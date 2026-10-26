@@ -396,7 +396,6 @@
 
             <hr style="border-color:#444; margin:15px 0;">
             
-            <!-- قسم تنبيهات النواقص الجديد -->
             <h4 style="color:var(--danger-color); margin:5px 0;">📉 إدارة النواقص (المواد التي تكاد تنفد)</h4>
             <div id="adminShortagesList" style="max-height: 140px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:10px;"></div>
             <button class="btn" onclick="sendShortagesWhatsApp()" style="background:#25d366; color:#000;">إرسال قائمة النواقص عبر واتساب 📱</button>
@@ -737,7 +736,7 @@
             alert("تم حفظ بياناتك بنجاح!");
         }
 
-        // إدارة المنتجات وشبكة العرض
+        // إدارة المنتجات وشبكة العرض (مع التدقيق على المخزون)
         function saveProducts() { localStorage.setItem('moaath_store_products', JSON.stringify(products)); }
 
         function filterProducts() { renderProducts(document.getElementById('searchInput').value); }
@@ -782,8 +781,20 @@
         function addToCart(productId) {
             let p = products.find(x => x.id === productId);
             if (!cart[productId]) {
-                cart[productId] = { id: p.id, name: p.name, basePrice: p.basePrice, qty: 1 };
-            } else { cart[productId].qty++; }
+                if (p.stock >= 1) {
+                    cart[productId] = { id: p.id, name: p.name, basePrice: p.basePrice, qty: 1 };
+                } else {
+                    alert("عذراً، نفدت الكمية من المخزون!");
+                    return;
+                }
+            } else { 
+                if (cart[productId].qty < p.stock) {
+                    cart[productId].qty++; 
+                } else {
+                    alert("عذراً، لا يتوفر المزيد من هذا المنتج في المخزون!");
+                    return;
+                }
+            }
             updateCartBar();
         }
 
@@ -842,6 +853,13 @@
 
         function changeCartQty(id, delta) {
             if (cart[id]) {
+                // التحقق من المخزون عند زيادة الكمية (نتخطى التحقق للعرض الخاص لأنه لا يملك ID رقمي في المنتجات)
+                let p = products.find(x => String(x.id) === String(id));
+                if (p && delta > 0 && cart[id].qty >= p.stock) {
+                    alert("عذراً، لا يتوفر المزيد من هذا المنتج في المخزون!");
+                    return;
+                }
+                
                 cart[id].qty += delta;
                 if (cart[id].qty <= 0) delete cart[id];
             }
@@ -852,7 +870,7 @@
             delete cart[id]; updateCartBar(); renderCartItems();
         }
 
-        // إتمام الطلب والدفع
+        // إتمام الطلب وخصم المخزون
         function openCheckout() {
             closeCartModal();
             if (Object.keys(cart).length === 0) { alert("السلة فارغة!"); return; }
@@ -882,10 +900,12 @@
 
         function sendOrderWhatsApp() {
             let itemsText = ""; let subTotal = 0;
+            let counter = 1;
             for (let id in cart) {
                 let itemTotal = (cart[id].basePrice * exchangeRate) * cart[id].qty;
                 subTotal += itemTotal;
-                itemsText += `- ${cart[id].name} (عدد ${cart[id].qty}) - ${itemTotal} ل.س\n`;
+                itemsText += `${counter}- ${cart[id].name} (الكمية: ${cart[id].qty}) = ${itemTotal} ل.س\n`;
+                counter++;
             }
             let delivery = (currentUser.area === 'other') ? deliveryFeeOther : deliveryFeeOwaina;
             let grand = subTotal + delivery;
@@ -894,20 +914,40 @@
             let cust = customers.find(c => c.phone === currentUser.phone);
             let currentPts = cust ? cust.points : 0;
 
-            let message = `🛒 *طلب جديد - متجر معاذ*%0A` +
-                          `---------------------------------%0A` +
-                          `👤 *الزبون:* ${currentUser.name}%0A` +
-                          `📱 *الهاتف:* ${currentUser.phone}%0A` +
-                          `🎁 *النقاط:* ${currentPts} نقطة%0A` +
-                          `📍 *التوصيل:* ${areaText} (${currentUser.address})%0A` +
-                          `---------------------------------%0A` +
-                          `📦 *المنتجات:*%0A${itemsText}` +
-                          `---------------------------------%0A` +
-                          `⚠️ *ملاحظة:* بانتظار إرسال إشعار التحويل من شام كاش للبدء بالتنفيذ.%0A` +
+            let message = `🛒 *طلب جديد - متجر معاذ*\n` +
+                          `---------------------------------\n` +
+                          `👤 *الزبون:* ${currentUser.name}\n` +
+                          `📱 *الهاتف:* ${currentUser.phone}\n` +
+                          `🎁 *النقاط:* ${currentPts} نقطة\n` +
+                          `📍 *التوصيل:* ${areaText} (${currentUser.address})\n` +
+                          `---------------------------------\n` +
+                          `📦 *المنتجات المطلوبة:*\n${itemsText}` +
+                          `---------------------------------\n` +
+                          `⚠️ *ملاحظة:* بانتظار إرسال إشعار التحويل من شام كاش للبدء بالتنفيذ.\n` +
                           `💰 *الإجمالي النهائي:* ${grand} ل.س`;
 
+            // خصم الكميات من المخزون الفعلي
+            for (let id in cart) {
+                let p = products.find(x => String(x.id) === String(id));
+                if (p) {
+                    p.stock -= cart[id].qty;
+                    if (p.stock < 0) p.stock = 0;
+                }
+            }
+            saveProducts(); // حفظ المخزون الجديد
+            
+            cart = {}; // تفريغ السلة
+            updateCartBar();
+            closeCheckout();
+            renderProducts(); // تحديث العرض للزبون لإظهار "نفدت الكمية" إن لزم الأمر
+
             let adminPhone = "+963965461504";
-            window.open(`https://api.whatsapp.com/send?phone=${adminPhone}&text=${message}`, '_blank');
+            window.open(`https://api.whatsapp.com/send?phone=${adminPhone}&text=${encodeURIComponent(message)}`, '_blank');
+            
+            // ملاحظة تلميحية للزبون في حال عودته للمتجر
+            setTimeout(() => {
+                alert("تم تجهيز الطلب وإرساله إلى واتساب، وتم تفريغ سلتك بنجاح.");
+            }, 1500);
         }
 
         // الإدارة السريّة ومراقبة النواقص
@@ -940,7 +980,7 @@
                 document.getElementById('adminCustomerSearch').value = '';
                 document.getElementById('adminProductSearch').value = ''; 
                 
-                renderAdminShortages(); // تحميل قائمة النواقص
+                renderAdminShortages(); 
                 renderAdminProductsList();
                 renderAdminCustomersList();
             } else {
@@ -955,7 +995,6 @@
             let listDiv = document.getElementById('adminShortagesList');
             listDiv.innerHTML = '';
             
-            // فلترة المنتجات التي كميتها أصغر أو تساوي حد التنبيه
             let shortages = products.filter(p => p.stock <= (p.minStock || 2));
             
             if(shortages.length === 0) {
@@ -980,12 +1019,14 @@
                 return;
             }
             
-            let text = `⚠️ *قائمة النواقص المطلوبة لمتجر معاذ*%0A---------------------------------%0A`;
+            let text = `⚠️ *قائمة النواقص المطلوبة لمتجر معاذ*\n---------------------------------\n`;
+            let counter = 1;
             shortages.forEach(p => {
-                text += `- ${p.name}%0A`;
+                text += `${counter}- ${p.name} (المتبقي: ${p.stock})\n`;
+                counter++;
             });
             
-            window.open(`https://api.whatsapp.com/send?phone=+963965461504&text=${text}`, '_blank');
+            window.open(`https://api.whatsapp.com/send?phone=+963965461504&text=${encodeURIComponent(text)}`, '_blank');
         }
 
         // إعدادات المتجر العامة
