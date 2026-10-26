@@ -74,6 +74,27 @@
             margin-bottom: 10px;
             box-sizing: border-box;
         }
+        
+        /* تنسيق العرض الخاص */
+        .special-offer-banner {
+            background: linear-gradient(45deg, #2a1f00, #121212);
+            border: 1px solid var(--gold-color);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+        }
+        .special-offer-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid var(--gold-color);
+        }
+
         .categories {
             display: flex;
             gap: 6px;
@@ -235,16 +256,27 @@
     </div>
 
     <div class="container">
+        
+        <!-- العرض الخاص (يظهر فقط إذا كان مفعلاً من الإدارة) -->
+        <div id="specialOfferContainer" class="special-offer-banner" style="display: none;">
+            <img id="soDisplayImg" src="" class="special-offer-img">
+            <div style="flex:1;">
+                <h3 style="color:var(--gold-color); font-size:14px; margin:0 0 4px 0;">🔥 عرض خاص!</h3>
+                <div id="soDisplayName" style="font-size:12px; margin-bottom:4px; font-weight:bold;"></div>
+                <div style="font-size:12px; margin-bottom:6px;">
+                    <s id="soDisplayOldPrice" style="color:#ff4444; margin-left:5px;"></s>
+                    <strong id="soDisplayPrice" style="color:#00ff00; font-size:14px;"></strong>
+                </div>
+                <button class="btn" onclick="addSpecialOfferToCart()" style="padding: 5px; font-size: 11px;">إضافة للسلة 🛒</button>
+            </div>
+        </div>
+
         <!-- شريط البحث الفوري -->
         <input type="text" id="searchInput" class="search-box" placeholder="🔍 ابحث عن أي منتج..." oninput="filterProducts()">
 
-        <!-- شريط الفئات -->
-        <div class="categories">
-            <button class="cat-btn active" onclick="setCategory('الكل', this)">الكل</button>
-            <button class="cat-btn" onclick="setCategory('غذائيات', this)">غذائيات</button>
-            <button class="cat-btn" onclick="setCategory('منظفات', this)">منظفات</button>
-            <button class="cat-btn" onclick="setCategory('مشروبات باردة وساخنة', this)">مشروبات باردة وساخنة</button>
-            <button class="cat-btn" onclick="setCategory('نقرشات', this)">نقرشات</button>
+        <!-- شريط الفئات (يتم توليده ديناميكياً) -->
+        <div class="categories" id="categoriesContainer">
+            <!-- يتم تعبئة التصنيفات هنا -->
         </div>
 
         <!-- شبكة المنتجات -->
@@ -275,7 +307,7 @@
         </div>
     </div>
 
-    <!-- نافذة تسجيل الدخول وإعداد الحساب (تظهر لمرة واحدة أو للتعديل) -->
+    <!-- نافذة تسجيل الدخول وإعداد الحساب -->
     <div id="registerModal" class="modal-overlay" style="display:flex;">
         <div class="modal-content" style="text-align:center;">
             <h3 style="color: var(--gold-color); margin-top:0;" id="regModalTitle">أهلاً بك في متجر معاذ 🛒</h3>
@@ -293,9 +325,7 @@
 
             <div class="form-group">
                 <label>منطقة التوصيل:</label>
-                <select id="regArea" class="form-control">
-                    <!-- تتعبأ تلقائياً بالأسعار -->
-                </select>
+                <select id="regArea" class="form-control"></select>
             </div>
 
             <div class="form-group">
@@ -364,6 +394,7 @@
         <div class="modal-content">
             <h3 style="color:var(--gold-color); text-align:center; margin-top:0;">لوحة تحكم متجر معاذ</h3>
             
+            <!-- إعدادات المتجر العامة -->
             <div class="form-group">
                 <label>سعر صرف الدولار (معامل التسعير):</label>
                 <div style="display:flex; gap:5px;">
@@ -383,6 +414,47 @@
 
             <hr style="border-color:#444; margin:15px 0;">
 
+            <!-- إدارة العرض الخاص الجديد -->
+            <h4 style="color:var(--gold-color); margin:5px 0;">🌟 إعدادات العرض الخاص</h4>
+            <div class="form-group">
+                <label>حالة العرض:</label>
+                <select id="soActiveInput" class="form-control">
+                    <option value="true">مُفعّل (يظهر للزبائن)</option>
+                    <option value="false">مُعطّل (مخفي)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>اسم المنتج/العرض:</label>
+                <input type="text" id="soNameInput" class="form-control" placeholder="مثال: طرد محارم">
+            </div>
+            <div style="display:flex; gap:5px;">
+                <div class="form-group" style="flex:1;">
+                    <label>السعر القديم (دولار):</label>
+                    <input type="number" id="soOldPriceInput" class="form-control">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>السعر الجديد (دولار):</label>
+                    <input type="number" id="soPriceInput" class="form-control">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>رابط صورة العرض (URL):</label>
+                <input type="text" id="soImgInput" class="form-control" placeholder="رابط الصورة">
+            </div>
+            <button class="btn" onclick="saveSpecialOffer()" style="margin-bottom: 10px;">حفظ العرض الخاص</button>
+
+            <hr style="border-color:#444; margin:15px 0;">
+
+            <!-- إدارة التصنيفات الجديدة -->
+            <h4 style="color:var(--gold-color); margin:5px 0;">🏷️ إدارة التصنيفات (الأقسام)</h4>
+            <div style="display:flex; gap:5px; margin-bottom: 10px;">
+                <input type="text" id="newCategoryInput" class="form-control" placeholder="اسم التصنيف الجديد">
+                <button class="btn" onclick="addCategory()" style="width:auto;">إضافة</button>
+            </div>
+            <div id="adminCategoriesList" style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:15px;"></div>
+
+            <hr style="border-color:#444; margin:15px 0;">
+
             <h4 style="color:var(--gold-color); margin:5px 0;">👥 إدارة نقاط الزبائن</h4>
             <input type="text" id="adminCustomerSearch" class="form-control" placeholder="🔍 ابحث عن زبون بالاسم أو الرقم..." oninput="renderAdminCustomersList()" style="margin-bottom: 10px;">
             <div id="adminCustomersList" style="max-height: 140px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:15px;"></div>
@@ -397,10 +469,7 @@
             <div class="form-group">
                 <label>التصنيف:</label>
                 <select id="newProdCat" class="form-control">
-                    <option value="غذائيات">غذائيات</option>
-                    <option value="منظفات">منظفات</option>
-                    <option value="مشروبات باردة وساخنة">مشروبات باردة وساخنة</option>
-                    <option value="نقرشات">نقرشات</option>
+                    <!-- تتعبأ ديناميكياً -->
                 </select>
             </div>
             <div class="form-group">
@@ -436,14 +505,11 @@
             <div class="form-group">
                 <label>التصنيف:</label>
                 <select id="editProdCat" class="form-control">
-                    <option value="غذائيات">غذائيات</option>
-                    <option value="منظفات">منظفات</option>
-                    <option value="مشروبات باردة وساخنة">مشروبات باردة وساخنة</option>
-                    <option value="نقرشات">نقرشات</option>
+                    <!-- تتعبأ ديناميكياً -->
                 </select>
             </div>
             <div class="form-group">
-                <label>السعر الأساسي:</label>
+                <label>السعر الأساسي (دولار):</label>
                 <input type="number" id="editProdPrice" class="form-control">
             </div>
             <div class="form-group">
@@ -460,18 +526,27 @@
     </div>
 
     <script>
+        // المتغيرات والبيانات الأساسية
+        let defaultCategories = ['غذائيات', 'منظفات', 'مشروبات باردة وساخنة', 'نقرشات'];
+        let categories = JSON.parse(localStorage.getItem('moaath_categories')) || defaultCategories;
+
+        let defaultSpecialOffer = {
+            active: false,
+            id: 'special_offer_1',
+            name: 'عرض التوفير',
+            baseOldPrice: 500,
+            basePrice: 350,
+            image: ''
+        };
+        let specialOffer = JSON.parse(localStorage.getItem('moaath_special_offer')) || defaultSpecialOffer;
+
         let defaultProducts = [
             { id: 1, name: "رز بسمتي نخب أول 1 كغ", category: "غذائيات", basePrice: 270, stock: 10, image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=300" },
-            { id: 2, name: "زيت دوار الشمس 1 ليتر", category: "غذائيات", basePrice: 235, stock: 5, image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=300" },
-            { id: 3, name: "مسحوق غسيل أوتوماتيك 2.5 كغ", category: "منظفات", basePrice: 500, stock: 8, image: "https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?w=300" },
-            { id: 4, name: "مشروب غازي عائلي", category: "مشروبات باردة وساخنة", basePrice: 110, stock: 0, image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300" },
-            { id: 5, name: "سائل جلي مركز 1 ليتر", category: "منظفات", basePrice: 140, stock: 12, image: "https://images.unsplash.com/photo-1585670146017-21445c71d61a?w=300" },
-            { id: 6, name: "مكسرات مشكلة فاخرة 250غ", category: "نقرشات", basePrice: 310, stock: 15, image: "https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=300" }
+            { id: 2, name: "زيت دوار الشمس 1 ليتر", category: "غذائيات", basePrice: 235, stock: 5, image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=300" }
         ];
-
         let products = JSON.parse(localStorage.getItem('moaath_store_products')) || defaultProducts;
-        let exchangeRate = parseFloat(localStorage.getItem('moaath_exchange_rate')) || 1;
         
+        let exchangeRate = parseFloat(localStorage.getItem('moaath_exchange_rate')) || 1;
         let deliveryFeeOwaina = parseInt(localStorage.getItem('moaath_fee_owaina')) || 5000;
         let deliveryFeeOther = parseInt(localStorage.getItem('moaath_fee_other')) || 7000;
 
@@ -480,12 +555,14 @@
         let currentCategory = 'الكل';
         let cart = {};
 
+        // عند الإقلاع
         window.onload = function() {
             setupDeliveryOptions();
+            renderCategoriesBar();
+            renderSpecialOfferCustomer();
             
             if (currentUser && currentUser.phone && currentUser.address) {
                 document.getElementById('registerModal').style.display = 'none';
-                
                 let existing = customers.find(c => c.phone === currentUser.phone);
                 if (!existing) {
                     customers.push({ name: currentUser.name, phone: currentUser.phone, points: 0 });
@@ -504,12 +581,136 @@
             renderProducts();
         };
 
+        // إدارة التصنيفات الديناميكية
+        function renderCategoriesBar() {
+            // شريط الزبون
+            let container = document.getElementById('categoriesContainer');
+            container.innerHTML = `<button class="cat-btn ${currentCategory === 'الكل' ? 'active' : ''}" onclick="setCategory('الكل', this)">الكل</button>`;
+            
+            categories.forEach(cat => {
+                container.innerHTML += `<button class="cat-btn ${currentCategory === cat ? 'active' : ''}" onclick="setCategory('${cat}', this)">${cat}</button>`;
+            });
+
+            // تعبئة قوائم الإدارة (إضافة وتعديل)
+            populateCategorySelects();
+        }
+
+        function populateCategorySelects() {
+            let addSelect = document.getElementById('newProdCat');
+            let editSelect = document.getElementById('editProdCat');
+            if(addSelect && editSelect) {
+                addSelect.innerHTML = '';
+                editSelect.innerHTML = '';
+                categories.forEach(cat => {
+                    let option = `<option value="${cat}">${cat}</option>`;
+                    addSelect.innerHTML += option;
+                    editSelect.innerHTML += option;
+                });
+            }
+        }
+
+        function renderAdminCategories() {
+            let list = document.getElementById('adminCategoriesList');
+            list.innerHTML = '';
+            categories.forEach((cat, index) => {
+                list.innerHTML += `
+                    <div style="background:#222; padding:4px 8px; border-radius:15px; font-size:11px; display:flex; align-items:center; gap:5px;">
+                        <span>${cat}</span>
+                        <span onclick="deleteCategory(${index})" style="color:var(--danger-color); cursor:pointer; font-weight:bold;">x</span>
+                    </div>
+                `;
+            });
+            populateCategorySelects();
+        }
+
+        function addCategory() {
+            let newCat = document.getElementById('newCategoryInput').value.trim();
+            if (newCat && !categories.includes(newCat) && newCat !== 'الكل') {
+                categories.push(newCat);
+                localStorage.setItem('moaath_categories', JSON.stringify(categories));
+                document.getElementById('newCategoryInput').value = '';
+                renderCategoriesBar();
+                renderAdminCategories();
+            }
+        }
+
+        function deleteCategory(index) {
+            if(confirm("هل أنت متأكد من حذف هذا التصنيف؟")) {
+                categories.splice(index, 1);
+                localStorage.setItem('moaath_categories', JSON.stringify(categories));
+                if(currentCategory === categories[index]) currentCategory = 'الكل';
+                renderCategoriesBar();
+                renderAdminCategories();
+            }
+        }
+
+        function setCategory(cat, btn) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderProducts(document.getElementById('searchInput').value);
+        }
+
+        // العرض الخاص
+        function renderSpecialOfferCustomer() {
+            let container = document.getElementById('specialOfferContainer');
+            if (specialOffer.active) {
+                let finalPrice = specialOffer.basePrice * exchangeRate;
+                let finalOldPrice = specialOffer.baseOldPrice * exchangeRate;
+                let imgSrc = specialOffer.image || 'https://via.placeholder.com/150?text=Special+Offer';
+                
+                document.getElementById('soDisplayImg').src = imgSrc;
+                document.getElementById('soDisplayName').innerText = specialOffer.name;
+                document.getElementById('soDisplayPrice').innerText = finalPrice + ' ل.س';
+                document.getElementById('soDisplayOldPrice').innerText = finalOldPrice + ' ل.س';
+                container.style.display = 'flex';
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        function loadAdminSpecialOffer() {
+            document.getElementById('soActiveInput').value = specialOffer.active ? 'true' : 'false';
+            document.getElementById('soNameInput').value = specialOffer.name;
+            document.getElementById('soOldPriceInput').value = specialOffer.baseOldPrice;
+            document.getElementById('soPriceInput').value = specialOffer.basePrice;
+            document.getElementById('soImgInput').value = specialOffer.image;
+        }
+
+        function saveSpecialOffer() {
+            specialOffer.active = document.getElementById('soActiveInput').value === 'true';
+            specialOffer.name = document.getElementById('soNameInput').value.trim() || 'عرض خاص';
+            specialOffer.baseOldPrice = parseFloat(document.getElementById('soOldPriceInput').value) || 0;
+            specialOffer.basePrice = parseFloat(document.getElementById('soPriceInput').value) || 0;
+            specialOffer.image = document.getElementById('soImgInput').value.trim();
+            
+            localStorage.setItem('moaath_special_offer', JSON.stringify(specialOffer));
+            renderSpecialOfferCustomer();
+            alert("تم حفظ إعدادات العرض الخاص بنجاح!");
+        }
+
+        function addSpecialOfferToCart() {
+            if (!specialOffer.active) return;
+            let id = specialOffer.id;
+            if (!cart[id]) {
+                // نمرره كمنتج عادي للسلة
+                cart[id] = { id: id, name: "🔥 " + specialOffer.name, basePrice: specialOffer.basePrice, qty: 1 };
+            } else {
+                cart[id].qty++;
+            }
+            updateCartBar();
+            alert("تمت إضافة العرض الخاص للسلة!");
+        }
+
+        // إعدادات الزبون الأساسية (التسجيل والتوصيل)
         function setupDeliveryOptions() {
             let select = document.getElementById('regArea');
-            select.innerHTML = `
-                <option value="owaina">قرية العوينة (+${deliveryFeeOwaina} ل.س)</option>
-                <option value="other">المناطق المجاورة (+${deliveryFeeOther} ل.س)</option>
-            `;
+            if(select) {
+                select.innerHTML = `
+                    <option value="owaina">قرية العوينة (+${deliveryFeeOwaina} ل.س)</option>
+                    <option value="other">المناطق المجاورة (+${deliveryFeeOther} ل.س)</option>
+                `;
+            }
         }
 
         function updateUserSessionDisplay() {
@@ -570,8 +771,13 @@
             alert("تم حفظ بياناتك بنجاح!");
         }
 
+        // إدارة المنتجات وشبكة العرض
         function saveProducts() {
             localStorage.setItem('moaath_store_products', JSON.stringify(products));
+        }
+
+        function filterProducts() {
+            renderProducts(document.getElementById('searchInput').value);
         }
 
         function renderProducts(filterText = '') {
@@ -598,7 +804,7 @@
                 card.className = 'product-card';
                 card.innerHTML = `
                     <div>
-                        <img src="${imgSrc}" class="product-img" alt="${p.name}" onerror="this.src='https://via.placeholder.com/150?text=No+Image'">
+                        <img src="${imgSrc}" class="product-img" onerror="this.src='https://via.placeholder.com/150?text=No+Image'">
                         <div style="font-size:10px; color:#aaa; margin-bottom:2px;">${p.category}</div>
                         <h3>${p.name}</h3>
                         <p>${finalPrice} ل.س</p>
@@ -611,21 +817,10 @@
             });
         }
 
-        function setCategory(cat, btn) {
-            currentCategory = cat;
-            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderProducts(document.getElementById('searchInput').value);
-        }
-
-        function filterProducts() {
-            renderProducts(document.getElementById('searchInput').value);
-        }
-
         function addToCart(productId) {
             let p = products.find(x => x.id === productId);
             if (!cart[productId]) {
-                cart[productId] = { ...p, qty: 1 };
+                cart[productId] = { id: p.id, name: p.name, basePrice: p.basePrice, qty: 1 };
             } else {
                 cart[productId].qty++;
             }
@@ -690,10 +885,10 @@
                         <div style="color:var(--gold-color);">${itemTotal} ل.س</div>
                     </div>
                     <div style="display:flex; align-items:center; gap:6px;">
-                        <button class="btn" onclick="changeCartQty(${id}, -1)" style="width:28px; height:28px; padding:0; line-height:28px; font-size:14px;">-</button>
+                        <button class="btn" onclick="changeCartQty('${id}', -1)" style="width:28px; height:28px; padding:0; line-height:28px; font-size:14px;">-</button>
                         <span><b style="color:#fff; font-size:14px;">${item.qty}</b></span>
-                        <button class="btn" onclick="changeCartQty(${id}, 1)" style="width:28px; height:28px; padding:0; line-height:28px; font-size:14px;">+</button>
-                        <button class="btn btn-danger" onclick="removeCartItem(${id})" style="width:auto; padding:4px 8px; font-size:10px;">حذف</button>
+                        <button class="btn" onclick="changeCartQty('${id}', 1)" style="width:28px; height:28px; padding:0; line-height:28px; font-size:14px;">+</button>
+                        <button class="btn btn-danger" onclick="removeCartItem('${id}')" style="width:auto; padding:4px 8px; font-size:10px;">حذف</button>
                     </div>
                 `;
                 list.appendChild(row);
@@ -718,6 +913,7 @@
             renderCartItems();
         }
 
+        // إتمام الطلب والدفع
         function openCheckout() {
             closeCartModal();
             if (Object.keys(cart).length === 0) {
@@ -783,14 +979,14 @@
                           `---------------------------------%0A` +
                           `📦 *المنتجات:*%0A${itemsText}` +
                           `---------------------------------%0A` +
-                          `⚠️ *ملاحظة:* تم إنشاء الطلب، بانتظار إرسال إشعار التحويل من شام كاش للبدء بالتنفيذ.%0A` +
+                          `⚠️ *ملاحظة:* بانتظار إرسال إشعار التحويل من شام كاش للبدء بالتنفيذ.%0A` +
                           `💰 *الإجمالي النهائي:* ${grand} ل.س`;
 
             let adminPhone = "+963965461504";
             window.open(`https://api.whatsapp.com/send?phone=${adminPhone}&text=${message}`, '_blank');
         }
 
-        // الإدارة السريّة (5 ضغطات)
+        // الإدارة السريّة
         let tapCount = 0;
         document.getElementById('adminTrigger').addEventListener('click', () => {
             tapCount++;
@@ -815,6 +1011,8 @@
                 document.getElementById('feeOwainaInput').value = deliveryFeeOwaina;
                 document.getElementById('feeOtherInput').value = deliveryFeeOther;
                 
+                loadAdminSpecialOffer();
+                renderAdminCategories();
                 document.getElementById('adminCustomerSearch').value = '';
                 
                 renderAdminProductsList();
@@ -832,6 +1030,7 @@
             exchangeRate = parseFloat(document.getElementById('exchangeRateInput').value) || 1;
             localStorage.setItem('moaath_exchange_rate', exchangeRate);
             renderProducts();
+            renderSpecialOfferCustomer();
             updateCartBar();
             alert("تم تحديث سعر الصرف بنجاح!");
         }
@@ -897,6 +1096,7 @@
             alert(`تم تحديث نقاط الزبون ${customers[index].name} إلى ${newPts} بنجاح!`);
         }
 
+        // إدارة المنتجات (إضافة، تعديل، حذف)
         function addNewProduct() {
             let name = document.getElementById('newProdName').value.trim();
             let category = document.getElementById('newProdCat').value;
@@ -935,7 +1135,7 @@
                 row.innerHTML = `
                     <div style="flex:1;">
                         <strong style="color:#fff;">${p.name}</strong><br>
-                        <span style="color:#aaa;">${p.basePrice} | مخزون: ${p.stock}</span>
+                        <span style="color:#aaa;">${p.basePrice}$ | صنف: ${p.category} | مخزون: ${p.stock}</span>
                     </div>
                     <div style="display:flex; gap:5px;">
                         <button class="btn" style="background:#555; color:#fff; width:auto; padding:3px 8px; font-size:10px;" onclick="openEditProduct(${p.id})">تعديل</button>
@@ -984,7 +1184,6 @@
                 renderProducts();
                 renderAdminProductsList();
                 
-                // تحديث المنتج إذا كان موجوداً في سلة المشتريات
                 if(cart[id]) {
                     cart[id].name = name;
                     cart[id].category = category;
