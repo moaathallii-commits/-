@@ -204,6 +204,18 @@
             box-sizing: border-box;
             font-size: 13px;
         }
+        .alert-danger {
+            background: rgba(255, 68, 68, 0.1);
+            color: var(--danger-color);
+            border: 2px dashed var(--danger-color);
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 13px;
+            margin: 15px 0;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -306,17 +318,16 @@
                 <b id="checkoutAddressDisplay" style="color:#fff;"></b>
             </p>
 
-            <div class="form-group" style="background:#121212; padding:10px; border-radius:5px; border:1px solid #333;">
+            <div class="form-group" style="background:#121212; padding:10px; border-radius:5px; border:1px solid #333; margin-bottom: 5px;">
                 <label style="color:var(--gold-color);">الدفع عبر تطبيق شام كاش:</label>
                 <p style="font-size:11px; margin:4px 0; color:#aaa;">اسم المستلم المعتمد: معاذ العلي</p>
                 <p style="font-size:11px; margin:4px 0; color:#aaa;">معرف المحفظة: <span id="walletId">da3e13cd8a2ef2af282445e148df999</span></p>
                 <button type="button" onclick="copyWallet()" style="background:#333; color:#fff; border:none; padding:4px 8px; font-size:10px; border-radius:3px; cursor:pointer;">📋 نسخ معرف المحفظة</button>
             </div>
 
-            <div class="form-group">
-                <label>إثبات الدفع (اسم المُرسِل وآخر 4 أرقام من الحوالة):</label>
-                <input type="text" id="paymentProof" class="form-control" placeholder="مثال: أحمد العلي - 4321">
-                <small style="font-size:10px; color:#888;">أرسل إشعار التحويل الإلكتروني لواتساب الإدارة فوراً.</small>
+            <!-- تنبيه الدفع الصارم الجديد -->
+            <div class="alert-danger">
+                لن يتم البدء بتنفيذ الطلب حتى يتم إرسال إشعار التحويل من شام كاش عبر واتساب الإدارة.
             </div>
 
             <div style="border-top: 1px solid #444; padding-top:10px; margin-top:10px; font-size:13px;">
@@ -374,6 +385,8 @@
             <hr style="border-color:#444; margin:15px 0;">
 
             <h4 style="color:var(--gold-color); margin:5px 0;">👥 إدارة نقاط الزبائن</h4>
+            <!-- حقل البحث الجديد في الإدارة -->
+            <input type="text" id="adminCustomerSearch" class="form-control" placeholder="🔍 ابحث عن زبون بالاسم أو الرقم..." oninput="renderAdminCustomersList()" style="margin-bottom: 10px;">
             <div id="adminCustomersList" style="max-height: 140px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:15px;"></div>
 
             <hr style="border-color:#444; margin:15px 0;">
@@ -437,11 +450,9 @@
         window.onload = function() {
             setupDeliveryOptions();
             
-            // تحقق ما إذا كان الزبون مسجلاً ولديه عنوان
             if (currentUser && currentUser.phone && currentUser.address) {
                 document.getElementById('registerModal').style.display = 'none';
                 
-                // الترحيل التلقائي إن لم يكن بقائمة الزبائن
                 let existing = customers.find(c => c.phone === currentUser.phone);
                 if (!existing) {
                     customers.push({ name: currentUser.name, phone: currentUser.phone, points: 0 });
@@ -449,10 +460,9 @@
                 }
                 updateUserSessionDisplay();
             } else {
-                // إذا لم يكن لديه حساب أو ينقصه العنوان، نفتح النافذة إجبارياً
                 if(currentUser) {
                     openEditProfile();
-                    document.getElementById('cancelEditBtn').style.display = 'none'; // منع الإلغاء لاستكمال البيانات
+                    document.getElementById('cancelEditBtn').style.display = 'none'; 
                 } else {
                     document.getElementById('registerModal').style.display = 'flex';
                     document.getElementById('cancelEditBtn').style.display = 'none';
@@ -488,7 +498,7 @@
                 document.getElementById('regArea').value = currentUser.area || 'owaina';
             }
             
-            document.getElementById('cancelEditBtn').style.display = 'block'; // السماح بالإلغاء
+            document.getElementById('cancelEditBtn').style.display = 'block'; 
             document.getElementById('registerModal').style.display = 'flex';
         }
 
@@ -717,13 +727,6 @@
         }
 
         function sendOrderWhatsApp() {
-            let proof = document.getElementById('paymentProof').value.trim();
-            
-            if(!proof) {
-                alert("يرجى إدخال إثبات الدفع!");
-                return;
-            }
-
             let itemsText = "";
             let subTotal = 0;
             for (let id in cart) {
@@ -747,7 +750,7 @@
                           `---------------------------------%0A` +
                           `📦 *المنتجات:*%0A${itemsText}` +
                           `---------------------------------%0A` +
-                          `💳 *إثبات الدفع (شام كاش):* ${proof}%0A` +
+                          `⚠️ *ملاحظة هامة:* بانتظار إشعار تحويل شام كاش للبدء بتنفيذ الطلب.%0A` +
                           `💰 *الإجمالي النهائي:* ${grand} ل.س`;
 
             let adminPhone = "+963965461504";
@@ -778,6 +781,10 @@
                 document.getElementById('exchangeRateInput').value = exchangeRate;
                 document.getElementById('feeOwainaInput').value = deliveryFeeOwaina;
                 document.getElementById('feeOtherInput').value = deliveryFeeOther;
+                
+                // مسح شريط البحث عند فتح الإدارة
+                document.getElementById('adminCustomerSearch').value = '';
+                
                 renderAdminProductsList();
                 renderAdminCustomersList();
             } else {
@@ -802,18 +809,32 @@
             deliveryFeeOther = parseInt(document.getElementById('feeOtherInput').value) || 7000;
             localStorage.setItem('moaath_fee_owaina', deliveryFeeOwaina);
             localStorage.setItem('moaath_fee_other', deliveryFeeOther);
-            setupDeliveryOptions(); // تحديث الخيارات للزبائن الجدد
+            setupDeliveryOptions(); 
             alert("تم تحديث أسعار التوصيل بنجاح!");
         }
 
+        // البحث وإدارة الزبائن
         function renderAdminCustomersList() {
             let listDiv = document.getElementById('adminCustomersList');
             listDiv.innerHTML = '';
-            if (customers.length === 0) {
-                listDiv.innerHTML = '<p style="text-align:center; color:#888; font-size:12px;">لا يوجد زبائن مسجلون بعد</p>';
+            
+            let searchText = (document.getElementById('adminCustomerSearch').value || '').toLowerCase();
+            let filteredCustomers = customers;
+            
+            if (searchText) {
+                filteredCustomers = customers.filter(c => 
+                    c.name.toLowerCase().includes(searchText) || 
+                    c.phone.includes(searchText)
+                );
+            }
+
+            if (filteredCustomers.length === 0) {
+                listDiv.innerHTML = '<p style="text-align:center; color:#888; font-size:12px;">لا يوجد زبائن مطابقين</p>';
                 return;
             }
-            customers.forEach((c, index) => {
+
+            filteredCustomers.forEach((c) => {
+                let originalIndex = customers.indexOf(c);
                 let row = document.createElement('div');
                 row.style.display = 'flex';
                 row.style.justifyContent = 'space-between';
@@ -826,8 +847,8 @@
                         <div style="color:#fff; font-weight:bold;">${c.name} (${c.phone})</div>
                     </div>
                     <div style="display:flex; align-items:center; gap:5px;">
-                        <input type="number" id="custPoints_${index}" value="${c.points}" style="width:50px; background:#121212; color:#fff; border:1px solid #444; text-align:center; padding:3px; border-radius:3px;">
-                        <button class="btn" onclick="updateSingleCustomerPoints(${index})" style="width:auto; padding:3px 8px; font-size:11px;">حفظ</button>
+                        <input type="number" id="custPoints_${originalIndex}" value="${c.points}" style="width:50px; background:#121212; color:#fff; border:1px solid #444; text-align:center; padding:3px; border-radius:3px;">
+                        <button class="btn" onclick="updateSingleCustomerPoints(${originalIndex})" style="width:auto; padding:3px 8px; font-size:11px;">حفظ</button>
                     </div>
                 `;
                 listDiv.appendChild(row);
