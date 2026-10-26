@@ -219,7 +219,7 @@
 
     <div class="user-bar">
         <span>👤 الزبون: <b id="userNameDisplay">زائر</b></span>
-        <span style="color: var(--gold-color);">🎁 هدية متجر معاذ: <b id="userPoints">0</b> نقطة</span>
+        <span style="color: var(--gold-color);">🎁 نقاطي: <b id="userPoints">0</b> نقطة</span>
     </div>
 
     <div class="container">
@@ -301,8 +301,7 @@
             <div class="form-group">
                 <label>منطقة التوصيل (إلزامي):</label>
                 <select id="deliveryArea" class="form-control" onchange="updateCartTotal()">
-                    <option value="5000">قرية العوينة (+5000 ل.س)</option>
-                    <option value="7000">المناطق المجاورة (+7000 ل.س)</option>
+                    <!-- يتم تحديث خيارات التوصيل ديناميكياً -->
                 </select>
             </div>
 
@@ -331,7 +330,7 @@
                 </div>
                 <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
                     <span>تكلفة التوصيل:</span>
-                    <span id="deliveryCost">5000</span>
+                    <span id="deliveryCost">0</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--gold-color); font-size:15px; margin-top:8px;">
                     <span>الإجمالي النهائي:</span>
@@ -368,12 +367,18 @@
             </div>
 
             <div class="form-group">
-                <label>التحكم بنقاط الزبون (هدية متجر معاذ):</label>
-                <div style="display:flex; gap:5px;">
-                    <input type="number" id="adminPointsInput" class="form-control" value="0">
-                    <button class="btn" onclick="updateUserPoints()" style="width:auto;">حفظ</button>
+                <label>تحكم بسعر التوصيل (ل.س):</label>
+                <div style="display:flex; gap:5px; margin-bottom:5px;">
+                    <input type="number" id="feeOwainaInput" class="form-control" placeholder="رسوم العوينة">
+                    <input type="number" id="feeOtherInput" class="form-control" placeholder="رسوم المناطق المجاورة">
                 </div>
+                <button class="btn" onclick="updateDeliveryFees()">حفظ أسعار التوصيل</button>
             </div>
+
+            <hr style="border-color:#444; margin:15px 0;">
+
+            <h4 style="color:var(--gold-color); margin:5px 0;">👥 إدارة نقاط الزبائن بشكل مستقل</h4>
+            <div id="adminCustomersList" style="max-height: 140px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:15px;"></div>
 
             <hr style="border-color:#444; margin:15px 0;">
 
@@ -406,7 +411,7 @@
             <button class="btn" onclick="addNewProduct()" style="margin-bottom:15px;">إضافة المنتج للمتجر</button>
 
             <h4 style="color:var(--gold-color); margin:5px 0;">📦 إدارة المنتجات الحالية (حذف)</h4>
-            <div id="adminProductsList" style="max-height: 150px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:10px;"></div>
+            <div id="adminProductsList" style="max-height: 140px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:10px;"></div>
 
             <button onclick="closeDashboard()" class="btn" style="background:#444; color:#fff;">إغلاق لوحة التحكم</button>
         </div>
@@ -424,8 +429,12 @@
 
         let products = JSON.parse(localStorage.getItem('moaath_store_products')) || defaultProducts;
         let exchangeRate = parseFloat(localStorage.getItem('moaath_exchange_rate')) || 1;
-        let userPoints = parseInt(localStorage.getItem('moaath_user_points')) || 0;
         
+        // أسعار التوصيل المحفوظة
+        let deliveryFeeOwaina = parseInt(localStorage.getItem('moaath_fee_owaina')) || 5000;
+        let deliveryFeeOther = parseInt(localStorage.getItem('moaath_fee_other')) || 7000;
+
+        let customers = JSON.parse(localStorage.getItem('moaath_customers')) || [];
         let currentUser = JSON.parse(localStorage.getItem('moaath_current_user')) || null;
         let currentCategory = 'الكل';
         let cart = {};
@@ -433,13 +442,30 @@
         window.onload = function() {
             if (currentUser && currentUser.phone) {
                 document.getElementById('registerModal').style.display = 'none';
-                document.getElementById('userNameDisplay').innerText = currentUser.name;
-                document.getElementById('userPoints').innerText = userPoints;
+                updateUserSessionDisplay();
             } else {
                 document.getElementById('registerModal').style.display = 'flex';
             }
+            setupDeliveryOptions();
             renderProducts();
         };
+
+        function setupDeliveryOptions() {
+            let select = document.getElementById('deliveryArea');
+            select.innerHTML = `
+                <option value="${deliveryFeeOwaina}">قرية العوينة (+${deliveryFeeOwaina} ل.س)</option>
+                <option value="${deliveryFeeOther}">المناطق المجاورة (+${deliveryFeeOther} ل.س)</option>
+            `;
+        }
+
+        function updateUserSessionDisplay() {
+            if (!currentUser) return;
+            // البحث عن الزبون في قاعدة بيانات الزبائن لجلب نقاطه المحدثة
+            let cust = customers.find(c => c.phone === currentUser.phone);
+            let pts = cust ? cust.points : 0;
+            document.getElementById('userNameDisplay').innerText = currentUser.name;
+            document.getElementById('userPoints').innerText = pts;
+        }
 
         function verifyAndRegister() {
             let name = document.getElementById('regName').value.trim();
@@ -457,9 +483,17 @@
             currentUser = { name, phone };
             localStorage.setItem('moaath_current_user', JSON.stringify(currentUser));
 
-            document.getElementById('userNameDisplay').innerText = name;
-            document.getElementById('userPoints').innerText = userPoints;
+            // تسجيل الزبون أو تحديثه في قائمة الزبائن العامة
+            let existing = customers.find(c => c.phone === phone);
+            if (!existing) {
+                customers.push({ name, phone, points: 0 });
+            } else {
+                existing.name = name; // تحديث الاسم إذا تغير
+            }
+            localStorage.setItem('moaath_customers', JSON.stringify(customers));
+
             document.getElementById('registerModal').style.display = 'none';
+            updateUserSessionDisplay();
             alert("تم تسجيل الدخول بنجاح!");
         }
 
@@ -543,7 +577,6 @@
             }
         }
 
-        // دوال نافذة السلة وتعديل الكميات
         function openCartModal() {
             renderCartItems();
             document.getElementById('cartModal').style.display = 'flex';
@@ -624,6 +657,12 @@
             }
             document.getElementById('custName').value = currentUser.name;
             document.getElementById('custPhone').value = currentUser.phone;
+            
+            // استرجاع العنوان المحفوظ مسبقاً على هاتف الزبون
+            let savedAddress = localStorage.getItem('moaath_cust_address_' + currentUser.phone) || '';
+            document.getElementById('custAddress').value = savedAddress;
+
+            setupDeliveryOptions();
             document.getElementById('checkoutModal').style.display = 'flex';
             updateCartTotal();
         }
@@ -660,6 +699,9 @@
                 return;
             }
 
+            // حفظ العنوان على هاتف الزبون بشكل دائم
+            localStorage.setItem('moaath_cust_address_' + currentUser.phone, address);
+
             let itemsText = "";
             let subTotal = 0;
             for (let id in cart) {
@@ -670,10 +712,15 @@
             let delivery = parseInt(document.getElementById('deliveryArea').value);
             let grand = subTotal + delivery;
 
+            // جلب نقاط الزبون الحالية
+            let cust = customers.find(c => c.phone === currentUser.phone);
+            let currentPts = cust ? cust.points : 0;
+
             let message = `🛒 *طلب جديد - متجر معاذ*%0A` +
                           `---------------------------------%0A` +
                           `👤 *الزبون الموثق:* ${currentUser.name}%0A` +
                           `📱 *رقم الهاتف:* ${currentUser.phone}%0A` +
+                          `🎁 *نقاط الزبون:* ${currentPts} نقطة%0A` +
                           `📍 *المنطقة:* ${deliveryText}%0A` +
                           `🏠 *العنوان:* ${address}%0A` +
                           `---------------------------------%0A` +
@@ -708,8 +755,10 @@
                 closeAdminModal();
                 document.getElementById('adminDashboard').style.display = 'flex';
                 document.getElementById('exchangeRateInput').value = exchangeRate;
-                document.getElementById('adminPointsInput').value = userPoints;
+                document.getElementById('feeOwainaInput').value = deliveryFeeOwaina;
+                document.getElementById('feeOtherInput').value = deliveryFeeOther;
                 renderAdminProductsList();
+                renderAdminCustomersList();
             } else {
                 alert("كلمة المرور غير صحيحة!");
             }
@@ -727,11 +776,54 @@
             alert("تم تحديث سعر الصرف بنجاح!");
         }
 
-        function updateUserPoints() {
-            userPoints = parseInt(document.getElementById('adminPointsInput').value) || 0;
-            localStorage.setItem('moaath_user_points', userPoints);
-            document.getElementById('userPoints').innerText = userPoints;
-            alert("تم تحديث نقاط الزبون بنجاح!");
+        function updateDeliveryFees() {
+            deliveryFeeOwaina = parseInt(document.getElementById('feeOwainaInput').value) || 5000;
+            deliveryFeeOther = parseInt(document.getElementById('feeOtherInput').value) || 7000;
+            localStorage.setItem('moaath_fee_owaina', deliveryFeeOwaina);
+            localStorage.setItem('moaath_fee_other', deliveryFeeOther);
+            setupDeliveryOptions();
+            alert("تم تحديث أسعار التوصيل بنجاح!");
+        }
+
+        // إدارة نقاط الزبائن بشكل مستقل من لوحة الإدارة
+        function renderAdminCustomersList() {
+            let listDiv = document.getElementById('adminCustomersList');
+            listDiv.innerHTML = '';
+            if (customers.length === 0) {
+                listDiv.innerHTML = '<p style="text-align:center; color:#888; font-size:12px;">لا يوجد زبائن مسجلون بعد</p>';
+                return;
+            }
+            customers.forEach((c, index) => {
+                let row = document.createElement('div');
+                row.style.display = 'flex';
+                row.style.justify = 'space-between';
+                row.style.alignItems = 'center';
+                row.style.padding = '6px 0';
+                row.style.borderBottom = '1px solid #222';
+                row.style.fontSize = '12px';
+                row.innerHTML = `
+                    <div style="flex:1; text-align:right;">
+                        <div style="color:#fff; font-weight:bold;">${c.name} (${c.phone})</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <input type="number" id="custPoints_${index}" value="${c.points}" style="width:50px; background:#121212; color:#fff; border:1px solid #444; text-align:center; padding:3px; border-radius:3px;">
+                        <button class="btn" onclick="updateSingleCustomerPoints(${index})" style="width:auto; padding:3px 8px; font-size:11px;">حفظ</button>
+                    </div>
+                `;
+                listDiv.appendChild(row);
+            });
+        }
+
+        function updateSingleCustomerPoints(index) {
+            let newPts = parseInt(document.getElementById(`custPoints_${index}`).value) || 0;
+            customers[index].points = newPts;
+            localStorage.setItem('moaath_customers', JSON.stringify(customers));
+            
+            // إذا كان هذا الزبون هو نفسها الجلسة الحالية، قم بتحديث واجهته فوراً
+            if (currentUser && currentUser.phone === customers[index].phone) {
+                updateUserSessionDisplay();
+            }
+            alert(`تم تحديث نقاط الزبون ${customers[index].name} إلى ${newPts} نقطة بنجاح!`);
         }
 
         function addNewProduct() {
