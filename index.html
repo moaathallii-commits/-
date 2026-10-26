@@ -161,6 +161,7 @@
             align-items: center;
             box-sizing: border-box;
             z-index: 99;
+            cursor: pointer;
         }
         .modal-overlay {
             display: none;
@@ -241,12 +242,28 @@
     <div style="height: 70px;"></div>
 
     <!-- شريط السلة العائم -->
-    <div class="cart-bar" id="cartBar" style="display:none;">
+    <div class="cart-bar" id="cartBar" style="display:none;" onclick="openCartModal()">
         <span>المنتجات: <b id="cartCount">0</b> | الإجمالي: <b id="cartTotal">0</b> ل.س</span>
-        <button class="btn" onclick="openCheckout()" style="width: auto; padding: 8px 15px;">إتمام الطلب والدفع</button>
+        <span style="color:var(--gold-color); font-size:12px; font-weight:bold;">🛒 عرض السلة وتعديلها</span>
     </div>
 
-    <!-- نافذة تسجيل الدخول برقم الهاتف عند الدخول لأول مرة -->
+    <!-- نافذة عرض وتعديل السلة -->
+    <div id="cartModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color: var(--gold-color); margin-top:0; text-align:center;">سلة المشتريات 🛒</h3>
+            <div id="cartItemsList" style="max-height: 220px; overflow-y: auto; margin-bottom: 10px;"></div>
+            
+            <div style="border-top: 1px solid #444; padding-top: 10px; margin-bottom: 15px; display:flex; justify-content:space-between; font-weight:bold; font-size:14px;">
+                <span>المجموع الكلي:</span>
+                <span id="cartModalTotal" style="color:var(--gold-color);">0 ل.س</span>
+            </div>
+
+            <button class="btn" onclick="openCheckout()" style="margin-bottom: 8px;">متابعة لإتمام الطلب والدفع ✨</button>
+            <button onclick="closeCartModal()" style="background:transparent; color:#aaa; border:none; padding:8px; width:100%; cursor:pointer;">إغلاق السلة</button>
+        </div>
+    </div>
+
+    <!-- نافذة التحقق برقم الهاتف عند الدخول لأول مرة -->
     <div id="registerModal" class="modal-overlay" style="display:flex;">
         <div class="modal-content" style="text-align:center;">
             <h3 style="color: var(--gold-color); margin-top:0;">أهلاً بك في متجر معاذ 🛒</h3>
@@ -522,10 +539,85 @@
                 document.getElementById('cartTotal').innerText = total;
             } else {
                 bar.style.display = 'none';
+                closeCartModal();
             }
         }
 
+        // دوال نافذة السلة وتعديل الكميات
+        function openCartModal() {
+            renderCartItems();
+            document.getElementById('cartModal').style.display = 'flex';
+        }
+
+        function closeCartModal() {
+            document.getElementById('cartModal').style.display = 'none';
+        }
+
+        function renderCartItems() {
+            let list = document.getElementById('cartItemsList');
+            list.innerHTML = '';
+            let total = 0;
+            
+            let keys = Object.keys(cart);
+            if (keys.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#888;">السلة فارغة حالياً</p>';
+                document.getElementById('cartModalTotal').innerText = '0 ل.س';
+                return;
+            }
+
+            keys.forEach(id => {
+                let item = cart[id];
+                let itemTotal = (item.basePrice * exchangeRate) * item.qty;
+                total += itemTotal;
+
+                let row = document.createElement('div');
+                row.style.display = 'flex';
+                row.style.justifyContent = 'space-between';
+                row.style.alignItems = 'center';
+                row.style.padding = '8px 0';
+                row.style.borderBottom = '1px solid #333';
+                row.style.fontSize = '12px';
+                
+                row.innerHTML = `
+                    <div style="flex:1; text-align:right;">
+                        <div style="font-weight:bold; color:#fff;">${item.name}</div>
+                        <div style="color:var(--gold-color);">${itemTotal} ل.س</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <button class="btn" onclick="changeCartQty(${id}, -1)" style="width:28px; height:28px; padding:0; line-height:28px; font-size:14px;">-</button>
+                        <span><b style="color:#fff; font-size:14px;">${item.qty}</b></span>
+                        <button class="btn" onclick="changeCartQty(${id}, 1)" style="width:28px; height:28px; padding:0; line-height:28px; font-size:14px;">+</button>
+                        <button class="btn btn-danger" onclick="removeCartItem(${id})" style="width:auto; padding:4px 8px; font-size:10px;">حذف</button>
+                    </div>
+                `;
+                list.appendChild(row);
+            });
+            document.getElementById('cartModalTotal').innerText = total + ' ل.س';
+        }
+
+        function changeCartQty(id, delta) {
+            if (cart[id]) {
+                cart[id].qty += delta;
+                if (cart[id].qty <= 0) {
+                    delete cart[id];
+                }
+            }
+            updateCartBar();
+            renderCartItems();
+        }
+
+        function removeCartItem(id) {
+            delete cart[id];
+            updateCartBar();
+            renderCartItems();
+        }
+
         function openCheckout() {
+            closeCartModal();
+            if (Object.keys(cart).length === 0) {
+                alert("السلة فارغة!");
+                return;
+            }
             if (!currentUser) {
                 document.getElementById('registerModal').style.display = 'flex';
                 return;
