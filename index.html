@@ -234,6 +234,12 @@
             margin: 15px 0;
             line-height: 1.5;
         }
+        /* تصميم حقل اختيار الملف */
+        input[type="file"] {
+            padding: 6px;
+            background: #222;
+            font-size: 11px;
+        }
     </style>
 </head>
 <body>
@@ -396,7 +402,7 @@
 
             <hr style="border-color:#444; margin:15px 0;">
             
-            <h4 style="color:var(--danger-color); margin:5px 0;">📉 إدارة النواقص (المواد التي تكاد تنفد)</h4>
+            <h4 style="color:var(--danger-color); margin:5px 0;">📉 إدارة النواقص</h4>
             <div id="adminShortagesList" style="max-height: 140px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:10px;"></div>
             <button class="btn" onclick="sendShortagesWhatsApp()" style="background:#25d366; color:#000;">إرسال قائمة النواقص عبر واتساب 📱</button>
 
@@ -416,17 +422,19 @@
             </div>
             <div style="display:flex; gap:5px;">
                 <div class="form-group" style="flex:1;">
-                    <label>السعر القديم (دولار):</label>
+                    <label>السعر القديم ($):</label>
                     <input type="number" id="soOldPriceInput" class="form-control">
                 </div>
                 <div class="form-group" style="flex:1;">
-                    <label>السعر الجديد (دولار):</label>
+                    <label>السعر الجديد ($):</label>
                     <input type="number" id="soPriceInput" class="form-control">
                 </div>
             </div>
             <div class="form-group">
-                <label>رابط صورة العرض (URL):</label>
-                <input type="text" id="soImgInput" class="form-control">
+                <label>صورة العرض (اختر من الهاتف):</label>
+                <input type="file" id="soImageFile" accept="image/*" class="form-control">
+                <input type="hidden" id="soImgInput">
+                <div id="soImgPreview" style="margin-top:5px; text-align:center;"></div>
             </div>
             <button class="btn" onclick="saveSpecialOffer()" style="margin-bottom: 10px;">حفظ العرض الخاص</button>
 
@@ -442,7 +450,7 @@
             <hr style="border-color:#444; margin:15px 0;">
 
             <h4 style="color:var(--gold-color); margin:5px 0;">👥 إدارة نقاط الزبائن</h4>
-            <input type="text" id="adminCustomerSearch" class="form-control" placeholder="🔍 ابحث عن زبون بالاسم أو الرقم..." oninput="renderAdminCustomersList()" style="margin-bottom: 10px;">
+            <input type="text" id="adminCustomerSearch" class="form-control" placeholder="🔍 ابحث عن زبون..." oninput="renderAdminCustomersList()" style="margin-bottom: 10px;">
             <div id="adminCustomersList" style="max-height: 140px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:15px;"></div>
 
             <hr style="border-color:#444; margin:15px 0;">
@@ -457,7 +465,7 @@
                 <select id="newProdCat" class="form-control"></select>
             </div>
             <div class="form-group">
-                <label>السعر (دولار):</label>
+                <label>السعر ($):</label>
                 <input type="number" id="newProdPrice" class="form-control">
             </div>
             <div style="display:flex; gap:5px;">
@@ -466,18 +474,20 @@
                     <input type="number" id="newProdStock" class="form-control" value="10">
                 </div>
                 <div class="form-group" style="flex:1;">
-                    <label>التنبيه عند وصول لـ:</label>
+                    <label>تنبيه عند:</label>
                     <input type="number" id="newProdMinStock" class="form-control" value="2">
                 </div>
             </div>
             <div class="form-group">
-                <label>رابط الصورة (اختياري):</label>
-                <input type="text" id="newProdImg" class="form-control">
+                <label>صورة المنتج (اختر من الهاتف):</label>
+                <input type="file" id="newProdImageFile" accept="image/*" class="form-control">
+                <input type="hidden" id="newProdImg">
+                <div id="newProdImgPreview" style="margin-top:5px; text-align:center;"></div>
             </div>
             <button class="btn" onclick="addNewProduct()" style="margin-bottom:15px;">إضافة المنتج</button>
 
             <h4 style="color:var(--gold-color); margin:5px 0;">📦 إدارة المنتجات (تعديل وحذف)</h4>
-            <input type="text" id="adminProductSearch" class="form-control" placeholder="🔍 ابحث عن منتج للتعديل..." oninput="renderAdminProductsList()" style="margin-bottom: 10px;">
+            <input type="text" id="adminProductSearch" class="form-control" placeholder="🔍 ابحث عن منتج..." oninput="renderAdminProductsList()" style="margin-bottom: 10px;">
             <div id="adminProductsList" style="max-height: 250px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:10px;"></div>
 
             <button onclick="closeDashboard()" class="btn" style="background:#444; color:#fff;">إغلاق لوحة التحكم</button>
@@ -498,7 +508,7 @@
                 <select id="editProdCat" class="form-control"></select>
             </div>
             <div class="form-group">
-                <label>السعر الأساسي (دولار):</label>
+                <label>السعر الأساسي ($):</label>
                 <input type="number" id="editProdPrice" class="form-control">
             </div>
             <div style="display:flex; gap:5px;">
@@ -507,13 +517,15 @@
                     <input type="number" id="editProdStock" class="form-control">
                 </div>
                 <div class="form-group" style="flex:1;">
-                    <label>التنبيه عند وصول لـ:</label>
+                    <label>تنبيه عند:</label>
                     <input type="number" id="editProdMinStock" class="form-control">
                 </div>
             </div>
             <div class="form-group">
-                <label>رابط الصورة (اختياري):</label>
-                <input type="text" id="editProdImg" class="form-control">
+                <label>تغيير الصورة (اختر من الهاتف):</label>
+                <input type="file" id="editProdImageFile" accept="image/*" class="form-control">
+                <input type="hidden" id="editProdImg">
+                <div id="editImgPreview" style="margin-top:5px; text-align:center;"></div>
             </div>
             <button class="btn" onclick="saveEditedProduct()" style="margin-bottom:5px; background:var(--gold-color); color:#000;">حفظ التعديلات</button>
             <button onclick="closeEditProductModal()" style="background:transparent; color:#aaa; border:none; padding:8px; width:100%; cursor:pointer;">إلغاء</button>
@@ -521,6 +533,42 @@
     </div>
 
     <script>
+        // أداة ضغط الصور وتحويلها لكود نصي
+        function setupImageUpload(fileInputId, hiddenInputId, previewId) {
+            let input = document.getElementById(fileInputId);
+            if(!input) return;
+            input.addEventListener('change', function(e) {
+                let file = e.target.files[0];
+                if(!file) return;
+                let reader = new FileReader();
+                reader.onload = function(event) {
+                    let img = new Image();
+                    img.onload = function() {
+                        let canvas = document.createElement('canvas');
+                        let ctx = canvas.getContext('2d');
+                        let max_size = 300; 
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > max_size) { height *= max_size / width; width = max_size; }
+                        } else {
+                            if (height > max_size) { width *= max_size / height; height = max_size; }
+                        }
+                        canvas.width = width; canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // ضغط الصورة بنسبة 60% لتقليل المساحة
+                        let dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                        document.getElementById(hiddenInputId).value = dataUrl;
+                        document.getElementById(previewId).innerHTML = `<img src="${dataUrl}" style="width:60px; height:60px; border-radius:5px; object-fit:cover; border:1px solid #444;">`;
+                    }
+                    img.src = event.target.result;
+                }
+                reader.readAsDataURL(file);
+            });
+        }
+
         let defaultCategories = ['غذائيات', 'منظفات', 'مشروبات باردة وساخنة', 'نقرشات'];
         let categories = JSON.parse(localStorage.getItem('moaath_categories')) || defaultCategories;
 
@@ -528,8 +576,7 @@
         let specialOffer = JSON.parse(localStorage.getItem('moaath_special_offer')) || defaultSpecialOffer;
 
         let defaultProducts = [
-            { id: 1, name: "رز بسمتي نخب أول 1 كغ", category: "غذائيات", basePrice: 270, stock: 10, minStock: 2, image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=300" },
-            { id: 2, name: "زيت دوار الشمس 1 ليتر", category: "غذائيات", basePrice: 235, stock: 2, minStock: 3, image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=300" }
+            { id: 1, name: "رز بسمتي نخب أول 1 كغ", category: "غذائيات", basePrice: 270, stock: 10, minStock: 2, image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=300" }
         ];
         let products = JSON.parse(localStorage.getItem('moaath_store_products')) || defaultProducts;
         
@@ -547,6 +594,11 @@
             renderCategoriesBar();
             renderSpecialOfferCustomer();
             
+            // تفعيل أدوات رفع الصور
+            setupImageUpload('newProdImageFile', 'newProdImg', 'newProdImgPreview');
+            setupImageUpload('editProdImageFile', 'editProdImg', 'editImgPreview');
+            setupImageUpload('soImageFile', 'soImgInput', 'soImgPreview');
+
             if (currentUser && currentUser.phone && currentUser.address) {
                 document.getElementById('registerModal').style.display = 'none';
                 let existing = customers.find(c => c.phone === currentUser.phone);
@@ -652,6 +704,8 @@
             document.getElementById('soOldPriceInput').value = specialOffer.baseOldPrice;
             document.getElementById('soPriceInput').value = specialOffer.basePrice;
             document.getElementById('soImgInput').value = specialOffer.image;
+            document.getElementById('soImageFile').value = '';
+            document.getElementById('soImgPreview').innerHTML = specialOffer.image ? `<img src="${specialOffer.image}" style="width:60px; height:60px; border-radius:5px; object-fit:cover;">` : '';
         }
 
         function saveSpecialOffer() {
@@ -736,9 +790,8 @@
             alert("تم حفظ بياناتك بنجاح!");
         }
 
-        // إدارة المنتجات وشبكة العرض (مع التدقيق على المخزون)
+        // إدارة المنتجات وشبكة العرض
         function saveProducts() { localStorage.setItem('moaath_store_products', JSON.stringify(products)); }
-
         function filterProducts() { renderProducts(document.getElementById('searchInput').value); }
 
         function renderProducts(filterText = '') {
@@ -783,17 +836,10 @@
             if (!cart[productId]) {
                 if (p.stock >= 1) {
                     cart[productId] = { id: p.id, name: p.name, basePrice: p.basePrice, qty: 1 };
-                } else {
-                    alert("عذراً، نفدت الكمية من المخزون!");
-                    return;
-                }
+                } else { alert("عذراً، نفدت الكمية من المخزون!"); return; }
             } else { 
-                if (cart[productId].qty < p.stock) {
-                    cart[productId].qty++; 
-                } else {
-                    alert("عذراً، لا يتوفر المزيد من هذا المنتج في المخزون!");
-                    return;
-                }
+                if (cart[productId].qty < p.stock) { cart[productId].qty++; } 
+                else { alert("عذراً، لا يتوفر المزيد من هذا المنتج في المخزون!"); return; }
             }
             updateCartBar();
         }
@@ -815,9 +861,7 @@
             }
         }
 
-        function openCartModal() {
-            renderCartItems(); document.getElementById('cartModal').style.display = 'flex';
-        }
+        function openCartModal() { renderCartItems(); document.getElementById('cartModal').style.display = 'flex'; }
         function closeCartModal() { document.getElementById('cartModal').style.display = 'none'; }
 
         function renderCartItems() {
@@ -853,24 +897,20 @@
 
         function changeCartQty(id, delta) {
             if (cart[id]) {
-                // التحقق من المخزون عند زيادة الكمية (نتخطى التحقق للعرض الخاص لأنه لا يملك ID رقمي في المنتجات)
                 let p = products.find(x => String(x.id) === String(id));
                 if (p && delta > 0 && cart[id].qty >= p.stock) {
                     alert("عذراً، لا يتوفر المزيد من هذا المنتج في المخزون!");
                     return;
                 }
-                
                 cart[id].qty += delta;
                 if (cart[id].qty <= 0) delete cart[id];
             }
             updateCartBar(); renderCartItems();
         }
 
-        function removeCartItem(id) {
-            delete cart[id]; updateCartBar(); renderCartItems();
-        }
+        function removeCartItem(id) { delete cart[id]; updateCartBar(); renderCartItems(); }
 
-        // إتمام الطلب وخصم المخزون
+        // إتمام الطلب والدفع
         function openCheckout() {
             closeCartModal();
             if (Object.keys(cart).length === 0) { alert("السلة فارغة!"); return; }
@@ -899,8 +939,7 @@
         }
 
         function sendOrderWhatsApp() {
-            let itemsText = ""; let subTotal = 0;
-            let counter = 1;
+            let itemsText = ""; let subTotal = 0; let counter = 1;
             for (let id in cart) {
                 let itemTotal = (cart[id].basePrice * exchangeRate) * cart[id].qty;
                 subTotal += itemTotal;
@@ -926,7 +965,7 @@
                           `⚠️ *ملاحظة:* بانتظار إرسال إشعار التحويل من شام كاش للبدء بالتنفيذ.\n` +
                           `💰 *الإجمالي النهائي:* ${grand} ل.س`;
 
-            // خصم الكميات من المخزون الفعلي
+            // خصم الكميات من المخزون
             for (let id in cart) {
                 let p = products.find(x => String(x.id) === String(id));
                 if (p) {
@@ -934,23 +973,17 @@
                     if (p.stock < 0) p.stock = 0;
                 }
             }
-            saveProducts(); // حفظ المخزون الجديد
+            saveProducts();
             
-            cart = {}; // تفريغ السلة
-            updateCartBar();
-            closeCheckout();
-            renderProducts(); // تحديث العرض للزبون لإظهار "نفدت الكمية" إن لزم الأمر
+            cart = {}; 
+            updateCartBar(); closeCheckout(); renderProducts();
 
             let adminPhone = "+963965461504";
             window.open(`https://api.whatsapp.com/send?phone=${adminPhone}&text=${encodeURIComponent(message)}`, '_blank');
-            
-            // ملاحظة تلميحية للزبون في حال عودته للمتجر
-            setTimeout(() => {
-                alert("تم تجهيز الطلب وإرساله إلى واتساب، وتم تفريغ سلتك بنجاح.");
-            }, 1500);
+            setTimeout(() => { alert("تم تجهيز الطلب، وتم تفريغ سلتك بنجاح."); }, 1500);
         }
 
-        // الإدارة السريّة ومراقبة النواقص
+        // الإدارة السريّة
         let tapCount = 0;
         document.getElementById('adminTrigger').addEventListener('click', () => {
             tapCount++;
@@ -994,14 +1027,12 @@
         function renderAdminShortages() {
             let listDiv = document.getElementById('adminShortagesList');
             listDiv.innerHTML = '';
-            
             let shortages = products.filter(p => p.stock <= (p.minStock || 2));
             
             if(shortages.length === 0) {
                 listDiv.innerHTML = '<p style="text-align:center; color:#888; font-size:12px;">المخزون ممتاز، لا توجد نواقص!</p>';
                 return;
             }
-
             shortages.forEach(p => {
                 listDiv.innerHTML += `
                     <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #222; font-size:12px;">
@@ -1014,18 +1045,11 @@
 
         function sendShortagesWhatsApp() {
             let shortages = products.filter(p => p.stock <= (p.minStock || 2));
-            if(shortages.length === 0) {
-                alert("لا توجد نواقص لإرسالها!");
-                return;
-            }
+            if(shortages.length === 0) { alert("لا توجد نواقص لإرسالها!"); return; }
             
             let text = `⚠️ *قائمة النواقص المطلوبة لمتجر معاذ*\n---------------------------------\n`;
             let counter = 1;
-            shortages.forEach(p => {
-                text += `${counter}- ${p.name} (المتبقي: ${p.stock})\n`;
-                counter++;
-            });
-            
+            shortages.forEach(p => { text += `${counter}- ${p.name} (المتبقي: ${p.stock})\n`; counter++; });
             window.open(`https://api.whatsapp.com/send?phone=+963965461504&text=${encodeURIComponent(text)}`, '_blank');
         }
 
@@ -1042,25 +1066,21 @@
             deliveryFeeOther = parseInt(document.getElementById('feeOtherInput').value) || 7000;
             localStorage.setItem('moaath_fee_owaina', deliveryFeeOwaina);
             localStorage.setItem('moaath_fee_other', deliveryFeeOther);
-            setupDeliveryOptions(); 
-            alert("تم تحديث أسعار التوصيل بنجاح!");
+            setupDeliveryOptions(); alert("تم تحديث أسعار التوصيل بنجاح!");
         }
 
         function renderAdminCustomersList() {
             let listDiv = document.getElementById('adminCustomersList');
             listDiv.innerHTML = '';
-            
             let searchText = (document.getElementById('adminCustomerSearch').value || '').toLowerCase();
             let filteredCustomers = customers;
             if (searchText) {
                 filteredCustomers = customers.filter(c => c.name.toLowerCase().includes(searchText) || c.phone.includes(searchText));
             }
-
             if (filteredCustomers.length === 0) {
                 listDiv.innerHTML = '<p style="text-align:center; color:#888; font-size:12px;">لا يوجد زبائن مطابقين</p>';
                 return;
             }
-
             filteredCustomers.forEach((c) => {
                 let originalIndex = customers.indexOf(c);
                 listDiv.innerHTML += `
@@ -1081,12 +1101,11 @@
             let newPts = parseInt(document.getElementById(`custPoints_${index}`).value) || 0;
             customers[index].points = newPts;
             localStorage.setItem('moaath_customers', JSON.stringify(customers));
-            
             if (currentUser && currentUser.phone === customers[index].phone) { updateUserSessionDisplay(); }
-            alert(`تم تحديث نقاط الزبون ${customers[index].name} بنجاح!`);
+            alert(`تم تحديث نقاط الزبون بنجاح!`);
         }
 
-        // إدارة المنتجات في لوحة التحكم
+        // إدارة المنتجات
         function addNewProduct() {
             let name = document.getElementById('newProdName').value.trim();
             let category = document.getElementById('newProdCat').value;
@@ -1104,6 +1123,8 @@
             document.getElementById('newProdName').value = '';
             document.getElementById('newProdPrice').value = '';
             document.getElementById('newProdImg').value = '';
+            document.getElementById('newProdImageFile').value = '';
+            document.getElementById('newProdImgPreview').innerHTML = '';
             
             renderProducts(); renderAdminProductsList(); renderAdminShortages();
             alert("تم إضافة المنتج بنجاح!");
@@ -1138,7 +1159,6 @@
                 grouped[cat].forEach(p => {
                     let min = p.minStock || 2;
                     let stockColor = p.stock <= min ? 'var(--danger-color)' : '#aaa';
-                    
                     let row = document.createElement('div');
                     row.style.display = 'flex'; row.style.justifyContent = 'space-between';
                     row.style.alignItems = 'center'; row.style.padding = '6px 4px';
@@ -1170,6 +1190,8 @@
             document.getElementById('editProdStock').value = p.stock;
             document.getElementById('editProdMinStock').value = p.minStock || 2;
             document.getElementById('editProdImg').value = p.image || '';
+            document.getElementById('editProdImageFile').value = '';
+            document.getElementById('editImgPreview').innerHTML = p.image ? `<img src="${p.image}" style="width:60px; height:60px; border-radius:5px; object-fit:cover;">` : '';
             
             document.getElementById('editProductModal').style.display = 'flex';
         }
