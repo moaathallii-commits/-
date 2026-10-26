@@ -257,4 +257,216 @@
                 <input type="text" id="regName" class="form-control" placeholder="مثال: أحمد محمد العلي">
             </div>
 
-            <div
+            <div class="form-group">
+                <label>رقم الهاتف المحمول (يبدأ بـ 09):</label>
+                <input type="tel" id="regPhone" class="form-control" placeholder="09xxxxxxxx" maxlength="10">
+            </div>
+
+            <button class="btn" onclick="verifyAndRegister()" style="background:var(--gold-color); margin-top:10px;">تحقق ودخول للمتجر ✨</button>
+        </div>
+    </div>
+
+    <!-- نافذة إتمام الطلب والدفع -->
+    <div id="checkoutModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color: var(--gold-color); margin-top:0; text-align:center;">تأكيد الطلب والدفع الإلكتروني</h3>
+            
+            <div class="form-group">
+                <label>اسم الزبون الموثق:</label>
+                <input type="text" id="custName" class="form-control" readonly style="background:#222; color:var(--gold-color);">
+            </div>
+            
+            <div class="form-group">
+                <label>رقم الهاتف الموثق:</label>
+                <input type="text" id="custPhone" class="form-control" readonly style="background:#222; color:var(--gold-color);">
+            </div>
+
+            <div class="form-group">
+                <label>منطقة التوصيل (إلزامي):</label>
+                <select id="deliveryArea" class="form-control" onchange="updateCartTotal()">
+                    <option value="5000">قرية العوينة (+5000 ل.س)</option>
+                    <option value="7000">المناطق المجاورة (+7000 ل.س)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>العنوان التفصيلي (الحي، بجانب...):</label>
+                <input type="text" id="custAddress" class="form-control" placeholder="ادخل تفاصيل عنوانك بدقة">
+            </div>
+
+            <div class="form-group" style="background:#121212; padding:10px; border-radius:5px; border:1px solid #333;">
+                <label style="color:var(--gold-color);">الدفع عبر تطبيق شام كاش:</label>
+                <p style="font-size:11px; margin:4px 0; color:#aaa;">اسم المستلم المعتمد: معاذ العلي</p>
+                <p style="font-size:11px; margin:4px 0; color:#aaa;">معرف المحفظة: <span id="walletId">da3e13cd8a2ef2af282445e148df999</span></p>
+                <button type="button" onclick="copyWallet()" style="background:#333; color:#fff; border:none; padding:4px 8px; font-size:10px; border-radius:3px; cursor:pointer;">📋 نسخ معرف المحفظة</button>
+            </div>
+
+            <div class="form-group">
+                <label>إثبات الدفع (اسم المُرسِل وآخر 4 أرقام من الحوالة):</label>
+                <input type="text" id="paymentProof" class="form-control" placeholder="مثال: أحمد العلي - 4321">
+                <small style="font-size:10px; color:#888;">ملاحظة: نظراً لمنع شام كاش لقطات الشاشة، يرجى إرسال كتاب التحويل الإلكتروني إلى واتساب الإدارة فوراً.</small>
+            </div>
+
+            <div style="border-top: 1px solid #444; padding-top:10px; margin-top:10px; font-size:13px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span>مجموع المنتجات:</span>
+                    <span id="subTotal">0</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span>تكلفة التوصيل:</span>
+                    <span id="deliveryCost">5000</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--gold-color); font-size:15px; margin-top:8px;">
+                    <span>الإجمالي النهائي:</span>
+                    <span id="grandTotal">0</span>
+                </div>
+            </div>
+
+            <button class="btn" onclick="sendOrderWhatsApp()" style="margin-top:15px; background: #25d366; color:#000;">إرسال الطلب عبر واتساب 📱</button>
+            <button onclick="closeCheckout()" style="background:transparent; color:#aaa; border:none; padding:8px; width:100%; margin-top:5px; cursor:pointer;">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- نافذة تسجيل دخول الإدارة السري -->
+    <div id="adminModal" class="modal-overlay">
+        <div class="modal-content" style="text-align:center;">
+            <h3 style="color:var(--gold-color);">لوحة الإدارة المخفية</h3>
+            <input type="password" id="adminPass" placeholder="كلمة المرور السرية" class="form-control" style="margin:10px 0;">
+            <button onclick="checkAdminPassword()" class="btn" style="margin-bottom:5px;">دخول الإدارة</button>
+            <button onclick="closeAdminModal()" style="background:transparent; color:#aaa; border:none; padding:8px; cursor:pointer;">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم الإدارية الكاملة -->
+    <div id="adminDashboard" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color:var(--gold-color); text-align:center; margin-top:0;">لوحة تحكم متجر معاذ</h3>
+            
+            <div class="form-group">
+                <label>سعر صرف الدولار (معامل التسعير):</label>
+                <div style="display:flex; gap:5px;">
+                    <input type="number" id="exchangeRateInput" class="form-control" value="1">
+                    <button class="btn" onclick="updateExchangeRate()" style="width:auto;">تحديث</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>التحكم بنقاط الزبون (هدية متجر معاذ):</label>
+                <div style="display:flex; gap:5px;">
+                    <input type="number" id="adminPointsInput" class="form-control" value="0">
+                    <button class="btn" onclick="updateUserPoints()" style="width:auto;">حفظ</button>
+                </div>
+            </div>
+
+            <hr style="border-color:#444; margin:15px 0;">
+
+            <h4 style="color:var(--gold-color); margin:5px 0;">➕ إضافة منتج جديد مع صورة</h4>
+            <div class="form-group">
+                <label>اسم المنتج:</label>
+                <input type="text" id="newProdName" class="form-control" placeholder="مثال: متة راس تنورة 250غ">
+            </div>
+            <div class="form-group">
+                <label>التصنيف:</label>
+                <select id="newProdCat" class="form-control">
+                    <option value="غذائيات">غذائيات</option>
+                    <option value="منظفات">منظفات</option>
+                    <option value="مشروبات باردة وساخنة">مشروبات باردة وساخنة</option>
+                    <option value="نقرشات">نقرشات</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>السعر الأساسي:</label>
+                <input type="number" id="newProdPrice" class="form-control" placeholder="مثال: 300">
+            </div>
+            <div class="form-group">
+                <label>الكمية في المخزون:</label>
+                <input type="number" id="newProdStock" class="form-control" value="10">
+            </div>
+            <div class="form-group">
+                <label>رابط صورة المنتج (URL):</label>
+                <input type="text" id="newProdImg" class="form-control" placeholder="ضع رابط الصورة هنا">
+            </div>
+            <button class="btn" onclick="addNewProduct()" style="margin-bottom:15px;">إضافة المنتج للمتجر</button>
+
+            <h4 style="color:var(--gold-color); margin:5px 0;">📦 إدارة المنتجات الحالية (حذف)</h4>
+            <div id="adminProductsList" style="max-height: 150px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:10px;"></div>
+
+            <button onclick="closeDashboard()" class="btn" style="background:#444; color:#fff;">إغلاق لوحة التحكم</button>
+        </div>
+    </div>
+
+    <script>
+        let defaultProducts = [
+            { id: 1, name: "رز بسمتي نخب أول 1 كغ", category: "غذائيات", basePrice: 270, stock: 10, image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=300" },
+            { id: 2, name: "زيت دوار الشمس 1 ليتر", category: "غذائيات", basePrice: 235, stock: 5, image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=300" },
+            { id: 3, name: "مسحوق غسيل أوتوماتيك 2.5 كغ", category: "منظفات", basePrice: 500, stock: 8, image: "https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?w=300" },
+            { id: 4, name: "مشروب غازي عائلي", category: "مشروبات باردة وساخنة", basePrice: 110, stock: 0, image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300" },
+            { id: 5, name: "سائل جلي مركز 1 ليتر", category: "منظفات", basePrice: 140, stock: 12, image: "https://images.unsplash.com/photo-1585670146017-21445c71d61a?w=300" },
+            { id: 6, name: "مكسرات مشكلة فاخرة 250غ", category: "نقرشات", basePrice: 310, stock: 15, image: "https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=300" }
+        ];
+
+        let products = JSON.parse(localStorage.getItem('moaath_store_products')) || defaultProducts;
+        let exchangeRate = parseFloat(localStorage.getItem('moaath_exchange_rate')) || 1;
+        let userPoints = parseInt(localStorage.getItem('moaath_user_points')) || 0;
+        
+        let currentUser = JSON.parse(localStorage.getItem('moaath_current_user')) || null;
+        let currentCategory = 'الكل';
+        let cart = {};
+
+        window.onload = function() {
+            if (currentUser && currentUser.phone) {
+                document.getElementById('registerModal').style.display = 'none';
+                document.getElementById('userNameDisplay').innerText = currentUser.name;
+                document.getElementById('userPoints').innerText = userPoints;
+            } else {
+                document.getElementById('registerModal').style.display = 'flex';
+            }
+            renderProducts();
+        };
+
+        function verifyAndRegister() {
+            let name = document.getElementById('regName').value.trim();
+            let phone = document.getElementById('regPhone').value.trim();
+
+            if (!name) {
+                alert("يرجى إدخال اسمك بشكل صحيح!");
+                return;
+            }
+            if (!phone.startsWith('09') || phone.length !== 10 || isNaN(phone)) {
+                alert("يرجى إدخال رقم هاتف سوري صحيح يتكون من 10 أرقام ويبدأ بـ 09");
+                return;
+            }
+
+            currentUser = { name, phone };
+            localStorage.setItem('moaath_current_user', JSON.stringify(currentUser));
+
+            document.getElementById('userNameDisplay').innerText = name;
+            document.getElementById('userPoints').innerText = userPoints;
+            document.getElementById('registerModal').style.display = 'none';
+            alert("تم التحقق وتسجيل الدخول بنجاح!");
+        }
+
+        function saveProducts() {
+            localStorage.setItem('moaath_store_products', JSON.stringify(products));
+        }
+
+        function renderProducts(filterText = '') {
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = '';
+            
+            let filtered = products.filter(p => {
+                let matchesCat = currentCategory === 'الكل' || p.category === currentCategory;
+                let matchesSearch = p.name.toLowerCase().includes(filterText.toLowerCase());
+                return matchesCat && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<p style="grid-column: span 2; text-align:center; color:#888;">لا توجد منتجات مطابقة</p>';
+                return;
+            }
+
+            filtered.forEach(p => {
+                let finalPrice = p.basePrice * exchangeRate;
+                let isOut = p.stock <= 0;
+                let imgSrc = p.image && p.image.trim() !== '' ? p.image : 'https://via.placeholder.com/150?text=Moaath+Store';
+          
