@@ -244,7 +244,7 @@
     <!-- شريط السلة العائم -->
     <div class="cart-bar" id="cartBar" style="display:none;" onclick="openCartModal()">
         <span>المنتجات: <b id="cartCount">0</b> | الإجمالي: <b id="cartTotal">0</b> ل.س</span>
-        <span style="color:var(--gold-color); font-size:12px; font-weight:bold;">🛒 عرض السلة وتعديلها</span>
+        <span style="color:var(--gold-color); font-size:12px; font-weight:bold;">🛒 عرض السلة</span>
     </div>
 
     <!-- نافذة عرض وتعديل السلة -->
@@ -301,7 +301,6 @@
             <div class="form-group">
                 <label>منطقة التوصيل (إلزامي):</label>
                 <select id="deliveryArea" class="form-control" onchange="updateCartTotal()">
-                    <!-- يتم تحديث خيارات التوصيل ديناميكياً -->
                 </select>
             </div>
 
@@ -320,7 +319,7 @@
             <div class="form-group">
                 <label>إثبات الدفع (اسم المُرسِل وآخر 4 أرقام من الحوالة):</label>
                 <input type="text" id="paymentProof" class="form-control" placeholder="مثال: أحمد العلي - 4321">
-                <small style="font-size:10px; color:#888;">ملاحظة: نظراً لمنع شام كاش لقطات الشاشة، يرجى إرسال كتاب التحويل الإلكتروني إلى واتساب الإدارة فوراً.</small>
+                <small style="font-size:10px; color:#888;">ملاحظة: نظراً لمنع لقطات الشاشة، أرسل إشعار التحويل الإلكتروني لواتساب الإدارة فوراً.</small>
             </div>
 
             <div style="border-top: 1px solid #444; padding-top:10px; margin-top:10px; font-size:13px;">
@@ -430,7 +429,6 @@
         let products = JSON.parse(localStorage.getItem('moaath_store_products')) || defaultProducts;
         let exchangeRate = parseFloat(localStorage.getItem('moaath_exchange_rate')) || 1;
         
-        // أسعار التوصيل المحفوظة
         let deliveryFeeOwaina = parseInt(localStorage.getItem('moaath_fee_owaina')) || 5000;
         let deliveryFeeOther = parseInt(localStorage.getItem('moaath_fee_other')) || 7000;
 
@@ -442,6 +440,15 @@
         window.onload = function() {
             if (currentUser && currentUser.phone) {
                 document.getElementById('registerModal').style.display = 'none';
+                
+                // الترحيل التلقائي للجلسات القديمة التي لم تسجل في قائمة الزبائن
+                let existing = customers.find(c => c.phone === currentUser.phone);
+                if (!existing) {
+                    let oldPoints = parseInt(localStorage.getItem('moaath_user_points')) || 0;
+                    customers.push({ name: currentUser.name, phone: currentUser.phone, points: oldPoints });
+                    localStorage.setItem('moaath_customers', JSON.stringify(customers));
+                }
+
                 updateUserSessionDisplay();
             } else {
                 document.getElementById('registerModal').style.display = 'flex';
@@ -460,7 +467,6 @@
 
         function updateUserSessionDisplay() {
             if (!currentUser) return;
-            // البحث عن الزبون في قاعدة بيانات الزبائن لجلب نقاطه المحدثة
             let cust = customers.find(c => c.phone === currentUser.phone);
             let pts = cust ? cust.points : 0;
             document.getElementById('userNameDisplay').innerText = currentUser.name;
@@ -483,12 +489,11 @@
             currentUser = { name, phone };
             localStorage.setItem('moaath_current_user', JSON.stringify(currentUser));
 
-            // تسجيل الزبون أو تحديثه في قائمة الزبائن العامة
             let existing = customers.find(c => c.phone === phone);
             if (!existing) {
                 customers.push({ name, phone, points: 0 });
             } else {
-                existing.name = name; // تحديث الاسم إذا تغير
+                existing.name = name; 
             }
             localStorage.setItem('moaath_customers', JSON.stringify(customers));
 
@@ -658,7 +663,6 @@
             document.getElementById('custName').value = currentUser.name;
             document.getElementById('custPhone').value = currentUser.phone;
             
-            // استرجاع العنوان المحفوظ مسبقاً على هاتف الزبون
             let savedAddress = localStorage.getItem('moaath_cust_address_' + currentUser.phone) || '';
             document.getElementById('custAddress').value = savedAddress;
 
@@ -699,7 +703,6 @@
                 return;
             }
 
-            // حفظ العنوان على هاتف الزبون بشكل دائم
             localStorage.setItem('moaath_cust_address_' + currentUser.phone, address);
 
             let itemsText = "";
@@ -712,7 +715,6 @@
             let delivery = parseInt(document.getElementById('deliveryArea').value);
             let grand = subTotal + delivery;
 
-            // جلب نقاط الزبون الحالية
             let cust = customers.find(c => c.phone === currentUser.phone);
             let currentPts = cust ? cust.points : 0;
 
@@ -785,7 +787,6 @@
             alert("تم تحديث أسعار التوصيل بنجاح!");
         }
 
-        // إدارة نقاط الزبائن بشكل مستقل من لوحة الإدارة
         function renderAdminCustomersList() {
             let listDiv = document.getElementById('adminCustomersList');
             listDiv.innerHTML = '';
@@ -796,7 +797,7 @@
             customers.forEach((c, index) => {
                 let row = document.createElement('div');
                 row.style.display = 'flex';
-                row.style.justify = 'space-between';
+                row.style.justifyContent = 'space-between';
                 row.style.alignItems = 'center';
                 row.style.padding = '6px 0';
                 row.style.borderBottom = '1px solid #222';
@@ -819,11 +820,10 @@
             customers[index].points = newPts;
             localStorage.setItem('moaath_customers', JSON.stringify(customers));
             
-            // إذا كان هذا الزبون هو نفسها الجلسة الحالية، قم بتحديث واجهته فوراً
             if (currentUser && currentUser.phone === customers[index].phone) {
                 updateUserSessionDisplay();
             }
-            alert(`تم تحديث نقاط الزبون ${customers[index].name} إلى ${newPts} نقطة بنجاح!`);
+            alert(`تم تحديث نقاط الزبون ${customers[index].name} إلى ${newPts} بنجاح!`);
         }
 
         function addNewProduct() {
