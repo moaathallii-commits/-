@@ -206,7 +206,7 @@
     </header>
 
     <div class="user-bar">
-        <span>👤 الزبون: <b id="userNameDisplay">معاذ العلي</b></span>
+        <span>👤 الزبون: <b id="userNameDisplay">زائر</b></span>
         <span style="color: var(--gold-color);">🎁 هدية متجر معاذ: <b id="userPoints">0</b> نقطة</span>
     </div>
 
@@ -235,19 +235,39 @@
         <button class="btn" onclick="openCheckout()" style="width: auto; padding: 8px 15px;">إتمام الطلب والدفع</button>
     </div>
 
+    <!-- نافذة التحقق الإلزامي برقم الهاتف عند الدخول لأول مرة -->
+    <div id="registerModal" class="modal-overlay" style="display:flex;">
+        <div class="modal-content" style="text-align:center;">
+            <h3 style="color: var(--gold-color); margin-top:0;">أهلاً بك في متجر معاذ 🛒</h3>
+            <p style="font-size:12px; color:#aaa; line-height:1.5;">يرجى إدخال اسمك ورقم هاتفك المحمول للتحقق وبدء التسوق وكسب نقاط الهدية:</p>
+            
+            <div class="form-group">
+                <label>الاسم الثلاثي أو الثنائي:</label>
+                <input type="text" id="regName" class="form-control" placeholder="مثال: أحمد محمد العلي">
+            </div>
+
+            <div class="form-group">
+                <label>رقم الهاتف المحمول (يبدأ بـ 09):</label>
+                <input type="tel" id="regPhone" class="form-control" placeholder="09xxxxxxxx" maxlength="10">
+            </div>
+
+            <button class="btn" onclick="verifyAndRegister()" style="background:var(--gold-color); margin-top:10px;">تحقق ودخول للمتجر ✨</button>
+        </div>
+    </div>
+
     <!-- نافذة إتمام الطلب والدفع -->
     <div id="checkoutModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color: var(--gold-color); margin-top:0; text-align:center;">تأكيد الطلب والدفع الإلكتروني</h3>
             
             <div class="form-group">
-                <label>اسم الزبون الكامل:</label>
-                <input type="text" id="custName" class="form-control" value="معاذ العلي">
+                <label>اسم الزبون الموثق:</label>
+                <input type="text" id="custName" class="form-control" readonly style="background:#222; color:var(--gold-color);">
             </div>
             
             <div class="form-group">
-                <label>رقم الهاتف:</label>
-                <input type="text" id="custPhone" class="form-control" value="0965461504">
+                <label>رقم الهاتف الموثق:</label>
+                <input type="text" id="custPhone" class="form-control" readonly style="background:#222; color:var(--gold-color);">
             </div>
 
             <div class="form-group">
@@ -259,8 +279,8 @@
             </div>
 
             <div class="form-group">
-                <label>العنوان التفصيلي:</label>
-                <input type="text" id="custAddress" class="form-control" placeholder="الحي، بجانب...">
+                <label>العنوان التفصيلي (الحي، بجانب...):</label>
+                <input type="text" id="custAddress" class="form-control" placeholder="ادخل تفاصيل عنوانك بدقة">
             </div>
 
             <div class="form-group" style="background:#121212; padding:10px; border-radius:5px; border:1px solid #333;">
@@ -273,7 +293,7 @@
             <div class="form-group">
                 <label>إثبات الدفع (اسم المُرسِل وآخر 4 أرقام من الحوالة):</label>
                 <input type="text" id="paymentProof" class="form-control" placeholder="مثال: أحمد العلي - 4321">
-                <small style="font-size:10px; color:#888;">ملاحظة: نظراً لمنع شام كاش لقطات الشاشة، يرجى إرسال كتاب التحويل الإلكتروني من تطبيق شام كاش إلى واتساب الإدارة بعد إرسال الفاتورة مباشرة.</small>
+                <small style="font-size:10px; color:#888;">ملاحظة: نظراً لمنع شام كاش لقطات الشاشة، يرجى إرسال كتاب التحويل الإلكتروني إلى واتساب الإدارة فوراً.</small>
             </div>
 
             <div style="border-top: 1px solid #444; padding-top:10px; margin-top:10px; font-size:13px;">
@@ -351,19 +371,16 @@
                 <label>الكمية في المخزون:</label>
                 <input type="number" id="newProdStock" class="form-control" value="10">
             </div>
-            <button class="btn" onclick="addNewProduct()" style="margin-bottom:15px;">إضافة المنتج ودون حفظ دائم</button>
+            <button class="btn" onclick="addNewProduct()" style="margin-bottom:15px;">إضافة المنتج للمتجر</button>
 
             <h4 style="color:var(--gold-color); margin:5px 0;">📦 إدارة المنتجات الحالية (حذف)</h4>
-            <div id="adminProductsList" style="max-height: 150px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:10px;">
-                <!-- توليد قائمة المنتجات للحذف -->
-            </div>
+            <div id="adminProductsList" style="max-height: 150px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:10px;"></div>
 
             <button onclick="closeDashboard()" class="btn" style="background:#444; color:#fff;">إغلاق لوحة التحكم</button>
         </div>
     </div>
 
     <script>
-        // تحميل المنتجات من ذاكرة الهاتف المحلية أو استخدام القائمة الافتراضية
         let defaultProducts = [
             { id: 1, name: "رز بسمتي نخب أول 1 كغ", category: "غذائيات", basePrice: 270, stock: 10 },
             { id: 2, name: "زيت دوار الشمس 1 ليتر", category: "غذائيات", basePrice: 235, stock: 5 },
@@ -375,9 +392,45 @@
 
         let products = JSON.parse(localStorage.getItem('moaath_store_products')) || defaultProducts;
         let exchangeRate = parseFloat(localStorage.getItem('moaath_exchange_rate')) || 1;
-        let userPoints = 0;
+        let userPoints = parseInt(localStorage.getItem('moaath_user_points')) || 0;
+        
+        let currentUser = JSON.parse(localStorage.getItem('moaath_current_user')) || null;
         let currentCategory = 'الكل';
         let cart = {};
+
+        // التحقق عند الإقلاع
+        window.onload = function() {
+            if (currentUser && currentUser.phone) {
+                document.getElementById('registerModal').style.display = 'none';
+                document.getElementById('userNameDisplay').innerText = currentUser.name;
+                document.getElementById('userPoints').innerText = userPoints;
+            } else {
+                document.getElementById('registerModal').style.display = 'flex';
+            }
+            renderProducts();
+        };
+
+        function verifyAndRegister() {
+            let name = document.getElementById('regName').value.trim();
+            let phone = document.getElementById('regPhone').value.trim();
+
+            if (!name) {
+                alert("يرجى إدخال اسمك بشكل صحيح!");
+                return;
+            }
+            if (!phone.startsWith('09') || phone.length !== 10 || isNaN(phone)) {
+                alert("يرجى إدخال رقم هاتف سوري صحيح يتكون من 10 أرقام ويبدأ بـ 09 (مثلاً: 0912345678)");
+                return;
+            }
+
+            currentUser = { name, phone };
+            localStorage.setItem('moaath_current_user', JSON.stringify(currentUser));
+
+            document.getElementById('userNameDisplay').innerText = name;
+            document.getElementById('userPoints').innerText = userPoints;
+            document.getElementById('registerModal').style.display = 'none';
+            alert("تم التحقق وتسجيل الدخول بنجاح! أهلاً بك في متجر معاذ.");
+        }
 
         function saveProducts() {
             localStorage.setItem('moaath_store_products', JSON.stringify(products));
@@ -452,6 +505,12 @@
         }
 
         function openCheckout() {
+            if (!currentUser) {
+                document.getElementById('registerModal').style.display = 'flex';
+                return;
+            }
+            document.getElementById('custName').value = currentUser.name;
+            document.getElementById('custPhone').value = currentUser.phone;
             document.getElementById('checkoutModal').style.display = 'flex';
             updateCartTotal();
         }
@@ -479,10 +538,8 @@
         }
 
         function sendOrderWhatsApp() {
-            let name = document.getElementById('custName').value;
-            let phone = document.getElementById('custPhone').value;
-            let address = document.getElementById('custAddress').value;
-            let proof = document.getElementById('paymentProof').value;
+            let address = document.getElementById('custAddress').value.trim();
+            let proof = document.getElementById('paymentProof').value.trim();
             let deliveryText = document.getElementById('deliveryArea').selectedOptions[0].text;
             
             if(!address || !proof) {
@@ -502,8 +559,8 @@
 
             let message = `🛒 *طلب جديد - متجر معاذ*%0A` +
                           `---------------------------------%0A` +
-                          `👤 *الزبون:* ${name}%0A` +
-                          `📱 *الهاتف:* ${phone}%0A` +
+                          `👤 *الزبون الموثق:* ${currentUser.name}%0A` +
+                          `📱 *رقم الهاتف:* ${currentUser.phone}%0A` +
                           `📍 *المنطقة:* ${deliveryText}%0A` +
                           `🏠 *العنوان:* ${address}%0A` +
                           `---------------------------------%0A` +
@@ -559,8 +616,9 @@
 
         function updateUserPoints() {
             userPoints = parseInt(document.getElementById('adminPointsInput').value) || 0;
+            localStorage.setItem('moaath_user_points', userPoints);
             document.getElementById('userPoints').innerText = userPoints;
-            alert("تم تحديث النقاط بنجاح!");
+            alert("تم تحديث نقاط الزبون بنجاح!");
         }
 
         function addNewProduct() {
@@ -582,7 +640,7 @@
 
             document.getElementById('newProdName').value = '';
             document.getElementById('newProdPrice').value = '';
-            alert("تم إضافة المنتج الجديد وحفظه بشكل دائم في المتجر!");
+            alert("تم إضافة المنتج الجديد بنجاح!");
         }
 
         function renderAdminProductsList() {
@@ -605,16 +663,13 @@
         }
 
         function deleteProduct(id) {
-            if(confirm("هل أنت متكد من حذف هذا المنتج؟")) {
+            if(confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
                 products = products.filter(p => p.id !== id);
                 saveProducts();
                 renderProducts();
                 renderAdminProductsList();
             }
         }
-
-        // التشغيل الأولي
-        renderProducts();
     </script>
 </body>
 </html>
