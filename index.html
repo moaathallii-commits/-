@@ -218,8 +218,8 @@
     </header>
 
     <div class="user-bar">
-        <span>👤 الزبون: <b id="userNameDisplay">زائر</b></span>
-        <span style="color: var(--gold-color);">🎁 نقاطي: <b id="userPoints">0</b> نقطة</span>
+        <span>👤 <b id="userNameDisplay">زائر</b> <button onclick="openEditProfile()" style="background:transparent; border:none; color:var(--gold-color); font-size:11px; cursor:pointer; padding:0;">(⚙️ تعديل)</button></span>
+        <span style="color: var(--gold-color);">🎁 نقاطي: <b id="userPoints">0</b></span>
     </div>
 
     <div class="container">
@@ -263,11 +263,11 @@
         </div>
     </div>
 
-    <!-- نافذة التحقق برقم الهاتف عند الدخول لأول مرة -->
+    <!-- نافذة تسجيل الدخول وإعداد الحساب (تظهر لمرة واحدة أو للتعديل) -->
     <div id="registerModal" class="modal-overlay" style="display:flex;">
         <div class="modal-content" style="text-align:center;">
-            <h3 style="color: var(--gold-color); margin-top:0;">أهلاً بك في متجر معاذ 🛒</h3>
-            <p style="font-size:12px; color:#aaa; line-height:1.5;">يرجى إدخال اسمك ورقم هاتفك المحمول لبدء التسوق:</p>
+            <h3 style="color: var(--gold-color); margin-top:0;" id="regModalTitle">أهلاً بك في متجر معاذ 🛒</h3>
+            <p style="font-size:12px; color:#aaa; line-height:1.5;" id="regModalDesc">يرجى إدخال بياناتك وعنوانك لمرة واحدة لبدء التسوق:</p>
             
             <div class="form-group">
                 <label>الاسم:</label>
@@ -279,35 +279,32 @@
                 <input type="tel" id="regPhone" class="form-control" placeholder="مثال: 0912345678">
             </div>
 
-            <button class="btn" onclick="verifyAndRegister()" style="background:var(--gold-color); margin-top:10px;">دخول للمتجر ✨</button>
-        </div>
-    </div>
-
-    <!-- نافذة إتمام الطلب والدفع -->
-    <div id="checkoutModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3 style="color: var(--gold-color); margin-top:0; text-align:center;">تأكيد الطلب والدفع الإلكتروني</h3>
-            
             <div class="form-group">
-                <label>اسم الزبون:</label>
-                <input type="text" id="custName" class="form-control" readonly style="background:#222; color:var(--gold-color);">
-            </div>
-            
-            <div class="form-group">
-                <label>رقم الهاتف:</label>
-                <input type="text" id="custPhone" class="form-control" readonly style="background:#222; color:var(--gold-color);">
-            </div>
-
-            <div class="form-group">
-                <label>منطقة التوصيل (إلزامي):</label>
-                <select id="deliveryArea" class="form-control" onchange="updateCartTotal()">
+                <label>منطقة التوصيل:</label>
+                <select id="regArea" class="form-control">
+                    <!-- تتعبأ تلقائياً بالأسعار -->
                 </select>
             </div>
 
             <div class="form-group">
                 <label>العنوان التفصيلي (الحي، بجانب...):</label>
-                <input type="text" id="custAddress" class="form-control" placeholder="ادخل تفاصيل عنوانك بدقة">
+                <input type="text" id="regAddress" class="form-control" placeholder="ادخل تفاصيل عنوانك بدقة">
             </div>
+
+            <button class="btn" onclick="verifyAndRegister()" style="background:var(--gold-color); margin-top:10px;">حفظ البيانات ✨</button>
+            <button id="cancelEditBtn" onclick="closeRegisterModal()" style="display:none; background:transparent; color:#aaa; border:none; padding:8px; width:100%; margin-top:5px; cursor:pointer;">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- نافذة إتمام الطلب والدفع المبسطة -->
+    <div id="checkoutModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color: var(--gold-color); margin-top:0; text-align:center;">تأكيد الطلب 🧾</h3>
+            
+            <p style="font-size:12px; color:#aaa; text-align:center; margin-bottom:15px; background:#181818; padding:10px; border-radius:5px;">
+                سيتم توصيل الطلب إلى عنوانك المحفوظ:<br>
+                <b id="checkoutAddressDisplay" style="color:#fff;"></b>
+            </p>
 
             <div class="form-group" style="background:#121212; padding:10px; border-radius:5px; border:1px solid #333;">
                 <label style="color:var(--gold-color);">الدفع عبر تطبيق شام كاش:</label>
@@ -319,7 +316,7 @@
             <div class="form-group">
                 <label>إثبات الدفع (اسم المُرسِل وآخر 4 أرقام من الحوالة):</label>
                 <input type="text" id="paymentProof" class="form-control" placeholder="مثال: أحمد العلي - 4321">
-                <small style="font-size:10px; color:#888;">ملاحظة: نظراً لمنع لقطات الشاشة، أرسل إشعار التحويل الإلكتروني لواتساب الإدارة فوراً.</small>
+                <small style="font-size:10px; color:#888;">أرسل إشعار التحويل الإلكتروني لواتساب الإدارة فوراً.</small>
             </div>
 
             <div style="border-top: 1px solid #444; padding-top:10px; margin-top:10px; font-size:13px;">
@@ -338,7 +335,7 @@
             </div>
 
             <button class="btn" onclick="sendOrderWhatsApp()" style="margin-top:15px; background: #25d366; color:#000;">إرسال الطلب عبر واتساب 📱</button>
-            <button onclick="closeCheckout()" style="background:transparent; color:#aaa; border:none; padding:8px; width:100%; margin-top:5px; cursor:pointer;">إلغاء</button>
+            <button onclick="closeCheckout()" style="background:transparent; color:#aaa; border:none; padding:8px; width:100%; margin-top:5px; cursor:pointer;">الرجوع للسلة</button>
         </div>
     </div>
 
@@ -368,23 +365,23 @@
             <div class="form-group">
                 <label>تحكم بسعر التوصيل (ل.س):</label>
                 <div style="display:flex; gap:5px; margin-bottom:5px;">
-                    <input type="number" id="feeOwainaInput" class="form-control" placeholder="رسوم العوينة">
-                    <input type="number" id="feeOtherInput" class="form-control" placeholder="رسوم المناطق المجاورة">
+                    <input type="number" id="feeOwainaInput" class="form-control" placeholder="العوينة">
+                    <input type="number" id="feeOtherInput" class="form-control" placeholder="جوار">
                 </div>
                 <button class="btn" onclick="updateDeliveryFees()">حفظ أسعار التوصيل</button>
             </div>
 
             <hr style="border-color:#444; margin:15px 0;">
 
-            <h4 style="color:var(--gold-color); margin:5px 0;">👥 إدارة نقاط الزبائن بشكل مستقل</h4>
+            <h4 style="color:var(--gold-color); margin:5px 0;">👥 إدارة نقاط الزبائن</h4>
             <div id="adminCustomersList" style="max-height: 140px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:15px;"></div>
 
             <hr style="border-color:#444; margin:15px 0;">
 
-            <h4 style="color:var(--gold-color); margin:5px 0;">➕ إضافة منتج جديد مع صورة</h4>
+            <h4 style="color:var(--gold-color); margin:5px 0;">➕ إضافة منتج جديد</h4>
             <div class="form-group">
-                <label>اسم المنتج:</label>
-                <input type="text" id="newProdName" class="form-control" placeholder="مثال: متة راس تنورة 250غ">
+                <label>الاسم:</label>
+                <input type="text" id="newProdName" class="form-control">
             </div>
             <div class="form-group">
                 <label>التصنيف:</label>
@@ -396,20 +393,20 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>السعر الأساسي:</label>
-                <input type="number" id="newProdPrice" class="form-control" placeholder="مثال: 300">
+                <label>السعر (دولار):</label>
+                <input type="number" id="newProdPrice" class="form-control">
             </div>
             <div class="form-group">
-                <label>الكمية في المخزون:</label>
+                <label>المخزون:</label>
                 <input type="number" id="newProdStock" class="form-control" value="10">
             </div>
             <div class="form-group">
-                <label>رابط صورة المنتج (URL):</label>
-                <input type="text" id="newProdImg" class="form-control" placeholder="ضع رابط الصورة هنا">
+                <label>رابط الصورة (اختياري):</label>
+                <input type="text" id="newProdImg" class="form-control">
             </div>
-            <button class="btn" onclick="addNewProduct()" style="margin-bottom:15px;">إضافة المنتج للمتجر</button>
+            <button class="btn" onclick="addNewProduct()" style="margin-bottom:15px;">إضافة المنتج</button>
 
-            <h4 style="color:var(--gold-color); margin:5px 0;">📦 إدارة المنتجات الحالية (حذف)</h4>
+            <h4 style="color:var(--gold-color); margin:5px 0;">📦 إدارة المنتجات (حذف)</h4>
             <div id="adminProductsList" style="max-height: 140px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:10px;"></div>
 
             <button onclick="closeDashboard()" class="btn" style="background:#444; color:#fff;">إغلاق لوحة التحكم</button>
@@ -438,30 +435,37 @@
         let cart = {};
 
         window.onload = function() {
-            if (currentUser && currentUser.phone) {
+            setupDeliveryOptions();
+            
+            // تحقق ما إذا كان الزبون مسجلاً ولديه عنوان
+            if (currentUser && currentUser.phone && currentUser.address) {
                 document.getElementById('registerModal').style.display = 'none';
                 
-                // الترحيل التلقائي للجلسات القديمة التي لم تسجل في قائمة الزبائن
+                // الترحيل التلقائي إن لم يكن بقائمة الزبائن
                 let existing = customers.find(c => c.phone === currentUser.phone);
                 if (!existing) {
-                    let oldPoints = parseInt(localStorage.getItem('moaath_user_points')) || 0;
-                    customers.push({ name: currentUser.name, phone: currentUser.phone, points: oldPoints });
+                    customers.push({ name: currentUser.name, phone: currentUser.phone, points: 0 });
                     localStorage.setItem('moaath_customers', JSON.stringify(customers));
                 }
-
                 updateUserSessionDisplay();
             } else {
-                document.getElementById('registerModal').style.display = 'flex';
+                // إذا لم يكن لديه حساب أو ينقصه العنوان، نفتح النافذة إجبارياً
+                if(currentUser) {
+                    openEditProfile();
+                    document.getElementById('cancelEditBtn').style.display = 'none'; // منع الإلغاء لاستكمال البيانات
+                } else {
+                    document.getElementById('registerModal').style.display = 'flex';
+                    document.getElementById('cancelEditBtn').style.display = 'none';
+                }
             }
-            setupDeliveryOptions();
             renderProducts();
         };
 
         function setupDeliveryOptions() {
-            let select = document.getElementById('deliveryArea');
+            let select = document.getElementById('regArea');
             select.innerHTML = `
-                <option value="${deliveryFeeOwaina}">قرية العوينة (+${deliveryFeeOwaina} ل.س)</option>
-                <option value="${deliveryFeeOther}">المناطق المجاورة (+${deliveryFeeOther} ل.س)</option>
+                <option value="owaina">قرية العوينة (+${deliveryFeeOwaina} ل.س)</option>
+                <option value="other">المناطق المجاورة (+${deliveryFeeOther} ل.س)</option>
             `;
         }
 
@@ -473,20 +477,41 @@
             document.getElementById('userPoints').innerText = pts;
         }
 
+        function openEditProfile() {
+            document.getElementById('regModalTitle').innerText = "تعديل بيانات الحساب ⚙️";
+            document.getElementById('regModalDesc').innerText = "قم بتحديث معلوماتك وعنوانك بكل سهولة:";
+            
+            if(currentUser) {
+                document.getElementById('regName').value = currentUser.name;
+                document.getElementById('regPhone').value = currentUser.phone;
+                document.getElementById('regAddress').value = currentUser.address || '';
+                document.getElementById('regArea').value = currentUser.area || 'owaina';
+            }
+            
+            document.getElementById('cancelEditBtn').style.display = 'block'; // السماح بالإلغاء
+            document.getElementById('registerModal').style.display = 'flex';
+        }
+
+        function closeRegisterModal() {
+            if (currentUser && currentUser.address) {
+                document.getElementById('registerModal').style.display = 'none';
+            } else {
+                alert("يجب إكمال تسجيل البيانات أولاً!");
+            }
+        }
+
         function verifyAndRegister() {
             let name = document.getElementById('regName').value.trim();
             let phone = document.getElementById('regPhone').value.trim();
+            let address = document.getElementById('regAddress').value.trim();
+            let area = document.getElementById('regArea').value;
 
-            if (!name) {
-                alert("يرجى إدخال الاسم!");
-                return;
-            }
-            if (!phone || phone.length < 5) {
-                alert("يرجى إدخال رقم هاتف صحيح!");
+            if (!name || !phone || phone.length < 5 || !address) {
+                alert("يرجى إدخال الاسم، رقم الهاتف، والعنوان التفصيلي بشكل صحيح!");
                 return;
             }
 
-            currentUser = { name, phone };
+            currentUser = { name, phone, address, area };
             localStorage.setItem('moaath_current_user', JSON.stringify(currentUser));
 
             let existing = customers.find(c => c.phone === phone);
@@ -499,7 +524,7 @@
 
             document.getElementById('registerModal').style.display = 'none';
             updateUserSessionDisplay();
-            alert("تم تسجيل الدخول بنجاح!");
+            alert("تم حفظ بياناتك بنجاح!");
         }
 
         function saveProducts() {
@@ -656,17 +681,14 @@
                 alert("السلة فارغة!");
                 return;
             }
-            if (!currentUser) {
-                document.getElementById('registerModal').style.display = 'flex';
+            if (!currentUser || !currentUser.address) {
+                openEditProfile();
                 return;
             }
-            document.getElementById('custName').value = currentUser.name;
-            document.getElementById('custPhone').value = currentUser.phone;
             
-            let savedAddress = localStorage.getItem('moaath_cust_address_' + currentUser.phone) || '';
-            document.getElementById('custAddress').value = savedAddress;
+            let areaText = currentUser.area === 'owaina' ? "قرية العوينة" : "المناطق المجاورة";
+            document.getElementById('checkoutAddressDisplay').innerText = `${areaText} - ${currentUser.address}`;
 
-            setupDeliveryOptions();
             document.getElementById('checkoutModal').style.display = 'flex';
             updateCartTotal();
         }
@@ -680,7 +702,8 @@
             for (let id in cart) {
                 subTotal += (cart[id].basePrice * exchangeRate) * cart[id].qty;
             }
-            let delivery = parseInt(document.getElementById('deliveryArea').value);
+            
+            let delivery = (currentUser && currentUser.area === 'other') ? deliveryFeeOther : deliveryFeeOwaina;
             let grand = subTotal + delivery;
             
             document.getElementById('subTotal').innerText = subTotal + ' ل.س';
@@ -694,16 +717,12 @@
         }
 
         function sendOrderWhatsApp() {
-            let address = document.getElementById('custAddress').value.trim();
             let proof = document.getElementById('paymentProof').value.trim();
-            let deliveryText = document.getElementById('deliveryArea').selectedOptions[0].text;
             
-            if(!address || !proof) {
-                alert("يرجى إدخال العنوان التفصيلي وإثبات الدفع!");
+            if(!proof) {
+                alert("يرجى إدخال إثبات الدفع!");
                 return;
             }
-
-            localStorage.setItem('moaath_cust_address_' + currentUser.phone, address);
 
             let itemsText = "";
             let subTotal = 0;
@@ -712,19 +731,19 @@
                 subTotal += itemTotal;
                 itemsText += `- ${cart[id].name} (عدد ${cart[id].qty}) - ${itemTotal} ل.س\n`;
             }
-            let delivery = parseInt(document.getElementById('deliveryArea').value);
+            let delivery = (currentUser.area === 'other') ? deliveryFeeOther : deliveryFeeOwaina;
             let grand = subTotal + delivery;
+            let areaText = currentUser.area === 'owaina' ? "قرية العوينة" : "المناطق المجاورة";
 
             let cust = customers.find(c => c.phone === currentUser.phone);
             let currentPts = cust ? cust.points : 0;
 
             let message = `🛒 *طلب جديد - متجر معاذ*%0A` +
                           `---------------------------------%0A` +
-                          `👤 *الزبون الموثق:* ${currentUser.name}%0A` +
-                          `📱 *رقم الهاتف:* ${currentUser.phone}%0A` +
-                          `🎁 *نقاط الزبون:* ${currentPts} نقطة%0A` +
-                          `📍 *المنطقة:* ${deliveryText}%0A` +
-                          `🏠 *العنوان:* ${address}%0A` +
+                          `👤 *الزبون:* ${currentUser.name}%0A` +
+                          `📱 *الهاتف:* ${currentUser.phone}%0A` +
+                          `🎁 *النقاط:* ${currentPts} نقطة%0A` +
+                          `📍 *التوصيل:* ${areaText} (${currentUser.address})%0A` +
                           `---------------------------------%0A` +
                           `📦 *المنتجات:*%0A${itemsText}` +
                           `---------------------------------%0A` +
@@ -783,7 +802,7 @@
             deliveryFeeOther = parseInt(document.getElementById('feeOtherInput').value) || 7000;
             localStorage.setItem('moaath_fee_owaina', deliveryFeeOwaina);
             localStorage.setItem('moaath_fee_other', deliveryFeeOther);
-            setupDeliveryOptions();
+            setupDeliveryOptions(); // تحديث الخيارات للزبائن الجدد
             alert("تم تحديث أسعار التوصيل بنجاح!");
         }
 
