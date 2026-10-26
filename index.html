@@ -513,3 +513,186 @@
             let total = 0;
             for (let id in cart) {
                 count += cart[id].qty;
+                total += (cart[id].basePrice * exchangeRate) * cart[id].qty;
+            }
+            const bar = document.getElementById('cartBar');
+            if (count > 0) {
+                bar.style.display = 'flex';
+                document.getElementById('cartCount').innerText = count;
+                document.getElementById('cartTotal').innerText = total;
+            } else {
+                bar.style.display = 'none';
+            }
+        }
+
+        function openCheckout() {
+            if (!currentUser) {
+                document.getElementById('registerModal').style.display = 'flex';
+                return;
+            }
+            document.getElementById('custName').value = currentUser.name;
+            document.getElementById('custPhone').value = currentUser.phone;
+            document.getElementById('checkoutModal').style.display = 'flex';
+            updateCartTotal();
+        }
+
+        function closeCheckout() {
+            document.getElementById('checkoutModal').style.display = 'none';
+        }
+
+        function updateCartTotal() {
+            let subTotal = 0;
+            for (let id in cart) {
+                subTotal += (cart[id].basePrice * exchangeRate) * cart[id].qty;
+            }
+            let delivery = parseInt(document.getElementById('deliveryArea').value);
+            let grand = subTotal + delivery;
+            
+            document.getElementById('subTotal').innerText = subTotal + ' ل.س';
+            document.getElementById('deliveryCost').innerText = delivery + ' ل.س';
+            document.getElementById('grandTotal').innerText = grand + ' ل.س';
+        }
+
+        function copyWallet() {
+            navigator.clipboard.writeText("da3e13cd8a2ef2af282445e148df999");
+            alert("تم نسخ معرف محفظة شام كاش بنجاح!");
+        }
+
+        function sendOrderWhatsApp() {
+            let address = document.getElementById('custAddress').value.trim();
+            let proof = document.getElementById('paymentProof').value.trim();
+            let deliveryText = document.getElementById('deliveryArea').selectedOptions[0].text;
+            
+            if(!address || !proof) {
+                alert("يرجى إدخال العنوان التفصيلي وإثبات الدفع!");
+                return;
+            }
+
+            let itemsText = "";
+            let subTotal = 0;
+            for (let id in cart) {
+                let itemTotal = (cart[id].basePrice * exchangeRate) * cart[id].qty;
+                subTotal += itemTotal;
+                itemsText += `- ${cart[id].name} (عدد ${cart[id].qty}) - ${itemTotal} ل.س\n`;
+            }
+            let delivery = parseInt(document.getElementById('deliveryArea').value);
+            let grand = subTotal + delivery;
+
+            let message = `🛒 *طلب جديد - متجر معاذ*%0A` +
+                          `---------------------------------%0A` +
+                          `👤 *الزبون الموثق:* ${currentUser.name}%0A` +
+                          `📱 *رقم الهاتف:* ${currentUser.phone}%0A` +
+                          `📍 *المنطقة:* ${deliveryText}%0A` +
+                          `🏠 *العنوان:* ${address}%0A` +
+                          `---------------------------------%0A` +
+                          `📦 *المنتجات:*%0A${itemsText}` +
+                          `---------------------------------%0A` +
+                          `💳 *إثبات الدفع (شام كاش):* ${proof}%0A` +
+                          `💰 *الإجمالي النهائي:* ${grand} ل.س`;
+
+            let adminPhone = "+963965461504";
+            window.open(`https://api.whatsapp.com/send?phone=${adminPhone}&text=${message}`, '_blank');
+        }
+
+        // الإدارة السريّة (5 ضغطات)
+        let tapCount = 0;
+        document.getElementById('adminTrigger').addEventListener('click', () => {
+            tapCount++;
+            if (tapCount >= 5) {
+                tapCount = 0;
+                document.getElementById('adminModal').style.display = 'flex';
+            }
+            setTimeout(() => { tapCount = 0; }, 2000);
+        });
+
+        function closeAdminModal() {
+            document.getElementById('adminModal').style.display = 'none';
+            document.getElementById('adminPass').value = '';
+        }
+
+        function checkAdminPassword() {
+            let pass = document.getElementById('adminPass').value;
+            if (pass === "MHA@1997//MOAATHS") {
+                closeAdminModal();
+                document.getElementById('adminDashboard').style.display = 'flex';
+                document.getElementById('exchangeRateInput').value = exchangeRate;
+                document.getElementById('adminPointsInput').value = userPoints;
+                renderAdminProductsList();
+            } else {
+                alert("كلمة المرور غير صحيحة!");
+            }
+        }
+
+        function closeDashboard() {
+            document.getElementById('adminDashboard').style.display = 'none';
+        }
+
+        function updateExchangeRate() {
+            exchangeRate = parseFloat(document.getElementById('exchangeRateInput').value) || 1;
+            localStorage.setItem('moaath_exchange_rate', exchangeRate);
+            renderProducts();
+            updateCartBar();
+            alert("تم تحديث سعر الصرف بنجاح!");
+        }
+
+        function updateUserPoints() {
+            userPoints = parseInt(document.getElementById('adminPointsInput').value) || 0;
+            localStorage.setItem('moaath_user_points', userPoints);
+            document.getElementById('userPoints').innerText = userPoints;
+            alert("تم تحديث نقاط الزبون بنجاح!");
+        }
+
+        function addNewProduct() {
+            let name = document.getElementById('newProdName').value.trim();
+            let category = document.getElementById('newProdCat').value;
+            let basePrice = parseFloat(document.getElementById('newProdPrice').value);
+            let stock = parseInt(document.getElementById('newProdStock').value);
+            let image = document.getElementById('newProdImg').value.trim();
+
+            if(!name || isNaN(basePrice)) {
+                alert("يرجى إدخال اسم المنتج والسعر الأساسي بشكل صحيح!");
+                return;
+            }
+
+            let newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+            products.push({ id: newId, name, category, basePrice, stock, image });
+            saveProducts();
+            renderProducts();
+            renderAdminProductsList();
+
+            document.getElementById('newProdName').value = '';
+            document.getElementById('newProdPrice').value = '';
+            document.getElementById('newProdImg').value = '';
+            alert("تم إضافة المنتج بنجاح!");
+        }
+
+        function renderAdminProductsList() {
+            let listDiv = document.getElementById('adminProductsList');
+            listDiv.innerHTML = '';
+            products.forEach(p => {
+                let row = document.createElement('div');
+                row.style.display = 'flex';
+                row.style.justify = 'space-between';
+                row.style.alignItems: 'center';
+                row.style.padding = '4px 0';
+                row.style.borderBottom = '1px solid #222';
+                row.style.fontSize = '12px';
+                row.innerHTML = `
+                    <span>${p.name} (${p.basePrice} ل.س)</span>
+                    <button class="btn btn-danger" onclick="deleteProduct(${p.id})" style="width:auto; padding:2px 6px; font-size:10px;">حذف</button>
+                `;
+                listDiv.appendChild(row);
+            });
+        }
+
+        function deleteProduct(id) {
+            if(confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
+                products = products.filter(p => p.id !== id);
+                saveProducts();
+                renderProducts();
+                renderAdminProductsList();
+            }
+        }
+    </script>
+</body>
+</html>
