@@ -250,19 +250,19 @@
     <div id="registerModal" class="modal-overlay" style="display:flex;">
         <div class="modal-content" style="text-align:center;">
             <h3 style="color: var(--gold-color); margin-top:0;">أهلاً بك في متجر معاذ 🛒</h3>
-            <p style="font-size:12px; color:#aaa; line-height:1.5;">يرجى إدخال اسمك ورقم هاتفك المحمول للتحقق وبدء التسوق:</p>
+            <p style="font-size:12px; color:#aaa; line-height:1.5;">يرجى إدخال اسمك ورقم هاتفك المحمول لبدء التسوق:</p>
             
             <div class="form-group">
-                <label>الاسم الثلاثي أو الثنائي:</label>
-                <input type="text" id="regName" class="form-control" placeholder="مثال: أحمد محمد العلي">
+                <label>الاسم:</label>
+                <input type="text" id="regName" class="form-control" placeholder="مثال: أحمد العلي">
             </div>
 
             <div class="form-group">
-                <label>رقم الهاتف المحمول (يبدأ بـ 09):</label>
-                <input type="tel" id="regPhone" class="form-control" placeholder="09xxxxxxxx" maxlength="10">
+                <label>رقم الهاتف المحمول:</label>
+                <input type="tel" id="regPhone" class="form-control" placeholder="مثال: 0912345678">
             </div>
 
-            <button class="btn" onclick="verifyAndRegister()" style="background:var(--gold-color); margin-top:10px;">تحقق ودخول للمتجر ✨</button>
+            <button class="btn" onclick="verifyAndRegister()" style="background:var(--gold-color); margin-top:10px;">دخول للمتجر ✨</button>
         </div>
     </div>
 
@@ -272,12 +272,12 @@
             <h3 style="color: var(--gold-color); margin-top:0; text-align:center;">تأكيد الطلب والدفع الإلكتروني</h3>
             
             <div class="form-group">
-                <label>اسم الزبون الموثق:</label>
+                <label>اسم الزبون:</label>
                 <input type="text" id="custName" class="form-control" readonly style="background:#222; color:var(--gold-color);">
             </div>
             
             <div class="form-group">
-                <label>رقم الهاتف الموثق:</label>
+                <label>رقم الهاتف:</label>
                 <input type="text" id="custPhone" class="form-control" readonly style="background:#222; color:var(--gold-color);">
             </div>
 
@@ -429,11 +429,11 @@
             let phone = document.getElementById('regPhone').value.trim();
 
             if (!name) {
-                alert("يرجى إدخال اسمك بشكل صحيح!");
+                alert("يرجى إدخال الاسم!");
                 return;
             }
-            if (!phone.startsWith('09') || phone.length !== 10 || isNaN(phone)) {
-                alert("يرجى إدخال رقم هاتف سوري صحيح يتكون من 10 أرقام ويبدأ بـ 09");
+            if (!phone || phone.length < 5) {
+                alert("يرجى إدخال رقم هاتف صحيح!");
                 return;
             }
 
@@ -443,7 +443,7 @@
             document.getElementById('userNameDisplay').innerText = name;
             document.getElementById('userPoints').innerText = userPoints;
             document.getElementById('registerModal').style.display = 'none';
-            alert("تم التحقق وتسجيل الدخول بنجاح!");
+            alert("تم تسجيل الدخول بنجاح!");
         }
 
         function saveProducts() {
@@ -469,4 +469,47 @@
                 let finalPrice = p.basePrice * exchangeRate;
                 let isOut = p.stock <= 0;
                 let imgSrc = p.image && p.image.trim() !== '' ? p.image : 'https://via.placeholder.com/150?text=Moaath+Store';
-          
+                
+                let card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div>
+                        <img src="${imgSrc}" class="product-img" alt="${p.name}" onerror="this.src='https://via.placeholder.com/150?text=No+Image'">
+                        <div style="font-size:10px; color:#aaa; margin-bottom:2px;">${p.category}</div>
+                        <h3>${p.name}</h3>
+                        <p>${finalPrice} ل.س</p>
+                    </div>
+                    <div>
+                        ${isOut ? '<button class="btn btn-out" disabled>نفذت الكمية</button>' : `<button class="btn" onclick="addToCart(${p.id})">إضافة للسلة</button>`}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function setCategory(cat, btn) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderProducts(document.getElementById('searchInput').value);
+        }
+
+        function filterProducts() {
+            renderProducts(document.getElementById('searchInput').value);
+        }
+
+        function addToCart(productId) {
+            let p = products.find(x => x.id === productId);
+            if (!cart[productId]) {
+                cart[productId] = { ...p, qty: 1 };
+            } else {
+                cart[productId].qty++;
+            }
+            updateCartBar();
+        }
+
+        function updateCartBar() {
+            let count = 0;
+            let total = 0;
+            for (let id in cart) {
+                count += cart[id].qty;
