@@ -246,7 +246,7 @@
         <button class="btn" onclick="openCheckout()" style="width: auto; padding: 8px 15px;">إتمام الطلب والدفع</button>
     </div>
 
-    <!-- نافذة التحقق برقم الهاتف عند الدخول لأول مرة -->
+    <!-- نافذة تسجيل الدخول برقم الهاتف عند الدخول لأول مرة -->
     <div id="registerModal" class="modal-overlay" style="display:flex;">
         <div class="modal-content" style="text-align:center;">
             <h3 style="color: var(--gold-color); margin-top:0;">أهلاً بك في متجر معاذ 🛒</h3>
@@ -672,8 +672,8 @@
             products.forEach(p => {
                 let row = document.createElement('div');
                 row.style.display = 'flex';
-                row.style.justify = 'space-between';
-                row.style.alignItems: 'center';
+                row.style.justifyContent = 'space-between';
+                row.style.alignItems = 'center';
                 row.style.padding = '4px 0';
                 row.style.borderBottom = '1px solid #222';
                 row.style.fontSize = '12px';
