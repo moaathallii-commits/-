@@ -325,7 +325,6 @@
                 <button type="button" onclick="copyWallet()" style="background:#333; color:#fff; border:none; padding:4px 8px; font-size:10px; border-radius:3px; cursor:pointer;">📋 نسخ معرف المحفظة</button>
             </div>
 
-            <!-- تنبيه الدفع الصارم الجديد -->
             <div class="alert-danger">
                 لن يتم البدء بتنفيذ الطلب حتى يتم إرسال إشعار التحويل من شام كاش عبر واتساب الإدارة.
             </div>
@@ -385,7 +384,6 @@
             <hr style="border-color:#444; margin:15px 0;">
 
             <h4 style="color:var(--gold-color); margin:5px 0;">👥 إدارة نقاط الزبائن</h4>
-            <!-- حقل البحث الجديد في الإدارة -->
             <input type="text" id="adminCustomerSearch" class="form-control" placeholder="🔍 ابحث عن زبون بالاسم أو الرقم..." oninput="renderAdminCustomersList()" style="margin-bottom: 10px;">
             <div id="adminCustomersList" style="max-height: 140px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:15px;"></div>
 
@@ -410,7 +408,7 @@
                 <input type="number" id="newProdPrice" class="form-control">
             </div>
             <div class="form-group">
-                <label>المخزون:</label>
+                <label>المخزون المتوفر:</label>
                 <input type="number" id="newProdStock" class="form-control" value="10">
             </div>
             <div class="form-group">
@@ -419,10 +417,45 @@
             </div>
             <button class="btn" onclick="addNewProduct()" style="margin-bottom:15px;">إضافة المنتج</button>
 
-            <h4 style="color:var(--gold-color); margin:5px 0;">📦 إدارة المنتجات (حذف)</h4>
-            <div id="adminProductsList" style="max-height: 140px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:10px;"></div>
+            <h4 style="color:var(--gold-color); margin:5px 0;">📦 إدارة المنتجات (تعديل وحذف)</h4>
+            <div id="adminProductsList" style="max-height: 150px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:10px;"></div>
 
             <button onclick="closeDashboard()" class="btn" style="background:#444; color:#fff;">إغلاق لوحة التحكم</button>
+        </div>
+    </div>
+
+    <!-- نافذة تعديل المنتج -->
+    <div id="editProductModal" class="modal-overlay" style="z-index: 1005;">
+        <div class="modal-content">
+            <h3 style="color:var(--gold-color); text-align:center; margin-top:0;">تعديل المنتج ✏️</h3>
+            <input type="hidden" id="editProdId">
+            <div class="form-group">
+                <label>الاسم:</label>
+                <input type="text" id="editProdName" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>التصنيف:</label>
+                <select id="editProdCat" class="form-control">
+                    <option value="غذائيات">غذائيات</option>
+                    <option value="منظفات">منظفات</option>
+                    <option value="مشروبات باردة وساخنة">مشروبات باردة وساخنة</option>
+                    <option value="نقرشات">نقرشات</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>السعر الأساسي:</label>
+                <input type="number" id="editProdPrice" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>الكمية المتوفرة (المخزون):</label>
+                <input type="number" id="editProdStock" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>رابط الصورة (اختياري):</label>
+                <input type="text" id="editProdImg" class="form-control">
+            </div>
+            <button class="btn" onclick="saveEditedProduct()" style="margin-bottom:5px; background:var(--gold-color); color:#000;">حفظ التعديلات</button>
+            <button onclick="closeEditProductModal()" style="background:transparent; color:#aaa; border:none; padding:8px; width:100%; cursor:pointer;">إلغاء</button>
         </div>
     </div>
 
@@ -750,7 +783,7 @@
                           `---------------------------------%0A` +
                           `📦 *المنتجات:*%0A${itemsText}` +
                           `---------------------------------%0A` +
-                          `⚠️ *ملاحظة هامة:* بانتظار إشعار تحويل شام كاش للبدء بتنفيذ الطلب.%0A` +
+                          `⚠️ *ملاحظة:* تم إنشاء الطلب، بانتظار إرسال إشعار التحويل من شام كاش للبدء بالتنفيذ.%0A` +
                           `💰 *الإجمالي النهائي:* ${grand} ل.س`;
 
             let adminPhone = "+963965461504";
@@ -782,7 +815,6 @@
                 document.getElementById('feeOwainaInput').value = deliveryFeeOwaina;
                 document.getElementById('feeOtherInput').value = deliveryFeeOther;
                 
-                // مسح شريط البحث عند فتح الإدارة
                 document.getElementById('adminCustomerSearch').value = '';
                 
                 renderAdminProductsList();
@@ -813,7 +845,6 @@
             alert("تم تحديث أسعار التوصيل بنجاح!");
         }
 
-        // البحث وإدارة الزبائن
         function renderAdminCustomersList() {
             let listDiv = document.getElementById('adminCustomersList');
             listDiv.innerHTML = '';
@@ -898,19 +929,78 @@
                 row.style.display = 'flex';
                 row.style.justifyContent = 'space-between';
                 row.style.alignItems = 'center';
-                row.style.padding = '4px 0';
+                row.style.padding = '6px 0';
                 row.style.borderBottom = '1px solid #222';
-                row.style.fontSize = '12px';
+                row.style.fontSize = '11px';
                 row.innerHTML = `
-                    <span>${p.name} (${p.basePrice} ل.س)</span>
-                    <button class="btn btn-danger" onclick="deleteProduct(${p.id})" style="width:auto; padding:2px 6px; font-size:10px;">حذف</button>
+                    <div style="flex:1;">
+                        <strong style="color:#fff;">${p.name}</strong><br>
+                        <span style="color:#aaa;">${p.basePrice} | مخزون: ${p.stock}</span>
+                    </div>
+                    <div style="display:flex; gap:5px;">
+                        <button class="btn" style="background:#555; color:#fff; width:auto; padding:3px 8px; font-size:10px;" onclick="openEditProduct(${p.id})">تعديل</button>
+                        <button class="btn btn-danger" onclick="deleteProduct(${p.id})" style="width:auto; padding:3px 8px; font-size:10px;">حذف</button>
+                    </div>
                 `;
                 listDiv.appendChild(row);
             });
         }
 
+        function openEditProduct(id) {
+            let p = products.find(x => x.id === id);
+            if (!p) return;
+            
+            document.getElementById('editProdId').value = p.id;
+            document.getElementById('editProdName').value = p.name;
+            document.getElementById('editProdCat').value = p.category;
+            document.getElementById('editProdPrice').value = p.basePrice;
+            document.getElementById('editProdStock').value = p.stock;
+            document.getElementById('editProdImg').value = p.image || '';
+            
+            document.getElementById('editProductModal').style.display = 'flex';
+        }
+
+        function closeEditProductModal() {
+            document.getElementById('editProductModal').style.display = 'none';
+        }
+
+        function saveEditedProduct() {
+            let id = parseInt(document.getElementById('editProdId').value);
+            let name = document.getElementById('editProdName').value.trim();
+            let category = document.getElementById('editProdCat').value;
+            let basePrice = parseFloat(document.getElementById('editProdPrice').value);
+            let stock = parseInt(document.getElementById('editProdStock').value);
+            let image = document.getElementById('editProdImg').value.trim();
+
+            if(!name || isNaN(basePrice)) {
+                alert("يرجى التأكد من إدخال اسم المنتج والسعر بشكل صحيح!");
+                return;
+            }
+
+            let pIndex = products.findIndex(x => x.id === id);
+            if(pIndex !== -1) {
+                products[pIndex] = { id, name, category, basePrice, stock, image };
+                saveProducts();
+                renderProducts();
+                renderAdminProductsList();
+                
+                // تحديث المنتج إذا كان موجوداً في سلة المشتريات
+                if(cart[id]) {
+                    cart[id].name = name;
+                    cart[id].category = category;
+                    cart[id].basePrice = basePrice;
+                    cart[id].stock = stock;
+                    cart[id].image = image;
+                    updateCartBar();
+                }
+
+                closeEditProductModal();
+                alert("تم تعديل بيانات المنتج بنجاح!");
+            }
+        }
+
         function deleteProduct(id) {
-            if(confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
+            if(confirm("هل أنت متأكد من حذف هذا المنتج نهائياً من المتجر؟")) {
                 products = products.filter(p => p.id !== id);
                 saveProducts();
                 renderProducts();
