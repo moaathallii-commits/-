@@ -936,7 +936,6 @@
             let cust = customers.find(c => c.phone === currentUser.phone);
             let currentPts = cust ? cust.points : 0;
             
-            // إنشاء الطلب وحفظه مباشرة في السحابة فوراً دون الحاجة لأي رابط للزبون
             let newOrder = {
                 id: Date.now(),
                 name: currentUser.name,
@@ -950,7 +949,6 @@
             currentOrders.push(newOrder);
             db.ref('pendingOrders').set(currentOrders);
 
-            // رسالة واتساب نظيفة خالية تماماً من الروابط
             let message = `🛒 *طلب جديد - متجر معاذ*\n` +
                           `---------------------------------\n` +
                           `👤 *الزبون:* ${currentUser.name}\n` +
@@ -984,15 +982,35 @@
             document.getElementById('cancelEditBtn').style.display = 'block'; document.getElementById('registerModal').style.display = 'flex';
         }
         function closeRegisterModal() { if (currentUser && currentUser.address) document.getElementById('registerModal').style.display = 'none'; else alert("أكمل البيانات!"); }
+        
+        // --- تعديل دالة التسجيل لحل مشكلة فشل الدخول نهائياً ---
         function verifyAndRegister() {
-            let name = document.getElementById('regName').value.trim(); let phone = document.getElementById('regPhone').value.trim();
-            let address = document.getElementById('regAddress').value.trim(); let area = document.getElementById('regArea').value;
-            if (!name || !phone || phone.length < 5 || !address) { alert("أكمل البيانات بشكل صحيح!"); return; }
-            currentUser = { name, phone, address, area }; localStorage.setItem('moaath_current_user', JSON.stringify(currentUser));
+            let name = document.getElementById('regName').value.trim(); 
+            let phone = document.getElementById('regPhone').value.trim();
+            let address = document.getElementById('regAddress').value.trim(); 
+            let area = document.getElementById('regArea').value;
+
+            if (!name) { alert("يرجى إدخال الاسم الكريم!"); return; }
+            if (!phone || phone.length < 5) { alert("يرجى إدخال رقم الهاتف بشكل صحيح!"); return; }
+            if (!address) { alert("يرجى إدخال العنوان التفصيلي!"); return; }
+
+            currentUser = { name, phone, address, area }; 
+            localStorage.setItem('moaath_current_user', JSON.stringify(currentUser));
+
+            if (!Array.isArray(customers)) { customers = []; }
+
             let existing = customers.find(c => c.phone === phone);
-            if (!existing) { customers.push({ name, phone, points: 0 }); } else { existing.name = name; }
-            db.ref('customers').set(customers);
-            document.getElementById('registerModal').style.display = 'none'; updateUserSessionDisplay(); alert("تم الحفظ!");
+            if (!existing) { 
+                customers.push({ name, phone, points: 0 }); 
+            } else { 
+                existing.name = name; 
+            }
+            
+            db.ref('customers').set(customers).catch(err => console.log(err));
+            
+            document.getElementById('registerModal').style.display = 'none'; 
+            updateUserSessionDisplay(); 
+            alert("تم حفظ بياناتك بنجاح وأهلاً بك في المتجر! 🎉");
         }
 
         let tapCount = 0;
