@@ -166,8 +166,6 @@
             color: #888;
             cursor: not-allowed;
         }
-        
-        /* تنسيق أزرار التحكم بالكمية في الواجهة الرئيسية */
         .qty-controls {
             display: flex;
             justify-content: space-between;
@@ -194,7 +192,6 @@
             font-size: 14px;
             padding: 0 10px;
         }
-
         .cart-bar {
             position: fixed;
             bottom: 0;
@@ -374,7 +371,7 @@
             </div>
 
             <div class="alert-danger">
-                لن يتم البدء بتنفيذ الطلب حتى يتم إرسال إشعار التحويل من شام كاش عبر واتساب الإدارة.
+                لن يتم البدء بتنفيذ الطلب أو خصمه من المخزون حتى يتم إرسال إشعار التحويل وتأكيده من الإدارة.
             </div>
 
             <div style="border-top: 1px solid #444; padding-top:10px; margin-top:10px; font-size:13px;">
@@ -425,14 +422,20 @@
                     <input type="number" id="feeOwainaInput" class="form-control" placeholder="العوينة">
                     <input type="number" id="feeOtherInput" class="form-control" placeholder="جوار">
                 </div>
-                <button class="btn" onclick="updateDeliveryFees()" style="margin-bottom:10px;">حفظ أسعار التوصيل</button>
+                <button class="btn" onclick="updateDeliveryFees()">حفظ أسعار التوصيل</button>
             </div>
 
             <hr style="border-color:#444; margin:15px 0;">
+
+            <!-- قسم الفواتير الواردة الجديد -->
+            <h4 style="color:var(--gold-color); margin:5px 0;">🧾 الفواتير الواردة (تأكيد أو إلغاء)</h4>
+            <div id="adminOrdersList" style="max-height: 200px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:15px;"></div>
             
-            <h4 style="color:var(--danger-color); margin:5px 0;">📉 إدارة النواقص (المواد التي تكاد تنفد)</h4>
+            <hr style="border-color:#444; margin:15px 0;">
+            
+            <h4 style="color:var(--danger-color); margin:5px 0;">📉 إدارة النواقص</h4>
             <div id="adminShortagesList" style="max-height: 140px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:10px;"></div>
-            <button class="btn" onclick="sendShortagesWhatsApp()" style="background:#25d366; color:#000;">إرسال قائمة النواقص عبر واتساب 📱</button>
+            <button class="btn" onclick="sendShortagesWhatsApp()" style="background:#25d366; color:#000;">إرسال النواقص عبر واتساب 📱</button>
 
             <hr style="border-color:#444; margin:15px 0;">
 
@@ -561,7 +564,7 @@
     </div>
 
     <script>
-        // أداة ضغط الصور وتحويلها لكود نصي
+        // دالة ضغط الصور
         function setupImageUpload(fileInputId, hiddenInputId, previewId) {
             let input = document.getElementById(fileInputId);
             if(!input) return;
@@ -616,6 +619,24 @@
         let cart = {};
 
         window.onload = function() {
+            // استقبال الطلبات الجديدة عبر الرابط السحري من الواتساب
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('new_order') === '1') {
+                let order = {
+                    id: Date.now(),
+                    name: params.get('n'),
+                    phone: params.get('p'),
+                    total: params.get('t'),
+                    cartStr: params.get('c')
+                };
+                let pendingOrders = JSON.parse(localStorage.getItem('moaath_pending_orders')) || [];
+                pendingOrders.push(order);
+                localStorage.setItem('moaath_pending_orders', JSON.stringify(pendingOrders));
+                
+                window.history.replaceState(null, '', window.location.pathname);
+                alert("تم استلام فاتورة جديدة وحفظها في النظام! يمكنك تأكيدها من قسم الإدارة.");
+            }
+
             setupDeliveryOptions();
             renderCategoriesBar();
             
@@ -641,7 +662,7 @@
                 }
             }
             renderProducts();
-            renderSpecialOfferCustomer(); // يتم الاستدعاء بعد السلة لتحديث الأزرار
+            renderSpecialOfferCustomer();
         };
 
         function renderCategoriesBar() {
@@ -719,7 +740,6 @@
                 document.getElementById('soDisplayPrice').innerText = finalPrice + ' ل.س';
                 document.getElementById('soDisplayOldPrice').innerText = finalOldPrice + ' ل.س';
                 
-                // تحديث زر إضافة العرض الخاص حسب وجوده في السلة
                 let cartQty = cart[id] ? cart[id].qty : 0;
                 let actionHtml = '';
                 if (cartQty > 0) {
@@ -768,7 +788,7 @@
                 cart[id] = { id: id, name: "🔥 " + specialOffer.name, basePrice: specialOffer.basePrice, qty: 1 };
             } else { cart[id].qty++; }
             updateCartBar();
-            renderSpecialOfferCustomer(); // تحديث شكل الزر
+            renderSpecialOfferCustomer(); 
         }
 
         function setupDeliveryOptions() {
@@ -854,7 +874,6 @@
                 let isOut = p.stock <= 0;
                 let imgSrc = p.image && p.image.trim() !== '' ? p.image : 'https://via.placeholder.com/150?text=Moaath+Store';
                 
-                // تحديد شكل زر الإضافة بناءً على تواجد المنتج في السلة والمخزون
                 let cartQty = cart[p.id] ? cart[p.id].qty : 0;
                 let actionHtml = '';
                 
@@ -900,7 +919,7 @@
                 else { alert("عذراً، لا يتوفر المزيد من هذا المنتج في المخزون!"); return; }
             }
             updateCartBar();
-            renderProducts(); // تحديث الزر الرئيسي إلى عداد
+            renderProducts(); 
         }
 
         function updateCartBar() {
@@ -957,7 +976,6 @@
         function changeCartQty(id, delta) {
             if (cart[id]) {
                 let p = products.find(x => String(x.id) === String(id));
-                // التحقق من المخزون فقط إذا لم يكن عرض خاص (العرض الخاص معرفه نصي special_offer_1)
                 if (p && delta > 0 && cart[id].qty >= p.stock) {
                     alert("عذراً، لا يتوفر المزيد من هذا المنتج في المخزون!");
                     return;
@@ -967,8 +985,8 @@
             }
             updateCartBar(); 
             renderCartItems();
-            renderProducts(); // تحديث الواجهة الرئيسية
-            renderSpecialOfferCustomer(); // تحديث العرض الخاص إذا كان هو المعدل
+            renderProducts(); 
+            renderSpecialOfferCustomer(); 
         }
 
         function removeCartItem(id) { 
@@ -1006,20 +1024,29 @@
             alert("تم نسخ معرف محفظة شام كاش بنجاح!");
         }
 
+        // إرسال الطلب مع الرابط السحري
         function sendOrderWhatsApp() {
             let itemsText = ""; let subTotal = 0; let counter = 1;
+            let minCart = [];
+            
             for (let id in cart) {
                 let itemTotal = (cart[id].basePrice * exchangeRate) * cart[id].qty;
                 subTotal += itemTotal;
                 itemsText += `${counter}- ${cart[id].name} (الكمية: ${cart[id].qty}) = ${itemTotal} ل.س\n`;
+                minCart.push(`${id}-${cart[id].qty}`);
                 counter++;
             }
+            
             let delivery = (currentUser.area === 'other') ? deliveryFeeOther : deliveryFeeOwaina;
             let grand = subTotal + delivery;
             let areaText = currentUser.area === 'owaina' ? "قرية العوينة" : "المناطق المجاورة";
 
             let cust = customers.find(c => c.phone === currentUser.phone);
             let currentPts = cust ? cust.points : 0;
+            
+            // توليد الرابط السحري الخاص بالمدير
+            let cartParam = minCart.join('_');
+            let magicLink = `${window.location.origin}${window.location.pathname}?new_order=1&n=${encodeURIComponent(currentUser.name)}&p=${encodeURIComponent(currentUser.phone)}&t=${grand}&c=${cartParam}`;
 
             let message = `🛒 *طلب جديد - متجر معاذ*\n` +
                           `---------------------------------\n` +
@@ -1030,27 +1057,18 @@
                           `---------------------------------\n` +
                           `📦 *المنتجات المطلوبة:*\n${itemsText}` +
                           `---------------------------------\n` +
-                          `⚠️ *ملاحظة:* بانتظار إرسال إشعار التحويل من شام كاش للبدء بالتنفيذ.\n` +
-                          `💰 *الإجمالي النهائي:* ${grand} ل.س`;
+                          `💰 *الإجمالي النهائي:* ${grand} ل.س\n\n` +
+                          `📌 *لإدارة الفاتورة وتأكيدها بنقرة واحدة، اضغط هنا:*\n${magicLink}`;
 
-            // خصم الكميات من المخزون
-            for (let id in cart) {
-                let p = products.find(x => String(x.id) === String(id));
-                if (p) {
-                    p.stock -= cart[id].qty;
-                    if (p.stock < 0) p.stock = 0;
-                }
-            }
-            saveProducts();
-            
+            // إفراغ السلة دون خصم الكمية (الخصم يتم من الإدارة)
             cart = {}; 
             updateCartBar(); closeCheckout(); 
-            renderProducts(); // إرجاع أزرار الإضافة للوضع الافتراضي
+            renderProducts(); 
             renderSpecialOfferCustomer();
 
             let adminPhone = "+963965461504";
             window.open(`https://api.whatsapp.com/send?phone=${adminPhone}&text=${encodeURIComponent(message)}`, '_blank');
-            setTimeout(() => { alert("تم تجهيز الطلب، وتم تفريغ سلتك بنجاح."); }, 1500);
+            setTimeout(() => { alert("تم إرسال الطلب بنجاح. يرجى انتظار تأكيد الدفع لتبدأ عملية التوصيل."); }, 1500);
         }
 
         // الإدارة السريّة
@@ -1083,6 +1101,7 @@
                 document.getElementById('adminCustomerSearch').value = '';
                 document.getElementById('adminProductSearch').value = ''; 
                 
+                renderAdminOrders(); // عرض الفواتير
                 renderAdminShortages(); 
                 renderAdminProductsList();
                 renderAdminCustomersList();
@@ -1092,7 +1111,100 @@
         }
 
         function closeDashboard() { document.getElementById('adminDashboard').style.display = 'none'; }
+        
+        // إدارة الفواتير الواردة (النظام الجديد)
+        function renderAdminOrders() {
+            let listDiv = document.getElementById('adminOrdersList');
+            listDiv.innerHTML = '';
+            let pendingOrders = JSON.parse(localStorage.getItem('moaath_pending_orders')) || [];
 
+            if (pendingOrders.length === 0) {
+                listDiv.innerHTML = '<p style="text-align:center; color:#888; font-size:12px;">لا توجد فواتير معلقة حالياً</p>';
+                return;
+            }
+
+            pendingOrders.forEach(order => {
+                let itemsNames = [];
+                let items = order.cartStr.split('_');
+                items.forEach(item => {
+                    let parts = item.split('-');
+                    let prod = products.find(p => String(p.id) === parts[0]);
+                    let name = prod ? prod.name : 'منتج غير معروف';
+                    itemsNames.push(`- ${name} (الكمية: ${parts[1]})`);
+                });
+
+                listDiv.innerHTML += `
+                    <div style="background:#222; padding:10px; border-radius:5px; margin-bottom:8px; font-size:12px; border:1px solid #444;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                            <strong style="color:var(--gold-color); font-size:14px;">الزبون: ${order.name}</strong>
+                            <strong style="color:#00ff00;">${order.total} ل.س</strong>
+                        </div>
+                        <div style="color:#aaa; margin-bottom:5px;">📱 هاتف: ${order.phone}</div>
+                        <div style="color:#fff; margin-bottom:10px; line-height:1.6;">${itemsNames.join('<br>')}</div>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn" style="background:#25d366; color:#000; flex:1;" onclick="confirmOrder(${order.id})">✅ تأكيد وخصم</button>
+                            <button class="btn btn-danger" style="flex:1;" onclick="cancelOrder(${order.id})">❌ إلغاء</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function confirmOrder(orderId) {
+            let pendingOrders = JSON.parse(localStorage.getItem('moaath_pending_orders')) || [];
+            let orderIndex = pendingOrders.findIndex(o => o.id === orderId);
+            if(orderIndex === -1) return;
+            let order = pendingOrders[orderIndex];
+
+            // خصم الكميات
+            let items = order.cartStr.split('_');
+            items.forEach(item => {
+                let parts = item.split('-');
+                let pId = parts[0];
+                let pQty = parseInt(parts[1]);
+                let prod = products.find(p => String(p.id) === String(pId));
+                if (prod) {
+                    prod.stock -= pQty;
+                    if (prod.stock < 0) prod.stock = 0;
+                }
+            });
+            saveProducts();
+            
+            // إزالة الفاتورة
+            pendingOrders.splice(orderIndex, 1);
+            localStorage.setItem('moaath_pending_orders', JSON.stringify(pendingOrders));
+            
+            renderAdminOrders(); renderProducts(); renderAdminProductsList(); renderAdminShortages();
+
+            // إرسال رسالة التأكيد
+            let custPhone = order.phone;
+            if (custPhone.startsWith('09')) custPhone = custPhone.replace(/^0/, '+963');
+            let msg = `أهلاً بك ${order.name} 🌹\nتم تأكيد فاتورتك وخصمها من المخزون بنجاح، وسيتم توصيل طلبك قريباً!\n\n~متجر معاذ~`;
+            window.open(`https://api.whatsapp.com/send?phone=${custPhone}&text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function cancelOrder(orderId) {
+            if(!confirm("هل أنت متأكد من إلغاء هذا الطلب وحذفه؟")) return;
+            
+            let pendingOrders = JSON.parse(localStorage.getItem('moaath_pending_orders')) || [];
+            let orderIndex = pendingOrders.findIndex(o => o.id === orderId);
+            if(orderIndex === -1) return;
+            let order = pendingOrders[orderIndex];
+
+            // إزالة الفاتورة بدون خصم
+            pendingOrders.splice(orderIndex, 1);
+            localStorage.setItem('moaath_pending_orders', JSON.stringify(pendingOrders));
+            
+            renderAdminOrders();
+
+            // إرسال رسالة الإلغاء
+            let custPhone = order.phone;
+            if (custPhone.startsWith('09')) custPhone = custPhone.replace(/^0/, '+963');
+            let msg = `أهلاً بك ${order.name}،\nنعتذر منك، تم إلغاء طلبك الأخير من متجر معاذ. يرجى التواصل معنا لأي استفسار.\n\n~متجر معاذ~`;
+            window.open(`https://api.whatsapp.com/send?phone=${custPhone}&text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        // التنبيهات والنواقص
         function renderAdminShortages() {
             let listDiv = document.getElementById('adminShortagesList');
             listDiv.innerHTML = '';
@@ -1122,6 +1234,7 @@
             window.open(`https://api.whatsapp.com/send?phone=+963965461504&text=${encodeURIComponent(text)}`, '_blank');
         }
 
+        // إعدادات المتجر العامة
         function updateExchangeRate() {
             exchangeRate = parseFloat(document.getElementById('exchangeRateInput').value) || 1;
             localStorage.setItem('moaath_exchange_rate', exchangeRate);
@@ -1173,6 +1286,7 @@
             alert(`تم تحديث نقاط الزبون بنجاح!`);
         }
 
+        // إدارة المنتجات
         function addNewProduct() {
             let name = document.getElementById('newProdName').value.trim();
             let category = document.getElementById('newProdCat').value;
