@@ -422,23 +422,25 @@
                     <input type="number" id="feeOwainaInput" class="form-control" placeholder="العوينة">
                     <input type="number" id="feeOtherInput" class="form-control" placeholder="جوار">
                 </div>
-                <button class="btn" onclick="updateDeliveryFees()">حفظ أسعار التوصيل</button>
+                <button class="btn" onclick="updateDeliveryFees()" style="margin-bottom:10px;">حفظ أسعار التوصيل</button>
             </div>
 
             <hr style="border-color:#444; margin:15px 0;">
 
-            <!-- قسم الفواتير الواردة الجديد -->
+            <!-- الفواتير الواردة -->
             <h4 style="color:var(--gold-color); margin:5px 0;">🧾 الفواتير الواردة (تأكيد أو إلغاء)</h4>
             <div id="adminOrdersList" style="max-height: 200px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:15px;"></div>
             
             <hr style="border-color:#444; margin:15px 0;">
             
-            <h4 style="color:var(--danger-color); margin:5px 0;">📉 إدارة النواقص</h4>
+            <!-- النواقص -->
+            <h4 style="color:var(--danger-color); margin:5px 0;">📉 إدارة النواقص (المواد التي تكاد تنفد)</h4>
             <div id="adminShortagesList" style="max-height: 140px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:10px;"></div>
-            <button class="btn" onclick="sendShortagesWhatsApp()" style="background:#25d366; color:#000;">إرسال النواقص عبر واتساب 📱</button>
+            <button class="btn" onclick="sendShortagesWhatsApp()" style="background:#25d366; color:#000;">إرسال قائمة النواقص عبر واتساب 📱</button>
 
             <hr style="border-color:#444; margin:15px 0;">
 
+            <!-- إعدادات العرض الخاص -->
             <h4 style="color:var(--gold-color); margin:5px 0;">🌟 إعدادات العرض الخاص</h4>
             <div class="form-group">
                 <label>حالة العرض:</label>
@@ -471,6 +473,7 @@
 
             <hr style="border-color:#444; margin:15px 0;">
 
+            <!-- إدارة التصنيفات -->
             <h4 style="color:var(--gold-color); margin:5px 0;">🏷️ إدارة التصنيفات</h4>
             <div style="display:flex; gap:5px; margin-bottom: 10px;">
                 <input type="text" id="newCategoryInput" class="form-control" placeholder="اسم التصنيف الجديد">
@@ -480,12 +483,14 @@
 
             <hr style="border-color:#444; margin:15px 0;">
 
+            <!-- إدارة نقاط الزبائن -->
             <h4 style="color:var(--gold-color); margin:5px 0;">👥 إدارة نقاط الزبائن</h4>
             <input type="text" id="adminCustomerSearch" class="form-control" placeholder="🔍 ابحث عن زبون..." oninput="renderAdminCustomersList()" style="margin-bottom: 10px;">
             <div id="adminCustomersList" style="max-height: 140px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:15px;"></div>
 
             <hr style="border-color:#444; margin:15px 0;">
 
+            <!-- إضافة منتج -->
             <h4 style="color:var(--gold-color); margin:5px 0;">➕ إضافة منتج جديد</h4>
             <div class="form-group">
                 <label>الاسم:</label>
@@ -517,6 +522,7 @@
             </div>
             <button class="btn" onclick="addNewProduct()" style="margin-bottom:15px;">إضافة المنتج</button>
 
+            <!-- إدارة المنتجات -->
             <h4 style="color:var(--gold-color); margin:5px 0;">📦 إدارة المنتجات (تعديل وحذف)</h4>
             <input type="text" id="adminProductSearch" class="form-control" placeholder="🔍 ابحث عن منتج..." oninput="renderAdminProductsList()" style="margin-bottom: 10px;">
             <div id="adminProductsList" style="max-height: 250px; overflow-y: auto; background:#121212; padding:5px; border-radius:5px; margin-bottom:10px;"></div>
@@ -564,7 +570,6 @@
     </div>
 
     <script>
-        // دالة ضغط الصور
         function setupImageUpload(fileInputId, hiddenInputId, previewId) {
             let input = document.getElementById(fileInputId);
             if(!input) return;
@@ -634,7 +639,7 @@
                 localStorage.setItem('moaath_pending_orders', JSON.stringify(pendingOrders));
                 
                 window.history.replaceState(null, '', window.location.pathname);
-                alert("تم استلام فاتورة جديدة وحفظها في النظام! يمكنك تأكيدها من قسم الإدارة.");
+                alert("تم استلام فاتورة جديدة وحفظها في النظام! قم بالدخول للإدارة لتأكيدها وخصم الكميات.");
             }
 
             setupDeliveryOptions();
@@ -726,7 +731,6 @@
             renderProducts(document.getElementById('searchInput').value);
         }
 
-        // العرض الخاص
         function renderSpecialOfferCustomer() {
             let container = document.getElementById('specialOfferContainer');
             if (specialOffer.active) {
@@ -1024,7 +1028,6 @@
             alert("تم نسخ معرف محفظة شام كاش بنجاح!");
         }
 
-        // إرسال الطلب مع الرابط السحري
         function sendOrderWhatsApp() {
             let itemsText = ""; let subTotal = 0; let counter = 1;
             let minCart = [];
@@ -1036,7 +1039,6 @@
                 minCart.push(`${id}-${cart[id].qty}`);
                 counter++;
             }
-            
             let delivery = (currentUser.area === 'other') ? deliveryFeeOther : deliveryFeeOwaina;
             let grand = subTotal + delivery;
             let areaText = currentUser.area === 'owaina' ? "قرية العوينة" : "المناطق المجاورة";
@@ -1044,7 +1046,6 @@
             let cust = customers.find(c => c.phone === currentUser.phone);
             let currentPts = cust ? cust.points : 0;
             
-            // توليد الرابط السحري الخاص بالمدير
             let cartParam = minCart.join('_');
             let magicLink = `${window.location.origin}${window.location.pathname}?new_order=1&n=${encodeURIComponent(currentUser.name)}&p=${encodeURIComponent(currentUser.phone)}&t=${grand}&c=${cartParam}`;
 
@@ -1057,6 +1058,7 @@
                           `---------------------------------\n` +
                           `📦 *المنتجات المطلوبة:*\n${itemsText}` +
                           `---------------------------------\n` +
+                          `⚠️ *ملاحظة:* بانتظار إرسال إشعار التحويل من شام كاش للبدء بالتنفيذ.\n` +
                           `💰 *الإجمالي النهائي:* ${grand} ل.س\n\n` +
                           `📌 *لإدارة الفاتورة وتأكيدها بنقرة واحدة، اضغط هنا:*\n${magicLink}`;
 
@@ -1101,7 +1103,7 @@
                 document.getElementById('adminCustomerSearch').value = '';
                 document.getElementById('adminProductSearch').value = ''; 
                 
-                renderAdminOrders(); // عرض الفواتير
+                renderAdminOrders(); // عرض الفواتير المعلقة
                 renderAdminShortages(); 
                 renderAdminProductsList();
                 renderAdminCustomersList();
@@ -1112,7 +1114,7 @@
 
         function closeDashboard() { document.getElementById('adminDashboard').style.display = 'none'; }
         
-        // إدارة الفواتير الواردة (النظام الجديد)
+        // إدارة الفواتير الواردة (تأكيد أو إلغاء)
         function renderAdminOrders() {
             let listDiv = document.getElementById('adminOrdersList');
             listDiv.innerHTML = '';
@@ -1129,7 +1131,7 @@
                 items.forEach(item => {
                     let parts = item.split('-');
                     let prod = products.find(p => String(p.id) === parts[0]);
-                    let name = prod ? prod.name : 'منتج غير معروف';
+                    let name = prod ? prod.name : 'منتج العرض الخاص';
                     itemsNames.push(`- ${name} (الكمية: ${parts[1]})`);
                 });
 
@@ -1156,7 +1158,7 @@
             if(orderIndex === -1) return;
             let order = pendingOrders[orderIndex];
 
-            // خصم الكميات
+            // خصم الكميات الفعلية من المخزون
             let items = order.cartStr.split('_');
             items.forEach(item => {
                 let parts = item.split('-');
@@ -1170,7 +1172,7 @@
             });
             saveProducts();
             
-            // إزالة الفاتورة
+            // إزالة الفاتورة المعلقة بعد التأكيد
             pendingOrders.splice(orderIndex, 1);
             localStorage.setItem('moaath_pending_orders', JSON.stringify(pendingOrders));
             
@@ -1191,7 +1193,7 @@
             if(orderIndex === -1) return;
             let order = pendingOrders[orderIndex];
 
-            // إزالة الفاتورة بدون خصم
+            // إزالة الفاتورة بدون خصم أي منتج
             pendingOrders.splice(orderIndex, 1);
             localStorage.setItem('moaath_pending_orders', JSON.stringify(pendingOrders));
             
@@ -1204,7 +1206,6 @@
             window.open(`https://api.whatsapp.com/send?phone=${custPhone}&text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // التنبيهات والنواقص
         function renderAdminShortages() {
             let listDiv = document.getElementById('adminShortagesList');
             listDiv.innerHTML = '';
@@ -1234,7 +1235,6 @@
             window.open(`https://api.whatsapp.com/send?phone=+963965461504&text=${encodeURIComponent(text)}`, '_blank');
         }
 
-        // إعدادات المتجر العامة
         function updateExchangeRate() {
             exchangeRate = parseFloat(document.getElementById('exchangeRateInput').value) || 1;
             localStorage.setItem('moaath_exchange_rate', exchangeRate);
@@ -1286,7 +1286,6 @@
             alert(`تم تحديث نقاط الزبون بنجاح!`);
         }
 
-        // إدارة المنتجات
         function addNewProduct() {
             let name = document.getElementById('newProdName').value.trim();
             let category = document.getElementById('newProdCat').value;
