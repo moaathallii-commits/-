@@ -9,7 +9,7 @@
     <!-- ربط التطبيق بالهاتف (PWA) -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#121212" id="themeColorMeta">
-    <link rel="apple-touch-icon" href="store-icon.png?v=2">
+    <link rel="apple-touch-icon" href="store-icon.png?v=3">
     
     <!-- مكتبات Firebase الأساسية -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
@@ -47,10 +47,13 @@
         header {
             background-color: var(--card-bg);
             border-bottom: 2px solid var(--gold-color);
-            padding: 12px 15px;
+            padding: 10px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+        .store-info {
+            cursor: pointer;
         }
         .store-info h1 {
             font-size: 16px;
@@ -63,18 +66,19 @@
             margin: 0;
         }
         .logo-circle {
-            width: 42px;
-            height: 42px;
-            background-color: var(--gold-color);
-            color: #fff;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 18px;
+            overflow: hidden;
+            border: 2px solid var(--gold-color);
             cursor: pointer;
             user-select: none;
+            background: #222;
+        }
+        .logo-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         .user-bar {
             background: var(--card-bg);
@@ -153,9 +157,10 @@
             flex-direction: column;
             justify-content: space-between;
         }
+        /* أبعاد صور المنتج 9:16 عمودية */
         .product-img {
             width: 100%;
-            height: 110px;
+            aspect-ratio: 9 / 16;
             object-fit: cover;
             border-radius: 6px;
             background: var(--bg-color);
@@ -305,16 +310,25 @@
             color: var(--gold-color);
             margin-top: 5px;
         }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(212, 175, 55, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="store-info">
+        <!-- الضغط على معلومات المتجر يفتح واتساب الإدارة -->
+        <div class="store-info" onclick="window.open('https://api.whatsapp.com/send?phone=+963965461504', '_blank')">
             <h1>متجر معاذ</h1>
-            <p>قرية العوينة | 0965461504</p>
+            <p>قرية العوينة | 0965461504 📱</p>
         </div>
-        <div class="logo-circle" id="adminTrigger">م</div>
+        <!-- الشعار في الزاوية (5 نقرات تفتح لوحة الإدارة) -->
+        <div class="logo-circle" id="adminTrigger">
+            <img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'">
+        </div>
     </header>
 
     <div class="user-bar">
@@ -322,9 +336,12 @@
             👤 <b id="userNameDisplay">زائر</b> 
             <button onclick="openEditProfile()" style="background:transparent; border:none; color:var(--gold-color); font-size:11px; cursor:pointer; padding:0;">(⚙️)</button>
         </span>
-        <div style="display:flex; gap:10px; align-items:center;">
+        <div style="display:flex; gap:8px; align-items:center;">
+            <!-- زر استخدام النقاط (يظهر تلقائياً عندما يتجاوز رصيد الزبون الحد المطلوب) -->
+            <button id="redeemPointsBtn" onclick="redeemPointsWhatsApp()" style="display:none; background:linear-gradient(45deg, #D4AF37, #FFD700); color:#000; border:none; padding:5px 10px; border-radius:15px; font-size:11px; font-weight:bold; cursor:pointer; animation: pulse 1.5s infinite;">🎁 استخدام النقاط</button>
+            
             <button onclick="toggleTheme()" id="themeBtn" style="background:transparent; border:none; font-size:18px; cursor:pointer; padding:0;">☀️</button>
-            <button id="installBtn" onclick="installApp()" style="display:none; background:#25d366; color:#000; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer; box-shadow:0 0 5px rgba(37,211,102,0.5);">تثبيت التطبيق 📱</button>
+            <button id="installBtn" onclick="installApp()" style="display:none; background:#25d366; color:#000; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer; box-shadow:0 0 5px rgba(37,211,102,0.5);">تثبيت 📱</button>
             <span style="color: var(--gold-color);">🎁 نقاطي: <b id="userPoints">0</b></span>
         </div>
     </div>
@@ -458,7 +475,7 @@
             <h3 style="color:var(--gold-color); text-align:center; margin-top:0;">لوحة تحكم متجر معاذ</h3>
             
             <h4 style="color:var(--gold-color); margin:5px 0;">📊 إحصائيات المتجر</h4>
-            <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
                 <div class="stats-box" style="flex:1;">
                     <div style="font-size:11px; color:var(--gray-text);">إجمالي المبيعات</div>
                     <div class="stats-value" id="statTotalSales">0 ل.س</div>
@@ -472,8 +489,19 @@
                 <div style="font-size:11px; color:var(--gray-text);">أكثر المنتجات مبيعاً</div>
                 <div class="stats-value" id="statBestSeller" style="font-size:14px; color:#fff;">لا يوجد بيانات بعد</div>
             </div>
-            <!-- زر تصفير الإحصائيات الجديد -->
-            <button class="btn btn-danger" onclick="resetStoreStatistics()" style="margin-bottom:15px; width:100%;">تصفير إحصائيات المتجر 🗑️</button>
+            <button class="btn btn-danger" onclick="resetStoreStats()" style="margin-bottom:15px; width:100%;">تصفير إحصائيات المتجر 🗑️</button>
+
+            <hr style="border-color:var(--border-color); margin:15px 0;">
+
+            <!-- إعدادات حد النقاط للهدية -->
+            <h4 style="color:var(--gold-color); margin:5px 0;">🎁 إعدادات نقاط الولاء والهدايا</h4>
+            <div class="form-group">
+                <label>الحد الأدنى للنقاط لظهر زر "استخدام النقاط":</label>
+                <div style="display:flex; gap:5px;">
+                    <input type="number" id="pointsThresholdInput" class="form-control" value="100">
+                    <button class="btn" onclick="updatePointsThreshold()" style="width:auto;">حفظ الحد</button>
+                </div>
+            </div>
 
             <hr style="border-color:var(--border-color); margin:15px 0;">
 
@@ -717,6 +745,7 @@
         let exchangeRate = 1;
         let deliveryFeeOwaina = 5000;
         let deliveryFeeOther = 7000;
+        let pointsThreshold = 100; // الحد الأدنى الافتراضي لاستخدام النقاط
         let customers = [];
         let pendingOrders = [];
         let storeStats = { totalSales: 0, canceledOrders: 0, productsSold: {} }; 
@@ -776,9 +805,15 @@
             });
 
             db.ref('settings').on('value', snap => {
-                let s = snap.val() || { exchangeRate: 1, deliveryFeeOwaina: 5000, deliveryFeeOther: 7000 };
-                exchangeRate = s.exchangeRate || 1; deliveryFeeOwaina = s.deliveryFeeOwaina || 5000; deliveryFeeOther = s.deliveryFeeOther || 7000;
-                setupDeliveryOptions(); renderProducts(); renderSpecialOfferCustomer(); updateCartBar();
+                let s = snap.val() || { exchangeRate: 1, deliveryFeeOwaina: 5000, deliveryFeeOther: 7000, pointsThreshold: 100 };
+                exchangeRate = s.exchangeRate || 1; 
+                deliveryFeeOwaina = s.deliveryFeeOwaina || 5000; 
+                deliveryFeeOther = s.deliveryFeeOther || 7000;
+                pointsThreshold = s.pointsThreshold || 100;
+                if(document.getElementById('pointsThresholdInput')) {
+                    document.getElementById('pointsThresholdInput').value = pointsThreshold;
+                }
+                setupDeliveryOptions(); renderProducts(); renderSpecialOfferCustomer(); updateCartBar(); updateUserSessionDisplay();
             });
 
             db.ref('pendingOrders').on('value', snap => {
@@ -975,11 +1010,41 @@
             setTimeout(() => { alert(`تم إرسال الطلب بنجاح وحفظه في لوحة الإدارة! سيتم إضافة ${earnedPoints} نقطة لرصيدك فور تأكيد الإدارة.`); }, 1500);
         }
 
+        // --- دالة استخدام النقاط لطلب هدية عبر الواتساب ---
+        function redeemPointsWhatsApp() {
+            if (!currentUser || !currentUser.phone) { openEditProfile(); return; }
+            let cust = customers.find(c => c.phone === currentUser.phone);
+            let pts = cust ? cust.points : 0;
+            if (pts < pointsThreshold) {
+                alert(`عذراً، رصيدك الحالي (${pts} نقطة) لم يبلغ الحد الأدنى المطلوب (${pointsThreshold} نقطة) لاستخدام النقاط.`);
+                return;
+            }
+            let message = `🎁 *طلب هدية (استخدام نقاط الولاء)*\n` +
+                          `---------------------------------\n` +
+                          `👤 *الزبون:* ${currentUser.name}\n` +
+                          `📱 *الهاتف:* ${currentUser.phone}\n` +
+                          `⭐ *الرصيد المراد استخدامه:* ${pts} نقطة\n` +
+                          `---------------------------------\n` +
+                          `أود استبدال نقاطي بهدية المتجر المتاحة. يرجى التواصل معي لتأكيد الطلب! ✨`;
+            window.open(`https://api.whatsapp.com/send?phone=+963965461504&text=${encodeURIComponent(message)}`, '_blank');
+        }
+
         function updateUserSessionDisplay() {
             if (!currentUser) return;
             let cust = customers.find(c => c.phone === currentUser.phone);
+            let pts = cust ? cust.points : 0;
             document.getElementById('userNameDisplay').innerText = currentUser.name || 'زبون';
-            document.getElementById('userPoints').innerText = cust ? cust.points : 0;
+            document.getElementById('userPoints').innerText = pts;
+            
+            // إظهار أو إخفاء زر "استخدام النقاط" بناءً على الرصيد والحد المحدد
+            let redeemBtn = document.getElementById('redeemPointsBtn');
+            if (redeemBtn) {
+                if (pts >= pointsThreshold) {
+                    redeemBtn.style.display = 'inline-block';
+                } else {
+                    redeemBtn.style.display = 'none';
+                }
+            }
         }
 
         function openEditProfile() {
@@ -1039,7 +1104,10 @@
         function checkAdminPassword() {
             if (document.getElementById('adminPass').value === "MHA@1997//MOAATHS") {
                 closeAdminModal(); document.getElementById('adminDashboard').style.display = 'flex';
-                document.getElementById('exchangeRateInput').value = exchangeRate; document.getElementById('feeOwainaInput').value = deliveryFeeOwaina; document.getElementById('feeOtherInput').value = deliveryFeeOther;
+                document.getElementById('exchangeRateInput').value = exchangeRate; 
+                document.getElementById('feeOwainaInput').value = deliveryFeeOwaina; 
+                document.getElementById('feeOtherInput').value = deliveryFeeOther;
+                document.getElementById('pointsThresholdInput').value = pointsThreshold;
                 loadAdminSpecialOffer(); renderAdminCategories(); renderAdminOrders(); renderAdminShortages(); renderAdminProductsList(); renderAdminCustomersList(); renderAdminStats();
             } else alert("كلمة المرور خاطئة!");
         }
@@ -1062,52 +1130,21 @@
             document.getElementById('statBestSeller').innerText = bestName;
         }
 
-        // --- دالة تصفير إحصائيات المتجر الجديدة ---
-        function resetStoreStatistics() {
-            if(confirm("هل أنت متأكد من تصفير جميع إحصائيات المتجر (إجمالي المبيعات، الطلبات الملغاة، والمباع من المنتجات)؟ لا يمكن التراجع!")) {
+        function resetStoreStats() {
+            if(confirm("هل أنت متأكد من تصفير جميع إحصائيات المبيعات والطلبات الملغاة؟ لا يمكن التراجع!")) {
                 storeStats = { totalSales: 0, canceledOrders: 0, productsSold: {} };
                 db.ref('statistics').set(storeStats);
                 renderAdminStats();
-                alert("تم تصفير إحصائيات المتجر بنجاح بالسحابة!");
+                alert("تم تصفير الإحصائيات بنجاح!");
             }
         }
 
-        function renderAdminOrders() {
-            let listDiv = document.getElementById('adminOrdersList');
-            if(!listDiv) return;
-            listDiv.innerHTML = '';
-            if (!pendingOrders || pendingOrders.length === 0) {
-                listDiv.innerHTML = '<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد فواتير معلقة حالياً</p>';
-                return;
-            }
-
-            pendingOrders.forEach(order => {
-                let itemsNames = [];
-                if(order.cartStr) {
-                    let items = order.cartStr.split('_');
-                    items.forEach(item => {
-                        let parts = item.split('-');
-                        let prod = products.find(p => String(p.id) === parts[0]);
-                        let name = prod ? prod.name : 'منتج العرض الخاص';
-                        itemsNames.push(`- ${name} (الكمية: ${parts[1]})`);
-                    });
-                }
-
-                listDiv.innerHTML += `
-                    <div style="background:var(--bg-color); padding:10px; border-radius:5px; margin-bottom:8px; font-size:12px; border:1px solid var(--border-color);">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                            <strong style="color:var(--gold-color); font-size:14px;">الزبون: ${order.name}</strong>
-                            <strong style="color:#00ff00;">${order.total} ل.س</strong>
-                        </div>
-                        <div style="color:var(--gray-text); margin-bottom:5px;">📱 هاتف: ${order.phone} | 🎁 نقاط: <span style="color:var(--text-color);">${order.earnedPoints || 0}</span></div>
-                        <div style="color:var(--text-color); margin-bottom:10px; line-height:1.6;">${itemsNames.join('<br>')}</div>
-                        <div style="display:flex; gap:10px;">
-                            <button class="btn" style="background:#25d366; color:#000; flex:1;" onclick="confirmOrder(${order.id})">✅ تأكيد وخصم</button>
-                            <button class="btn btn-danger" style="flex:1;" onclick="cancelOrder(${order.id})">❌ إلغاء</button>
-                        </div>
-                    </div>
-                `;
-            });
+        function updatePointsThreshold() {
+            let val = parseInt(document.getElementById('pointsThresholdInput').value);
+            if(isNaN(val) || val <= 0) { alert("يرجى إدخال رقم صحيح!"); return; }
+            pointsThreshold = val;
+            db.ref('settings').update({ pointsThreshold: pointsThreshold });
+            alert("تم تحديث الحد الأدنى لنقاط الهدية بنجاح!");
         }
 
         function confirmOrder(orderId) {
@@ -1153,7 +1190,7 @@
         }
 
         function exportBackup() {
-            let backupData = { categories, specialOffer, products, customers, settings: {exchangeRate, deliveryFeeOwaina, deliveryFeeOther}, storeStats };
+            let backupData = { categories, specialOffer, products, customers, settings: {exchangeRate, deliveryFeeOwaina, deliveryFeeOther, pointsThreshold}, storeStats };
             let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
             let dlAnchorElem = document.createElement('a');
             dlAnchorElem.setAttribute("href", dataStr);
@@ -1173,7 +1210,7 @@
                         db.ref('specialOffer').set(data.specialOffer);
                         db.ref('products').set(data.products);
                         db.ref('customers').set(data.customers || []);
-                        db.ref('settings').set(data.settings);
+                        db.ref('settings').set(data.settings || {exchangeRate, deliveryFeeOwaina, deliveryFeeOther, pointsThreshold});
                         db.ref('statistics').set(data.storeStats || { totalSales: 0, canceledOrders: 0, productsSold: {} });
                         alert("تم استعادة النسخة الاحتياطية بنجاح إلى السحابة!");
                     } else { alert("الملف المرفوع غير صالح!"); }
@@ -1222,6 +1259,44 @@
             } 
         }
         function deleteProduct(id) { if(confirm("حذف المنتج؟")) { products = products.filter(p => p.id !== id); db.ref('products').set(products); } }
+
+        function renderAdminOrders() {
+            let listDiv = document.getElementById('adminOrdersList');
+            if(!listDiv) return;
+            listDiv.innerHTML = '';
+            if (!pendingOrders || pendingOrders.length === 0) {
+                listDiv.innerHTML = '<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد فواتير معلقة حالياً</p>';
+                return;
+            }
+
+            pendingOrders.forEach(order => {
+                let itemsNames = [];
+                if(order.cartStr) {
+                    let items = order.cartStr.split('_');
+                    items.forEach(item => {
+                        let parts = item.split('-');
+                        let prod = products.find(p => String(p.id) === parts[0]);
+                        let name = prod ? prod.name : 'منتج العرض الخاص';
+                        itemsNames.push(`- ${name} (الكمية: ${parts[1]})`);
+                    });
+                }
+
+                listDiv.innerHTML += `
+                    <div style="background:var(--bg-color); padding:10px; border-radius:5px; margin-bottom:8px; font-size:12px; border:1px solid var(--border-color);">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                            <strong style="color:var(--gold-color); font-size:14px;">الزبون: ${order.name}</strong>
+                            <strong style="color:#00ff00;">${order.total} ل.س</strong>
+                        </div>
+                        <div style="color:var(--gray-text); margin-bottom:5px;">📱 هاتف: ${order.phone} | 🎁 نقاط: <span style="color:var(--text-color);">${order.earnedPoints || 0}</span></div>
+                        <div style="color:var(--text-color); margin-bottom:10px; line-height:1.6;">${itemsNames.join('<br>')}</div>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn" style="background:#25d366; color:#000; flex:1;" onclick="confirmOrder(${order.id})">✅ تأكيد وخصم</button>
+                            <button class="btn btn-danger" style="flex:1;" onclick="cancelOrder(${order.id})">❌ إلغاء</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
     </script>
 </body>
 </html>
