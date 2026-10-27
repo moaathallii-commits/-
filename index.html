@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>متجر معاذ - قرية العوينة</title>
+    
+    <!-- مكتبات Firebase الأساسية -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+
     <style>
         :root {
             --bg-color: #121212;
@@ -341,7 +346,10 @@
             </div>
             <div class="form-group">
                 <label>منطقة التوصيل:</label>
-                <select id="regArea" class="form-control"></select>
+                <select id="regArea" class="form-control">
+                    <option value="owaina">قرية العوينة</option>
+                    <option value="other">المناطق المجاورة</option>
+                </select>
             </div>
             <div class="form-group">
                 <label>العنوان التفصيلي (الحي، بجانب...):</label>
@@ -581,17 +589,127 @@
     </div>
 
     <script>
-        // دالة حماية للتعامل مع الذاكرة القديمة أو المعطوبة
-        function getSafeStorage(key, defaultValue) {
-            try {
-                let data = localStorage.getItem(key);
-                return data ? JSON.parse(data) : defaultValue;
-            } catch (error) {
-                console.error("Storage error:", error);
-                return defaultValue; 
-            }
-        }
+        // --- تهيئة Firebase ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCAqM6NoNq_Ac6frcEzGT8LxGVJaDPM10E",
+            authDomain: "moaathstore-d2fd6.firebaseapp.com",
+            databaseURL: "https://moaathstore-d2fd6-default-rtdb.firebaseio.com",
+            projectId: "moaathstore-d2fd6",
+            storageBucket: "moaathstore-d2fd6.firebasestorage.app",
+            messagingSenderId: "632321917796",
+            appId: "1:632321917796:web:cfdb1f0af856376ec43071"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
+        // متغيرات النظام
+        let categories = [];
+        let specialOffer = {};
+        let products = [];
+        let customers = [];
+        let pendingOrders = [];
+        
+        let exchangeRate = 1;
+        let deliveryFeeOwaina = 5000;
+        let deliveryFeeOther = 7000;
+
+        let currentUser = null;
+        try { currentUser = JSON.parse(localStorage.getItem('moaath_current_user')) || null; } catch(e){}
+        
+        let currentCategory = 'الكل';
+        let cart = {};
+
+        window.onload = function() {
+            // استقبال الرابط السحري للفواتير (يعمل للزبائن والإدارة)
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('new_order') === '1') {
+                let order = {
+                    id: Date.now(),
+                    name: params.get('n'),
+                    phone: params.get('p'),
+                    total: params.get('t'),
+                    cartStr: params.get('c'),
+                    earnedPoints: parseInt(params.get('ep')) || 0
+                };
+                
+                // إضافة الفاتورة للسحابة مباشرة لتظهر في كل الأجهزة
+                let newOrders = [...pendingOrders, order];
+                db.ref('pendingOrders').set(newOrders);
+                window.history.replaceState(null, '', window.location.pathname);
+                alert("تم استلام فاتورة جديدة وحفظها في النظام السحابي بنجاح!");
+            }
+
+            // --- المستمعات اللحظية من Firebase (السر السحابي) ---
+            
+            // 1. الأقسام
+            db.ref('categories').on('value', snap => {
+                categories = snap.val() || ['غذائيات', 'منظفات', 'مشروبات باردة وساخنة', 'نقرشات'];
+                renderCategoriesBar();
+                if(document.getElementById('adminDashboard').style.display === 'flex') renderAdminCategories();
+            });
+
+            // 2. المنتجات
+            db.ref('products').on('value', snap => {
+                let data = snap.val() || [];
+                products = data.filter(p => p !== null); 
+                renderProducts(document.getElementById('searchInput').value);
+                if(document.getElementById('adminDashboard').style.display === 'flex') {
+                    renderAdminProductsList();
+                    renderAdminShortages();
+                }
+            });
+
+            // 3. العرض الخاص
+            db.ref('specialOffer').on('value', snap => {
+                specialOffer = snap.val() || { active: false, id: 'special_offer_1', name: 'عرض التوفير', baseOldPrice: 500, basePrice: 350, image: '' };
+                renderSpecialOfferCustomer();
+            });
+
+            // 4. الزبائن والنقاط
+            db.ref('customers').on('value', snap => {
+                let data = snap.val() || [];
+                customers = data.filter(c => c !== null);
+                updateUserSessionDisplay();
+                if(document.getElementById('adminDashboard').style.display === 'flex') renderAdminCustomersList();
+            });
+
+            // 5. الإعدادات
+            db.ref('settings').on('value', snap => {
+                let s = snap.val() || { exchangeRate: 1, deliveryFeeOwaina: 5000, deliveryFeeOther: 7000 };
+                exchangeRate = s.exchangeRate || 1;
+                deliveryFeeOwaina = s.deliveryFeeOwaina || 5000;
+                deliveryFeeOther = s.deliveryFeeOther || 7000;
+                setupDeliveryOptions();
+                renderProducts(); renderSpecialOfferCustomer(); updateCartBar();
+            });
+
+            // 6. الفواتير المعلقة
+            db.ref('pendingOrders').on('value', snap => {
+                let data = snap.val() || [];
+                pendingOrders = data.filter(o => o !== null);
+                if(document.getElementById('adminDashboard').style.display === 'flex') renderAdminOrders();
+            });
+
+            // أدوات رفع الصور للإدارة
+            setupImageUpload('newProdImageFile', 'newProdImg', 'newProdImgPreview');
+            setupImageUpload('editProdImageFile', 'editProdImg', 'editImgPreview');
+            setupImageUpload('soImageFile', 'soImgInput', 'soImgPreview');
+
+            // فحص تسجيل الدخول المحلي للزبون
+            if (currentUser && currentUser.phone && currentUser.address) {
+                document.getElementById('registerModal').style.display = 'none';
+            } else {
+                if(currentUser) {
+                    openEditProfile();
+                    document.getElementById('cancelEditBtn').style.display = 'none'; 
+                } else {
+                    document.getElementById('registerModal').style.display = 'flex';
+                    document.getElementById('cancelEditBtn').style.display = 'none';
+                }
+            }
+        };
+
+        // دالة ضغط الصور للإدارة
         function setupImageUpload(fileInputId, hiddenInputId, previewId) {
             let input = document.getElementById(fileInputId);
             if(!input) return;
@@ -625,73 +743,7 @@
             });
         }
 
-        let defaultCategories = ['غذائيات', 'منظفات', 'مشروبات باردة وساخنة', 'نقرشات'];
-        let categories = getSafeStorage('moaath_categories', defaultCategories);
-
-        let defaultSpecialOffer = { active: false, id: 'special_offer_1', name: 'عرض التوفير', baseOldPrice: 500, basePrice: 350, image: '' };
-        let specialOffer = getSafeStorage('moaath_special_offer', defaultSpecialOffer);
-
-        let defaultProducts = [
-            { id: 1, name: "رز بسمتي نخب أول 1 كغ", category: "غذائيات", basePrice: 270, stock: 10, minStock: 2, pointsPercent: 0, image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=300" }
-        ];
-        let products = getSafeStorage('moaath_store_products', defaultProducts);
-        
-        let exchangeRate = parseFloat(localStorage.getItem('moaath_exchange_rate')) || 1;
-        let deliveryFeeOwaina = parseInt(localStorage.getItem('moaath_fee_owaina')) || 5000;
-        let deliveryFeeOther = parseInt(localStorage.getItem('moaath_fee_other')) || 7000;
-
-        let customers = getSafeStorage('moaath_customers', []);
-        let currentUser = getSafeStorage('moaath_current_user', null);
-        let currentCategory = 'الكل';
-        let cart = {};
-
-        window.onload = function() {
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('new_order') === '1') {
-                let order = {
-                    id: Date.now(),
-                    name: params.get('n'),
-                    phone: params.get('p'),
-                    total: params.get('t'),
-                    cartStr: params.get('c'),
-                    earnedPoints: parseInt(params.get('ep')) || 0
-                };
-                let pendingOrders = getSafeStorage('moaath_pending_orders', []);
-                pendingOrders.push(order);
-                localStorage.setItem('moaath_pending_orders', JSON.stringify(pendingOrders));
-                
-                window.history.replaceState(null, '', window.location.pathname);
-                alert("تم استلام فاتورة جديدة وحفظها في النظام! قم بالدخول للإدارة لتأكيدها وإضافة النقاط للزبون.");
-            }
-
-            setupDeliveryOptions();
-            renderCategoriesBar();
-            
-            setupImageUpload('newProdImageFile', 'newProdImg', 'newProdImgPreview');
-            setupImageUpload('editProdImageFile', 'editProdImg', 'editImgPreview');
-            setupImageUpload('soImageFile', 'soImgInput', 'soImgPreview');
-
-            if (currentUser && currentUser.phone && currentUser.address) {
-                document.getElementById('registerModal').style.display = 'none';
-                let existing = customers.find(c => c.phone === currentUser.phone);
-                if (!existing) {
-                    customers.push({ name: currentUser.name, phone: currentUser.phone, points: 0 });
-                    localStorage.setItem('moaath_customers', JSON.stringify(customers));
-                }
-                updateUserSessionDisplay();
-            } else {
-                if(currentUser) {
-                    openEditProfile();
-                    document.getElementById('cancelEditBtn').style.display = 'none'; 
-                } else {
-                    document.getElementById('registerModal').style.display = 'flex';
-                    document.getElementById('cancelEditBtn').style.display = 'none';
-                }
-            }
-            renderProducts();
-            renderSpecialOfferCustomer();
-        };
-
+        // --- وظائف الزبائن وتصفح المتجر ---
         function setupDeliveryOptions() {
             let select = document.getElementById('regArea');
             if(select) {
@@ -699,9 +751,7 @@
                     <option value="owaina">قرية العوينة (+${deliveryFeeOwaina} ل.س)</option>
                     <option value="other">المناطق المجاورة (+${deliveryFeeOther} ل.س)</option>
                 `;
-                if(currentUser && currentUser.area) {
-                    select.value = currentUser.area;
-                }
+                if(currentUser && currentUser.area) select.value = currentUser.area;
             }
         }
 
@@ -714,51 +764,6 @@
             populateCategorySelects();
         }
 
-        function populateCategorySelects() {
-            let addSelect = document.getElementById('newProdCat');
-            let editSelect = document.getElementById('editProdCat');
-            if(addSelect && editSelect) {
-                addSelect.innerHTML = ''; editSelect.innerHTML = '';
-                categories.forEach(cat => {
-                    let option = `<option value="${cat}">${cat}</option>`;
-                    addSelect.innerHTML += option; editSelect.innerHTML += option;
-                });
-            }
-        }
-
-        function renderAdminCategories() {
-            let list = document.getElementById('adminCategoriesList');
-            list.innerHTML = '';
-            categories.forEach((cat, index) => {
-                list.innerHTML += `
-                    <div style="background:#222; padding:4px 8px; border-radius:15px; font-size:11px; display:flex; align-items:center; gap:5px;">
-                        <span>${cat}</span>
-                        <span onclick="deleteCategory(${index})" style="color:var(--danger-color); cursor:pointer; font-weight:bold;">x</span>
-                    </div>
-                `;
-            });
-            populateCategorySelects();
-        }
-
-        function addCategory() {
-            let newCat = document.getElementById('newCategoryInput').value.trim();
-            if (newCat && !categories.includes(newCat) && newCat !== 'الكل') {
-                categories.push(newCat);
-                localStorage.setItem('moaath_categories', JSON.stringify(categories));
-                document.getElementById('newCategoryInput').value = '';
-                renderCategoriesBar(); renderAdminCategories();
-            }
-        }
-
-        function deleteCategory(index) {
-            if(confirm("هل أنت متأكد من حذف هذا التصنيف؟")) {
-                categories.splice(index, 1);
-                localStorage.setItem('moaath_categories', JSON.stringify(categories));
-                if(currentCategory === categories[index]) currentCategory = 'الكل';
-                renderCategoriesBar(); renderAdminCategories();
-            }
-        }
-
         function setCategory(cat, btn) {
             currentCategory = cat;
             document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -766,134 +771,6 @@
             renderProducts(document.getElementById('searchInput').value);
         }
 
-        function renderSpecialOfferCustomer() {
-            let container = document.getElementById('specialOfferContainer');
-            if (specialOffer.active) {
-                let id = specialOffer.id;
-                let finalPrice = specialOffer.basePrice * exchangeRate;
-                let finalOldPrice = specialOffer.baseOldPrice * exchangeRate;
-                let imgSrc = specialOffer.image || 'https://via.placeholder.com/150?text=Special+Offer';
-                
-                document.getElementById('soDisplayImg').src = imgSrc;
-                document.getElementById('soDisplayName').innerText = specialOffer.name;
-                document.getElementById('soDisplayPrice').innerText = finalPrice + ' ل.س';
-                document.getElementById('soDisplayOldPrice').innerText = finalOldPrice + ' ل.س';
-                
-                let cartQty = cart[id] ? cart[id].qty : 0;
-                let actionHtml = '';
-                if (cartQty > 0) {
-                    actionHtml = `
-                        <div class="qty-controls" style="width: 100px;">
-                            <button class="qty-btn" onclick="changeCartQty('${id}', -1)">-</button>
-                            <span class="qty-text">${cartQty}</span>
-                            <button class="qty-btn" onclick="changeCartQty('${id}', 1)">+</button>
-                        </div>
-                    `;
-                } else {
-                    actionHtml = `<button class="btn" onclick="addSpecialOfferToCart()" style="padding: 5px; font-size: 11px;">إضافة للسلة 🛒</button>`;
-                }
-                document.getElementById('soActionContainer').innerHTML = actionHtml;
-                container.style.display = 'flex';
-            } else {
-                container.style.display = 'none';
-            }
-        }
-
-        function loadAdminSpecialOffer() {
-            document.getElementById('soActiveInput').value = specialOffer.active ? 'true' : 'false';
-            document.getElementById('soNameInput').value = specialOffer.name;
-            document.getElementById('soOldPriceInput').value = specialOffer.baseOldPrice;
-            document.getElementById('soPriceInput').value = specialOffer.basePrice;
-            document.getElementById('soImgInput').value = specialOffer.image;
-            document.getElementById('soImageFile').value = '';
-            document.getElementById('soImgPreview').innerHTML = specialOffer.image ? `<img src="${specialOffer.image}" style="width:60px; height:60px; border-radius:5px; object-fit:cover;">` : '';
-        }
-
-        function saveSpecialOffer() {
-            specialOffer.active = document.getElementById('soActiveInput').value === 'true';
-            specialOffer.name = document.getElementById('soNameInput').value.trim() || 'عرض خاص';
-            specialOffer.baseOldPrice = parseFloat(document.getElementById('soOldPriceInput').value) || 0;
-            specialOffer.basePrice = parseFloat(document.getElementById('soPriceInput').value) || 0;
-            specialOffer.image = document.getElementById('soImgInput').value.trim();
-            localStorage.setItem('moaath_special_offer', JSON.stringify(specialOffer));
-            renderSpecialOfferCustomer();
-            alert("تم حفظ إعدادات العرض الخاص بنجاح!");
-        }
-
-        function addSpecialOfferToCart() {
-            if (!specialOffer.active) return;
-            let id = specialOffer.id;
-            if (!cart[id]) {
-                cart[id] = { id: id, name: "🔥 " + specialOffer.name, basePrice: specialOffer.basePrice, qty: 1, pointsPercent: 0 };
-            } else { cart[id].qty++; }
-            updateCartBar();
-            renderSpecialOfferCustomer(); 
-        }
-
-        function updateUserSessionDisplay() {
-            if (!currentUser) return;
-            let cust = customers.find(c => c.phone === currentUser.phone);
-            let pts = cust ? cust.points : 0;
-            document.getElementById('userNameDisplay').innerText = currentUser.name;
-            document.getElementById('userPoints').innerText = pts;
-        }
-
-        function openEditProfile() {
-            document.getElementById('regModalTitle').innerText = "تعديل بيانات الحساب ⚙️";
-            document.getElementById('regModalDesc').innerText = "قم بتحديث معلوماتك وعنوانك بكل سهولة:";
-            if(currentUser) {
-                document.getElementById('regName').value = currentUser.name;
-                document.getElementById('regPhone').value = currentUser.phone;
-                document.getElementById('regAddress').value = currentUser.address || '';
-                document.getElementById('regArea').value = currentUser.area || 'owaina';
-            }
-            document.getElementById('cancelEditBtn').style.display = 'block'; 
-            document.getElementById('registerModal').style.display = 'flex';
-        }
-
-        function closeRegisterModal() {
-            if (currentUser && currentUser.address) {
-                document.getElementById('registerModal').style.display = 'none';
-            } else { alert("يجب إكمال تسجيل البيانات أولاً!"); }
-        }
-
-        function verifyAndRegister() {
-            let name = document.getElementById('regName').value.trim();
-            let phone = document.getElementById('regPhone').value.trim();
-            let address = document.getElementById('regAddress').value.trim();
-            let area = document.getElementById('regArea').value;
-
-            // تم فصل رسائل التنبيه لتكون واضحة جداً للمستخدم
-            if (!name) {
-                alert("يرجى إدخال الاسم الكريم!");
-                return;
-            }
-            if (!phone || phone.length < 5) {
-                alert("يرجى إدخال رقم الهاتف بشكل صحيح (5 أرقام على الأقل)!");
-                return;
-            }
-            if (!address) {
-                alert("يرجى إدخال العنوان التفصيلي لتتمكن من استلام الطلبات!");
-                return;
-            }
-
-            currentUser = { name, phone, address, area };
-            localStorage.setItem('moaath_current_user', JSON.stringify(currentUser));
-
-            let existing = customers.find(c => c.phone === phone);
-            if (!existing) { 
-                customers.push({ name, phone, points: 0 }); 
-            } else { 
-                existing.name = name; 
-            }
-            
-            localStorage.setItem('moaath_customers', JSON.stringify(customers));
-            document.getElementById('registerModal').style.display = 'none';
-            updateUserSessionDisplay();
-            alert("تم حفظ بياناتك بنجاح!");
-        }
-
-        function saveProducts() { localStorage.setItem('moaath_store_products', JSON.stringify(products)); }
         function filterProducts() { renderProducts(document.getElementById('searchInput').value); }
 
         function renderProducts(filterText = '') {
@@ -950,6 +827,94 @@
             });
         }
 
+        function renderSpecialOfferCustomer() {
+            let container = document.getElementById('specialOfferContainer');
+            if (specialOffer.active) {
+                let id = specialOffer.id;
+                let finalPrice = specialOffer.basePrice * exchangeRate;
+                let finalOldPrice = specialOffer.baseOldPrice * exchangeRate;
+                let imgSrc = specialOffer.image || 'https://via.placeholder.com/150?text=Special+Offer';
+                
+                document.getElementById('soDisplayImg').src = imgSrc;
+                document.getElementById('soDisplayName').innerText = specialOffer.name;
+                document.getElementById('soDisplayPrice').innerText = finalPrice + ' ل.س';
+                document.getElementById('soDisplayOldPrice').innerText = finalOldPrice + ' ل.س';
+                
+                let cartQty = cart[id] ? cart[id].qty : 0;
+                let actionHtml = '';
+                if (cartQty > 0) {
+                    actionHtml = `
+                        <div class="qty-controls" style="width: 100px;">
+                            <button class="qty-btn" onclick="changeCartQty('${id}', -1)">-</button>
+                            <span class="qty-text">${cartQty}</span>
+                            <button class="qty-btn" onclick="changeCartQty('${id}', 1)">+</button>
+                        </div>
+                    `;
+                } else {
+                    actionHtml = `<button class="btn" onclick="addSpecialOfferToCart()" style="padding: 5px; font-size: 11px;">إضافة للسلة 🛒</button>`;
+                }
+                document.getElementById('soActionContainer').innerHTML = actionHtml;
+                container.style.display = 'flex';
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        // --- وظائف الحساب المحلي للزبون ---
+        function updateUserSessionDisplay() {
+            if (!currentUser) return;
+            let cust = customers.find(c => c.phone === currentUser.phone);
+            let pts = cust ? cust.points : 0;
+            document.getElementById('userNameDisplay').innerText = currentUser.name;
+            document.getElementById('userPoints').innerText = pts;
+        }
+
+        function openEditProfile() {
+            document.getElementById('regModalTitle').innerText = "تعديل بيانات الحساب ⚙️";
+            document.getElementById('regModalDesc').innerText = "قم بتحديث معلوماتك وعنوانك بكل سهولة:";
+            if(currentUser) {
+                document.getElementById('regName').value = currentUser.name;
+                document.getElementById('regPhone').value = currentUser.phone;
+                document.getElementById('regAddress').value = currentUser.address || '';
+                document.getElementById('regArea').value = currentUser.area || 'owaina';
+            }
+            document.getElementById('cancelEditBtn').style.display = 'block'; 
+            document.getElementById('registerModal').style.display = 'flex';
+        }
+
+        function closeRegisterModal() {
+            if (currentUser && currentUser.address) {
+                document.getElementById('registerModal').style.display = 'none';
+            } else { alert("يجب إكمال تسجيل البيانات أولاً!"); }
+        }
+
+        function verifyAndRegister() {
+            let name = document.getElementById('regName').value.trim();
+            let phone = document.getElementById('regPhone').value.trim();
+            let address = document.getElementById('regAddress').value.trim();
+            let area = document.getElementById('regArea').value;
+
+            if (!name) { alert("يرجى إدخال الاسم الكريم!"); return; }
+            if (!phone || phone.length < 5) { alert("يرجى إدخال رقم الهاتف بشكل صحيح!"); return; }
+            if (!address) { alert("يرجى إدخال العنوان التفصيلي لتتمكن من استلام الطلبات!"); return; }
+
+            currentUser = { name, phone, address, area };
+            localStorage.setItem('moaath_current_user', JSON.stringify(currentUser));
+
+            let existing = customers.find(c => c.phone === phone);
+            if (!existing) { 
+                customers.push({ name, phone, points: 0 }); 
+            } else { 
+                existing.name = name; 
+            }
+            db.ref('customers').set(customers); // الحفظ السحابي
+            
+            document.getElementById('registerModal').style.display = 'none';
+            updateUserSessionDisplay();
+            alert("تم حفظ بياناتك بنجاح!");
+        }
+
+        // --- السلة والطلبات ---
         function addToCart(productId) {
             let p = products.find(x => x.id === productId);
             if (!cart[productId]) {
@@ -960,8 +925,16 @@
                 if (cart[productId].qty < p.stock) { cart[productId].qty++; } 
                 else { alert("عذراً، لا يتوفر المزيد من هذا المنتج في المخزون!"); return; }
             }
-            updateCartBar();
-            renderProducts(); 
+            updateCartBar(); renderProducts(); 
+        }
+
+        function addSpecialOfferToCart() {
+            if (!specialOffer.active) return;
+            let id = specialOffer.id;
+            if (!cart[id]) {
+                cart[id] = { id: id, name: "🔥 " + specialOffer.name, basePrice: specialOffer.basePrice, qty: 1, pointsPercent: 0 };
+            } else { cart[id].qty++; }
+            updateCartBar(); renderSpecialOfferCustomer(); 
         }
 
         function updateCartBar() {
@@ -1025,18 +998,11 @@
                 cart[id].qty += delta;
                 if (cart[id].qty <= 0) delete cart[id];
             }
-            updateCartBar(); 
-            renderCartItems();
-            renderProducts(); 
-            renderSpecialOfferCustomer(); 
+            updateCartBar(); renderCartItems(); renderProducts(); renderSpecialOfferCustomer(); 
         }
 
         function removeCartItem(id) { 
-            delete cart[id]; 
-            updateCartBar(); 
-            renderCartItems(); 
-            renderProducts(); 
-            renderSpecialOfferCustomer(); 
+            delete cart[id]; updateCartBar(); renderCartItems(); renderProducts(); renderSpecialOfferCustomer(); 
         }
 
         function openCheckout() {
@@ -1110,15 +1076,15 @@
                           `📌 *لإدارة الفاتورة وتأكيدها بنقرة واحدة، اضغط هنا:*\n${magicLink}`;
 
             cart = {}; 
-            updateCartBar(); closeCheckout(); 
-            renderProducts(); 
-            renderSpecialOfferCustomer();
+            updateCartBar(); closeCheckout(); renderProducts(); renderSpecialOfferCustomer();
 
             let adminPhone = "+963965461504";
             window.open(`https://api.whatsapp.com/send?phone=${adminPhone}&text=${encodeURIComponent(message)}`, '_blank');
             setTimeout(() => { alert(`تم إرسال الطلب بنجاح. سيتم إضافة ${earnedPoints} نقطة هدية لرصيدك فور تأكيد الإدارة للطلب!`); }, 1500);
         }
 
+
+        // --- لوحة تحكم الإدارة הסحابية ---
         let tapCount = 0;
         document.getElementById('adminTrigger').addEventListener('click', () => {
             tapCount++;
@@ -1162,8 +1128,6 @@
         function renderAdminOrders() {
             let listDiv = document.getElementById('adminOrdersList');
             listDiv.innerHTML = '';
-            let pendingOrders = getSafeStorage('moaath_pending_orders', []);
-
             if (pendingOrders.length === 0) {
                 listDiv.innerHTML = '<p style="text-align:center; color:#888; font-size:12px;">لا توجد فواتير معلقة حالياً</p>';
                 return;
@@ -1185,7 +1149,7 @@
                             <strong style="color:var(--gold-color); font-size:14px;">الزبون: ${order.name}</strong>
                             <strong style="color:#00ff00;">${order.total} ل.س</strong>
                         </div>
-                        <div style="color:#aaa; margin-bottom:5px;">📱 هاتف: ${order.phone} | 🎁 نقاط مكتسبة: <span style="color:#fff;">${order.earnedPoints || 0}</span></div>
+                        <div style="color:#aaa; margin-bottom:5px;">📱 هاتف: ${order.phone} | 🎁 نقاط ستضاف: <span style="color:#fff;">${order.earnedPoints || 0}</span></div>
                         <div style="color:#fff; margin-bottom:10px; line-height:1.6;">${itemsNames.join('<br>')}</div>
                         <div style="display:flex; gap:10px;">
                             <button class="btn" style="background:#25d366; color:#000; flex:1;" onclick="confirmOrder(${order.id})">✅ تأكيد وخصم</button>
@@ -1197,11 +1161,11 @@
         }
 
         function confirmOrder(orderId) {
-            let pendingOrders = getSafeStorage('moaath_pending_orders', []);
             let orderIndex = pendingOrders.findIndex(o => o.id === orderId);
             if(orderIndex === -1) return;
             let order = pendingOrders[orderIndex];
 
+            // خصم الكميات
             let items = order.cartStr.split('_');
             items.forEach(item => {
                 let parts = item.split('-');
@@ -1213,8 +1177,9 @@
                     if (prod.stock < 0) prod.stock = 0;
                 }
             });
-            saveProducts();
+            db.ref('products').set(products);
 
+            // إضافة النقاط للزبون
             let earnedPts = order.earnedPoints || 0;
             let custIndex = customers.findIndex(c => c.phone === order.phone);
             if (custIndex !== -1) {
@@ -1222,14 +1187,12 @@
             } else {
                 customers.push({ name: order.name, phone: order.phone, points: earnedPts });
             }
-            localStorage.setItem('moaath_customers', JSON.stringify(customers));
+            db.ref('customers').set(customers);
             
+            // إزالة الفاتورة
             pendingOrders.splice(orderIndex, 1);
-            localStorage.setItem('moaath_pending_orders', JSON.stringify(pendingOrders));
+            db.ref('pendingOrders').set(pendingOrders);
             
-            renderAdminOrders(); renderProducts(); renderAdminProductsList(); renderAdminShortages(); renderAdminCustomersList();
-            if (currentUser && currentUser.phone === order.phone) { updateUserSessionDisplay(); }
-
             let custPhone = order.phone;
             if (custPhone.startsWith('09')) custPhone = custPhone.replace(/^0/, '+963');
             let msg = `أهلاً بك ${order.name} 🌹\nتم تأكيد فاتورتك بنجاح، وتمت إضافة ${earnedPts} نقطة هدية لرصيدك!\nسيتم توصيل طلبك قريباً.\n\n~متجر معاذ~`;
@@ -1239,20 +1202,69 @@
         function cancelOrder(orderId) {
             if(!confirm("هل أنت متأكد من إلغاء هذا الطلب وحذفه؟")) return;
             
-            let pendingOrders = getSafeStorage('moaath_pending_orders', []);
             let orderIndex = pendingOrders.findIndex(o => o.id === orderId);
             if(orderIndex === -1) return;
             let order = pendingOrders[orderIndex];
 
             pendingOrders.splice(orderIndex, 1);
-            localStorage.setItem('moaath_pending_orders', JSON.stringify(pendingOrders));
-            
-            renderAdminOrders();
+            db.ref('pendingOrders').set(pendingOrders);
 
             let custPhone = order.phone;
             if (custPhone.startsWith('09')) custPhone = custPhone.replace(/^0/, '+963');
             let msg = `أهلاً بك ${order.name}،\nنعتذر منك، تم إلغاء طلبك الأخير من متجر معاذ. يرجى التواصل معنا لأي استفسار.\n\n~متجر معاذ~`;
             window.open(`https://api.whatsapp.com/send?phone=${custPhone}&text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function populateCategorySelects() {
+            let addSelect = document.getElementById('newProdCat');
+            let editSelect = document.getElementById('editProdCat');
+            if(addSelect && editSelect) {
+                addSelect.innerHTML = ''; editSelect.innerHTML = '';
+                categories.forEach(cat => {
+                    let option = `<option value="${cat}">${cat}</option>`;
+                    addSelect.innerHTML += option; editSelect.innerHTML += option;
+                });
+            }
+        }
+
+        function addCategory() {
+            let newCat = document.getElementById('newCategoryInput').value.trim();
+            if (newCat && !categories.includes(newCat) && newCat !== 'الكل') {
+                categories.push(newCat);
+                db.ref('categories').set(categories);
+                document.getElementById('newCategoryInput').value = '';
+            }
+        }
+
+        function deleteCategory(index) {
+            if(confirm("هل أنت متأكد من حذف هذا التصنيف؟")) {
+                categories.splice(index, 1);
+                db.ref('categories').set(categories);
+                if(currentCategory === categories[index]) setCategory('الكل', document.querySelector('.cat-btn'));
+            }
+        }
+
+        function saveSpecialOffer() {
+            specialOffer.active = document.getElementById('soActiveInput').value === 'true';
+            specialOffer.name = document.getElementById('soNameInput').value.trim() || 'عرض خاص';
+            specialOffer.baseOldPrice = parseFloat(document.getElementById('soOldPriceInput').value) || 0;
+            specialOffer.basePrice = parseFloat(document.getElementById('soPriceInput').value) || 0;
+            specialOffer.image = document.getElementById('soImgInput').value.trim();
+            db.ref('specialOffer').set(specialOffer);
+            alert("تم حفظ إعدادات العرض الخاص بالسحابة!");
+        }
+
+        function updateExchangeRate() {
+            exchangeRate = parseFloat(document.getElementById('exchangeRateInput').value) || 1;
+            db.ref('settings').update({ exchangeRate: exchangeRate });
+            alert("تم تحديث سعر الصرف للسحابة!");
+        }
+
+        function updateDeliveryFees() {
+            deliveryFeeOwaina = parseInt(document.getElementById('feeOwainaInput').value) || 5000;
+            deliveryFeeOther = parseInt(document.getElementById('feeOtherInput').value) || 7000;
+            db.ref('settings').update({ deliveryFeeOwaina: deliveryFeeOwaina, deliveryFeeOther: deliveryFeeOther });
+            alert("تم تحديث أسعار التوصيل للسحابة!");
         }
 
         function renderAdminShortages() {
@@ -1282,21 +1294,6 @@
             let counter = 1;
             shortages.forEach(p => { text += `${counter}- ${p.name} (المتبقي: ${p.stock})\n`; counter++; });
             window.open(`https://api.whatsapp.com/send?phone=+963965461504&text=${encodeURIComponent(text)}`, '_blank');
-        }
-
-        function updateExchangeRate() {
-            exchangeRate = parseFloat(document.getElementById('exchangeRateInput').value) || 1;
-            localStorage.setItem('moaath_exchange_rate', exchangeRate);
-            renderProducts(); renderSpecialOfferCustomer(); updateCartBar();
-            alert("تم تحديث سعر الصرف بنجاح!");
-        }
-
-        function updateDeliveryFees() {
-            deliveryFeeOwaina = parseInt(document.getElementById('feeOwainaInput').value) || 5000;
-            deliveryFeeOther = parseInt(document.getElementById('feeOtherInput').value) || 7000;
-            localStorage.setItem('moaath_fee_owaina', deliveryFeeOwaina);
-            localStorage.setItem('moaath_fee_other', deliveryFeeOther);
-            setupDeliveryOptions(); alert("تم تحديث أسعار التوصيل بنجاح!");
         }
 
         function renderAdminCustomersList() {
@@ -1330,18 +1327,15 @@
         function updateSingleCustomerPoints(index) {
             let newPts = parseInt(document.getElementById(`custPoints_${index}`).value) || 0;
             customers[index].points = newPts;
-            localStorage.setItem('moaath_customers', JSON.stringify(customers));
-            if (currentUser && currentUser.phone === customers[index].phone) { updateUserSessionDisplay(); }
-            alert(`تم تحديث نقاط الزبون بنجاح!`);
+            db.ref('customers').set(customers);
+            alert(`تم تحديث نقاط الزبون سحابياً!`);
         }
 
         function resetAllCustomersPoints() {
-            if(confirm("هل أنت متأكد من تصفير نقاط جميع الزبائن؟ لا يمكن التراجع عن هذا الإجراء!")) {
+            if(confirm("هل أنت متأكد من تصفير نقاط جميع الزبائن؟ لا يمكن التراجع!")) {
                 customers.forEach(c => c.points = 0);
-                localStorage.setItem('moaath_customers', JSON.stringify(customers));
-                renderAdminCustomersList();
-                if(currentUser) updateUserSessionDisplay();
-                alert("تم تصفير جميع النقاط بنجاح!");
+                db.ref('customers').set(customers);
+                alert("تم تصفير جميع النقاط بالسحابة!");
             }
         }
 
@@ -1354,11 +1348,11 @@
             let pointsPercent = parseFloat(document.getElementById('newProdPointsPercent').value) || 0;
             let image = document.getElementById('newProdImg').value.trim();
 
-            if(!name || isNaN(basePrice)) { alert("يرجى إدخال اسم المنتج والسعر الأساسي بشكل صحيح!"); return; }
+            if(!name || isNaN(basePrice)) { alert("يرجى إدخال اسم المنتج والسعر الأساسي!"); return; }
 
             let newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
             products.push({ id: newId, name, category, basePrice, stock, minStock, pointsPercent, image });
-            saveProducts();
+            db.ref('products').set(products);
             
             document.getElementById('newProdName').value = '';
             document.getElementById('newProdPrice').value = '';
@@ -1366,23 +1360,19 @@
             document.getElementById('newProdImg').value = '';
             document.getElementById('newProdImageFile').value = '';
             document.getElementById('newProdImgPreview').innerHTML = '';
-            
-            renderProducts(); renderAdminProductsList(); renderAdminShortages();
-            alert("تم إضافة المنتج بنجاح!");
+            alert("تم رفع المنتج للسحابة!");
         }
 
         function renderAdminProductsList() {
             let listDiv = document.getElementById('adminProductsList');
             listDiv.innerHTML = '';
-            
             let searchText = (document.getElementById('adminProductSearch').value || '').toLowerCase();
             let filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchText));
 
             if (filteredProducts.length === 0) {
-                listDiv.innerHTML = '<p style="text-align:center; color:#888; font-size:12px;">لا يوجد منتجات مطابقة للبحث</p>';
+                listDiv.innerHTML = '<p style="text-align:center; color:#888; font-size:12px;">لا توجد منتجات</p>';
                 return;
             }
-
             let grouped = {};
             filteredProducts.forEach(p => {
                 if (!grouped[p.category]) grouped[p.category] = [];
@@ -1423,7 +1413,6 @@
         function openEditProduct(id) {
             let p = products.find(x => x.id === id);
             if (!p) return;
-            
             document.getElementById('editProdId').value = p.id;
             document.getElementById('editProdName').value = p.name;
             document.getElementById('editProdCat').value = p.category;
@@ -1434,7 +1423,6 @@
             document.getElementById('editProdImg').value = p.image || '';
             document.getElementById('editProdImageFile').value = '';
             document.getElementById('editImgPreview').innerHTML = p.image ? `<img src="${p.image}" style="width:60px; height:60px; border-radius:5px; object-fit:cover;">` : '';
-            
             document.getElementById('editProductModal').style.display = 'flex';
         }
 
@@ -1455,26 +1443,16 @@
             let pIndex = products.findIndex(x => x.id === id);
             if(pIndex !== -1) {
                 products[pIndex] = { id, name, category, basePrice, stock, minStock, pointsPercent, image };
-                saveProducts();
-                
-                if(cart[id]) {
-                    cart[id].name = name; cart[id].category = category;
-                    cart[id].basePrice = basePrice; cart[id].stock = stock; 
-                    cart[id].pointsPercent = pointsPercent; cart[id].image = image;
-                    updateCartBar();
-                }
-
-                renderProducts(); renderAdminProductsList(); renderAdminShortages();
+                db.ref('products').set(products);
                 closeEditProductModal();
-                alert("تم التعديل بنجاح!");
+                alert("تم تحديث المنتج بالسحابة!");
             }
         }
 
         function deleteProduct(id) {
             if(confirm("هل أنت متأكد من حذف هذا المنتج نهائياً من المتجر؟")) {
                 products = products.filter(p => p.id !== id);
-                saveProducts();
-                renderProducts(); renderAdminProductsList(); renderAdminShortages();
+                db.ref('products').set(products);
             }
         }
     </script>
