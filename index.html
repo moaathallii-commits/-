@@ -8,7 +8,7 @@
     <!-- ربط التطبيق بالهاتف (PWA) -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#121212" id="themeColorMeta">
-    <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/shop.png">
+    <link rel="apple-touch-icon" href="logo.png">
     
     <!-- مكتبات Firebase الأساسية -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
@@ -30,7 +30,7 @@
         body.light-mode {
             --bg-color: #F0F2F5;
             --card-bg: #FFFFFF;
-            --gold-color: #B8860B; /* ذهبي داكن ليناسب الخلفية البيضاء */
+            --gold-color: #B8860B; 
             --text-color: #1A1A1A;
             --gray-text: #666666;
             --border-color: #E0E0E0;
@@ -293,7 +293,6 @@
             color: var(--text-color);
         }
         
-        /* تصميم الإحصائيات */
         .stats-box {
             background: var(--bg-color);
             border: 1px solid var(--border-color);
@@ -326,12 +325,8 @@
             <button onclick="openEditProfile()" style="background:transparent; border:none; color:var(--gold-color); font-size:11px; cursor:pointer; padding:0;">(⚙️)</button>
         </span>
         <div style="display:flex; gap:10px; align-items:center;">
-            <!-- زر الوضع الليلي/النهاري -->
             <button onclick="toggleTheme()" id="themeBtn" style="background:transparent; border:none; font-size:18px; cursor:pointer; padding:0;">☀️</button>
-            
-            <!-- زر تثبيت التطبيق المخفي -->
             <button id="installBtn" onclick="installApp()" style="display:none; background:#25d366; color:#000; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer; box-shadow:0 0 5px rgba(37,211,102,0.5);">تثبيت التطبيق 📱</button>
-            
             <span style="color: var(--gold-color);">🎁 نقاطي: <b id="userPoints">0</b></span>
         </div>
     </div>
@@ -465,7 +460,6 @@
         <div class="modal-content">
             <h3 style="color:var(--gold-color); text-align:center; margin-top:0;">لوحة تحكم متجر معاذ</h3>
             
-            <!-- إحصائيات المبيعات (Dashboard) -->
             <h4 style="color:var(--gold-color); margin:5px 0;">📊 إحصائيات المتجر</h4>
             <div style="display:flex; gap:10px; margin-bottom:15px;">
                 <div class="stats-box" style="flex:1;">
@@ -484,20 +478,17 @@
 
             <hr style="border-color:var(--border-color); margin:15px 0;">
 
-            <!-- الفواتير الواردة -->
             <h4 style="color:var(--gold-color); margin:5px 0;">🧾 الفواتير الواردة</h4>
             <div id="adminOrdersList" style="max-height: 200px; overflow-y: auto; background:var(--bg-color); padding:5px; border-radius:5px; border:1px solid var(--border-color); margin-bottom:15px;"></div>
             
             <hr style="border-color:var(--border-color); margin:15px 0;">
             
-            <!-- النواقص -->
             <h4 style="color:var(--danger-color); margin:5px 0;">📉 إدارة النواقص (المواد التي تكاد تنفد)</h4>
             <div id="adminShortagesList" style="max-height: 140px; overflow-y: auto; background:var(--bg-color); padding:5px; border-radius:5px; border:1px solid var(--border-color); margin-bottom:10px;"></div>
             <button class="btn" onclick="sendShortagesWhatsApp()" style="background:#25d366; color:#000;">إرسال النواقص عبر واتساب 📱</button>
 
             <hr style="border-color:var(--border-color); margin:15px 0;">
 
-            <!-- إعدادات التسعير -->
             <h4 style="color:var(--gold-color); margin:5px 0;">⚙️ الإعدادات والتسعير</h4>
             <div class="form-group">
                 <label>سعر صرف الدولار (معامل التسعير):</label>
@@ -517,7 +508,6 @@
 
             <hr style="border-color:var(--border-color); margin:15px 0;">
 
-            <!-- إعدادات العرض الخاص -->
             <h4 style="color:var(--gold-color); margin:5px 0;">🌟 إعدادات العرض الخاص</h4>
             <div class="form-group">
                 <label>حالة العرض:</label>
@@ -550,7 +540,6 @@
 
             <hr style="border-color:var(--border-color); margin:15px 0;">
 
-            <!-- النسخ الاحتياطي والاستعادة -->
             <h4 style="color:var(--gold-color); margin:5px 0;">💾 النسخ الاحتياطي لبيانات المتجر</h4>
             <div style="display:flex; gap:5px; margin-bottom:10px;">
                 <button class="btn" onclick="exportBackup()" style="flex:1;">تحميل نسخة للهاتف 📥</button>
@@ -562,7 +551,6 @@
 
             <hr style="border-color:var(--border-color); margin:15px 0;">
 
-            <!-- إدارة التصنيفات -->
             <h4 style="color:var(--gold-color); margin:5px 0;">🏷️ إدارة التصنيفات</h4>
             <div style="display:flex; gap:5px; margin-bottom: 10px;">
                 <input type="text" id="newCategoryInput" class="form-control" placeholder="اسم التصنيف الجديد">
@@ -572,7 +560,6 @@
 
             <hr style="border-color:var(--border-color); margin:15px 0;">
 
-            <!-- إدارة نقاط الزبائن -->
             <h4 style="color:var(--gold-color); margin:5px 0;">👥 إدارة نقاط الزبائن</h4>
             <button class="btn btn-danger" onclick="resetAllCustomersPoints()" style="margin-bottom:10px; width:100%;">تصفير نقاط جميع الزبائن 🗑️</button>
             <input type="text" id="adminCustomerSearch" class="form-control" placeholder="🔍 ابحث عن زبون..." oninput="renderAdminCustomersList()" style="margin-bottom: 10px;">
@@ -580,7 +567,6 @@
 
             <hr style="border-color:var(--border-color); margin:15px 0;">
 
-            <!-- إضافة منتج -->
             <h4 style="color:var(--gold-color); margin:5px 0;">➕ إضافة منتج جديد</h4>
             <div class="form-group">
                 <label>الاسم:</label>
@@ -616,7 +602,6 @@
             </div>
             <button class="btn" onclick="addNewProduct()" style="margin-bottom:15px;">إضافة المنتج</button>
 
-            <!-- إدارة المنتجات -->
             <h4 style="color:var(--gold-color); margin:5px 0;">📦 إدارة المنتجات (تعديل وحذف)</h4>
             <input type="text" id="adminProductSearch" class="form-control" placeholder="🔍 ابحث عن منتج..." oninput="renderAdminProductsList()" style="margin-bottom: 10px;">
             <div id="adminProductsList" style="max-height: 250px; overflow-y: auto; background:var(--bg-color); border:1px solid var(--border-color); padding:5px; border-radius:5px; margin-bottom:10px;"></div>
@@ -668,7 +653,6 @@
     </div>
 
     <script>
-        // --- ميزة الوضع الليلي والنهاري ---
         let currentTheme = localStorage.getItem('moaath_theme') || 'dark';
         if (currentTheme === 'light') { document.body.classList.add('light-mode'); document.getElementById('themeBtn').innerText = '🌙'; }
         
@@ -680,7 +664,6 @@
             document.getElementById('themeColorMeta').content = isLight ? '#F0F2F5' : '#121212';
         }
 
-        // --- ميزة PWA (التثبيت كـ تطبيق) ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(err => console.log('PWA Error', err)); });
         }
@@ -737,7 +720,7 @@
         let deliveryFeeOther = 7000;
         let customers = [];
         let pendingOrders = [];
-        let storeStats = { totalSales: 0, canceledOrders: 0, productsSold: {} }; // متغير الإحصائيات الجديد
+        let storeStats = { totalSales: 0, canceledOrders: 0, productsSold: {} }; 
         
         let currentUser = getSafeStorage('moaath_current_user', null);
         let currentCategory = 'الكل';
@@ -770,7 +753,6 @@
                 alert("تم استلام فاتورة جديدة وحفظها في النظام السحابي بنجاح!");
             }
 
-            // الاستماع اللحظي
             db.ref('categories').on('value', snap => {
                 categories = snap.val() || ['غذائيات', 'منظفات', 'مشروبات باردة وساخنة', 'نقرشات'];
                 renderCategoriesBar();
@@ -805,7 +787,6 @@
                 if(document.getElementById('adminDashboard').style.display === 'flex') renderAdminOrders();
             });
 
-            // استماع الإحصائيات
             db.ref('statistics').on('value', snap => {
                 storeStats = snap.val() || { totalSales: 0, canceledOrders: 0, productsSold: {} };
                 if(document.getElementById('adminDashboard').style.display === 'flex') renderAdminStats();
@@ -823,7 +804,6 @@
             }
         };
 
-        // --- دوال الزبون ---
         function setupDeliveryOptions() {
             let select = document.getElementById('regArea');
             if(select) {
@@ -848,7 +828,9 @@
         function renderSpecialOfferCustomer() {
             let container = document.getElementById('specialOfferContainer');
             if (specialOffer.active) {
-                let id = specialOffer.id; let finalPrice = specialOffer.basePrice * exchangeRate; let finalOldPrice = specialOffer.baseOldPrice * exchangeRate;
+                let id = specialOffer.id; 
+                let finalPrice = Math.round((specialOffer.basePrice * exchangeRate) / 5) * 5; 
+                let finalOldPrice = Math.round((specialOffer.baseOldPrice * exchangeRate) / 5) * 5;
                 document.getElementById('soDisplayImg').src = specialOffer.image || 'https://via.placeholder.com/150?text=Offer';
                 document.getElementById('soDisplayName').innerText = specialOffer.name;
                 document.getElementById('soDisplayPrice').innerText = finalPrice + ' ل.س';
@@ -868,7 +850,8 @@
             let filtered = products.filter(p => (currentCategory === 'الكل' || p.category === currentCategory) && p.name.toLowerCase().includes(filterText.toLowerCase()));
             if (filtered.length === 0) { grid.innerHTML = '<p style="grid-column: span 2; text-align:center; color:var(--gray-text);">لا توجد منتجات</p>'; return; }
             filtered.forEach(p => {
-                let finalPrice = p.basePrice * exchangeRate; let isOut = p.stock <= 0;
+                let finalPrice = Math.round((p.basePrice * exchangeRate) / 5) * 5; 
+                let isOut = p.stock <= 0;
                 let imgSrc = p.image && p.image.trim() !== '' ? p.image : 'https://via.placeholder.com/150?text=Store';
                 let cartQty = cart[p.id] ? cart[p.id].qty : 0;
                 let actionHtml = isOut && cartQty === 0 ? '<button class="btn btn-out" disabled>نفذت الكمية</button>' : (cartQty > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeCartQty('${p.id}', -1)">-</button><span class="qty-text">${cartQty}</span><button class="qty-btn" onclick="changeCartQty('${p.id}', 1)">+</button></div>` : `<button class="btn" onclick="addToCart(${p.id})">إضافة للسلة</button>`);
@@ -894,7 +877,10 @@
 
         function updateCartBar() {
             let count = 0; let total = 0;
-            for (let id in cart) { count += cart[id].qty; total += (cart[id].basePrice * exchangeRate) * cart[id].qty; }
+            for (let id in cart) { 
+                count += cart[id].qty; 
+                total += Math.round((cart[id].basePrice * exchangeRate) / 5) * 5 * cart[id].qty; 
+            }
             const bar = document.getElementById('cartBar');
             if (count > 0) { bar.style.display = 'flex'; document.getElementById('cartCount').innerText = count; document.getElementById('cartTotal').innerText = total; } 
             else { bar.style.display = 'none'; closeCartModal(); }
@@ -907,7 +893,9 @@
             let list = document.getElementById('cartItemsList'); list.innerHTML = ''; let total = 0; let keys = Object.keys(cart);
             if (keys.length === 0) { list.innerHTML = '<p style="text-align:center; color:var(--gray-text);">السلة فارغة</p>'; document.getElementById('cartModalTotal').innerText = '0 ل.س'; return; }
             keys.forEach(id => {
-                let item = cart[id]; let itemTotal = (item.basePrice * exchangeRate) * item.qty; total += itemTotal;
+                let item = cart[id]; 
+                let itemTotal = Math.round((item.basePrice * exchangeRate) / 5) * 5 * item.qty; 
+                total += itemTotal;
                 list.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-color); font-size:12px;"><div style="flex:1; text-align:right;"><div style="font-weight:bold; color:var(--text-color);">${item.name}</div><div style="color:var(--gold-color);">${itemTotal} ل.س</div></div><div style="display:flex; align-items:center; gap:6px;"><button class="btn" onclick="changeCartQty('${id}', -1)" style="width:28px; height:28px; padding:0; font-size:14px;">-</button><span><b style="color:var(--text-color); font-size:14px;">${item.qty}</b></span><button class="btn" onclick="changeCartQty('${id}', 1)" style="width:28px; height:28px; padding:0; font-size:14px;">+</button><button class="btn btn-danger" onclick="removeCartItem('${id}')" style="width:auto; padding:4px 8px; font-size:10px;">حذف</button></div></div>`;
             });
             document.getElementById('cartModalTotal').innerText = total + ' ل.س';
@@ -935,7 +923,10 @@
         function closeCheckout() { document.getElementById('checkoutModal').style.display = 'none'; }
 
         function updateCartTotal() {
-            let subTotal = 0; for (let id in cart) { subTotal += (cart[id].basePrice * exchangeRate) * cart[id].qty; }
+            let subTotal = 0; 
+            for (let id in cart) { 
+                subTotal += Math.round((cart[id].basePrice * exchangeRate) / 5) * 5 * cart[id].qty; 
+            }
             let delivery = (currentUser && currentUser.area === 'other') ? deliveryFeeOther : deliveryFeeOwaina;
             document.getElementById('subTotal').innerText = subTotal + ' ل.س';
             document.getElementById('deliveryCost').innerText = delivery + ' ل.س';
@@ -946,7 +937,8 @@
         function sendOrderWhatsApp() {
             let itemsText = ""; let subTotal = 0; let earnedPoints = 0; let counter = 1; let minCart = [];
             for (let id in cart) {
-                let itemTotal = (cart[id].basePrice * exchangeRate) * cart[id].qty; subTotal += itemTotal;
+                let itemTotal = Math.round((cart[id].basePrice * exchangeRate) / 5) * 5 * cart[id].qty; 
+                subTotal += itemTotal;
                 earnedPoints += Math.floor(itemTotal * ((cart[id].pointsPercent || 0) / 100));
                 itemsText += `${counter}- ${cart[id].name} (الكمية: ${cart[id].qty}) = ${itemTotal} ل.س\n`;
                 minCart.push(`${id}-${cart[id].qty}`); counter++;
@@ -993,7 +985,6 @@
             document.getElementById('registerModal').style.display = 'none'; updateUserSessionDisplay(); alert("تم الحفظ!");
         }
 
-        // --- دوال الإدارة ---
         let tapCount = 0;
         document.getElementById('adminTrigger').addEventListener('click', () => {
             tapCount++; if (tapCount >= 5) { tapCount = 0; document.getElementById('adminModal').style.display = 'flex'; }
@@ -1010,7 +1001,6 @@
         }
         function closeDashboard() { document.getElementById('adminDashboard').style.display = 'none'; }
 
-        // --- نظام الإحصائيات (الداشبورد) ---
         function renderAdminStats() {
             document.getElementById('statTotalSales').innerText = (storeStats.totalSales || 0) + ' ل.س';
             document.getElementById('statCanceled').innerText = storeStats.canceledOrders || 0;
@@ -1032,27 +1022,24 @@
             let orderIndex = pendingOrders.findIndex(o => o.id === orderId); if(orderIndex === -1) return;
             let order = pendingOrders[orderIndex];
 
-            // 1. خصم وتحديث إحصائيات المبيعات
             storeStats.totalSales = (storeStats.totalSales || 0) + parseFloat(order.total);
             if(!storeStats.productsSold) storeStats.productsSold = {};
             
             let items = order.cartStr.split('_');
             items.forEach(item => {
                 let parts = item.split('-'); let pId = parts[0]; let pQty = parseInt(parts[1]);
-                storeStats.productsSold[pId] = (storeStats.productsSold[pId] || 0) + pQty; // زيادة مباع المنتج
+                storeStats.productsSold[pId] = (storeStats.productsSold[pId] || 0) + pQty; 
                 let prod = products.find(p => String(p.id) === String(pId));
                 if (prod) { prod.stock -= pQty; if (prod.stock < 0) prod.stock = 0; }
             });
             db.ref('products').set(products);
             db.ref('statistics').set(storeStats);
 
-            // 2. إضافة النقاط
             let earnedPts = order.earnedPoints || 0;
             let custIndex = customers.findIndex(c => c.phone === order.phone);
             if (custIndex !== -1) customers[custIndex].points += earnedPts; else customers.push({ name: order.name, phone: order.phone, points: earnedPts });
             db.ref('customers').set(customers);
             
-            // 3. مسح الفاتورة
             pendingOrders.splice(orderIndex, 1); db.ref('pendingOrders').set(pendingOrders);
             
             let msg = `أهلاً بك ${order.name} 🌹\nتم تأكيد فاتورتك بنجاح وإضافة ${earnedPts} نقطة هدية!\nسيتم توصيل طلبك قريباً.`;
@@ -1064,7 +1051,6 @@
             let orderIndex = pendingOrders.findIndex(o => o.id === orderId); if(orderIndex === -1) return;
             let order = pendingOrders[orderIndex];
 
-            // تحديث إحصائيات الإلغاء
             storeStats.canceledOrders = (storeStats.canceledOrders || 0) + 1;
             db.ref('statistics').set(storeStats);
 
@@ -1074,7 +1060,6 @@
             window.open(`https://api.whatsapp.com/send?phone=${order.phone.replace(/^0/, '+963')}&text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // --- نظام النسخ الاحتياطي (Backup) ---
         function exportBackup() {
             let backupData = { categories, specialOffer, products, customers, settings: {exchangeRate, deliveryFeeOwaina, deliveryFeeOther}, storeStats };
             let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
@@ -1105,7 +1090,6 @@
             reader.readAsText(file);
         }
 
-        // باقي دوال الإدارة
         function populateCategorySelects() {
             let addSelect = document.getElementById('newProdCat'); let editSelect = document.getElementById('editProdCat');
             if(addSelect && editSelect) { addSelect.innerHTML = ''; editSelect.innerHTML = ''; categories.forEach(cat => { let opt = `<option value="${cat}">${cat}</option>`; addSelect.innerHTML += opt; editSelect.innerHTML += opt; }); }
