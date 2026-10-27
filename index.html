@@ -468,10 +468,12 @@
                     <div class="stats-value" id="statCanceled" style="color:var(--danger-color);">0</div>
                 </div>
             </div>
-            <div class="stats-box">
+            <div class="stats-box" style="margin-bottom:10px;">
                 <div style="font-size:11px; color:var(--gray-text);">أكثر المنتجات مبيعاً</div>
                 <div class="stats-value" id="statBestSeller" style="font-size:14px; color:#fff;">لا يوجد بيانات بعد</div>
             </div>
+            <!-- زر تصفير الإحصائيات الجديد -->
+            <button class="btn btn-danger" onclick="resetStoreStatistics()" style="margin-bottom:15px; width:100%;">تصفير إحصائيات المتجر 🗑️</button>
 
             <hr style="border-color:var(--border-color); margin:15px 0;">
 
@@ -1060,7 +1062,16 @@
             document.getElementById('statBestSeller').innerText = bestName;
         }
 
-        // --- دالة عرض الفواتير الواردة في الإدارة ---
+        // --- دالة تصفير إحصائيات المتجر الجديدة ---
+        function resetStoreStatistics() {
+            if(confirm("هل أنت متأكد من تصفير جميع إحصائيات المتجر (إجمالي المبيعات، الطلبات الملغاة، والمباع من المنتجات)؟ لا يمكن التراجع!")) {
+                storeStats = { totalSales: 0, canceledOrders: 0, productsSold: {} };
+                db.ref('statistics').set(storeStats);
+                renderAdminStats();
+                alert("تم تصفير إحصائيات المتجر بنجاح بالسحابة!");
+            }
+        }
+
         function renderAdminOrders() {
             let listDiv = document.getElementById('adminOrdersList');
             if(!listDiv) return;
