@@ -227,8 +227,8 @@
             background: var(--gold-color);
             color: #fff;
             border: none;
-            width: 32px;
-            height: 32px;
+            width: 30px;
+            height: 30px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
@@ -236,8 +236,8 @@
         .qty-text {
             color: var(--text-color);
             font-weight: bold;
-            font-size: 14px;
-            padding: 0 10px;
+            font-size: 13px;
+            padding: 0 8px;
         }
         .cart-bar {
             position: fixed;
@@ -380,6 +380,9 @@
             margin-top: 5px;
             font-size: 11px;
             text-align: right;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         @keyframes pulse {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7); }
@@ -419,7 +422,7 @@
 
     <div class="container">
         <div id="specialOfferContainer" class="special-offer-banner" style="display: none;">
-            <img id="soDisplayImg" src="" class="special-offer-img">
+            <img id="soDisplayImg" src="" class="special-offer-img" loading="lazy">
             <div style="flex:1;">
                 <h3 style="color:var(--gold-color); font-size:14px; margin:0 0 4px 0;">🔥 عرض خاص!</h3>
                 <div id="soDisplayName" style="font-size:12px; margin-bottom:4px; font-weight:bold;"></div>
@@ -464,7 +467,7 @@
 
             <div id="compDetailsCard" class="comp-card" style="display: none;">
                 <h3 id="compTitleDisplay" style="color: var(--gold-color); margin: 0 0 8px 0; font-size: 15px;"></h3>
-                <img id="compImgDisplay" src="" style="width: 100%; max-height: 260px; object-fit: cover; border-radius: 8px; border: 1px solid var(--gold-color); margin-bottom: 8px; display: none;">
+                <img id="compImgDisplay" src="" style="width: 100%; max-height: 260px; object-fit: cover; border-radius: 8px; border: 1px solid var(--gold-color); margin-bottom: 8px; display: none;" loading="lazy">
                 <p id="compDescDisplay" style="font-size: 13px; line-height: 1.6; margin: 0; white-space: pre-line;"></p>
             </div>
 
@@ -569,7 +572,6 @@
                 </div>
             </div>
 
-            <!-- الدفع حصراً عبر شام كاش -->
             <div style="background: rgba(212, 175, 55, 0.08); border: 1px dashed var(--gold-color); padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 12px;">
                 <div style="color: var(--gold-color); font-weight: bold; margin-bottom: 5px; text-align: center;">📱 الدفع حصراً عبر شام كاش (Sham Cash)</div>
                 <div style="margin-bottom: 4px;">👤 المستلم: <b style="color: var(--gold-color);">معاذ العلي</b></div>
@@ -736,9 +738,9 @@
                 </div>
             </div>
 
-            <!-- 4. قسم إدارة المنتجات وسعر الجملة -->
+            <!-- 4. قسم إدارة المنتجات (مع حقل تنبيه النواقص والبحث) -->
             <div id="productsTab" class="admin-tab" style="display: none;">
-                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">➕ إضافة / تعديل منتج (مع سعر الجملة)</h4>
+                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">➕ إضافة / تعديل منتج</h4>
                 <input type="hidden" id="editProductId">
                 <div class="form-group">
                     <label>اسم المنتج:</label>
@@ -757,7 +759,7 @@
                 <div class="stats-grid">
                     <div class="form-group">
                         <label>سعر الجملة ($):</label>
-                        <input type="number" step="0.01" id="prodWholesaleUSD" class="form-control" placeholder="خاص بزبائن الجملة">
+                        <input type="number" step="0.01" id="prodWholesaleUSD" class="form-control" placeholder="خاص بالجملة">
                     </div>
                     <div class="form-group">
                         <label>الكمية المتوفرة:</label>
@@ -766,13 +768,17 @@
                 </div>
                 <div class="stats-grid">
                     <div class="form-group">
+                        <label>تنبيه النواقص عند الكمية (مثال: 3):</label>
+                        <input type="number" id="prodAlertLimit" class="form-control" value="2">
+                    </div>
+                    <div class="form-group">
                         <label>نسبة النقاط (%):</label>
                         <input type="number" step="0.1" id="prodPointsPct" class="form-control" value="2">
                     </div>
-                    <div class="form-group">
-                        <label>التصنيف:</label>
-                        <select id="prodCategory" class="form-control"></select>
-                    </div>
+                </div>
+                <div class="form-group">
+                    <label>التصنيف:</label>
+                    <select id="prodCategory" class="form-control"></select>
                 </div>
                 <div class="form-group">
                     <label>صورة المنتج (تُضغط تلقائياً 550px - JPEG 0.80):</label>
@@ -808,12 +814,12 @@
                 </div>
                 <div class="stats-grid">
                     <div class="form-group">
-                        <label>نسبة النقاط (%):</label>
-                        <input type="number" step="0.1" id="soPointsPct" class="form-control" value="2">
-                    </div>
-                    <div class="form-group">
                         <label>سعر جملة العرض ($):</label>
                         <input type="number" step="0.01" id="soWholesaleUSD" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>نسبة النقاط (%):</label>
+                        <input type="number" step="0.1" id="soPointsPct" class="form-control" value="2">
                     </div>
                 </div>
                 <div class="form-group">
@@ -834,7 +840,9 @@
                 <div id="adminCategoriesList" style="margin-bottom: 12px;"></div>
 
                 <hr style="border-color: var(--border-color);">
-                <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">📋 قائمة المنتجات الحالية</h4>
+                <h4 style="color: var(--gold-color); margin: 10px 0 6px 0;">📋 قائمة المنتجات والتعليقات</h4>
+                <!-- شريط بحث المنتجات في الإدارة -->
+                <input type="text" id="adminSearchProd" class="search-box" placeholder="🔍 ابحث عن منتج لتعديله أو حذف تعليقاته..." oninput="renderAdminProducts()" style="margin-bottom: 8px; font-size: 11px;">
                 <div id="adminProductsList"></div>
             </div>
 
@@ -891,9 +899,9 @@
                 <button onclick="resetStatistics()" class="btn btn-danger">🗑️ تصفير سجل الإحصائيات</button>
             </div>
 
-            <!-- 6. قسم النواقص -->
+            <!-- 6. قسم النواقص (يعتمد على حد التنبيه لكل منتج) -->
             <div id="shortagesTab" class="admin-tab" style="display: none;">
-                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">⚠️ رصد المنتجات الناقصة (الكمية 2 أو أقل)</h4>
+                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">⚠️ رصد المنتجات الناقصة حسب حد التنبيه</h4>
                 <div id="shortagesList" style="margin-bottom: 12px;"></div>
                 <button onclick="sendShortagesWhatsApp()" class="btn">📲 إرسال قائمة النواقص عبر واتساب</button>
             </div>
@@ -901,7 +909,6 @@
     </div>
 
     <script>
-        /* ==================== 1. الثوابت وإعدادات Firebase ==================== */
         let adminWhatsAppNumber = "963965461504";
         let shamWalletIdGlobal = "da3e13cd8a2ef2af282445e148df9599";
         const ADMIN_PASSWORD = "MHA@1997//MOAATHS";
@@ -914,7 +921,6 @@
         }
         const db = firebase.database();
 
-        /* ==================== 2. المتغيرات العامة ==================== */
         let exchangeRate = 15000;
         let deliveryDriverPhone = "";
         let deliveryFees = {
@@ -954,7 +960,6 @@
             return p;
         }
 
-        /* ==================== 3. الوضع الليلي والنهاري وتثبيت PWA ==================== */
         function initTheme() {
             const savedTheme = localStorage.getItem("moaath_theme");
             if (savedTheme === "light") {
@@ -993,7 +998,6 @@
             });
         }
 
-        /* ==================== 4. معادلة التسعير وضغط الصور ==================== */
         function calcSYP(usdPrice) {
             const num = parseFloat(usdPrice) || 0;
             return Math.round((num * exchangeRate) / 5) * 5;
@@ -1027,7 +1031,6 @@
             });
         }
 
-        /* ==================== 5. المزامنة اللحظية مع Firebase ==================== */
         db.ref("settings").on("value", (snap) => {
             const data = snap.val() || {};
             exchangeRate = parseFloat(data.exchangeRate) || 15000;
@@ -1112,7 +1115,6 @@
             renderStatsDashboard();
         });
 
-        /* ==================== 6. تسجيل الدخول الإجباري وبيانات التواصل ==================== */
         function checkInitialLogin() {
             if (!currentUser || !currentUser.phone || !currentUser.name || !currentUser.region || !currentUser.address) {
                 if (currentUser) {
@@ -1163,7 +1165,7 @@
 
             const existingPoints = existingUser.points || 0;
             const existingPurchases = existingUser.purchases || {};
-            const existingType = existingUser.userType || "retail"; // الافتراضي زبون مفرق
+            const existingType = existingUser.userType || "retail";
 
             currentUser = {
                 name,
@@ -1219,7 +1221,6 @@
             window.location.href = `https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`;
         }
 
-        /* ==================== 7. واجهة المتجر، أسعار الجملة، التقييمات والسلة ==================== */
         function renderCategories() {
             const container = document.getElementById("categoriesContainer");
             container.innerHTML = categories.map(cat => `
@@ -1270,7 +1271,11 @@
                         <button class="qty-btn" onclick="changeQty('SPECIAL_OFFER', -1)">-</button>
                     </div>`;
             } else {
-                actionDiv.innerHTML = `<button class="btn" onclick="changeQty('SPECIAL_OFFER', 1)">➕ أضف للطلب</button>`;
+                actionDiv.innerHTML = `
+                    <div style="display:flex; gap:4px;">
+                        <button class="btn" style="padding:6px; font-size:11px;" onclick="changeQty('SPECIAL_OFFER', 1)">➕ للسلة</button>
+                        <button class="btn" style="padding:6px; font-size:11px; background:var(--success-color); color:#000;" onclick="quickBuy('SPECIAL_OFFER')">⚡ اطلب فوراً</button>
+                    </div>`;
             }
         }
 
@@ -1287,7 +1292,6 @@
                 if (selectedCategory !== "الكل" && p.category !== selectedCategory) return;
                 if (query && !p.name.toLowerCase().includes(query)) return;
 
-                // تحديد السعر بناءً على نوع الزبون (مفرق أو جملة)
                 const activePriceUSD = (isWholesale && p.wholesaleUSD && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD;
                 const priceSYP = calcSYP(activePriceUSD);
                 const stock = parseInt(p.stock) || 0;
@@ -1304,7 +1308,11 @@
                             <button class="qty-btn" onclick="changeQty('${id}', -1)">-</button>
                         </div>`;
                 } else {
-                    btnHTML = `<button class="btn" onclick="changeQty('${id}', 1)">➕ أضف للسلة</button>`;
+                    btnHTML = `
+                        <div style="display:flex; gap:4px;">
+                            <button class="btn" style="padding:6px; font-size:11px;" onclick="changeQty('${id}', 1)">➕ للسلة</button>
+                            <button class="btn" style="padding:6px; font-size:11px; background:var(--success-color); color:#000;" onclick="quickBuy('${id}')">⚡ اطلب فوراً</button>
+                        </div>`;
                 }
 
                 const reviews = p.reviews || {};
@@ -1315,6 +1323,7 @@
                     avgRating = (sum / reviewKeys.length).toFixed(1);
                 }
 
+                // التحقق الصارم: هل اشترى الزبون هذا المنتج وتم تأكيد طلبه؟
                 const hasPurchased = currentUser && currentUser.phone && 
                                      users[currentUser.phone] && 
                                      users[currentUser.phone].purchases && 
@@ -1322,16 +1331,16 @@
 
                 let reviewBtnHTML = "";
                 if (hasPurchased && (!currentUser || !currentUser.banned)) {
-                    reviewBtnHTML = `<button onclick="openReviewModal('${id}')" class="btn" style="background:transparent; border:1px solid var(--gold-color); color:var(--gold-color); margin-top:6px; font-size:11px; padding:5px;">⭐ قيّم المنتج واكتب تعليقاً</button>`;
+                    reviewBtnHTML = `<button onclick="openReviewModal('${id}')" class="btn" style="background:transparent; border:1px solid var(--gold-color); color:var(--gold-color); margin-top:5px; font-size:11px; padding:4px;">⭐ قيّم المنتج</button>`;
                 }
 
                 let reviewsListHTML = "";
                 if (reviewKeys.length > 0) {
-                    reviewsListHTML = `<div style="margin-top:8px; border-top:1px dashed var(--border-color); padding-top:6px; text-align:right;">
-                        <div style="font-size:11px; color:var(--gold-color); margin-bottom:4px;">⭐ ${avgRating} (${reviewKeys.length} تقييم)</div>`;
-                    reviewKeys.slice(-2).forEach(rk => {
+                    reviewsListHTML = `<div style="margin-top:6px; border-top:1px dashed var(--border-color); padding-top:4px; text-align:right;">
+                        <div style="font-size:11px; color:var(--gold-color);">⭐ ${avgRating} (${reviewKeys.length})</div>`;
+                    reviewKeys.slice(-1).forEach(rk => {
                         const rev = reviews[rk];
-                        reviewsListHTML += `<div class="review-box"><b>${rev.customerName}:</b> ${rev.comment} (${rev.rating}⭐)</div>`;
+                        reviewsListHTML += `<div class="review-box" style="display:block;"><b>${rev.customerName}:</b> ${rev.comment}</div>`;
                     });
                     reviewsListHTML += `</div>`;
                 }
@@ -1401,6 +1410,12 @@
             if (document.getElementById("cartModal").style.display === "flex") {
                 renderCartModalItems();
             }
+        }
+
+        function quickBuy(id) {
+            cart = {};
+            changeQty(id, 1);
+            openCartModal();
         }
 
         function updateCartBar() {
@@ -1483,7 +1498,7 @@
                             <strong>${item.name}</strong><br>
                             <span style="color:var(--gray-text);">${unitSYP.toLocaleString()} ل.س × ${item.qty} = ${subSYP.toLocaleString()} ل.س</span>
                         </div>
-                        <div class="qty-controls" style="width:95px;">
+                        <div class="qty-controls" style="width:85px;">
                             <button class="qty-btn" onclick="changeQty('${item.id}', 1)">+</button>
                             <span class="qty-text">${item.qty}</span>
                             <button class="qty-btn" onclick="changeQty('${item.id}', -1)">-</button>
@@ -1502,7 +1517,6 @@
             document.getElementById("modalCartPoints").textContent = totalPoints;
         }
 
-        /* ==================== 8. إرسال الطلب عبر واتساب ==================== */
         function submitOrder() {
             if (!currentUser || !currentUser.phone || !currentUser.name || !currentUser.address) {
                 closeCartModal();
@@ -1601,7 +1615,6 @@
             window.location.href = whatsappURL;
         }
 
-        /* ==================== 9. تقييم المنتجات والتعليقات ==================== */
         function openReviewModal(productId) {
             const p = products[productId];
             if (!p) return;
@@ -1648,7 +1661,15 @@
             });
         }
 
-        /* ==================== 10. صفحة المسابقات ولوحة الشرف ==================== */
+        // خيار حذف تعليق معين من قبل الإدارة
+        function deleteProductReview(productId, reviewId) {
+            if (confirm("⚠️ هل أنت متأكد من حذف هذا التعليق نهائياً؟")) {
+                db.ref(`products/${productId}/reviews/${reviewId}`).remove().then(() => {
+                    alert("✅ تم حذف التعليق بنجاح!");
+                });
+            }
+        }
+
         function openCompetitionsPage() {
             syncCurrentUser();
             renderCompetitionDetails();
@@ -1703,7 +1724,6 @@
             }).join("");
         }
 
-        /* ==================== 11. بوابة الإدارة المخفية (5 نقرات) ==================== */
         let adminClickCount = 0;
         let adminClickTimer = null;
 
@@ -1734,7 +1754,6 @@
             btn.classList.add("active");
         }
 
-        /* ==================== 12. إدارة الفواتير الواردة وإشعار التوصيل ==================== */
         function renderPendingOrders() {
             const container = document.getElementById("pendingOrdersList");
             const keys = Object.keys(pendingOrders);
@@ -1860,7 +1879,6 @@
             db.ref("pendingOrders/" + orderId).remove();
         }
 
-        /* ==================== 13. إدارة الزبائن وتصنيف (مفرق/جملة) والحظر ==================== */
         function renderAdminCustomers() {
             const container = document.getElementById("adminCustomersList");
             const q = (document.getElementById("adminSearchCust").value || "").trim().toLowerCase();
@@ -1967,7 +1985,6 @@
             }
         }
 
-        /* ==================== 14. الإحصائيات، المنتجات مع سعر الجملة والإعدادات ==================== */
         function renderStatsDashboard() {
             const sales = statsData.totalSales || 0;
             const cost = statsData.totalCost || 0;
@@ -2062,6 +2079,7 @@
             const priceUSD = parseFloat(document.getElementById("prodPriceUSD").value) || 0;
             const wholesaleUSD = parseFloat(document.getElementById("prodWholesaleUSD").value) || 0;
             const stock = parseInt(document.getElementById("prodStock").value) || 0;
+            const alertLimit = parseInt(document.getElementById("prodAlertLimit").value) || 2;
             const pointsPct = parseFloat(document.getElementById("prodPointsPct").value) || 2;
             const category = document.getElementById("prodCategory").value;
             const fileInput = document.getElementById("prodImageInput");
@@ -2080,13 +2098,14 @@
             }
 
             db.ref("products/" + id).set({
-                name, costPrice, priceUSD, wholesaleUSD, stock, pointsPct, category, image: imageBase64, reviews: existingReviews
+                name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, image: imageBase64, reviews: existingReviews
             }).then(() => {
                 document.getElementById("editProductId").value = "";
                 document.getElementById("prodName").value = "";
                 document.getElementById("prodCostUSD").value = "";
                 document.getElementById("prodPriceUSD").value = "";
                 document.getElementById("prodWholesaleUSD").value = "";
+                document.getElementById("prodAlertLimit").value = "2";
                 document.getElementById("prodImageInput").value = "";
                 alert("✅ تم حفظ المنتج بنجاح!");
             });
@@ -2101,6 +2120,7 @@
             document.getElementById("prodPriceUSD").value = p.priceUSD || 0;
             document.getElementById("prodWholesaleUSD").value = p.wholesaleUSD || 0;
             document.getElementById("prodStock").value = p.stock || 0;
+            document.getElementById("prodAlertLimit").value = p.alertLimit || 2;
             document.getElementById("prodPointsPct").value = p.pointsPct || 2;
             document.getElementById("prodCategory").value = p.category || "";
             document.getElementById("productsTab").scrollIntoView({ behavior: "smooth" });
@@ -2114,20 +2134,43 @@
 
         function renderAdminProducts() {
             const container = document.getElementById("adminProductsList");
-            const keys = Object.keys(products);
+            const q = (document.getElementById("adminSearchProd").value || "").trim().toLowerCase();
+            const keys = Object.keys(products).filter(id => !q || products[id].name.toLowerCase().includes(q));
+
+            if (keys.length === 0) {
+                container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد منتجات مطابقة.</p>`;
+                return;
+            }
+
             container.innerHTML = keys.map(id => {
                 const p = products[id];
                 const unitProfitSYP = calcSYP(p.priceUSD) - calcSYP(p.costPrice || 0);
+                
+                // عرض التعليقات الخاصة بالمنتج مع خيار الحذف
+                const reviews = p.reviews || {};
+                let reviewsAdminHTML = "";
+                Object.keys(reviews).forEach(revId => {
+                    const rev = reviews[revId];
+                    reviewsAdminHTML += `
+                        <div class="review-box">
+                            <span><b>${rev.customerName}:</b> ${rev.comment} (${rev.rating}⭐)</span>
+                            <button onclick="deleteProductReview('${id}', '${revId}')" class="btn btn-danger" style="width:auto; padding:2px 6px; font-size:10px;">حذف</button>
+                        </div>`;
+                });
+
                 return `
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-color); padding:8px; border-radius:6px; margin-bottom:6px; font-size:12px;">
-                        <div>
-                            <strong>${p.name}</strong> (المخزون: ${p.stock})<br>
-                            <span style="color:var(--gray-text);">مبيع: $${p.priceUSD} | جملة: $${p.wholesaleUSD || 0} | ربح: <b style="color:var(--success-color);">${unitProfitSYP.toLocaleString()} ل.س</b></span>
+                    <div style="background:var(--bg-color); border:1px solid var(--border-color); padding:8px; border-radius:6px; margin-bottom:8px; font-size:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <strong>${p.name}</strong> (المخزون: ${p.stock} | تنبيه عند: ${p.alertLimit || 2})<br>
+                                <span style="color:var(--gray-text);">مبيع: $${p.priceUSD} | جملة: $${p.wholesaleUSD || 0} | ربح: <b style="color:var(--success-color);">${unitProfitSYP.toLocaleString()} ل.س</b></span>
+                            </div>
+                            <div style="display:flex; gap:4px;">
+                                <button onclick="editProduct('${id}')" class="btn" style="width:auto; padding:4px 8px;">✏️ تعديل</button>
+                                <button onclick="deleteProduct('${id}')" class="btn btn-danger" style="width:auto; padding:4px 8px;">🗑️ حذف</button>
+                            </div>
                         </div>
-                        <div style="display:flex; gap:4px;">
-                            <button onclick="editProduct('${id}')" class="btn" style="width:auto; padding:4px 8px;">✏️</button>
-                            <button onclick="deleteProduct('${id}')" class="btn btn-danger" style="width:auto; padding:4px 8px;">🗑️</button>
-                        </div>
+                        ${reviewsAdminHTML ? `<div style="margin-top:6px; border-top:1px dashed var(--border-color); padding-top:4px;"><small style="color:var(--gold-color);">التعليقات والتقييمات:</small>${reviewsAdminHTML}</div>` : ''}
                     </div>`;
             }).join("");
         }
@@ -2158,20 +2201,20 @@
 
         function renderShortages() {
             const list = document.getElementById("shortagesList");
-            const lowItems = Object.values(products).filter(p => (parseInt(p.stock) || 0) <= 2);
+            const lowItems = Object.values(products).filter(p => (parseInt(p.stock) || 0) <= (parseInt(p.alertLimit) || 2));
             if (lowItems.length === 0) {
-                list.innerHTML = `<p style="color:var(--success-color); font-size:12px;">✅ جميع المنتجات متوفرة بكميات جيدة.</p>`;
+                list.innerHTML = `<p style="color:var(--success-color); font-size:12px;">✅ جميع المنتجات متوفرة بكميات جيدة ولا توجد نواقص.</p>`;
                 return;
             }
             list.innerHTML = lowItems.map(p => `
                 <div style="display:flex; justify-content:space-between; background:var(--bg-color); padding:8px; border-radius:6px; margin-bottom:6px; font-size:12px; border-right:3px solid var(--danger-color);">
                     <span>${p.name}</span>
-                    <strong style="color:var(--danger-color);">المتبقي: ${p.stock}</strong>
+                    <strong style="color:var(--danger-color);">المتبقي: ${p.stock} (حد التنبيه: ${p.alertLimit || 2})</strong>
                 </div>`).join("");
         }
 
         function sendShortagesWhatsApp() {
-            const lowItems = Object.values(products).filter(p => (parseInt(p.stock) || 0) <= 2);
+            const lowItems = Object.values(products).filter(p => (parseInt(p.stock) || 0) <= (parseInt(p.alertLimit) || 2));
             if (lowItems.length === 0) {
                 alert("لا توجد نواقص حالياً.");
                 return;
