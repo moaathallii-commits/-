@@ -533,7 +533,6 @@
             <div class="form-group" style="background:var(--bg-color); padding:10px; border-radius:5px; border:1px solid var(--border-color); margin-bottom: 5px;">
                 <label style="color:var(--gold-color);">الدفع عبر تطبيق شام كاش:</label>
                 <p style="font-size:11px; margin:4px 0; color:var(--gray-text);">اسم المستلم المعتمد: معاذ العلي</p>
-                <!-- تعديل معرف محفظة شام كاش الجديد -->
                 <p style="font-size:11px; margin:4px 0; color:var(--gray-text);">معرف المحفظة: <span id="walletId">da3e13cd8a2ef2af282445e148df9599</span></p>
                 <button type="button" onclick="copyWallet()" style="background:var(--border-color); color:var(--text-color); border:none; padding:4px 8px; font-size:10px; border-radius:3px; cursor:pointer;">📋 نسخ معرف المحفظة</button>
             </div>
@@ -646,6 +645,19 @@
                 <button class="btn" onclick="sendBroadcast()" style="flex:1; background:#25d366; color:#000;">إرسال التعميم للجميع 🚀</button>
                 <button class="btn btn-danger" onclick="clearBroadcast()" style="width:auto;">إلغاء التعميم</button>
             </div>
+
+            <hr style="border-color:var(--border-color); margin:15px 0;">
+
+            <!-- إدارة الأرقام المحظورة (حظر الطلبات الوهمية) -->
+            <h4 style="color:var(--danger-color); margin:5px 0;">🚫 إدارة الحظر (الأرقام المحظورة)</h4>
+            <div class="form-group">
+                <label>حظر رقم هاتف (أدخل الرقم):</label>
+                <div style="display:flex; gap:5px;">
+                    <input type="tel" id="blockPhoneInput" class="form-control" placeholder="09xxxxxxxx">
+                    <button class="btn btn-danger" onclick="addBlockedPhone()" style="width:auto;">حظر الرقم ⛔</button>
+                </div>
+            </div>
+            <div id="adminBlockedList" style="max-height: 120px; overflow-y: auto; background:var(--bg-color); padding:5px; border-radius:5px; border:1px solid var(--border-color); margin-bottom:15px;"></div>
 
             <hr style="border-color:var(--border-color); margin:15px 0;">
 
@@ -926,7 +938,6 @@
             window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(err => console.log('PWA Error', err)); });
         }
 
-        // --- دعم زر التثبيت على سطح المكتب والهاتف ---
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault(); 
@@ -944,7 +955,7 @@
                     deferredPrompt = null;
                 });
             } else {
-                alert("لتثبيت التطبيق على هاتفك، افتح إعدادات المتصفح (النقاط الثلاث بالأعلى) واضغط على 'إضافة إلى الشاشة الرئيسية' أو 'Install App'.");
+                alert("لتثبيت التطبيق على هاتفك، افتح إعدادات المتصفح واضغط على 'إضافة إلى الشاشة الرئيسية'.");
             }
         }
 
@@ -994,6 +1005,7 @@
         let deliveryPhone = '';
         let customers = [];
         let pendingOrders = [];
+        let blockedPhones = []; // قائمة الأرقام المحظورة
         let storeStats = { 
             totalSales: 0, 
             totalCost: 0, 
@@ -1007,9 +1019,8 @@
         let currentUser = getSafeStorage('moaath_current_user', null);
         let currentCategory = 'الكل';
         let cart = {};
-        let lastOrdersCount = -1; // لمتابعة الإشعارات الجديدة للطلبات
+        let lastOrdersCount = -1;
 
-        // --- تهيئة Firebase ---
         const firebaseConfig = {
             apiKey: "AIzaSyCAqM6NoNq_Ac6frcEzGT8LxGVJaDPM10E",
             authDomain: "moaathstore-d2fd6.firebaseapp.com",
@@ -1074,6 +1085,13 @@
                 if(document.getElementById('competitionsPage').style.display === 'block') renderCompetitionsPage();
             });
 
+            // جلب الأرقام المحظورة من سحابة Firebase
+            db.ref('blockedPhones').on('value', snap => {
+                let val = snap.val();
+                blockedPhones = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+                if(document.getElementById('adminDashboard').style.display === 'flex') renderAdminBlockedList();
+            });
+
             db.ref('settings').on('value', snap => {
                 let s = snap.val() || { exchangeRate: 1, deliveryFeeOwaina: 5000, deliveryFeeOther: 7000, pointsThreshold: 100, deliveryPhone: '', broadcastMsg: '' };
                 exchangeRate = s.exchangeRate || 1; 
@@ -1082,7 +1100,6 @@
                 pointsThreshold = s.pointsThreshold || 100;
                 deliveryPhone = s.deliveryPhone || '';
                 
-                // عرض التعميم النشط للزبائن
                 if (s.broadcastMsg && s.broadcastMsg.trim() !== '') {
                     document.getElementById('broadcastText').innerText = s.broadcastMsg;
                     document.getElementById('broadcastBanner').style.display = 'block';
@@ -1103,13 +1120,11 @@
                 }
             });
 
-            // مراقبة الطلبات الواردة وإطلاق الإشعارات عند وصول طلب جديد
             db.ref('pendingOrders').on('value', snap => {
                 let val = snap.val();
                 let data = val ? (Array.isArray(val) ? val : Object.values(val)) : []; 
                 pendingOrders = data.filter(o => o !== null && o !== undefined);
                 
-                // فحص إذا كان هناك طلب جديد وصل للإدارة لتشغيل التنبيه والصوت
                 if (lastOrdersCount !== -1 && pendingOrders.length > lastOrdersCount) {
                     playNewOrderSound();
                     showBrowserNotification("طلب جديد في متجر معاذ! 🛒", "هناك فاتورة جديدة بانتظار التأكيد.");
@@ -1131,15 +1146,14 @@
             setupImageUpload('compImageFile', 'compImgInput', 'compImgPreview');
         };
 
-        // --- نظام إشعارات الصوت والتنبيهات للمتجر ---
         function playNewOrderSound() {
             try {
                 let ctx = new (window.AudioContext || window.webkitAudioContext)();
                 let osc = ctx.createOscillator();
                 let gain = ctx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(587.33, ctx.currentTime); // نوتة D5
-                osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15); // نوتة A5
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15);
                 gain.gain.setValueAtTime(0.2, ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
                 osc.connect(gain);
@@ -1163,7 +1177,6 @@
             }
         }
 
-        // --- نظام التعميمات والإشعارات العامة من الإدارة ---
         function sendBroadcast() {
             let msg = document.getElementById('broadcastInput').value.trim();
             if(!msg) { alert("يرجى كتابة نص التعميم أولاً!"); return; }
@@ -1183,7 +1196,43 @@
             document.getElementById('broadcastBanner').style.display = 'none';
         }
 
-        // --- وظائف صفحة المسابقات واللوحة التنافسية ---
+        // --- وظائف الحظر الجديدة ---
+        function addBlockedPhone() {
+            let phone = document.getElementById('blockPhoneInput').value.trim();
+            if(!phone) { alert("يرجى إدخال رقم الهاتف المراد حظره!"); return; }
+            if(blockedPhones.includes(phone)) { alert("هذا الرقم محظور مسبقاً!"); return; }
+            blockedPhones.push(phone);
+            db.ref('blockedPhones').set(blockedPhones);
+            document.getElementById('blockPhoneInput').value = '';
+            alert("تم حظر الرقم بنجاح!");
+        }
+
+        function unblockPhone(phone) {
+            if(confirm(`هل تريد رفع الحظر عن الرقم ${phone}؟`)) {
+                blockedPhones = blockedPhones.filter(p => p !== phone);
+                db.ref('blockedPhones').set(blockedPhones);
+                alert("تم رفع الحظر بنجاح!");
+            }
+        }
+
+        function renderAdminBlockedList() {
+            let listDiv = document.getElementById('adminBlockedList');
+            if(!listDiv) return;
+            listDiv.innerHTML = '';
+            if(blockedPhones.length === 0) {
+                listDiv.innerHTML = '<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أرقام محظورة حالياً</p>';
+                return;
+            }
+            blockedPhones.forEach(phone => {
+                listDiv.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--border-color); font-size:12px;">
+                        <span style="color:var(--danger-color); font-weight:bold;">📱 ${phone}</span>
+                        <button class="btn" style="background:#555; width:auto; padding:2px 6px; font-size:10px;" onclick="unblockPhone('${phone}')">رفع الحظر</button>
+                    </div>
+                `;
+            });
+        }
+
         function openCompetitionsPage() {
             renderCompetitionsPage();
             document.getElementById('competitionsPage').style.display = 'block';
@@ -1387,6 +1436,13 @@
             closeCartModal();
             if (Object.keys(cart).length === 0) { alert("السلة فارغة!"); return; }
             if (!currentUser || !currentUser.phone) { openEditProfile(); return; }
+            
+            // فحص إذا كان رقم هاتف الزبون محظوراً
+            if (blockedPhones.includes(currentUser.phone)) {
+                alert("عذراً، رقم هاتفك محظور من إرسال الطلبات لدى متجر معاذ.");
+                return;
+            }
+
             let areaText = currentUser.area === 'owaina' ? "قرية العوينة" : "المناطق المجاورة";
             document.getElementById('checkoutAddressDisplay').innerText = `${areaText} - ${currentUser.address || 'العوينة'}`;
             document.getElementById('checkoutModal').style.display = 'flex'; updateCartTotal();
@@ -1406,6 +1462,13 @@
         function copyWallet() { navigator.clipboard.writeText("da3e13cd8a2ef2af282445e148df9599"); alert("تم نسخ معرف المحفظة بنجاح!"); }
 
         function sendOrderWhatsApp() {
+            // فحص إضافي قبل الإرسال النهائي
+            if (blockedPhones.includes(currentUser.phone)) {
+                alert("عذراً، رقم هاتفك محظور.");
+                closeCheckout();
+                return;
+            }
+
             let itemsText = ""; let subTotal = 0; let earnedPoints = 0; let counter = 1; let minCart = [];
             for (let id in cart) {
                 let itemTotal = Math.round((cart[id].basePrice * exchangeRate) / 5) * 5 * cart[id].qty; 
@@ -1457,6 +1520,7 @@
 
         function redeemPointsWhatsApp() {
             if (!currentUser || !currentUser.phone) { openEditProfile(); return; }
+            if (blockedPhones.includes(currentUser.phone)) { alert("عذراً، رقم هاتفك محظور."); return; }
             let cust = customers.find(c => c.phone === currentUser.phone);
             let pts = cust ? cust.points : 0;
             if (pts < pointsThreshold) {
@@ -1518,6 +1582,11 @@
             if (!phone || phone.length < 5) { alert("يرجى إدخال رقم الهاتف بشكل صحيح!"); return; }
             if (!address) { address = "العوينة"; }
 
+            if (blockedPhones.includes(phone)) {
+                alert("عذراً، هذا الرقم محظور من التسجيل أو الطلب في المتجر.");
+                return;
+            }
+
             currentUser = { name, phone, address, area }; 
             localStorage.setItem('moaath_current_user', JSON.stringify(currentUser));
 
@@ -1540,25 +1609,46 @@
 
         let tapCount = 0;
         document.getElementById('adminTrigger').addEventListener('click', () => {
-            tapCount++; if (tapCount >= 5) { tapCount = 0; document.getElementById('adminModal').style.display = 'flex'; }
+            tapCount++; 
+            if (tapCount >= 5) { 
+                tapCount = 0; 
+                let isManagerDevice = localStorage.getItem('moaath_admin_device_authorized') === 'true';
+                if (isManagerDevice) {
+                    openAdminDashboardDirectly();
+                } else {
+                    document.getElementById('adminModal').style.display = 'flex'; 
+                }
+            }
             setTimeout(() => { tapCount = 0; }, 2000);
         });
-        function closeAdminModal() { document.getElementById('adminModal').style.display = 'none'; document.getElementById('adminPass').value = ''; }
+
+        function closeAdminModal() { 
+            document.getElementById('adminModal').style.display = 'none'; 
+            document.getElementById('adminPass').value = ''; 
+        }
         
         function checkAdminPassword() {
             if (document.getElementById('adminPass').value === "MHA@1997//MOAATHS") {
-                closeAdminModal(); document.getElementById('adminDashboard').style.display = 'flex';
-                document.getElementById('exchangeRateInput').value = exchangeRate; 
-                document.getElementById('feeOwainaInput').value = deliveryFeeOwaina; 
-                document.getElementById('feeOtherInput').value = deliveryFeeOther;
-                document.getElementById('pointsThresholdInput').value = pointsThreshold;
-                document.getElementById('deliveryPhoneInput').value = deliveryPhone;
-                loadAdminSpecialOffer(); loadAdminCompetition(); renderAdminCategories(); renderAdminOrders(); renderAdminShortages(); renderAdminProductsList(); renderAdminCustomersList(); renderAdminStats();
-            } else alert("كلمة المرور خاطئة!");
+                localStorage.setItem('moaath_admin_device_authorized', 'true');
+                closeAdminModal(); 
+                openAdminDashboardDirectly();
+            } else {
+                alert("كلمة المرور خاطئة! هذا الجهاز غير مصرح له بفتح لوحة الإدارة.");
+            }
         }
+
+        function openAdminDashboardDirectly() {
+            document.getElementById('adminDashboard').style.display = 'flex';
+            document.getElementById('exchangeRateInput').value = exchangeRate; 
+            document.getElementById('feeOwainaInput').value = deliveryFeeOwaina; 
+            document.getElementById('feeOtherInput').value = deliveryFeeOther;
+            document.getElementById('pointsThresholdInput').value = pointsThreshold;
+            document.getElementById('deliveryPhoneInput').value = deliveryPhone;
+            loadAdminSpecialOffer(); loadAdminCompetition(); renderAdminCategories(); renderAdminOrders(); renderAdminShortages(); renderAdminProductsList(); renderAdminCustomersList(); renderAdminStats(); renderAdminBlockedList();
+        }
+
         function closeDashboard() { document.getElementById('adminDashboard').style.display = 'none'; }
 
-        // --- دالة عرض الإحصائيات المطورة وحساب الأرباح وتقييم المخزون ---
         function renderAdminStats() {
             let sales = storeStats.totalSales || 0;
             let cost = storeStats.totalCost || 0;
@@ -1574,7 +1664,6 @@
             document.getElementById('statCompleted').innerText = completed;
             document.getElementById('statCanceled').innerText = canceled;
             
-            // الأكثر مبيعاً بالكمية
             let bestName = "لا يوجد بيانات بعد"; let maxQty = 0;
             if(storeStats.productsSold) {
                 for(let pId in storeStats.productsSold) {
@@ -1588,7 +1677,6 @@
             }
             document.getElementById('statBestSeller').innerText = bestName;
 
-            // الأعلى تحقيقاً للربح
             let mostProfName = "لا يوجد بيانات بعد"; let maxProf = 0;
             if(storeStats.productsProfit) {
                 for(let pId in storeStats.productsProfit) {
@@ -1602,7 +1690,6 @@
             }
             document.getElementById('statMostProfitable').innerText = mostProfName;
 
-            // حساب التقييم المالي للمخزون الحالي
             let invCostTotal = 0;
             let invSaleTotal = 0;
             products.forEach(p => {
@@ -1704,7 +1791,6 @@
                 }
             });
 
-            // تحديث إحصائيات المبيعات والتكلفة وصافي الربح
             storeStats.totalSales = (storeStats.totalSales || 0) + orderItemsSaleTotal;
             storeStats.totalCost = (storeStats.totalCost || 0) + orderItemsCostTotal;
             storeStats.netProfit = (storeStats.netProfit || 0) + orderItemsProfitTotal;
@@ -1720,11 +1806,9 @@
             
             pendingOrders.splice(orderIndex, 1); db.ref('pendingOrders').set(pendingOrders);
             
-            // 1. إرسال إشعار للزبون
             let custMsg = `أهلاً بك ${order.name} 🌹\nتم تأكيد فاتورتك بنجاح وإضافة ${earnedPts} نقطة هدية!\nسيتم توصيل طلبك قريباً.`;
             window.open(`https://api.whatsapp.com/send?phone=${order.phone.replace(/^0/, '+963')}&text=${encodeURIComponent(custMsg)}`, '_blank');
 
-            // 2. إرسال نسخة من الفاتورة لعامل التوصيل إذا كان رقمه مسجلاً
             if (deliveryPhone && deliveryPhone.trim() !== '') {
                 let delPhoneClean = deliveryPhone.startsWith('09') ? deliveryPhone.replace(/^0/, '+963') : deliveryPhone;
                 let deliveryMsg = `🛵 *طلب جديد للتوصيل - متجر معاذ*\n` +
@@ -1757,7 +1841,7 @@
         }
 
         function exportBackup() {
-            let backupData = { categories, specialOffer, competitionData, products, customers, settings: {exchangeRate, deliveryFeeOwaina, deliveryFeeOther, pointsThreshold, deliveryPhone}, storeStats };
+            let backupData = { categories, specialOffer, competitionData, products, customers, blockedPhones, settings: {exchangeRate, deliveryFeeOwaina, deliveryFeeOther, pointsThreshold, deliveryPhone}, storeStats };
             let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
             let dlAnchorElem = document.createElement('a');
             dlAnchorElem.setAttribute("href", dataStr);
@@ -1778,6 +1862,7 @@
                         if(data.competitionData) db.ref('competitions').set(data.competitionData);
                         db.ref('products').set(data.products);
                         db.ref('customers').set(data.customers || []);
+                        db.ref('blockedPhones').set(data.blockedPhones || []);
                         db.ref('settings').set(data.settings || {exchangeRate, deliveryFeeOwaina, deliveryFeeOther, pointsThreshold, deliveryPhone});
                         db.ref('statistics').set(data.storeStats || { totalSales: 0, totalCost: 0, netProfit: 0, completedOrders: 0, canceledOrders: 0, productsSold: {}, productsProfit: {} });
                         alert("تم استعادة النسخة الاحتياطية بنجاح إلى السحابة!");
@@ -1886,7 +1971,6 @@
 
         function resetAllCustomersPoints() { if(confirm("تصفير نقاط جميع الزبائن؟")) { customers.forEach(c => c.points = 0); db.ref('customers').set(customers); alert("تم التصفير!"); } }
         
-        // --- إضافة منتج جديد مع حفظ سعر التكلفة السري ---
         function addNewProduct() { 
             let name = document.getElementById('newProdName').value.trim(); 
             let category = document.getElementById('newProdCat').value; 
@@ -1912,7 +1996,6 @@
             alert("تمت إضافة المنتج بنجاح!"); 
         }
         
-        // --- عرض المنتجات في الإدارة مع توضيح التكلفة وسعر المبيع وصافي ربح القطعة ---
         function renderAdminProductsList() { 
             let listDiv = document.getElementById('adminProductsList'); 
             listDiv.innerHTML = ''; 
