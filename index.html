@@ -391,9 +391,9 @@
 <body>
 
     <header>
-        <div class="store-info" onclick="window.open('https://wa.me/963965461504', '_blank')">
+        <div class="store-info" onclick="window.open('https://wa.me/' + adminWhatsAppNumber, '_blank')">
             <h1>متجر معاذ</h1>
-            <p>قرية العوينة | 0965461504 📱</p>
+            <p>قرية العوينة | <span id="headerPhoneText">0965461504</span> 📱</p>
         </div>
         <div class="logo-circle" id="adminTrigger">
             <img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'">
@@ -404,6 +404,7 @@
         <span style="display:flex; align-items:center; gap:5px;">
             👤 <b id="userNameDisplay">زائر</b>
             <small id="userRegionBadge" style="color:var(--gray-text); font-size:10px;"></small>
+            <small id="userTypeBadge" style="color:var(--gold-color); font-size:10px; font-weight:bold;"></small>
             <button onclick="openEditProfile()" style="background:transparent; border:none; color:var(--gold-color); font-size:12px; cursor:pointer; padding:0;" title="تعديل بياناتي">(⚙️)</button>
         </span>
         <div style="display:flex; gap:8px; align-items:center;">
@@ -612,6 +613,13 @@
                 </select>
             </div>
             <div class="form-group">
+                <label>نوع الزبون (تصنيف الإدارة):</label>
+                <select id="adminCustType" class="form-control">
+                    <option value="retail">زبون مفرق</option>
+                    <option value="wholesale">زبون جملة</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label>العنوان التفصيلي:</label>
                 <input type="text" id="adminCustAddress" class="form-control">
             </div>
@@ -634,9 +642,9 @@
 
             <div class="categories" style="margin-bottom: 12px;">
                 <button class="cat-btn active" onclick="switchAdminTab('ordersTab', this)">📦 الطلبات (<span id="pendingCountBadge">0</span>)</button>
-                <button class="cat-btn" onclick="switchAdminTab('customersTab', this)">👥 الزبائن والحظر</button>
-                <button class="cat-btn" onclick="switchAdminTab('settingsTab', this)">🛵 التوصيل والصرف</button>
-                <button class="cat-btn" onclick="switchAdminTab('productsTab', this)">🛍️ المنتجات والعرض</button>
+                <button class="cat-btn" onclick="switchAdminTab('customersTab', this)">👥 الزبائن والجملة</button>
+                <button class="cat-btn" onclick="switchAdminTab('settingsTab', this)">🛵 الإعدادات وشام كاش</button>
+                <button class="cat-btn" onclick="switchAdminTab('productsTab', this)">🛍️ المنتجات والجملة</button>
                 <button class="cat-btn" onclick="switchAdminTab('statsTab', this)">📊 الإحصائيات والجرد</button>
                 <button class="cat-btn" onclick="switchAdminTab('shortagesTab', this)">⚠️ النواقص</button>
             </div>
@@ -647,11 +655,11 @@
                 <div id="pendingOrdersList"></div>
             </div>
 
-            <!-- 2. قسم الزبائن والحظر وإعدادات المسابقة -->
+            <!-- 2. قسم الزبائن والجملة والحظر -->
             <div id="customersTab" class="admin-tab" style="display: none;">
-                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">👥 إدارة الزبائن (تعديل، نقاط، حظر 🚫)</h4>
+                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">👥 إدارة الزبائن وتصنيف (مفرق / جملة)</h4>
                 <input type="text" id="adminSearchCust" class="search-box" placeholder="🔍 ابحث عن زبون بالاسم أو الرقم..." oninput="renderAdminCustomers()" style="margin-bottom: 8px;">
-                <div id="adminCustomersList" style="max-height: 300px; overflow-y: auto; margin-bottom: 14px;"></div>
+                <div id="adminCustomersList" style="max-height: 260px; overflow-y: auto; margin-bottom: 14px;"></div>
 
                 <hr style="border-color: var(--border-color);">
                 <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">🏆 إعدادات المسابقة والهدايا</h4>
@@ -680,33 +688,44 @@
                 <button onclick="saveCompetitionSettings()" class="btn">💾 حفظ إعدادات المسابقة</button>
             </div>
 
-            <!-- 3. قسم أسعار التوصيل لكل قرية وسعر الصرف والنسخ الاحتياطي -->
+            <!-- 3. قسم إعدادات شام كاش، رقم الإدارة، والتوصيل -->
             <div id="settingsTab" class="admin-tab" style="display: none;">
-                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">🛵 تكلفة التوصيل لكل منطقة (بالليرة السورية)</h4>
+                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">💳 إعدادات شام كاش ورقم الإدارة</h4>
                 <div class="form-group">
-                    <label>تكلفة التوصيل داخل (العوينة) - ل.س:</label>
-                    <input type="number" id="feeAwinaInput" class="form-control" placeholder="مثال: 5000">
+                    <label>معرف محفظة شام كاش (Sham Cash ID):</label>
+                    <input type="text" id="adminShamWalletInput" class="form-control" placeholder="da3e13cd8a2ef2af282445e148df9599">
                 </div>
                 <div class="form-group">
-                    <label>تكلفة التوصيل إلى (المزرعة الشرقية - الريحانية) - ل.س:</label>
-                    <input type="number" id="feeEastInput" class="form-control" placeholder="مثال: 10000">
+                    <label>رقم واتساب الإدارة (مع رمز الدولة):</label>
+                    <input type="text" id="adminWhatsAppInput" class="form-control" placeholder="963965461504">
+                </div>
+
+                <hr style="border-color: var(--border-color);">
+                <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">🛵 تكلفة التوصيل لكل منطقة (ل.س)</h4>
+                <div class="form-group">
+                    <label>التوصيل داخل (العوينة):</label>
+                    <input type="number" id="feeAwinaInput" class="form-control" placeholder="5000">
                 </div>
                 <div class="form-group">
-                    <label>تكلفة التوصيل إلى (المزرعة الغربية) - ل.س:</label>
-                    <input type="number" id="feeWestInput" class="form-control" placeholder="مثال: 10000">
+                    <label>التوصيل إلى (المزرعة الشرقية - الريحانية):</label>
+                    <input type="number" id="feeEastInput" class="form-control" placeholder="10000">
+                </div>
+                <div class="form-group">
+                    <label>التوصيل إلى (المزرعة الغربية):</label>
+                    <input type="number" id="feeWestInput" class="form-control" placeholder="10000">
                 </div>
 
                 <hr style="border-color: var(--border-color);">
                 <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">💵 سعر الصرف ورقم عامل التوصيل</h4>
                 <div class="form-group">
                     <label>سعر صرف الدولار مقابل الليرة السورية:</label>
-                    <input type="number" id="exchangeRateInput" class="form-control" placeholder="مثال: 15000">
+                    <input type="number" id="exchangeRateInput" class="form-control" placeholder="15000">
                 </div>
                 <div class="form-group">
-                    <label>رقم واتساب عامل التوصيل (مثال: 9639XXXXXXXX):</label>
+                    <label>رقم واتساب عامل التوصيل:</label>
                     <input type="text" id="deliveryPhoneInput" class="form-control" placeholder="9639XXXXXXXX">
                 </div>
-                <button onclick="saveGeneralSettings()" class="btn" style="margin-bottom: 15px;">💾 حفظ تكاليف التوصيل وسعر الصرف</button>
+                <button onclick="saveGeneralSettings()" class="btn" style="margin-bottom: 15px;">💾 حفظ الإعدادات العامة</button>
 
                 <hr style="border-color: var(--border-color);">
                 <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">📦 النسخ الاحتياطي الشامل (.json)</h4>
@@ -717,9 +736,9 @@
                 </div>
             </div>
 
-            <!-- 4. قسم إدارة المنتجات والتصنيفات والعرض الخاص -->
+            <!-- 4. قسم إدارة المنتجات وسعر الجملة -->
             <div id="productsTab" class="admin-tab" style="display: none;">
-                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">➕ إضافة / تعديل منتج</h4>
+                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">➕ إضافة / تعديل منتج (مع سعر الجملة)</h4>
                 <input type="hidden" id="editProductId">
                 <div class="form-group">
                     <label>اسم المنتج:</label>
@@ -728,26 +747,32 @@
                 <div class="stats-grid">
                     <div class="form-group">
                         <label>سعر التكلفة السري ($):</label>
-                        <input type="number" step="0.01" id="prodCostUSD" class="form-control" placeholder="مخفي عن الزبون">
+                        <input type="number" step="0.01" id="prodCostUSD" class="form-control" placeholder="مخفي">
                     </div>
                     <div class="form-group">
-                        <label>سعر المبيع ($):</label>
+                        <label>سعر المبيع مفرق ($):</label>
                         <input type="number" step="0.01" id="prodPriceUSD" class="form-control">
                     </div>
                 </div>
                 <div class="stats-grid">
                     <div class="form-group">
+                        <label>سعر الجملة ($):</label>
+                        <input type="number" step="0.01" id="prodWholesaleUSD" class="form-control" placeholder="خاص بزبائن الجملة">
+                    </div>
+                    <div class="form-group">
                         <label>الكمية المتوفرة:</label>
                         <input type="number" id="prodStock" class="form-control" value="10">
                     </div>
+                </div>
+                <div class="stats-grid">
                     <div class="form-group">
-                        <label>نسبة النقاط (% من السعر):</label>
+                        <label>نسبة النقاط (%):</label>
                         <input type="number" step="0.1" id="prodPointsPct" class="form-control" value="2">
                     </div>
-                </div>
-                <div class="form-group">
-                    <label>التصنيف:</label>
-                    <select id="prodCategory" class="form-control"></select>
+                    <div class="form-group">
+                        <label>التصنيف:</label>
+                        <select id="prodCategory" class="form-control"></select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>صورة المنتج (تُضغط تلقائياً 550px - JPEG 0.80):</label>
@@ -781,9 +806,15 @@
                         <input type="number" id="soStock" class="form-control" value="5">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>نسبة النقاط (%):</label>
-                    <input type="number" step="0.1" id="soPointsPct" class="form-control" value="2">
+                <div class="stats-grid">
+                    <div class="form-group">
+                        <label>نسبة النقاط (%):</label>
+                        <input type="number" step="0.1" id="soPointsPct" class="form-control" value="2">
+                    </div>
+                    <div class="form-group">
+                        <label>سعر جملة العرض ($):</label>
+                        <input type="number" step="0.01" id="soWholesaleUSD" class="form-control">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>صورة العرض الخاص:</label>
@@ -871,7 +902,8 @@
 
     <script>
         /* ==================== 1. الثوابت وإعدادات Firebase ==================== */
-        const ADMIN_WHATSAPP = "963965461504";
+        let adminWhatsAppNumber = "963965461504";
+        let shamWalletIdGlobal = "da3e13cd8a2ef2af282445e148df9599";
         const ADMIN_PASSWORD = "MHA@1997//MOAATHS";
 
         const firebaseConfig = {
@@ -1000,6 +1032,12 @@
             const data = snap.val() || {};
             exchangeRate = parseFloat(data.exchangeRate) || 15000;
             deliveryDriverPhone = data.deliveryDriverPhone || "";
+            adminWhatsAppNumber = data.adminWhatsApp || "963965461504";
+            shamWalletIdGlobal = data.shamWalletId || "da3e13cd8a2ef2af282445e148df9599";
+
+            document.getElementById("headerPhoneText").textContent = adminWhatsAppNumber;
+            document.getElementById("shamWalletId").textContent = shamWalletIdGlobal;
+
             if (data.deliveryFees) {
                 deliveryFees = {
                     "العوينة": parseInt(data.deliveryFees["العوينة"]) || 0,
@@ -1009,6 +1047,8 @@
             }
             document.getElementById("exchangeRateInput").value = exchangeRate;
             document.getElementById("deliveryPhoneInput").value = deliveryDriverPhone;
+            document.getElementById("adminWhatsAppInput").value = adminWhatsAppNumber;
+            document.getElementById("adminShamWalletInput").value = shamWalletIdGlobal;
             document.getElementById("feeAwinaInput").value = deliveryFees["العوينة"];
             document.getElementById("feeEastInput").value = deliveryFees["المزرعة الشرقية ( الريحانية )"];
             document.getElementById("feeWestInput").value = deliveryFees["المزرعة الغربية"];
@@ -1123,6 +1163,7 @@
 
             const existingPoints = existingUser.points || 0;
             const existingPurchases = existingUser.purchases || {};
+            const existingType = existingUser.userType || "retail"; // الافتراضي زبون مفرق
 
             currentUser = {
                 name,
@@ -1131,6 +1172,7 @@
                 address,
                 points: existingPoints,
                 purchases: existingPurchases,
+                userType: existingType,
                 banned: false
             };
 
@@ -1140,7 +1182,8 @@
                 phone,
                 region,
                 address,
-                points: existingPoints
+                points: existingPoints,
+                userType: existingType
             });
             closeProfileModal();
             syncCurrentUser();
@@ -1153,8 +1196,11 @@
                 localStorage.setItem("moaath_user", JSON.stringify(currentUser));
             }
             const pts = Math.round(currentUser.points || 0);
+            const isWholesale = currentUser.userType === "wholesale";
+
             document.getElementById("userNameDisplay").textContent = currentUser.name;
             document.getElementById("userRegionBadge").textContent = currentUser.region ? `(${currentUser.region})` : "";
+            document.getElementById("userTypeBadge").textContent = isWholesale ? "[زبون جملة]" : "[مفرق]";
             document.getElementById("userPoints").textContent = pts;
             document.getElementById("compUserPoints").textContent = pts;
 
@@ -1170,10 +1216,10 @@
                 return;
             }
             const msg = `مرحباً إدارة متجر معاذ 🎁\nأرغب باستبدال رصيد نقاطي بهدية:\n👤 الاسم: ${currentUser.name}\n📱 الهاتف: ${currentUser.phone}\n🏘️ المنطقة: ${currentUser.region || "العوينة"}\n📍 العنوان: ${currentUser.address}\n🌟 رصيد النقاط الحالي: ${Math.round(currentUser.points || 0)} نقطة`;
-            window.location.href = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`;
+            window.location.href = `https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`;
         }
 
-        /* ==================== 7. واجهة المتجر، التقييمات، والسلة ==================== */
+        /* ==================== 7. واجهة المتجر، أسعار الجملة، التقييمات والسلة ==================== */
         function renderCategories() {
             const container = document.getElementById("categoriesContainer");
             container.innerHTML = categories.map(cat => `
@@ -1200,9 +1246,15 @@
             box.style.display = "flex";
             document.getElementById("soDisplayImg").src = specialOffer.image || "store-icon.png";
             document.getElementById("soDisplayName").textContent = specialOffer.name;
+
+            const isWholesale = currentUser && currentUser.userType === "wholesale";
+            const effectivePriceUSD = (isWholesale && specialOffer.wholesaleUSD && specialOffer.wholesaleUSD > 0) 
+                ? specialOffer.wholesaleUSD 
+                : specialOffer.newPriceUSD;
+
             document.getElementById("soDisplayOldPrice").textContent = calcSYP(specialOffer.oldPriceUSD).toLocaleString() + " ل.س";
-            const newPriceSYP = calcSYP(specialOffer.newPriceUSD);
-            document.getElementById("soDisplayPrice").textContent = newPriceSYP.toLocaleString() + " ل.س";
+            const newPriceSYP = calcSYP(effectivePriceUSD);
+            document.getElementById("soDisplayPrice").textContent = newPriceSYP.toLocaleString() + (isWholesale ? " ل.س (جملة)" : " ل.س");
 
             const qtyInCart = cart["SPECIAL_OFFER"] ? cart["SPECIAL_OFFER"].qty : 0;
             const stock = parseInt(specialOffer.stock) || 0;
@@ -1228,12 +1280,16 @@
             const query = (document.getElementById("searchInput").value || "").trim().toLowerCase();
             let html = "";
 
+            const isWholesale = currentUser && currentUser.userType === "wholesale";
+
             Object.keys(products).forEach(id => {
                 const p = products[id];
                 if (selectedCategory !== "الكل" && p.category !== selectedCategory) return;
                 if (query && !p.name.toLowerCase().includes(query)) return;
 
-                const priceSYP = calcSYP(p.priceUSD);
+                // تحديد السعر بناءً على نوع الزبون (مفرق أو جملة)
+                const activePriceUSD = (isWholesale && p.wholesaleUSD && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD;
+                const priceSYP = calcSYP(activePriceUSD);
                 const stock = parseInt(p.stock) || 0;
                 const qtyInCart = cart[id] ? cart[id].qty : 0;
 
@@ -1285,7 +1341,7 @@
                         <div>
                             <img src="${p.image || 'store-icon.png'}" class="product-img" loading="lazy">
                             <h3>${p.name}</h3>
-                            <p>${priceSYP.toLocaleString()} ل.س</p>
+                            <p>${priceSYP.toLocaleString()} ل.س ${isWholesale && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>
                             ${reviewsListHTML}
                         </div>
                         <div style="margin-top:6px;">
@@ -1301,12 +1357,15 @@
 
         function changeQty(id, delta) {
             let itemData;
+            const isWholesale = currentUser && currentUser.userType === "wholesale";
+
             if (id === "SPECIAL_OFFER") {
                 if (!specialOffer || !specialOffer.active) return;
+                const effPrice = (isWholesale && specialOffer.wholesaleUSD && specialOffer.wholesaleUSD > 0) ? specialOffer.wholesaleUSD : specialOffer.newPriceUSD;
                 itemData = {
                     id: "SPECIAL_OFFER",
                     name: "🔥 عرض خاص: " + specialOffer.name,
-                    priceUSD: parseFloat(specialOffer.newPriceUSD) || 0,
+                    priceUSD: parseFloat(effPrice) || 0,
                     costPrice: parseFloat(specialOffer.costPrice) || 0,
                     stock: parseInt(specialOffer.stock) || 0,
                     pointsPct: parseFloat(specialOffer.pointsPct) || 2
@@ -1314,10 +1373,11 @@
             } else {
                 const p = products[id];
                 if (!p) return;
+                const effPrice = (isWholesale && p.wholesaleUSD && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD;
                 itemData = {
                     id,
                     name: p.name,
-                    priceUSD: parseFloat(p.priceUSD) || 0,
+                    priceUSD: parseFloat(effPrice) || 0,
                     costPrice: parseFloat(p.costPrice) || 0,
                     stock: parseInt(p.stock) || 0,
                     pointsPct: parseFloat(p.pointsPct) || 2
@@ -1390,9 +1450,12 @@
         function copyWalletId() {
             const wallet = document.getElementById("shamWalletId").textContent;
             if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(wallet).then(() => alert("✅ تم نسخ معرف محفظة شام كاش بنجاح!"));
+                navigator.clipboard.writeText(wallet).then(() => {
+                    alert("✅ تم نسخ معرف الشام كاش بنجاح!");
+                });
             } else {
                 prompt("انسخ معرف المحفظة التالي:", wallet);
+                alert("✅ تم نسخ معرف الشام كاش بنجاح!");
             }
         }
 
@@ -1439,7 +1502,7 @@
             document.getElementById("modalCartPoints").textContent = totalPoints;
         }
 
-        /* ==================== 8. إرسال الطلب عبر واتساب بدون حظر النوافذ ==================== */
+        /* ==================== 8. إرسال الطلب عبر واتساب ==================== */
         function submitOrder() {
             if (!currentUser || !currentUser.phone || !currentUser.name || !currentUser.address) {
                 closeCartModal();
@@ -1511,7 +1574,7 @@
             };
 
             let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n`;
-            msg += `👤 الزبون: ${orderPayload.customerName}\n`;
+            msg += `👤 الزبون: ${orderPayload.customerName} (${currentUser.userType === 'wholesale' ? 'جملة' : 'مفرق'})\n`;
             msg += `📱 الهاتف: ${orderPayload.customerPhone}\n`;
             msg += `🏘️ المنطقة: ${orderPayload.customerRegion}\n`;
             msg += `📍 العنوان: ${orderPayload.customerAddress}\n`;
@@ -1527,7 +1590,7 @@
             msg += `💰 *الإجمالي النهائي المطلوب:* ${orderPayload.totalSaleSYP.toLocaleString()} ل.س\n`;
             msg += `🎁 النقاط المستحقة عند التأكيد: +${orderPayload.earnedPoints} نقطة`;
 
-            const whatsappURL = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`;
+            const whatsappURL = `https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`;
 
             db.ref("pendingOrders/" + orderId).set(orderPayload);
             cart = {};
@@ -1797,7 +1860,7 @@
             db.ref("pendingOrders/" + orderId).remove();
         }
 
-        /* ==================== 13. إدارة الزبائن (تعديل، نقاط، حظر / فك حظر، حذف) ==================== */
+        /* ==================== 13. إدارة الزبائن وتصنيف (مفرق/جملة) والحظر ==================== */
         function renderAdminCustomers() {
             const container = document.getElementById("adminCustomersList");
             const q = (document.getElementById("adminSearchCust").value || "").trim().toLowerCase();
@@ -1812,24 +1875,37 @@
 
             container.innerHTML = sorted.map(u => {
                 const isBanned = !!u.banned;
+                const isWholesale = u.userType === "wholesale";
                 return `
                 <div style="background:var(--bg-color); border:1px solid ${isBanned ? 'var(--danger-color)' : 'var(--border-color)'}; padding:10px; border-radius:8px; margin-bottom:8px; font-size:12px;">
                     <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:4px;">
-                        <span>👤 ${u.name} (${u.phone}) ${isBanned ? '<b style="color:var(--danger-color);">[محظور 🚫]</b>' : ''}</span>
+                        <span>👤 ${u.name} (${u.phone}) <b style="color:${isWholesale ? 'var(--gold-color)' : 'var(--success-color)'};">[${isWholesale ? 'جملة' : 'مفرق'}]</b> ${isBanned ? '<b style="color:var(--danger-color);">[محظور 🚫]</b>' : ''}</span>
                         <span style="color:var(--gold-color);">${Math.round(u.points || 0)} نقطة</span>
                     </div>
                     <div style="color:var(--gray-text); font-size:11px; margin-bottom:8px;">
                         🏘️ المنطقة: <b>${u.region || "العوينة"}</b> | 📍 العنوان: ${u.address || "-"}
                     </div>
-                    <div style="display:flex; gap:5px;">
-                        <button onclick="openAdminEditCustomerModal('${u.phone}')" class="btn" style="padding:5px 8px; font-size:11px;">✏️ تعديل البيانات/النقاط</button>
-                        <button onclick="toggleBanCustomer('${u.phone}')" class="btn" style="padding:5px 8px; font-size:11px; background:${isBanned ? 'var(--success-color)' : '#ff9800'}; color:#000;">
-                            ${isBanned ? '🔓 فك الحظر' : '🚫 حظر الزبون'}
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                        <button onclick="openAdminEditCustomerModal('${u.phone}')" class="btn" style="padding:5px 8px; font-size:11px; width:auto;">✏️ تعديل</button>
+                        <button onclick="toggleCustomerType('${u.phone}')" class="btn" style="padding:5px 8px; font-size:11px; width:auto; background:${isWholesale ? '#2196F3' : '#9c27b0'}; color:#fff;">
+                            ${isWholesale ? '🔄 تحويل لمفرق' : '🔄 تحويل لجملة'}
                         </button>
-                        <button onclick="deleteCustomerAdmin('${u.phone}')" class="btn btn-danger" style="width:auto; padding:5px 10px; font-size:11px;">🗑️</button>
+                        <button onclick="toggleBanCustomer('${u.phone}')" class="btn" style="padding:5px 8px; font-size:11px; width:auto; background:${isBanned ? 'var(--success-color)' : '#ff9800'}; color:#000;">
+                            ${isBanned ? '🔓 فك الحظر' : '🚫 حظر'}
+                        </button>
+                        <button onclick="deleteCustomerAdmin('${u.phone}')" class="btn btn-danger" style="width:auto; padding:5px 8px; font-size:11px;">🗑️</button>
                     </div>
                 </div>`;
             }).join("");
+        }
+
+        function toggleCustomerType(phone) {
+            const u = users[phone];
+            if (!u) return;
+            const newType = (u.userType === "wholesale") ? "retail" : "wholesale";
+            db.ref("users/" + phone + "/userType").set(newType).then(() => {
+                alert(`✅ تم تحديث تصنيف الزبون (${u.name}) إلى (${newType === 'wholesale' ? 'جملة' : 'مفرق'}) بنجاح!`);
+            });
         }
 
         function openAdminEditCustomerModal(phone) {
@@ -1839,6 +1915,7 @@
             document.getElementById("adminCustName").value = u.name || "";
             document.getElementById("adminCustPhone").value = u.phone || phone;
             document.getElementById("adminCustRegion").value = u.region || "العوينة";
+            document.getElementById("adminCustType").value = u.userType || "retail";
             document.getElementById("adminCustAddress").value = u.address || "";
             document.getElementById("adminCustPoints").value = Math.round(u.points || 0);
             document.getElementById("adminEditCustomerModal").style.display = "flex";
@@ -1854,12 +1931,14 @@
 
             const name = document.getElementById("adminCustName").value.trim();
             const region = document.getElementById("adminCustRegion").value;
+            const userType = document.getElementById("adminCustType").value;
             const address = document.getElementById("adminCustAddress").value.trim();
             const points = parseFloat(document.getElementById("adminCustPoints").value) || 0;
 
             db.ref("users/" + phone).update({
                 name: name || users[phone].name,
                 region,
+                userType,
                 address,
                 points
             }).then(() => {
@@ -1888,7 +1967,7 @@
             }
         }
 
-        /* ==================== 14. الإحصائيات، المنتجات، والإعدادات العامة ==================== */
+        /* ==================== 14. الإحصائيات، المنتجات مع سعر الجملة والإعدادات ==================== */
         function renderStatsDashboard() {
             const sales = statsData.totalSales || 0;
             const cost = statsData.totalCost || 0;
@@ -1981,6 +2060,7 @@
             const name = document.getElementById("prodName").value.trim();
             const costPrice = parseFloat(document.getElementById("prodCostUSD").value) || 0;
             const priceUSD = parseFloat(document.getElementById("prodPriceUSD").value) || 0;
+            const wholesaleUSD = parseFloat(document.getElementById("prodWholesaleUSD").value) || 0;
             const stock = parseInt(document.getElementById("prodStock").value) || 0;
             const pointsPct = parseFloat(document.getElementById("prodPointsPct").value) || 2;
             const category = document.getElementById("prodCategory").value;
@@ -2000,12 +2080,13 @@
             }
 
             db.ref("products/" + id).set({
-                name, costPrice, priceUSD, stock, pointsPct, category, image: imageBase64, reviews: existingReviews
+                name, costPrice, priceUSD, wholesaleUSD, stock, pointsPct, category, image: imageBase64, reviews: existingReviews
             }).then(() => {
                 document.getElementById("editProductId").value = "";
                 document.getElementById("prodName").value = "";
                 document.getElementById("prodCostUSD").value = "";
                 document.getElementById("prodPriceUSD").value = "";
+                document.getElementById("prodWholesaleUSD").value = "";
                 document.getElementById("prodImageInput").value = "";
                 alert("✅ تم حفظ المنتج بنجاح!");
             });
@@ -2018,6 +2099,7 @@
             document.getElementById("prodName").value = p.name;
             document.getElementById("prodCostUSD").value = p.costPrice || 0;
             document.getElementById("prodPriceUSD").value = p.priceUSD || 0;
+            document.getElementById("prodWholesaleUSD").value = p.wholesaleUSD || 0;
             document.getElementById("prodStock").value = p.stock || 0;
             document.getElementById("prodPointsPct").value = p.pointsPct || 2;
             document.getElementById("prodCategory").value = p.category || "";
@@ -2040,7 +2122,7 @@
                     <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-color); padding:8px; border-radius:6px; margin-bottom:6px; font-size:12px;">
                         <div>
                             <strong>${p.name}</strong> (المخزون: ${p.stock})<br>
-                            <span style="color:var(--gray-text);">تكلفة: $${p.costPrice || 0} | مبيع: $${p.priceUSD} | ربح القطعة: <b style="color:var(--success-color);">${unitProfitSYP.toLocaleString()} ل.س</b></span>
+                            <span style="color:var(--gray-text);">مبيع: $${p.priceUSD} | جملة: $${p.wholesaleUSD || 0} | ربح: <b style="color:var(--success-color);">${unitProfitSYP.toLocaleString()} ل.س</b></span>
                         </div>
                         <div style="display:flex; gap:4px;">
                             <button onclick="editProduct('${id}')" class="btn" style="width:auto; padding:4px 8px;">✏️</button>
@@ -2059,6 +2141,7 @@
             const costPrice = parseFloat(document.getElementById("soCostUSD").value) || 0;
             const oldPriceUSD = parseFloat(document.getElementById("soOldPriceUSD").value) || 0;
             const newPriceUSD = parseFloat(document.getElementById("soNewPriceUSD").value) || 0;
+            const wholesaleUSD = parseFloat(document.getElementById("soWholesaleUSD").value) || 0;
             const stock = parseInt(document.getElementById("soStock").value) || 0;
             const pointsPct = parseFloat(document.getElementById("soPointsPct").value) || 2;
             const fileInput = document.getElementById("soImageInput");
@@ -2069,7 +2152,7 @@
             }
 
             db.ref("specialOffer").set({
-                active: true, name, costPrice, oldPriceUSD, newPriceUSD, stock, pointsPct, image: imageBase64
+                active: true, name, costPrice, oldPriceUSD, newPriceUSD, wholesaleUSD, stock, pointsPct, image: imageBase64
             }).then(() => alert("✅ تم تحديث العرض الخاص!"));
         }
 
@@ -2097,7 +2180,7 @@
             lowItems.forEach(p => {
                 msg += `• ${p.name} (المتبقي: ${p.stock})\n`;
             });
-            window.location.href = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`;
+            window.location.href = `https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`;
         }
 
         async function saveCompetitionSettings() {
@@ -2119,6 +2202,9 @@
         function saveGeneralSettings() {
             const rate = parseFloat(document.getElementById("exchangeRateInput").value) || 15000;
             const driver = document.getElementById("deliveryPhoneInput").value.trim();
+            const adminWA = document.getElementById("adminWhatsAppInput").value.trim() || "963965461504";
+            const shamWallet = document.getElementById("adminShamWalletInput").value.trim() || "da3e13cd8a2ef2af282445e148df9599";
+
             const fees = {
                 "العوينة": parseInt(document.getElementById("feeAwinaInput").value) || 0,
                 "المزرعة الشرقية ( الريحانية )": parseInt(document.getElementById("feeEastInput").value) || 0,
@@ -2128,8 +2214,10 @@
             db.ref("settings").set({
                 exchangeRate: rate,
                 deliveryDriverPhone: driver,
+                adminWhatsApp: adminWA,
+                shamWalletId: shamWallet,
                 deliveryFees: fees
-            }).then(() => alert("✅ تم حفظ تكاليف التوصيل وسعر الصرف ورقم التوصيل بنجاح!"));
+            }).then(() => alert("✅ تم حفظ الإعدادات ورقم الإدارة ومعرف شام كاش بنجاح!"));
         }
 
         function exportBackupJSON() {
