@@ -572,7 +572,7 @@
             <div style="background: rgba(212, 175, 55, 0.08); border: 1px dashed var(--gold-color); padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 12px;">
                 <div style="color: var(--gold-color); font-weight: bold; margin-bottom: 5px; text-align: center;">📱 الدفع حصراً عبر شام كاش (Sham Cash)</div>
                 <div style="margin-bottom: 4px;">👤 المستلم: <b style="color: var(--gold-color);">معاذ العلي</b></div>
-                <div style="margin-bottom: 6px; word-break: break-all;">💳 معرف المحفظة: <b id="shamWalletId">da3e13cd8a2ef2af282445e148df999</b></div>
+                <div style="margin-bottom: 6px; word-break: break-all;">💳 معرف المحفظة: <b id="shamWalletId">da3e13cd8a2ef2af282445e148df9599</b></div>
                 <button type="button" onclick="copyWalletId()" class="btn" style="padding: 6px; font-size: 11px;">📋 نسخ معرف المحفظة للدفع</button>
             </div>
 
@@ -915,7 +915,6 @@
 
         let currentUser = JSON.parse(localStorage.getItem("moaath_user") || "null");
 
-        // دالة لتنسيق رقم الهاتف لروابط واتساب المباشرة
         function formatWhatsAppPhone(phone) {
             let p = String(phone || "").replace(/[^0-9]/g, "");
             if (p.startsWith("00")) p = p.substring(2);
@@ -1075,7 +1074,6 @@
 
         /* ==================== 6. تسجيل الدخول الإجباري وبيانات التواصل ==================== */
         function checkInitialLogin() {
-            // إذا لم يكن مسجلاً أو كانت معلومات التواصل أو المنطقة ناقصة، تفتح النافذة فوراً
             if (!currentUser || !currentUser.phone || !currentUser.name || !currentUser.region || !currentUser.address) {
                 if (currentUser) {
                     document.getElementById("regName").value = currentUser.name || "";
@@ -1253,7 +1251,6 @@
                     btnHTML = `<button class="btn" onclick="changeQty('${id}', 1)">➕ أضف للسلة</button>`;
                 }
 
-                // حساب التقييمات والتعليقات
                 const reviews = p.reviews || {};
                 const reviewKeys = Object.keys(reviews);
                 let avgRating = 0;
@@ -1262,7 +1259,6 @@
                     avgRating = (sum / reviewKeys.length).toFixed(1);
                 }
 
-                // التحقق من شراء المنتج وتأكيد الطلب
                 const hasPurchased = currentUser && currentUser.phone && 
                                      users[currentUser.phone] && 
                                      users[currentUser.phone].purchases && 
@@ -1514,7 +1510,6 @@
                 earnedPoints: totalPoints
             };
 
-            // تجهيز نص رسالة واتساب فوراً
             let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n`;
             msg += `👤 الزبون: ${orderPayload.customerName}\n`;
             msg += `📱 الهاتف: ${orderPayload.customerPhone}\n`;
@@ -1534,14 +1529,12 @@
 
             const whatsappURL = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`;
 
-            // حفظ الطلب في Firebase وتفريغ السلة وفتح واتساب مباشرة دون حظر من المتصفح
             db.ref("pendingOrders/" + orderId).set(orderPayload);
             cart = {};
             document.getElementById("orderNotes").value = "";
             closeCartModal();
             renderStore();
 
-            // التوجيه الفوري لتطبيق واتساب
             window.location.href = whatsappURL;
         }
 
@@ -1725,7 +1718,6 @@
             const o = pendingOrders[orderId];
             if (!o) return;
 
-            // 1. خصم الكميات من المخزون
             (o.items || []).forEach(item => {
                 if (item.id === "SPECIAL_OFFER" && specialOffer) {
                     const newStock = Math.max(0, (parseInt(specialOffer.stock) || 0) - item.qty);
@@ -1736,7 +1728,6 @@
                 }
             });
 
-            // 2. توثيق المنتجات المشتراة للزبون لتفعيل التقييم والتعليق
             const phone = o.customerPhone;
             let purchasedObj = (users[phone] && users[phone].purchases) ? users[phone].purchases : {};
             (o.items || []).forEach(item => {
@@ -1745,7 +1736,6 @@
                 }
             });
 
-            // 3. تحديث نقاط وبيانات الزبون
             const currentPts = (users[phone] && users[phone].points) ? users[phone].points : 0;
             const updatedPts = currentPts + (o.earnedPoints || 0);
             db.ref(`users/${phone}`).update({
@@ -1757,7 +1747,6 @@
                 purchases: purchasedObj
             });
 
-            // 4. تحديث الإحصائيات المالية
             const newStats = { ...statsData };
             newStats.totalSales = (newStats.totalSales || 0) + (o.subtotalSaleSYP || o.totalSaleSYP || 0);
             newStats.totalCost = (newStats.totalCost || 0) + (o.totalCostSYP || 0);
@@ -1776,7 +1765,6 @@
             db.ref("stats").set(newStats);
             db.ref("pendingOrders/" + orderId).remove();
 
-            // 5. إشعار الزبون وعامل التوصيل عبر واتساب
             const custPhoneClean = formatWhatsAppPhone(o.customerPhone);
             const custMsg = `مرحباً ${o.customerName} 🌸\nتم تأكيد فاتورتك في *متجر معاذ* وجاري تجهيزها للتوصيل إلى (${o.customerRegion || "العوينة"})!\n💰 الإجمالي مع التوصيل: ${o.totalSaleSYP.toLocaleString()} ل.س\n🎁 تمت إضافة +${o.earnedPoints} نقطة لرصيدك (إجمالي نقاطك: ${updatedPts}).\n⭐ يمكنك الآن تقييم المنتجات التي اشتريتها داخل التطبيق!`;
             window.open(`https://wa.me/${custPhoneClean}?text=${encodeURIComponent(custMsg)}`, "_blank");
