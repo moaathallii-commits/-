@@ -422,7 +422,8 @@
 
     <div class="container">
         <div id="specialOfferContainer" class="special-offer-banner" style="display: none;">
-            <img id="soDisplayImg" src="" class="special-offer-img" loading="lazy">
+            <!-- استخدام صورة بديلة مؤقتة لحين دخولها شاشة العرض -->
+            <img id="soDisplayImg" data-src="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" class="special-offer-img lazy-img">
             <div style="flex:1;">
                 <h3 style="color:var(--gold-color); font-size:14px; margin:0 0 4px 0;">🔥 عرض خاص!</h3>
                 <div id="soDisplayName" style="font-size:12px; margin-bottom:4px; font-weight:bold;"></div>
@@ -467,7 +468,7 @@
 
             <div id="compDetailsCard" class="comp-card" style="display: none;">
                 <h3 id="compTitleDisplay" style="color: var(--gold-color); margin: 0 0 8px 0; font-size: 15px;"></h3>
-                <img id="compImgDisplay" src="" style="width: 100%; max-height: 260px; object-fit: cover; border-radius: 8px; border: 1px solid var(--gold-color); margin-bottom: 8px; display: none;" loading="lazy">
+                <img id="compImgDisplay" data-src="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" style="width: 100%; max-height: 260px; object-fit: cover; border-radius: 8px; border: 1px solid var(--gold-color); margin-bottom: 8px; display: none;" class="lazy-img">
                 <p id="compDescDisplay" style="font-size: 13px; line-height: 1.6; margin: 0; white-space: pre-line;"></p>
             </div>
 
@@ -841,7 +842,6 @@
 
                 <hr style="border-color: var(--border-color);">
                 <h4 style="color: var(--gold-color); margin: 10px 0 6px 0;">📋 قائمة المنتجات والتعليقات</h4>
-                <!-- شريط بحث المنتجات في الإدارة -->
                 <input type="text" id="adminSearchProd" class="search-box" placeholder="🔍 ابحث عن منتج لتعديله أو حذف تعليقاته..." oninput="renderAdminProducts()" style="margin-bottom: 8px; font-size: 11px;">
                 <div id="adminProductsList"></div>
             </div>
@@ -899,7 +899,7 @@
                 <button onclick="resetStatistics()" class="btn btn-danger">🗑️ تصفير سجل الإحصائيات</button>
             </div>
 
-            <!-- 6. قسم النواقص (يعتمد على حد التنبيه لكل منتج) -->
+            <!-- 6. قسم النواقص -->
             <div id="shortagesTab" class="admin-tab" style="display: none;">
                 <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">⚠️ رصد المنتجات الناقصة حسب حد التنبيه</h4>
                 <div id="shortagesList" style="margin-bottom: 12px;"></div>
@@ -1029,6 +1029,33 @@
                 reader.onerror = reject;
                 reader.readAsDataURL(file);
             });
+        }
+
+        // أداة التحميل الكسول الفعالة جداً للصور المعلقة (Intersection Observer)
+        function initLazyImages() {
+            const lazyImages = document.querySelectorAll(".lazy-img");
+            if ("IntersectionObserver" in window) {
+                const imageObserver = new IntersectionObserver((entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const image = entry.target;
+                            const realSrc = image.getAttribute("data-src");
+                            if (realSrc) {
+                                image.src = realSrc;
+                                image.removeAttribute("data-src");
+                            }
+                            imageObserver.unobserve(image);
+                        }
+                    });
+                });
+                lazyImages.forEach(image => imageObserver.observe(image));
+            } else {
+                lazyImages.forEach(image => {
+                    if (image.getAttribute("data-src")) {
+                        image.src = image.getAttribute("data-src");
+                    }
+                });
+            }
         }
 
         db.ref("settings").on("value", (snap) => {
@@ -1245,7 +1272,10 @@
                 return;
             }
             box.style.display = "flex";
-            document.getElementById("soDisplayImg").src = specialOffer.image || "store-icon.png";
+            const soImg = document.getElementById("soDisplayImg");
+            soImg.setAttribute("data-src", specialOffer.image || "store-icon.png");
+            soImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E";
+
             document.getElementById("soDisplayName").textContent = specialOffer.name;
 
             const isWholesale = currentUser && currentUser.userType === "wholesale";
@@ -1277,6 +1307,7 @@
                         <button class="btn" style="padding:6px; font-size:11px; background:var(--success-color); color:#000;" onclick="quickBuy('SPECIAL_OFFER')">⚡ اطلب فوراً</button>
                     </div>`;
             }
+            initLazyImages();
         }
 
         function renderStore() {
@@ -1323,7 +1354,6 @@
                     avgRating = (sum / reviewKeys.length).toFixed(1);
                 }
 
-                // التحقق الصارم: هل اشترى الزبون هذا المنتج وتم تأكيد طلبه؟
                 const hasPurchased = currentUser && currentUser.phone && 
                                      users[currentUser.phone] && 
                                      users[currentUser.phone].purchases && 
@@ -1348,7 +1378,7 @@
                 html += `
                     <div class="product-card">
                         <div>
-                            <img src="${p.image || 'store-icon.png'}" class="product-img" loading="lazy">
+                            <img data-src="${p.image || 'store-icon.png'}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" class="product-img lazy-img">
                             <h3>${p.name}</h3>
                             <p>${priceSYP.toLocaleString()} ل.س ${isWholesale && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>
                             ${reviewsListHTML}
@@ -1362,6 +1392,7 @@
 
             grid.innerHTML = html || `<p style="grid-column: span 2; text-align: center; color: var(--gray-text);">لا توجد منتجات مطابقة</p>`;
             updateCartBar();
+            initLazyImages();
         }
 
         function changeQty(id, delta) {
@@ -1661,7 +1692,6 @@
             });
         }
 
-        // خيار حذف تعليق معين من قبل الإدارة
         function deleteProductReview(productId, reviewId) {
             if (confirm("⚠️ هل أنت متأكد من حذف هذا التعليق نهائياً؟")) {
                 db.ref(`products/${productId}/reviews/${reviewId}`).remove().then(() => {
@@ -1690,7 +1720,8 @@
                 document.getElementById("compDescDisplay").textContent = compSettings.desc || "";
                 const img = document.getElementById("compImgDisplay");
                 if (compSettings.image) {
-                    img.src = compSettings.image;
+                    img.setAttribute("data-src", compSettings.image);
+                    img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E";
                     img.style.display = "block";
                 } else {
                     img.style.display = "none";
@@ -1698,6 +1729,7 @@
             } else {
                 card.style.display = "none";
             }
+            initLazyImages();
         }
 
         function renderLeaderboard() {
@@ -2146,7 +2178,6 @@
                 const p = products[id];
                 const unitProfitSYP = calcSYP(p.priceUSD) - calcSYP(p.costPrice || 0);
                 
-                // عرض التعليقات الخاصة بالمنتج مع خيار الحذف
                 const reviews = p.reviews || {};
                 let reviewsAdminHTML = "";
                 Object.keys(reviews).forEach(revId => {
