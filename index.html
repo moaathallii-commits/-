@@ -9,7 +9,7 @@
     <!-- ربط التطبيق بالهاتف (PWA) -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#121212" id="themeColorMeta">
-    <link rel="apple-touch-icon" href="store-icon.png?v=4">
+    <link rel="apple-touch-icon" href="store-icon.png?v=6">
     
     <!-- مكتبات Firebase الأساسية -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
@@ -23,6 +23,7 @@
             --text-color: #FFFFFF;
             --gray-text: #AAAAAA;
             --danger-color: #ff4444;
+            --success-color: #00e676;
             --border-color: #333333;
         }
 
@@ -32,6 +33,7 @@
             --gold-color: #B8860B; 
             --text-color: #1A1A1A;
             --gray-text: #666666;
+            --success-color: #00a152;
             --border-color: #E0E0E0;
         }
 
@@ -88,6 +90,22 @@
             align-items: center;
             border-bottom: 1px solid var(--border-color);
             font-size: 13px;
+        }
+        .points-badge {
+            color: var(--gold-color);
+            cursor: pointer;
+            background: rgba(212, 175, 55, 0.12);
+            padding: 5px 10px;
+            border-radius: 15px;
+            border: 1px solid var(--gold-color);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+        .points-badge:active {
+            transform: scale(0.95);
         }
         .container {
             padding: 10px;
@@ -253,7 +271,7 @@
             border-radius: 10px;
             border: 1px solid var(--gold-color);
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             max-height: 90vh;
             overflow-y: auto;
             box-sizing: border-box;
@@ -296,19 +314,65 @@
             font-size: 11px;
             color: var(--text-color);
         }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
         .stats-box {
             background: var(--bg-color);
             border: 1px solid var(--border-color);
-            border-radius: 5px;
-            padding: 10px;
-            margin-bottom: 10px;
+            border-radius: 6px;
+            padding: 10px 8px;
             text-align: center;
         }
         .stats-value {
-            font-size: 18px;
+            font-size: 15px;
             font-weight: bold;
             color: var(--gold-color);
-            margin-top: 5px;
+            margin-top: 4px;
+        }
+        /* تصميم صفحة المسابقات */
+        .page-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color);
+            z-index: 950;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+        .comp-card {
+            background: var(--card-bg);
+            border: 1px solid var(--gold-color);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 0 12px rgba(212, 175, 55, 0.15);
+        }
+        .leader-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .leader-row.top-1 {
+            border-color: #FFD700;
+            background: linear-gradient(90deg, rgba(255, 215, 0, 0.15), var(--bg-color));
+        }
+        .leader-row.top-2 {
+            border-color: #C0C0C0;
+            background: linear-gradient(90deg, rgba(192, 192, 192, 0.12), var(--bg-color));
+        }
+        .leader-row.top-3 {
+            border-color: #CD7F32;
+            background: linear-gradient(90deg, rgba(205, 127, 50, 0.12), var(--bg-color));
         }
         @keyframes pulse {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7); }
@@ -330,7 +394,7 @@
     </header>
 
     <div class="user-bar">
-        <span style="display:flex; align-items:center; gap:8px;">
+        <span style="display:flex; align-items:center; gap:6px;">
             👤 <b id="userNameDisplay">زائر</b> 
             <button onclick="openEditProfile()" style="background:transparent; border:none; color:var(--gold-color); font-size:11px; cursor:pointer; padding:0;">(⚙️)</button>
         </span>
@@ -338,7 +402,10 @@
             <button id="redeemPointsBtn" onclick="redeemPointsWhatsApp()" style="display:none; background:linear-gradient(45deg, #D4AF37, #FFD700); color:#000; border:none; padding:5px 10px; border-radius:15px; font-size:11px; font-weight:bold; cursor:pointer; animation: pulse 1.5s infinite;">🎁 استخدام النقاط</button>
             <button onclick="toggleTheme()" id="themeBtn" style="background:transparent; border:none; font-size:18px; cursor:pointer; padding:0;">☀️</button>
             <button id="installBtn" onclick="installApp()" style="display:none; background:#25d366; color:#000; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer; box-shadow:0 0 5px rgba(37,211,102,0.5);">تثبيت 📱</button>
-            <span style="color: var(--gold-color);">🎁 نقاطي: <b id="userPoints">0</b></span>
+            <!-- الضغط على إشارة الهدية يفتح صفحة المسابقات -->
+            <span class="points-badge" onclick="openCompetitionsPage()">
+                🎁 نقاطي: <b id="userPoints">0</b>
+            </span>
         </div>
     </div>
 
@@ -350,7 +417,7 @@
                 <div id="soDisplayName" style="font-size:12px; margin-bottom:4px; font-weight:bold;"></div>
                 <div style="font-size:12px; margin-bottom:6px;">
                     <s id="soDisplayOldPrice" style="color:#ff4444; margin-left:5px;"></s>
-                    <strong id="soDisplayPrice" style="color:#00ff00; font-size:14px;"></strong>
+                    <strong id="soDisplayPrice" style="color:var(--success-color); font-size:14px;"></strong>
                 </div>
                 <div id="soActionContainer" style="margin-top: 5px;"></div>
             </div>
@@ -366,6 +433,37 @@
     <div class="cart-bar" id="cartBar" style="display:none;" onclick="openCartModal()">
         <span>المنتجات: <b id="cartCount">0</b> | الإجمالي: <b id="cartTotal">0</b> ل.س</span>
         <span style="color:var(--gold-color); font-size:12px; font-weight:bold;">🛒 عرض السلة</span>
+    </div>
+
+    <!-- صفحة مسابقات متجر معاذ -->
+    <div id="competitionsPage" class="page-overlay">
+        <header style="position: sticky; top: 0; z-index: 10;">
+            <div class="store-info">
+                <h1>🏆 صفحة مسابقات متجر معاذ</h1>
+                <p>اجمع النقاط وتصدر القائمة لتربح الجوائز!</p>
+            </div>
+            <button onclick="closeCompetitionsPage()" class="btn" style="width: auto; padding: 6px 12px;">🔙 العودة للمتجر</button>
+        </header>
+
+        <div class="container">
+            <div class="comp-card" style="text-align: center; background: linear-gradient(45deg, rgba(212, 175, 55, 0.15), var(--card-bg));">
+                <div style="font-size: 13px; color: var(--gray-text);">رصيد نقاطك الحالي</div>
+                <div style="font-size: 26px; font-weight: bold; color: var(--gold-color); margin: 5px 0;"><span id="compUserPoints">0</span> نقطة 🎁</div>
+                <div id="compRedeemContainer" style="margin-top: 8px;"></div>
+            </div>
+
+            <div class="comp-card">
+                <h3 id="compDisplayTitle" style="color: var(--gold-color); margin-top: 0; text-align: center; font-size: 16px;">مسابقة متجر معاذ الكبرى 🎉</h3>
+                <img id="compDisplayImg" src="" style="width: 100%; max-height: 350px; object-fit: cover; border-radius: 8px; border: 1px solid var(--gold-color); margin-bottom: 12px; display: none;">
+                <p id="compDisplayDetails" style="font-size: 13px; line-height: 1.7; color: var(--text-color); white-space: pre-line; margin: 0; text-align: right;">تسوق من متجر معاذ واجمع النقاط مع كل فاتورة لتكون من الفائزين بجوائزنا المميزة!</p>
+            </div>
+
+            <div class="comp-card">
+                <h3 style="color: var(--gold-color); margin-top: 0; text-align: center; font-size: 15px;">🔥 المتصدرون بالنقاط في المتجر</h3>
+                <p style="font-size: 11px; color: var(--gray-text); text-align: center; margin-top: -5px; margin-bottom: 12px;">تنافس مع أصدقائك واجمع نقاطاً أكثر لتتصدر القائمة!</p>
+                <div id="compLeaderboardList"></div>
+            </div>
+        </div>
     </div>
 
     <!-- نافذة السلة -->
@@ -470,22 +568,63 @@
         <div class="modal-content">
             <h3 style="color:var(--gold-color); text-align:center; margin-top:0;">لوحة تحكم متجر معاذ</h3>
             
-            <h4 style="color:var(--gold-color); margin:5px 0;">📊 إحصائيات المتجر</h4>
-            <div style="display:flex; gap:10px; margin-bottom:10px;">
-                <div class="stats-box" style="flex:1;">
+            <!-- قسم إحصائيات المتجر المطور (مع التكلفة وصافي الربح وتقييم المخزون) -->
+            <h4 style="color:var(--gold-color); margin:5px 0;">📊 إحصائيات المتجر والأرباح</h4>
+            <div class="stats-grid">
+                <div class="stats-box">
                     <div style="font-size:11px; color:var(--gray-text);">إجمالي المبيعات</div>
                     <div class="stats-value" id="statTotalSales">0 ل.س</div>
                 </div>
-                <div class="stats-box" style="flex:1;">
-                    <div style="font-size:11px; color:var(--gray-text);">طلبات ملغاة</div>
+                <div class="stats-box">
+                    <div style="font-size:11px; color:var(--gray-text);">إجمالي التكلفة</div>
+                    <div class="stats-value" id="statTotalCost" style="color:var(--gray-text);">0 ل.س</div>
+                </div>
+                <div class="stats-box" style="border-color:var(--success-color);">
+                    <div style="font-size:11px; color:var(--gray-text);">💰 صافي الأرباح</div>
+                    <div class="stats-value" id="statNetProfit" style="color:var(--success-color);">0 ل.س</div>
+                </div>
+                <div class="stats-box">
+                    <div style="font-size:11px; color:var(--gray-text);">نسبة الربح المحققة</div>
+                    <div class="stats-value" id="statProfitMargin" style="color:var(--success-color);">0%</div>
+                </div>
+                <div class="stats-box">
+                    <div style="font-size:11px; color:var(--gray-text);">طلبات منفذة ✅</div>
+                    <div class="stats-value" id="statCompleted" style="color:var(--text-color);">0</div>
+                </div>
+                <div class="stats-box">
+                    <div style="font-size:11px; color:var(--gray-text);">طلبات ملغاة ❌</div>
                     <div class="stats-value" id="statCanceled" style="color:var(--danger-color);">0</div>
                 </div>
             </div>
-            <div class="stats-box" style="margin-bottom:10px;">
-                <div style="font-size:11px; color:var(--gray-text);">أكثر المنتجات مبيعاً</div>
-                <div class="stats-value" id="statBestSeller" style="font-size:14px; color:#fff;">لا يوجد بيانات بعد</div>
+
+            <div class="stats-box" style="margin-bottom:8px;">
+                <div style="font-size:11px; color:var(--gray-text);">🔥 الأكثر مبيعاً (بالكمية)</div>
+                <div class="stats-value" id="statBestSeller" style="font-size:13px; color:var(--text-color);">لا يوجد بيانات بعد</div>
             </div>
-            <button class="btn btn-danger" onclick="resetStoreStats()" style="margin-bottom:15px; width:100%;">تصفير إحصائيات المتجر 🗑️</button>
+
+            <div class="stats-box" style="margin-bottom:8px;">
+                <div style="font-size:11px; color:var(--gray-text);">💎 المنتج الأعلى تحقيقاً للربح</div>
+                <div class="stats-value" id="statMostProfitable" style="font-size:13px; color:var(--success-color);">لا يوجد بيانات بعد</div>
+            </div>
+
+            <!-- الجرد المالي الفوري للمخزون الحالي -->
+            <div class="stats-box" style="margin-bottom:10px; text-align:right; padding:10px;">
+                <div style="font-size:12px; color:var(--gold-color); font-weight:bold; text-align:center; margin-bottom:6px;">📦 التقييم المالي للمخزون الحالي</div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+                    <span style="color:var(--gray-text);">رأس مال المخزون (بسعر التكلفة):</span>
+                    <b id="statInvCost" style="color:var(--text-color);">0 ل.س</b>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+                    <span style="color:var(--gray-text);">قيمة المخزون (بسعر المبيع):</span>
+                    <b id="statInvSale" style="color:var(--gold-color);">0 ل.س</b>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; border-top:1px solid var(--border-color); padding-top:4px; margin-top:4px;">
+                    <span style="color:var(--gray-text);">الربح المتوقع من المخزون:</span>
+                    <b id="statInvProfit" style="color:var(--success-color);">0 ل.س</b>
+                </div>
+            </div>
+
+            <button class="btn btn-danger" onclick="resetStoreStats()" style="margin-bottom:15px; width:100%;">تصفير إحصائيات المبيعات والأرباح 🗑️</button>
 
             <hr style="border-color:var(--border-color); margin:15px 0;">
 
@@ -501,15 +640,35 @@
 
             <hr style="border-color:var(--border-color); margin:15px 0;">
 
-            <!-- إعدادات حد النقاط للهدية -->
-            <h4 style="color:var(--gold-color); margin:5px 0;">🎁 إعدادات نقاط الولاء والهدايا</h4>
+            <!-- إعدادات المسابقات ولوحة الشرف -->
+            <h4 style="color:var(--gold-color); margin:5px 0;">🏆 إعدادات المسابقات والمتصدرين</h4>
             <div class="form-group">
-                <label>الحد الأدنى للنقاط لظهر زر "استخدام النقاط":</label>
+                <label>الحد الأدنى للنقاط ليظهر زر "استخدام النقاط":</label>
                 <div style="display:flex; gap:5px;">
                     <input type="number" id="pointsThresholdInput" class="form-control" value="100">
                     <button class="btn" onclick="updatePointsThreshold()" style="width:auto;">حفظ الحد</button>
                 </div>
             </div>
+            <div class="form-group">
+                <label>عنوان المسابقة:</label>
+                <input type="text" id="compTitleInput" class="form-control" placeholder="مثال: مسابقة متجر معاذ الشهرية">
+            </div>
+            <div class="form-group">
+                <label>تفاصيل المسابقة والجوائز:</label>
+                <textarea id="compDetailsInput" class="form-control" rows="3" placeholder="اكتب شروط المسابقة والجوائز هنا..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>عدد الزبائن المتصدرين المعروضين في صفحة المسابقات:</label>
+                <input type="number" id="compTopCountInput" class="form-control" value="5" min="1">
+            </div>
+            <div class="form-group">
+                <label>صورة المسابقة أو الجائزة (اختر من الهاتف):</label>
+                <input type="file" id="compImageFile" accept="image/*" class="form-control">
+                <input type="hidden" id="compImgInput">
+                <div id="compImgPreview" style="margin-top:5px; text-align:center;"></div>
+                <button type="button" onclick="clearCompImage()" style="background:transparent; border:none; color:var(--danger-color); font-size:11px; cursor:pointer; margin-top:3px;">🗑️ إزالة صورة المسابقة</button>
+            </div>
+            <button class="btn" onclick="saveCompetitionSettings()" style="margin-bottom:10px;">حفظ إعدادات المسابقة 🏆</button>
 
             <hr style="border-color:var(--border-color); margin:15px 0;">
 
@@ -557,6 +716,10 @@
             </div>
             <div style="display:flex; gap:5px;">
                 <div class="form-group" style="flex:1;">
+                    <label>سعر التكلفة ($):</label>
+                    <input type="number" id="soCostPriceInput" class="form-control" placeholder="سري للإدارة">
+                </div>
+                <div class="form-group" style="flex:1;">
                     <label>السعر القديم ($):</label>
                     <input type="number" id="soOldPriceInput" class="form-control">
                 </div>
@@ -595,13 +758,14 @@
 
             <hr style="border-color:var(--border-color); margin:15px 0;">
 
-            <h4 style="color:var(--gold-color); margin:5px 0;">👥 إدارة نقاط الزبائن ومعلوماتهم</h4>
+            <h4 style="color:var(--gold-color); margin:5px 0;">👥 إدارة نقاط الزبائن (مرتبة من الأكبر للأصغر)</h4>
             <button class="btn btn-danger" onclick="resetAllCustomersPoints()" style="margin-bottom:10px; width:100%;">تصفير نقاط جميع الزبائن 🗑️</button>
             <input type="text" id="adminCustomerSearch" class="form-control" placeholder="🔍 ابحث عن زبون..." oninput="renderAdminCustomersList()" style="margin-bottom: 10px;">
-            <div id="adminCustomersList" style="max-height: 140px; overflow-y: auto; background:var(--bg-color); border:1px solid var(--border-color); padding:5px; border-radius:5px; margin-bottom:15px;"></div>
+            <div id="adminCustomersList" style="max-height: 180px; overflow-y: auto; background:var(--bg-color); border:1px solid var(--border-color); padding:5px; border-radius:5px; margin-bottom:15px;"></div>
 
             <hr style="border-color:var(--border-color); margin:15px 0;">
 
+            <!-- إضافة منتج جديد (مع سعر التكلفة السري) -->
             <h4 style="color:var(--gold-color); margin:5px 0;">➕ إضافة منتج جديد</h4>
             <div class="form-group">
                 <label>الاسم:</label>
@@ -611,9 +775,15 @@
                 <label>التصنيف:</label>
                 <select id="newProdCat" class="form-control"></select>
             </div>
-            <div class="form-group">
-                <label>السعر ($):</label>
-                <input type="number" id="newProdPrice" class="form-control">
+            <div style="display:flex; gap:5px;">
+                <div class="form-group" style="flex:1;">
+                    <label>سعر التكلفة ($) [سري]:</label>
+                    <input type="number" id="newProdCost" class="form-control" placeholder="لحساب الربح">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>سعر المبيع ($):</label>
+                    <input type="number" id="newProdPrice" class="form-control" placeholder="يظهر للزبون">
+                </div>
             </div>
             <div style="display:flex; gap:5px;">
                 <div class="form-group" style="flex:1;">
@@ -671,7 +841,7 @@
         </div>
     </div>
 
-    <!-- نافذة تعديل المنتج -->
+    <!-- نافذة تعديل المنتج (مع سعر التكلفة السري) -->
     <div id="editProductModal" class="modal-overlay" style="z-index: 1005;">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); text-align:center; margin-top:0;">تعديل المنتج ✏️</h3>
@@ -684,9 +854,15 @@
                 <label>التصنيف:</label>
                 <select id="editProdCat" class="form-control"></select>
             </div>
-            <div class="form-group">
-                <label>السعر الأساسي ($):</label>
-                <input type="number" id="editProdPrice" class="form-control">
+            <div style="display:flex; gap:5px;">
+                <div class="form-group" style="flex:1;">
+                    <label>سعر التكلفة ($) [سري]:</label>
+                    <input type="number" id="editProdCost" class="form-control">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>سعر المبيع ($):</label>
+                    <input type="number" id="editProdPrice" class="form-control">
+                </div>
             </div>
             <div style="display:flex; gap:5px;">
                 <div class="form-group" style="flex:1;">
@@ -759,11 +935,11 @@
                     let img = new Image();
                     img.onload = function() {
                         let canvas = document.createElement('canvas'); let ctx = canvas.getContext('2d');
-                        let max_size = 300; let width = img.width; let height = img.height;
+                        let max_size = 550; let width = img.width; let height = img.height;
                         if (width > height) { if (width > max_size) { height *= max_size / width; width = max_size; } } 
                         else { if (height > max_size) { width *= max_size / height; height = max_size; } }
                         canvas.width = width; canvas.height = height; ctx.drawImage(img, 0, 0, width, height);
-                        let dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                        let dataUrl = canvas.toDataURL('image/jpeg', 0.80);
                         document.getElementById(hiddenInputId).value = dataUrl;
                         document.getElementById(previewId).innerHTML = `<img src="${dataUrl}" style="width:60px; height:60px; border-radius:5px; object-fit:cover; border:1px solid var(--border-color);">`;
                     }
@@ -775,6 +951,12 @@
 
         let categories = [];
         let specialOffer = {};
+        let competitionData = {
+            title: 'مسابقة متجر معاذ الكبرى 🎉',
+            details: 'تسوق من متجر معاذ واجمع النقاط مع كل فاتورة لتكون من الفائزين بجوائزنا المميزة!',
+            image: '',
+            topCount: 5
+        };
         let products = [];
         let exchangeRate = 1;
         let deliveryFeeOwaina = 5000;
@@ -783,7 +965,15 @@
         let deliveryPhone = '';
         let customers = [];
         let pendingOrders = [];
-        let storeStats = { totalSales: 0, canceledOrders: 0, productsSold: {} }; 
+        let storeStats = { 
+            totalSales: 0, 
+            totalCost: 0, 
+            netProfit: 0, 
+            completedOrders: 0, 
+            canceledOrders: 0, 
+            productsSold: {}, 
+            productsProfit: {} 
+        }; 
         
         let currentUser = getSafeStorage('moaath_current_user', null);
         let currentCategory = 'الكل';
@@ -823,12 +1013,26 @@
                 let data = val ? (Array.isArray(val) ? val : Object.values(val)) : []; 
                 products = data.filter(p => p !== null && p !== undefined); 
                 renderProducts(document.getElementById('searchInput').value);
-                if(document.getElementById('adminDashboard').style.display === 'flex') { renderAdminProductsList(); renderAdminShortages(); }
+                if(document.getElementById('adminDashboard').style.display === 'flex') { 
+                    renderAdminProductsList(); 
+                    renderAdminShortages(); 
+                    renderAdminStats();
+                }
             });
 
             db.ref('specialOffer').on('value', snap => {
-                specialOffer = snap.val() || { active: false, id: 'special_offer_1', name: 'عرض التوفير', baseOldPrice: 500, basePrice: 350, image: '' };
+                specialOffer = snap.val() || { active: false, id: 'special_offer_1', name: 'عرض التوفير', costPrice: 0, baseOldPrice: 500, basePrice: 350, image: '' };
                 renderSpecialOfferCustomer();
+            });
+
+            db.ref('competitions').on('value', snap => {
+                competitionData = snap.val() || {
+                    title: 'مسابقة متجر معاذ الكبرى 🎉',
+                    details: 'تسوق من متجر معاذ واجمع النقاط مع كل فاتورة لتكون من الفائزين بجوائزنا المميزة!',
+                    image: '',
+                    topCount: 5
+                };
+                if(document.getElementById('competitionsPage').style.display === 'block') renderCompetitionsPage();
             });
 
             db.ref('customers').on('value', snap => {
@@ -837,6 +1041,7 @@
                 customers = data.filter(c => c !== null && c !== undefined);
                 updateUserSessionDisplay();
                 if(document.getElementById('adminDashboard').style.display === 'flex') renderAdminCustomersList();
+                if(document.getElementById('competitionsPage').style.display === 'block') renderCompetitionsPage();
             });
 
             db.ref('settings').on('value', snap => {
@@ -854,6 +1059,10 @@
                     document.getElementById('deliveryPhoneInput').value = deliveryPhone;
                 }
                 setupDeliveryOptions(); renderProducts(); renderSpecialOfferCustomer(); updateCartBar(); updateUserSessionDisplay();
+                if(document.getElementById('adminDashboard').style.display === 'flex') {
+                    renderAdminProductsList();
+                    renderAdminStats();
+                }
             });
 
             db.ref('pendingOrders').on('value', snap => {
@@ -864,7 +1073,7 @@
             });
 
             db.ref('statistics').on('value', snap => {
-                storeStats = snap.val() || { totalSales: 0, canceledOrders: 0, productsSold: {} };
+                storeStats = snap.val() || { totalSales: 0, totalCost: 0, netProfit: 0, completedOrders: 0, canceledOrders: 0, productsSold: {}, productsProfit: {} };
                 if(document.getElementById('adminDashboard').style.display === 'flex') renderAdminStats();
             });
 
@@ -872,7 +1081,100 @@
             setupImageUpload('newProdImageFile', 'newProdImg', 'newProdImgPreview');
             setupImageUpload('editProdImageFile', 'editProdImg', 'editImgPreview');
             setupImageUpload('soImageFile', 'soImgInput', 'soImgPreview');
+            setupImageUpload('compImageFile', 'compImgInput', 'compImgPreview');
         };
+
+        // --- وظائف صفحة المسابقات واللوحة التنافسية ---
+        function openCompetitionsPage() {
+            renderCompetitionsPage();
+            document.getElementById('competitionsPage').style.display = 'block';
+        }
+
+        function closeCompetitionsPage() {
+            document.getElementById('competitionsPage').style.display = 'none';
+        }
+
+        function renderCompetitionsPage() {
+            let cust = currentUser ? customers.find(c => c.phone === currentUser.phone) : null;
+            let pts = cust ? (cust.points || 0) : 0;
+            document.getElementById('compUserPoints').innerText = pts;
+
+            let redeemContainer = document.getElementById('compRedeemContainer');
+            if (pts >= pointsThreshold) {
+                redeemContainer.innerHTML = `<button class="btn" onclick="redeemPointsWhatsApp()" style="background:linear-gradient(45deg, #D4AF37, #FFD700); color:#000; animation: pulse 1.5s infinite;">🎁 اضغط هنا لاستخدام نقاطك وطلب الهدية!</button>`;
+            } else {
+                let remaining = pointsThreshold - pts;
+                redeemContainer.innerHTML = `<span style="font-size:11px; color:var(--gray-text);">يتبقى لك <b style="color:var(--gold-color);">${remaining} نقطة</b> للوصول إلى حد طلب الهدية (${pointsThreshold} نقطة)</span>`;
+            }
+
+            document.getElementById('compDisplayTitle').innerText = competitionData.title || 'مسابقة متجر معاذ الكبرى 🎉';
+            document.getElementById('compDisplayDetails').innerText = competitionData.details || 'تسوق من متجر معاذ واجمع النقاط مع كل فاتورة لتكون من الفائزين بجوائزنا المميزة!';
+            
+            let compImg = document.getElementById('compDisplayImg');
+            if (competitionData.image && competitionData.image.trim() !== '') {
+                compImg.src = competitionData.image;
+                compImg.style.display = 'block';
+            } else {
+                compImg.style.display = 'none';
+            }
+
+            let topLimit = parseInt(competitionData.topCount) || 5;
+            let sortedCustomers = [...customers].sort((a, b) => (b.points || 0) - (a.points || 0)).slice(0, topLimit);
+            
+            let leaderList = document.getElementById('compLeaderboardList');
+            leaderList.innerHTML = '';
+
+            if (sortedCustomers.length === 0) {
+                leaderList.innerHTML = '<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد بيانات متصدرين حالياً</p>';
+                return;
+            }
+
+            sortedCustomers.forEach((c, idx) => {
+                let rank = idx + 1;
+                let medal = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : `#${rank}`));
+                let rowClass = rank <= 3 ? `leader-row top-${rank}` : 'leader-row';
+                let isCurrentUser = currentUser && c.phone === currentUser.phone;
+                let youBadge = isCurrentUser ? '<span style="background:var(--gold-color); color:#000; font-size:10px; padding:2px 6px; border-radius:10px; margin-right:5px;">أنت</span>' : '';
+
+                leaderList.innerHTML += `
+                    <div class="${rowClass}">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:16px; font-weight:bold; min-width:28px; text-align:center;">${medal}</span>
+                            <strong style="color:var(--text-color);">${c.name} ${youBadge}</strong>
+                        </div>
+                        <div style="color:var(--gold-color); font-weight:bold;">
+                            ${c.points || 0} نقطة ⭐
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function loadAdminCompetition() {
+            document.getElementById('compTitleInput').value = competitionData.title || '';
+            document.getElementById('compDetailsInput').value = competitionData.details || '';
+            document.getElementById('compTopCountInput').value = competitionData.topCount || 5;
+            document.getElementById('compImgInput').value = competitionData.image || '';
+            document.getElementById('compImageFile').value = '';
+            document.getElementById('compImgPreview').innerHTML = competitionData.image ? `<img src="${competitionData.image}" style="width:60px; height:60px; border-radius:5px; object-fit:cover;">` : '';
+        }
+
+        function clearCompImage() {
+            document.getElementById('compImgInput').value = '';
+            document.getElementById('compImageFile').value = '';
+            document.getElementById('compImgPreview').innerHTML = '';
+        }
+
+        function saveCompetitionSettings() {
+            competitionData = {
+                title: document.getElementById('compTitleInput').value.trim() || 'مسابقة متجر معاذ الكبرى 🎉',
+                details: document.getElementById('compDetailsInput').value.trim() || 'تسوق من متجر معاذ واجمع النقاط مع كل فاتورة!',
+                topCount: parseInt(document.getElementById('compTopCountInput').value) || 5,
+                image: document.getElementById('compImgInput').value.trim()
+            };
+            db.ref('competitions').set(competitionData);
+            alert("تم حفظ إعدادات المسابقة وقائمة المتصدرين بنجاح!");
+        }
 
         function setupDeliveryOptions() {
             let select = document.getElementById('regArea');
@@ -1025,6 +1327,8 @@
                 name: currentUser.name,
                 phone: currentUser.phone,
                 address: addressFull,
+                subTotal: subTotal,
+                delivery: delivery,
                 total: grand,
                 cartStr: minCart.join('_'),
                 earnedPoints: earnedPoints
@@ -1150,31 +1454,84 @@
                 document.getElementById('feeOtherInput').value = deliveryFeeOther;
                 document.getElementById('pointsThresholdInput').value = pointsThreshold;
                 document.getElementById('deliveryPhoneInput').value = deliveryPhone;
-                loadAdminSpecialOffer(); renderAdminCategories(); renderAdminOrders(); renderAdminShortages(); renderAdminProductsList(); renderAdminCustomersList(); renderAdminStats();
+                loadAdminSpecialOffer(); loadAdminCompetition(); renderAdminCategories(); renderAdminOrders(); renderAdminShortages(); renderAdminProductsList(); renderAdminCustomersList(); renderAdminStats();
             } else alert("كلمة المرور خاطئة!");
         }
         function closeDashboard() { document.getElementById('adminDashboard').style.display = 'none'; }
 
+        // --- دالة عرض الإحصائيات المطورة وحساب الأرباح وتقييم المخزون ---
         function renderAdminStats() {
-            document.getElementById('statTotalSales').innerText = (storeStats.totalSales || 0) + ' ل.س';
-            document.getElementById('statCanceled').innerText = storeStats.canceledOrders || 0;
+            let sales = storeStats.totalSales || 0;
+            let cost = storeStats.totalCost || 0;
+            let profit = storeStats.netProfit || 0;
+            let completed = storeStats.completedOrders || 0;
+            let canceled = storeStats.canceledOrders || 0;
+            let margin = sales > 0 ? ((profit / sales) * 100).toFixed(1) : 0;
+
+            document.getElementById('statTotalSales').innerText = sales.toLocaleString() + ' ل.س';
+            document.getElementById('statTotalCost').innerText = cost.toLocaleString() + ' ل.س';
+            document.getElementById('statNetProfit').innerText = profit.toLocaleString() + ' ل.س';
+            document.getElementById('statProfitMargin').innerText = margin + '%';
+            document.getElementById('statCompleted').innerText = completed;
+            document.getElementById('statCanceled').innerText = canceled;
             
-            let bestName = "لا يوجد بيانات"; let maxQty = 0;
+            // الأكثر مبيعاً بالكمية
+            let bestName = "لا يوجد بيانات بعد"; let maxQty = 0;
             if(storeStats.productsSold) {
                 for(let pId in storeStats.productsSold) {
                     if(storeStats.productsSold[pId] > maxQty) {
                         maxQty = storeStats.productsSold[pId];
-                        let p = products.find(x => String(x.id) === pId);
-                        if(p) bestName = p.name + ` (${maxQty} قطعة)`;
+                        let p = products.find(x => String(x.id) === String(pId));
+                        let name = p ? p.name : (pId === 'special_offer_1' ? specialOffer.name : 'منتج');
+                        bestName = `${name} (${maxQty} قطعة)`;
                     }
                 }
             }
             document.getElementById('statBestSeller').innerText = bestName;
+
+            // الأعلى تحقيقاً للربح
+            let mostProfName = "لا يوجد بيانات بعد"; let maxProf = 0;
+            if(storeStats.productsProfit) {
+                for(let pId in storeStats.productsProfit) {
+                    if(storeStats.productsProfit[pId] > maxProf) {
+                        maxProf = storeStats.productsProfit[pId];
+                        let p = products.find(x => String(x.id) === String(pId));
+                        let name = p ? p.name : (pId === 'special_offer_1' ? specialOffer.name : 'منتج');
+                        mostProfName = `${name} (${maxProf.toLocaleString()} ل.س)`;
+                    }
+                }
+            }
+            document.getElementById('statMostProfitable').innerText = mostProfName;
+
+            // حساب التقييم المالي للمخزون الحالي
+            let invCostTotal = 0;
+            let invSaleTotal = 0;
+            products.forEach(p => {
+                let stk = parseInt(p.stock) || 0;
+                if (stk > 0) {
+                    let unitSale = Math.round(((p.basePrice || 0) * exchangeRate) / 5) * 5;
+                    let unitCost = Math.round(((p.costPrice || 0) * exchangeRate) / 5) * 5;
+                    invSaleTotal += (unitSale * stk);
+                    invCostTotal += (unitCost * stk);
+                }
+            });
+            let invExpectedProfit = invSaleTotal - invCostTotal;
+            document.getElementById('statInvCost').innerText = invCostTotal.toLocaleString() + ' ل.س';
+            document.getElementById('statInvSale').innerText = invSaleTotal.toLocaleString() + ' ل.س';
+            document.getElementById('statInvProfit').innerText = invExpectedProfit.toLocaleString() + ' ل.س';
         }
 
         function resetStoreStats() {
-            if(confirm("هل أنت متأكد من تصفير جميع إحصائيات المبيعات والطلبات الملغاة؟ لا يمكن التراجع!")) {
-                storeStats = { totalSales: 0, canceledOrders: 0, productsSold: {} };
+            if(confirm("هل أنت متأكد من تصفير جميع إحصائيات المبيعات والتكاليف والأرباح والطلبات؟ لا يمكن التراجع!")) {
+                storeStats = { 
+                    totalSales: 0, 
+                    totalCost: 0, 
+                    netProfit: 0, 
+                    completedOrders: 0, 
+                    canceledOrders: 0, 
+                    productsSold: {}, 
+                    productsProfit: {} 
+                };
                 db.ref('statistics').set(storeStats);
                 renderAdminStats();
                 alert("تم تصفير الإحصائيات بنجاح!");
@@ -1200,19 +1557,60 @@
             let orderIndex = pendingOrders.findIndex(o => o.id === orderId); if(orderIndex === -1) return;
             let order = pendingOrders[orderIndex];
 
-            storeStats.totalSales = (storeStats.totalSales || 0) + parseFloat(order.total);
             if(!storeStats.productsSold) storeStats.productsSold = {};
+            if(!storeStats.productsProfit) storeStats.productsProfit = {};
             
+            let orderItemsSaleTotal = 0;
+            let orderItemsCostTotal = 0;
+            let orderItemsProfitTotal = 0;
             let itemsNames = [];
+
             let items = order.cartStr.split('_');
             items.forEach(item => {
-                let parts = item.split('-'); let pId = parts[0]; let pQty = parseInt(parts[1]);
+                let parts = item.split('-'); 
+                let pId = parts[0]; 
+                let pQty = parseInt(parts[1]) || 0;
+                
                 storeStats.productsSold[pId] = (storeStats.productsSold[pId] || 0) + pQty; 
+
                 let prod = products.find(p => String(p.id) === String(pId));
-                let name = prod ? prod.name : 'منتج';
-                itemsNames.push(`- ${name} (الكمية: ${pQty})`);
-                if (prod) { prod.stock -= pQty; if (prod.stock < 0) prod.stock = 0; }
+                if (prod) {
+                    let unitSale = Math.round(((prod.basePrice || 0) * exchangeRate) / 5) * 5;
+                    let unitCost = Math.round(((prod.costPrice || 0) * exchangeRate) / 5) * 5;
+                    let itemSale = unitSale * pQty;
+                    let itemCost = unitCost * pQty;
+                    let itemProfit = itemSale - itemCost;
+
+                    orderItemsSaleTotal += itemSale;
+                    orderItemsCostTotal += itemCost;
+                    orderItemsProfitTotal += itemProfit;
+                    storeStats.productsProfit[pId] = (storeStats.productsProfit[pId] || 0) + itemProfit;
+
+                    itemsNames.push(`- ${prod.name} (الكمية: ${pQty})`);
+                    prod.stock -= pQty; 
+                    if (prod.stock < 0) prod.stock = 0; 
+                } else if (pId === 'special_offer_1') {
+                    let unitSale = Math.round(((specialOffer.basePrice || 0) * exchangeRate) / 5) * 5;
+                    let unitCost = Math.round(((specialOffer.costPrice || 0) * exchangeRate) / 5) * 5;
+                    let itemSale = unitSale * pQty;
+                    let itemCost = unitCost * pQty;
+                    let itemProfit = itemSale - itemCost;
+
+                    orderItemsSaleTotal += itemSale;
+                    orderItemsCostTotal += itemCost;
+                    orderItemsProfitTotal += itemProfit;
+                    storeStats.productsProfit[pId] = (storeStats.productsProfit[pId] || 0) + itemProfit;
+
+                    itemsNames.push(`- 🔥 ${specialOffer.name} (الكمية: ${pQty})`);
+                }
             });
+
+            // تحديث إحصائيات المبيعات والتكلفة وصافي الربح
+            storeStats.totalSales = (storeStats.totalSales || 0) + orderItemsSaleTotal;
+            storeStats.totalCost = (storeStats.totalCost || 0) + orderItemsCostTotal;
+            storeStats.netProfit = (storeStats.netProfit || 0) + orderItemsProfitTotal;
+            storeStats.completedOrders = (storeStats.completedOrders || 0) + 1;
+
             db.ref('products').set(products);
             db.ref('statistics').set(storeStats);
 
@@ -1260,7 +1658,7 @@
         }
 
         function exportBackup() {
-            let backupData = { categories, specialOffer, products, customers, settings: {exchangeRate, deliveryFeeOwaina, deliveryFeeOther, pointsThreshold, deliveryPhone}, storeStats };
+            let backupData = { categories, specialOffer, competitionData, products, customers, settings: {exchangeRate, deliveryFeeOwaina, deliveryFeeOther, pointsThreshold, deliveryPhone}, storeStats };
             let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
             let dlAnchorElem = document.createElement('a');
             dlAnchorElem.setAttribute("href", dataStr);
@@ -1278,10 +1676,11 @@
                     if(data.products && data.categories) {
                         db.ref('categories').set(data.categories);
                         db.ref('specialOffer').set(data.specialOffer);
+                        if(data.competitionData) db.ref('competitions').set(data.competitionData);
                         db.ref('products').set(data.products);
                         db.ref('customers').set(data.customers || []);
                         db.ref('settings').set(data.settings || {exchangeRate, deliveryFeeOwaina, deliveryFeeOther, pointsThreshold, deliveryPhone});
-                        db.ref('statistics').set(data.storeStats || { totalSales: 0, canceledOrders: 0, productsSold: {} });
+                        db.ref('statistics').set(data.storeStats || { totalSales: 0, totalCost: 0, netProfit: 0, completedOrders: 0, canceledOrders: 0, productsSold: {}, productsProfit: {} });
                         alert("تم استعادة النسخة الاحتياطية بنجاح إلى السحابة!");
                     } else { alert("الملف المرفوع غير صالح!"); }
                 } catch(err) { alert("حدث خطأ أثناء قراءة الملف."); }
@@ -1296,30 +1695,55 @@
         function renderAdminCategories() { let list = document.getElementById('adminCategoriesList'); list.innerHTML = ''; categories.forEach((cat, index) => { list.innerHTML += `<div style="background:var(--border-color); padding:4px 8px; border-radius:15px; font-size:11px; display:flex; gap:5px;"><span>${cat}</span><span onclick="deleteCategory(${index})" style="color:var(--danger-color); cursor:pointer;">x</span></div>`; }); populateCategorySelects(); }
         function addCategory() { let newCat = document.getElementById('newCategoryInput').value.trim(); if (newCat && !categories.includes(newCat) && newCat !== 'الكل') { categories.push(newCat); db.ref('categories').set(categories); document.getElementById('newCategoryInput').value = ''; } }
         function deleteCategory(index) { if(confirm("حذف؟")) { categories.splice(index, 1); db.ref('categories').set(categories); } }
-        function loadAdminSpecialOffer() { document.getElementById('soActiveInput').value = specialOffer.active ? 'true' : 'false'; document.getElementById('soNameInput').value = specialOffer.name; document.getElementById('soOldPriceInput').value = specialOffer.baseOldPrice; document.getElementById('soPriceInput').value = specialOffer.basePrice; document.getElementById('soImgInput').value = specialOffer.image; document.getElementById('soImageFile').value = ''; document.getElementById('soImgPreview').innerHTML = specialOffer.image ? `<img src="${specialOffer.image}" style="width:60px; height:60px; border-radius:5px; object-fit:cover;">` : ''; }
-        function saveSpecialOffer() { specialOffer.active = document.getElementById('soActiveInput').value === 'true'; specialOffer.name = document.getElementById('soNameInput').value.trim(); specialOffer.baseOldPrice = parseFloat(document.getElementById('soOldPriceInput').value) || 0; specialOffer.basePrice = parseFloat(document.getElementById('soPriceInput').value) || 0; specialOffer.image = document.getElementById('soImgInput').value.trim(); db.ref('specialOffer').set(specialOffer); alert("تم حفظ العرض!"); }
+        
+        function loadAdminSpecialOffer() { 
+            document.getElementById('soActiveInput').value = specialOffer.active ? 'true' : 'false'; 
+            document.getElementById('soNameInput').value = specialOffer.name || ''; 
+            document.getElementById('soCostPriceInput').value = specialOffer.costPrice || 0;
+            document.getElementById('soOldPriceInput').value = specialOffer.baseOldPrice || 0; 
+            document.getElementById('soPriceInput').value = specialOffer.basePrice || 0; 
+            document.getElementById('soImgInput').value = specialOffer.image || ''; 
+            document.getElementById('soImageFile').value = ''; 
+            document.getElementById('soImgPreview').innerHTML = specialOffer.image ? `<img src="${specialOffer.image}" style="width:60px; height:60px; border-radius:5px; object-fit:cover;">` : ''; 
+        }
+        
+        function saveSpecialOffer() { 
+            specialOffer.active = document.getElementById('soActiveInput').value === 'true'; 
+            specialOffer.name = document.getElementById('soNameInput').value.trim(); 
+            specialOffer.costPrice = parseFloat(document.getElementById('soCostPriceInput').value) || 0;
+            specialOffer.baseOldPrice = parseFloat(document.getElementById('soOldPriceInput').value) || 0; 
+            specialOffer.basePrice = parseFloat(document.getElementById('soPriceInput').value) || 0; 
+            specialOffer.image = document.getElementById('soImgInput').value.trim(); 
+            db.ref('specialOffer').set(specialOffer); 
+            alert("تم حفظ العرض الخاص!"); 
+        }
+        
         function renderAdminShortages() { let listDiv = document.getElementById('adminShortagesList'); listDiv.innerHTML = ''; let shortages = products.filter(p => p.stock <= (p.minStock || 2)); if(shortages.length === 0) { listDiv.innerHTML = '<p style="text-align:center; color:var(--gray-text);">لا توجد نواقص!</p>'; return; } shortages.forEach(p => { listDiv.innerHTML += `<div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--border-color); font-size:12px;"><span>${p.name}</span><span style="color:var(--danger-color); font-weight:bold;">متبقي: ${p.stock}</span></div>`; }); }
         function sendShortagesWhatsApp() { let shortages = products.filter(p => p.stock <= (p.minStock || 2)); if(shortages.length === 0) return; let text = `⚠️ *النواقص*\n`; shortages.forEach((p,i) => { text += `${i+1}- ${p.name} (${p.stock})\n`; }); window.open(`https://api.whatsapp.com/send?phone=+963965461504&text=${encodeURIComponent(text)}`, '_blank'); }
         function updateExchangeRate() { exchangeRate = parseFloat(document.getElementById('exchangeRateInput').value) || 1; db.ref('settings').update({ exchangeRate: exchangeRate }); alert("تم التحديث!"); }
         function updateDeliveryFees() { deliveryFeeOwaina = parseInt(document.getElementById('feeOwainaInput').value) || 5000; deliveryFeeOther = parseInt(document.getElementById('feeOtherInput').value) || 7000; db.ref('settings').update({ deliveryFeeOwaina: deliveryFeeOwaina, deliveryFeeOther: deliveryFeeOther }); alert("تم التحديث!"); }
         
-        // --- إدارة الزبائن وتعديل معلوماتهم من لوحة الإدارة ---
         function renderAdminCustomersList() { 
             let listDiv = document.getElementById('adminCustomersList'); 
             listDiv.innerHTML = ''; 
             let searchText = (document.getElementById('adminCustomerSearch').value || '').toLowerCase(); 
-            let filtered = searchText ? customers.filter(c => c.name.toLowerCase().includes(searchText) || c.phone.includes(searchText)) : customers; 
+            
+            let indexedCustomers = customers.map((c, idx) => ({ ...c, originalIndex: idx }));
+            let filtered = searchText ? indexedCustomers.filter(c => c.name.toLowerCase().includes(searchText) || c.phone.includes(searchText)) : indexedCustomers; 
+            
+            filtered.sort((a, b) => (b.points || 0) - (a.points || 0));
+
             if (filtered.length === 0) { listDiv.innerHTML = '<p style="text-align:center; color:var(--gray-text);">لا يوجد</p>'; return; } 
-            filtered.forEach((c) => { 
-                let i = customers.indexOf(c); 
+            filtered.forEach((c, rankIdx) => { 
                 listDiv.innerHTML += `
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border-color); font-size:12px;">
                         <div style="flex:1; text-align:right;">
+                            <span style="color:var(--gold-color); font-weight:bold;">#${rankIdx + 1}</span> 
                             <b style="color:var(--text-color);">${c.name}</b> (${c.phone})<br>
-                            <span style="color:var(--gold-color);">نقاط: ${c.points} | عنوان: ${c.address || 'غير محدد'}</span>
+                            <span style="color:var(--gold-color);">نقاط: ${c.points || 0} | عنوان: ${c.address || 'غير محدد'}</span>
                         </div>
                         <div style="display:flex; gap:5px;">
-                            <button class="btn" onclick="openEditCustomer(${i})" style="width:auto; padding:3px 8px; font-size:11px; background:#555;">تعديل</button>
+                            <button class="btn" onclick="openEditCustomer(${c.originalIndex})" style="width:auto; padding:3px 8px; font-size:11px; background:#555;">تعديل</button>
                         </div>
                     </div>`; 
             }); 
@@ -1363,11 +1787,101 @@
 
         function resetAllCustomersPoints() { if(confirm("تصفير نقاط جميع الزبائن؟")) { customers.forEach(c => c.points = 0); db.ref('customers').set(customers); alert("تم التصفير!"); } }
         
-        function addNewProduct() { let name = document.getElementById('newProdName').value.trim(); let category = document.getElementById('newProdCat').value; let basePrice = parseFloat(document.getElementById('newProdPrice').value); let stock = parseInt(document.getElementById('newProdStock').value); let minStock = parseInt(document.getElementById('newProdMinStock').value) || 2; let pointsPercent = parseFloat(document.getElementById('newProdPointsPercent').value) || 0; let image = document.getElementById('newProdImg').value.trim(); if(!name || isNaN(basePrice)) return; let newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1; products.push({ id: newId, name, category, basePrice, stock, minStock, pointsPercent, image }); db.ref('products').set(products); document.getElementById('newProdName').value = ''; document.getElementById('newProdPrice').value = ''; document.getElementById('newProdImg').value = ''; document.getElementById('newProdImageFile').value = ''; document.getElementById('newProdImgPreview').innerHTML = ''; alert("تم الرفع!"); }
+        // --- إضافة منتج جديد مع حفظ سعر التكلفة السري ---
+        function addNewProduct() { 
+            let name = document.getElementById('newProdName').value.trim(); 
+            let category = document.getElementById('newProdCat').value; 
+            let costPrice = parseFloat(document.getElementById('newProdCost').value) || 0;
+            let basePrice = parseFloat(document.getElementById('newProdPrice').value); 
+            let stock = parseInt(document.getElementById('newProdStock').value); 
+            let minStock = parseInt(document.getElementById('newProdMinStock').value) || 2; 
+            let pointsPercent = parseFloat(document.getElementById('newProdPointsPercent').value) || 0; 
+            let image = document.getElementById('newProdImg').value.trim(); 
+            
+            if(!name || isNaN(basePrice)) { alert("يرجى إدخال اسم المنتج وسعر المبيع!"); return; } 
+            
+            let newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1; 
+            products.push({ id: newId, name, category, costPrice, basePrice, stock, minStock, pointsPercent, image }); 
+            db.ref('products').set(products); 
+            
+            document.getElementById('newProdName').value = ''; 
+            document.getElementById('newProdCost').value = '';
+            document.getElementById('newProdPrice').value = ''; 
+            document.getElementById('newProdImg').value = ''; 
+            document.getElementById('newProdImageFile').value = ''; 
+            document.getElementById('newProdImgPreview').innerHTML = ''; 
+            alert("تمت إضافة المنتج بنجاح!"); 
+        }
         
-        function renderAdminProductsList() { let listDiv = document.getElementById('adminProductsList'); listDiv.innerHTML = ''; let searchText = (document.getElementById('adminProductSearch').value || '').toLowerCase(); let filtered = products.filter(p => p.name.toLowerCase().includes(searchText)); if (filtered.length === 0) { listDiv.innerHTML = '<p style="text-align:center; color:var(--gray-text);">لا يوجد</p>'; return; } let grouped = {}; filtered.forEach(p => { if (!grouped[p.category]) grouped[p.category] = []; grouped[p.category].push(p); }); for (let cat in grouped) { let h = document.createElement('div'); h.style.background = 'var(--border-color)'; h.style.color = 'var(--gold-color)'; h.style.padding = '4px 8px'; h.style.fontSize = '12px'; h.style.fontWeight = 'bold'; h.style.marginTop = '8px'; h.innerText = cat; listDiv.appendChild(h); grouped[cat].forEach(p => { let min = p.minStock || 2; let color = p.stock <= min ? 'var(--danger-color)' : 'var(--gray-text)'; let row = document.createElement('div'); row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.alignItems = 'center'; row.style.padding = '6px 4px'; row.style.borderBottom = '1px solid var(--border-color)'; row.style.fontSize = '11px'; row.innerHTML = `<div style="flex:1;"><strong style="color:var(--text-color);">${p.name}</strong><br><span style="color:var(--gray-text);">${p.basePrice}$ | النقاط: ${p.pointsPercent || 0}% | </span><span style="color:${color};">مخزون: ${p.stock}</span></div><div style="display:flex; gap:5px;"><button class="btn" style="background:#555; width:auto; padding:3px 8px;" onclick="openEditProduct(${p.id})">تعديل</button><button class="btn btn-danger" style="width:auto; padding:3px 8px;" onclick="deleteProduct(${p.id})">حذف</button></div>`; listDiv.appendChild(row); }); } }
+        // --- عرض المنتجات في الإدارة مع توضيح التكلفة وسعر المبيع وصافي ربح القطعة ---
+        function renderAdminProductsList() { 
+            let listDiv = document.getElementById('adminProductsList'); 
+            listDiv.innerHTML = ''; 
+            let searchText = (document.getElementById('adminProductSearch').value || '').toLowerCase(); 
+            let filtered = products.filter(p => p.name.toLowerCase().includes(searchText)); 
+            if (filtered.length === 0) { listDiv.innerHTML = '<p style="text-align:center; color:var(--gray-text);">لا يوجد</p>'; return; } 
+            
+            let grouped = {}; 
+            filtered.forEach(p => { if (!grouped[p.category]) grouped[p.category] = []; grouped[p.category].push(p); }); 
+            
+            for (let cat in grouped) { 
+                let h = document.createElement('div'); 
+                h.style.background = 'var(--border-color)'; 
+                h.style.color = 'var(--gold-color)'; 
+                h.style.padding = '4px 8px'; 
+                h.style.fontSize = '12px'; 
+                h.style.fontWeight = 'bold'; 
+                h.style.marginTop = '8px'; 
+                h.innerText = cat; 
+                listDiv.appendChild(h); 
+                
+                grouped[cat].forEach(p => { 
+                    let min = p.minStock || 2; 
+                    let color = p.stock <= min ? 'var(--danger-color)' : 'var(--gray-text)'; 
+                    let unitSaleSYP = Math.round(((p.basePrice || 0) * exchangeRate) / 5) * 5;
+                    let unitCostSYP = Math.round(((p.costPrice || 0) * exchangeRate) / 5) * 5;
+                    let unitProfitSYP = unitSaleSYP - unitCostSYP;
+
+                    let row = document.createElement('div'); 
+                    row.style.display = 'flex'; 
+                    row.style.justifyContent = 'space-between'; 
+                    row.style.alignItems = 'center'; 
+                    row.style.padding = '6px 4px'; 
+                    row.style.borderBottom = '1px solid var(--border-color)'; 
+                    row.style.fontSize = '11px'; 
+                    row.innerHTML = `
+                        <div style="flex:1;">
+                            <strong style="color:var(--text-color);">${p.name}</strong><br>
+                            <span style="color:var(--gray-text);">تكلفة: ${p.costPrice || 0}$ | مبيع: ${p.basePrice}$ | </span>
+                            <span style="color:var(--success-color); font-weight:bold;">ربح القطعة: ${unitProfitSYP} ل.س</span><br>
+                            <span style="color:var(--gray-text);">النقاط: ${p.pointsPercent || 0}% | </span>
+                            <span style="color:${color};">مخزون: ${p.stock}</span>
+                        </div>
+                        <div style="display:flex; gap:5px;">
+                            <button class="btn" style="background:#555; width:auto; padding:3px 8px;" onclick="openEditProduct(${p.id})">تعديل</button>
+                            <button class="btn btn-danger" style="width:auto; padding:3px 8px;" onclick="deleteProduct(${p.id})">حذف</button>
+                        </div>`; 
+                    listDiv.appendChild(row); 
+                }); 
+            } 
+        }
         
-        function openEditProduct(id) { let p = products.find(x => x.id === id); if (!p) return; document.getElementById('editProdId').value = p.id; document.getElementById('editProdName').value = p.name; document.getElementById('editProdCat').value = p.category; document.getElementById('editProdPrice').value = p.basePrice; document.getElementById('editProdStock').value = p.stock; document.getElementById('editProdMinStock').value = p.minStock || 2; document.getElementById('editProdPointsPercent').value = p.pointsPercent || 0; document.getElementById('editProdImg').value = p.image || ''; document.getElementById('editProdImageFile').value = ''; document.getElementById('editImgPreview').innerHTML = p.image ? `<img src="${p.image}" style="width:60px; height:60px; border-radius:5px;">` : ''; document.getElementById('editProductModal').style.display = 'flex'; }
+        function openEditProduct(id) { 
+            let p = products.find(x => x.id === id); 
+            if (!p) return; 
+            document.getElementById('editProdId').value = p.id; 
+            document.getElementById('editProdName').value = p.name; 
+            document.getElementById('editProdCat').value = p.category; 
+            document.getElementById('editProdCost').value = p.costPrice || 0;
+            document.getElementById('editProdPrice').value = p.basePrice; 
+            document.getElementById('editProdStock').value = p.stock; 
+            document.getElementById('editProdMinStock').value = p.minStock || 2; 
+            document.getElementById('editProdPointsPercent').value = p.pointsPercent || 0; 
+            document.getElementById('editProdImg').value = p.image || ''; 
+            document.getElementById('editProdImageFile').value = ''; 
+            document.getElementById('editImgPreview').innerHTML = p.image ? `<img src="${p.image}" style="width:60px; height:60px; border-radius:5px;">` : ''; 
+            document.getElementById('editProductModal').style.display = 'flex'; 
+        }
         
         function closeEditProductModal() { document.getElementById('editProductModal').style.display = 'none'; }
         
@@ -1379,6 +1893,7 @@
                     id, 
                     name: document.getElementById('editProdName').value.trim(), 
                     category: document.getElementById('editProdCat').value, 
+                    costPrice: parseFloat(document.getElementById('editProdCost').value) || 0,
                     basePrice: parseFloat(document.getElementById('editProdPrice').value), 
                     stock: parseInt(document.getElementById('editProdStock').value), 
                     minStock: parseInt(document.getElementById('editProdMinStock').value) || 2, 
@@ -1387,7 +1902,7 @@
                 }; 
                 db.ref('products').set(products); 
                 closeEditProductModal(); 
-                alert("تم التحديث!"); 
+                alert("تم تحديث المنتج بنجاح!"); 
             } 
         }
         
@@ -1404,13 +1919,27 @@
 
             pendingOrders.forEach(order => {
                 let itemsNames = [];
+                let expectedOrderProfit = 0;
+
                 if(order.cartStr) {
                     let items = order.cartStr.split('_');
                     items.forEach(item => {
                         let parts = item.split('-');
-                        let prod = products.find(p => String(p.id) === parts[0]);
+                        let pId = parts[0];
+                        let qty = parseInt(parts[1]) || 0;
+                        let prod = products.find(p => String(p.id) === pId);
                         let name = prod ? prod.name : 'منتج العرض الخاص';
-                        itemsNames.push(`- ${name} (الكمية: ${parts[1]})`);
+                        itemsNames.push(`- ${name} (الكمية: ${qty})`);
+
+                        if(prod) {
+                            let uSale = Math.round(((prod.basePrice || 0) * exchangeRate) / 5) * 5;
+                            let uCost = Math.round(((prod.costPrice || 0) * exchangeRate) / 5) * 5;
+                            expectedOrderProfit += (uSale - uCost) * qty;
+                        } else if(pId === 'special_offer_1') {
+                            let uSale = Math.round(((specialOffer.basePrice || 0) * exchangeRate) / 5) * 5;
+                            let uCost = Math.round(((specialOffer.costPrice || 0) * exchangeRate) / 5) * 5;
+                            expectedOrderProfit += (uSale - uCost) * qty;
+                        }
                     });
                 }
 
@@ -1418,9 +1947,10 @@
                     <div style="background:var(--bg-color); padding:10px; border-radius:5px; margin-bottom:8px; font-size:12px; border:1px solid var(--border-color);">
                         <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
                             <strong style="color:var(--gold-color); font-size:14px;">الزبون: ${order.name}</strong>
-                            <strong style="color:#00ff00;">${order.total} ل.س</strong>
+                            <strong style="color:var(--success-color);">${order.total} ل.س</strong>
                         </div>
                         <div style="color:var(--gray-text); margin-bottom:5px;">📱 هاتف: ${order.phone} | 📍 ${order.address || 'العوينة'}</div>
+                        <div style="color:var(--gold-color); font-size:11px; margin-bottom:5px;">💰 صافي ربح الفاتورة المتوقع: <b>${expectedOrderProfit} ل.س</b></div>
                         <div style="color:var(--text-color); margin-bottom:10px; line-height:1.6;">${itemsNames.join('<br>')}</div>
                         <div style="display:flex; gap:10px;">
                             <button class="btn" style="background:#25d366; color:#000; flex:1;" onclick="confirmOrder(${order.id})">✅ تأكيد وخصم</button>
