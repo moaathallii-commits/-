@@ -89,7 +89,7 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border-color);
-            font-size: 13px;
+            font-size: 12px;
         }
         .points-badge {
             color: var(--gold-color);
@@ -299,12 +299,12 @@
             background: rgba(255, 68, 68, 0.1);
             color: var(--danger-color);
             border: 2px dashed var(--danger-color);
-            padding: 12px;
+            padding: 10px;
             border-radius: 6px;
             text-align: center;
             font-weight: bold;
-            font-size: 13px;
-            margin: 15px 0;
+            font-size: 12px;
+            margin: 12px 0;
             line-height: 1.5;
         }
         input[type="file"] {
@@ -375,9 +375,9 @@
         .review-box {
             background: var(--bg-color);
             border: 1px solid var(--border-color);
-            padding: 8px;
+            padding: 6px 8px;
             border-radius: 6px;
-            margin-top: 6px;
+            margin-top: 5px;
             font-size: 11px;
             text-align: right;
         }
@@ -391,7 +391,7 @@
 <body>
 
     <header>
-        <div class="store-info" onclick="window.open('https://api.whatsapp.com/send?phone=+963965461504', '_blank')">
+        <div class="store-info" onclick="window.open('https://wa.me/963965461504', '_blank')">
             <h1>متجر معاذ</h1>
             <p>قرية العوينة | 0965461504 📱</p>
         </div>
@@ -401,9 +401,10 @@
     </header>
 
     <div class="user-bar">
-        <span style="display:flex; align-items:center; gap:6px;">
-            👤 <b id="userNameDisplay">زائر</b> 
-            <button onclick="openEditProfile()" style="background:transparent; border:none; color:var(--gold-color); font-size:11px; cursor:pointer; padding:0;">(⚙️)</button>
+        <span style="display:flex; align-items:center; gap:5px;">
+            👤 <b id="userNameDisplay">زائر</b>
+            <small id="userRegionBadge" style="color:var(--gray-text); font-size:10px;"></small>
+            <button onclick="openEditProfile()" style="background:transparent; border:none; color:var(--gold-color); font-size:12px; cursor:pointer; padding:0;" title="تعديل بياناتي">(⚙️)</button>
         </span>
         <div style="display:flex; gap:8px; align-items:center;">
             <button id="redeemPointsBtn" onclick="redeemPointsWhatsApp()" style="display:none; background:linear-gradient(45deg, #D4AF37, #FFD700); color:#000; border:none; padding:5px 10px; border-radius:15px; font-size:11px; font-weight:bold; cursor:pointer; animation: pulse 1.5s infinite;">🎁 استخدام النقاط</button>
@@ -434,11 +435,11 @@
         <div class="products-grid" id="productsGrid"></div>
     </div>
 
-    <div style="height: 70px;"></div>
+    <div style="height: 75px;"></div>
 
     <div class="cart-bar" id="cartBar" style="display:none;" onclick="openCartModal()">
-        <span>المنتجات: <b id="cartCount">0</b> | الإجمالي: <b id="cartTotal">0</b> ل.س</span>
-        <span style="color:var(--gold-color); font-size:12px; font-weight:bold;">🛒 عرض السلة</span>
+        <span>المنتجات: <b id="cartCount">0</b> | المجموع: <b id="cartTotal">0</b> ل.س</span>
+        <span style="color:var(--gold-color); font-size:12px; font-weight:bold;">🛒 عرض السلة وإتمام الطلب</span>
     </div>
 
     <!-- صفحة مسابقات متجر معاذ -->
@@ -473,28 +474,38 @@
         </div>
     </div>
 
-    <!-- نافذة تسجيل / تعديل بيانات الزبون -->
+    <!-- نافذة تسجيل / تعديل بيانات الزبون والمناطق المعتمدة -->
     <div id="profileModal" class="modal-overlay">
         <div class="modal-content">
-            <h3 style="color: var(--gold-color); margin-top: 0; text-align: center;">👤 بيانات الزبون</h3>
+            <h3 style="color: var(--gold-color); margin-top: 0; text-align: center;">👤 تسجيل بيانات التواصل والتوصيل</h3>
+            <p style="font-size: 11px; color: var(--gray-text); text-align: center; margin-top: -6px;">يرجى إدخال معلوماتك بدقة لضمان وصول طلباتك وحفظ نقاطك</p>
+            
             <div class="form-group">
                 <label>الاسم الثلاثي أو الكامل:</label>
                 <input type="text" id="regName" class="form-control" placeholder="مثال: أحمد محمد العلي">
             </div>
             <div class="form-group">
-                <label>رقم الهاتف (واتساب):</label>
+                <label>رقم الهاتف للتواصل (واتساب):</label>
                 <input type="tel" id="regPhone" class="form-control" placeholder="مثال: 09XXXXXXXX">
             </div>
             <div class="form-group">
-                <label>العنوان التفصيلي في قرية العوينة / الجوار:</label>
-                <input type="text" id="regAddress" class="form-control" placeholder="الحي / جانب...">
+                <label>المنطقة / القرية:</label>
+                <select id="regRegion" class="form-control">
+                    <option value="العوينة">العوينة</option>
+                    <option value="المزرعة الشرقية ( الريحانية )">المزرعة الشرقية ( الريحانية )</option>
+                    <option value="المزرعة الغربية">المزرعة الغربية</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>العنوان التفصيلي (الحي / أقرب نقطة دالة):</label>
+                <input type="text" id="regAddress" class="form-control" placeholder="مثال: الحارة الشمالية - قرب...">
             </div>
             <button onclick="saveUserProfile()" class="btn" style="margin-bottom: 8px;">💾 حفظ البيانات ومتابعة التسوق</button>
             <button id="closeProfileBtn" onclick="closeProfileModal()" class="btn btn-danger" style="display: none;">إغلاق</button>
         </div>
     </div>
 
-    <!-- نافذة تقييم المنتج وكتابة التعليق -->
+    <!-- نافذة تقييم المنتج وكتابة التعليق (للمشترين الفعليين فقط) -->
     <div id="reviewModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color: var(--gold-color); margin-top: 0; text-align: center;">⭐ تقييم وتعليق على المنتج</h3>
@@ -514,8 +525,8 @@
             </div>
 
             <div class="form-group">
-                <label>تعليقك على المنتج (بعد تجربته):</label>
-                <textarea id="reviewCommentInput" class="form-control" rows="3" placeholder="اكتب تجربتك مع المنتج..."></textarea>
+                <label>تعليقك على المنتج (بعد الشراء والتجربة):</label>
+                <textarea id="reviewCommentInput" class="form-control" rows="3" placeholder="اكتب رأيك الصادق بالمنتج..."></textarea>
             </div>
 
             <button onclick="submitProductReview()" class="btn" style="margin-bottom: 8px;">💾 إرسال التقييم</button>
@@ -523,54 +534,99 @@
         </div>
     </div>
 
-    <!-- نافذة سلة المشتريات وإتمام الطلب -->
+    <!-- نافذة سلة المشتريات وإتمام الطلب (الدفع شام كاش حصراً) -->
     <div id="cartModal" class="modal-overlay">
         <div class="modal-content">
-            <h3 style="color: var(--gold-color); margin-top: 0; text-align: center;">🛒 سلة المشتريات</h3>
-            <div id="cartItemsList" style="max-height: 240px; overflow-y: auto; margin-bottom: 12px;"></div>
+            <h3 style="color: var(--gold-color); margin-top: 0; text-align: center;">🛒 سلة المشتريات وإتمام الطلب</h3>
+            <div id="cartItemsList" style="max-height: 200px; overflow-y: auto; margin-bottom: 10px;"></div>
             
-            <div style="border-top: 1px solid var(--border-color); padding-top: 10px; margin-bottom: 10px; font-size: 13px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <span>إجمالي الفاتورة:</span>
+            <div class="form-group">
+                <label>📍 منطقة التوصيل (تُحدد أجور التوصيل تلقائياً):</label>
+                <select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()">
+                    <option value="العوينة">العوينة</option>
+                    <option value="المزرعة الشرقية ( الريحانية )">المزرعة الشرقية ( الريحانية )</option>
+                    <option value="المزرعة الغربية">المزرعة الغربية</option>
+                </select>
+            </div>
+
+            <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 10px; font-size: 12px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span>قيمة المنتجات:</span>
+                    <strong><span id="modalCartSubtotal">0</span> ل.س</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--gray-text);">
+                    <span>أجور التوصيل (<span id="modalDeliveryRegionName">-</span>):</span>
+                    <strong><span id="modalDeliveryFee">0</span> ل.س</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px dashed var(--border-color); padding-top: 6px; margin-top: 4px; font-size: 14px;">
+                    <span>الإجمالي النهائي المطلوب:</span>
                     <strong style="color: var(--gold-color);"><span id="modalCartTotal">0</span> ل.س</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--success-color);">
-                    <span>النقاط المكتسبة من الفاتورة:</span>
+                <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 11px; color: var(--success-color);">
+                    <span>النقاط المكتسبة عند التأكيد:</span>
                     <strong>+<span id="modalCartPoints">0</span> نقطة 🎁</strong>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>طريقة الدفع:</label>
-                <select id="paymentMethod" class="form-control" onchange="toggleShamCashBox()">
-                    <option value="نقداً عند الاستلام">💵 نقداً عند الاستلام</option>
-                    <option value="شام كاش (Sham Cash)">📱 شام كاش (Sham Cash)</option>
-                </select>
-            </div>
-
-            <div id="shamCashBox" style="display: none; background: var(--bg-color); border: 1px dashed var(--gold-color); padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 12px;">
+            <!-- الدفع حصراً عبر شام كاش -->
+            <div style="background: rgba(212, 175, 55, 0.08); border: 1px dashed var(--gold-color); padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 12px;">
+                <div style="color: var(--gold-color); font-weight: bold; margin-bottom: 5px; text-align: center;">📱 الدفع حصراً عبر شام كاش (Sham Cash)</div>
                 <div style="margin-bottom: 4px;">👤 المستلم: <b style="color: var(--gold-color);">معاذ العلي</b></div>
                 <div style="margin-bottom: 6px; word-break: break-all;">💳 معرف المحفظة: <b id="shamWalletId">da3e13cd8a2ef2af282445e148df999</b></div>
-                <button type="button" onclick="copyWalletId()" class="btn" style="padding: 5px; font-size: 11px;">📋 نسخ معرف المحفظة</button>
+                <button type="button" onclick="copyWalletId()" class="btn" style="padding: 6px; font-size: 11px;">📋 نسخ معرف المحفظة للدفع</button>
             </div>
 
             <div class="form-group">
-                <label>ملاحظات إضافية على الطلب (اختياري):</label>
-                <input type="text" id="orderNotes" class="form-control" placeholder="أي ملاحظة للتوصيل...">
+                <label>ملاحظات إضافية أو رقم عملية التحويل (اختياري):</label>
+                <input type="text" id="orderNotes" class="form-control" placeholder="أدخل أي ملاحظة للتوصيل أو الدفع...">
             </div>
 
             <div class="alert-danger">
-                ⚠️ بعد الضغط على إرسال الطلب، سيتم فتح واتساب لإرسال الفاتورة للإدارة لاعتمادها وتجهيزها فوراً.
+                ⚠️ عند الضغط على الزر أدناه، سيتم تسجيل الفاتورة وفتح محادثة واتساب مباشرة مع الإدارة لاعتماد الطلب.
             </div>
 
-            <button onclick="submitOrder()" class="btn" style="background: var(--success-color); color: #000; margin-bottom: 8px;">✅ تأكيد وإرسال الطلب عبر واتساب</button>
-            <button onclick="closeCartModal()" class="btn btn-danger">إغلاق</button>
+            <button type="button" onclick="submitOrder()" class="btn" style="background: var(--success-color); color: #000; margin-bottom: 8px; font-size: 13px;">✅ تأكيد وإرسال الطلب عبر واتساب</button>
+            <button type="button" onclick="closeCartModal()" class="btn btn-danger">إغلاق</button>
+        </div>
+    </div>
+
+    <!-- نافذة تعديل بيانات الزبون من قبل الإدارة -->
+    <div id="adminEditCustomerModal" class="modal-overlay" style="z-index: 1100;">
+        <div class="modal-content">
+            <h3 style="color: var(--gold-color); margin-top: 0; text-align: center;">✏️ تعديل بيانات الزبون</h3>
+            <input type="hidden" id="adminCustOrigPhone">
+            <div class="form-group">
+                <label>اسم الزبون:</label>
+                <input type="text" id="adminCustName" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>رقم الهاتف:</label>
+                <input type="text" id="adminCustPhone" class="form-control" disabled style="opacity: 0.7;">
+            </div>
+            <div class="form-group">
+                <label>المنطقة / القرية:</label>
+                <select id="adminCustRegion" class="form-control">
+                    <option value="العوينة">العوينة</option>
+                    <option value="المزرعة الشرقية ( الريحانية )">المزرعة الشرقية ( الريحانية )</option>
+                    <option value="المزرعة الغربية">المزرعة الغربية</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>العنوان التفصيلي:</label>
+                <input type="text" id="adminCustAddress" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>رصيد النقاط:</label>
+                <input type="number" id="adminCustPoints" class="form-control">
+            </div>
+            <button onclick="saveAdminCustomerEdit()" class="btn" style="margin-bottom: 8px;">💾 حفظ التعديلات</button>
+            <button onclick="closeAdminEditCustomerModal()" class="btn btn-danger">إلغاء</button>
         </div>
     </div>
 
     <!-- لوحة التحكم الإدارية الشاملة -->
     <div id="adminModal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 520px;">
+        <div class="modal-content" style="max-width: 530px;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gold-color); padding-bottom: 8px; margin-bottom: 12px;">
                 <h3 style="color: var(--gold-color); margin: 0;">⚙️ لوحة تحكم متجر معاذ</h3>
                 <button onclick="closeAdminModal()" class="btn btn-danger" style="width: auto; padding: 5px 10px;">✖ إغلاق</button>
@@ -578,11 +634,11 @@
 
             <div class="categories" style="margin-bottom: 12px;">
                 <button class="cat-btn active" onclick="switchAdminTab('ordersTab', this)">📦 الطلبات (<span id="pendingCountBadge">0</span>)</button>
-                <button class="cat-btn" onclick="switchAdminTab('statsTab', this)">📊 الإحصائيات والجرد</button>
+                <button class="cat-btn" onclick="switchAdminTab('customersTab', this)">👥 الزبائن والحظر</button>
+                <button class="cat-btn" onclick="switchAdminTab('settingsTab', this)">🛵 التوصيل والصرف</button>
                 <button class="cat-btn" onclick="switchAdminTab('productsTab', this)">🛍️ المنتجات والعرض</button>
+                <button class="cat-btn" onclick="switchAdminTab('statsTab', this)">📊 الإحصائيات والجرد</button>
                 <button class="cat-btn" onclick="switchAdminTab('shortagesTab', this)">⚠️ النواقص</button>
-                <button class="cat-btn" onclick="switchAdminTab('customersTab', this)">👥 الزبائن والمسابقة</button>
-                <button class="cat-btn" onclick="switchAdminTab('settingsTab', this)">💵 الصرف والنسخ</button>
             </div>
 
             <!-- 1. قسم الطلبات الواردة -->
@@ -591,60 +647,77 @@
                 <div id="pendingOrdersList"></div>
             </div>
 
-            <!-- 2. قسم الإحصائيات المتقدمة والجرد المالي -->
-            <div id="statsTab" class="admin-tab" style="display: none;">
-                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">📊 لوحة المحاسبة والأرباح</h4>
-                <div class="stats-grid">
-                    <div class="stats-box">
-                        <div style="font-size: 11px; color: var(--gray-text);">إجمالي المبيعات</div>
-                        <div class="stats-value" id="statTotalSales">0 ل.س</div>
-                    </div>
-                    <div class="stats-box">
-                        <div style="font-size: 11px; color: var(--gray-text);">إجمالي التكلفة</div>
-                        <div class="stats-value" id="statTotalCost">0 ل.س</div>
-                    </div>
-                    <div class="stats-box">
-                        <div style="font-size: 11px; color: var(--gray-text);">صافي الأرباح</div>
-                        <div class="stats-value" style="color: var(--success-color);" id="statNetProfit">0 ل.س</div>
-                    </div>
-                    <div class="stats-box">
-                        <div style="font-size: 11px; color: var(--gray-text);">نسبة الربح المئوية</div>
-                        <div class="stats-value" id="statProfitMargin">0%</div>
-                    </div>
-                    <div class="stats-box">
-                        <div style="font-size: 11px; color: var(--gray-text);">الطلبات المنفذة / الملغاة</div>
-                        <div class="stats-value"><span id="statCompletedOrders" style="color:var(--success-color);">0</span> / <span id="statCancelledOrders" style="color:var(--danger-color);">0</span></div>
-                    </div>
-                    <div class="stats-box">
-                        <div style="font-size: 11px; color: var(--gray-text);">الأكثر مبيعاً (كمية)</div>
-                        <div class="stats-value" style="font-size: 12px;" id="statTopSelling">-</div>
-                    </div>
-                </div>
-                <div class="stats-box" style="margin-bottom: 12px;">
-                    <div style="font-size: 11px; color: var(--gray-text);">المنتج الأعلى تحقيقاً للربح</div>
-                    <div class="stats-value" style="font-size: 13px;" id="statMostProfitable">-</div>
-                </div>
+            <!-- 2. قسم الزبائن والحظر وإعدادات المسابقة -->
+            <div id="customersTab" class="admin-tab" style="display: none;">
+                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">👥 إدارة الزبائن (تعديل، نقاط، حظر 🚫)</h4>
+                <input type="text" id="adminSearchCust" class="search-box" placeholder="🔍 ابحث عن زبون بالاسم أو الرقم..." oninput="renderAdminCustomers()" style="margin-bottom: 8px;">
+                <div id="adminCustomersList" style="max-height: 300px; overflow-y: auto; margin-bottom: 14px;"></div>
 
-                <h4 style="color: var(--gold-color); margin: 12px 0 8px 0;">🏦 الجرد المالي الفوري للمخزون الحالي</h4>
+                <hr style="border-color: var(--border-color);">
+                <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">🏆 إعدادات المسابقة والهدايا</h4>
                 <div class="stats-grid">
-                    <div class="stats-box">
-                        <div style="font-size: 11px; color: var(--gray-text);">رأس المال بالتكلفة</div>
-                        <div class="stats-value" id="invTotalCost">0 ل.س</div>
+                    <div class="form-group">
+                        <label>الحد الأدنى لاستبدال النقاط:</label>
+                        <input type="number" id="minRedeemPointsInput" class="form-control" value="500">
                     </div>
-                    <div class="stats-box">
-                        <div style="font-size: 11px; color: var(--gray-text);">قيمة المخزون بالمبيع</div>
-                        <div class="stats-value" id="invTotalSale">0 ل.س</div>
+                    <div class="form-group">
+                        <label>عدد المتصدرين في اللوحة (N):</label>
+                        <input type="number" id="leaderboardLimitInput" class="form-control" value="10">
                     </div>
                 </div>
-                <div class="stats-box" style="margin-bottom: 12px;">
-                    <div style="font-size: 11px; color: var(--gray-text);">الربح المتوقع من المخزون</div>
-                    <div class="stats-value" style="color: var(--success-color);" id="invExpectedProfit">0 ل.س</div>
+                <div class="form-group">
+                    <label>عنوان المسابقة:</label>
+                    <input type="text" id="compTitleInput" class="form-control" placeholder="مسابقة متجر معاذ الكبرى">
                 </div>
-
-                <button onclick="resetStatistics()" class="btn btn-danger">🗑️ تصفير سجل الإحصائيات</button>
+                <div class="form-group">
+                    <label>تفاصيل وشروط المسابقة:</label>
+                    <textarea id="compDescInput" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>صورة المسابقة:</label>
+                    <input type="file" id="compImageInput" accept="image/*" class="form-control">
+                </div>
+                <button onclick="saveCompetitionSettings()" class="btn">💾 حفظ إعدادات المسابقة</button>
             </div>
 
-            <!-- 3. قسم إدارة المنتجات والتصنيفات والعرض الخاص -->
+            <!-- 3. قسم أسعار التوصيل لكل قرية وسعر الصرف والنسخ الاحتياطي -->
+            <div id="settingsTab" class="admin-tab" style="display: none;">
+                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">🛵 تكلفة التوصيل لكل منطقة (بالليرة السورية)</h4>
+                <div class="form-group">
+                    <label>تكلفة التوصيل داخل (العوينة) - ل.س:</label>
+                    <input type="number" id="feeAwinaInput" class="form-control" placeholder="مثال: 5000">
+                </div>
+                <div class="form-group">
+                    <label>تكلفة التوصيل إلى (المزرعة الشرقية - الريحانية) - ل.س:</label>
+                    <input type="number" id="feeEastInput" class="form-control" placeholder="مثال: 10000">
+                </div>
+                <div class="form-group">
+                    <label>تكلفة التوصيل إلى (المزرعة الغربية) - ل.س:</label>
+                    <input type="number" id="feeWestInput" class="form-control" placeholder="مثال: 10000">
+                </div>
+
+                <hr style="border-color: var(--border-color);">
+                <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">💵 سعر الصرف ورقم عامل التوصيل</h4>
+                <div class="form-group">
+                    <label>سعر صرف الدولار مقابل الليرة السورية:</label>
+                    <input type="number" id="exchangeRateInput" class="form-control" placeholder="مثال: 15000">
+                </div>
+                <div class="form-group">
+                    <label>رقم واتساب عامل التوصيل (مثال: 9639XXXXXXXX):</label>
+                    <input type="text" id="deliveryPhoneInput" class="form-control" placeholder="9639XXXXXXXX">
+                </div>
+                <button onclick="saveGeneralSettings()" class="btn" style="margin-bottom: 15px;">💾 حفظ تكاليف التوصيل وسعر الصرف</button>
+
+                <hr style="border-color: var(--border-color);">
+                <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">📦 النسخ الاحتياطي الشامل (.json)</h4>
+                <button onclick="exportBackupJSON()" class="btn" style="margin-bottom: 10px;">⬇️ تصدير نسخة احتياطية كاملة (.json)</button>
+                <div class="form-group">
+                    <label>⬆️ استيراد نسخة احتياطية (.json):</label>
+                    <input type="file" id="importBackupInput" accept=".json" class="form-control" onchange="importBackupJSON(event)">
+                </div>
+            </div>
+
+            <!-- 4. قسم إدارة المنتجات والتصنيفات والعرض الخاص -->
             <div id="productsTab" class="admin-tab" style="display: none;">
                 <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">➕ إضافة / تعديل منتج</h4>
                 <input type="hidden" id="editProductId">
@@ -734,70 +807,71 @@
                 <div id="adminProductsList"></div>
             </div>
 
-            <!-- 4. قسم النواقص -->
+            <!-- 5. قسم الإحصائيات المتقدمة والجرد المالي -->
+            <div id="statsTab" class="admin-tab" style="display: none;">
+                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">📊 لوحة المحاسبة والأرباح</h4>
+                <div class="stats-grid">
+                    <div class="stats-box">
+                        <div style="font-size: 11px; color: var(--gray-text);">إجمالي المبيعات</div>
+                        <div class="stats-value" id="statTotalSales">0 ل.س</div>
+                    </div>
+                    <div class="stats-box">
+                        <div style="font-size: 11px; color: var(--gray-text);">إجمالي التكلفة</div>
+                        <div class="stats-value" id="statTotalCost">0 ل.س</div>
+                    </div>
+                    <div class="stats-box">
+                        <div style="font-size: 11px; color: var(--gray-text);">صافي الأرباح</div>
+                        <div class="stats-value" style="color: var(--success-color);" id="statNetProfit">0 ل.س</div>
+                    </div>
+                    <div class="stats-box">
+                        <div style="font-size: 11px; color: var(--gray-text);">نسبة الربح المئوية</div>
+                        <div class="stats-value" id="statProfitMargin">0%</div>
+                    </div>
+                    <div class="stats-box">
+                        <div style="font-size: 11px; color: var(--gray-text);">الطلبات المنفذة / الملغاة</div>
+                        <div class="stats-value"><span id="statCompletedOrders" style="color:var(--success-color);">0</span> / <span id="statCancelledOrders" style="color:var(--danger-color);">0</span></div>
+                    </div>
+                    <div class="stats-box">
+                        <div style="font-size: 11px; color: var(--gray-text);">الأكثر مبيعاً (كمية)</div>
+                        <div class="stats-value" style="font-size: 12px;" id="statTopSelling">-</div>
+                    </div>
+                </div>
+                <div class="stats-box" style="margin-bottom: 12px;">
+                    <div style="font-size: 11px; color: var(--gray-text);">المنتج الأعلى تحقيقاً للربح</div>
+                    <div class="stats-value" style="font-size: 13px;" id="statMostProfitable">-</div>
+                </div>
+
+                <h4 style="color: var(--gold-color); margin: 12px 0 8px 0;">🏦 الجرد المالي الفوري للمخزون الحالي</h4>
+                <div class="stats-grid">
+                    <div class="stats-box">
+                        <div style="font-size: 11px; color: var(--gray-text);">رأس المال بالتكلفة</div>
+                        <div class="stats-value" id="invTotalCost">0 ل.س</div>
+                    </div>
+                    <div class="stats-box">
+                        <div style="font-size: 11px; color: var(--gray-text);">قيمة المخزون بالمبيع</div>
+                        <div class="stats-value" id="invTotalSale">0 ل.س</div>
+                    </div>
+                </div>
+                <div class="stats-box" style="margin-bottom: 12px;">
+                    <div style="font-size: 11px; color: var(--gray-text);">الربح المتوقع من المخزون</div>
+                    <div class="stats-value" style="color: var(--success-color);" id="invExpectedProfit">0 ل.س</div>
+                </div>
+
+                <button onclick="resetStatistics()" class="btn btn-danger">🗑️ تصفير سجل الإحصائيات</button>
+            </div>
+
+            <!-- 6. قسم النواقص -->
             <div id="shortagesTab" class="admin-tab" style="display: none;">
                 <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">⚠️ رصد المنتجات الناقصة (الكمية 2 أو أقل)</h4>
                 <div id="shortagesList" style="margin-bottom: 12px;"></div>
                 <button onclick="sendShortagesWhatsApp()" class="btn">📲 إرسال قائمة النواقص عبر واتساب</button>
             </div>
-
-            <!-- 5. قسم الزبائن وإعدادات المسابقة -->
-            <div id="customersTab" class="admin-tab" style="display: none;">
-                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">🏆 إعدادات المسابقة والهدايا</h4>
-                <div class="stats-grid">
-                    <div class="form-group">
-                        <label>الحد الأدنى لاستبدال النقاط:</label>
-                        <input type="number" id="minRedeemPointsInput" class="form-control" value="500">
-                    </div>
-                    <div class="form-group">
-                        <label>عدد المتصدرين في اللوحة (N):</label>
-                        <input type="number" id="leaderboardLimitInput" class="form-control" value="10">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>عنوان المسابقة:</label>
-                    <input type="text" id="compTitleInput" class="form-control" placeholder="مسابقة متجر معاذ الكبرى">
-                </div>
-                <div class="form-group">
-                    <label>تفاصيل وشروط المسابقة:</label>
-                    <textarea id="compDescInput" class="form-control" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>صورة المسابقة:</label>
-                    <input type="file" id="compImageInput" accept="image/*" class="form-control">
-                </div>
-                <button onclick="saveCompetitionSettings()" class="btn" style="margin-bottom: 12px;">💾 حفظ إعدادات المسابقة</button>
-
-                <hr style="border-color: var(--border-color);">
-                <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">👥 سجل الزبائن (مرتبين تنازلياً حسب النقاط)</h4>
-                <div id="adminCustomersList"></div>
-            </div>
-
-            <!-- 6. قسم سعر الصرف والتوصيل والنسخ الاحتياطي -->
-            <div id="settingsTab" class="admin-tab" style="display: none;">
-                <div class="form-group">
-                    <label>💵 سعر صرف الدولار مقابل الليرة السورية:</label>
-                    <input type="number" id="exchangeRateInput" class="form-control" placeholder="مثال: 15000">
-                </div>
-                <div class="form-group">
-                    <label>🛵 رقم واتساب عامل التوصيل (مع الرمز الدولي):</label>
-                    <input type="text" id="deliveryPhoneInput" class="form-control" placeholder="+9639XXXXXXXX">
-                </div>
-                <button onclick="saveGeneralSettings()" class="btn" style="margin-bottom: 15px;">💾 حفظ سعر الصرف ورقم التوصيل</button>
-
-                <hr style="border-color: var(--border-color);">
-                <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">📦 النسخ الاحتياطي الشامل (.json)</h4>
-                <button onclick="exportBackupJSON()" class="btn" style="margin-bottom: 10px;">⬇️ تصدير نسخة احتياطية كاملة (.json)</button>
-                <div class="form-group">
-                    <label>⬆️ استيراد نسخة احتياطية (.json):</label>
-                    <input type="file" id="importBackupInput" accept=".json" class="form-control" onchange="importBackupJSON(event)">
-                </div>
-            </div>
         </div>
     </div>
 
     <script>
-        const ADMIN_WHATSAPP = "+963965461504";
+        /* ==================== 1. الثوابت وإعدادات Firebase ==================== */
+        const ADMIN_WHATSAPP = "963965461504";
         const ADMIN_PASSWORD = "MHA@1997//MOAATHS";
 
         const firebaseConfig = {
@@ -808,8 +882,14 @@
         }
         const db = firebase.database();
 
+        /* ==================== 2. المتغيرات العامة ==================== */
         let exchangeRate = 15000;
         let deliveryDriverPhone = "";
+        let deliveryFees = {
+            "العوينة": 0,
+            "المزرعة الشرقية ( الريحانية )": 5000,
+            "المزرعة الغربية": 5000
+        };
         let categories = ["الكل"];
         let selectedCategory = "الكل";
         let products = {};
@@ -835,6 +915,15 @@
 
         let currentUser = JSON.parse(localStorage.getItem("moaath_user") || "null");
 
+        // دالة لتنسيق رقم الهاتف لروابط واتساب المباشرة
+        function formatWhatsAppPhone(phone) {
+            let p = String(phone || "").replace(/[^0-9]/g, "");
+            if (p.startsWith("00")) p = p.substring(2);
+            if (p.startsWith("09")) p = "963" + p.substring(1);
+            return p;
+        }
+
+        /* ==================== 3. الوضع الليلي والنهاري وتثبيت PWA ==================== */
         function initTheme() {
             const savedTheme = localStorage.getItem("moaath_theme");
             if (savedTheme === "light") {
@@ -873,6 +962,7 @@
             });
         }
 
+        /* ==================== 4. معادلة التسعير وضغط الصور ==================== */
         function calcSYP(usdPrice) {
             const num = parseFloat(usdPrice) || 0;
             return Math.round((num * exchangeRate) / 5) * 5;
@@ -906,12 +996,23 @@
             });
         }
 
+        /* ==================== 5. المزامنة اللحظية مع Firebase ==================== */
         db.ref("settings").on("value", (snap) => {
             const data = snap.val() || {};
             exchangeRate = parseFloat(data.exchangeRate) || 15000;
             deliveryDriverPhone = data.deliveryDriverPhone || "";
+            if (data.deliveryFees) {
+                deliveryFees = {
+                    "العوينة": parseInt(data.deliveryFees["العوينة"]) || 0,
+                    "المزرعة الشرقية ( الريحانية )": parseInt(data.deliveryFees["المزرعة الشرقية ( الريحانية )"]) || 0,
+                    "المزرعة الغربية": parseInt(data.deliveryFees["المزرعة الغربية"]) || 0
+                };
+            }
             document.getElementById("exchangeRateInput").value = exchangeRate;
             document.getElementById("deliveryPhoneInput").value = deliveryDriverPhone;
+            document.getElementById("feeAwinaInput").value = deliveryFees["العوينة"];
+            document.getElementById("feeEastInput").value = deliveryFees["المزرعة الشرقية ( الريحانية )"];
+            document.getElementById("feeWestInput").value = deliveryFees["المزرعة الغربية"];
             renderStore();
         });
 
@@ -972,8 +1073,16 @@
             renderStatsDashboard();
         });
 
+        /* ==================== 6. تسجيل الدخول الإجباري وبيانات التواصل ==================== */
         function checkInitialLogin() {
-            if (!currentUser || !currentUser.phone) {
+            // إذا لم يكن مسجلاً أو كانت معلومات التواصل أو المنطقة ناقصة، تفتح النافذة فوراً
+            if (!currentUser || !currentUser.phone || !currentUser.name || !currentUser.region || !currentUser.address) {
+                if (currentUser) {
+                    document.getElementById("regName").value = currentUser.name || "";
+                    document.getElementById("regPhone").value = currentUser.phone || "";
+                    document.getElementById("regRegion").value = currentUser.region || "العوينة";
+                    document.getElementById("regAddress").value = currentUser.address || "";
+                }
                 document.getElementById("closeProfileBtn").style.display = "none";
                 document.getElementById("profileModal").style.display = "flex";
             } else {
@@ -986,6 +1095,7 @@
             if (currentUser) {
                 document.getElementById("regName").value = currentUser.name || "";
                 document.getElementById("regPhone").value = currentUser.phone || "";
+                document.getElementById("regRegion").value = currentUser.region || "العوينة";
                 document.getElementById("regAddress").value = currentUser.address || "";
             }
             document.getElementById("closeProfileBtn").style.display = "block";
@@ -998,18 +1108,42 @@
 
         function saveUserProfile() {
             const name = document.getElementById("regName").value.trim();
-            const phone = document.getElementById("regPhone").value.trim();
+            const phone = document.getElementById("regPhone").value.trim().replace(/\s+/g, "");
+            const region = document.getElementById("regRegion").value;
             const address = document.getElementById("regAddress").value.trim();
-            if (!name || !phone || !address) {
-                alert("يرجى إدخال الاسم ورقم الهاتف والعنوان بالكامل.");
+
+            if (!name || !phone || !region || !address) {
+                alert("⚠️ يرجى إدخال الاسم، رقم واتساب، اختيار المنطقة، والعنوان التفصيلي بالكامل.");
                 return;
             }
-            const existingPoints = (users[phone] && users[phone].points) ? users[phone].points : 0;
-            const existingPurchases = (users[phone] && users[phone].purchases) ? users[phone].purchases : {};
-            
-            currentUser = { name, phone, address, points: existingPoints, purchases: existingPurchases };
+
+            const existingUser = users[phone] || {};
+            if (existingUser.banned) {
+                alert("🚫 عذراً، هذا الحساب محظور من قبل إدارة المتجر.");
+                return;
+            }
+
+            const existingPoints = existingUser.points || 0;
+            const existingPurchases = existingUser.purchases || {};
+
+            currentUser = {
+                name,
+                phone,
+                region,
+                address,
+                points: existingPoints,
+                purchases: existingPurchases,
+                banned: false
+            };
+
             localStorage.setItem("moaath_user", JSON.stringify(currentUser));
-            db.ref("users/" + phone).update({ name, phone, address, points: existingPoints });
+            db.ref("users/" + phone).update({
+                name,
+                phone,
+                region,
+                address,
+                points: existingPoints
+            });
             closeProfileModal();
             syncCurrentUser();
         }
@@ -1022,20 +1156,26 @@
             }
             const pts = Math.round(currentUser.points || 0);
             document.getElementById("userNameDisplay").textContent = currentUser.name;
+            document.getElementById("userRegionBadge").textContent = currentUser.region ? `(${currentUser.region})` : "";
             document.getElementById("userPoints").textContent = pts;
             document.getElementById("compUserPoints").textContent = pts;
 
             const minRedeem = parseInt(compSettings.minRedeemPoints) || 500;
             const redeemBtn = document.getElementById("redeemPointsBtn");
-            redeemBtn.style.display = pts >= minRedeem ? "inline-block" : "none";
+            redeemBtn.style.display = (pts >= minRedeem && !currentUser.banned) ? "inline-block" : "none";
         }
 
         function redeemPointsWhatsApp() {
             if (!currentUser) return;
-            const msg = `مرحباً إدارة متجر معاذ 🎁\nأرغب باستبدال رصيد نقاطي بهدية:\n👤 الاسم: ${currentUser.name}\n📱 الهاتف: ${currentUser.phone}\n🌟 رصيد النقاط الحالي: ${Math.round(currentUser.points || 0)} نقطة\n📍 العنوان: ${currentUser.address}`;
-            window.open(`https://api.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(msg)}`, "_blank");
+            if (currentUser.banned) {
+                alert("🚫 حسابك محظور من قبل الإدارة.");
+                return;
+            }
+            const msg = `مرحباً إدارة متجر معاذ 🎁\nأرغب باستبدال رصيد نقاطي بهدية:\n👤 الاسم: ${currentUser.name}\n📱 الهاتف: ${currentUser.phone}\n🏘️ المنطقة: ${currentUser.region || "العوينة"}\n📍 العنوان: ${currentUser.address}\n🌟 رصيد النقاط الحالي: ${Math.round(currentUser.points || 0)} نقطة`;
+            window.location.href = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`;
         }
 
+        /* ==================== 7. واجهة المتجر، التقييمات، والسلة ==================== */
         function renderCategories() {
             const container = document.getElementById("categoriesContainer");
             container.innerHTML = categories.map(cat => `
@@ -1113,7 +1253,7 @@
                     btnHTML = `<button class="btn" onclick="changeQty('${id}', 1)">➕ أضف للسلة</button>`;
                 }
 
-                // حساب متوسط التقييمات والتعليقات للمنتج
+                // حساب التقييمات والتعليقات
                 const reviews = p.reviews || {};
                 const reviewKeys = Object.keys(reviews);
                 let avgRating = 0;
@@ -1122,15 +1262,15 @@
                     avgRating = (sum / reviewKeys.length).toFixed(1);
                 }
 
-                // التحقق مما إذا كان الزبون قد اشترى هذا المنتج فعلاً وتم تأكيد طلبه
+                // التحقق من شراء المنتج وتأكيد الطلب
                 const hasPurchased = currentUser && currentUser.phone && 
                                      users[currentUser.phone] && 
                                      users[currentUser.phone].purchases && 
                                      users[currentUser.phone].purchases[id];
 
                 let reviewBtnHTML = "";
-                if (hasPurchased) {
-                    reviewBtnHTML = `<button onclick="openReviewModal('${id}', '${p.name}')" class="btn" style="background:transparent; border:1px solid var(--gold-color); color:var(--gold-color); margin-top:6px; font-size:11px; padding:4px;">⭐ تقييم المنتج</button>`;
+                if (hasPurchased && (!currentUser || !currentUser.banned)) {
+                    reviewBtnHTML = `<button onclick="openReviewModal('${id}')" class="btn" style="background:transparent; border:1px solid var(--gold-color); color:var(--gold-color); margin-top:6px; font-size:11px; padding:5px;">⭐ قيّم المنتج واكتب تعليقاً</button>`;
                 }
 
                 let reviewsListHTML = "";
@@ -1152,7 +1292,7 @@
                             <p>${priceSYP.toLocaleString()} ل.س</p>
                             ${reviewsListHTML}
                         </div>
-                        <div>
+                        <div style="margin-top:6px;">
                             ${btnHTML}
                             ${reviewBtnHTML}
                         </div>
@@ -1210,23 +1350,28 @@
         function updateCartBar() {
             const bar = document.getElementById("cartBar");
             let totalCount = 0;
-            let totalSYP = 0;
+            let subtotalSYP = 0;
 
             Object.values(cart).forEach(item => {
                 totalCount += item.qty;
-                totalSYP += calcSYP(item.priceUSD) * item.qty;
+                subtotalSYP += calcSYP(item.priceUSD) * item.qty;
             });
 
             if (totalCount > 0) {
                 bar.style.display = "flex";
                 document.getElementById("cartCount").textContent = totalCount;
-                document.getElementById("cartTotal").textContent = totalSYP.toLocaleString();
+                document.getElementById("cartTotal").textContent = subtotalSYP.toLocaleString();
             } else {
                 bar.style.display = "none";
             }
         }
 
         function openCartModal() {
+            if (!currentUser || !currentUser.phone || !currentUser.region) {
+                openEditProfile();
+                return;
+            }
+            document.getElementById("cartRegionSelect").value = currentUser.region || "العوينة";
             renderCartModalItems();
             document.getElementById("cartModal").style.display = "flex";
         }
@@ -1235,19 +1380,29 @@
             document.getElementById("cartModal").style.display = "none";
         }
 
-        function toggleShamCashBox() {
-            const method = document.getElementById("paymentMethod").value;
-            document.getElementById("shamCashBox").style.display = method.includes("شام كاش") ? "block" : "none";
+        function onCartRegionChange() {
+            const selectedReg = document.getElementById("cartRegionSelect").value;
+            if (currentUser && currentUser.phone) {
+                currentUser.region = selectedReg;
+                localStorage.setItem("moaath_user", JSON.stringify(currentUser));
+                db.ref("users/" + currentUser.phone + "/region").set(selectedReg);
+                document.getElementById("userRegionBadge").textContent = `(${selectedReg})`;
+            }
+            renderCartModalItems();
         }
 
         function copyWalletId() {
             const wallet = document.getElementById("shamWalletId").textContent;
-            navigator.clipboard.writeText(wallet).then(() => alert("تم نسخ معرف محفظة شام كاش بنجاح!"));
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(wallet).then(() => alert("✅ تم نسخ معرف محفظة شام كاش بنجاح!"));
+            } else {
+                prompt("انسخ معرف المحفظة التالي:", wallet);
+            }
         }
 
         function renderCartModalItems() {
             const list = document.getElementById("cartItemsList");
-            let totalSYP = 0;
+            let subtotalSYP = 0;
             let totalPoints = 0;
 
             const items = Object.values(cart);
@@ -1259,7 +1414,7 @@
             list.innerHTML = items.map(item => {
                 const unitSYP = calcSYP(item.priceUSD);
                 const subSYP = unitSYP * item.qty;
-                totalSYP += subSYP;
+                subtotalSYP += subSYP;
                 const itemPts = Math.round((item.priceUSD * item.qty) * (item.pointsPct || 2));
                 totalPoints += itemPts;
 
@@ -1277,21 +1432,40 @@
                     </div>`;
             }).join("");
 
-            document.getElementById("modalCartTotal").textContent = totalSYP.toLocaleString();
+            const selectedRegion = document.getElementById("cartRegionSelect").value || (currentUser ? currentUser.region : "العوينة");
+            const deliveryFee = parseInt(deliveryFees[selectedRegion]) || 0;
+            const finalTotalSYP = subtotalSYP + deliveryFee;
+
+            document.getElementById("modalCartSubtotal").textContent = subtotalSYP.toLocaleString();
+            document.getElementById("modalDeliveryRegionName").textContent = selectedRegion;
+            document.getElementById("modalDeliveryFee").textContent = deliveryFee.toLocaleString();
+            document.getElementById("modalCartTotal").textContent = finalTotalSYP.toLocaleString();
             document.getElementById("modalCartPoints").textContent = totalPoints;
         }
 
+        /* ==================== 8. إرسال الطلب عبر واتساب بدون حظر النوافذ ==================== */
         function submitOrder() {
-            if (!currentUser || !currentUser.phone) {
+            if (!currentUser || !currentUser.phone || !currentUser.name || !currentUser.address) {
                 closeCartModal();
                 openEditProfile();
                 return;
             }
 
-            const items = Object.values(cart);
-            if (items.length === 0) return;
+            if (users[currentUser.phone] && users[currentUser.phone].banned) {
+                alert("🚫 عذراً، حسابك محظور من قبل إدارة المتجر ولا يمكنك إرسال طلبات.");
+                return;
+            }
 
-            let totalSaleSYP = 0;
+            const items = Object.values(cart);
+            if (items.length === 0) {
+                alert("السلة فارغة!");
+                return;
+            }
+
+            const selectedRegion = document.getElementById("cartRegionSelect").value || currentUser.region || "العوينة";
+            const deliveryFeeSYP = parseInt(deliveryFees[selectedRegion]) || 0;
+
+            let subtotalSaleSYP = 0;
             let totalCostSYP = 0;
             let totalPoints = 0;
 
@@ -1301,7 +1475,7 @@
                 const subSaleSYP = unitSaleSYP * item.qty;
                 const subCostSYP = unitCostSYP * item.qty;
 
-                totalSaleSYP += subSaleSYP;
+                subtotalSaleSYP += subSaleSYP;
                 totalCostSYP += subCostSYP;
                 totalPoints += Math.round((item.priceUSD * item.qty) * (item.pointsPct || 2));
 
@@ -1317,7 +1491,8 @@
                 };
             });
 
-            const paymentMethod = document.getElementById("paymentMethod").value;
+            const finalTotalSYP = subtotalSaleSYP + deliveryFeeSYP;
+            const paymentMethod = "شام كاش (Sham Cash)";
             const notes = document.getElementById("orderNotes").value.trim();
             const orderId = "ORD_" + Date.now();
 
@@ -1326,41 +1501,56 @@
                 timestamp: new Date().toLocaleString("ar-SY"),
                 customerName: currentUser.name,
                 customerPhone: currentUser.phone,
+                customerRegion: selectedRegion,
                 customerAddress: currentUser.address,
                 paymentMethod,
                 notes,
                 items: orderItems,
-                totalSaleSYP,
+                subtotalSaleSYP,
+                deliveryFeeSYP,
+                totalSaleSYP: finalTotalSYP,
                 totalCostSYP,
-                netProfitSYP: totalSaleSYP - totalCostSYP,
+                netProfitSYP: subtotalSaleSYP - totalCostSYP,
                 earnedPoints: totalPoints
             };
 
-            db.ref("pendingOrders/" + orderId).set(orderPayload).then(() => {
-                let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n`;
-                msg += `👤 الزبون: ${orderPayload.customerName}\n`;
-                msg += `📱 الهاتف: ${orderPayload.customerPhone}\n`;
-                msg += `📍 العنوان: ${orderPayload.customerAddress}\n`;
-                msg += `💳 الدفع: ${orderPayload.paymentMethod}\n`;
-                if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}\n`;
-                msg += `──────────────\n`;
-                orderPayload.items.forEach(i => {
-                    msg += `• ${i.name} (العدد: ${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س\n`;
-                });
-                msg += `──────────────\n`;
-                msg += `💰 *الإجمالي المطلوب:* ${orderPayload.totalSaleSYP.toLocaleString()} ل.س\n`;
-                msg += `🎁 النقاط المستحقة عند التأكيد: +${orderPayload.earnedPoints} نقطة`;
-
-                cart = {};
-                closeCartModal();
-                renderStore();
-                window.open(`https://api.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(msg)}`, "_blank");
+            // تجهيز نص رسالة واتساب فوراً
+            let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n`;
+            msg += `👤 الزبون: ${orderPayload.customerName}\n`;
+            msg += `📱 الهاتف: ${orderPayload.customerPhone}\n`;
+            msg += `🏘️ المنطقة: ${orderPayload.customerRegion}\n`;
+            msg += `📍 العنوان: ${orderPayload.customerAddress}\n`;
+            msg += `💳 الدفع: ${orderPayload.paymentMethod}\n`;
+            if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}\n`;
+            msg += `──────────────\n`;
+            orderPayload.items.forEach(i => {
+                msg += `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س\n`;
             });
+            msg += `──────────────\n`;
+            msg += `📦 قيمة المنتجات: ${orderPayload.subtotalSaleSYP.toLocaleString()} ل.س\n`;
+            msg += `🛵 أجور التوصيل (${orderPayload.customerRegion}): ${orderPayload.deliveryFeeSYP.toLocaleString()} ل.س\n`;
+            msg += `💰 *الإجمالي النهائي المطلوب:* ${orderPayload.totalSaleSYP.toLocaleString()} ل.س\n`;
+            msg += `🎁 النقاط المستحقة عند التأكيد: +${orderPayload.earnedPoints} نقطة`;
+
+            const whatsappURL = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`;
+
+            // حفظ الطلب في Firebase وتفريغ السلة وفتح واتساب مباشرة دون حظر من المتصفح
+            db.ref("pendingOrders/" + orderId).set(orderPayload);
+            cart = {};
+            document.getElementById("orderNotes").value = "";
+            closeCartModal();
+            renderStore();
+
+            // التوجيه الفوري لتطبيق واتساب
+            window.location.href = whatsappURL;
         }
 
-        function openReviewModal(productId, productName) {
+        /* ==================== 9. تقييم المنتجات والتعليقات ==================== */
+        function openReviewModal(productId) {
+            const p = products[productId];
+            if (!p) return;
             document.getElementById("reviewProductId").value = productId;
-            document.getElementById("reviewProductName").textContent = productName;
+            document.getElementById("reviewProductName").textContent = p.name;
             document.getElementById("reviewCommentInput").value = "";
             document.getElementById("reviewModal").style.display = "flex";
         }
@@ -1374,12 +1564,16 @@
                 alert("يرجى تسجيل الدخول أولاً.");
                 return;
             }
+            if (users[currentUser.phone] && users[currentUser.phone].banned) {
+                alert("🚫 حسابك محظور من قبل الإدارة.");
+                return;
+            }
             const productId = document.getElementById("reviewProductId").value;
             const rating = parseInt(document.getElementById("reviewRatingSelect").value) || 5;
             const comment = document.getElementById("reviewCommentInput").value.trim();
 
             if (!comment) {
-                alert("يرجى كتابة تعليق قصير حول المنتج.");
+                alert("يرجى كتابة تعليق قصير حول تجربتك مع المنتج.");
                 return;
             }
 
@@ -1393,11 +1587,12 @@
             };
 
             db.ref(`products/${productId}/reviews/${reviewId}`).set(reviewData).then(() => {
-                alert("✅ تم إضافة تقييمك بنجاح، شكراً لك!");
+                alert("✅ تم نشر تقييمك وتعليقك بنجاح!");
                 closeReviewModal();
             });
         }
 
+        /* ==================== 10. صفحة المسابقات ولوحة الشرف ==================== */
         function openCompetitionsPage() {
             syncCurrentUser();
             renderCompetitionDetails();
@@ -1432,7 +1627,7 @@
             const list = document.getElementById("leaderboardList");
             const limit = parseInt(compSettings.leaderboardLimit) || 10;
             const sortedUsers = Object.values(users)
-                .filter(u => (u.points || 0) > 0)
+                .filter(u => (u.points || 0) > 0 && !u.banned)
                 .sort((a, b) => (b.points || 0) - (a.points || 0))
                 .slice(0, limit);
 
@@ -1446,12 +1641,13 @@
                 const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
                 return `
                     <div class="leader-row ${rankClass}">
-                        <span><b>${medal}</b> ${u.name}</span>
+                        <span><b>${medal}</b> ${u.name} <small style="color:var(--gray-text);">(${u.region || "العوينة"})</small></span>
                         <span style="color:var(--gold-color); font-weight:bold;">${Math.round(u.points || 0)} نقطة</span>
                     </div>`;
             }).join("");
         }
 
+        /* ==================== 11. بوابة الإدارة المخفية (5 نقرات) ==================== */
         let adminClickCount = 0;
         let adminClickTimer = null;
 
@@ -1482,6 +1678,7 @@
             btn.classList.add("active");
         }
 
+        /* ==================== 12. إدارة الفواتير الواردة وإشعار التوصيل ==================== */
         function renderPendingOrders() {
             const container = document.getElementById("pendingOrdersList");
             const keys = Object.keys(pendingOrders);
@@ -1506,14 +1703,15 @@
                             <span>👤 ${o.customerName} (${o.customerPhone})</span>
                             <span>${o.timestamp}</span>
                         </div>
-                        <div style="margin-bottom:4px;">📍 العنوان: ${o.customerAddress} | 💳 ${o.paymentMethod}</div>
+                        <div style="margin-bottom:4px;">🏘️ المنطقة: <b>${o.customerRegion || "العوينة"}</b> | 📍 ${o.customerAddress}</div>
+                        <div style="margin-bottom:4px;">💳 الدفع: ${o.paymentMethod} | 🛵 توصيل: ${(o.deliveryFeeSYP || 0).toLocaleString()} ل.س</div>
                         ${o.notes ? `<div style="color:#ffbb33; margin-bottom:4px;">📝 ملاحظات: ${o.notes}</div>` : ""}
                         <div style="border-top:1px dashed var(--border-color); border-bottom:1px dashed var(--border-color); padding:6px 0; margin:6px 0;">
                             ${itemsHtml}
                         </div>
                         <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:8px;">
-                            <span>إجمالي الفاتورة: ${o.totalSaleSYP.toLocaleString()} ل.س</span>
-                            <span style="color:var(--success-color);">صافي ربح الفاتورة: ${(o.netProfitSYP || 0).toLocaleString()} ل.س</span>
+                            <span>الإجمالي مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</span>
+                            <span style="color:var(--success-color);">صافي الربح: ${(o.netProfitSYP || 0).toLocaleString()} ل.س</span>
                         </div>
                         <div style="display:flex; gap:6px;">
                             <button class="btn" style="background:var(--success-color); color:#000;" onclick="confirmOrder('${id}')">✅ تأكيد الفاتورة وإشعار التوصيل</button>
@@ -1538,7 +1736,7 @@
                 }
             });
 
-            // 2. توثيق المنتجات المشتراة للزبون (لتفعيل صلاحية التقييم والتعليق)
+            // 2. توثيق المنتجات المشتراة للزبون لتفعيل التقييم والتعليق
             const phone = o.customerPhone;
             let purchasedObj = (users[phone] && users[phone].purchases) ? users[phone].purchases : {};
             (o.items || []).forEach(item => {
@@ -1547,12 +1745,13 @@
                 }
             });
 
-            // 3. إضافة النقاط لرصيد الزبون وتحديث بياناته
+            // 3. تحديث نقاط وبيانات الزبون
             const currentPts = (users[phone] && users[phone].points) ? users[phone].points : 0;
             const updatedPts = currentPts + (o.earnedPoints || 0);
             db.ref(`users/${phone}`).update({
                 name: o.customerName,
                 phone: o.customerPhone,
+                region: o.customerRegion || "العوينة",
                 address: o.customerAddress,
                 points: updatedPts,
                 purchases: purchasedObj
@@ -1560,7 +1759,7 @@
 
             // 4. تحديث الإحصائيات المالية
             const newStats = { ...statsData };
-            newStats.totalSales = (newStats.totalSales || 0) + (o.totalSaleSYP || 0);
+            newStats.totalSales = (newStats.totalSales || 0) + (o.subtotalSaleSYP || o.totalSaleSYP || 0);
             newStats.totalCost = (newStats.totalCost || 0) + (o.totalCostSYP || 0);
             newStats.netProfit = (newStats.netProfit || 0) + (o.netProfitSYP || 0);
             newStats.completedOrders = (newStats.completedOrders || 0) + 1;
@@ -1577,15 +1776,18 @@
             db.ref("stats").set(newStats);
             db.ref("pendingOrders/" + orderId).remove();
 
-            // 5. إشعار الزبون ثم فتح محادثة واتساب عامل التوصيل
-            const custMsg = `مرحباً ${o.customerName} 🌸\nتم تأكيد فاتورتك في *متجر معاذ* وجاري تجهيزها للتوصيل!\n💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س\n🎁 تمت إضافة +${o.earnedPoints} نقطة لرصيدك.`;
-            window.open(`https://api.whatsapp.com/send?phone=${o.customerPhone}&text=${encodeURIComponent(custMsg)}`, "_blank");
+            // 5. إشعار الزبون وعامل التوصيل عبر واتساب
+            const custPhoneClean = formatWhatsAppPhone(o.customerPhone);
+            const custMsg = `مرحباً ${o.customerName} 🌸\nتم تأكيد فاتورتك في *متجر معاذ* وجاري تجهيزها للتوصيل إلى (${o.customerRegion || "العوينة"})!\n💰 الإجمالي مع التوصيل: ${o.totalSaleSYP.toLocaleString()} ل.س\n🎁 تمت إضافة +${o.earnedPoints} نقطة لرصيدك (إجمالي نقاطك: ${updatedPts}).\n⭐ يمكنك الآن تقييم المنتجات التي اشتريتها داخل التطبيق!`;
+            window.open(`https://wa.me/${custPhoneClean}?text=${encodeURIComponent(custMsg)}`, "_blank");
 
             if (deliveryDriverPhone) {
+                const driverClean = formatWhatsAppPhone(deliveryDriverPhone);
                 setTimeout(() => {
                     let driverMsg = `🛵 *طلب توصيل جديد - متجر معاذ*\n`;
                     driverMsg += `👤 الزبون: ${o.customerName}\n`;
                     driverMsg += `📱 هاتف الزبون: ${o.customerPhone}\n`;
+                    driverMsg += `🏘️ المنطقة: ${o.customerRegion || "العوينة"}\n`;
                     driverMsg += `📍 العنوان: ${o.customerAddress}\n`;
                     if (o.notes) driverMsg += `📝 ملاحظات: ${o.notes}\n`;
                     driverMsg += `──────────────\n`;
@@ -1593,9 +1795,10 @@
                         driverMsg += `• ${i.name} (×${i.qty})\n`;
                     });
                     driverMsg += `──────────────\n`;
-                    driverMsg += `💵 *المبلغ المطلوب تحصيله:* ${o.totalSaleSYP.toLocaleString()} ل.س (${o.paymentMethod})`;
-                    window.open(`https://api.whatsapp.com/send?phone=${deliveryDriverPhone}&text=${encodeURIComponent(driverMsg)}`, "_blank");
-                }, 800);
+                    driverMsg += `🛵 أجور التوصيل: ${(o.deliveryFeeSYP || 0).toLocaleString()} ل.س\n`;
+                    driverMsg += `💵 *المبلغ الإجمالي:* ${o.totalSaleSYP.toLocaleString()} ل.س (${o.paymentMethod})`;
+                    window.open(`https://wa.me/${driverClean}?text=${encodeURIComponent(driverMsg)}`, "_blank");
+                }, 700);
             }
         }
 
@@ -1606,6 +1809,98 @@
             db.ref("pendingOrders/" + orderId).remove();
         }
 
+        /* ==================== 13. إدارة الزبائن (تعديل، نقاط، حظر / فك حظر، حذف) ==================== */
+        function renderAdminCustomers() {
+            const container = document.getElementById("adminCustomersList");
+            const q = (document.getElementById("adminSearchCust").value || "").trim().toLowerCase();
+            const sorted = Object.values(users)
+                .filter(u => !q || (u.name && u.name.toLowerCase().includes(q)) || (u.phone && u.phone.includes(q)))
+                .sort((a, b) => (b.points || 0) - (a.points || 0));
+
+            if (sorted.length === 0) {
+                container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا يوجد زبائن مسجلون.</p>`;
+                return;
+            }
+
+            container.innerHTML = sorted.map(u => {
+                const isBanned = !!u.banned;
+                return `
+                <div style="background:var(--bg-color); border:1px solid ${isBanned ? 'var(--danger-color)' : 'var(--border-color)'}; padding:10px; border-radius:8px; margin-bottom:8px; font-size:12px;">
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:4px;">
+                        <span>👤 ${u.name} (${u.phone}) ${isBanned ? '<b style="color:var(--danger-color);">[محظور 🚫]</b>' : ''}</span>
+                        <span style="color:var(--gold-color);">${Math.round(u.points || 0)} نقطة</span>
+                    </div>
+                    <div style="color:var(--gray-text); font-size:11px; margin-bottom:8px;">
+                        🏘️ المنطقة: <b>${u.region || "العوينة"}</b> | 📍 العنوان: ${u.address || "-"}
+                    </div>
+                    <div style="display:flex; gap:5px;">
+                        <button onclick="openAdminEditCustomerModal('${u.phone}')" class="btn" style="padding:5px 8px; font-size:11px;">✏️ تعديل البيانات/النقاط</button>
+                        <button onclick="toggleBanCustomer('${u.phone}')" class="btn" style="padding:5px 8px; font-size:11px; background:${isBanned ? 'var(--success-color)' : '#ff9800'}; color:#000;">
+                            ${isBanned ? '🔓 فك الحظر' : '🚫 حظر الزبون'}
+                        </button>
+                        <button onclick="deleteCustomerAdmin('${u.phone}')" class="btn btn-danger" style="width:auto; padding:5px 10px; font-size:11px;">🗑️</button>
+                    </div>
+                </div>`;
+            }).join("");
+        }
+
+        function openAdminEditCustomerModal(phone) {
+            const u = users[phone];
+            if (!u) return;
+            document.getElementById("adminCustOrigPhone").value = phone;
+            document.getElementById("adminCustName").value = u.name || "";
+            document.getElementById("adminCustPhone").value = u.phone || phone;
+            document.getElementById("adminCustRegion").value = u.region || "العوينة";
+            document.getElementById("adminCustAddress").value = u.address || "";
+            document.getElementById("adminCustPoints").value = Math.round(u.points || 0);
+            document.getElementById("adminEditCustomerModal").style.display = "flex";
+        }
+
+        function closeAdminEditCustomerModal() {
+            document.getElementById("adminEditCustomerModal").style.display = "none";
+        }
+
+        function saveAdminCustomerEdit() {
+            const phone = document.getElementById("adminCustOrigPhone").value;
+            if (!phone || !users[phone]) return;
+
+            const name = document.getElementById("adminCustName").value.trim();
+            const region = document.getElementById("adminCustRegion").value;
+            const address = document.getElementById("adminCustAddress").value.trim();
+            const points = parseFloat(document.getElementById("adminCustPoints").value) || 0;
+
+            db.ref("users/" + phone).update({
+                name: name || users[phone].name,
+                region,
+                address,
+                points
+            }).then(() => {
+                alert("✅ تم تحديث معلومات الزبون بنجاح!");
+                closeAdminEditCustomerModal();
+            });
+        }
+
+        function toggleBanCustomer(phone) {
+            const u = users[phone];
+            if (!u) return;
+            const newBanState = !u.banned;
+            const confirmMsg = newBanState 
+                ? `🚫 هل أنت متأكد من حظر الزبون (${u.name}) ومنعه من إرسال الطلبات؟`
+                : `🔓 هل تريد فك الحظر عن الزبون (${u.name})؟`;
+
+            if (!confirm(confirmMsg)) return;
+            db.ref("users/" + phone + "/banned").set(newBanState);
+        }
+
+        function deleteCustomerAdmin(phone) {
+            const u = users[phone];
+            if (!u) return;
+            if (confirm(`⚠️ هل أنت متأكد من حذف حساب الزبون (${u.name}) نهائياً؟`)) {
+                db.ref("users/" + phone).remove();
+            }
+        }
+
+        /* ==================== 14. الإحصائيات، المنتجات، والإعدادات العامة ==================== */
         function renderStatsDashboard() {
             const sales = statsData.totalSales || 0;
             const cost = statsData.totalCost || 0;
@@ -1814,7 +2109,7 @@
             lowItems.forEach(p => {
                 msg += `• ${p.name} (المتبقي: ${p.stock})\n`;
             });
-            window.open(`https://api.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(msg)}`, "_blank");
+            window.location.href = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`;
         }
 
         async function saveCompetitionSettings() {
@@ -1833,45 +2128,20 @@
                 .then(() => alert("✅ تم حفظ إعدادات المسابقة بنجاح!"));
         }
 
-        function renderAdminCustomers() {
-            const container = document.getElementById("adminCustomersList");
-            const sorted = Object.values(users).sort((a, b) => (b.points || 0) - (a.points || 0));
-
-            container.innerHTML = sorted.map(u => `
-                <div style="background:var(--bg-color); padding:8px; border-radius:6px; margin-bottom:6px; font-size:12px;">
-                    <div style="display:flex; justify-content:space-between; font-weight:bold;">
-                        <span>👤 ${u.name} (${u.phone})</span>
-                        <span style="color:var(--gold-color);">${Math.round(u.points || 0)} نقطة</span>
-                    </div>
-                    <div style="color:var(--gray-text); font-size:11px; margin:4px 0;">📍 ${u.address || "-"}</div>
-                    <div style="display:flex; gap:4px; margin-top:6px;">
-                        <button onclick="editCustomerAdmin('${u.phone}')" class="btn" style="padding:4px 8px; font-size:11px;">✏️ تعديل النقاط/البيانات</button>
-                    </div>
-                </div>`).join("");
-        }
-
-        function editCustomerAdmin(phone) {
-            const u = users[phone];
-            if (!u) return;
-            const newName = prompt("تعديل اسم الزبون:", u.name);
-            if (newName === null) return;
-            const newAddress = prompt("تعديل عنوان الزبون:", u.address || "");
-            if (newAddress === null) return;
-            const newPoints = prompt("تعديل رصيد نقاط الزبون:", u.points || 0);
-            if (newPoints === null) return;
-
-            db.ref("users/" + phone).update({
-                name: newName.trim() || u.name,
-                address: newAddress.trim(),
-                points: parseFloat(newPoints) || 0
-            });
-        }
-
         function saveGeneralSettings() {
             const rate = parseFloat(document.getElementById("exchangeRateInput").value) || 15000;
             const driver = document.getElementById("deliveryPhoneInput").value.trim();
-            db.ref("settings").set({ exchangeRate: rate, deliveryDriverPhone: driver })
-                .then(() => alert("✅ تم حفظ سعر الصرف ورقم التوصيل!"));
+            const fees = {
+                "العوينة": parseInt(document.getElementById("feeAwinaInput").value) || 0,
+                "المزرعة الشرقية ( الريحانية )": parseInt(document.getElementById("feeEastInput").value) || 0,
+                "المزرعة الغربية": parseInt(document.getElementById("feeWestInput").value) || 0
+            };
+
+            db.ref("settings").set({
+                exchangeRate: rate,
+                deliveryDriverPhone: driver,
+                deliveryFees: fees
+            }).then(() => alert("✅ تم حفظ تكاليف التوصيل وسعر الصرف ورقم التوصيل بنجاح!"));
         }
 
         function exportBackupJSON() {
