@@ -178,6 +178,7 @@
             border-radius: 6px;
             background: var(--bg-color);
             margin-bottom: 6px;
+            transition: opacity 0.3s ease;
         }
         .product-card h3 {
             font-size: 13px;
@@ -1014,16 +1015,6 @@
             });
         }
 
-        function progressiveImageLoad(imgElement, highSrc) {
-            if (!highSrc || imgElement.dataset.loaded === "true") return;
-            const tempImg = new Image();
-            tempImg.src = highSrc;
-            tempImg.onload = () => {
-                imgElement.dataset.loaded = "true";
-                imgElement.src = highSrc;
-            };
-        }
-
         db.ref("settings").on("value", (snap) => {
             const data = snap.val() || {};
             exchangeRate = parseFloat(data.exchangeRate) || 15000;
@@ -1235,7 +1226,11 @@
             const thumbSrc = specialOffer.thumb || specialOffer.image || "store-icon.png";
             const fullSrc = specialOffer.image || "store-icon.png";
             soImg.src = thumbSrc;
-            progressiveImageLoad(soImg, fullSrc);
+            if (fullSrc && fullSrc !== thumbSrc) {
+                const temp = new Image();
+                temp.onload = () => { soImg.src = fullSrc; };
+                temp.src = fullSrc;
+            }
 
             document.getElementById("soDisplayName").textContent = specialOffer.name;
             const isWholesale = currentUser && currentUser.userType === "wholesale";
@@ -1273,14 +1268,16 @@
             let html = "";
 
             const isWholesale = currentUser && currentUser.userType === "wholesale";
+            const keysToRender = (shuffledProductKeys && shuffledProductKeys.length > 0) ? shuffledProductKeys : Object.keys(products);
 
-            shuffledProductKeys.forEach(id => {
+            keysToRender.forEach(id => {
                 const p = products[id];
                 if (!p) return;
+                const pName = p.name || "";
                 if (selectedCategory !== "الكل" && p.category !== selectedCategory) return;
-                if (query && !p.name.toLowerCase().includes(query)) return;
+                if (query && !pName.toLowerCase().includes(query)) return;
 
-                const activePriceUSD = (isWholesale && p.wholesaleUSD && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD;
+                const activePriceUSD = (isWholesale && p.wholesaleUSD && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0);
                 const priceSYP = calcSYP(activePriceUSD);
                 const stock = parseInt(p.stock) || 0;
                 const qtyInCart = cart[id] ? cart[id].qty : 0;
@@ -1338,8 +1335,8 @@
                 html += `
                     <div class="product-card">
                         <div>
-                            <img src="${thumbSrc}" onload="progressiveImageLoad(this, '${fullSrc}')" class="product-img">
-                            <h3>${p.name}</h3>
+                            <img src="${thumbSrc}" data-full="${fullSrc}" class="product-img lazy-prod-img" loading="lazy">
+                            <h3>${pName}</h3>
                             <p>${priceSYP.toLocaleString()} ل.س ${isWholesale && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>
                             ${reviewsListHTML}
                         </div>
@@ -1352,6 +1349,16 @@
 
             grid.innerHTML = html || `<p style="grid-column: span 2; text-align: center; color: var(--gray-text);">لا توجد منتجات مطابقة</p>`;
             updateCartBar();
+
+            // ترقية الصور بالخلفية إلى الدقة العالية بأمان
+            document.querySelectorAll(".lazy-prod-img").forEach(img => {
+                const full = img.getAttribute("data-full");
+                if (full && full !== img.src) {
+                    const temp = new Image();
+                    temp.onload = () => { img.src = full; };
+                    temp.src = full;
+                }
+            });
         }
 
         function changeQty(id, delta) {
@@ -1376,7 +1383,7 @@
                 const effPrice = (isWholesale && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD;
                 itemData = {
                     id,
-                    name: p.name,
+                    name: p.name || "",
                     category: p.category || "غير مصنف",
                     priceUSD: parseFloat(effPrice) || 0,
                     costPrice: parseFloat(p.costPrice) || 0,
@@ -1575,22 +1582,22 @@
                 earnedPoints: totalPoints
             };
 
-            let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n`;
-            msg += `👤 الزبون: ${orderPayload.customerName}\n`;
-            msg += `📱 الهاتف: ${orderPayload.customerPhone}\n`;
-            msg += `🏘️ المنطقة: ${orderPayload.customerRegion}\n`;
-            msg += `📍 العنوان: ${orderPayload.customerAddress}\n`;
-            msg += `💳 الدفع: ${orderPayload.paymentMethod}\n`;
+            let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n` +
+                      `👤 الزبون: ${orderPayload.customerName}\n` +
+                      `📱 الهاتف: ${orderPayload.customerPhone}\n` +
+                      `🏘️ المنطقة: ${orderPayload.customerRegion}\n` +
+                      `📍 العنوان: ${orderPayload.customerAddress}\n` +
+                      `💳 الدفع: ${orderPayload.paymentMethod}\n`;
             if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}\n`;
             msg += `──────────────\n`;
             orderPayload.items.forEach(i => {
                 msg += `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س\n`;
             });
-            msg += `──────────────\n`;
-            msg += `📦 المنتجات: ${orderPayload.subtotalSaleSYP.toLocaleString()} ل.س\n`;
-            msg += `🛵 التوصيل: ${orderPayload.deliveryFeeSYP.toLocaleString()} ل.س\n`;
-            msg += `💰 *الإجمالي:* ${orderPayload.totalSaleSYP.toLocaleString()} ل.س\n`;
-            msg += `🎁 النقاط: +${orderPayload.earnedPoints}`;
+            msg += `──────────────\n` +
+                   `📦 المنتجات: ${orderPayload.subtotalSaleSYP.toLocaleString()} ل.س\n` +
+                   `🛵 التوصيل: ${orderPayload.deliveryFeeSYP.toLocaleString()} ل.س\n` +
+                   `💰 *الإجمالي:* ${orderPayload.totalSaleSYP.toLocaleString()} ل.س\n` +
+                   `🎁 النقاط: +${orderPayload.earnedPoints}`;
 
             const whatsappURL = `https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`;
 
@@ -1607,7 +1614,7 @@
             const p = products[productId];
             if (!p) return;
             document.getElementById("reviewProductId").value = productId;
-            document.getElementById("reviewProductName").textContent = p.name;
+            document.getElementById("reviewProductName").textContent = p.name || "";
             document.getElementById("reviewCommentInput").value = "";
             document.getElementById("reviewModal").style.display = "flex";
         }
@@ -1809,24 +1816,28 @@
             db.ref("pendingOrders/" + orderId).remove();
 
             const custPhoneClean = formatWhatsAppPhone(o.customerPhone);
-            const custMsg = `مرحباً ${o.customerName} 🌸\nتم تأكيد فاتورتك في *متجر معاذ* وجاري توصيلها إلى (${o.customerRegion})!\n💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س\n🎁 نقاطك الجديدة: ${updatedPts}\n⭐ يمكنك الآن تقييم المنتجات التي اشتريتها داخل التطبيق!`;
+            const custMsg = `مرحباً ${o.customerName} 🌸\n` +
+                           `تم تأكيد فاتورتك في *متجر معاذ* وجاري توصيلها إلى (${o.customerRegion})!\n` +
+                           `💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س\n` +
+                           `🎁 نقاطك الجديدة: ${updatedPts}\n` +
+                           `⭐ يمكنك الآن تقييم المنتجات التي اشتريتها داخل التطبيق!`;
             window.open(`https://wa.me/${custPhoneClean}?text=${encodeURIComponent(custMsg)}`, "_blank");
 
             if (deliveryDriverPhone) {
                 const driverClean = formatWhatsAppPhone(deliveryDriverPhone);
                 setTimeout(() => {
-                    let driverMsg = `🛵 *طلب توصيل جديد - متجر معاذ*\n`;
-                    driverMsg += `👤 الزبون: ${o.customerName}\n`;
-                    driverMsg += `📱 الهاتف: ${o.customerPhone}\n`;
-                    driverMsg += `🏘️ المنطقة: ${o.customerRegion}\n`;
-                    driverMsg += `📍 العنوان: ${o.customerAddress}\n`;
+                    let driverMsg = `🛵 *طلب توصيل جديد - متجر معاذ*\n` +
+                                   `👤 الزبون: ${o.customerName}\n` +
+                                   `📱 الهاتف: ${o.customerPhone}\n` +
+                                   `🏘️ المنطقة: ${o.customerRegion}\n` +
+                                   `📍 العنوان: ${o.customerAddress}\n`;
                     if (o.notes) driverMsg += `📝 ملاحظات: ${o.notes}\n`;
                     driverMsg += `──────────────\n`;
                     (o.items || []).forEach(i => {
                         driverMsg += `• ${i.name} (×${i.qty})\n`;
                     });
-                    driverMsg += `──────────────\n`;
-                    driverMsg += `💵 *المطلوب تحصيله:* ${o.totalSaleSYP.toLocaleString()} ل.س`;
+                    driverMsg += `──────────────\n` +
+                                 `💵 *المطلوب تحصيله:* ${o.totalSaleSYP.toLocaleString()} ل.س`;
                     window.open(`https://wa.me/${driverClean}?text=${encodeURIComponent(driverMsg)}`, "_blank");
                 }, 700);
             }
@@ -1999,7 +2010,7 @@
             document.getElementById("invTotalCost").textContent = totalInvCost.toLocaleString() + " ل.س";
             document.getElementById("invTotalSale").textContent = totalInvSale.toLocaleString() + " ل.س";
         }
-        
+
         function renderAdminCustomers() {
             const container = document.getElementById("adminCustomersList");
             const q = (document.getElementById("adminSearchCust").value || "").trim().toLowerCase();
@@ -2167,7 +2178,7 @@
             const p = products[id];
             if (!p) return;
             document.getElementById("editProductId").value = id;
-            document.getElementById("prodName").value = p.name;
+            document.getElementById("prodName").value = p.name || "";
             document.getElementById("prodCostUSD").value = p.costPrice || 0;
             document.getElementById("prodPriceUSD").value = p.priceUSD || 0;
             document.getElementById("prodWholesaleUSD").value = p.wholesaleUSD || 0;
@@ -2188,7 +2199,7 @@
         function renderAdminProducts() {
             const container = document.getElementById("adminProductsList");
             const q = (document.getElementById("adminSearchProd").value || "").trim().toLowerCase();
-            const keys = Object.keys(products).filter(id => !q || products[id].name.toLowerCase().includes(q));
+            const keys = Object.keys(products).filter(id => !q || (products[id].name && products[id].name.toLowerCase().includes(q)));
 
             if (keys.length === 0) {
                 container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد منتجات.</p>`;
