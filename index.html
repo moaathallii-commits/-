@@ -242,14 +242,37 @@
             left: 0;
             width: 100%;
             background: var(--card-bg);
-            border-top: 2px solid var(--gold-color);
-            padding: 12px;
+            border-top: 3px solid var(--gold-color);
+            padding: 10px 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             box-sizing: border-box;
             z-index: 99;
             cursor: pointer;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.6);
+        }
+        .cart-bar-total-val {
+            color: #00e676;
+            font-size: 15px;
+            font-weight: 900;
+            text-shadow: 0 0 10px rgba(0, 230, 118, 0.4);
+        }
+        .cart-bar-btn {
+            background: linear-gradient(45deg, #00e676, #00b0ff);
+            color: #000;
+            border: none;
+            padding: 9px 16px;
+            border-radius: 20px;
+            font-weight: 900;
+            font-size: 13px;
+            cursor: pointer;
+            box-shadow: 0 3px 12px rgba(0, 230, 118, 0.35);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            animation: pulse 1.8s infinite;
+            white-space: nowrap;
         }
         .modal-overlay {
             display: none;
@@ -367,9 +390,9 @@
             align-items: center;
         }
         @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(212, 175, 55, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
+            70% { transform: scale(1.04); box-shadow: 0 0 0 8px rgba(0, 230, 118, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
         }
     </style>
 </head>
@@ -386,11 +409,12 @@
     </header>
 
     <div class="user-bar">
-        <span style="display:flex; align-items:center; gap:5px;">
+        <span style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
             👤 <b id="userNameDisplay">زائر</b>
             <small id="userRegionBadge" style="color:var(--gray-text); font-size:10px;"></small>
             <small id="userTypeBadge" style="color:var(--gold-color); font-size:10px; font-weight:bold;"></small>
             <button onclick="openEditProfile()" style="background:transparent; border:none; color:var(--gold-color); font-size:12px; cursor:pointer; padding:0;" title="تعديل بياناتي">(⚙️)</button>
+            <span id="userRankBadge" onclick="openCompetitionsPage()" style="display:none; cursor:pointer; background:rgba(0,230,118,0.15); color:var(--success-color); border:1px solid var(--success-color); padding:2px 7px; border-radius:12px; font-size:11px; font-weight:bold;">🏅 ترتيبي: -</span>
         </span>
         <div style="display:flex; gap:6px; align-items:center;">
             <button id="redeemPointsBtn" onclick="redeemPointsWhatsApp()" style="display:none; background:linear-gradient(45deg, #D4AF37, #FFD700); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer; animation: pulse 1.5s infinite;">🎁 النقاط</button>
@@ -424,8 +448,11 @@
     <div style="height: 75px;"></div>
 
     <div class="cart-bar" id="cartBar" style="display:none;" onclick="openCartModal()">
-        <span>المنتجات: <b id="cartCount">0</b> | المجموع: <b id="cartTotal">0</b> ل.س</span>
-        <span style="color:var(--gold-color); font-size:12px; font-weight:bold;">🛒 عرض السلة وإتمام الطلب</span>
+        <div style="display:flex; flex-direction:column; gap:2px; text-align:right;">
+            <span style="font-size:11px; color:var(--gray-text);">المنتجات: <b id="cartCount" style="color:var(--text-color);">0</b> <small id="cartBarDeliveryNote" style="color:var(--gold-color);"></small></span>
+            <span style="font-size:12px;">المجموع النهائي: <strong id="cartTotal" class="cart-bar-total-val">0 ل.س</strong></span>
+        </div>
+        <button class="cart-bar-btn" type="button">🛒 عرض السلة وإتمام الطلب</button>
     </div>
 
     <!-- صفحة مسابقات متجر معاذ -->
@@ -440,9 +467,9 @@
 
         <div class="container">
             <div class="comp-card" style="text-align: center; background: linear-gradient(45deg, rgba(212, 175, 55, 0.15), var(--card-bg));">
-                <div style="font-size: 13px; color: var(--gray-text);">رصيد نقاطك الحالي</div>
-                <div style="font-size: 26px; font-weight: bold; color: var(--gold-color); margin: 5px 0;">
-                    <span id="compUserPoints">0</span> نقطة 🌟
+                <div style="font-size: 13px; color: var(--gray-text);">رصيد نقاطك الحالي وترتيبك</div>
+                <div style="font-size: 24px; font-weight: bold; color: var(--gold-color); margin: 5px 0;">
+                    <span id="compUserPoints">0</span> نقطة 🌟 | <span id="compUserRankDisplay" style="color:var(--success-color);">#1</span>
                 </div>
                 <div id="compMinPointsNote" style="font-size: 11px; color: var(--gray-text);"></div>
             </div>
@@ -485,6 +512,13 @@
             <div class="form-group">
                 <label>العنوان التفصيلي (الحي / أقرب نقطة دالة):</label>
                 <input type="text" id="regAddress" class="form-control" placeholder="مثال: الحارة الشمالية - قرب...">
+            </div>
+            <div class="form-group">
+                <label>عرض نقاطي في لوحة المتصدرين:</label>
+                <select id="regPointsVisibility" class="form-control">
+                    <option value="public">🌐 إظهار رصيد نقاطي علناً في لوحة الشرف</option>
+                    <option value="masked">🔒 تشفير رصيد نقاطي (إخفاء النقاط للجميع كـ ***)</option>
+                </select>
             </div>
             <button onclick="saveUserProfile()" class="btn" style="margin-bottom: 8px;">💾 حفظ البيانات ومتابعة التسوق</button>
             <button id="closeProfileBtn" onclick="closeProfileModal()" class="btn btn-danger" style="display: none;">إغلاق</button>
@@ -546,7 +580,7 @@
                 </div>
                 <div style="display: flex; justify-content: space-between; border-top: 1px dashed var(--border-color); padding-top: 6px; margin-top: 4px; font-size: 14px;">
                     <span>الإجمالي النهائي المطلوب:</span>
-                    <strong style="color: var(--gold-color);"><span id="modalCartTotal">0</span> ل.س</strong>
+                    <strong style="color: #00e676; font-size: 16px; font-weight: 900; text-shadow: 0 0 8px rgba(0,230,118,0.3);"><span id="modalCartTotal">0</span> ل.س</strong>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 11px; color: var(--success-color);">
                     <span>النقاط المكتسبة عند التأكيد:</span>
@@ -1015,6 +1049,16 @@
             });
         }
 
+        function progressiveImageLoad(imgElement, highSrc) {
+            if (!highSrc || imgElement.dataset.loaded === "true") return;
+            const tempImg = new Image();
+            tempImg.src = highSrc;
+            tempImg.onload = () => {
+                imgElement.dataset.loaded = "true";
+                imgElement.src = highSrc;
+            };
+        }
+
         db.ref("settings").on("value", (snap) => {
             const data = snap.val() || {};
             exchangeRate = parseFloat(data.exchangeRate) || 15000;
@@ -1110,6 +1154,9 @@
                     document.getElementById("regPhone").value = currentUser.phone || "";
                     document.getElementById("regRegion").value = currentUser.region || "العوينة";
                     document.getElementById("regAddress").value = currentUser.address || "";
+                    if (document.getElementById("regPointsVisibility")) {
+                        document.getElementById("regPointsVisibility").value = currentUser.pointsVisibility || "public";
+                    }
                 }
                 document.getElementById("closeProfileBtn").style.display = "none";
                 document.getElementById("profileModal").style.display = "flex";
@@ -1125,6 +1172,9 @@
                 document.getElementById("regPhone").value = currentUser.phone || "";
                 document.getElementById("regRegion").value = currentUser.region || "العوينة";
                 document.getElementById("regAddress").value = currentUser.address || "";
+                if (document.getElementById("regPointsVisibility")) {
+                    document.getElementById("regPointsVisibility").value = currentUser.pointsVisibility || "public";
+                }
             }
             document.getElementById("closeProfileBtn").style.display = "block";
             document.getElementById("profileModal").style.display = "flex";
@@ -1151,14 +1201,20 @@
                 return;
             }
 
+            const existingPoints = existingUser.points || 0;
+            const existingPurchases = existingUser.purchases || {};
+            const existingType = existingUser.userType || "retail";
+            const pointsVisibility = document.getElementById("regPointsVisibility") ? document.getElementById("regPointsVisibility").value : (existingUser.pointsVisibility || "public");
+
             currentUser = {
                 name,
                 phone,
                 region,
                 address,
-                points: existingUser.points || 0,
-                purchases: existingUser.purchases || {},
-                userType: existingUser.userType || "retail",
+                points: existingPoints,
+                purchases: existingPurchases,
+                userType: existingType,
+                pointsVisibility: pointsVisibility,
                 banned: false
             };
 
@@ -1166,10 +1222,20 @@
             db.ref("users/" + phone).update({
                 name, phone, region, address,
                 points: existingUser.points || 0,
-                userType: existingUser.userType || "retail"
+                userType: existingUser.userType || "retail",
+                pointsVisibility: pointsVisibility
             });
             closeProfileModal();
             syncCurrentUser();
+        }
+
+        function calculateUserRank(phone) {
+            if (!phone || !users[phone] || !(users[phone].points > 0)) return "-";
+            const sorted = Object.values(users)
+                .filter(u => (u.points || 0) > 0 && !u.banned)
+                .sort((a, b) => (b.points || 0) - (a.points || 0));
+            const index = sorted.findIndex(u => u.phone === phone);
+            return index !== -1 ? `#${index + 1}` : "-";
         }
 
         function syncCurrentUser() {
@@ -1186,6 +1252,22 @@
             document.getElementById("userTypeBadge").textContent = isWholesale ? "[جملة]" : "[مفرق]";
             document.getElementById("userPoints").textContent = pts;
             document.getElementById("compUserPoints").textContent = pts;
+
+            // عرض ترتيب الزبون التلقائي في الواجهة الرئيسية
+            const userRank = calculateUserRank(currentUser.phone);
+            const rankBadge = document.getElementById("userRankBadge");
+            if (rankBadge) {
+                if (userRank !== "-") {
+                    rankBadge.style.display = "inline-flex";
+                    rankBadge.textContent = `🏅 ترتيبي: ${userRank}`;
+                } else {
+                    rankBadge.style.display = "none";
+                }
+            }
+            const compRankDisp = document.getElementById("compUserRankDisplay");
+            if (compRankDisp) {
+                compRankDisp.textContent = userRank !== "-" ? userRank : "غير مصنف";
+            }
 
             const minRedeem = parseInt(compSettings.minRedeemPoints) || 500;
             document.getElementById("redeemPointsBtn").style.display = (pts >= minRedeem && !currentUser.banned) ? "inline-block" : "none";
@@ -1226,11 +1308,7 @@
             const thumbSrc = specialOffer.thumb || specialOffer.image || "store-icon.png";
             const fullSrc = specialOffer.image || "store-icon.png";
             soImg.src = thumbSrc;
-            if (fullSrc && fullSrc !== thumbSrc) {
-                const temp = new Image();
-                temp.onload = () => { soImg.src = fullSrc; };
-                temp.src = fullSrc;
-            }
+            progressiveImageLoad(soImg, fullSrc);
 
             document.getElementById("soDisplayName").textContent = specialOffer.name;
             const isWholesale = currentUser && currentUser.userType === "wholesale";
@@ -1268,16 +1346,15 @@
             let html = "";
 
             const isWholesale = currentUser && currentUser.userType === "wholesale";
-            const keysToRender = (shuffledProductKeys && shuffledProductKeys.length > 0) ? shuffledProductKeys : Object.keys(products);
 
-            keysToRender.forEach(id => {
+            // استخدام مصفوفة الترتيب العشوائي المحفوظة لتجنب إعادة الخلط عند الضغط على الأزرار
+            shuffledProductKeys.forEach(id => {
                 const p = products[id];
                 if (!p) return;
-                const pName = p.name || "";
                 if (selectedCategory !== "الكل" && p.category !== selectedCategory) return;
-                if (query && !pName.toLowerCase().includes(query)) return;
+                if (query && !p.name.toLowerCase().includes(query)) return;
 
-                const activePriceUSD = (isWholesale && p.wholesaleUSD && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0);
+                const activePriceUSD = (isWholesale && p.wholesaleUSD && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD;
                 const priceSYP = calcSYP(activePriceUSD);
                 const stock = parseInt(p.stock) || 0;
                 const qtyInCart = cart[id] ? cart[id].qty : 0;
@@ -1335,8 +1412,8 @@
                 html += `
                     <div class="product-card">
                         <div>
-                            <img src="${thumbSrc}" data-full="${fullSrc}" class="product-img lazy-prod-img" loading="lazy">
-                            <h3>${pName}</h3>
+                            <img src="${thumbSrc}" onload="progressiveImageLoad(this, '${fullSrc}')" class="product-img">
+                            <h3>${p.name}</h3>
                             <p>${priceSYP.toLocaleString()} ل.س ${isWholesale && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>
                             ${reviewsListHTML}
                         </div>
@@ -1349,16 +1426,6 @@
 
             grid.innerHTML = html || `<p style="grid-column: span 2; text-align: center; color: var(--gray-text);">لا توجد منتجات مطابقة</p>`;
             updateCartBar();
-
-            // ترقية الصور بالخلفية إلى الدقة العالية بأمان
-            document.querySelectorAll(".lazy-prod-img").forEach(img => {
-                const full = img.getAttribute("data-full");
-                if (full && full !== img.src) {
-                    const temp = new Image();
-                    temp.onload = () => { img.src = full; };
-                    temp.src = full;
-                }
-            });
         }
 
         function changeQty(id, delta) {
@@ -1383,7 +1450,7 @@
                 const effPrice = (isWholesale && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD;
                 itemData = {
                     id,
-                    name: p.name || "",
+                    name: p.name,
                     category: p.category || "غير مصنف",
                     priceUSD: parseFloat(effPrice) || 0,
                     costPrice: parseFloat(p.costPrice) || 0,
@@ -1428,9 +1495,17 @@
             });
 
             if (totalCount > 0) {
+                const userRegion = (currentUser && currentUser.region) ? currentUser.region : "العوينة";
+                const deliveryFee = parseInt(deliveryFees[userRegion]) || 0;
+                const grandTotal = subtotalSYP + deliveryFee;
+
                 bar.style.display = "flex";
                 document.getElementById("cartCount").textContent = totalCount;
-                document.getElementById("cartTotal").textContent = subtotalSYP.toLocaleString();
+                document.getElementById("cartTotal").textContent = grandTotal.toLocaleString() + " ل.س";
+                const delivNote = document.getElementById("cartBarDeliveryNote");
+                if (delivNote) {
+                    delivNote.textContent = `(توصيل ${userRegion}: ${deliveryFee.toLocaleString()} ل.س)`;
+                }
             } else {
                 bar.style.display = "none";
             }
@@ -1459,6 +1534,7 @@
                 document.getElementById("userRegionBadge").textContent = `(${selectedReg})`;
             }
             renderCartModalItems();
+            updateCartBar();
         }
 
         function copyWalletId() {
@@ -1596,8 +1672,8 @@
             msg += `──────────────\n` +
                    `📦 المنتجات: ${orderPayload.subtotalSaleSYP.toLocaleString()} ل.س\n` +
                    `🛵 التوصيل: ${orderPayload.deliveryFeeSYP.toLocaleString()} ل.س\n` +
-                   `💰 *الإجمالي:* ${orderPayload.totalSaleSYP.toLocaleString()} ل.س\n` +
-                   `🎁 النقاط: +${orderPayload.earnedPoints}`;
+                   `💰 *الإجمالي النهائي:* ${orderPayload.totalSaleSYP.toLocaleString()} ل.س\n` +
+                   `🎁 النقاط المستحقة: +${orderPayload.earnedPoints}`;
 
             const whatsappURL = `https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`;
 
@@ -1614,7 +1690,7 @@
             const p = products[productId];
             if (!p) return;
             document.getElementById("reviewProductId").value = productId;
-            document.getElementById("reviewProductName").textContent = p.name || "";
+            document.getElementById("reviewProductName").textContent = p.name;
             document.getElementById("reviewCommentInput").value = "";
             document.getElementById("reviewModal").style.display = "flex";
         }
@@ -1701,10 +1777,24 @@
             list.innerHTML = sortedUsers.map((u, idx) => {
                 const rankClass = idx === 0 ? "top-1" : idx === 1 ? "top-2" : idx === 2 ? "top-3" : "";
                 const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
+
+                // فحص ما إذا كان الزبون قد اختار تشفير نقاطه
+                const isMasked = u.pointsVisibility === "masked";
+                let ptsDisplay = "";
+                if (isMasked) {
+                    if (currentUser && currentUser.phone === u.phone) {
+                        ptsDisplay = `🔒 مشفرة (${Math.round(u.points || 0)} نقطة)`;
+                    } else {
+                        ptsDisplay = `🔒 مشفرة (***)`;
+                    }
+                } else {
+                    ptsDisplay = `${Math.round(u.points || 0)} نقطة`;
+                }
+
                 return `
                     <div class="leader-row ${rankClass}">
                         <span><b>${medal}</b> ${u.name} <small>(${u.region || "العوينة"})</small></span>
-                        <span style="color:var(--gold-color); font-weight:bold;">${Math.round(u.points || 0)} نقطة</span>
+                        <span style="color:var(--gold-color); font-weight:bold;">${ptsDisplay}</span>
                     </div>`;
             }).join("");
         }
