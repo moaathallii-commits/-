@@ -906,6 +906,7 @@
         let categories = ["الكل"];
         let selectedCategory = "الكل";
         let products = {};
+        let shuffledProductKeys = []; // حفظ الترتيب العشوائي ثابتاً أثناء الجلسة
         let specialOffer = null;
         let cart = {};
         let users = {};
@@ -961,7 +962,7 @@
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
             } else {
-                alert("📱 لتثبيت التطبيق:\nاضغط على النقاط الثلاث في أعلى المتصفح ثم اختر 'إضافة إلى الشاشة الرئيسية'.");
+                alert("📱 لتثبيت التطبيق على هاتفك:\nاضغط على قائمة المتصفح (النقاط الثلاث بالأعلى) ثم اختر 'إضافة إلى الشاشة الرئيسية'.");
             }
         }
 
@@ -1003,10 +1004,11 @@
         }
 
         function progressiveImageLoad(imgElement, highSrc) {
-            if (!highSrc) return;
+            if (!highSrc || imgElement.dataset.loaded === "true") return;
             const tempImg = new Image();
             tempImg.src = highSrc;
             tempImg.onload = () => {
+                imgElement.dataset.loaded = "true";
                 imgElement.src = highSrc;
             };
         }
@@ -1047,6 +1049,18 @@
 
         db.ref("products").on("value", (snap) => {
             products = snap.val() || {};
+            
+            // توليد الترتيب العشوائي فقط عند تحميل المنتجات لأول مرة وتحديثه بلطف عند إضافة/حذف منتج
+            const currentKeys = Object.keys(products);
+            if (shuffledProductKeys.length === 0) {
+                shuffledProductKeys = [...currentKeys].sort(() => Math.random() - 0.5);
+            } else {
+                shuffledProductKeys = shuffledProductKeys.filter(k => products[k]);
+                currentKeys.forEach(k => {
+                    if (!shuffledProductKeys.includes(k)) shuffledProductKeys.push(k);
+                });
+            }
+
             renderStore();
             renderAdminProducts();
             renderShortages();
@@ -1250,12 +1264,10 @@
 
             const isWholesale = currentUser && currentUser.userType === "wholesale";
 
-            let productKeys = Object.keys(products);
-            // ترتيب المنتجات عشوائياً في كل مرة يفتح الزبون المتجر
-            productKeys.sort(() => Math.random() - 0.5);
-
-            productKeys.forEach(id => {
+            // استخدام مصفوفة الترتيب العشوائي المحفوظة لتجنب إعادة الخلط عند الضغط على الأزرار
+            shuffledProductKeys.forEach(id => {
                 const p = products[id];
+                if (!p) return;
                 if (selectedCategory !== "الكل" && p.category !== selectedCategory) return;
                 if (query && !p.name.toLowerCase().includes(query)) return;
 
@@ -1290,7 +1302,6 @@
                     avgRating = (sum / reviewKeys.length).toFixed(1);
                 }
 
-                // التحقق الصارم من الشراء الفعلي وتأكيد الطلب
                 const hasPurchased = currentUser && currentUser.phone && 
                                      users[currentUser.phone] && 
                                      users[currentUser.phone].purchases && 
@@ -1821,7 +1832,6 @@
             let totalSales = 0;
             let totalCost = 0;
             let netProfit = 0;
-            let completedCount = 0;
 
             Object.values(completedOrdersHistory).forEach(o => {
                 const orderDate = new Date(o.dateISO || Date.now());
@@ -1839,7 +1849,6 @@
                 totalSales += (o.subtotalSaleSYP || o.totalSaleSYP || 0);
                 totalCost += (o.totalCostSYP || 0);
                 netProfit += (o.netProfitSYP || 0);
-                completedCount++;
             });
 
             const margin = totalSales > 0 ? ((netProfit / totalSales) * 100).toFixed(1) : 0;
@@ -1909,7 +1918,7 @@
             if (!u) return;
             const newType = (u.userType === "wholesale") ? "retail" : "wholesale";
             db.ref("users/" + phone + "/userType").set(newType).then(() => {
-                alert(`✅ تم التحديث بنجاح!`);
+                alert("✅ تم التحديث بنجاح!");
             });
         }
 
@@ -2042,7 +2051,6 @@
             document.getElementById("prodPointsPct").value = p.pointsPct || 2;
             document.getElementById("prodCategory").value = p.category || "";
             
-            // فتح تبويب إضافة صنف جديد للتعديل
             switchAdminTab('addProductTab', document.querySelector("button[onclick*='addProductTab']"));
         }
 
