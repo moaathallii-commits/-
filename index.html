@@ -133,6 +133,11 @@
             border-radius: 6px;
             object-fit: cover;
             border: 1px solid var(--gold-color);
+            filter: blur(2px);
+            transition: filter 0.3s ease;
+        }
+        .special-offer-img.loaded {
+            filter: blur(0);
         }
         .categories {
             display: flex;
@@ -178,6 +183,11 @@
             border-radius: 6px;
             background: var(--bg-color);
             margin-bottom: 6px;
+            filter: blur(3px);
+            transition: filter 0.3s ease;
+        }
+        .product-img.loaded {
+            filter: blur(0);
         }
         .product-card h3 {
             font-size: 13px;
@@ -394,7 +404,6 @@
         <div style="display:flex; gap:6px; align-items:center;">
             <button id="redeemPointsBtn" onclick="redeemPointsWhatsApp()" style="display:none; background:linear-gradient(45deg, #D4AF37, #FFD700); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer; animation: pulse 1.5s infinite;">🎁 النقاط</button>
             <button onclick="toggleTheme()" id="themeBtn" style="background:transparent; border:none; font-size:16px; cursor:pointer; padding:0;">☀️</button>
-            <!-- زر تثبيت التطبيق دائم ومتاح -->
             <button id="installBtn" onclick="installApp()" style="background:#25d366; color:#000; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer; box-shadow:0 0 5px rgba(37,211,102,0.5);">تثبيت 📱</button>
             <span class="points-badge" onclick="openCompetitionsPage()">
                 🎁 نقاطي: <b id="userPoints">0</b>
@@ -404,7 +413,7 @@
 
     <div class="container">
         <div id="specialOfferContainer" class="special-offer-banner" style="display: none;">
-            <img id="soDisplayImg" data-src="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" class="special-offer-img lazy-img">
+            <img id="soDisplayImg" src="store-icon.png" class="special-offer-img">
             <div style="flex:1;">
                 <h3 style="color:var(--gold-color); font-size:14px; margin:0 0 4px 0;">🔥 عرض خاص!</h3>
                 <div id="soDisplayName" style="font-size:12px; margin-bottom:4px; font-weight:bold;"></div>
@@ -449,7 +458,7 @@
 
             <div id="compDetailsCard" class="comp-card" style="display: none;">
                 <h3 id="compTitleDisplay" style="color: var(--gold-color); margin: 0 0 8px 0; font-size: 15px;"></h3>
-                <img id="compImgDisplay" data-src="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" style="width: 100%; max-height: 260px; object-fit: cover; border-radius: 8px; border: 1px solid var(--gold-color); margin-bottom: 8px; display: none;" class="lazy-img">
+                <img id="compImgDisplay" src="store-icon.png" style="width: 100%; max-height: 260px; object-fit: cover; border-radius: 8px; border: 1px solid var(--gold-color); margin-bottom: 8px; display: none;">
                 <p id="compDescDisplay" style="font-size: 13px; line-height: 1.6; margin: 0; white-space: pre-line;"></p>
             </div>
 
@@ -855,14 +864,7 @@
         let users = {};
         let pendingOrders = {};
         let completedOrdersHistory = {};
-        let statsData = {
-            totalSales: 0,
-            totalCost: 0,
-            netProfit: 0,
-            completedOrders: 0,
-            cancelledOrders: 0,
-            productStats: {}
-        };
+        let statsData = {};
         let compSettings = {
             minRedeemPoints: 500,
             leaderboardLimit: 10,
@@ -906,7 +908,6 @@
         window.addEventListener("beforeinstallprompt", (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            document.getElementById("installBtn").style.display = "inline-block";
         });
 
         function installApp() {
@@ -914,7 +915,7 @@
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
             } else {
-                alert("📱 لتثبيت التطبيق على هاتفك:\nاضغط على قائمة المتصفح (النقاط الثلاث في الأعلى) ثم اختر 'إضافة إلى الشاشة الرئيسية' (Add to Home screen).");
+                alert("📱 لتثبيت التطبيق على هاتفك:\nاضغط على قائمة المتصفح (النقاط الثلاث في أعلى المتصفح) ثم اختر 'إضافة إلى الشاشة الرئيسية' (Add to Home screen).");
             }
         }
 
@@ -923,26 +924,32 @@
             return Math.round((num * exchangeRate) / 5) * 5;
         }
 
-        // ضغط خفيف وسريع للصور لتجنب أي بطء في التحميل
-        function compressImage(file) {
+        // ضغط مزدوج لتوليد نسخة مصغرة خفيفة للغاية ونسخة واضحة
+        function compressDualImages(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const img = new Image();
                     img.onload = () => {
-                        const canvas = document.createElement("canvas");
-                        const maxWidth = 350;
-                        let width = img.width;
-                        let height = img.height;
-                        if (width > maxWidth) {
-                            height = Math.round((height * maxWidth) / width);
-                            width = maxWidth;
-                        }
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext("2d");
-                        ctx.drawImage(img, 0, 0, width, height);
-                        resolve(canvas.toDataURL("image/jpeg", 0.65));
+                        // 1. نسخة مصغرة جداً لتحميل فوري على الشبكات الضعيفة
+                        const canvasThumb = document.createElement("canvas");
+                        let w1 = img.width, h1 = img.height;
+                        const maxW1 = 70;
+                        if (w1 > maxW1) { h1 = Math.round((h1 * maxW1) / w1); w1 = maxW1; }
+                        canvasThumb.width = w1; canvasThumb.height = h1;
+                        canvasThumb.getContext("2d").drawImage(img, 0, 0, w1, h1);
+                        const thumbBase64 = canvasThumb.toDataURL("image/jpeg", 0.3);
+
+                        // 2. نسخة رئيسية واضحة ومضغوطة
+                        const canvasMain = document.createElement("canvas");
+                        let w2 = img.width, h2 = img.height;
+                        const maxW2 = 320;
+                        if (w2 > maxW2) { h2 = Math.round((h2 * maxW2) / w2); w2 = maxW2; }
+                        canvasMain.width = w2; canvasMain.height = h2;
+                        canvasMain.getContext("2d").drawImage(img, 0, 0, w2, h2);
+                        const mainBase64 = canvasMain.toDataURL("image/jpeg", 0.6);
+
+                        resolve({ thumb: thumbBase64, image: mainBase64 });
                     };
                     img.onerror = reject;
                     img.src = event.target.result;
@@ -952,31 +959,15 @@
             });
         }
 
-        // نظام التحميل الكسول (Lazy Loading) الذكي
-        function initLazyImages() {
-            const lazyImages = document.querySelectorAll(".lazy-img");
-            if ("IntersectionObserver" in window) {
-                const imageObserver = new IntersectionObserver((entries, observer) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            const image = entry.target;
-                            const realSrc = image.getAttribute("data-src");
-                            if (realSrc) {
-                                image.src = realSrc;
-                                image.removeAttribute("data-src");
-                            }
-                            imageObserver.unobserve(image);
-                        }
-                    });
-                });
-                lazyImages.forEach(image => imageObserver.observe(image));
-            } else {
-                lazyImages.forEach(image => {
-                    if (image.getAttribute("data-src")) {
-                        image.src = image.getAttribute("data-src");
-                    }
-                });
-            }
+        // تحميل متدرج: تظهر الدقة المنخفضة فوراً وتترقى للدقة العالية تدريجياً
+        function progressiveImageLoad(imgElement, highSrc) {
+            if (!highSrc) return;
+            const tempImg = new Image();
+            tempImg.src = highSrc;
+            tempImg.onload = () => {
+                imgElement.src = highSrc;
+                imgElement.classList.add("loaded");
+            };
         }
 
         db.ref("settings").on("value", (snap) => {
@@ -1174,9 +1165,12 @@
                 return;
             }
             box.style.display = "flex";
+            
             const soImg = document.getElementById("soDisplayImg");
-            soImg.setAttribute("data-src", specialOffer.image || "store-icon.png");
-            soImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E";
+            const thumbSrc = specialOffer.thumb || specialOffer.image || "store-icon.png";
+            const fullSrc = specialOffer.image || "store-icon.png";
+            soImg.src = thumbSrc;
+            progressiveImageLoad(soImg, fullSrc);
 
             document.getElementById("soDisplayName").textContent = specialOffer.name;
             const isWholesale = currentUser && currentUser.userType === "wholesale";
@@ -1205,7 +1199,6 @@
                         <button class="btn" style="padding:6px; font-size:11px; background:var(--success-color); color:#000;" onclick="quickBuy('SPECIAL_OFFER')">⚡ اطلب فوراً</button>
                     </div>`;
             }
-            initLazyImages();
         }
 
         function renderStore() {
@@ -1252,7 +1245,6 @@
                     avgRating = (sum / reviewKeys.length).toFixed(1);
                 }
 
-                // التحقق الصارم من الشراء الفعلي وتأكيد الطلب
                 const hasPurchased = currentUser && currentUser.phone && 
                                      users[currentUser.phone] && 
                                      users[currentUser.phone].purchases && 
@@ -1274,10 +1266,13 @@
                     reviewsListHTML += `</div>`;
                 }
 
+                const thumbSrc = p.thumb || p.image || "store-icon.png";
+                const fullSrc = p.image || "store-icon.png";
+
                 html += `
                     <div class="product-card">
                         <div>
-                            <img data-src="${p.image || 'store-icon.png'}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" class="product-img lazy-img">
+                            <img src="${thumbSrc}" onload="progressiveImageLoad(this, '${fullSrc}')" class="product-img">
                             <h3>${p.name}</h3>
                             <p>${priceSYP.toLocaleString()} ل.س ${isWholesale && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>
                             ${reviewsListHTML}
@@ -1291,7 +1286,6 @@
 
             grid.innerHTML = html || `<p style="grid-column: span 2; text-align: center; color: var(--gray-text);">لا توجد منتجات مطابقة</p>`;
             updateCartBar();
-            initLazyImages();
         }
 
         function changeQty(id, delta) {
@@ -1496,7 +1490,7 @@
             const orderPayload = {
                 orderId,
                 timestamp: new Date().toLocaleString("ar-SY"),
-                dateISO: new Date().toISOString(), // لتسهيل الفلترة اليومية والأسبوعية والشهرية
+                dateISO: new Date().toISOString(),
                 customerName: currentUser.name,
                 customerPhone: currentUser.phone,
                 customerRegion: selectedRegion,
@@ -1605,8 +1599,7 @@
                 document.getElementById("compDescDisplay").textContent = compSettings.desc || "";
                 const img = document.getElementById("compImgDisplay");
                 if (compSettings.image) {
-                    img.setAttribute("data-src", compSettings.image);
-                    img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E";
+                    img.src = compSettings.image;
                     img.style.display = "block";
                 } else {
                     img.style.display = "none";
@@ -1614,7 +1607,6 @@
             } else {
                 card.style.display = "none";
             }
-            initLazyImages();
         }
 
         function renderLeaderboard() {
@@ -1744,7 +1736,6 @@
                 purchases: purchasedObj
             });
 
-            // حفظ الطلب في أرشيف الفواتير المكتملة لتفعيل التقارير والجرد (يومي، أسبوعي، شهري)
             db.ref("completedOrdersHistory/" + orderId).set(o);
             db.ref("pendingOrders/" + orderId).remove();
 
@@ -1777,7 +1768,6 @@
             db.ref("pendingOrders/" + orderId).remove();
         }
 
-        // لوحة الجرد والتقارير المتقدمة (يومي، أسبوعي، شهري، إجمالي)
         function renderStatsDashboard() {
             const period = document.getElementById("reportPeriodSelect").value;
             const now = new Date();
@@ -1791,15 +1781,12 @@
                 const orderDate = new Date(o.dateISO || Date.now());
                 
                 if (period === "daily") {
-                    // مقارنة اليوم والشهر والسنة
                     if (orderDate.toDateString() !== now.toDateString()) return;
                 } else if (period === "weekly") {
-                    // آخر 7 أيام
                     const diffTime = Math.abs(now - orderDate);
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                     if (diffDays > 7) return;
                 } else if (period === "monthly") {
-                    // نفس الشهر والسنة الحالية
                     if (orderDate.getMonth() !== now.getMonth() || orderDate.getFullYear() !== now.getFullYear()) return;
                 }
 
@@ -1973,14 +1960,17 @@
 
             const id = editId || ("PROD_" + Date.now());
             let imageBase64 = (products[id] && products[id].image) ? products[id].image : "";
+            let thumbBase64 = (products[id] && products[id].thumb) ? products[id].thumb : "";
             let existingReviews = (products[id] && products[id].reviews) ? products[id].reviews : {};
 
             if (fileInput.files && fileInput.files[0]) {
-                imageBase64 = await compressImage(fileInput.files[0]);
+                const compressed = await compressDualImages(fileInput.files[0]);
+                thumbBase64 = compressed.thumb;
+                imageBase64 = compressed.image;
             }
 
             db.ref("products/" + id).set({
-                name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, image: imageBase64, reviews: existingReviews
+                name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, image: imageBase64, thumb: thumbBase64, reviews: existingReviews
             }).then(() => {
                 document.getElementById("editProductId").value = "";
                 document.getElementById("prodName").value = "";
@@ -2069,12 +2059,16 @@
             const fileInput = document.getElementById("soImageInput");
 
             let imageBase64 = (specialOffer && specialOffer.image) ? specialOffer.image : "";
+            let thumbBase64 = (specialOffer && specialOffer.thumb) ? specialOffer.thumb : "";
+
             if (fileInput.files && fileInput.files[0]) {
-                imageBase64 = await compressImage(fileInput.files[0]);
+                const compressed = await compressDualImages(fileInput.files[0]);
+                thumbBase64 = compressed.thumb;
+                imageBase64 = compressed.image;
             }
 
             db.ref("specialOffer").set({
-                active: true, name, costPrice, oldPriceUSD, newPriceUSD, wholesaleUSD, stock, pointsPct, image: imageBase64
+                active: true, name, costPrice, oldPriceUSD, newPriceUSD, wholesaleUSD, stock, pointsPct, image: imageBase64, thumb: thumbBase64
             }).then(() => alert("✅ تم تحديث العرض!"));
         }
 
@@ -2112,7 +2106,8 @@
 
             let image = compSettings.image || "";
             if (fileInput.files && fileInput.files[0]) {
-                image = await compressImage(fileInput.files[0]);
+                const compressed = await compressDualImages(fileInput.files[0]);
+                image = compressed.image;
             }
 
             db.ref("competition").set({ minRedeemPoints, leaderboardLimit, title, desc, image })
