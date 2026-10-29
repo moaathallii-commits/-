@@ -828,27 +828,35 @@
                 </div>
             </div>
 
-            <!-- 6. الجرد والأرباح -->
+            <!-- 6. الجرد والأرباح (عام + تفصيلي لكل تصنيف) -->
             <div id="statsTab" class="admin-tab" style="display: none;">
-                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">📊 التقارير المالية والجرد</h4>
+                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">📊 التقارير المالية وجرد الأرباح</h4>
                 
-                <div class="form-group">
-                    <label>اختر فترة الجرد:</label>
-                    <select id="reportPeriodSelect" class="form-control" onchange="renderStatsDashboard()">
-                        <option value="total">📊 الإجمالي الكلي</option>
-                        <option value="daily">📅 الجرد اليومي (اليوم)</option>
-                        <option value="weekly">📆 الجرد الأسبوعي (آخر 7 أيام)</option>
-                        <option value="monthly">🗓️ الجرد الشهري (هذا الشهر)</option>
-                    </select>
+                <div class="stats-grid">
+                    <div class="form-group">
+                        <label>📅 فترة الجرد:</label>
+                        <select id="reportPeriodSelect" class="form-control" onchange="renderStatsDashboard()">
+                            <option value="total">📊 الإجمالي الكلي</option>
+                            <option value="daily">📅 الجرد اليومي (اليوم)</option>
+                            <option value="weekly">📆 الجرد الأسبوعي (آخر 7 أيام)</option>
+                            <option value="monthly">🗓️ الجرد الشهري (هذا الشهر)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>📂 تصفية حسب التصنيف:</label>
+                        <select id="reportCategorySelect" class="form-control" onchange="renderStatsDashboard()">
+                            <option value="all">🌟 جميع التصنيفات (إجمالي عام)</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="stats-grid">
                     <div class="stats-box">
-                        <div style="font-size: 11px; color: var(--gray-text);">إجمالي المبيعات</div>
+                        <div style="font-size: 11px; color: var(--gray-text);">المبيعات</div>
                         <div class="stats-value" id="statTotalSales">0 ل.س</div>
                     </div>
                     <div class="stats-box">
-                        <div style="font-size: 11px; color: var(--gray-text);">إجمالي التكلفة</div>
+                        <div style="font-size: 11px; color: var(--gray-text);">التكلفة</div>
                         <div class="stats-value" id="statTotalCost">0 ل.س</div>
                     </div>
                     <div class="stats-box">
@@ -861,7 +869,7 @@
                     </div>
                 </div>
 
-                <h4 style="color: var(--gold-color); margin: 12px 0 8px 0;">🏦 الجرد الفوري للمخزون</h4>
+                <h4 style="color: var(--gold-color); margin: 12px 0 8px 0;">🏦 تقييم المخزون المالي</h4>
                 <div class="stats-grid">
                     <div class="stats-box">
                         <div style="font-size: 11px; color: var(--gray-text);">رأس المال بالتكلفة</div>
@@ -872,6 +880,9 @@
                         <div class="stats-value" id="invTotalSale">0 ل.س</div>
                     </div>
                 </div>
+
+                <h4 style="color: var(--gold-color); margin: 14px 0 6px 0;">📑 تفصيل الإحصائيات وجرد كل تصنيف</h4>
+                <div id="categoryStatsContainer"></div>
             </div>
 
             <!-- 7. النواقص -->
@@ -906,7 +917,7 @@
         let categories = ["الكل"];
         let selectedCategory = "الكل";
         let products = {};
-        let shuffledProductKeys = []; // حفظ الترتيب العشوائي ثابتاً أثناء الجلسة
+        let shuffledProductKeys = [];
         let specialOffer = null;
         let cart = {};
         let users = {};
@@ -1050,7 +1061,6 @@
         db.ref("products").on("value", (snap) => {
             products = snap.val() || {};
             
-            // توليد الترتيب العشوائي فقط عند تحميل المنتجات لأول مرة وتحديثه بلطف عند إضافة/حذف منتج
             const currentKeys = Object.keys(products);
             if (shuffledProductKeys.length === 0) {
                 shuffledProductKeys = [...currentKeys].sort(() => Math.random() - 0.5);
@@ -1264,7 +1274,6 @@
 
             const isWholesale = currentUser && currentUser.userType === "wholesale";
 
-            // استخدام مصفوفة الترتيب العشوائي المحفوظة لتجنب إعادة الخلط عند الضغط على الأزرار
             shuffledProductKeys.forEach(id => {
                 const p = products[id];
                 if (!p) return;
@@ -1355,6 +1364,7 @@
                 itemData = {
                     id: "SPECIAL_OFFER",
                     name: "🔥 عرض خاص: " + specialOffer.name,
+                    category: "عروض خاصة",
                     priceUSD: parseFloat(effPrice) || 0,
                     costPrice: parseFloat(specialOffer.costPrice) || 0,
                     stock: parseInt(specialOffer.stock) || 0,
@@ -1367,6 +1377,7 @@
                 itemData = {
                     id,
                     name: p.name,
+                    category: p.category || "غير مصنف",
                     priceUSD: parseFloat(effPrice) || 0,
                     costPrice: parseFloat(p.costPrice) || 0,
                     stock: parseInt(p.stock) || 0,
@@ -1532,6 +1543,7 @@
                 return {
                     id: item.id,
                     name: item.name,
+                    category: item.category || (item.id === "SPECIAL_OFFER" ? "عروض خاصة" : (products[item.id] ? products[item.id].category : "غير مصنف")),
                     qty: item.qty,
                     unitSaleSYP,
                     unitCostSYP,
@@ -1825,13 +1837,35 @@
             db.ref("pendingOrders/" + orderId).remove();
         }
 
+        function populateStatsCategorySelect() {
+            const select = document.getElementById("reportCategorySelect");
+            if (!select) return;
+            const currentVal = select.value || "all";
+            let opts = '<option value="all">🌟 جميع التصنيفات (إجمالي عام)</option>';
+            const rawCats = categories.filter(c => c !== "الكل");
+            rawCats.forEach(c => {
+                opts += `<option value="${c}">${c}</option>`;
+            });
+            opts += '<option value="عروض خاصة">عروض خاصة</option>';
+            select.innerHTML = opts;
+            select.value = currentVal;
+        }
+
         function renderStatsDashboard() {
+            populateStatsCategorySelect();
             const period = document.getElementById("reportPeriodSelect").value;
+            const selectedCat = document.getElementById("reportCategorySelect").value || "all";
             const now = new Date();
             
             let totalSales = 0;
             let totalCost = 0;
             let netProfit = 0;
+
+            let catMap = {};
+            const rawCats = categories.filter(c => c !== "الكل");
+            rawCats.forEach(c => { catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 }; });
+            catMap["عروض خاصة"] = { sales: 0, cost: 0, profit: 0, count: 0 };
+            catMap["غير مصنف"] = { sales: 0, cost: 0, profit: 0, count: 0 };
 
             Object.values(completedOrdersHistory).forEach(o => {
                 const orderDate = new Date(o.dateISO || Date.now());
@@ -1846,9 +1880,26 @@
                     if (orderDate.getMonth() !== now.getMonth() || orderDate.getFullYear() !== now.getFullYear()) return;
                 }
 
-                totalSales += (o.subtotalSaleSYP || o.totalSaleSYP || 0);
-                totalCost += (o.totalCostSYP || 0);
-                netProfit += (o.netProfitSYP || 0);
+                (o.items || []).forEach(item => {
+                    const c = item.category || (item.id === "SPECIAL_OFFER" ? "عروض خاصة" : (products[item.id] ? products[item.id].category : "غير مصنف"));
+                    if (!catMap[c]) {
+                        catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 };
+                    }
+                    const sSale = item.subSaleSYP || 0;
+                    const sCost = item.subCostSYP || 0;
+                    const sProfit = (item.netProfitSYP !== undefined) ? item.netProfitSYP : (sSale - sCost);
+
+                    catMap[c].sales += sSale;
+                    catMap[c].cost += sCost;
+                    catMap[c].profit += sProfit;
+                    catMap[c].count += (item.qty || 1);
+
+                    if (selectedCat === "all" || selectedCat === c) {
+                        totalSales += sSale;
+                        totalCost += sCost;
+                        netProfit += sProfit;
+                    }
+                });
             });
 
             const margin = totalSales > 0 ? ((netProfit / totalSales) * 100).toFixed(1) : 0;
@@ -1858,23 +1909,97 @@
             document.getElementById("statNetProfit").textContent = netProfit.toLocaleString() + " ل.س";
             document.getElementById("statProfitMargin").textContent = margin + "%";
 
-            updateInventoryValuation();
+            renderCategoryBreakdownTable(catMap);
+            updateInventoryValuation(selectedCat);
         }
 
-        function updateInventoryValuation() {
+        function renderCategoryBreakdownTable(catMap) {
+            const container = document.getElementById("categoryStatsContainer");
+            if (!container) return;
+
+            const activeCats = Object.keys(catMap).filter(c => catMap[c].sales > 0 || catMap[c].profit > 0 || getCategoryInventoryValue(c).stock > 0);
+
+            if (activeCats.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد مبيعات أو مخزون مسجل في هذه الفترة.</p>';
+                return;
+            }
+
+            let html = `
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:center; margin-top:8px;">
+                        <thead>
+                            <tr style="background:var(--bg-color); color:var(--gold-color); border-bottom:1px solid var(--border-color);">
+                                <th style="padding:6px; text-align:right;">التصنيف</th>
+                                <th style="padding:6px;">المبيعات</th>
+                                <th style="padding:6px;">صافي الربح</th>
+                                <th style="padding:6px;">مخزون (مبيع)</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+            activeCats.forEach(c => {
+                const data = catMap[c];
+                const inv = getCategoryInventoryValue(c);
+                html += `
+                    <tr style="border-bottom:1px solid var(--border-color);">
+                        <td style="padding:6px; font-weight:bold; text-align:right;">${c}</td>
+                        <td style="padding:6px;">${data.sales.toLocaleString()} ل.س</td>
+                        <td style="padding:6px; color:var(--success-color); font-weight:bold;">${data.profit.toLocaleString()} ل.س</td>
+                        <td style="padding:6px; color:var(--gray-text);">${inv.totalSale.toLocaleString()} ل.س</td>
+                    </tr>`;
+            });
+
+            html += `</tbody></table></div>`;
+            container.innerHTML = html;
+        }
+
+        function getCategoryInventoryValue(categoryName) {
+            let totalCost = 0;
+            let totalSale = 0;
+            let totalStock = 0;
+
+            Object.values(products).forEach(p => {
+                if ((p.category || "غير مصنف") === categoryName) {
+                    const stock = Math.max(0, parseInt(p.stock) || 0);
+                    totalStock += stock;
+                    totalCost += calcSYP(p.costPrice || 0) * stock;
+                    totalSale += calcSYP(p.priceUSD || 0) * stock;
+                }
+            });
+
+            if (categoryName === "عروض خاصة" && specialOffer && specialOffer.active) {
+                const soStock = Math.max(0, parseInt(specialOffer.stock) || 0);
+                totalStock += soStock;
+                totalCost += calcSYP(specialOffer.costPrice || 0) * soStock;
+                totalSale += calcSYP(specialOffer.newPriceUSD || 0) * soStock;
+            }
+
+            return { totalCost, totalSale, stock: totalStock };
+        }
+
+        function updateInventoryValuation(selectedCat = "all") {
             let totalInvCost = 0;
             let totalInvSale = 0;
 
             Object.values(products).forEach(p => {
-                const stock = Math.max(0, parseInt(p.stock) || 0);
-                totalInvCost += calcSYP(p.costPrice || 0) * stock;
-                totalInvSale += calcSYP(p.priceUSD || 0) * stock;
+                const c = p.category || "غير مصنف";
+                if (selectedCat === "all" || selectedCat === c) {
+                    const stock = Math.max(0, parseInt(p.stock) || 0);
+                    totalInvCost += calcSYP(p.costPrice || 0) * stock;
+                    totalInvSale += calcSYP(p.priceUSD || 0) * stock;
+                }
             });
+
+            if ((selectedCat === "all" || selectedCat === "عروض خاصة") && specialOffer && specialOffer.active) {
+                const soStock = Math.max(0, parseInt(specialOffer.stock) || 0);
+                totalInvCost += calcSYP(specialOffer.costPrice || 0) * soStock;
+                totalInvSale += calcSYP(specialOffer.newPriceUSD || 0) * soStock;
+            }
 
             document.getElementById("invTotalCost").textContent = totalInvCost.toLocaleString() + " ل.س";
             document.getElementById("invTotalSale").textContent = totalInvSale.toLocaleString() + " ل.س";
         }
-
+        
         function renderAdminCustomers() {
             const container = document.getElementById("adminCustomersList");
             const q = (document.getElementById("adminSearchCust").value || "").trim().toLowerCase();
