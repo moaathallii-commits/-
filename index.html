@@ -133,11 +133,6 @@
             border-radius: 6px;
             object-fit: cover;
             border: 1px solid var(--gold-color);
-            filter: blur(2px);
-            transition: filter 0.3s ease;
-        }
-        .special-offer-img.loaded {
-            filter: blur(0);
         }
         .categories {
             display: flex;
@@ -183,11 +178,6 @@
             border-radius: 6px;
             background: var(--bg-color);
             margin-bottom: 6px;
-            filter: blur(3px);
-            transition: filter 0.3s ease;
-        }
-        .product-img.loaded {
-            filter: blur(0);
         }
         .product-card h3 {
             font-size: 13px;
@@ -971,8 +961,7 @@
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
             } else {
-                alert("📱 لتثبيت التطبيق:
-اضغط على النقاط الثلاث في أعلى المتصفح ثم اختر 'إضافة إلى الشاشة الرئيسية'.");
+                alert("📱 لتثبيت التطبيق:\nاضغط على النقاط الثلاث في أعلى المتصفح ثم اختر 'إضافة إلى الشاشة الرئيسية'.");
             }
         }
 
@@ -1189,12 +1178,7 @@
 
         function redeemPointsWhatsApp() {
             if (!currentUser || currentUser.banned) return;
-            const msg = `مرحباً إدارة متجر معاذ 🎁
-أرغب باستبدال نقاطي بهدية:
-👤 الاسم: ${currentUser.name}
-📱 الهاتف: ${currentUser.phone}
-🏘️ المنطقة: ${currentUser.region}
-🌟 النقاط: ${Math.round(currentUser.points || 0)}`;
+            const msg = `مرحباً إدارة متجر معاذ 🎁\nأرغب باستبدال نقاطي بهدية:\n👤 الاسم: ${currentUser.name}\n📱 الهاتف: ${currentUser.phone}\n🏘️ المنطقة: ${currentUser.region}\n🌟 النقاط: ${Math.round(currentUser.points || 0)}`;
             window.location.href = `https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`;
         }
 
@@ -1267,7 +1251,7 @@
             const isWholesale = currentUser && currentUser.userType === "wholesale";
 
             let productKeys = Object.keys(products);
-            // ترتيب المنتجات عشوائياً في كل مرة يفتح الزبون التطبيق أو يتم العرض
+            // ترتيب المنتجات عشوائياً في كل مرة يفتح الزبون المتجر
             productKeys.sort(() => Math.random() - 0.5);
 
             productKeys.forEach(id => {
@@ -1306,6 +1290,7 @@
                     avgRating = (sum / reviewKeys.length).toFixed(1);
                 }
 
+                // التحقق الصارم من الشراء الفعلي وتأكيد الطلب
                 const hasPurchased = currentUser && currentUser.phone && 
                                      users[currentUser.phone] && 
                                      users[currentUser.phone].purchases && 
@@ -1567,34 +1552,21 @@
                 earnedPoints: totalPoints
             };
 
-            let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*
-`;
-            msg += `👤 الزبون: ${orderPayload.customerName}
-`;
-            msg += `📱 الهاتف: ${orderPayload.customerPhone}
-`;
-            msg += `🏘️ المنطقة: ${orderPayload.customerRegion}
-`;
-            msg += `📍 العنوان: ${orderPayload.customerAddress}
-`;
-            msg += `💳 الدفع: ${orderPayload.paymentMethod}
-`;
-            if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}
-`;
-            msg += `──────────────
-`;
+            let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n`;
+            msg += `👤 الزبون: ${orderPayload.customerName}\n`;
+            msg += `📱 الهاتف: ${orderPayload.customerPhone}\n`;
+            msg += `🏘️ المنطقة: ${orderPayload.customerRegion}\n`;
+            msg += `📍 العنوان: ${orderPayload.customerAddress}\n`;
+            msg += `💳 الدفع: ${orderPayload.paymentMethod}\n`;
+            if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}\n`;
+            msg += `──────────────\n`;
             orderPayload.items.forEach(i => {
-                msg += `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س
-`;
+                msg += `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س\n`;
             });
-            msg += `──────────────
-`;
-            msg += `📦 المنتجات: ${orderPayload.subtotalSaleSYP.toLocaleString()} ل.س
-`;
-            msg += `🛵 التوصيل: ${orderPayload.deliveryFeeSYP.toLocaleString()} ل.س
-`;
-            msg += `💰 *الإجمالي:* ${orderPayload.totalSaleSYP.toLocaleString()} ل.س
-`;
+            msg += `──────────────\n`;
+            msg += `📦 المنتجات: ${orderPayload.subtotalSaleSYP.toLocaleString()} ل.س\n`;
+            msg += `🛵 التوصيل: ${orderPayload.deliveryFeeSYP.toLocaleString()} ل.س\n`;
+            msg += `💰 *الإجمالي:* ${orderPayload.totalSaleSYP.toLocaleString()} ل.س\n`;
             msg += `🎁 النقاط: +${orderPayload.earnedPoints}`;
 
             const whatsappURL = `https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`;
@@ -1814,36 +1786,23 @@
             db.ref("pendingOrders/" + orderId).remove();
 
             const custPhoneClean = formatWhatsAppPhone(o.customerPhone);
-            const custMsg = `مرحباً ${o.customerName} 🌸
-تم تأكيد فاتورتك في *متجر معاذ* وجاري توصيلها إلى (${o.customerRegion})!
-💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س
-🎁 نقاطك الجديدة: ${updatedPts}
-⭐ يمكنك الآن تقييم المنتجات التي اشتريتها داخل التطبيق!`;
+            const custMsg = `مرحباً ${o.customerName} 🌸\nتم تأكيد فاتورتك في *متجر معاذ* وجاري توصيلها إلى (${o.customerRegion})!\n💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س\n🎁 نقاطك الجديدة: ${updatedPts}\n⭐ يمكنك الآن تقييم المنتجات التي اشتريتها داخل التطبيق!`;
             window.open(`https://wa.me/${custPhoneClean}?text=${encodeURIComponent(custMsg)}`, "_blank");
 
             if (deliveryDriverPhone) {
                 const driverClean = formatWhatsAppPhone(deliveryDriverPhone);
                 setTimeout(() => {
-                    let driverMsg = `🛵 *طلب توصيل جديد - متجر معاذ*
-`;
-                    driverMsg += `👤 الزبون: ${o.customerName}
-`;
-                    driverMsg += `📱 الهاتف: ${o.customerPhone}
-`;
-                    driverMsg += `🏘️ المنطقة: ${o.customerRegion}
-`;
-                    driverMsg += `📍 العنوان: ${o.customerAddress}
-`;
-                    if (o.notes) driverMsg += `📝 ملاحظات: ${o.notes}
-`;
-                    driverMsg += `──────────────
-`;
+                    let driverMsg = `🛵 *طلب توصيل جديد - متجر معاذ*\n`;
+                    driverMsg += `👤 الزبون: ${o.customerName}\n`;
+                    driverMsg += `📱 الهاتف: ${o.customerPhone}\n`;
+                    driverMsg += `🏘️ المنطقة: ${o.customerRegion}\n`;
+                    driverMsg += `📍 العنوان: ${o.customerAddress}\n`;
+                    if (o.notes) driverMsg += `📝 ملاحظات: ${o.notes}\n`;
+                    driverMsg += `──────────────\n`;
                     (o.items || []).forEach(i => {
-                        driverMsg += `• ${i.name} (×${i.qty})
-`;
+                        driverMsg += `• ${i.name} (×${i.qty})\n`;
                     });
-                    driverMsg += `──────────────
-`;
+                    driverMsg += `──────────────\n`;
                     driverMsg += `💵 *المطلوب تحصيله:* ${o.totalSaleSYP.toLocaleString()} ل.س`;
                     window.open(`https://wa.me/${driverClean}?text=${encodeURIComponent(driverMsg)}`, "_blank");
                 }, 700);
@@ -2181,10 +2140,8 @@
                 alert("لا توجد نواقص.");
                 return;
             }
-            let msg = `⚠️ *قائمة نواقص متجر معاذ:*
-`;
-            lowItems.forEach(p => { msg += `• ${p.name} (${p.stock})
-`; });
+            let msg = `⚠️ *قائمة نواقص متجر معاذ:*\n`;
+            lowItems.forEach(p => { msg += `• ${p.name} (${p.stock})\n`; });
             window.location.href = `https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`;
         }
 
