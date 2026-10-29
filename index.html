@@ -127,12 +127,20 @@
             gap: 12px;
             align-items: center;
         }
-        .special-offer-img {
+        .special-offer-img-wrap {
             width: 80px;
             height: 80px;
             border-radius: 6px;
-            object-fit: cover;
+            overflow: hidden;
             border: 1px solid var(--gold-color);
+            flex-shrink: 0;
+            background: var(--bg-color);
+        }
+        .special-offer-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: filter 0.4s ease, transform 0.4s ease;
         }
         .categories {
             display: flex;
@@ -171,14 +179,29 @@
             flex-direction: column;
             justify-content: space-between;
         }
-        .product-img {
+        .product-img-wrap {
             width: 100%;
             aspect-ratio: 9 / 16;
-            object-fit: cover;
             border-radius: 6px;
             background: var(--bg-color);
             margin-bottom: 6px;
-            transition: opacity 0.3s ease;
+            overflow: hidden;
+            position: relative;
+        }
+        .product-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: filter 0.45s ease, transform 0.45s ease, opacity 0.3s ease;
+        }
+        /* تأثير الصورة ذات الدقة الرديئة جداً قبل ترقيتها للدقة العالية */
+        .img-low-res {
+            filter: blur(6px);
+            transform: scale(1.06);
+        }
+        .img-high-res {
+            filter: blur(0);
+            transform: scale(1);
         }
         .product-card h3 {
             font-size: 13px;
@@ -428,7 +451,9 @@
 
     <div class="container">
         <div id="specialOfferContainer" class="special-offer-banner" style="display: none;">
-            <img id="soDisplayImg" src="store-icon.png" class="special-offer-img">
+            <div class="special-offer-img-wrap">
+                <img id="soDisplayImg" src="store-icon.png" class="special-offer-img img-low-res">
+            </div>
             <div style="flex:1;">
                 <h3 style="color:var(--gold-color); font-size:14px; margin:0 0 4px 0;">🔥 عرض خاص!</h3>
                 <div id="soDisplayName" style="font-size:12px; margin-bottom:4px; font-weight:bold;"></div>
@@ -503,11 +528,7 @@
             </div>
             <div class="form-group">
                 <label>المنطقة / القرية:</label>
-                <select id="regRegion" class="form-control">
-                    <option value="العوينة">العوينة</option>
-                    <option value="المزرعة الشرقية ( الريحانية )">المزرعة الشرقية ( الريحانية )</option>
-                    <option value="المزرعة الغربية">المزرعة الغربية</option>
-                </select>
+                <select id="regRegion" class="form-control"></select>
             </div>
             <div class="form-group">
                 <label>العنوان التفصيلي (الحي / أقرب نقطة دالة):</label>
@@ -562,11 +583,7 @@
             
             <div class="form-group">
                 <label>📍 منطقة التوصيل (تُحدد أجور التوصيل تلقائياً):</label>
-                <select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()">
-                    <option value="العوينة">العوينة</option>
-                    <option value="المزرعة الشرقية ( الريحانية )">المزرعة الشرقية ( الريحانية )</option>
-                    <option value="المزرعة الغربية">المزرعة الغربية</option>
-                </select>
+                <select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()"></select>
             </div>
 
             <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 10px; font-size: 12px;">
@@ -624,11 +641,7 @@
             </div>
             <div class="form-group">
                 <label>المنطقة / القرية:</label>
-                <select id="adminCustRegion" class="form-control">
-                    <option value="العوينة">العوينة</option>
-                    <option value="المزرعة الشرقية ( الريحانية )">المزرعة الشرقية ( الريحانية )</option>
-                    <option value="المزرعة الغربية">المزرعة الغربية</option>
-                </select>
+                <select id="adminCustRegion" class="form-control"></select>
             </div>
             <div class="form-group">
                 <label>نوع الزبون:</label>
@@ -652,7 +665,7 @@
 
     <!-- لوحة التحكم الإدارية الشاملة -->
     <div id="adminModal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 530px;">
+        <div class="modal-content" style="max-width: 550px;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gold-color); padding-bottom: 8px; margin-bottom: 12px;">
                 <h3 style="color: var(--gold-color); margin: 0;">⚙️ لوحة تحكم متجر معاذ</h3>
                 <button onclick="closeAdminModal()" class="btn btn-danger" style="width: auto; padding: 5px 10px;">✖ إغلاق</button>
@@ -664,7 +677,7 @@
                 <button class="cat-btn" onclick="switchAdminTab('addProductTab', this)">➕ إضافة صنف جديد</button>
                 <button class="cat-btn" onclick="switchAdminTab('productsTab', this)">🛍️ إدارة المنتجات</button>
                 <button class="cat-btn" onclick="switchAdminTab('customersTab', this)">👥 الزبائن</button>
-                <button class="cat-btn" onclick="switchAdminTab('settingsTab', this)">🛵 الإعدادات</button>
+                <button class="cat-btn" onclick="switchAdminTab('settingsTab', this)">🛵 الإعدادات والتوصيل</button>
                 <button class="cat-btn" onclick="switchAdminTab('statsTab', this)">📊 الجرد والأرباح</button>
                 <button class="cat-btn" onclick="switchAdminTab('shortagesTab', this)">⚠️ النواقص</button>
             </div>
@@ -677,7 +690,7 @@
 
             <!-- 2. تبويب إضافة صنف جديد -->
             <div id="addProductTab" class="admin-tab" style="display: none;">
-                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">➕ إضافة صنف جديد للمتجر</h4>
+                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">➕ إضافة / تعديل صنف في المتجر</h4>
                 <input type="hidden" id="editProductId">
                 <div class="form-group">
                     <label>اسم الصنف / المنتج:</label>
@@ -721,13 +734,13 @@
                     <label>صورة المنتج:</label>
                     <input type="file" id="prodImageInput" accept="image/*" class="form-control">
                 </div>
-                <button onclick="saveProduct()" class="btn" style="margin-bottom: 12px; background:var(--success-color); color:#000;">💾 حفظ وإضافة الصنف</button>
+                <button onclick="saveProduct()" class="btn" style="margin-bottom: 12px; background:var(--success-color); color:#000;">💾 حفظ الصنف</button>
             </div>
 
             <!-- 3. إدارة المنتجات القائمة -->
             <div id="productsTab" class="admin-tab" style="display: none;">
                 <h4 style="color: var(--gold-color); margin: 0 0 6px 0;">📋 قائمة المنتجات والتعليقات</h4>
-                <input type="text" id="adminSearchProd" class="search-box" placeholder="🔍 ابحث عن منتج لتعديله أو حذف تعليقاته..." oninput="renderAdminProducts()" style="margin-bottom: 8px; font-size: 11px;">
+                <input type="text" id="adminSearchProd" class="search-box" placeholder="🔍 ابحث عن منتج لتعديله أو تصفير مبيعاته..." oninput="renderAdminProducts()" style="margin-bottom: 8px; font-size: 11px;">
                 <div id="adminProductsList"></div>
 
                 <hr style="border-color: var(--border-color); margin: 15px 0;">
@@ -817,7 +830,7 @@
                 <button onclick="saveCompetitionSettings()" class="btn">💾 حفظ المسابقة</button>
             </div>
 
-            <!-- 5. الإعدادات -->
+            <!-- 5. الإعدادات ومناطق التوصيل -->
             <div id="settingsTab" class="admin-tab" style="display: none;">
                 <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">💳 إعدادات شام كاش والإدارة</h4>
                 <div class="form-group">
@@ -830,19 +843,20 @@
                 </div>
 
                 <hr style="border-color: var(--border-color);">
-                <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">🛵 تكلفة التوصيل (ل.س)</h4>
-                <div class="form-group">
-                    <label>العوينة:</label>
-                    <input type="number" id="feeAwinaInput" class="form-control">
+                <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">🛵 إدارة مناطق وتكلفة التوصيل (ل.س)</h4>
+                
+                <!-- إضافة منطقة توصيل جديدة -->
+                <div style="background: var(--bg-color); border: 1px dashed var(--gold-color); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                    <label style="font-size: 11px; color: var(--gold-color); display: block; margin-bottom: 6px; font-weight: bold;">➕ إضافة مكان / منطقة توصيل جديدة:</label>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                        <input type="text" id="newRegionNameInput" class="form-control" placeholder="اسم القرية / المنطقة..." style="flex: 2; min-width: 130px;">
+                        <input type="number" id="newRegionFeeInput" class="form-control" placeholder="التكلفة (ل.س)" style="flex: 1; min-width: 90px;" value="5000">
+                        <button type="button" onclick="addDeliveryRegion()" class="btn" style="width: auto; background: var(--success-color); color: #000; padding: 8px 12px;">إضافة</button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>المزرعة الشرقية ( الريحانية ):</label>
-                    <input type="number" id="feeEastInput" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>المزرعة الغربية:</label>
-                    <input type="number" id="feeWestInput" class="form-control">
-                </div>
+
+                <!-- قائمة مناطق التوصيل الحالية -->
+                <div id="adminDeliveryRegionsList" style="margin-bottom: 12px;"></div>
 
                 <hr style="border-color: var(--border-color);">
                 <div class="form-group">
@@ -853,7 +867,7 @@
                     <label>رقم واتساب عامل التوصيل:</label>
                     <input type="text" id="deliveryPhoneInput" class="form-control">
                 </div>
-                <button onclick="saveGeneralSettings()" class="btn" style="margin-bottom: 15px;">💾 حفظ الإعدادات</button>
+                <button onclick="saveGeneralSettings()" class="btn" style="margin-bottom: 15px;">💾 حفظ جميع الإعدادات وأسعار التوصيل</button>
 
                 <hr style="border-color: var(--border-color);">
                 <button onclick="exportBackupJSON()" class="btn" style="margin-bottom: 10px;">⬇️ تصدير نسخة احتياطية (.json)</button>
@@ -863,7 +877,7 @@
                 </div>
             </div>
 
-            <!-- 6. الجرد والأرباح (عام + تفصيلي لكل تصنيف) -->
+            <!-- 6. الجرد والأرباح (مع تصفير مبيعات كل صنف أو تصنيف على حدة) -->
             <div id="statsTab" class="admin-tab" style="display: none;">
                 <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">📊 التقارير المالية وجرد الأرباح</h4>
                 
@@ -904,7 +918,7 @@
                     </div>
                 </div>
 
-                <h4 style="color: var(--gold-color); margin: 12px 0 8px 0;">🏦 تقييم المخزون المالي</h4>
+                <h4 style="color: var(--gold-color); margin: 12px 0 8px 0;">🏦 تقييم المخزون المالي (يبقى محفوظاً عند تصفير المبيعات)</h4>
                 <div class="stats-grid">
                     <div class="stats-box">
                         <div style="font-size: 11px; color: var(--gray-text);">رأس المال بالتكلفة</div>
@@ -918,6 +932,12 @@
 
                 <h4 style="color: var(--gold-color); margin: 14px 0 6px 0;">📑 تفصيل الإحصائيات وجرد كل تصنيف</h4>
                 <div id="categoryStatsContainer"></div>
+
+                <hr style="border-color: var(--border-color); margin: 14px 0;">
+                <h4 style="color: var(--gold-color); margin: 10px 0 6px 0;">📦 إحصائيات المبيعات لكل صنف على حدة (مع التصفير الفردي)</h4>
+                <p style="font-size: 10px; color: var(--gray-text); margin: 0 0 8px 0;">يمكنك تصفير عداد المبيعات والأرباح لأي صنف بشكل مستقل مع الحفاظ الكامل على كمية المخزون والجرد.</p>
+                <input type="text" id="statsProductSearch" class="search-box" placeholder="🔍 ابحث عن صنف في الجرد لتصفير مبيعاته..." oninput="renderStatsDashboard()" style="margin-bottom: 8px; font-size: 11px; padding: 7px;">
+                <div id="productStatsContainer"></div>
             </div>
 
             <!-- 7. النواقص -->
@@ -952,6 +972,7 @@
         let categories = ["الكل"];
         let selectedCategory = "الكل";
         let products = {};
+        let highResImagesMemoryCache = {};
         let shuffledProductKeys = [];
         let specialOffer = null;
         let cart = {};
@@ -965,6 +986,16 @@
             desc: "",
             image: ""
         };
+
+        // تحميل البيانات المخزنة محلياً للعرض الفوري
+        try {
+            const cachedProds = localStorage.getItem("moaath_cached_products");
+            if (cachedProds) products = JSON.parse(cachedProds);
+            const cachedCats = localStorage.getItem("moaath_cached_cats");
+            if (cachedCats) categories = JSON.parse(cachedCats);
+            const cachedFees = localStorage.getItem("moaath_cached_fees");
+            if (cachedFees) deliveryFees = JSON.parse(cachedFees);
+        } catch(e) {}
 
         let currentUser = JSON.parse(localStorage.getItem("moaath_user") || "null");
 
@@ -997,7 +1028,6 @@
             navigator.serviceWorker.register("sw.js").catch(() => {});
         }
 
-        // التقاط حدث التثبيت الرسمي للنظام
         let deferredPrompt = null;
         window.addEventListener("beforeinstallprompt", (e) => {
             e.preventDefault();
@@ -1033,6 +1063,7 @@
             return Math.round((num * exchangeRate) / 5) * 5;
         }
 
+        // ضغط مزدوج مطوّر: صورة مصغرة بدقة رديئة جداً (36px) للفتح الفوري + صورة عالية الدقة (320px)
         function compressDualImages(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -1041,19 +1072,19 @@
                     img.onload = () => {
                         const canvasThumb = document.createElement("canvas");
                         let w1 = img.width, h1 = img.height;
-                        const maxW1 = 70;
-                        if (w1 > maxW1) { h1 = Math.round((h1 * maxW1) / w1); w1 = maxW1; }
+                        const maxW1 = 36;
+                        if (w1 > maxW1) { h1 = Math.max(1, Math.round((h1 * maxW1) / w1)); w1 = maxW1; }
                         canvasThumb.width = w1; canvasThumb.height = h1;
                         canvasThumb.getContext("2d").drawImage(img, 0, 0, w1, h1);
-                        const thumbBase64 = canvasThumb.toDataURL("image/jpeg", 0.3);
+                        const thumbBase64 = canvasThumb.toDataURL("image/jpeg", 0.15);
 
                         const canvasMain = document.createElement("canvas");
                         let w2 = img.width, h2 = img.height;
                         const maxW2 = 320;
-                        if (w2 > maxW2) { h2 = Math.round((h2 * maxW2) / w2); w2 = maxW2; }
+                        if (w2 > maxW2) { h2 = Math.max(1, Math.round((h2 * maxW2) / w2)); w2 = maxW2; }
                         canvasMain.width = w2; canvasMain.height = h2;
                         canvasMain.getContext("2d").drawImage(img, 0, 0, w2, h2);
-                        const mainBase64 = canvasMain.toDataURL("image/jpeg", 0.6);
+                        const mainBase64 = canvasMain.toDataURL("image/jpeg", 0.62);
 
                         resolve({ thumb: thumbBase64, image: mainBase64 });
                     };
@@ -1063,6 +1094,102 @@
                 reader.onerror = reject;
                 reader.readAsDataURL(file);
             });
+        }
+
+        // توليد مصغرة رديئة جداً تلقائياً لأي صورة قديمة لتحسين سرعة المتجر
+        function createMicroThumbFromBase64(base64Str) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement("canvas");
+                    let w = img.width, h = img.height;
+                    const maxW = 36;
+                    if (w > maxW) { h = Math.max(1, Math.round((h * maxW) / w)); w = maxW; }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL("image/jpeg", 0.15));
+                };
+                img.onerror = () => resolve("");
+                img.src = base64Str;
+            });
+        }
+
+        // تحديث جميع قوائم مناطق التوصيل في التطبيق ديناميكياً
+        function populateRegionSelects() {
+            const regionNames = Object.keys(deliveryFees);
+            if (regionNames.length === 0) {
+                deliveryFees = { "العوينة": 0 };
+                regionNames.push("العوينة");
+            }
+
+            const selects = ["regRegion", "cartRegionSelect", "adminCustRegion"];
+            selects.forEach(selId => {
+                const el = document.getElementById(selId);
+                if (!el) return;
+                const prevVal = el.value;
+                el.innerHTML = regionNames.map(r => `<option value="${r}">${r} (${(deliveryFees[r] || 0).toLocaleString()} ل.س)</option>`).join("");
+                if (prevVal && deliveryFees.hasOwnProperty(prevVal)) {
+                    el.value = prevVal;
+                } else if (currentUser && currentUser.region && deliveryFees.hasOwnProperty(currentUser.region)) {
+                    el.value = currentUser.region;
+                } else {
+                    el.value = regionNames[0];
+                }
+            });
+
+            renderAdminDeliveryRegions();
+        }
+
+        function renderAdminDeliveryRegions() {
+            const container = document.getElementById("adminDeliveryRegionsList");
+            if (!container) return;
+            const regionNames = Object.keys(deliveryFees);
+            container.innerHTML = regionNames.map((reg, idx) => `
+                <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px; background:var(--bg-color); padding:6px 8px; border-radius:6px; border:1px solid var(--border-color);">
+                    <span style="flex:1; font-size:12px; font-weight:bold;">📍 ${reg}</span>
+                    <input type="number" class="form-control region-fee-input" data-region="${reg}" value="${deliveryFees[reg] || 0}" style="width:105px; padding:5px; font-size:12px;">
+                    <span style="font-size:11px; color:var(--gray-text);">ل.س</span>
+                    <button type="button" onclick="removeDeliveryRegion(${idx})" class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:11px;">🗑️</button>
+                </div>
+            `).join("");
+        }
+
+        function addDeliveryRegion() {
+            const nameInput = document.getElementById("newRegionNameInput");
+            const feeInput = document.getElementById("newRegionFeeInput");
+            const name = (nameInput.value || "").trim();
+            const fee = parseInt(feeInput.value) || 0;
+
+            if (!name) {
+                alert("⚠️ يرجى كتابة اسم المنطقة أو القرية أولاً.");
+                return;
+            }
+            // مزامنة أي تعديلات حالية في الحقول قبل الإضافة
+            document.querySelectorAll(".region-fee-input").forEach(inp => {
+                const r = inp.getAttribute("data-region");
+                if (r) deliveryFees[r] = parseInt(inp.value) || 0;
+            });
+
+            deliveryFees[name] = fee;
+            nameInput.value = "";
+            populateRegionSelects();
+            db.ref("settings/deliveryFees").set(deliveryFees).then(() => {
+                alert(`✅ تمت إضافة منطقة "${name}" بتكلفة توصيل ${fee.toLocaleString()} ل.س`);
+            });
+        }
+
+        function removeDeliveryRegion(idx) {
+            const regionNames = Object.keys(deliveryFees);
+            if (regionNames.length <= 1) {
+                alert("⚠️ يجب بقاء منطقة توصيل واحدة على الأقل.");
+                return;
+            }
+            const targetReg = regionNames[idx];
+            if (!confirm(`⚠️ هل أنت متأكد من حذف منطقة التوصيل "${targetReg}"؟`)) return;
+
+            delete deliveryFees[targetReg];
+            populateRegionSelects();
+            db.ref("settings/deliveryFees").set(deliveryFees);
         }
 
         db.ref("settings").on("value", (snap) => {
@@ -1075,32 +1202,44 @@
             document.getElementById("headerPhoneText").textContent = adminWhatsAppNumber;
             document.getElementById("shamWalletId").textContent = shamWalletIdGlobal;
 
-            if (data.deliveryFees) {
-                deliveryFees = {
-                    "العوينة": parseInt(data.deliveryFees["العوينة"]) || 0,
-                    "المزرعة الشرقية ( الريحانية )": parseInt(data.deliveryFees["المزرعة الشرقية ( الريحانية )"]) || 0,
-                    "المزرعة الغربية": parseInt(data.deliveryFees["المزرعة الغربية"]) || 0
-                };
+            if (data.deliveryFees && Object.keys(data.deliveryFees).length > 0) {
+                deliveryFees = {};
+                Object.keys(data.deliveryFees).forEach(k => {
+                    deliveryFees[k] = parseInt(data.deliveryFees[k]) || 0;
+                });
+                try { localStorage.setItem("moaath_cached_fees", JSON.stringify(deliveryFees)); } catch(e){}
             }
+
+            populateRegionSelects();
+
             document.getElementById("exchangeRateInput").value = exchangeRate;
             document.getElementById("deliveryPhoneInput").value = deliveryDriverPhone;
             document.getElementById("adminWhatsAppInput").value = adminWhatsAppNumber;
             document.getElementById("adminShamWalletInput").value = shamWalletIdGlobal;
-            document.getElementById("feeAwinaInput").value = deliveryFees["العوينة"];
-            document.getElementById("feeEastInput").value = deliveryFees["المزرعة الشرقية ( الريحانية )"];
-            document.getElementById("feeWestInput").value = deliveryFees["المزرعة الغربية"];
             renderStore();
         });
 
         db.ref("categories").on("value", (snap) => {
             const data = snap.val() || ["مواد غذائية", "منظفات", "مشروبات"];
             categories = ["الكل", ...data];
+            try { localStorage.setItem("moaath_cached_cats", JSON.stringify(categories)); } catch(e){}
             renderCategories();
             renderAdminCategories(data);
         });
 
         db.ref("products").on("value", (snap) => {
             products = snap.val() || {};
+
+            // حفظ نسخة خفيفة بدون الصور الثقيلة في الذاكرة المحلية لفتح المتجر فوراً
+            try {
+                const lightProducts = {};
+                Object.keys(products).forEach(k => {
+                    const p = products[k];
+                    if (p.image) highResImagesMemoryCache[k] = p.image;
+                    lightProducts[k] = { ...p, image: "" };
+                });
+                localStorage.setItem("moaath_cached_products", JSON.stringify(lightProducts));
+            } catch(e){}
             
             const currentKeys = Object.keys(products);
             if (shuffledProductKeys.length === 0) {
@@ -1116,7 +1255,30 @@
             renderAdminProducts();
             renderShortages();
             updateInventoryValuation();
+            renderStatsDashboard();
+            migrateLegacyInlineImages();
         });
+
+        // نقل الصور عالية الدقة القديمة تلقائياً إلى مسار مستقل لتسريع فتح المتجر
+        let migrationRunning = false;
+        async function migrateLegacyInlineImages() {
+            if (migrationRunning) return;
+            migrationRunning = true;
+            for (const id of Object.keys(products)) {
+                const p = products[id];
+                if (p && p.image && p.image.length > 5000) {
+                    highResImagesMemoryCache[id] = p.image;
+                    try { localStorage.setItem("moaath_hi_img_" + id, p.image); } catch(e){}
+                    let microThumb = p.thumb || "";
+                    if (!microThumb || microThumb.length > 8000) {
+                        microThumb = await createMicroThumbFromBase64(p.image);
+                    }
+                    await db.ref("productImages/" + id).set(p.image);
+                    await db.ref("products/" + id).update({ thumb: microThumb, image: null });
+                }
+            }
+            migrationRunning = false;
+        }
 
         db.ref("specialOffer").on("value", (snap) => {
             specialOffer = snap.val() || null;
@@ -1151,14 +1313,18 @@
         db.ref("completedOrdersHistory").on("value", (snap) => {
             completedOrdersHistory = snap.val() || {};
             renderStatsDashboard();
+            renderAdminProducts();
         });
 
         function checkInitialLogin() {
+            populateRegionSelects();
             if (!currentUser || !currentUser.phone || !currentUser.name || !currentUser.region || !currentUser.address) {
                 if (currentUser) {
                     document.getElementById("regName").value = currentUser.name || "";
                     document.getElementById("regPhone").value = currentUser.phone || "";
-                    document.getElementById("regRegion").value = currentUser.region || "العوينة";
+                    if (currentUser.region && deliveryFees.hasOwnProperty(currentUser.region)) {
+                        document.getElementById("regRegion").value = currentUser.region;
+                    }
                     document.getElementById("regAddress").value = currentUser.address || "";
                     if (document.getElementById("regPointsVisibility")) {
                         document.getElementById("regPointsVisibility").value = currentUser.pointsVisibility || "public";
@@ -1170,13 +1336,21 @@
                 syncCurrentUser();
             }
         }
-        window.addEventListener("load", checkInitialLogin);
+        window.addEventListener("load", () => {
+            populateRegionSelects();
+            checkInitialLogin();
+            renderCategories();
+            renderStore();
+        });
 
         function openEditProfile() {
+            populateRegionSelects();
             if (currentUser) {
                 document.getElementById("regName").value = currentUser.name || "";
                 document.getElementById("regPhone").value = currentUser.phone || "";
-                document.getElementById("regRegion").value = currentUser.region || "العوينة";
+                if (currentUser.region && deliveryFees.hasOwnProperty(currentUser.region)) {
+                    document.getElementById("regRegion").value = currentUser.region;
+                }
                 document.getElementById("regAddress").value = currentUser.address || "";
                 if (document.getElementById("regPointsVisibility")) {
                     document.getElementById("regPointsVisibility").value = currentUser.pointsVisibility || "public";
@@ -1233,8 +1407,8 @@
             });
             closeProfileModal();
             syncCurrentUser();
+            updateCartBar();
 
-            // إنشاء الاختصار وتثبيت التطبيق تلقائياً عند أول تسجيل دخول
             if (deferredPrompt && !localStorage.getItem("pwa_installed_once")) {
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then((choiceResult) => {
@@ -1272,7 +1446,6 @@
             document.getElementById("userPoints").textContent = pts;
             document.getElementById("compUserPoints").textContent = pts;
 
-            // عرض ترتيب الزبون التلقائي في الواجهة الرئيسية
             const userRank = calculateUserRank(currentUser.phone);
             const rankBadge = document.getElementById("userRankBadge");
             if (rankBadge) {
@@ -1327,9 +1500,13 @@
             const thumbSrc = specialOffer.thumb || specialOffer.image || "store-icon.png";
             const fullSrc = specialOffer.image || "store-icon.png";
             soImg.src = thumbSrc;
-            if (fullSrc && fullSrc !== thumbSrc) {
+            soImg.className = "special-offer-img img-low-res";
+            if (fullSrc) {
                 const temp = new Image();
-                temp.onload = () => { soImg.src = fullSrc; };
+                temp.onload = () => {
+                    soImg.src = fullSrc;
+                    soImg.className = "special-offer-img img-high-res";
+                };
                 temp.src = fullSrc;
             }
 
@@ -1362,6 +1539,81 @@
             }
         }
 
+        // محرك التحميل التدريجي للصور عالية الدقة على دفعات بعد عرض المنتجات بالدقة الرديئة
+        let batchLoadSessionId = 0;
+
+        function fetchHighResProductImage(prodId) {
+            return new Promise((resolve) => {
+                if (highResImagesMemoryCache[prodId]) {
+                    return resolve(highResImagesMemoryCache[prodId]);
+                }
+                if (products[prodId] && products[prodId].image) {
+                    highResImagesMemoryCache[prodId] = products[prodId].image;
+                    return resolve(products[prodId].image);
+                }
+                try {
+                    const localHi = localStorage.getItem("moaath_hi_img_" + prodId);
+                    if (localHi) {
+                        highResImagesMemoryCache[prodId] = localHi;
+                        return resolve(localHi);
+                    }
+                } catch(e) {}
+
+                db.ref("productImages/" + prodId).once("value")
+                    .then(snap => {
+                        const hiData = snap.val();
+                        if (hiData) {
+                            highResImagesMemoryCache[prodId] = hiData;
+                            try { localStorage.setItem("moaath_hi_img_" + prodId, hiData); } catch(e) {}
+                            resolve(hiData);
+                        } else {
+                            resolve(null);
+                        }
+                    })
+                    .catch(() => resolve(null));
+            });
+        }
+
+        async function processHighResQueueInBatches(productIdsQueue, sessionId) {
+            const BATCH_SIZE = 3; // تحميل 3 صور فقط في كل دفعة لضمان سرعة واستقرار الشبكة
+            for (let i = 0; i < productIdsQueue.length; i += BATCH_SIZE) {
+                if (sessionId !== batchLoadSessionId) return; // إلغاء الدفعة القديمة إذا قام الزبون بتغيير البحث أو التصنيف
+                const currentBatch = productIdsQueue.slice(i, i + BATCH_SIZE);
+
+                await Promise.all(currentBatch.map(prodId => {
+                    return new Promise(async (resolveItem) => {
+                        const imgEl = document.getElementById("prod_img_" + prodId);
+                        if (!imgEl) return resolveItem();
+
+                        const hiSrc = await fetchHighResProductImage(prodId);
+                        if (!hiSrc || sessionId !== batchLoadSessionId) {
+                            imgEl.classList.remove("img-low-res");
+                            return resolveItem();
+                        }
+
+                        const preloader = new Image();
+                        preloader.onload = () => {
+                            const targetEl = document.getElementById("prod_img_" + prodId);
+                            if (targetEl) {
+                                targetEl.src = hiSrc;
+                                targetEl.classList.remove("img-low-res");
+                                targetEl.classList.add("img-high-res");
+                            }
+                            resolveItem();
+                        };
+                        preloader.onerror = () => {
+                            imgEl.classList.remove("img-low-res");
+                            resolveItem();
+                        };
+                        preloader.src = hiSrc;
+                    });
+                }));
+
+                // مهلة قصيرة جداً بين كل دفعة وأخرى لإراحة المعالج والشبكة
+                await new Promise(r => setTimeout(r, 60));
+            }
+        }
+
         function renderStore() {
             renderSpecialOffer();
             const grid = document.getElementById("productsGrid");
@@ -1370,6 +1622,7 @@
 
             const isWholesale = currentUser && currentUser.userType === "wholesale";
             const keysToRender = (shuffledProductKeys && shuffledProductKeys.length > 0) ? shuffledProductKeys : Object.keys(products);
+            const visibleProductIds = [];
 
             keysToRender.forEach(id => {
                 const p = products[id];
@@ -1377,6 +1630,8 @@
                 const pName = p.name || "";
                 if (selectedCategory !== "الكل" && p.category !== selectedCategory) return;
                 if (query && !pName.toLowerCase().includes(query)) return;
+
+                visibleProductIds.push(id);
 
                 const activePriceUSD = (isWholesale && p.wholesaleUSD && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0);
                 const priceSYP = calcSYP(activePriceUSD);
@@ -1430,13 +1685,15 @@
                     reviewsListHTML += `</div>`;
                 }
 
-                const thumbSrc = p.thumb || p.image || "store-icon.png";
-                const fullSrc = p.image || "store-icon.png";
+                // الخطوة 1: عرض الصورة المصغرة ذات الدقة الرديئة جداً فوراً
+                const lowResThumb = p.thumb || "store-icon.png";
 
                 html += `
                     <div class="product-card">
                         <div>
-                            <img src="${thumbSrc}" data-full="${fullSrc}" class="product-img lazy-prod-img" loading="lazy">
+                            <div class="product-img-wrap">
+                                <img id="prod_img_${id}" src="${lowResThumb}" class="product-img img-low-res">
+                            </div>
                             <h3>${pName}</h3>
                             <p>${priceSYP.toLocaleString()} ل.س ${isWholesale && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>
                             ${reviewsListHTML}
@@ -1448,17 +1705,16 @@
                     </div>`;
             });
 
+            // الخطوة 2: إظهار جميع المنتجات فوراً على الشاشة
             grid.innerHTML = html || `<p style="grid-column: span 2; text-align: center; color: var(--gray-text);">لا توجد منتجات مطابقة</p>`;
             updateCartBar();
 
-            document.querySelectorAll(".lazy-prod-img").forEach(img => {
-                const full = img.getAttribute("data-full");
-                if (full && full !== img.src) {
-                    const temp = new Image();
-                    temp.onload = () => { img.src = full; };
-                    temp.src = full;
-                }
-            });
+            // الخطوة 3: بدء تحميل الصور عالية الدقة على دفعات متتالية وتحديث المنتجات
+            batchLoadSessionId++;
+            const currentSession = batchLoadSessionId;
+            setTimeout(() => {
+                processHighResQueueInBatches(visibleProductIds, currentSession);
+            }, 50);
         }
 
         function changeQty(id, delta) {
@@ -1528,7 +1784,8 @@
             });
 
             if (totalCount > 0) {
-                const userRegion = (currentUser && currentUser.region) ? currentUser.region : "العوينة";
+                const defaultReg = Object.keys(deliveryFees)[0] || "العوينة";
+                const userRegion = (currentUser && currentUser.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : defaultReg;
                 const deliveryFee = parseInt(deliveryFees[userRegion]) || 0;
                 const grandTotal = subtotalSYP + deliveryFee;
 
@@ -1549,7 +1806,9 @@
                 openEditProfile();
                 return;
             }
-            document.getElementById("cartRegionSelect").value = currentUser.region || "العوينة";
+            populateRegionSelects();
+            const defaultReg = Object.keys(deliveryFees)[0] || "العوينة";
+            document.getElementById("cartRegionSelect").value = (currentUser.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : defaultReg;
             renderCartModalItems();
             document.getElementById("cartModal").style.display = "flex";
         }
@@ -1613,7 +1872,8 @@
                     </div>`;
             }).join("");
 
-            const selectedRegion = document.getElementById("cartRegionSelect").value || (currentUser ? currentUser.region : "العوينة");
+            const defaultReg = Object.keys(deliveryFees)[0] || "العوينة";
+            const selectedRegion = document.getElementById("cartRegionSelect").value || (currentUser ? currentUser.region : defaultReg);
             const deliveryFee = parseInt(deliveryFees[selectedRegion]) || 0;
             const finalTotalSYP = subtotalSYP + deliveryFee;
 
@@ -1639,7 +1899,8 @@
             const items = Object.values(cart);
             if (items.length === 0) return;
 
-            const selectedRegion = document.getElementById("cartRegionSelect").value || currentUser.region || "العوينة";
+            const defaultReg = Object.keys(deliveryFees)[0] || "العوينة";
+            const selectedRegion = document.getElementById("cartRegionSelect").value || currentUser.region || defaultReg;
             const deliveryFeeSYP = parseInt(deliveryFees[selectedRegion]) || 0;
 
             let subtotalSaleSYP = 0;
@@ -1977,6 +2238,97 @@
             db.ref("pendingOrders/" + orderId).remove();
         }
 
+        // ميزة تصفير إحصائيات البيع لصنف (منتج) واحد مع الحفاظ على المخزون والجرد
+        function resetProductSalesStats(productId) {
+            const pName = (products[productId] && products[productId].name) ? products[productId].name : (productId === "SPECIAL_OFFER" ? "العرض الخاص" : "هذا الصنف");
+            if (!confirm(`⚠️ هل أنت متأكد من تصفير إحصائيات المبيعات والأرباح للصنف "${pName}" فقط؟\n\n(ملاحظة: سيتم الحفاظ على كمية المخزون وإحصائيات الجرد كما هي تماماً)`)) {
+                return;
+            }
+
+            const updates = {};
+            Object.keys(completedOrdersHistory).forEach(ordId => {
+                const ord = completedOrdersHistory[ordId];
+                if (!ord || !ord.items) return;
+
+                const remainingItems = ord.items.filter(item => item.id !== productId);
+                if (remainingItems.length !== ord.items.length) {
+                    if (remainingItems.length === 0) {
+                        updates[ordId] = null;
+                    } else {
+                        let subSale = 0, subCost = 0;
+                        remainingItems.forEach(i => {
+                            subSale += (i.subSaleSYP || 0);
+                            subCost += (i.subCostSYP || 0);
+                        });
+                        updates[ordId] = {
+                            ...ord,
+                            items: remainingItems,
+                            subtotalSaleSYP: subSale,
+                            totalCostSYP: subCost,
+                            netProfitSYP: subSale - subCost,
+                            totalSaleSYP: subSale + (ord.deliveryFeeSYP || 0)
+                        };
+                    }
+                }
+            });
+
+            if (Object.keys(updates).length === 0) {
+                alert("ℹ️ مبيعات هذا الصنف مصفرة بالفعل.");
+                return;
+            }
+
+            db.ref("completedOrdersHistory").update(updates).then(() => {
+                alert(`✅ تم تصفير إحصائيات البيع للصنف "${pName}" بنجاح مع الحفاظ على المخزون والجرد!`);
+            });
+        }
+
+        // ميزة تصفير إحصائيات البيع لتصنيف كامل مع الحفاظ على المخزون والجرد
+        function resetCategorySalesStats(categoryName) {
+            if (!confirm(`⚠️ هل أنت متأكد من تصفير إحصائيات المبيعات والأرباح لتصنيف "${categoryName}" بالكامل؟\n\n(ملاحظة: سيتم الحفاظ على كميات المخزون وإحصائيات الجرد كما هي)`)) {
+                return;
+            }
+
+            const updates = {};
+            Object.keys(completedOrdersHistory).forEach(ordId => {
+                const ord = completedOrdersHistory[ordId];
+                if (!ord || !ord.items) return;
+
+                const remainingItems = ord.items.filter(item => {
+                    const itemCat = item.category || (item.id === "SPECIAL_OFFER" ? "عروض خاصة" : (products[item.id] ? products[item.id].category : "غير مصنف"));
+                    return itemCat !== categoryName;
+                });
+
+                if (remainingItems.length !== ord.items.length) {
+                    if (remainingItems.length === 0) {
+                        updates[ordId] = null;
+                    } else {
+                        let subSale = 0, subCost = 0;
+                        remainingItems.forEach(i => {
+                            subSale += (i.subSaleSYP || 0);
+                            subCost += (i.subCostSYP || 0);
+                        });
+                        updates[ordId] = {
+                            ...ord,
+                            items: remainingItems,
+                            subtotalSaleSYP: subSale,
+                            totalCostSYP: subCost,
+                            netProfitSYP: subSale - subCost,
+                            totalSaleSYP: subSale + (ord.deliveryFeeSYP || 0)
+                        };
+                    }
+                }
+            });
+
+            if (Object.keys(updates).length === 0) {
+                alert("ℹ️ مبيعات هذا التصنيف مصفرة بالفعل.");
+                return;
+            }
+
+            db.ref("completedOrdersHistory").update(updates).then(() => {
+                alert(`✅ تم تصفير مبيعات تصنيف "${categoryName}" مع الحفاظ على المخزون والجرد!`);
+            });
+        }
+
         function populateStatsCategorySelect() {
             const select = document.getElementById("reportCategorySelect");
             if (!select) return;
@@ -2007,6 +2359,20 @@
             catMap["عروض خاصة"] = { sales: 0, cost: 0, profit: 0, count: 0 };
             catMap["غير مصنف"] = { sales: 0, cost: 0, profit: 0, count: 0 };
 
+            let prodStatsMap = {};
+            Object.keys(products).forEach(pid => {
+                prodStatsMap[pid] = {
+                    id: pid,
+                    name: products[pid].name || "صنف",
+                    category: products[pid].category || "غير مصنف",
+                    stock: parseInt(products[pid].stock) || 0,
+                    qtySold: 0,
+                    sales: 0,
+                    cost: 0,
+                    profit: 0
+                };
+            });
+
             Object.values(completedOrdersHistory).forEach(o => {
                 const orderDate = new Date(o.dateISO || Date.now());
                 
@@ -2028,11 +2394,29 @@
                     const sSale = item.subSaleSYP || 0;
                     const sCost = item.subCostSYP || 0;
                     const sProfit = (item.netProfitSYP !== undefined) ? item.netProfitSYP : (sSale - sCost);
+                    const sQty = item.qty || 1;
 
                     catMap[c].sales += sSale;
                     catMap[c].cost += sCost;
                     catMap[c].profit += sProfit;
-                    catMap[c].count += (item.qty || 1);
+                    catMap[c].count += sQty;
+
+                    if (!prodStatsMap[item.id]) {
+                        prodStatsMap[item.id] = {
+                            id: item.id,
+                            name: item.name || "صنف",
+                            category: c,
+                            stock: (products[item.id] ? parseInt(products[item.id].stock) : (item.id === "SPECIAL_OFFER" && specialOffer ? parseInt(specialOffer.stock) : 0)) || 0,
+                            qtySold: 0,
+                            sales: 0,
+                            cost: 0,
+                            profit: 0
+                        };
+                    }
+                    prodStatsMap[item.id].qtySold += sQty;
+                    prodStatsMap[item.id].sales += sSale;
+                    prodStatsMap[item.id].cost += sCost;
+                    prodStatsMap[item.id].profit += sProfit;
 
                     if (selectedCat === "all" || selectedCat === c) {
                         totalSales += sSale;
@@ -2050,6 +2434,7 @@
             document.getElementById("statProfitMargin").textContent = margin + "%";
 
             renderCategoryBreakdownTable(catMap);
+            renderProductBreakdownTable(prodStatsMap, selectedCat);
             updateInventoryValuation(selectedCat);
         }
 
@@ -2073,6 +2458,7 @@
                                 <th style="padding:6px;">المبيعات</th>
                                 <th style="padding:6px;">صافي الربح</th>
                                 <th style="padding:6px;">مخزون (مبيع)</th>
+                                <th style="padding:6px;">تصفير البيع</th>
                             </tr>
                         </thead>
                         <tbody>`;
@@ -2086,6 +2472,60 @@
                         <td style="padding:6px;">${data.sales.toLocaleString()} ل.س</td>
                         <td style="padding:6px; color:var(--success-color); font-weight:bold;">${data.profit.toLocaleString()} ل.س</td>
                         <td style="padding:6px; color:var(--gray-text);">${inv.totalSale.toLocaleString()} ل.س</td>
+                        <td style="padding:6px;">
+                            <button onclick="resetCategorySalesStats('${c}')" class="btn btn-danger" style="width:auto; padding:3px 7px; font-size:10px;">🔄 تصفير</button>
+                        </td>
+                    </tr>`;
+            });
+
+            html += `</tbody></table></div>`;
+            container.innerHTML = html;
+        }
+
+        // جدول إحصائيات وجرد كل صنف على حدة مع زر تصفير مبيعات الصنف
+        function renderProductBreakdownTable(prodStatsMap, selectedCat) {
+            const container = document.getElementById("productStatsContainer");
+            if (!container) return;
+
+            const searchQ = (document.getElementById("statsProductSearch") ? document.getElementById("statsProductSearch").value : "").trim().toLowerCase();
+
+            const list = Object.values(prodStatsMap).filter(p => {
+                if (selectedCat !== "all" && p.category !== selectedCat) return false;
+                if (searchQ && !p.name.toLowerCase().includes(searchQ)) return false;
+                return true;
+            }).sort((a, b) => b.sales - a.sales);
+
+            if (list.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف مطابقة.</p>';
+                return;
+            }
+
+            let html = `
+                <div style="overflow-x:auto; max-height:280px; overflow-y:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:center;">
+                        <thead>
+                            <tr style="background:var(--bg-color); color:var(--gold-color); border-bottom:1px solid var(--border-color); position:sticky; top:0;">
+                                <th style="padding:6px; text-align:right;">الصنف</th>
+                                <th style="padding:6px;">المباع</th>
+                                <th style="padding:6px;">المبيعات</th>
+                                <th style="padding:6px;">الربح</th>
+                                <th style="padding:6px;">المخزون</th>
+                                <th style="padding:6px;">تصفير البيع</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+            list.forEach(item => {
+                html += `
+                    <tr style="border-bottom:1px solid var(--border-color);">
+                        <td style="padding:6px; font-weight:bold; text-align:right;">${item.name}</td>
+                        <td style="padding:6px;">${item.qtySold}</td>
+                        <td style="padding:6px;">${item.sales.toLocaleString()}</td>
+                        <td style="padding:6px; color:var(--success-color); font-weight:bold;">${item.profit.toLocaleString()}</td>
+                        <td style="padding:6px; color:var(--gold-color);">${item.stock}</td>
+                        <td style="padding:6px;">
+                            <button onclick="resetProductSalesStats('${item.id}')" class="btn btn-danger" style="width:auto; padding:3px 7px; font-size:10px;" ${item.qtySold === 0 ? 'disabled style="opacity:0.4; width:auto; padding:3px 7px; font-size:10px;"' : ''}>🔄 تصفير</button>
+                        </td>
                     </tr>`;
             });
 
@@ -2190,10 +2630,12 @@
         function openAdminEditCustomerModal(phone) {
             const u = users[phone];
             if (!u) return;
+            populateRegionSelects();
             document.getElementById("adminCustOrigPhone").value = phone;
             document.getElementById("adminCustName").value = u.name || "";
             document.getElementById("adminCustPhone").value = u.phone || phone;
-            document.getElementById("adminCustRegion").value = u.region || "العوينة";
+            const defaultReg = Object.keys(deliveryFees)[0] || "العوينة";
+            document.getElementById("adminCustRegion").value = (u.region && deliveryFees.hasOwnProperty(u.region)) ? u.region : defaultReg;
             document.getElementById("adminCustType").value = u.userType || "retail";
             document.getElementById("adminCustAddress").value = u.address || "";
             document.getElementById("adminCustPoints").value = Math.round(u.points || 0);
@@ -2279,18 +2721,20 @@
             }
 
             const id = editId || ("PROD_" + Date.now());
-            let imageBase64 = (products[id] && products[id].image) ? products[id].image : "";
             let thumbBase64 = (products[id] && products[id].thumb) ? products[id].thumb : "";
             let existingReviews = (products[id] && products[id].reviews) ? products[id].reviews : {};
 
             if (fileInput.files && fileInput.files[0]) {
                 const compressed = await compressDualImages(fileInput.files[0]);
                 thumbBase64 = compressed.thumb;
-                imageBase64 = compressed.image;
+                highResImagesMemoryCache[id] = compressed.image;
+                try { localStorage.setItem("moaath_hi_img_" + id, compressed.image); } catch(e){}
+                await db.ref("productImages/" + id).set(compressed.image);
             }
 
+            // حفظ المصغرة الخفيفة جداً في قائمة المنتجات لتسريع التحميل، بينما الصورة عالية الدقة في productImages
             db.ref("products/" + id).set({
-                name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, image: imageBase64, thumb: thumbBase64, reviews: existingReviews
+                name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, thumb: thumbBase64, reviews: existingReviews
             }).then(() => {
                 document.getElementById("editProductId").value = "";
                 document.getElementById("prodName").value = "";
@@ -2299,7 +2743,7 @@
                 document.getElementById("prodWholesaleUSD").value = "";
                 document.getElementById("prodAlertLimit").value = "2";
                 document.getElementById("prodImageInput").value = "";
-                alert("✅ تم حفظ المنتج!");
+                alert("✅ تم حفظ الصنف بنجاح!");
             });
         }
 
@@ -2322,11 +2766,28 @@
         function deleteProduct(id) {
             if (confirm("هل أنت متأكد من الحذف؟")) {
                 db.ref("products/" + id).remove();
+                db.ref("productImages/" + id).remove();
+                delete highResImagesMemoryCache[id];
+                try { localStorage.removeItem("moaath_hi_img_" + id); } catch(e){}
             }
+        }
+
+        function getProductSoldStats(productId) {
+            let qty = 0, profit = 0;
+            Object.values(completedOrdersHistory).forEach(o => {
+                (o.items || []).forEach(i => {
+                    if (i.id === productId) {
+                        qty += (i.qty || 1);
+                        profit += (i.netProfitSYP !== undefined ? i.netProfitSYP : ((i.subSaleSYP || 0) - (i.subCostSYP || 0)));
+                    }
+                });
+            });
+            return { qty, profit };
         }
 
         function renderAdminProducts() {
             const container = document.getElementById("adminProductsList");
+            if (!container) return;
             const q = (document.getElementById("adminSearchProd").value || "").trim().toLowerCase();
             const keys = Object.keys(products).filter(id => !q || (products[id].name && products[id].name.toLowerCase().includes(q)));
 
@@ -2337,6 +2798,7 @@
 
             container.innerHTML = keys.map(id => {
                 const p = products[id];
+                const soldInfo = getProductSoldStats(id);
                 const reviews = p.reviews || {};
                 let reviewsAdminHTML = "";
                 Object.keys(reviews).forEach(revId => {
@@ -2350,12 +2812,14 @@
 
                 return `
                     <div style="background:var(--bg-color); border:1px solid var(--border-color); padding:8px; border-radius:6px; margin-bottom:8px; font-size:12px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap;">
                             <div>
-                                <strong>${p.name}</strong> (المخزون: ${p.stock} | تنبيه عند: ${p.alertLimit || 2})<br>
-                                <span style="color:var(--gray-text);">مبيع: $${p.priceUSD} | جملة: $${p.wholesaleUSD || 0}</span>
+                                <strong>${p.name}</strong> (المخزون: <b style="color:var(--gold-color);">${p.stock}</b> | تنبيه عند: ${p.alertLimit || 2})<br>
+                                <span style="color:var(--gray-text);">مبيع: $${p.priceUSD} | جملة: $${p.wholesaleUSD || 0}</span><br>
+                                <span style="font-size:11px; color:var(--success-color);">📈 المباع: ${soldInfo.qty} | صافي الربح: ${soldInfo.profit.toLocaleString()} ل.س</span>
                             </div>
-                            <div style="display:flex; gap:4px;">
+                            <div style="display:flex; gap:4px; align-items:center;">
+                                <button onclick="resetProductSalesStats('${id}')" class="btn" style="width:auto; padding:4px 7px; font-size:10px; background:#ff9800; color:#000;" title="تصفير مبيعات هذا الصنف مع الحفاظ على المخزون">🔄 تصفير البيع</button>
                                 <button onclick="editProduct('${id}')" class="btn" style="width:auto; padding:4px 8px;">✏️</button>
                                 <button onclick="deleteProduct('${id}')" class="btn btn-danger" style="width:auto; padding:4px 8px;">🗑️</button>
                             </div>
@@ -2441,19 +2905,25 @@
             const adminWA = document.getElementById("adminWhatsAppInput").value.trim() || "963965461504";
             const shamWallet = document.getElementById("adminShamWalletInput").value.trim() || "da3e13cd8a2ef2af282445e148df9599";
 
-            const fees = {
-                "العوينة": parseInt(document.getElementById("feeAwinaInput").value) || 0,
-                "المزرعة الشرقية ( الريحانية )": parseInt(document.getElementById("feeEastInput").value) || 0,
-                "المزرعة الغربية": parseInt(document.getElementById("feeWestInput").value) || 0
-            };
+            const updatedFees = {};
+            document.querySelectorAll(".region-fee-input").forEach(inp => {
+                const regName = inp.getAttribute("data-region");
+                if (regName) {
+                    updatedFees[regName] = parseInt(inp.value) || 0;
+                }
+            });
+
+            if (Object.keys(updatedFees).length > 0) {
+                deliveryFees = updatedFees;
+            }
 
             db.ref("settings").set({
                 exchangeRate: rate,
                 deliveryDriverPhone: driver,
                 adminWhatsApp: adminWA,
                 shamWalletId: shamWallet,
-                deliveryFees: fees
-            }).then(() => alert("✅ تم حفظ الإعدادات!"));
+                deliveryFees: deliveryFees
+            }).then(() => alert("✅ تم حفظ الإعدادات ومناطق التوصيل بنجاح!"));
         }
 
         function exportBackupJSON() {
