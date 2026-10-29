@@ -133,11 +133,6 @@
             border-radius: 6px;
             object-fit: cover;
             border: 1px solid var(--gold-color);
-            filter: blur(2px);
-            transition: filter 0.3s ease;
-        }
-        .special-offer-img.loaded {
-            filter: blur(0);
         }
         .categories {
             display: flex;
@@ -183,11 +178,6 @@
             border-radius: 6px;
             background: var(--bg-color);
             margin-bottom: 6px;
-            filter: blur(3px);
-            transition: filter 0.3s ease;
-        }
-        .product-img.loaded {
-            filter: blur(0);
         }
         .product-card h3 {
             font-size: 13px;
@@ -633,11 +623,13 @@
                 <button onclick="closeAdminModal()" class="btn btn-danger" style="width: auto; padding: 5px 10px;">✖ إغلاق</button>
             </div>
 
+            <!-- شريط التبويبات في الإدارة (تم فصل زر "إضافة صنف جديد" وزر "إدارة المنتجات") -->
             <div class="categories" style="margin-bottom: 12px;">
                 <button class="cat-btn active" onclick="switchAdminTab('ordersTab', this)">📦 الطلبات (<span id="pendingCountBadge">0</span>)</button>
+                <button class="cat-btn" onclick="switchAdminTab('addProductTab', this)">➕ إضافة صنف جديد</button>
+                <button class="cat-btn" onclick="switchAdminTab('productsTab', this)">🛍️ إدارة المنتجات</button>
                 <button class="cat-btn" onclick="switchAdminTab('customersTab', this)">👥 الزبائن</button>
                 <button class="cat-btn" onclick="switchAdminTab('settingsTab', this)">🛵 الإعدادات</button>
-                <button class="cat-btn" onclick="switchAdminTab('productsTab', this)">🛍️ المنتجات</button>
                 <button class="cat-btn" onclick="switchAdminTab('statsTab', this)">📊 الجرد والأرباح</button>
                 <button class="cat-btn" onclick="switchAdminTab('shortagesTab', this)">⚠️ النواقص</button>
             </div>
@@ -648,7 +640,116 @@
                 <div id="pendingOrdersList"></div>
             </div>
 
-            <!-- 2. الزبائن -->
+            <!-- 2. تبويب إضافة صنف جديد (مستقل وواضح تماماً) -->
+            <div id="addProductTab" class="admin-tab" style="display: none;">
+                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">➕ إضافة صنف جديد للمتجر</h4>
+                <input type="hidden" id="editProductId">
+                <div class="form-group">
+                    <label>اسم الصنف / المنتج:</label>
+                    <input type="text" id="prodName" class="form-control" placeholder="مثال: متة راس الطاحونة...">
+                </div>
+                <div class="stats-grid">
+                    <div class="form-group">
+                        <label>التكلفة ($):</label>
+                        <input type="number" step="0.01" id="prodCostUSD" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>المبيع مفرق ($):</label>
+                        <input type="number" step="0.01" id="prodPriceUSD" class="form-control">
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="form-group">
+                        <label>سعر الجملة ($):</label>
+                        <input type="number" step="0.01" id="prodWholesaleUSD" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>الكمية المتوفرة:</label>
+                        <input type="number" id="prodStock" class="form-control" value="10">
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="form-group">
+                        <label>تنبيه النواقص عند الكمية:</label>
+                        <input type="number" id="prodAlertLimit" class="form-control" value="2">
+                    </div>
+                    <div class="form-group">
+                        <label>نسبة النقاط (%):</label>
+                        <input type="number" step="0.1" id="prodPointsPct" class="form-control" value="2">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>التصنيف:</label>
+                    <select id="prodCategory" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                    <label>صورة المنتج:</label>
+                    <input type="file" id="prodImageInput" accept="image/*" class="form-control">
+                </div>
+                <button onclick="saveProduct()" class="btn" style="margin-bottom: 12px; background:var(--success-color); color:#000;">💾 حفظ وإضافة الصنف</button>
+            </div>
+
+            <!-- 3. إدارة المنتجات القائمة -->
+            <div id="productsTab" class="admin-tab" style="display: none;">
+                <h4 style="color: var(--gold-color); margin: 0 0 6px 0;">📋 قائمة المنتجات والتعليقات</h4>
+                <input type="text" id="adminSearchProd" class="search-box" placeholder="🔍 ابحث عن منتج لتعديله أو حذف تعليقاته..." oninput="renderAdminProducts()" style="margin-bottom: 8px; font-size: 11px;">
+                <div id="adminProductsList"></div>
+
+                <hr style="border-color: var(--border-color); margin: 15px 0;">
+                <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">🔥 إعداد العرض الخاص</h4>
+                <div class="form-group">
+                    <label>اسم العرض:</label>
+                    <input type="text" id="soName" class="form-control">
+                </div>
+                <div class="stats-grid">
+                    <div class="form-group">
+                        <label>التكلفة ($):</label>
+                        <input type="number" step="0.01" id="soCostUSD" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>السعر القديم ($):</label>
+                        <input type="number" step="0.01" id="soOldPriceUSD" class="form-control">
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="form-group">
+                        <label>السعر الجديد ($):</label>
+                        <input type="number" step="0.01" id="soNewPriceUSD" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>الكمية:</label>
+                        <input type="number" id="soStock" class="form-control" value="5">
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="form-group">
+                        <label>جملة العرض ($):</label>
+                        <input type="number" step="0.01" id="soWholesaleUSD" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>نسبة النقاط (%):</label>
+                        <input type="number" step="0.1" id="soPointsPct" class="form-control" value="2">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>صورة العرض:</label>
+                    <input type="file" id="soImageInput" accept="image/*" class="form-control">
+                </div>
+                <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+                    <button onclick="saveSpecialOffer(true)" class="btn">✅ تفعيل العرض</button>
+                    <button onclick="saveSpecialOffer(false)" class="btn btn-danger">إيقاف</button>
+                </div>
+
+                <hr style="border-color: var(--border-color); margin: 15px 0;">
+                <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">📂 إدارة التصنيفات</h4>
+                <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                    <input type="text" id="newCatInput" class="form-control" placeholder="اسم تصنيف جديد...">
+                    <button onclick="addCategory()" class="btn" style="width: auto;">إضافة</button>
+                </div>
+                <div id="adminCategoriesList" style="margin-bottom: 12px;"></div>
+            </div>
+
+            <!-- 4. الزبائن -->
             <div id="customersTab" class="admin-tab" style="display: none;">
                 <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">👥 إدارة الزبائن وتصنيف (مفرق / جملة)</h4>
                 <input type="text" id="adminSearchCust" class="search-box" placeholder="🔍 ابحث عن زبون..." oninput="renderAdminCustomers()" style="margin-bottom: 8px;">
@@ -681,7 +782,7 @@
                 <button onclick="saveCompetitionSettings()" class="btn">💾 حفظ المسابقة</button>
             </div>
 
-            <!-- 3. الإعدادات -->
+            <!-- 5. الإعدادات -->
             <div id="settingsTab" class="admin-tab" style="display: none;">
                 <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">💳 إعدادات شام كاش والإدارة</h4>
                 <div class="form-group">
@@ -727,61 +828,7 @@
                 </div>
             </div>
 
-            <!-- 4. المنتجات -->
-            <div id="productsTab" class="admin-tab" style="display: none;">
-                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">➕ إضافة / تعديل منتج</h4>
-                <input type="hidden" id="editProductId">
-                <div class="form-group">
-                    <label>اسم المنتج:</label>
-                    <input type="text" id="prodName" class="form-control">
-                </div>
-                <div class="stats-grid">
-                    <div class="form-group">
-                        <label>التكلفة ($):</label>
-                        <input type="number" step="0.01" id="prodCostUSD" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label>المبيع مفرق ($):</label>
-                        <input type="number" step="0.01" id="prodPriceUSD" class="form-control">
-                    </div>
-                </div>
-                <div class="stats-grid">
-                    <div class="form-group">
-                        <label>سعر الجملة ($):</label>
-                        <input type="number" step="0.01" id="prodWholesaleUSD" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label>الكمية المتوفرة:</label>
-                        <input type="number" id="prodStock" class="form-control" value="10">
-                    </div>
-                </div>
-                <div class="stats-grid">
-                    <div class="form-group">
-                        <label>تنبيه النواقص عند الكمية:</label>
-                        <input type="number" id="prodAlertLimit" class="form-control" value="2">
-                    </div>
-                    <div class="form-group">
-                        <label>نسبة النقاط (%):</label>
-                        <input type="number" step="0.1" id="prodPointsPct" class="form-control" value="2">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>التصنيف:</label>
-                    <select id="prodCategory" class="form-control"></select>
-                </div>
-                <div class="form-group">
-                    <label>صورة المنتج:</label>
-                    <input type="file" id="prodImageInput" accept="image/*" class="form-control">
-                </div>
-                <button onclick="saveProduct()" class="btn" style="margin-bottom: 12px;">💾 حفظ المنتج</button>
-
-                <hr style="border-color: var(--border-color);">
-                <h4 style="color: var(--gold-color); margin: 10px 0 6px 0;">📋 المنتجات والتعليقات</h4>
-                <input type="text" id="adminSearchProd" class="search-box" placeholder="🔍 ابحث عن منتج..." oninput="renderAdminProducts()" style="margin-bottom: 8px; font-size: 11px;">
-                <div id="adminProductsList"></div>
-            </div>
-
-            <!-- 5. الجرد والأرباح (يومي، أسبوعي، شهري، إجمالي) -->
+            <!-- 6. الجرد والأرباح -->
             <div id="statsTab" class="admin-tab" style="display: none;">
                 <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">📊 التقارير المالية والجرد</h4>
                 
@@ -827,7 +874,7 @@
                 </div>
             </div>
 
-            <!-- 6. النواقص -->
+            <!-- 7. النواقص -->
             <div id="shortagesTab" class="admin-tab" style="display: none;">
                 <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">⚠️ المنتجات الناقصة</h4>
                 <div id="shortagesList" style="margin-bottom: 12px;"></div>
@@ -864,7 +911,6 @@
         let users = {};
         let pendingOrders = {};
         let completedOrdersHistory = {};
-        let statsData = {};
         let compSettings = {
             minRedeemPoints: 500,
             leaderboardLimit: 10,
@@ -915,7 +961,7 @@
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
             } else {
-                alert("📱 لتثبيت التطبيق على هاتفك:\nاضغط على قائمة المتصفح (النقاط الثلاث في أعلى المتصفح) ثم اختر 'إضافة إلى الشاشة الرئيسية' (Add to Home screen).");
+                alert("📱 لتثبيت التطبيق:\nاضغط على النقاط الثلاث في أعلى المتصفح ثم اختر 'إضافة إلى الشاشة الرئيسية'.");
             }
         }
 
@@ -924,14 +970,12 @@
             return Math.round((num * exchangeRate) / 5) * 5;
         }
 
-        // ضغط مزدوج لتوليد نسخة مصغرة خفيفة للغاية ونسخة واضحة
         function compressDualImages(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const img = new Image();
                     img.onload = () => {
-                        // 1. نسخة مصغرة جداً لتحميل فوري على الشبكات الضعيفة
                         const canvasThumb = document.createElement("canvas");
                         let w1 = img.width, h1 = img.height;
                         const maxW1 = 70;
@@ -940,7 +984,6 @@
                         canvasThumb.getContext("2d").drawImage(img, 0, 0, w1, h1);
                         const thumbBase64 = canvasThumb.toDataURL("image/jpeg", 0.3);
 
-                        // 2. نسخة رئيسية واضحة ومضغوطة
                         const canvasMain = document.createElement("canvas");
                         let w2 = img.width, h2 = img.height;
                         const maxW2 = 320;
@@ -959,14 +1002,12 @@
             });
         }
 
-        // تحميل متدرج: تظهر الدقة المنخفضة فوراً وتترقى للدقة العالية تدريجياً
         function progressiveImageLoad(imgElement, highSrc) {
             if (!highSrc) return;
             const tempImg = new Image();
             tempImg.src = highSrc;
             tempImg.onload = () => {
                 imgElement.src = highSrc;
-                imgElement.classList.add("loaded");
             };
         }
 
@@ -1995,7 +2036,9 @@
             document.getElementById("prodAlertLimit").value = p.alertLimit || 2;
             document.getElementById("prodPointsPct").value = p.pointsPct || 2;
             document.getElementById("prodCategory").value = p.category || "";
-            document.getElementById("productsTab").scrollIntoView({ behavior: "smooth" });
+            
+            // فتح تبويب "إضافة صنف جديد" للتعديل بسهولة
+            switchAdminTab('addProductTab', document.querySelector("button[onclick*='addProductTab']"));
         }
 
         function deleteProduct(id) {
