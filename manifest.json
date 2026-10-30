@@ -1,11 +1,8 @@
 {
   "name": "متجر معاذ - العوينة",
   "short_name": "متجر معاذ",
-  "id": "./index.html",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "index.html",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#121212",
   "theme_color": "#121212",
   "description": "متجر معاذ في قرية العوينة بريف حماة",
