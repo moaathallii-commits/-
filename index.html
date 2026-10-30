@@ -3,14 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="google" content="notranslate">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>متجر معاذ - قرية العوينة</title>
     
+    <!-- وسوم تطبيق الويب التقدمي المتقدمة (PWA Standalone) -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#121212" id="themeColorMeta">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="متجر معاذ">
     <link rel="apple-touch-icon" href="store-icon.png">
     
-    <!-- مكتبات Firebase -->
+    <!-- مكتبات Firebase المتوافقة -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
@@ -44,6 +49,9 @@
             padding: 0;
             -webkit-tap-highlight-color: transparent;
             transition: background-color 0.3s, color 0.3s;
+            overscroll-behavior-y: contain;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         header {
@@ -391,7 +399,7 @@
             <p>قرية العوينة | <span id="headerPhoneText">0965461504</span> 📱</p>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
-            <button id="mainInstallAppBtn" onclick="installAppDirectly()" class="btn" style="width:auto; padding:6px 10px; font-size:11px; background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; font-weight:bold; border-radius:15px; animation: pulse 2s infinite;">📲 تثبيت التطبيق</button>
+            <button id="mainInstallAppBtn" onclick="installAppDirectly()" class="btn" style="width:auto; padding:6px 10px; font-size:11px; background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; font-weight:bold; border-radius:15px; animation: pulse 2s infinite; display:none;">📲 تثبيت التطبيق</button>
             <div class="logo-circle" id="adminTrigger">
                 <img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'">
             </div>
@@ -984,6 +992,11 @@
 
     <!-- كود الجافاسكربت الشامل -->
     <script>
+        // تسجيل Service Worker الخاص بـ PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+
         // الثوابت الأساسية
         let adminWhatsAppNumber = "963965461504";
         let shamWalletIdGlobal = "da3e13cd8a2ef2af282445e148df9599";
@@ -1036,41 +1049,53 @@
 
         let currentUser = JSON.parse(localStorage.getItem("moaath_user") || "null");
 
-        // 1. نظام التثبيت المباشر الفوري (تجاوز الشرح النصي نهائياً)
+        // 1. نظام التثبيت المباشر الفوري وتجاوز النوافذ التوجيهية
         let deferredPrompt = null;
+        const installBtn = document.getElementById("mainInstallAppBtn");
+
+        function isAppStandalone() {
+            return (
+                window.matchMedia("(display-mode: standalone)").matches ||
+                window.navigator.standalone === true ||
+                document.referrer.includes('android-app://')
+            );
+        }
+
         window.addEventListener("beforeinstallprompt", (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            const btn = document.getElementById("mainInstallAppBtn");
-            if (btn) btn.style.display = "inline-block";
+            if (installBtn && !isAppStandalone()) {
+                installBtn.style.display = "inline-block";
+            }
         });
 
-        function installAppDirectly() {
+        async function installAppDirectly() {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === "accepted") {
-                        const btn = document.getElementById("mainInstallAppBtn");
-                        if (btn) btn.style.display = "none";
-                    }
-                    deferredPrompt = null;
-                }).catch(() => {});
+                const choiceResult = await deferredPrompt.userChoice;
+                if (choiceResult.outcome === "accepted") {
+                    if (installBtn) installBtn.style.display = "none";
+                }
+                deferredPrompt = null;
             } else {
-                if (window.matchMedia("(display-mode: standalone)").matches) {
-                    const btn = document.getElementById("mainInstallAppBtn");
-                    if (btn) btn.style.display = "none";
+                if (isAppStandalone()) {
+                    if (installBtn) installBtn.style.display = "none";
                 }
             }
         }
 
-        window.addEventListener("DOMContentLoaded", () => {
-            if (window.matchMedia("(display-mode: standalone)").matches) {
-                const btn = document.getElementById("mainInstallAppBtn");
-                if (btn) btn.style.display = "none";
+        window.addEventListener("appinstalled", () => {
+            if (installBtn) installBtn.style.display = "none";
+            deferredPrompt = null;
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (isAppStandalone() && installBtn) {
+                installBtn.style.display = "none";
             }
         });
 
-        // 2. نظام حماية زر الرجوع لمنع الخروج المفاجئ وإظهار رسالة التأكيد
+        // 2. نظام حماية زر الرجوع لمنع الخروج المفاجئ وطلب التأكيد
         let isExitingApp = false;
         function setupBackButtonProtection() {
             history.pushState({ page: 'store_home' }, '');
@@ -1078,7 +1103,7 @@
             window.addEventListener('popstate', () => {
                 if (isExitingApp) return;
 
-                // أولاً: إغلاق أي نافذة منبثقة مفتوحة
+                // أولاً: فحص وإغلاق النوافذ المنبثقة
                 const openModals = [
                     'cartModal', 'profileModal', 'adminModal', 
                     'reviewModal', 'missingModal', 'adminEditCustomerModal'
@@ -1092,7 +1117,7 @@
                     }
                 }
 
-                // ثانياً: إغلاق صفحة المسابقات
+                // ثانياً: فحص وإغلاق صفحة المسابقات
                 const openPages = ['competitionsPage'];
                 for (let id of openPages) {
                     const el = document.getElementById(id);
@@ -1103,7 +1128,7 @@
                     }
                 }
 
-                // ثالثاً: عند التواجد في الشاشة الرئيسية للمتجر يُطلب تأكيد الخروج
+                // ثالثاً: عند الشاشة الرئيسية يتم إظهار رسالة التأكيد
                 const confirmClose = confirm("هل تريد إغلاق التطبيق بالفعل؟");
                 if (confirmClose) {
                     isExitingApp = true;
@@ -1115,7 +1140,7 @@
         }
         window.addEventListener('load', setupBackButtonProtection);
 
-        // فحص ساعات العمل العامة والخاصة
+        // فحص ساعات العمل العامة وساعات المنطقة المحددة
         function isRegionOpenNow(regionName) {
             const regData = deliveryFees[regionName];
             const now = new Date();
@@ -1365,10 +1390,7 @@
             const fee = parseInt(document.getElementById("newRegionFeeInput").value) || 0;
             const driverPct = Math.min(100, Math.max(0, parseFloat(document.getElementById("newRegionDriverPctInput").value) || 80));
 
-            if (!name) {
-                alert("⚠️ يرجى إدخال اسم المنطقة أو القرية أولاً.");
-                return;
-            }
+            if (!name) return alert("⚠️ يرجى إدخال اسم المنطقة أو القرية أولاً.");
 
             collectDeliveryRegionsFromDOM();
 
@@ -1392,10 +1414,7 @@
 
         function removeDeliveryRegion(idx) {
             const regionNames = Object.keys(deliveryFees);
-            if (regionNames.length <= 1) {
-                alert("⚠️ يجب بقاء منطقة توصيل واحدة على الأقل.");
-                return;
-            }
+            if (regionNames.length <= 1) return alert("⚠️ يجب بقاء منطقة توصيل واحدة على الأقل.");
             const targetReg = regionNames[idx];
             if (!confirm(`هل أنت متأكد من حذف منطقة (${targetReg})؟`)) return;
 
@@ -1454,7 +1473,7 @@
             renderStore();
         });
 
-        // مزامنة المنتجات والتصنيفات والعروض
+        // مزامنة الأصناف والتصنيفات والعروض
         db.ref("categories").on("value", (snap) => {
             const data = snap.val() || ["مواد غذائية", "منظفات", "مشروبات"];
             categories = ["الكل", ...data];
@@ -1584,20 +1603,17 @@
 
             if (!validatePhoneSyrian(phone)) {
                 phoneErrEl.style.display = "block";
-                alert("⚠️ تنبيه: يجب أن يتكون رقم الهاتف من 10 خانات ويبدأ بـ 09 حصراً.");
-                return;
+                return alert("⚠️ تنبيه: يجب أن يتكون رقم الهاتف من 10 خانات ويبدأ بـ 09 حصراً.");
             }
             phoneErrEl.style.display = "none";
 
             if (!name || !region || !address) {
-                alert("⚠️ يرجى إدخال الاسم، المنطقة، وتفاصيل العنوان.");
-                return;
+                return alert("⚠️ يرجى إدخال الاسم، المنطقة، وتفاصيل العنوان.");
             }
 
             const existingUser = users[phone] || {};
             if (existingUser.banned) {
-                alert("🚫 عذراً، هذا الحساب محظور.");
-                return;
+                return alert("🚫 عذراً، هذا الحساب محظور.");
             }
 
             currentUser = {
@@ -1883,8 +1899,7 @@
             const newQty = currentQty + delta;
 
             if (newQty > itemData.stock) {
-                alert("⚠️ الكمية المطلوبة غير متوفرة بالكامل بالمخزون!");
-                return;
+                return alert("⚠️ الكمية المطلوبة غير متوفرة بالكامل بالمخزون!");
             }
 
             if (newQty <= 0) {
@@ -1932,13 +1947,11 @@
             const currentReg = (currentUser && currentUser.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : defaultReg;
             
             if (!isRegionOpenNow(currentReg)) {
-                alert(`⚠️ نعتذر منكم، خدمة التوصيل لمنطقة (${currentReg}) مغلقة حالياً حسب جدول دوامها.`);
-                return;
+                return alert(`⚠️ نعتذر منكم، خدمة التوصيل لمنطقة (${currentReg}) مغلقة حالياً حسب جدول دوامها.`);
             }
 
             if (!currentUser || !currentUser.phone || !currentUser.region) {
-                openEditProfile();
-                return;
+                return openEditProfile();
             }
             populateRegionSelects();
             document.getElementById("cartRegionSelect").value = currentReg;
@@ -1984,8 +1997,7 @@
 
             const items = Object.values(cart);
             if (items.length === 0) {
-                closeCartModal();
-                return;
+                return closeCartModal();
             }
 
             list.innerHTML = items.map(item => {
@@ -2025,20 +2037,17 @@
             if (!checkStoreWorkHours()) return;
             if (!currentUser || !currentUser.phone || !currentUser.name || !currentUser.address) {
                 closeCartModal();
-                openEditProfile();
-                return;
+                return openEditProfile();
             }
 
             const defaultReg = Object.keys(deliveryFees)[0] || "العوينة";
             const selectedRegion = document.getElementById("cartRegionSelect").value || currentUser.region || defaultReg;
             if (!isRegionOpenNow(selectedRegion)) {
-                alert(`⚠️ عذراً، أوقات التوصيل لمنطقة (${selectedRegion}) مغلقة حالياً.`);
-                return;
+                return alert(`⚠️ عذراً، أوقات التوصيل لمنطقة (${selectedRegion}) مغلقة حالياً.`);
             }
 
             if (users[currentUser.phone] && users[currentUser.phone].banned) {
-                alert("🚫 عذراً، حسابك محظور.");
-                return;
+                return alert("🚫 عذراً، حسابك محظور.");
             }
 
             const items = Object.values(cart);
@@ -2716,8 +2725,7 @@
             const fileInput = document.getElementById("prodImageInput");
 
             if (!name || priceUSD <= 0) {
-                alert("يرجى إدخال اسم الصنف وسعر المبيع.");
-                return;
+                return alert("يرجى إدخال اسم الصنف وسعر المبيع.");
             }
 
             const id = editId || ("PROD_" + Date.now());
