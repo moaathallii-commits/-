@@ -122,7 +122,7 @@
             border: 1px solid var(--gold-color);
             border-radius: 8px;
             padding: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             display: flex;
             gap: 12px;
             align-items: center;
@@ -346,12 +346,6 @@
             font-size: 12px;
             margin: 12px 0;
         }
-        input[type="file"] {
-            padding: 6px;
-            background: var(--bg-color);
-            font-size: 11px;
-            color: var(--text-color);
-        }
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -409,6 +403,20 @@
             justify-content: space-between;
             align-items: center;
         }
+        /* شاشة إغلاق المتجر خارج أوقات العمل */
+        #storeClosedOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(18, 18, 18, 0.96);
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
         @keyframes pulse {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
             70% { transform: scale(1.04); box-shadow: 0 0 0 8px rgba(0, 230, 118, 0); }
@@ -418,13 +426,27 @@
 </head>
 <body>
 
+    <!-- شاشة الإغلاق التلقائي خارج أوقات العمل -->
+    <div id="storeClosedOverlay">
+        <div style="font-size: 55px; margin-bottom: 10px;">🌙</div>
+        <h2 style="color: var(--gold-color); margin: 0 0 10px 0;">المتجر مغلق حالياً</h2>
+        <p id="closedMessageText" style="font-size: 14px; color: var(--text-color); max-width: 320px; line-height: 1.6;"></p>
+        <div style="margin-top: 15px; font-size: 12px; color: var(--gray-text);">متجر معاذ - قرية العوينة بريف حماة 🌸</div>
+        <div class="logo-circle" id="closedAdminTrigger" style="margin-top: 25px; opacity: 0.8;">
+            <img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'">
+        </div>
+    </div>
+
     <header>
         <div class="store-info" onclick="window.open('https://wa.me/' + adminWhatsAppNumber, '_blank')">
             <h1>متجر معاذ</h1>
             <p>قرية العوينة | <span id="headerPhoneText">0965461504</span> 📱</p>
         </div>
-        <div class="logo-circle" id="adminTrigger">
-            <img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'">
+        <div style="display:flex; align-items:center; gap:8px;">
+            <button id="mainInstallAppBtn" onclick="installAppDirectly()" class="btn" style="width:auto; padding:6px 10px; font-size:11px; background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; font-weight:bold; border-radius:15px; animation: pulse 2s infinite;">📲 تحميل التطبيق</button>
+            <div class="logo-circle" id="adminTrigger">
+                <img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'">
+            </div>
         </div>
     </header>
 
@@ -439,7 +461,6 @@
         <div style="display:flex; gap:6px; align-items:center;">
             <button id="redeemPointsBtn" onclick="redeemPointsWhatsApp()" style="display:none; background:linear-gradient(45deg, #D4AF37, #FFD700); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer; animation: pulse 1.5s infinite;">🎁 النقاط</button>
             <button onclick="toggleTheme()" id="themeBtn" style="background:transparent; border:none; font-size:16px; cursor:pointer; padding:0;">☀️</button>
-            <button id="installBtn" onclick="installApp()" style="display:none; background:#25d366; color:#000; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer; box-shadow:0 0 5px rgba(37,211,102,0.5);">تثبيت 📱</button>
             <span class="points-badge" onclick="openCompetitionsPage()">
                 🎁 نقاطي: <b id="userPoints">0</b>
             </span>
@@ -447,20 +468,8 @@
     </div>
 
     <div class="container">
-        <div id="specialOfferContainer" class="special-offer-banner" style="display: none;">
-            <div class="special-offer-img-wrap">
-                <img id="soDisplayImg" src="store-icon.png" class="special-offer-img img-high-res">
-            </div>
-            <div style="flex:1;">
-                <h3 style="color:var(--gold-color); font-size:14px; margin:0 0 4px 0;">🔥 عرض خاص!</h3>
-                <div id="soDisplayName" style="font-size:12px; margin-bottom:4px; font-weight:bold;"></div>
-                <div style="font-size:12px; margin-bottom:6px;">
-                    <s id="soDisplayOldPrice" style="color:#ff4444; margin-left:5px;"></s>
-                    <strong id="soDisplayPrice" style="color:var(--success-color); font-size:14px;"></strong>
-                </div>
-                <div id="soActionContainer" style="margin-top: 5px;"></div>
-            </div>
-        </div>
+        <!-- حاوية العروض الخاصة المتعددة -->
+        <div id="multipleOffersContainer"></div>
 
         <input type="text" id="searchInput" class="search-box" placeholder="🔍 ابحث عن أي منتج..." oninput="filterProducts()">
         <div class="categories" id="categoriesContainer"></div>
@@ -509,19 +518,20 @@
         </div>
     </div>
 
-    <!-- نافذة تسجيل / تعديل بيانات الزبون -->
+    <!-- نافذة تسجيل / تعديل بيانات الزبون (تحقق من 09XXXXXXXX) -->
     <div id="profileModal" class="modal-overlay">
         <div class="modal-content">
-            <h3 style="color: var(--gold-color); margin-top: 0; text-align: center;">👤 تسجيل بيانات التواصل والتوصيل</h3>
-            <p style="font-size: 11px; color: var(--gray-text); text-align: center; margin-top: -6px;">يرجى إدخال معلوماتك بدقة لضمان وصول طلباتك وحفظ نقاطك</p>
+            <h3 style="color: var(--gold-color); margin-top: 0; text-align: center;">👤 تسجيل بيانات الزبون للتوصيل والنقاط</h3>
+            <p style="font-size: 11px; color: var(--gray-text); text-align: center; margin-top: -6px;">يرجى إدخال رقم الهاتف بصيغة 09 مكوناً من 10 خانات تماماً</p>
             
             <div class="form-group">
                 <label>الاسم الثلاثي أو الكامل:</label>
                 <input type="text" id="regName" class="form-control" placeholder="مثال: أحمد محمد العلي">
             </div>
             <div class="form-group">
-                <label>رقم الهاتف للتواصل (واتساب):</label>
-                <input type="tel" id="regPhone" class="form-control" placeholder="مثال: 09XXXXXXXX">
+                <label>رقم الهاتف للتواصل والطلب (10 خانات تبدأ بـ 09):</label>
+                <input type="tel" id="regPhone" class="form-control" placeholder="09XXXXXXXX" maxlength="10">
+                <small id="regPhoneError" style="color:var(--danger-color); font-size:11px; display:none;">⚠️ يجب أن يتكون الرقم من 10 خانات ويبدأ بـ 09</small>
             </div>
             <div class="form-group">
                 <label>المنطقة / القرية:</label>
@@ -548,9 +558,7 @@
         <div class="modal-content">
             <h3 style="color: var(--gold-color); margin-top: 0; text-align: center;">⭐ تقييم وتعليق على المنتج</h3>
             <div id="reviewProductName" style="font-weight: bold; font-size: 13px; text-align: center; margin-bottom: 12px; color: var(--text-color);"></div>
-            
             <input type="hidden" id="reviewProductId">
-            
             <div class="form-group">
                 <label>التقييم بالنجوم:</label>
                 <select id="reviewRatingSelect" class="form-control">
@@ -561,12 +569,10 @@
                     <option value="1">⭐ (1/5 ضعيف)</option>
                 </select>
             </div>
-
             <div class="form-group">
                 <label>تعليقك على المنتج (بعد الشراء والتجربة):</label>
                 <textarea id="reviewCommentInput" class="form-control" rows="3" placeholder="اكتب رأيك الصادق بالمنتج..."></textarea>
             </div>
-
             <button onclick="submitProductReview()" class="btn" style="margin-bottom: 8px;">💾 إرسال التقييم</button>
             <button onclick="closeReviewModal()" class="btn btn-danger">إغلاق</button>
         </div>
@@ -672,9 +678,10 @@
             <div class="categories" style="margin-bottom: 12px;">
                 <button class="cat-btn active" onclick="switchAdminTab('ordersTab', this)">📦 الطلبات (<span id="pendingCountBadge">0</span>)</button>
                 <button class="cat-btn" onclick="switchAdminTab('addProductTab', this)">➕ إضافة صنف جديد</button>
+                <button class="cat-btn" onclick="switchAdminTab('offersTab', this)">🔥 إدارة العروض الخاصة</button>
                 <button class="cat-btn" onclick="switchAdminTab('productsTab', this)">🛍️ إدارة المنتجات</button>
                 <button class="cat-btn" onclick="switchAdminTab('customersTab', this)">👥 الزبائن</button>
-                <button class="cat-btn" onclick="switchAdminTab('settingsTab', this)">🛵 الإعدادات والتوصيل</button>
+                <button class="cat-btn" onclick="switchAdminTab('settingsTab', this)">🛵 الإعدادات والتوصيل والدوام</button>
                 <button class="cat-btn" onclick="switchAdminTab('statsTab', this)">📊 الجرد والأرباح</button>
                 <button class="cat-btn" onclick="switchAdminTab('shortagesTab', this)">⚠️ النواقص</button>
             </div>
@@ -734,56 +741,62 @@
                 <button onclick="saveProduct()" class="btn" style="margin-bottom: 12px; background:var(--success-color); color:#000;">💾 حفظ الصنف</button>
             </div>
 
-            <!-- 3. إدارة المنتجات القائمة -->
-            <div id="productsTab" class="admin-tab" style="display: none;">
-                <h4 style="color: var(--gold-color); margin: 0 0 6px 0;">📋 قائمة المنتجات والتعليقات</h4>
-                <input type="text" id="adminSearchProd" class="search-box" placeholder="🔍 ابحث عن منتج لتعديله أو تصفير مبيعاته..." oninput="renderAdminProducts()" style="margin-bottom: 8px; font-size: 11px;">
-                <div id="adminProductsList"></div>
-
-                <hr style="border-color: var(--border-color); margin: 15px 0;">
-                <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">🔥 إعداد العرض الخاص</h4>
+            <!-- تبويب جديد: إدارة عروض متعددة معاً -->
+            <div id="offersTab" class="admin-tab" style="display: none;">
+                <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">🔥 إدارة العروض الخاصة المتعددة</h4>
+                <input type="hidden" id="editOfferId">
                 <div class="form-group">
                     <label>اسم العرض:</label>
-                    <input type="text" id="soName" class="form-control">
+                    <input type="text" id="offerNameInput" class="form-control" placeholder="مثال: بكج توفير المتة والقهوة">
                 </div>
                 <div class="stats-grid">
                     <div class="form-group">
                         <label>التكلفة ($):</label>
-                        <input type="number" step="0.01" id="soCostUSD" class="form-control">
+                        <input type="number" step="0.01" id="offerCostInput" class="form-control">
                     </div>
                     <div class="form-group">
                         <label>السعر القديم ($):</label>
-                        <input type="number" step="0.01" id="soOldPriceUSD" class="form-control">
+                        <input type="number" step="0.01" id="offerOldPriceInput" class="form-control">
                     </div>
                 </div>
                 <div class="stats-grid">
                     <div class="form-group">
                         <label>السعر الجديد ($):</label>
-                        <input type="number" step="0.01" id="soNewPriceUSD" class="form-control">
+                        <input type="number" step="0.01" id="offerNewPriceInput" class="form-control">
                     </div>
                     <div class="form-group">
-                        <label>الكمية:</label>
-                        <input type="number" id="soStock" class="form-control" value="5">
+                        <label>سعر الجملة ($):</label>
+                        <input type="number" step="0.01" id="offerWholesaleInput" class="form-control">
                     </div>
                 </div>
                 <div class="stats-grid">
                     <div class="form-group">
-                        <label>جملة العرض ($):</label>
-                        <input type="number" step="0.01" id="soWholesaleUSD" class="form-control">
+                        <label>الكمية المتوفرة:</label>
+                        <input type="number" id="offerStockInput" class="form-control" value="5">
                     </div>
                     <div class="form-group">
                         <label>نسبة النقاط (%):</label>
-                        <input type="number" step="0.1" id="soPointsPct" class="form-control" value="2">
+                        <input type="number" step="0.1" id="offerPointsPctInput" class="form-control" value="2">
                     </div>
                 </div>
                 <div class="form-group">
                     <label>صورة العرض:</label>
-                    <input type="file" id="soImageInput" accept="image/*" class="form-control">
+                    <input type="file" id="offerImageInput" accept="image/*" class="form-control">
                 </div>
-                <div style="display: flex; gap: 6px; margin-bottom: 12px;">
-                    <button onclick="saveSpecialOffer(true)" class="btn">✅ تفعيل العرض</button>
-                    <button onclick="saveSpecialOffer(false)" class="btn btn-danger">إيقاف</button>
+                <div style="display:flex; gap:6px; margin-bottom:12px;">
+                    <button onclick="saveMultipleOffer()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ / إضافة العرض</button>
+                    <button onclick="clearOfferForm()" class="btn btn-danger" style="width:auto;">إلغاء</button>
                 </div>
+                <hr style="border-color: var(--border-color); margin: 10px 0;">
+                <h5 style="color: var(--gold-color); margin: 6px 0;">📋 قائمة العروض الفعالة الحالية</h5>
+                <div id="adminOffersList"></div>
+            </div>
+
+            <!-- 3. إدارة المنتجات القائمة -->
+            <div id="productsTab" class="admin-tab" style="display: none;">
+                <h4 style="color: var(--gold-color); margin: 0 0 6px 0;">📋 قائمة المنتجات والتعليقات</h4>
+                <input type="text" id="adminSearchProd" class="search-box" placeholder="🔍 ابحث عن منتج لتعديله أو تصفير مبيعاته..." oninput="renderAdminProducts()" style="margin-bottom: 8px; font-size: 11px;">
+                <div id="adminProductsList"></div>
 
                 <hr style="border-color: var(--border-color); margin: 15px 0;">
                 <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">📂 إدارة التصنيفات</h4>
@@ -827,7 +840,7 @@
                 <button onclick="saveCompetitionSettings()" class="btn">💾 حفظ المسابقة</button>
             </div>
 
-            <!-- 5. الإعدادات ومناطق التوصيل -->
+            <!-- 5. الإعدادات، التوصيل، وساعات العمل -->
             <div id="settingsTab" class="admin-tab" style="display: none;">
                 <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">💳 إعدادات شام كاش والإدارة</h4>
                 <div class="form-group">
@@ -840,12 +853,29 @@
                 </div>
 
                 <hr style="border-color: var(--border-color);">
-                <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">🛵 إدارة مناطق وتكلفة التوصيل (ل.س)</h4>
+                <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">⏰ ساعات العمل والدوام للمتجر</h4>
+                <div class="form-group" style="display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" id="workHoursEnabled" style="width:18px; height:18px;">
+                    <label for="workHoursEnabled" style="margin:0; cursor:pointer; font-weight:bold; color:var(--text-color);">تفعيل التحقق من ساعات العمل وإغلاق المتجر آلياً</label>
+                </div>
+                <div class="stats-grid">
+                    <div class="form-group">
+                        <label>من الساعة (فتح المتجر):</label>
+                        <input type="time" id="workHourOpen" class="form-control" value="08:00">
+                    </div>
+                    <div class="form-group">
+                        <label>إلى الساعة (إغلاق المتجر):</label>
+                        <input type="time" id="workHourClose" class="form-control" value="23:00">
+                    </div>
+                </div>
+
+                <hr style="border-color: var(--border-color);">
+                <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">🛵 إدارة مناطق التوصيل وخيار "جيران المتجر"</h4>
                 
                 <div style="background: var(--bg-color); border: 1px dashed var(--gold-color); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                    <label style="font-size: 11px; color: var(--gold-color); display: block; margin-bottom: 6px; font-weight: bold;">➕ إضافة مكان / منطقة توصيل جديدة:</label>
+                    <label style="font-size: 11px; color: var(--gold-color); display: block; margin-bottom: 6px; font-weight: bold;">➕ إضافة مكان أو منطقة توصيل جديدة:</label>
                     <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                        <input type="text" id="newRegionNameInput" class="form-control" placeholder="اسم القرية / المنطقة..." style="flex: 2; min-width: 130px;">
+                        <input type="text" id="newRegionNameInput" class="form-control" placeholder="اسم المنطقة أو القرية..." style="flex: 2; min-width: 130px;">
                         <input type="number" id="newRegionFeeInput" class="form-control" placeholder="التكلفة (ل.س)" style="flex: 1; min-width: 90px;" value="5000">
                         <button type="button" onclick="addDeliveryRegion()" class="btn" style="width: auto; background: var(--success-color); color: #000; padding: 8px 12px;">إضافة</button>
                     </div>
@@ -862,7 +892,7 @@
                     <label>رقم واتساب عامل التوصيل:</label>
                     <input type="text" id="deliveryPhoneInput" class="form-control">
                 </div>
-                <button onclick="saveGeneralSettings()" class="btn" style="margin-bottom: 15px;">💾 حفظ جميع الإعدادات وأسعار التوصيل</button>
+                <button onclick="saveGeneralSettings()" class="btn" style="margin-bottom: 15px;">💾 حفظ جميع الإعدادات والتوصيل والدوام</button>
 
                 <hr style="border-color: var(--border-color);">
                 <button onclick="exportBackupJSON()" class="btn" style="margin-bottom: 10px;">⬇️ تصدير نسخة احتياطية (.json)</button>
@@ -872,7 +902,7 @@
                 </div>
             </div>
 
-            <!-- 6. الجرد والأرباح (مع إحصائيات عدد المنتجات والنافد وتصفير المبيعات) -->
+            <!-- 6. الجرد والأرباح (مع عدد الزبائن والمنتجات والنافد) -->
             <div id="statsTab" class="admin-tab" style="display: none;">
                 <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">📊 التقارير المالية وجرد الأرباح</h4>
                 
@@ -913,8 +943,16 @@
                     </div>
                 </div>
 
-                <h4 style="color: var(--gold-color); margin: 12px 0 8px 0;">🏦 تقييم المخزون وإحصائيات الأصناف</h4>
+                <h4 style="color: var(--gold-color); margin: 12px 0 8px 0;">🏦 إحصائيات الزبائن والمخزون والأصناف</h4>
                 <div class="stats-grid">
+                    <div class="stats-box">
+                        <div style="font-size: 11px; color: var(--gray-text);">👥 الزبائن المسجلين</div>
+                        <div class="stats-value" id="statRegisteredUsersCount" style="color:#00b0ff;">0 زبون</div>
+                    </div>
+                    <div class="stats-box">
+                        <div style="font-size: 11px; color: var(--gray-text);">إجمالي عدد المنتجات</div>
+                        <div class="stats-value" id="invTotalProductsCount">0 منتج</div>
+                    </div>
                     <div class="stats-box">
                         <div style="font-size: 11px; color: var(--gray-text);">رأس المال بالتكلفة</div>
                         <div class="stats-value" id="invTotalCost">0 ل.س</div>
@@ -923,11 +961,7 @@
                         <div style="font-size: 11px; color: var(--gray-text);">قيمة المخزون بالمبيع</div>
                         <div class="stats-value" id="invTotalSale">0 ل.س</div>
                     </div>
-                    <div class="stats-box">
-                        <div style="font-size: 11px; color: var(--gray-text);">إجمالي عدد المنتجات</div>
-                        <div class="stats-value" id="invTotalProductsCount">0 منتج</div>
-                    </div>
-                    <div class="stats-box">
+                    <div class="stats-box" style="grid-column: span 2;">
                         <div style="font-size: 11px; color: var(--gray-text);">غير متوفر (نفدت الكمية)</div>
                         <div class="stats-value" style="color: var(--danger-color);" id="invOutOfStockCount">0 منتج</div>
                     </div>
@@ -968,18 +1002,24 @@
         let exchangeRate = 15000;
         let deliveryDriverPhone = "";
         let deliveryFees = {
+            "العوينة (جيران المتجر)": 0,
             "العوينة": 0,
             "المزرعة الشرقية ( الريحانية )": 5000,
             "المزرعة الغربية": 5000
         };
+        let workHoursSettings = {
+            enabled: false,
+            open: "08:00",
+            close: "23:00"
+        };
+
         let categories = ["الكل"];
         let selectedCategory = "الكل";
         let products = {};
+        let specialOffers = {}; // دعم عروض متعددة معاً
         let highResImagesMemoryCache = {};
         let noHighResAvailableSet = {};
-        let specialOfferHighResLocked = "";
         let shuffledProductKeys = [];
-        let specialOffer = null;
         let cart = {};
         let users = {};
         let pendingOrders = {};
@@ -1002,6 +1042,64 @@
         } catch(e) {}
 
         let currentUser = JSON.parse(localStorage.getItem("moaath_user") || "null");
+
+        // زر تحميل التطبيق وإنشاء اختصار الشاشة الرئيسية
+        let deferredPrompt = null;
+        window.addEventListener("beforeinstallprompt", (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+
+        function installAppDirectly() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === "accepted") {
+                        localStorage.setItem("pwa_installed_once", "true");
+                    }
+                    deferredPrompt = null;
+                }).catch(() => {});
+            } else {
+                if (window.matchMedia("(display-mode: standalone)").matches) {
+                    alert("✅ التطبيق مثبت بالفعل كاختصار على شاشة جهازك بشعار المتجر!");
+                } else {
+                    alert("📱 لتنزيل التطبيق وإنشاء اختصار مباشر على الشاشة الرئيسية:\n\n1. اضغط على زر الخيارات (⋮) أعلى متصفح Chrome.\n2. اختر 'إضافة إلى الشاشة الرئيسية' أو 'تثبيت التطبيق'.\n3. سيظهر تطبيق متجر معاذ بأيقونته الرسمية مباشرة على هاتفك.");
+                }
+            }
+        }
+
+        // فحص ساعات العمل والتحكم بالإغلاق التلقائي
+        function checkStoreWorkHours() {
+            if (!workHoursSettings.enabled) {
+                document.getElementById("storeClosedOverlay").style.display = "none";
+                return true;
+            }
+            const now = new Date();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+            const [openH, openM] = (workHoursSettings.open || "08:00").split(":").map(Number);
+            const [closeH, closeM] = (workHoursSettings.close || "23:00").split(":").map(Number);
+            const openMinutes = openH * 60 + openM;
+            const closeMinutes = closeH * 60 + closeM;
+
+            let isOpen = false;
+            if (openMinutes <= closeMinutes) {
+                isOpen = currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+            } else {
+                isOpen = currentMinutes >= openMinutes || currentMinutes < closeMinutes;
+            }
+
+            const overlay = document.getElementById("storeClosedOverlay");
+            if (!isOpen) {
+                document.getElementById("closedMessageText").innerHTML = `نعتذر منكم، المتجر مغلق حالياً.<br>ساعات العمل واستقبال الطلبات من <b>${workHoursSettings.open}</b> إلى <b>${workHoursSettings.close}</b>.`;
+                overlay.style.display = "flex";
+                return false;
+            } else {
+                overlay.style.display = "none";
+                return true;
+            }
+        }
+        setInterval(checkStoreWorkHours, 60000);
 
         function getLockedHighResImage(prodId) {
             if (highResImagesMemoryCache[prodId]) {
@@ -1051,36 +1149,6 @@
             navigator.serviceWorker.register("sw.js").catch(() => {});
         }
 
-        let deferredPrompt = null;
-        window.addEventListener("beforeinstallprompt", (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            const btn = document.getElementById("installBtn");
-            if (btn && !window.matchMedia("(display-mode: standalone)").matches) {
-                btn.style.display = "inline-block";
-            }
-        });
-
-        function installApp() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === "accepted") {
-                        const btn = document.getElementById("installBtn");
-                        if (btn) btn.style.display = "none";
-                        localStorage.setItem("pwa_installed_once", "true");
-                    }
-                    deferredPrompt = null;
-                }).catch(() => {});
-            } else {
-                if (window.matchMedia("(display-mode: standalone)").matches) {
-                    alert("✅ التطبيق مثبت بالفعل على شاشة جهازك!");
-                } else {
-                    alert("📱 لتثبيت التطبيق:\nاضغط على خيارات المتصفح (⋮) بالأعلى ثم اختر 'إضافة إلى الشاشة الرئيسية'.");
-                }
-            }
-        }
-
         function calcSYP(usdPrice) {
             const num = parseFloat(usdPrice) || 0;
             return Math.round((num * exchangeRate) / 5) * 5;
@@ -1118,28 +1186,11 @@
             });
         }
 
-        function createMicroThumbFromBase64(base64Str) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement("canvas");
-                    let w = img.width, h = img.height;
-                    const maxW = 36;
-                    if (w > maxW) { h = Math.max(1, Math.round((h * maxW) / w)); w = maxW; }
-                    canvas.width = w; canvas.height = h;
-                    canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL("image/jpeg", 0.15));
-                };
-                img.onerror = () => resolve("");
-                img.src = base64Str;
-            });
-        }
-
         function populateRegionSelects() {
             const regionNames = Object.keys(deliveryFees);
             if (regionNames.length === 0) {
-                deliveryFees = { "العوينة": 0 };
-                regionNames.push("العوينة");
+                deliveryFees = { "العوينة (جيران المتجر)": 0, "العوينة": 0 };
+                regionNames.push("العوينة (جيران المتجر)", "العوينة");
             }
 
             const selects = ["regRegion", "cartRegionSelect", "adminCustRegion"];
@@ -1181,7 +1232,7 @@
             const fee = parseInt(feeInput.value) || 0;
 
             if (!name) {
-                alert("⚠️ يرجى كتابة اسم المنطقة أو القرية أولاً.");
+                alert("⚠️ يرجى كتابة اسم المنطقة أو تحديد (جيران المتجر).");
                 return;
             }
             document.querySelectorAll(".region-fee-input").forEach(inp => {
@@ -1193,7 +1244,7 @@
             nameInput.value = "";
             populateRegionSelects();
             db.ref("settings/deliveryFees").set(deliveryFees).then(() => {
-                alert(`✅ تمت إضافة منطقة "${name}" بتكلفة توصيل ${fee.toLocaleString()} ل.س`);
+                alert(`✅ تمت إضافة/تعديل منطقة "${name}" بتكلفة توصيل ${fee.toLocaleString()} ل.س`);
             });
         }
 
@@ -1211,12 +1262,25 @@
             db.ref("settings/deliveryFees").set(deliveryFees);
         }
 
+        // مزامنة إعدادات المتجر وساعات العمل
         db.ref("settings").on("value", (snap) => {
             const data = snap.val() || {};
             exchangeRate = parseFloat(data.exchangeRate) || 15000;
             deliveryDriverPhone = data.deliveryDriverPhone || "";
             adminWhatsAppNumber = data.adminWhatsApp || "963965461504";
             shamWalletIdGlobal = data.shamWalletId || "da3e13cd8a2ef2af282445e148df9599";
+
+            if (data.workHours) {
+                workHoursSettings = {
+                    enabled: !!data.workHours.enabled,
+                    open: data.workHours.open || "08:00",
+                    close: data.workHours.close || "23:00"
+                };
+            }
+            document.getElementById("workHoursEnabled").checked = workHoursSettings.enabled;
+            document.getElementById("workHourOpen").value = workHoursSettings.open;
+            document.getElementById("workHourClose").value = workHoursSettings.close;
+            checkStoreWorkHours();
 
             document.getElementById("headerPhoneText").textContent = adminWhatsAppNumber;
             document.getElementById("shamWalletId").textContent = shamWalletIdGlobal;
@@ -1230,7 +1294,6 @@
             }
 
             populateRegionSelects();
-
             document.getElementById("exchangeRateInput").value = exchangeRate;
             document.getElementById("deliveryPhoneInput").value = deliveryDriverPhone;
             document.getElementById("adminWhatsAppInput").value = adminWhatsAppNumber;
@@ -1249,20 +1312,6 @@
 
         db.ref("products").on("value", (snap) => {
             products = snap.val() || {};
-
-            try {
-                const lightProducts = {};
-                Object.keys(products).forEach(k => {
-                    const p = products[k];
-                    if (p.image && p.image.length > 100) {
-                        highResImagesMemoryCache[k] = p.image;
-                        try { localStorage.setItem("moaath_hi_img_" + k, p.image); } catch(e){}
-                    }
-                    lightProducts[k] = { ...p, image: "" };
-                });
-                localStorage.setItem("moaath_cached_products", JSON.stringify(lightProducts));
-            } catch(e){}
-            
             const currentKeys = Object.keys(products);
             if (shuffledProductKeys.length === 0) {
                 shuffledProductKeys = [...currentKeys].sort(() => Math.random() - 0.5);
@@ -1272,54 +1321,27 @@
                     if (!shuffledProductKeys.includes(k)) shuffledProductKeys.push(k);
                 });
             }
-
             renderStore();
             renderAdminProducts();
             renderShortages();
             renderStatsDashboard();
-            migrateLegacyInlineImagesOnce();
         });
 
-        let migrationDoneOnce = false;
-        async function migrateLegacyInlineImagesOnce() {
-            if (migrationDoneOnce) return;
-            migrationDoneOnce = true;
-
-            const multiUpdates = {};
-            let hasLegacy = false;
-
-            for (const id of Object.keys(products)) {
-                const p = products[id];
-                if (p && p.image && p.image.length > 5000) {
-                    hasLegacy = true;
-                    highResImagesMemoryCache[id] = p.image;
-                    try { localStorage.setItem("moaath_hi_img_" + id, p.image); } catch(e){}
-                    let microThumb = p.thumb || "";
-                    if (!microThumb || microThumb.length > 8000) {
-                        microThumb = await createMicroThumbFromBase64(p.image);
-                    }
-                    multiUpdates[`productImages/${id}`] = p.image;
-                    multiUpdates[`products/${id}/thumb`] = microThumb;
-                    multiUpdates[`products/${id}/image`] = null;
-                }
-            }
-
-            if (hasLegacy) {
-                db.ref().update(multiUpdates);
-            }
-        }
-
-        db.ref("specialOffer").on("value", (snap) => {
-            specialOffer = snap.val() || null;
-            renderSpecialOffer();
+        // مزامنة العروض الخاصة المتعددة
+        db.ref("specialOffers").on("value", (snap) => {
+            specialOffers = snap.val() || {};
+            renderSpecialOffers();
+            renderAdminOffersList();
             renderStatsDashboard();
         });
 
+        // مزامنة الزبائن وتحديث عددهم في الإحصائيات
         db.ref("users").on("value", (snap) => {
             users = snap.val() || {};
             syncCurrentUser();
             renderAdminCustomers();
             renderLeaderboard();
+            renderStatsDashboard();
             renderStore();
         });
 
@@ -1345,9 +1367,15 @@
             renderAdminProducts();
         });
 
+        // التحقق من رقم الهاتف 09XXXXXXXX بدقة 10 خانات
+        function validatePhoneSyrian(phone) {
+            const clean = String(phone || "").trim().replace(/\s+/g, "");
+            return /^09[0-9]{8}$/.test(clean);
+        }
+
         function checkInitialLogin() {
             populateRegionSelects();
-            if (!currentUser || !currentUser.phone || !currentUser.name || !currentUser.region || !currentUser.address) {
+            if (!currentUser || !currentUser.phone || !currentUser.name || !currentUser.region || !currentUser.address || !validatePhoneSyrian(currentUser.phone)) {
                 if (currentUser) {
                     document.getElementById("regName").value = currentUser.name || "";
                     document.getElementById("regPhone").value = currentUser.phone || "";
@@ -1365,11 +1393,13 @@
                 syncCurrentUser();
             }
         }
+
         window.addEventListener("load", () => {
             populateRegionSelects();
             checkInitialLogin();
             renderCategories();
             renderStore();
+            checkStoreWorkHours();
         });
 
         function openEditProfile() {
@@ -1398,9 +1428,17 @@
             const phone = document.getElementById("regPhone").value.trim().replace(/\s+/g, "");
             const region = document.getElementById("regRegion").value;
             const address = document.getElementById("regAddress").value.trim();
+            const phoneErrEl = document.getElementById("regPhoneError");
 
-            if (!name || !phone || !region || !address) {
-                alert("⚠️ يرجى إدخال الاسم، رقم واتساب، المنطقة، والعنوان التفصيلي.");
+            if (!validatePhoneSyrian(phone)) {
+                phoneErrEl.style.display = "block";
+                alert("⚠️ تنبيه: يجب أن يكون رقم الهاتف مكوناً من 10 خانات ويبدأ بـ 09 حصراً (مثال: 09XXXXXXXX).");
+                return;
+            }
+            phoneErrEl.style.display = "none";
+
+            if (!name || !region || !address) {
+                alert("⚠️ يرجى إدخال الاسم، المنطقة، والعنوان بالتفصيل.");
                 return;
             }
 
@@ -1410,20 +1448,15 @@
                 return;
             }
 
-            const existingPoints = existingUser.points || 0;
-            const existingPurchases = existingUser.purchases || {};
-            const existingType = existingUser.userType || "retail";
-            const pointsVisibility = document.getElementById("regPointsVisibility") ? document.getElementById("regPointsVisibility").value : (existingUser.pointsVisibility || "public");
-
             currentUser = {
                 name,
                 phone,
                 region,
                 address,
-                points: existingPoints,
-                purchases: existingPurchases,
-                userType: existingType,
-                pointsVisibility: pointsVisibility,
+                points: existingUser.points || 0,
+                purchases: existingUser.purchases || {},
+                userType: existingUser.userType || "retail",
+                pointsVisibility: document.getElementById("regPointsVisibility").value,
                 banned: false
             };
 
@@ -1432,22 +1465,15 @@
                 name, phone, region, address,
                 points: existingUser.points || 0,
                 userType: existingUser.userType || "retail",
-                pointsVisibility: pointsVisibility
+                pointsVisibility: currentUser.pointsVisibility
             });
+
             closeProfileModal();
             syncCurrentUser();
             updateCartBar();
 
             if (deferredPrompt && !localStorage.getItem("pwa_installed_once")) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    localStorage.setItem("pwa_installed_once", "true");
-                    if (choiceResult.outcome === "accepted") {
-                        const btn = document.getElementById("installBtn");
-                        if (btn) btn.style.display = "none";
-                    }
-                    deferredPrompt = null;
-                }).catch(() => {});
+                installAppDirectly();
             }
         }
 
@@ -1517,155 +1543,68 @@
             renderStore();
         }
 
-        function renderSpecialOffer() {
-            const box = document.getElementById("specialOfferContainer");
-            if (!specialOffer || !specialOffer.active) {
-                box.style.display = "none";
+        // عرض قائمة العروض الخاصة المتعددة في الواجهة
+        function renderSpecialOffers() {
+            const container = document.getElementById("multipleOffersContainer");
+            const offerKeys = Object.keys(specialOffers).filter(k => specialOffers[k] && specialOffers[k].active);
+
+            if (offerKeys.length === 0) {
+                container.innerHTML = "";
                 return;
             }
-            box.style.display = "flex";
-            
-            const soImg = document.getElementById("soDisplayImg");
-            const thumbSrc = specialOffer.thumb || specialOffer.image || "store-icon.png";
-            const fullSrc = specialOffer.image || thumbSrc || "store-icon.png";
 
-            if (specialOfferHighResLocked === fullSrc) {
-                if (soImg.src !== fullSrc) soImg.src = fullSrc;
-                soImg.className = "special-offer-img img-high-res";
-            } else {
-                soImg.src = thumbSrc;
-                soImg.className = "special-offer-img img-low-res";
-                const temp = new Image();
-                temp.onload = () => {
-                    specialOfferHighResLocked = fullSrc;
-                    soImg.src = fullSrc;
-                    soImg.className = "special-offer-img img-high-res";
-                };
-                temp.src = fullSrc;
-            }
-
-            document.getElementById("soDisplayName").textContent = specialOffer.name;
             const isWholesale = currentUser && currentUser.userType === "wholesale";
-            const effPrice = (isWholesale && specialOffer.wholesaleUSD > 0) ? specialOffer.wholesaleUSD : specialOffer.newPriceUSD;
 
-            document.getElementById("soDisplayOldPrice").textContent = calcSYP(specialOffer.oldPriceUSD).toLocaleString() + " ل.س";
-            document.getElementById("soDisplayPrice").textContent = calcSYP(effPrice).toLocaleString() + (isWholesale ? " ل.س (جملة)" : " ل.س");
+            container.innerHTML = offerKeys.map(k => {
+                const so = specialOffers[k];
+                const effPrice = (isWholesale && so.wholesaleUSD > 0) ? so.wholesaleUSD : so.newPriceUSD;
+                const qtyInCart = cart[k] ? cart[k].qty : 0;
+                const stock = parseInt(so.stock) || 0;
 
-            const qtyInCart = cart["SPECIAL_OFFER"] ? cart["SPECIAL_OFFER"].qty : 0;
-            const stock = parseInt(specialOffer.stock) || 0;
-            const actionDiv = document.getElementById("soActionContainer");
-
-            if (stock <= 0) {
-                actionDiv.innerHTML = `<button class="btn btn-out" disabled>نفدت الكمية</button>`;
-            } else if (qtyInCart > 0) {
-                actionDiv.innerHTML = `
-                    <div class="qty-controls">
-                        <button class="qty-btn" onclick="changeQty('SPECIAL_OFFER', 1)">+</button>
-                        <span class="qty-text">${qtyInCart}</span>
-                        <button class="qty-btn" onclick="changeQty('SPECIAL_OFFER', -1)">-</button>
-                    </div>`;
-            } else {
-                actionDiv.innerHTML = `
-                    <div style="display:flex; gap:4px;">
-                        <button class="btn" style="padding:6px; font-size:11px;" onclick="changeQty('SPECIAL_OFFER', 1)">➕ للسلة</button>
-                        <button class="btn" style="padding:6px; font-size:11px; background:var(--success-color); color:#000;" onclick="quickBuy('SPECIAL_OFFER')">⚡ اطلب فوراً</button>
-                    </div>`;
-            }
-        }
-
-        let isBatchProcessorRunning = false;
-        let pendingHighResQueue = [];
-
-        function fetchHighResProductImage(prodId) {
-            return new Promise((resolve) => {
-                const locked = getLockedHighResImage(prodId);
-                if (locked) return resolve(locked);
-                if (noHighResAvailableSet[prodId]) return resolve(null);
-
-                db.ref("productImages/" + prodId).once("value")
-                    .then(snap => {
-                        const hiData = snap.val();
-                        if (hiData && hiData.length > 100) {
-                            highResImagesMemoryCache[prodId] = hiData;
-                            try { localStorage.setItem("moaath_hi_img_" + prodId, hiData); } catch(e) {}
-                            resolve(hiData);
-                        } else {
-                            noHighResAvailableSet[prodId] = true;
-                            resolve(null);
-                        }
-                    })
-                    .catch(() => resolve(null));
-            });
-        }
-
-        function enqueueHighResBatchLoading(idsToLoad) {
-            idsToLoad.forEach(id => {
-                if (!highResImagesMemoryCache[id] && !noHighResAvailableSet[id] && !pendingHighResQueue.includes(id)) {
-                    pendingHighResQueue.push(id);
+                let actionHtml = "";
+                if (stock <= 0) {
+                    actionHtml = `<button class="btn btn-out" disabled>نفدت الكمية</button>`;
+                } else if (qtyInCart > 0) {
+                    actionHtml = `
+                        <div class="qty-controls">
+                            <button class="qty-btn" onclick="changeQty('${k}', 1)">+</button>
+                            <span class="qty-text">${qtyInCart}</span>
+                            <button class="qty-btn" onclick="changeQty('${k}', -1)">-</button>
+                        </div>`;
+                } else {
+                    actionHtml = `
+                        <div style="display:flex; gap:4px;">
+                            <button class="btn" style="padding:6px; font-size:11px;" onclick="changeQty('${k}', 1)">➕ للسلة</button>
+                            <button class="btn" style="padding:6px; font-size:11px; background:var(--success-color); color:#000;" onclick="quickBuy('${k}')">⚡ اطلب فوراً</button>
+                        </div>`;
                 }
-            });
-            if (!isBatchProcessorRunning && pendingHighResQueue.length > 0) {
-                runHighResBatchLoop();
-            }
-        }
 
-        async function runHighResBatchLoop() {
-            if (isBatchProcessorRunning) return;
-            isBatchProcessorRunning = true;
-
-            const BATCH_SIZE = 3;
-            while (pendingHighResQueue.length > 0) {
-                const currentBatch = pendingHighResQueue.splice(0, BATCH_SIZE);
-
-                await Promise.all(currentBatch.map(prodId => {
-                    return new Promise(async (resolveItem) => {
-                        const hiSrc = await fetchHighResProductImage(prodId);
-                        const imgEl = document.getElementById("prod_img_" + prodId);
-
-                        if (!hiSrc) {
-                            if (imgEl) {
-                                imgEl.classList.remove("img-low-res");
-                                imgEl.classList.add("img-high-res");
-                            }
-                            return resolveItem();
-                        }
-
-                        const preloader = new Image();
-                        preloader.onload = () => {
-                            const targetEl = document.getElementById("prod_img_" + prodId);
-                            if (targetEl) {
-                                targetEl.src = hiSrc;
-                                targetEl.classList.remove("img-low-res");
-                                targetEl.classList.add("img-high-res");
-                            }
-                            resolveItem();
-                        };
-                        preloader.onerror = () => {
-                            if (imgEl) {
-                                imgEl.classList.remove("img-low-res");
-                                imgEl.classList.add("img-high-res");
-                            }
-                            resolveItem();
-                        };
-                        preloader.src = hiSrc;
-                    });
-                }));
-
-                await new Promise(r => setTimeout(r, 50));
-            }
-
-            isBatchProcessorRunning = false;
+                return `
+                    <div class="special-offer-banner">
+                        <div class="special-offer-img-wrap">
+                            <img src="${so.image || so.thumb || 'store-icon.png'}" class="special-offer-img">
+                        </div>
+                        <div style="flex:1;">
+                            <h3 style="color:var(--gold-color); font-size:13px; margin:0 0 3px 0;">🔥 عرض خاص!</h3>
+                            <div style="font-size:12px; margin-bottom:3px; font-weight:bold;">${so.name}</div>
+                            <div style="font-size:12px; margin-bottom:5px;">
+                                <s style="color:#ff4444; margin-left:5px;">${calcSYP(so.oldPriceUSD).toLocaleString()} ل.س</s>
+                                <strong style="color:var(--success-color); font-size:13px;">${calcSYP(effPrice).toLocaleString()} ل.س ${isWholesale ? '<small>(جملة)</small>' : ''}</strong>
+                            </div>
+                            <div style="margin-top: 4px;">${actionHtml}</div>
+                        </div>
+                    </div>`;
+            }).join("");
         }
 
         function renderStore() {
-            renderSpecialOffer();
+            renderSpecialOffers();
             const grid = document.getElementById("productsGrid");
             const query = (document.getElementById("searchInput").value || "").trim().toLowerCase();
             let html = "";
 
             const isWholesale = currentUser && currentUser.userType === "wholesale";
             const keysToRender = (shuffledProductKeys && shuffledProductKeys.length > 0) ? shuffledProductKeys : Object.keys(products);
-            const needsHighResFetchIds = [];
 
             keysToRender.forEach(id => {
                 const p = products[id];
@@ -1726,27 +1665,13 @@
                     reviewsListHTML += `</div>`;
                 }
 
-                const lockedHiRes = getLockedHighResImage(id);
-                let finalImgSrc = "";
-                let finalImgClass = "";
-
-                if (lockedHiRes) {
-                    finalImgSrc = lockedHiRes;
-                    finalImgClass = "product-img img-high-res";
-                } else if (noHighResAvailableSet[id] || !p.thumb) {
-                    finalImgSrc = p.thumb || "store-icon.png";
-                    finalImgClass = "product-img img-high-res";
-                } else {
-                    finalImgSrc = p.thumb;
-                    finalImgClass = "product-img img-low-res";
-                    needsHighResFetchIds.push(id);
-                }
+                const finalImgSrc = getLockedHighResImage(id) || p.thumb || p.image || "store-icon.png";
 
                 html += `
                     <div class="product-card">
                         <div>
                             <div class="product-img-wrap">
-                                <img id="prod_img_${id}" src="${finalImgSrc}" class="${finalImgClass}">
+                                <img id="prod_img_${id}" src="${finalImgSrc}" class="product-img">
                             </div>
                             <h3>${pName}</h3>
                             <p>${priceSYP.toLocaleString()} ل.س ${isWholesale && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>
@@ -1761,27 +1686,24 @@
 
             grid.innerHTML = html || `<p style="grid-column: span 2; text-align: center; color: var(--gray-text);">لا توجد منتجات مطابقة</p>`;
             updateCartBar();
-
-            if (needsHighResFetchIds.length > 0) {
-                enqueueHighResBatchLoading(needsHighResFetchIds);
-            }
         }
 
         function changeQty(id, delta) {
             let itemData;
             const isWholesale = currentUser && currentUser.userType === "wholesale";
 
-            if (id === "SPECIAL_OFFER") {
-                if (!specialOffer || !specialOffer.active) return;
-                const effPrice = (isWholesale && specialOffer.wholesaleUSD > 0) ? specialOffer.wholesaleUSD : specialOffer.newPriceUSD;
+            if (id.startsWith("OFFER_")) {
+                const so = specialOffers[id];
+                if (!so || !so.active) return;
+                const effPrice = (isWholesale && so.wholesaleUSD > 0) ? so.wholesaleUSD : so.newPriceUSD;
                 itemData = {
-                    id: "SPECIAL_OFFER",
-                    name: "🔥 عرض خاص: " + specialOffer.name,
+                    id: id,
+                    name: "🔥 عرض: " + so.name,
                     category: "عروض خاصة",
                     priceUSD: parseFloat(effPrice) || 0,
-                    costPrice: parseFloat(specialOffer.costPrice) || 0,
-                    stock: parseInt(specialOffer.stock) || 0,
-                    pointsPct: parseFloat(specialOffer.pointsPct) || 2
+                    costPrice: parseFloat(so.costPrice) || 0,
+                    stock: parseInt(so.stock) || 0,
+                    pointsPct: parseFloat(so.pointsPct) || 2
                 };
             } else {
                 const p = products[id];
@@ -1852,6 +1774,7 @@
         }
 
         function openCartModal() {
+            if (!checkStoreWorkHours()) return;
             if (!currentUser || !currentUser.phone || !currentUser.region) {
                 openEditProfile();
                 return;
@@ -1935,6 +1858,7 @@
         }
 
         function submitOrder() {
+            if (!checkStoreWorkHours()) return;
             if (!currentUser || !currentUser.phone || !currentUser.name || !currentUser.address) {
                 closeCartModal();
                 openEditProfile();
@@ -1970,7 +1894,7 @@
                 return {
                     id: item.id,
                     name: item.name,
-                    category: item.category || (item.id === "SPECIAL_OFFER" ? "عروض خاصة" : (products[item.id] ? products[item.id].category : "غير مصنف")),
+                    category: item.category || (item.id.startsWith("OFFER_") ? "عروض خاصة" : (products[item.id] ? products[item.id].category : "غير مصنف")),
                     qty: item.qty,
                     unitSaleSYP,
                     unitCostSYP,
@@ -2163,10 +2087,8 @@
 
         const adminLogo = document.getElementById("adminTrigger");
         adminLogo.addEventListener("click", handleAdminTrigger);
-        adminLogo.addEventListener("touchend", (e) => {
-            e.preventDefault();
-            handleAdminTrigger();
-        });
+        const closedLogo = document.getElementById("closedAdminTrigger");
+        if (closedLogo) closedLogo.addEventListener("click", handleAdminTrigger);
 
         function closeAdminModal() {
             document.getElementById("adminModal").style.display = "none";
@@ -2223,9 +2145,9 @@
             if (!o) return;
 
             (o.items || []).forEach(item => {
-                if (item.id === "SPECIAL_OFFER" && specialOffer) {
-                    const newStock = Math.max(0, (parseInt(specialOffer.stock) || 0) - item.qty);
-                    db.ref("specialOffer/stock").set(newStock);
+                if (item.id.startsWith("OFFER_") && specialOffers[item.id]) {
+                    const newStock = Math.max(0, (parseInt(specialOffers[item.id].stock) || 0) - item.qty);
+                    db.ref(`specialOffers/${item.id}/stock`).set(newStock);
                 } else if (products[item.id]) {
                     const newStock = Math.max(0, (parseInt(products[item.id].stock) || 0) - item.qty);
                     db.ref(`products/${item.id}/stock`).set(newStock);
@@ -2235,7 +2157,7 @@
             const phone = o.customerPhone;
             let purchasedObj = (users[phone] && users[phone].purchases) ? users[phone].purchases : {};
             (o.items || []).forEach(item => {
-                if (item.id !== "SPECIAL_OFFER") {
+                if (!item.id.startsWith("OFFER_")) {
                     purchasedObj[item.id] = true;
                 }
             });
@@ -2289,7 +2211,7 @@
         }
 
         function resetProductSalesStats(productId) {
-            const pName = (products[productId] && products[productId].name) ? products[productId].name : (productId === "SPECIAL_OFFER" ? "العرض الخاص" : "هذا الصنف");
+            const pName = (products[productId] && products[productId].name) ? products[productId].name : "هذا الصنف";
             if (!confirm(`⚠️ هل أنت متأكد من تصفير إحصائيات المبيعات والأرباح للصنف "${pName}" فقط؟\n\n(ملاحظة: سيتم الحفاظ على كمية المخزون وإحصائيات الجرد كما هي تماماً)`)) {
                 return;
             }
@@ -2342,7 +2264,7 @@
                 if (!ord || !ord.items) return;
 
                 const remainingItems = ord.items.filter(item => {
-                    const itemCat = item.category || (item.id === "SPECIAL_OFFER" ? "عروض خاصة" : (products[item.id] ? products[item.id].category : "غير مصنف"));
+                    const itemCat = item.category || (item.id.startsWith("OFFER_") ? "عروض خاصة" : (products[item.id] ? products[item.id].category : "غير مصنف"));
                     return itemCat !== categoryName;
                 });
 
@@ -2391,6 +2313,7 @@
             select.value = currentVal;
         }
 
+        // عرض الإحصائيات مع عدد الزبائن المسجلين
         function renderStatsDashboard() {
             populateStatsCategorySelect();
             const period = document.getElementById("reportPeriodSelect").value;
@@ -2439,7 +2362,7 @@
                 }
 
                 (o.items || []).forEach(item => {
-                    const c = item.category || (item.id === "SPECIAL_OFFER" ? "عروض خاصة" : (products[item.id] ? products[item.id].category : "غير مصنف"));
+                    const c = item.category || (item.id.startsWith("OFFER_") ? "عروض خاصة" : (products[item.id] ? products[item.id].category : "غير مصنف"));
                     if (!catMap[c]) {
                         catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 };
                     }
@@ -2458,7 +2381,7 @@
                             id: item.id,
                             name: item.name || "صنف",
                             category: c,
-                            stock: (products[item.id] ? parseInt(products[item.id].stock) : (item.id === "SPECIAL_OFFER" && specialOffer ? parseInt(specialOffer.stock) : 0)) || 0,
+                            stock: (products[item.id] ? parseInt(products[item.id].stock) : (specialOffers[item.id] ? parseInt(specialOffers[item.id].stock) : 0)) || 0,
                             qtySold: 0,
                             sales: 0,
                             cost: 0,
@@ -2484,6 +2407,11 @@
             document.getElementById("statTotalCost").textContent = totalCost.toLocaleString() + " ل.س";
             document.getElementById("statNetProfit").textContent = netProfit.toLocaleString() + " ل.س";
             document.getElementById("statProfitMargin").textContent = margin + "%";
+
+            // عرض عدد الزبائن المسجلين
+            const usersCount = Object.keys(users).length;
+            const regCountEl = document.getElementById("statRegisteredUsersCount");
+            if (regCountEl) regCountEl.textContent = usersCount + " زبون";
 
             renderCategoryBreakdownTable(catMap);
             renderProductBreakdownTable(prodStatsMap, selectedCat);
@@ -2615,16 +2543,20 @@
                 }
             });
 
-            if (categoryName === "عروض خاصة" && specialOffer && specialOffer.active) {
-                productCount++;
-                const rawSoStock = parseInt(specialOffer.stock) || 0;
-                if (rawSoStock <= 0) {
-                    outOfStockCount++;
-                }
-                const soStock = Math.max(0, rawSoStock);
-                totalStock += soStock;
-                totalCost += calcSYP(specialOffer.costPrice || 0) * soStock;
-                totalSale += calcSYP(specialOffer.newPriceUSD || 0) * soStock;
+            if (categoryName === "عروض خاصة") {
+                Object.values(specialOffers).forEach(so => {
+                    if (so && so.active) {
+                        productCount++;
+                        const rawSoStock = parseInt(so.stock) || 0;
+                        if (rawSoStock <= 0) {
+                            outOfStockCount++;
+                        }
+                        const soStock = Math.max(0, rawSoStock);
+                        totalStock += soStock;
+                        totalCost += calcSYP(so.costPrice || 0) * soStock;
+                        totalSale += calcSYP(so.newPriceUSD || 0) * soStock;
+                    }
+                });
             }
 
             return { totalCost, totalSale, stock: totalStock, productCount, outOfStockCount };
@@ -2650,15 +2582,19 @@
                 }
             });
 
-            if ((selectedCat === "all" || selectedCat === "عروض خاصة") && specialOffer && specialOffer.active) {
-                totalProductsCount++;
-                const rawSoStock = parseInt(specialOffer.stock) || 0;
-                if (rawSoStock <= 0) {
-                    totalOutOfStockCount++;
-                }
-                const soStock = Math.max(0, rawSoStock);
-                totalInvCost += calcSYP(specialOffer.costPrice || 0) * soStock;
-                totalInvSale += calcSYP(specialOffer.newPriceUSD || 0) * soStock;
+            if (selectedCat === "all" || selectedCat === "عروض خاصة") {
+                Object.values(specialOffers).forEach(so => {
+                    if (so && so.active) {
+                        totalProductsCount++;
+                        const rawSoStock = parseInt(so.stock) || 0;
+                        if (rawSoStock <= 0) {
+                            totalOutOfStockCount++;
+                        }
+                        const soStock = Math.max(0, rawSoStock);
+                        totalInvCost += calcSYP(so.costPrice || 0) * soStock;
+                        totalInvSale += calcSYP(so.newPriceUSD || 0) * soStock;
+                    }
+                });
             }
 
             document.getElementById("invTotalCost").textContent = totalInvCost.toLocaleString() + " ل.س";
@@ -2924,33 +2860,116 @@
             }).join("");
         }
 
-        async function saveSpecialOffer(active) {
-            if (!active) {
-                db.ref("specialOffer/active").set(false);
+        // إدارة العروض الخاصة المتعددة (إضافة، تعديل، حذف، تفعيل/إيقاف)
+        function clearOfferForm() {
+            document.getElementById("editOfferId").value = "";
+            document.getElementById("offerNameInput").value = "";
+            document.getElementById("offerCostInput").value = "";
+            document.getElementById("offerOldPriceInput").value = "";
+            document.getElementById("offerNewPriceInput").value = "";
+            document.getElementById("offerWholesaleInput").value = "";
+            document.getElementById("offerStockInput").value = "5";
+            document.getElementById("offerImageInput").value = "";
+        }
+
+        async function saveMultipleOffer() {
+            const editId = document.getElementById("editOfferId").value;
+            const name = document.getElementById("offerNameInput").value.trim();
+            const costPrice = parseFloat(document.getElementById("offerCostInput").value) || 0;
+            const oldPriceUSD = parseFloat(document.getElementById("offerOldPriceInput").value) || 0;
+            const newPriceUSD = parseFloat(document.getElementById("offerNewPriceInput").value) || 0;
+            const wholesaleUSD = parseFloat(document.getElementById("offerWholesaleInput").value) || 0;
+            const stock = parseInt(document.getElementById("offerStockInput").value) || 0;
+            const pointsPct = parseFloat(document.getElementById("offerPointsPctInput").value) || 2;
+            const fileInput = document.getElementById("offerImageInput");
+
+            if (!name || newPriceUSD <= 0) {
+                alert("يرجى إدخال اسم العرض وسعر المبيع الجديد.");
                 return;
             }
-            const name = document.getElementById("soName").value.trim();
-            const costPrice = parseFloat(document.getElementById("soCostUSD").value) || 0;
-            const oldPriceUSD = parseFloat(document.getElementById("soOldPriceUSD").value) || 0;
-            const newPriceUSD = parseFloat(document.getElementById("soNewPriceUSD").value) || 0;
-            const wholesaleUSD = parseFloat(document.getElementById("soWholesaleUSD").value) || 0;
-            const stock = parseInt(document.getElementById("soStock").value) || 0;
-            const pointsPct = parseFloat(document.getElementById("soPointsPct").value) || 2;
-            const fileInput = document.getElementById("soImageInput");
 
-            let imageBase64 = (specialOffer && specialOffer.image) ? specialOffer.image : "";
-            let thumbBase64 = (specialOffer && specialOffer.thumb) ? specialOffer.thumb : "";
+            const offerId = editId || ("OFFER_" + Date.now());
+            let imageBase64 = (specialOffers[offerId] && specialOffers[offerId].image) ? specialOffers[offerId].image : "";
+            let thumbBase64 = (specialOffers[offerId] && specialOffers[offerId].thumb) ? specialOffers[offerId].thumb : "";
 
             if (fileInput.files && fileInput.files[0]) {
                 const compressed = await compressDualImages(fileInput.files[0]);
                 thumbBase64 = compressed.thumb;
                 imageBase64 = compressed.image;
-                specialOfferHighResLocked = imageBase64;
             }
 
-            db.ref("specialOffer").set({
-                active: true, name, costPrice, oldPriceUSD, newPriceUSD, wholesaleUSD, stock, pointsPct, image: imageBase64, thumb: thumbBase64
-            }).then(() => alert("✅ تم تحديث العرض!"));
+            db.ref("specialOffers/" + offerId).set({
+                id: offerId,
+                active: true,
+                name,
+                costPrice,
+                oldPriceUSD,
+                newPriceUSD,
+                wholesaleUSD,
+                stock,
+                pointsPct,
+                image: imageBase64,
+                thumb: thumbBase64
+            }).then(() => {
+                alert("✅ تم حفظ العرض الخاص بنجاح!");
+                clearOfferForm();
+            });
+        }
+
+        function editMultipleOffer(offerId) {
+            const so = specialOffers[offerId];
+            if (!so) return;
+            document.getElementById("editOfferId").value = offerId;
+            document.getElementById("offerNameInput").value = so.name || "";
+            document.getElementById("offerCostInput").value = so.costPrice || 0;
+            document.getElementById("offerOldPriceInput").value = so.oldPriceUSD || 0;
+            document.getElementById("offerNewPriceInput").value = so.newPriceUSD || 0;
+            document.getElementById("offerWholesaleInput").value = so.wholesaleUSD || 0;
+            document.getElementById("offerStockInput").value = so.stock || 0;
+            document.getElementById("offerPointsPctInput").value = so.pointsPct || 2;
+        }
+
+        function toggleOfferStatus(offerId) {
+            const so = specialOffers[offerId];
+            if (!so) return;
+            db.ref(`specialOffers/${offerId}/active`).set(!so.active);
+        }
+
+        function deleteMultipleOffer(offerId) {
+            if (confirm("⚠️ هل أنت متأكد من حذف هذا العرض؟")) {
+                db.ref("specialOffers/" + offerId).remove();
+            }
+        }
+
+        function renderAdminOffersList() {
+            const container = document.getElementById("adminOffersList");
+            if (!container) return;
+            const keys = Object.keys(specialOffers);
+
+            if (keys.length === 0) {
+                container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد عروض حالياً.</p>`;
+                return;
+            }
+
+            container.innerHTML = keys.map(id => {
+                const so = specialOffers[id];
+                return `
+                    <div style="background:var(--bg-color); border:1px solid ${so.active ? 'var(--gold-color)' : 'var(--border-color)'}; padding:8px; border-radius:6px; margin-bottom:8px; font-size:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <strong>${so.name}</strong> <b style="color:${so.active ? 'var(--success-color)' : 'var(--danger-color)'};">[${so.active ? 'مفعل' : 'موقف'}]</b><br>
+                                <span style="color:var(--gray-text);">جديد: $${so.newPriceUSD} | قديم: $${so.oldPriceUSD} | مخزون: ${so.stock}</span>
+                            </div>
+                            <div style="display:flex; gap:4px;">
+                                <button onclick="toggleOfferStatus('${id}')" class="btn" style="width:auto; padding:4px 8px; background:${so.active ? '#ff9800' : 'var(--success-color)'}; color:#000;">
+                                    ${so.active ? 'إيقاف' : 'تفعيل'}
+                                </button>
+                                <button onclick="editMultipleOffer('${id}')" class="btn" style="width:auto; padding:4px 8px;">✏️</button>
+                                <button onclick="deleteMultipleOffer('${id}')" class="btn btn-danger" style="width:auto; padding:4px 8px;">🗑️</button>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join("");
         }
 
         function renderShortages() {
@@ -3001,6 +3020,12 @@
             const adminWA = document.getElementById("adminWhatsAppInput").value.trim() || "963965461504";
             const shamWallet = document.getElementById("adminShamWalletInput").value.trim() || "da3e13cd8a2ef2af282445e148df9599";
 
+            const workHours = {
+                enabled: document.getElementById("workHoursEnabled").checked,
+                open: document.getElementById("workHourOpen").value || "08:00",
+                close: document.getElementById("workHourClose").value || "23:00"
+            };
+
             const updatedFees = {};
             document.querySelectorAll(".region-fee-input").forEach(inp => {
                 const regName = inp.getAttribute("data-region");
@@ -3018,8 +3043,9 @@
                 deliveryDriverPhone: driver,
                 adminWhatsApp: adminWA,
                 shamWalletId: shamWallet,
-                deliveryFees: deliveryFees
-            }).then(() => alert("✅ تم حفظ الإعدادات ومناطق التوصيل بنجاح!"));
+                deliveryFees: deliveryFees,
+                workHours: workHours
+            }).then(() => alert("✅ تم حفظ الإعدادات، التوصيل، وساعات العمل بنجاح!"));
         }
 
         function exportBackupJSON() {
