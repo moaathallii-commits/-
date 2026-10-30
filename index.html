@@ -19,6 +19,27 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
+    <!-- سكربت اصطياد حدث التثبيت الفوري في أول جزء من الثانية -->
+    <script>
+        window.deferredPrompt = null;
+        window.addEventListener("beforeinstallprompt", (e) => {
+            e.preventDefault();
+            window.deferredPrompt = e;
+            const btn = document.getElementById("mainInstallAppBtn");
+            if (btn && !isAppStandalone()) {
+                btn.style.display = "inline-block";
+            }
+        });
+
+        function isAppStandalone() {
+            return (
+                window.matchMedia("(display-mode: standalone)").matches ||
+                window.navigator.standalone === true ||
+                document.referrer.includes('android-app://')
+            );
+        }
+    </script>
+
     <style>
         :root {
             --bg-color: #121212;
@@ -399,7 +420,7 @@
             <p>قرية العوينة | <span id="headerPhoneText">0965461504</span> 📱</p>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
-            <button id="mainInstallAppBtn" onclick="installAppDirectly()" class="btn" style="width:auto; padding:6px 10px; font-size:11px; background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; font-weight:bold; border-radius:15px; animation: pulse 2s infinite; display:none;">📲 تثبيت التطبيق</button>
+            <button id="mainInstallAppBtn" onclick="installAppDirectly()" class="btn" style="width:auto; padding:6px 10px; font-size:11px; background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; font-weight:bold; border-radius:15px; animation: pulse 2s infinite;">📲 تثبيت التطبيق</button>
             <div class="logo-circle" id="adminTrigger">
                 <img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'">
             </div>
@@ -1050,43 +1071,29 @@
         let currentUser = JSON.parse(localStorage.getItem("moaath_user") || "null");
 
         // 1. نظام التثبيت المباشر الفوري وتجاوز النوافذ التوجيهية
-        let deferredPrompt = null;
         const installBtn = document.getElementById("mainInstallAppBtn");
 
-        function isAppStandalone() {
-            return (
-                window.matchMedia("(display-mode: standalone)").matches ||
-                window.navigator.standalone === true ||
-                document.referrer.includes('android-app://')
-            );
-        }
-
-        window.addEventListener("beforeinstallprompt", (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            if (installBtn && !isAppStandalone()) {
-                installBtn.style.display = "inline-block";
-            }
-        });
-
         async function installAppDirectly() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const choiceResult = await deferredPrompt.userChoice;
-                if (choiceResult.outcome === "accepted") {
+            if (window.deferredPrompt) {
+                window.deferredPrompt.prompt();
+                const choiceResult = await window.deferredPrompt.userChoice;
+                if (choiceResult && choiceResult.outcome === "accepted") {
                     if (installBtn) installBtn.style.display = "none";
                 }
-                deferredPrompt = null;
+                window.deferredPrompt = null;
             } else {
                 if (isAppStandalone()) {
                     if (installBtn) installBtn.style.display = "none";
+                    alert("✅ التطبيق مثبت بالفعل ويعمل من الشاشة الرئيسية!");
+                } else {
+                    alert("⏳ جاري تهيئة التثبيت، يرجى الضغط مرة ثانية الآن...");
                 }
             }
         }
 
         window.addEventListener("appinstalled", () => {
             if (installBtn) installBtn.style.display = "none";
-            deferredPrompt = null;
+            window.deferredPrompt = null;
         });
 
         document.addEventListener("DOMContentLoaded", () => {
