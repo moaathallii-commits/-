@@ -194,12 +194,6 @@
             object-fit: cover;
             transition: filter 0.35s ease;
         }
-        .img-low-res {
-            filter: blur(4px);
-        }
-        .img-high-res {
-            filter: blur(0);
-        }
         .product-card h3 {
             font-size: 13px;
             margin: 4px 0;
@@ -403,7 +397,6 @@
             justify-content: space-between;
             align-items: center;
         }
-        /* شاشة إغلاق المتجر خارج أوقات العمل */
         #storeClosedOverlay {
             display: none;
             position: fixed;
@@ -518,7 +511,7 @@
         </div>
     </div>
 
-    <!-- نافذة تسجيل / تعديل بيانات الزبون (تحقق من 09XXXXXXXX) -->
+    <!-- نافذة تسجيل / تعديل بيانات الزبون -->
     <div id="profileModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color: var(--gold-color); margin-top: 0; text-align: center;">👤 تسجيل بيانات الزبون للتوصيل والنقاط</h3>
@@ -741,7 +734,7 @@
                 <button onclick="saveProduct()" class="btn" style="margin-bottom: 12px; background:var(--success-color); color:#000;">💾 حفظ الصنف</button>
             </div>
 
-            <!-- تبويب جديد: إدارة عروض متعددة معاً -->
+            <!-- تبويب إدارة عروض متعددة معاً -->
             <div id="offersTab" class="admin-tab" style="display: none;">
                 <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">🔥 إدارة العروض الخاصة المتعددة</h4>
                 <input type="hidden" id="editOfferId">
@@ -902,7 +895,7 @@
                 </div>
             </div>
 
-            <!-- 6. الجرد والأرباح (مع عدد الزبائن والمنتجات والنافد) -->
+            <!-- 6. الجرد والأرباح (مع بند وتصفير أجور عامل التوصيل) -->
             <div id="statsTab" class="admin-tab" style="display: none;">
                 <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">📊 التقارير المالية وجرد الأرباح</h4>
                 
@@ -941,6 +934,18 @@
                         <div style="font-size: 11px; color: var(--gray-text);">نسبة الربح</div>
                         <div class="stats-value" id="statProfitMargin">0%</div>
                     </div>
+                </div>
+
+                <!-- بند خاص بأجور عامل التوصيل مع خيار التصفير المستقل -->
+                <div style="background: rgba(0, 176, 255, 0.08); border: 1px solid #00b0ff; border-radius: 8px; padding: 12px; margin: 10px 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <div>
+                            <div style="font-size: 12px; color: var(--text-color); font-weight: bold;">🛵 مستحقات عامل التوصيل (أجور التوصيل المستحقة):</div>
+                            <div style="font-size: 18px; font-weight: 900; color: #00b0ff; margin-top: 3px;" id="statDriverTotalFee">0 ل.س</div>
+                        </div>
+                        <button onclick="resetDeliveryFeesStats()" class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 11px; font-weight: bold;">🔄 تصفير مستحقات السائق</button>
+                    </div>
+                    <div style="font-size: 10px; color: var(--gray-text); margin-top: 5px;">* عند تصفير أجور التوصيل بعد محاسبة السائق، يتم تصفير مستحقاته فقط مع الحفاظ على مبيعات وأرباح المتجر بالكامل.</div>
                 </div>
 
                 <h4 style="color: var(--gold-color); margin: 12px 0 8px 0;">🏦 إحصائيات الزبائن والمخزون والأصناف</h4>
@@ -1016,7 +1021,7 @@
         let categories = ["الكل"];
         let selectedCategory = "الكل";
         let products = {};
-        let specialOffers = {}; // دعم عروض متعددة معاً
+        let specialOffers = {};
         let highResImagesMemoryCache = {};
         let noHighResAvailableSet = {};
         let shuffledProductKeys = [];
@@ -1043,7 +1048,6 @@
 
         let currentUser = JSON.parse(localStorage.getItem("moaath_user") || "null");
 
-        // زر تحميل التطبيق وإنشاء اختصار الشاشة الرئيسية
         let deferredPrompt = null;
         window.addEventListener("beforeinstallprompt", (e) => {
             e.preventDefault();
@@ -1068,7 +1072,6 @@
             }
         }
 
-        // فحص ساعات العمل والتحكم بالإغلاق التلقائي
         function checkStoreWorkHours() {
             if (!workHoursSettings.enabled) {
                 document.getElementById("storeClosedOverlay").style.display = "none";
@@ -1262,7 +1265,6 @@
             db.ref("settings/deliveryFees").set(deliveryFees);
         }
 
-        // مزامنة إعدادات المتجر وساعات العمل
         db.ref("settings").on("value", (snap) => {
             const data = snap.val() || {};
             exchangeRate = parseFloat(data.exchangeRate) || 15000;
@@ -1327,7 +1329,6 @@
             renderStatsDashboard();
         });
 
-        // مزامنة العروض الخاصة المتعددة
         db.ref("specialOffers").on("value", (snap) => {
             specialOffers = snap.val() || {};
             renderSpecialOffers();
@@ -1335,7 +1336,6 @@
             renderStatsDashboard();
         });
 
-        // مزامنة الزبائن وتحديث عددهم في الإحصائيات
         db.ref("users").on("value", (snap) => {
             users = snap.val() || {};
             syncCurrentUser();
@@ -1367,7 +1367,6 @@
             renderAdminProducts();
         });
 
-        // التحقق من رقم الهاتف 09XXXXXXXX بدقة 10 خانات
         function validatePhoneSyrian(phone) {
             const clean = String(phone || "").trim().replace(/\s+/g, "");
             return /^09[0-9]{8}$/.test(clean);
@@ -1543,7 +1542,6 @@
             renderStore();
         }
 
-        // عرض قائمة العروض الخاصة المتعددة في الواجهة
         function renderSpecialOffers() {
             const container = document.getElementById("multipleOffersContainer");
             const offerKeys = Object.keys(specialOffers).filter(k => specialOffers[k] && specialOffers[k].active);
@@ -2210,6 +2208,55 @@
             db.ref("pendingOrders/" + orderId).remove();
         }
 
+        // تصفير أجور عامل التوصيل المستقل مع الحفاظ التام على أرباح ومبيعات المتجر
+        function resetDeliveryFeesStats() {
+            const period = document.getElementById("reportPeriodSelect").value;
+            const periodNames = {
+                "total": "الإجمالي الكلي",
+                "daily": "اليومي (اليوم)",
+                "weekly": "الأسبوعي (آخر 7 أيام)",
+                "monthly": "الشهري (هذا الشهر)"
+            };
+
+            if (!confirm(`⚠️ هل أنت متأكد من تصفير مستحقات عامل التوصيل لفترة الجرد: [${periodNames[period] || 'المحددة'}] بعد محاسبته وتسليمه مستحقاته؟\n\n(ملاحظة: سيتم الحفاظ على مبيعات وأرباح المتجر والمخزون دون أي تغيير)`)) {
+                return;
+            }
+
+            const now = new Date();
+            const updates = {};
+            let count = 0;
+
+            Object.keys(completedOrdersHistory).forEach(ordId => {
+                const ord = completedOrdersHistory[ordId];
+                if (!ord) return;
+
+                const orderDate = new Date(ord.dateISO || Date.now());
+                if (period === "daily") {
+                    if (orderDate.toDateString() !== now.toDateString()) return;
+                } else if (period === "weekly") {
+                    const diffTime = Math.abs(now - orderDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (diffDays > 7) return;
+                } else if (period === "monthly") {
+                    if (orderDate.getMonth() !== now.getMonth() || orderDate.getFullYear() !== now.getFullYear()) return;
+                }
+
+                if ((ord.deliveryFeeSYP || 0) > 0) {
+                    updates[`completedOrdersHistory/${ordId}/deliveryFeeSYP`] = 0;
+                    count++;
+                }
+            });
+
+            if (count === 0) {
+                alert("ℹ️ أجور عامل التوصيل لهذه الفترة مصفرة بالفعل.");
+                return;
+            }
+
+            db.ref().update(updates).then(() => {
+                alert(`✅ تم تصفير مستحقات عامل التوصيل بنجاح لـ (${count}) فاتورة!`);
+            });
+        }
+
         function resetProductSalesStats(productId) {
             const pName = (products[productId] && products[productId].name) ? products[productId].name : "هذا الصنف";
             if (!confirm(`⚠️ هل أنت متأكد من تصفير إحصائيات المبيعات والأرباح للصنف "${pName}" فقط؟\n\n(ملاحظة: سيتم الحفاظ على كمية المخزون وإحصائيات الجرد كما هي تماماً)`)) {
@@ -2313,7 +2360,6 @@
             select.value = currentVal;
         }
 
-        // عرض الإحصائيات مع عدد الزبائن المسجلين
         function renderStatsDashboard() {
             populateStatsCategorySelect();
             const period = document.getElementById("reportPeriodSelect").value;
@@ -2323,6 +2369,7 @@
             let totalSales = 0;
             let totalCost = 0;
             let netProfit = 0;
+            let driverTotalDeliveryFee = 0;
 
             let catMap = {};
             const rawCats = categories.filter(c => c !== "الكل");
@@ -2360,6 +2407,9 @@
                 } else if (period === "monthly") {
                     if (orderDate.getMonth() !== now.getMonth() || orderDate.getFullYear() !== now.getFullYear()) return;
                 }
+
+                // احتساب أجور التوصيل لفترة الجرد
+                driverTotalDeliveryFee += (parseInt(o.deliveryFeeSYP) || 0);
 
                 (o.items || []).forEach(item => {
                     const c = item.category || (item.id.startsWith("OFFER_") ? "عروض خاصة" : (products[item.id] ? products[item.id].category : "غير مصنف"));
@@ -2408,7 +2458,12 @@
             document.getElementById("statNetProfit").textContent = netProfit.toLocaleString() + " ل.س";
             document.getElementById("statProfitMargin").textContent = margin + "%";
 
-            // عرض عدد الزبائن المسجلين
+            // عرض إجمالي أجور عامل التوصيل في الصندوق المخصص
+            const driverFeeEl = document.getElementById("statDriverTotalFee");
+            if (driverFeeEl) {
+                driverFeeEl.textContent = driverTotalDeliveryFee.toLocaleString() + " ل.س";
+            }
+
             const usersCount = Object.keys(users).length;
             const regCountEl = document.getElementById("statRegisteredUsersCount");
             if (regCountEl) regCountEl.textContent = usersCount + " زبون";
@@ -2860,7 +2915,6 @@
             }).join("");
         }
 
-        // إدارة العروض الخاصة المتعددة (إضافة، تعديل، حذف، تفعيل/إيقاف)
         function clearOfferForm() {
             document.getElementById("editOfferId").value = "";
             document.getElementById("offerNameInput").value = "";
