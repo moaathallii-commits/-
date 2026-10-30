@@ -10,7 +10,7 @@
     <meta name="theme-color" content="#121212" id="themeColorMeta">
     <link rel="apple-touch-icon" href="store-icon.png">
     
-    <!-- مكتبات Firebase المتوافقة -->
+    <!-- مكتبات Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
@@ -322,18 +322,6 @@
             font-size: 13px;
         }
 
-        .alert-danger {
-            background: rgba(255, 68, 68, 0.1);
-            color: var(--danger-color);
-            border: 2px dashed var(--danger-color);
-            padding: 10px;
-            border-radius: 6px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 12px;
-            margin: 12px 0;
-        }
-
         .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 8px; }
         .stats-box { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 8px; text-align: center; }
         .stats-value { font-size: 15px; font-weight: bold; color: var(--gold-color); margin-top: 4px; }
@@ -385,7 +373,7 @@
 </head>
 <body>
 
-    <!-- الشاشة الحاجبة عند إغلاق المتجر أو المنطقة -->
+    <!-- الشاشة الحاجبة عند إغلاق المتجر أو منطقة التوصيل -->
     <div id="storeClosedOverlay">
         <div style="font-size: 55px; margin-bottom: 10px;">🌙</div>
         <h2 style="color: var(--gold-color); margin: 0 0 10px 0;">المتجر أو المنطقة مغلقة حالياً</h2>
@@ -1001,7 +989,7 @@
         let shamWalletIdGlobal = "da3e13cd8a2ef2af282445e148df9599";
         const ADMIN_PASSWORD = "MHA@1997//MOAATHS";
 
-        // تهيئة الاتصال بـ Firebase Realtime Database
+        // تهيئة Firebase
         const firebaseConfig = {
             databaseURL: "https://moaathstore-d2fd6-default-rtdb.firebaseio.com"
         };
@@ -1013,7 +1001,6 @@
         let exchangeRate = 15000;
         let deliveryDriverPhone = "";
         
-        // مناطق التوصيل الافتراضية مع نسبة السائق وبند الصيانة وساعات الدوام
         let deliveryFees = {
             "العوينة (جيران المتجر)": { fee: 0, driverPct: 100, hoursEnabled: false, open: "08:00", close: "23:00" },
             "العوينة": { fee: 2000, driverPct: 80, hoursEnabled: false, open: "08:00", close: "23:00" },
@@ -1049,11 +1036,13 @@
 
         let currentUser = JSON.parse(localStorage.getItem("moaath_user") || "null");
 
-        // دعم تثبيت تطبيق PWA
+        // 1. نظام التثبيت المباشر الفوري (تجاوز الشرح النصي نهائياً)
         let deferredPrompt = null;
         window.addEventListener("beforeinstallprompt", (e) => {
             e.preventDefault();
             deferredPrompt = e;
+            const btn = document.getElementById("mainInstallAppBtn");
+            if (btn) btn.style.display = "inline-block";
         });
 
         function installAppDirectly() {
@@ -1061,20 +1050,72 @@
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then((choiceResult) => {
                     if (choiceResult.outcome === "accepted") {
-                        localStorage.setItem("pwa_installed_once", "true");
+                        const btn = document.getElementById("mainInstallAppBtn");
+                        if (btn) btn.style.display = "none";
                     }
                     deferredPrompt = null;
                 }).catch(() => {});
             } else {
                 if (window.matchMedia("(display-mode: standalone)").matches) {
-                    alert("✅ التطبيق مثبت بالفعل على شاشتك الرئيسية بشعار المتجر!");
-                } else {
-                    alert("📱 لتثبيت التطبيق على الشاشة الرئيسية:\n1. اضغط على خيارات المتصفح (⋮).\n2. اختر 'إضافة إلى الشاشة الرئيسية' أو 'Install App'.");
+                    const btn = document.getElementById("mainInstallAppBtn");
+                    if (btn) btn.style.display = "none";
                 }
             }
         }
 
-        // فحص ساعات العمل العامة وساعات المنطقة الخاصة
+        window.addEventListener("DOMContentLoaded", () => {
+            if (window.matchMedia("(display-mode: standalone)").matches) {
+                const btn = document.getElementById("mainInstallAppBtn");
+                if (btn) btn.style.display = "none";
+            }
+        });
+
+        // 2. نظام حماية زر الرجوع لمنع الخروج المفاجئ وإظهار رسالة التأكيد
+        let isExitingApp = false;
+        function setupBackButtonProtection() {
+            history.pushState({ page: 'store_home' }, '');
+
+            window.addEventListener('popstate', () => {
+                if (isExitingApp) return;
+
+                // أولاً: إغلاق أي نافذة منبثقة مفتوحة
+                const openModals = [
+                    'cartModal', 'profileModal', 'adminModal', 
+                    'reviewModal', 'missingModal', 'adminEditCustomerModal'
+                ];
+                for (let id of openModals) {
+                    const el = document.getElementById(id);
+                    if (el && el.style.display === 'flex') {
+                        el.style.display = 'none';
+                        history.pushState({ page: 'store_home' }, '');
+                        return;
+                    }
+                }
+
+                // ثانياً: إغلاق صفحة المسابقات
+                const openPages = ['competitionsPage'];
+                for (let id of openPages) {
+                    const el = document.getElementById(id);
+                    if (el && el.style.display === 'block') {
+                        el.style.display = 'none';
+                        history.pushState({ page: 'store_home' }, '');
+                        return;
+                    }
+                }
+
+                // ثالثاً: عند التواجد في الشاشة الرئيسية للمتجر يُطلب تأكيد الخروج
+                const confirmClose = confirm("هل تريد إغلاق التطبيق بالفعل؟");
+                if (confirmClose) {
+                    isExitingApp = true;
+                    history.back();
+                } else {
+                    history.pushState({ page: 'store_home' }, '');
+                }
+            });
+        }
+        window.addEventListener('load', setupBackButtonProtection);
+
+        // فحص ساعات العمل العامة والخاصة
         function isRegionOpenNow(regionName) {
             const regData = deliveryFees[regionName];
             const now = new Date();
@@ -1132,7 +1173,6 @@
         }
         setInterval(checkStoreWorkHours, 60000);
 
-        // ذاكرة الصور عالية الدقة المقفولة
         function getLockedHighResImage(prodId) {
             if (highResImagesMemoryCache[prodId]) return highResImagesMemoryCache[prodId];
             if (products[prodId] && products[prodId].image && products[prodId].image.length > 100) {
@@ -1142,7 +1182,6 @@
             return null;
         }
 
-        // معادلة تحويل العملة والتقريب لأقرب 5 ليرات سورية
         function calcSYP(usdPrice) {
             const num = parseFloat(usdPrice) || 0;
             return Math.round((num * exchangeRate) / 5) * 5;
@@ -1155,7 +1194,6 @@
             return p;
         }
 
-        // الوضع الليلي والنهاري
         function initTheme() {
             const savedTheme = localStorage.getItem("moaath_theme");
             if (savedTheme === "light") {
@@ -1174,7 +1212,6 @@
             document.getElementById("themeColorMeta").setAttribute("content", isLight ? "#F0F2F5" : "#121212");
         }
 
-        // ضغط وتوليد نسختين للصور (Blur مصغرة + دقة عالية)
         function compressDualImages(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -1486,7 +1523,6 @@
             renderCustomerMissingRequests();
         });
 
-        // التحقق من رقم الهاتف بصيغة 09XXXXXXXX حصراً
         function validatePhoneSyrian(phone) {
             const clean = String(phone || "").trim().replace(/\s+/g, "");
             return /^09[0-9]{8}$/.test(clean);
@@ -1649,7 +1685,6 @@
             renderStore();
         }
 
-        // عرض العروض الخاصة المتعددة
         function renderSpecialOffers() {
             const container = document.getElementById("multipleOffersContainer");
             const offerKeys = Object.keys(specialOffers).filter(k => specialOffers[k] && specialOffers[k].active);
@@ -1699,7 +1734,6 @@
             }).join("");
         }
 
-        // عرض شبكة المنتجات
         function renderStore() {
             renderSpecialOffers();
             const grid = document.getElementById("productsGrid");
@@ -1778,7 +1812,6 @@
             setTimeout(loadHighResImagesInBatches, 100);
         }
 
-        // نظام التحميل المرحلي للصور على دفعات (3 صور في كل دفعة)
         let isBatchLoadingImages = false;
         async function loadHighResImagesInBatches() {
             if (isBatchLoadingImages) return;
@@ -1814,7 +1847,6 @@
             isBatchLoadingImages = false;
         }
 
-        // إدارة السلة
         function changeQty(id, delta) {
             let itemData;
             const isWholesale = currentUser && currentUser.userType === "wholesale";
@@ -1989,7 +2021,6 @@
             document.getElementById("modalCartPoints").textContent = totalPoints;
         }
 
-        // إرسال الفاتورة والطلب
         function submitOrder() {
             if (!checkStoreWorkHours()) return;
             if (!currentUser || !currentUser.phone || !currentUser.name || !currentUser.address) {
@@ -2090,7 +2121,6 @@
             window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
-        // تقييم الأصناف
         function openReviewModal(productId) {
             const p = products[productId];
             if (!p) return;
@@ -2110,10 +2140,7 @@
             const rating = parseInt(document.getElementById("reviewRatingSelect").value) || 5;
             const comment = document.getElementById("reviewCommentInput").value.trim();
 
-            if (!comment) {
-                alert("يرجى كتابة تعليق.");
-                return;
-            }
+            if (!comment) return alert("يرجى كتابة تعليق.");
 
             const reviewId = "REV_" + Date.now();
             db.ref(`products/${productId}/reviews/${reviewId}`).set({
@@ -2133,7 +2160,6 @@
             }
         }
 
-        // المسابقات والمتصدرين
         function openCompetitionsPage() {
             syncCurrentUser();
             renderCompetitionDetails();
@@ -2194,7 +2220,6 @@
             }).join("");
         }
 
-        // النواقص
         function openMissingRequestModal() {
             document.getElementById("missingItemName").value = "";
             document.getElementById("missingModal").style.display = "flex";
@@ -2217,7 +2242,6 @@
             document.getElementById(id).style.display = "none";
         }
 
-        // بوابة الإدارة المخفية (5 نقرات سريعة)
         let adminClickCount = 0;
         let adminClickTimer = null;
         function handleAdminTrigger() {
@@ -2250,7 +2274,6 @@
             btn.classList.add("active");
         }
 
-        // تأكيد الفواتير وإشعار السائق والزبون
         function renderPendingOrders() {
             const container = document.getElementById("pendingOrdersList");
             const keys = Object.keys(pendingOrders);
@@ -2352,7 +2375,6 @@
             }
         }
 
-        // التقارير المالية ومحاسبة السائق وصيانة الآلية والوقود
         function populateStatsCategorySelect() {
             const select = document.getElementById("reportCategorySelect");
             if (!select) return;
@@ -2605,7 +2627,6 @@
             document.getElementById("invOutOfStockCount").textContent = totalOutOfStockCount + " صنف";
         }
 
-        // تصفير مستحقات السائق مع الحفاظ على بند الوقود والصيانة
         function resetDeliveryFeesStats() {
             const period = document.getElementById("reportPeriodSelect").value;
             if (!confirm(`هل أنت متأكد من تصفير مستحقات السائق فقط لفترة الجرد المحددة؟\n(ملاحظة: سيبقى رصيد بند آلية النقل والوقود ومبيعات المتجر محفوظة بالكامل)`)) return;
@@ -2640,7 +2661,6 @@
             }
         }
 
-        // تصفير مبيعات صنف أو تصنيف
         function resetProductSalesStats(productId) {
             const pName = (products[productId] && products[productId].name) ? products[productId].name : "الصنف";
             if (!confirm(`تصفير مبيعات وأرباح "${pName}" مع الحفاظ الكامل على كمية المخزون؟`)) return;
@@ -2683,7 +2703,6 @@
             db.ref("completedOrdersHistory").update(updates).then(() => alert(`✅ تم تصفير مبيعات التصنيف!`));
         }
 
-        // إدارة المنتجات
         async function saveProduct() {
             const editId = document.getElementById("editProductId").value;
             const name = document.getElementById("prodName").value.trim();
@@ -2788,7 +2807,6 @@
             }).join("");
         }
 
-        // إدارة العروض الخاصة
         async function saveMultipleOffer() {
             const editId = document.getElementById("editOfferId").value;
             const name = document.getElementById("offerNameInput").value.trim();
@@ -2869,7 +2887,6 @@
             }).join("");
         }
 
-        // إدارة التصنيفات
         function renderAdminCategories(rawCats) {
             const select = document.getElementById("prodCategory");
             select.innerHTML = rawCats.map(c => `<option value="${c}">${c}</option>`).join("");
@@ -2898,7 +2915,6 @@
             db.ref("categories").set(rawCats);
         }
 
-        // إدارة الزبائن والجملة
         function renderAdminCustomers() {
             const container = document.getElementById("adminCustomersList");
             const q = (document.getElementById("adminSearchCust").value || "").trim().toLowerCase();
@@ -2979,7 +2995,6 @@
             });
         }
 
-        // النواقص
         function renderShortages() {
             const container = document.getElementById("shortagesList");
             if (!container) return;
