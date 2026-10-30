@@ -140,7 +140,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: filter 0.4s ease, transform 0.4s ease;
+            transition: filter 0.35s ease;
         }
         .categories {
             display: flex;
@@ -192,16 +192,13 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: filter 0.45s ease, transform 0.45s ease, opacity 0.3s ease;
+            transition: filter 0.35s ease;
         }
-        /* تأثير الصورة ذات الدقة الرديئة جداً قبل ترقيتها للدقة العالية */
         .img-low-res {
-            filter: blur(6px);
-            transform: scale(1.06);
+            filter: blur(4px);
         }
         .img-high-res {
             filter: blur(0);
-            transform: scale(1);
         }
         .product-card h3 {
             font-size: 13px;
@@ -452,7 +449,7 @@
     <div class="container">
         <div id="specialOfferContainer" class="special-offer-banner" style="display: none;">
             <div class="special-offer-img-wrap">
-                <img id="soDisplayImg" src="store-icon.png" class="special-offer-img img-low-res">
+                <img id="soDisplayImg" src="store-icon.png" class="special-offer-img img-high-res">
             </div>
             <div style="flex:1;">
                 <h3 style="color:var(--gold-color); font-size:14px; margin:0 0 4px 0;">🔥 عرض خاص!</h3>
@@ -665,7 +662,7 @@
 
     <!-- لوحة التحكم الإدارية الشاملة -->
     <div id="adminModal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 550px;">
+        <div class="modal-content" style="max-width: 560px;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gold-color); padding-bottom: 8px; margin-bottom: 12px;">
                 <h3 style="color: var(--gold-color); margin: 0;">⚙️ لوحة تحكم متجر معاذ</h3>
                 <button onclick="closeAdminModal()" class="btn btn-danger" style="width: auto; padding: 5px 10px;">✖ إغلاق</button>
@@ -845,7 +842,6 @@
                 <hr style="border-color: var(--border-color);">
                 <h4 style="color: var(--gold-color); margin: 10px 0 8px 0;">🛵 إدارة مناطق وتكلفة التوصيل (ل.س)</h4>
                 
-                <!-- إضافة منطقة توصيل جديدة -->
                 <div style="background: var(--bg-color); border: 1px dashed var(--gold-color); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
                     <label style="font-size: 11px; color: var(--gold-color); display: block; margin-bottom: 6px; font-weight: bold;">➕ إضافة مكان / منطقة توصيل جديدة:</label>
                     <div style="display: flex; gap: 6px; flex-wrap: wrap;">
@@ -855,7 +851,6 @@
                     </div>
                 </div>
 
-                <!-- قائمة مناطق التوصيل الحالية -->
                 <div id="adminDeliveryRegionsList" style="margin-bottom: 12px;"></div>
 
                 <hr style="border-color: var(--border-color);">
@@ -877,7 +872,7 @@
                 </div>
             </div>
 
-            <!-- 6. الجرد والأرباح (مع تصفير مبيعات كل صنف أو تصنيف على حدة) -->
+            <!-- 6. الجرد والأرباح (مع إحصائيات عدد المنتجات والنافد وتصفير المبيعات) -->
             <div id="statsTab" class="admin-tab" style="display: none;">
                 <h4 style="color: var(--gold-color); margin: 0 0 8px 0;">📊 التقارير المالية وجرد الأرباح</h4>
                 
@@ -918,7 +913,7 @@
                     </div>
                 </div>
 
-                <h4 style="color: var(--gold-color); margin: 12px 0 8px 0;">🏦 تقييم المخزون المالي (يبقى محفوظاً عند تصفير المبيعات)</h4>
+                <h4 style="color: var(--gold-color); margin: 12px 0 8px 0;">🏦 تقييم المخزون وإحصائيات الأصناف</h4>
                 <div class="stats-grid">
                     <div class="stats-box">
                         <div style="font-size: 11px; color: var(--gray-text);">رأس المال بالتكلفة</div>
@@ -927,6 +922,14 @@
                     <div class="stats-box">
                         <div style="font-size: 11px; color: var(--gray-text);">قيمة المخزون بالمبيع</div>
                         <div class="stats-value" id="invTotalSale">0 ل.س</div>
+                    </div>
+                    <div class="stats-box">
+                        <div style="font-size: 11px; color: var(--gray-text);">إجمالي عدد المنتجات</div>
+                        <div class="stats-value" id="invTotalProductsCount">0 منتج</div>
+                    </div>
+                    <div class="stats-box">
+                        <div style="font-size: 11px; color: var(--gray-text);">غير متوفر (نفدت الكمية)</div>
+                        <div class="stats-value" style="color: var(--danger-color);" id="invOutOfStockCount">0 منتج</div>
                     </div>
                 </div>
 
@@ -973,6 +976,8 @@
         let selectedCategory = "الكل";
         let products = {};
         let highResImagesMemoryCache = {};
+        let noHighResAvailableSet = {};
+        let specialOfferHighResLocked = "";
         let shuffledProductKeys = [];
         let specialOffer = null;
         let cart = {};
@@ -987,7 +992,6 @@
             image: ""
         };
 
-        // تحميل البيانات المخزنة محلياً للعرض الفوري
         try {
             const cachedProds = localStorage.getItem("moaath_cached_products");
             if (cachedProds) products = JSON.parse(cachedProds);
@@ -998,6 +1002,25 @@
         } catch(e) {}
 
         let currentUser = JSON.parse(localStorage.getItem("moaath_user") || "null");
+
+        function getLockedHighResImage(prodId) {
+            if (highResImagesMemoryCache[prodId]) {
+                return highResImagesMemoryCache[prodId];
+            }
+            if (products[prodId] && products[prodId].image && products[prodId].image.length > 100) {
+                highResImagesMemoryCache[prodId] = products[prodId].image;
+                try { localStorage.setItem("moaath_hi_img_" + prodId, products[prodId].image); } catch(e) {}
+                return products[prodId].image;
+            }
+            try {
+                const localHi = localStorage.getItem("moaath_hi_img_" + prodId);
+                if (localHi && localHi.length > 100) {
+                    highResImagesMemoryCache[prodId] = localHi;
+                    return localHi;
+                }
+            } catch(e) {}
+            return null;
+        }
 
         function formatWhatsAppPhone(phone) {
             let p = String(phone || "").replace(/[^0-9]/g, "");
@@ -1063,7 +1086,6 @@
             return Math.round((num * exchangeRate) / 5) * 5;
         }
 
-        // ضغط مزدوج مطوّر: صورة مصغرة بدقة رديئة جداً (36px) للفتح الفوري + صورة عالية الدقة (320px)
         function compressDualImages(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -1096,7 +1118,6 @@
             });
         }
 
-        // توليد مصغرة رديئة جداً تلقائياً لأي صورة قديمة لتحسين سرعة المتجر
         function createMicroThumbFromBase64(base64Str) {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -1114,7 +1135,6 @@
             });
         }
 
-        // تحديث جميع قوائم مناطق التوصيل في التطبيق ديناميكياً
         function populateRegionSelects() {
             const regionNames = Object.keys(deliveryFees);
             if (regionNames.length === 0) {
@@ -1164,7 +1184,6 @@
                 alert("⚠️ يرجى كتابة اسم المنطقة أو القرية أولاً.");
                 return;
             }
-            // مزامنة أي تعديلات حالية في الحقول قبل الإضافة
             document.querySelectorAll(".region-fee-input").forEach(inp => {
                 const r = inp.getAttribute("data-region");
                 if (r) deliveryFees[r] = parseInt(inp.value) || 0;
@@ -1225,17 +1244,20 @@
             try { localStorage.setItem("moaath_cached_cats", JSON.stringify(categories)); } catch(e){}
             renderCategories();
             renderAdminCategories(data);
+            renderStatsDashboard();
         });
 
         db.ref("products").on("value", (snap) => {
             products = snap.val() || {};
 
-            // حفظ نسخة خفيفة بدون الصور الثقيلة في الذاكرة المحلية لفتح المتجر فوراً
             try {
                 const lightProducts = {};
                 Object.keys(products).forEach(k => {
                     const p = products[k];
-                    if (p.image) highResImagesMemoryCache[k] = p.image;
+                    if (p.image && p.image.length > 100) {
+                        highResImagesMemoryCache[k] = p.image;
+                        try { localStorage.setItem("moaath_hi_img_" + k, p.image); } catch(e){}
+                    }
                     lightProducts[k] = { ...p, image: "" };
                 });
                 localStorage.setItem("moaath_cached_products", JSON.stringify(lightProducts));
@@ -1254,36 +1276,43 @@
             renderStore();
             renderAdminProducts();
             renderShortages();
-            updateInventoryValuation();
             renderStatsDashboard();
-            migrateLegacyInlineImages();
+            migrateLegacyInlineImagesOnce();
         });
 
-        // نقل الصور عالية الدقة القديمة تلقائياً إلى مسار مستقل لتسريع فتح المتجر
-        let migrationRunning = false;
-        async function migrateLegacyInlineImages() {
-            if (migrationRunning) return;
-            migrationRunning = true;
+        let migrationDoneOnce = false;
+        async function migrateLegacyInlineImagesOnce() {
+            if (migrationDoneOnce) return;
+            migrationDoneOnce = true;
+
+            const multiUpdates = {};
+            let hasLegacy = false;
+
             for (const id of Object.keys(products)) {
                 const p = products[id];
                 if (p && p.image && p.image.length > 5000) {
+                    hasLegacy = true;
                     highResImagesMemoryCache[id] = p.image;
                     try { localStorage.setItem("moaath_hi_img_" + id, p.image); } catch(e){}
                     let microThumb = p.thumb || "";
                     if (!microThumb || microThumb.length > 8000) {
                         microThumb = await createMicroThumbFromBase64(p.image);
                     }
-                    await db.ref("productImages/" + id).set(p.image);
-                    await db.ref("products/" + id).update({ thumb: microThumb, image: null });
+                    multiUpdates[`productImages/${id}`] = p.image;
+                    multiUpdates[`products/${id}/thumb`] = microThumb;
+                    multiUpdates[`products/${id}/image`] = null;
                 }
             }
-            migrationRunning = false;
+
+            if (hasLegacy) {
+                db.ref().update(multiUpdates);
+            }
         }
 
         db.ref("specialOffer").on("value", (snap) => {
             specialOffer = snap.val() || null;
             renderSpecialOffer();
-            updateInventoryValuation();
+            renderStatsDashboard();
         });
 
         db.ref("users").on("value", (snap) => {
@@ -1498,12 +1527,17 @@
             
             const soImg = document.getElementById("soDisplayImg");
             const thumbSrc = specialOffer.thumb || specialOffer.image || "store-icon.png";
-            const fullSrc = specialOffer.image || "store-icon.png";
-            soImg.src = thumbSrc;
-            soImg.className = "special-offer-img img-low-res";
-            if (fullSrc) {
+            const fullSrc = specialOffer.image || thumbSrc || "store-icon.png";
+
+            if (specialOfferHighResLocked === fullSrc) {
+                if (soImg.src !== fullSrc) soImg.src = fullSrc;
+                soImg.className = "special-offer-img img-high-res";
+            } else {
+                soImg.src = thumbSrc;
+                soImg.className = "special-offer-img img-low-res";
                 const temp = new Image();
                 temp.onload = () => {
+                    specialOfferHighResLocked = fullSrc;
                     soImg.src = fullSrc;
                     soImg.className = "special-offer-img img-high-res";
                 };
@@ -1539,34 +1573,24 @@
             }
         }
 
-        // محرك التحميل التدريجي للصور عالية الدقة على دفعات بعد عرض المنتجات بالدقة الرديئة
-        let batchLoadSessionId = 0;
+        let isBatchProcessorRunning = false;
+        let pendingHighResQueue = [];
 
         function fetchHighResProductImage(prodId) {
             return new Promise((resolve) => {
-                if (highResImagesMemoryCache[prodId]) {
-                    return resolve(highResImagesMemoryCache[prodId]);
-                }
-                if (products[prodId] && products[prodId].image) {
-                    highResImagesMemoryCache[prodId] = products[prodId].image;
-                    return resolve(products[prodId].image);
-                }
-                try {
-                    const localHi = localStorage.getItem("moaath_hi_img_" + prodId);
-                    if (localHi) {
-                        highResImagesMemoryCache[prodId] = localHi;
-                        return resolve(localHi);
-                    }
-                } catch(e) {}
+                const locked = getLockedHighResImage(prodId);
+                if (locked) return resolve(locked);
+                if (noHighResAvailableSet[prodId]) return resolve(null);
 
                 db.ref("productImages/" + prodId).once("value")
                     .then(snap => {
                         const hiData = snap.val();
-                        if (hiData) {
+                        if (hiData && hiData.length > 100) {
                             highResImagesMemoryCache[prodId] = hiData;
                             try { localStorage.setItem("moaath_hi_img_" + prodId, hiData); } catch(e) {}
                             resolve(hiData);
                         } else {
+                            noHighResAvailableSet[prodId] = true;
                             resolve(null);
                         }
                     })
@@ -1574,20 +1598,35 @@
             });
         }
 
-        async function processHighResQueueInBatches(productIdsQueue, sessionId) {
-            const BATCH_SIZE = 3; // تحميل 3 صور فقط في كل دفعة لضمان سرعة واستقرار الشبكة
-            for (let i = 0; i < productIdsQueue.length; i += BATCH_SIZE) {
-                if (sessionId !== batchLoadSessionId) return; // إلغاء الدفعة القديمة إذا قام الزبون بتغيير البحث أو التصنيف
-                const currentBatch = productIdsQueue.slice(i, i + BATCH_SIZE);
+        function enqueueHighResBatchLoading(idsToLoad) {
+            idsToLoad.forEach(id => {
+                if (!highResImagesMemoryCache[id] && !noHighResAvailableSet[id] && !pendingHighResQueue.includes(id)) {
+                    pendingHighResQueue.push(id);
+                }
+            });
+            if (!isBatchProcessorRunning && pendingHighResQueue.length > 0) {
+                runHighResBatchLoop();
+            }
+        }
+
+        async function runHighResBatchLoop() {
+            if (isBatchProcessorRunning) return;
+            isBatchProcessorRunning = true;
+
+            const BATCH_SIZE = 3;
+            while (pendingHighResQueue.length > 0) {
+                const currentBatch = pendingHighResQueue.splice(0, BATCH_SIZE);
 
                 await Promise.all(currentBatch.map(prodId => {
                     return new Promise(async (resolveItem) => {
-                        const imgEl = document.getElementById("prod_img_" + prodId);
-                        if (!imgEl) return resolveItem();
-
                         const hiSrc = await fetchHighResProductImage(prodId);
-                        if (!hiSrc || sessionId !== batchLoadSessionId) {
-                            imgEl.classList.remove("img-low-res");
+                        const imgEl = document.getElementById("prod_img_" + prodId);
+
+                        if (!hiSrc) {
+                            if (imgEl) {
+                                imgEl.classList.remove("img-low-res");
+                                imgEl.classList.add("img-high-res");
+                            }
                             return resolveItem();
                         }
 
@@ -1602,16 +1641,20 @@
                             resolveItem();
                         };
                         preloader.onerror = () => {
-                            imgEl.classList.remove("img-low-res");
+                            if (imgEl) {
+                                imgEl.classList.remove("img-low-res");
+                                imgEl.classList.add("img-high-res");
+                            }
                             resolveItem();
                         };
                         preloader.src = hiSrc;
                     });
                 }));
 
-                // مهلة قصيرة جداً بين كل دفعة وأخرى لإراحة المعالج والشبكة
-                await new Promise(r => setTimeout(r, 60));
+                await new Promise(r => setTimeout(r, 50));
             }
+
+            isBatchProcessorRunning = false;
         }
 
         function renderStore() {
@@ -1622,7 +1665,7 @@
 
             const isWholesale = currentUser && currentUser.userType === "wholesale";
             const keysToRender = (shuffledProductKeys && shuffledProductKeys.length > 0) ? shuffledProductKeys : Object.keys(products);
-            const visibleProductIds = [];
+            const needsHighResFetchIds = [];
 
             keysToRender.forEach(id => {
                 const p = products[id];
@@ -1630,8 +1673,6 @@
                 const pName = p.name || "";
                 if (selectedCategory !== "الكل" && p.category !== selectedCategory) return;
                 if (query && !pName.toLowerCase().includes(query)) return;
-
-                visibleProductIds.push(id);
 
                 const activePriceUSD = (isWholesale && p.wholesaleUSD && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0);
                 const priceSYP = calcSYP(activePriceUSD);
@@ -1685,14 +1726,27 @@
                     reviewsListHTML += `</div>`;
                 }
 
-                // الخطوة 1: عرض الصورة المصغرة ذات الدقة الرديئة جداً فوراً
-                const lowResThumb = p.thumb || "store-icon.png";
+                const lockedHiRes = getLockedHighResImage(id);
+                let finalImgSrc = "";
+                let finalImgClass = "";
+
+                if (lockedHiRes) {
+                    finalImgSrc = lockedHiRes;
+                    finalImgClass = "product-img img-high-res";
+                } else if (noHighResAvailableSet[id] || !p.thumb) {
+                    finalImgSrc = p.thumb || "store-icon.png";
+                    finalImgClass = "product-img img-high-res";
+                } else {
+                    finalImgSrc = p.thumb;
+                    finalImgClass = "product-img img-low-res";
+                    needsHighResFetchIds.push(id);
+                }
 
                 html += `
                     <div class="product-card">
                         <div>
                             <div class="product-img-wrap">
-                                <img id="prod_img_${id}" src="${lowResThumb}" class="product-img img-low-res">
+                                <img id="prod_img_${id}" src="${finalImgSrc}" class="${finalImgClass}">
                             </div>
                             <h3>${pName}</h3>
                             <p>${priceSYP.toLocaleString()} ل.س ${isWholesale && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>
@@ -1705,16 +1759,12 @@
                     </div>`;
             });
 
-            // الخطوة 2: إظهار جميع المنتجات فوراً على الشاشة
             grid.innerHTML = html || `<p style="grid-column: span 2; text-align: center; color: var(--gray-text);">لا توجد منتجات مطابقة</p>`;
             updateCartBar();
 
-            // الخطوة 3: بدء تحميل الصور عالية الدقة على دفعات متتالية وتحديث المنتجات
-            batchLoadSessionId++;
-            const currentSession = batchLoadSessionId;
-            setTimeout(() => {
-                processHighResQueueInBatches(visibleProductIds, currentSession);
-            }, 50);
+            if (needsHighResFetchIds.length > 0) {
+                enqueueHighResBatchLoading(needsHighResFetchIds);
+            }
         }
 
         function changeQty(id, delta) {
@@ -2238,7 +2288,6 @@
             db.ref("pendingOrders/" + orderId).remove();
         }
 
-        // ميزة تصفير إحصائيات البيع لصنف (منتج) واحد مع الحفاظ على المخزون والجرد
         function resetProductSalesStats(productId) {
             const pName = (products[productId] && products[productId].name) ? products[productId].name : (productId === "SPECIAL_OFFER" ? "العرض الخاص" : "هذا الصنف");
             if (!confirm(`⚠️ هل أنت متأكد من تصفير إحصائيات المبيعات والأرباح للصنف "${pName}" فقط؟\n\n(ملاحظة: سيتم الحفاظ على كمية المخزون وإحصائيات الجرد كما هي تماماً)`)) {
@@ -2282,7 +2331,6 @@
             });
         }
 
-        // ميزة تصفير إحصائيات البيع لتصنيف كامل مع الحفاظ على المخزون والجرد
         function resetCategorySalesStats(categoryName) {
             if (!confirm(`⚠️ هل أنت متأكد من تصفير إحصائيات المبيعات والأرباح لتصنيف "${categoryName}" بالكامل؟\n\n(ملاحظة: سيتم الحفاظ على كميات المخزون وإحصائيات الجرد كما هي)`)) {
                 return;
@@ -2361,10 +2409,14 @@
 
             let prodStatsMap = {};
             Object.keys(products).forEach(pid => {
+                const c = products[pid].category || "غير مصنف";
+                if (!catMap[c]) {
+                    catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 };
+                }
                 prodStatsMap[pid] = {
                     id: pid,
                     name: products[pid].name || "صنف",
-                    category: products[pid].category || "غير مصنف",
+                    category: c,
                     stock: parseInt(products[pid].stock) || 0,
                     qtySold: 0,
                     sales: 0,
@@ -2442,7 +2494,11 @@
             const container = document.getElementById("categoryStatsContainer");
             if (!container) return;
 
-            const activeCats = Object.keys(catMap).filter(c => catMap[c].sales > 0 || catMap[c].profit > 0 || getCategoryInventoryValue(c).stock > 0);
+            const rawCats = categories.filter(c => c !== "الكل");
+            const activeCats = Object.keys(catMap).filter(c => {
+                const inv = getCategoryInventoryValue(c);
+                return rawCats.includes(c) || inv.productCount > 0 || catMap[c].sales > 0 || catMap[c].profit > 0 || inv.stock > 0;
+            });
 
             if (activeCats.length === 0) {
                 container.innerHTML = '<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد مبيعات أو مخزون مسجل في هذه الفترة.</p>';
@@ -2455,6 +2511,8 @@
                         <thead>
                             <tr style="background:var(--bg-color); color:var(--gold-color); border-bottom:1px solid var(--border-color);">
                                 <th style="padding:6px; text-align:right;">التصنيف</th>
+                                <th style="padding:6px;">المنتجات</th>
+                                <th style="padding:6px;">نفدت الكمية</th>
                                 <th style="padding:6px;">المبيعات</th>
                                 <th style="padding:6px;">صافي الربح</th>
                                 <th style="padding:6px;">مخزون (مبيع)</th>
@@ -2466,9 +2524,12 @@
             activeCats.forEach(c => {
                 const data = catMap[c];
                 const inv = getCategoryInventoryValue(c);
+                const outColor = inv.outOfStockCount > 0 ? "var(--danger-color)" : "var(--success-color)";
                 html += `
                     <tr style="border-bottom:1px solid var(--border-color);">
                         <td style="padding:6px; font-weight:bold; text-align:right;">${c}</td>
+                        <td style="padding:6px; font-weight:bold; color:var(--gold-color);">${inv.productCount}</td>
+                        <td style="padding:6px; font-weight:bold; color:${outColor};">${inv.outOfStockCount}</td>
                         <td style="padding:6px;">${data.sales.toLocaleString()} ل.س</td>
                         <td style="padding:6px; color:var(--success-color); font-weight:bold;">${data.profit.toLocaleString()} ل.س</td>
                         <td style="padding:6px; color:var(--gray-text);">${inv.totalSale.toLocaleString()} ل.س</td>
@@ -2482,7 +2543,6 @@
             container.innerHTML = html;
         }
 
-        // جدول إحصائيات وجرد كل صنف على حدة مع زر تصفير مبيعات الصنف
         function renderProductBreakdownTable(prodStatsMap, selectedCat) {
             const container = document.getElementById("productStatsContainer");
             if (!container) return;
@@ -2516,13 +2576,14 @@
                         <tbody>`;
 
             list.forEach(item => {
+                const isOut = item.stock <= 0;
                 html += `
                     <tr style="border-bottom:1px solid var(--border-color);">
                         <td style="padding:6px; font-weight:bold; text-align:right;">${item.name}</td>
                         <td style="padding:6px;">${item.qtySold}</td>
                         <td style="padding:6px;">${item.sales.toLocaleString()}</td>
                         <td style="padding:6px; color:var(--success-color); font-weight:bold;">${item.profit.toLocaleString()}</td>
-                        <td style="padding:6px; color:var(--gold-color);">${item.stock}</td>
+                        <td style="padding:6px; font-weight:bold; color:${isOut ? 'var(--danger-color)' : 'var(--gold-color)'};">${isOut ? '0 (نفد)' : item.stock}</td>
                         <td style="padding:6px;">
                             <button onclick="resetProductSalesStats('${item.id}')" class="btn btn-danger" style="width:auto; padding:3px 7px; font-size:10px;" ${item.qtySold === 0 ? 'disabled style="opacity:0.4; width:auto; padding:3px 7px; font-size:10px;"' : ''}>🔄 تصفير</button>
                         </td>
@@ -2537,10 +2598,17 @@
             let totalCost = 0;
             let totalSale = 0;
             let totalStock = 0;
+            let productCount = 0;
+            let outOfStockCount = 0;
 
             Object.values(products).forEach(p => {
                 if ((p.category || "غير مصنف") === categoryName) {
-                    const stock = Math.max(0, parseInt(p.stock) || 0);
+                    productCount++;
+                    const rawStock = parseInt(p.stock) || 0;
+                    if (rawStock <= 0) {
+                        outOfStockCount++;
+                    }
+                    const stock = Math.max(0, rawStock);
                     totalStock += stock;
                     totalCost += calcSYP(p.costPrice || 0) * stock;
                     totalSale += calcSYP(p.priceUSD || 0) * stock;
@@ -2548,36 +2616,62 @@
             });
 
             if (categoryName === "عروض خاصة" && specialOffer && specialOffer.active) {
-                const soStock = Math.max(0, parseInt(specialOffer.stock) || 0);
+                productCount++;
+                const rawSoStock = parseInt(specialOffer.stock) || 0;
+                if (rawSoStock <= 0) {
+                    outOfStockCount++;
+                }
+                const soStock = Math.max(0, rawSoStock);
                 totalStock += soStock;
                 totalCost += calcSYP(specialOffer.costPrice || 0) * soStock;
                 totalSale += calcSYP(specialOffer.newPriceUSD || 0) * soStock;
             }
 
-            return { totalCost, totalSale, stock: totalStock };
+            return { totalCost, totalSale, stock: totalStock, productCount, outOfStockCount };
         }
 
         function updateInventoryValuation(selectedCat = "all") {
             let totalInvCost = 0;
             let totalInvSale = 0;
+            let totalProductsCount = 0;
+            let totalOutOfStockCount = 0;
 
             Object.values(products).forEach(p => {
                 const c = p.category || "غير مصنف";
                 if (selectedCat === "all" || selectedCat === c) {
-                    const stock = Math.max(0, parseInt(p.stock) || 0);
+                    totalProductsCount++;
+                    const rawStock = parseInt(p.stock) || 0;
+                    if (rawStock <= 0) {
+                        totalOutOfStockCount++;
+                    }
+                    const stock = Math.max(0, rawStock);
                     totalInvCost += calcSYP(p.costPrice || 0) * stock;
                     totalInvSale += calcSYP(p.priceUSD || 0) * stock;
                 }
             });
 
             if ((selectedCat === "all" || selectedCat === "عروض خاصة") && specialOffer && specialOffer.active) {
-                const soStock = Math.max(0, parseInt(specialOffer.stock) || 0);
+                totalProductsCount++;
+                const rawSoStock = parseInt(specialOffer.stock) || 0;
+                if (rawSoStock <= 0) {
+                    totalOutOfStockCount++;
+                }
+                const soStock = Math.max(0, rawSoStock);
                 totalInvCost += calcSYP(specialOffer.costPrice || 0) * soStock;
                 totalInvSale += calcSYP(specialOffer.newPriceUSD || 0) * soStock;
             }
 
             document.getElementById("invTotalCost").textContent = totalInvCost.toLocaleString() + " ل.س";
             document.getElementById("invTotalSale").textContent = totalInvSale.toLocaleString() + " ل.س";
+
+            const prodCountEl = document.getElementById("invTotalProductsCount");
+            if (prodCountEl) prodCountEl.textContent = totalProductsCount + " منتج";
+
+            const outCountEl = document.getElementById("invOutOfStockCount");
+            if (outCountEl) {
+                outCountEl.textContent = totalOutOfStockCount + " منتج";
+                outCountEl.style.color = totalOutOfStockCount > 0 ? "var(--danger-color)" : "var(--success-color)";
+            }
         }
 
         function renderAdminCustomers() {
@@ -2728,11 +2822,11 @@
                 const compressed = await compressDualImages(fileInput.files[0]);
                 thumbBase64 = compressed.thumb;
                 highResImagesMemoryCache[id] = compressed.image;
+                delete noHighResAvailableSet[id];
                 try { localStorage.setItem("moaath_hi_img_" + id, compressed.image); } catch(e){}
                 await db.ref("productImages/" + id).set(compressed.image);
             }
 
-            // حفظ المصغرة الخفيفة جداً في قائمة المنتجات لتسريع التحميل، بينما الصورة عالية الدقة في productImages
             db.ref("products/" + id).set({
                 name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, thumb: thumbBase64, reviews: existingReviews
             }).then(() => {
@@ -2768,6 +2862,7 @@
                 db.ref("products/" + id).remove();
                 db.ref("productImages/" + id).remove();
                 delete highResImagesMemoryCache[id];
+                delete noHighResAvailableSet[id];
                 try { localStorage.removeItem("moaath_hi_img_" + id); } catch(e){}
             }
         }
@@ -2850,6 +2945,7 @@
                 const compressed = await compressDualImages(fileInput.files[0]);
                 thumbBase64 = compressed.thumb;
                 imageBase64 = compressed.image;
+                specialOfferHighResLocked = imageBase64;
             }
 
             db.ref("specialOffer").set({
