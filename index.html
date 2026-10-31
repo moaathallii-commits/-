@@ -158,36 +158,35 @@
         </div>
     </div>
 
-    <!-- نافذة السلة المحدثة غير المزدحمة -->
+    <!-- نافذة السلة -->
     <div id="cartModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">🛒 سلة المشتريات وإتمام الطلب</h3>
-            <div id="cartItemsList" style="max-height:200px; overflow-y:auto; margin-bottom:10px;"></div>
+            <div id="cartItemsList" style="max-height:220px; overflow-y:auto; margin-bottom:10px;"></div>
             <div class="form-group"><label>📍 منطقة التوصيل:</label><select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()"></select></div>
-            <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:8px 10px; margin-bottom:10px; font-size:12px;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span>قيمة المواد:</span><strong><span id="modalCartSubtotal">0</span> ل.س</strong></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:3px; color:var(--gray-text);"><span>أجور التوصيل (<span id="modalDeliveryRegionName">-</span>):</span><strong><span id="modalDeliveryFee">0</span> ل.س</strong></div>
-                <div style="display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding-top:5px; margin-top:3px; font-size:14px;"><span>الإجمالي النهائي:</span><strong style="color:#00e676; font-size:16px; font-weight:900;"><span id="modalCartTotal">0</span> ل.س</strong></div>
-                <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:11px; color:var(--success-color);"><span>النقاط المكتسبة:</span><strong>+<span id="modalCartPoints">0</span> نقطة 🎁</strong></div>
+            <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:10px; margin-bottom:10px; font-size:12px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>قيمة المواد:</span><strong><span id="modalCartSubtotal">0</span> ل.س</strong></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--gray-text);"><span>أجور التوصيل (<span id="modalDeliveryRegionName">-</span>):</span><strong><span id="modalDeliveryFee">0</span> ل.س</strong></div>
+                <div style="display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding-top:6px; margin-top:4px; font-size:14px;"><span>الإجمالي النهائي:</span><strong style="color:#00e676; font-size:16px; font-weight:900;"><span id="modalCartTotal">0</span> ل.س</strong></div>
+                <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:11px; color:var(--success-color);"><span>النقاط المكتسبة:</span><strong>+<span id="modalCartPoints">0</span> نقطة 🎁</strong></div>
             </div>
-
-            <!-- زر بارز لنسخ كود الشام كاش بدون إظهار الكود المزعج -->
-            <div style="margin-bottom:10px;">
-                <button type="button" onclick="copyWalletId()" class="btn" style="background:linear-gradient(45deg, #D4AF37, #FFD700); color:#000; padding:10px; font-weight:bold; font-size:12px; display:flex; align-items:center; justify-content:center; gap:6px;">
-                    📋 اضغط هنا لنسخ معرف محفظة شام كاش للدفع
-                </button>
+            <div class="form-group">
+                <label>طريقة الدفع:</label>
+                <select id="paymentMethodSelect" class="form-control" onchange="toggleShamCashBox()">
+                    <option value="شام كاش (Sham Cash)">📱 شام كاش (Sham Cash)</option>
+                    <option value="نقداً عند الاستلام">💵 نقداً عند الاستلام</option>
+                </select>
             </div>
-
-            <div class="form-group"><label>ملاحظات إضافية أو رقم عملية التحويل (اختياري):</label><input type="text" id="orderNotes" class="form-control" placeholder="أي ملاحظة أو رقم إيصال التحويل..."></div>
-
-            <!-- زر إرسال وتأكيد الطلب بارز ومشمس -->
-            <div style="display:flex; flex-direction:column; gap:6px; margin-top:10px;">
-                <button type="button" onclick="submitOrder()" class="btn" style="background:linear-gradient(45deg, #00e676, #00b0ff); color:#000; padding:12px; font-size:14px; font-weight:900; box-shadow:0 4px 15px rgba(0,230,118,0.4);">
-                    ✅ إرسال وتأكيد الطلب عبر واتساب
-                </button>
-                <button type="button" onclick="closeCartModal()" class="btn btn-danger" style="padding:8px; font-size:12px;">إغلاق السلة</button>
+            <div id="shamCashBox" style="background:rgba(212,175,55,0.08); border:1px dashed var(--gold-color); padding:10px; border-radius:6px; margin-bottom:10px; font-size:12px;">
+                <div style="color:var(--gold-color); font-weight:bold; margin-bottom:5px; text-align:center;">📱 الدفع عبر محفظة شام كاش</div>
+                <div style="margin-bottom:6px; word-break:break-all; text-align:center;">💳 المعرف: <b id="shamWalletId">da3e13cd8a2ef2af282445e148df9599</b></div>
+                <button type="button" onclick="copyWalletId()" class="btn" style="padding:6px; font-size:11px;">📋 نسخ معرف المحفظة للدفع</button>
             </div>
-            <div hidden><span id="shamWalletId">da3e13cd8a2ef2af282445e148df9599</span></div>
+            <div class="form-group"><label>ملاحظات إضافية حول التوصيل أو الدفع:</label><input type="text" id="orderNotes" class="form-control" placeholder="أي تفاصيل خاصة بالطلب..."></div>
+            <div style="display:flex; gap:8px;">
+                <button type="button" onclick="submitOrder()" class="btn" style="background:var(--success-color); color:#000;">✅ إرسال وتأكيد الطلب</button>
+                <button type="button" onclick="closeCartModal()" class="btn btn-danger" style="width:35%;">إلغاء</button>
+            </div>
         </div>
     </div>
 
@@ -265,6 +264,7 @@
                 <button class="cat-btn" onclick="switchAdminTab('shortagesTab', this)">⚠️ النواقص</button>
             </div>
 
+            <!-- تبويب الجرد -->
             <div id="statsTab" class="admin-tab">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">📊 التقارير المالية وجرد الأرباح</h4>
                 <div class="stats-grid">
@@ -309,6 +309,7 @@
                 <div id="productStatsContainer"></div>
             </div>
 
+            <!-- تبويب الطلبات مع الزر البارز لإلغاء جميع الطلبات -->
             <div id="ordersTab" class="admin-tab" style="display:none;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
                     <h4 style="color:var(--gold-color); margin:0;">📦 الفواتير والطلبات المعلقة</h4>
@@ -317,6 +318,7 @@
                 <div id="pendingOrdersList"></div>
             </div>
 
+            <!-- تبويب إضافة صنف -->
             <div id="addProductTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">➕ إضافة / تعديل صنف</h4>
                 <input type="hidden" id="editProductId">
@@ -334,6 +336,7 @@
                 <button onclick="saveProduct()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ الصنف في المتجر</button>
             </div>
 
+            <!-- تبويب العروض -->
             <div id="offersTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">🔥 إدارة العروض الخاصة المتعددة</h4>
                 <input type="hidden" id="editOfferId">
@@ -356,6 +359,7 @@
                 <div id="adminOffersList"></div>
             </div>
 
+            <!-- تبويب المنتجات والتصنيفات -->
             <div id="productsTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 6px 0;">📋 قائمة الأصناف والتعليقات</h4>
                 <input type="text" id="adminSearchProd" class="search-box" placeholder="🔍 ابحث عن صنف لتعديله أو تصفيره..." oninput="renderAdminProducts()" style="margin-bottom:8px;">
@@ -369,6 +373,7 @@
                 <div id="adminCategoriesList"></div>
             </div>
 
+            <!-- تبويب الزبائن والجيران -->
             <div id="customersTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">👥 الزبائن وتصنيف (مفرق / جملة / جيران المتجر)</h4>
                 <input type="text" id="adminSearchCust" class="search-box" placeholder="🔍 ابحث بالاسم أو الهاتف..." oninput="renderAdminCustomers()" style="margin-bottom:8px;">
@@ -385,6 +390,7 @@
                 <button onclick="saveCompetitionSettings()" class="btn">💾 حفظ المسابقة</button>
             </div>
 
+            <!-- تبويب الإعدادات والمناطق مع تسعير توصيل جيران المتجر -->
             <div id="settingsTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">🛵 سعر توصيل صنف "جيران المتجر" الخاص</h4>
                 <div style="background:var(--bg-color); border:1px solid var(--gold-color); padding:10px; border-radius:8px; margin-bottom:12px;">
@@ -430,6 +436,7 @@
                 <div class="form-group"><label>⬆️ استيراد نسخة احتياطية:</label><input type="file" id="importBackupInput" accept=".json" class="form-control" onchange="importBackupJSON(event)"></div>
             </div>
 
+            <!-- تبويب النواقص -->
             <div id="shortagesTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--danger-color); margin:0 0 8px 0;">⚠️ أصناف أوشكت على النفاد</h4>
                 <div id="shortagesList" style="margin-bottom:12px;"></div>
@@ -890,6 +897,7 @@
             renderCartModalItems(); updateCartBar();
         }
 
+        const toggleShamCashBox = () => $("shamCashBox").style.display = $("paymentMethodSelect").value.includes("شام كاش") ? "block" : "none";
         const copyWalletId = () => navigator.clipboard.writeText($("shamWalletId").textContent).then(() => alert("✅ تم نسخ معرف محفظة شام كاش بنجاح!"));
 
         function renderCartModalItems() {
@@ -923,14 +931,14 @@
                 orderId: ordId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
                 customerName: currentUser.name, customerPhone: currentUser.phone, customerRegion: reg, customerAddress: currentUser.address,
                 customerType: currentUser.userType || "retail",
-                paymentMethod: "شام كاش (Sham Cash)", notes: $("orderNotes").value.trim(), items: ordItems,
+                paymentMethod: $("paymentMethodSelect").value, notes: $("orderNotes").value.trim(), items: ordItems,
                 subtotalSaleSYP: subSale, deliveryFeeSYP: fee, totalSaleSYP: subSale + fee, totalCostSYP: totCost, netProfitSYP: subSale - totCost, earnedPoints: totPts
             };
             let typeLabel = "زبون مفرق";
             if (currentUser.userType === "wholesale") typeLabel = "زبون جملة";
             else if (currentUser.userType === "neighbors") typeLabel = "جيران المتجر 🏘️";
 
-            let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n👤 الزبون: ${payload.customerName} [${typeLabel}]\n📱 الهاتف: ${payload.customerPhone}\n🏘️ المنطقة: ${payload.customerRegion}\n📍 العنوان: ${payload.customerAddress}\n💳 طريقة الدفع: شام كاش (Sham Cash)\n`;
+            let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n👤 الزبون: ${payload.customerName} [${typeLabel}]\n📱 الهاتف: ${payload.customerPhone}\n🏘️ المنطقة: ${payload.customerRegion}\n📍 العنوان: ${payload.customerAddress}\n💳 طريقة الدفع: ${payload.paymentMethod}\n`;
             if (payload.notes) msg += `📝 ملاحظات: ${payload.notes}\n`;
             msg += `──────────────\n` + ordItems.map(i => `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س`).join("\n") + `\n──────────────\n📦 قيمة المواد: ${subSale.toLocaleString()} ل.س\n🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${payload.totalSaleSYP.toLocaleString()} ل.س\n🎁 النقاط المستحقة: +${totPts}`;
             db.ref("pendingOrders/" + ordId).set(payload);
@@ -1131,7 +1139,7 @@
                 updates[`completedOrdersHistory/${id}/deliveryFeeSYP`] = fee - Math.round((fee * getRegionDriverPct(ord.customerRegion)) / 100);
                 cnt++;
             });
-            if (cnt > 0) db.ref().update(updates).then(() => alert(`✅ تم تصفير حساب السائق بنجاح لـ (${cnt}) طلب وحفظ رصيد الوقود.`));
+            if (cnt > 0) db.ref().update(updates).then(() => alert(`✅ تم تصفير حساب السائق بنجاح لـ (${count}) طلب وحفظ رصيد الوقود.`));
             else alert("ℹ️ لا توجد مستحقات معلقة للسائق لتصفيرها.");
         }
 
@@ -1220,6 +1228,74 @@
             $("newCatInput").value = "";
         }
         function deleteCategory(idx) { const raw = categories.filter(c => c !== "الكل"); raw.splice(idx, 1); db.ref("categories").set(raw); }
+
+        function renderAdminCustomers() {
+            const q = ($("adminSearchCust").value || "").trim().toLowerCase();
+            const sorted = Object.values(users).filter(u => !q || u.name?.toLowerCase().includes(q) || u.phone?.includes(q)).sort((a, b) => (b.points || 0) - (a.points || 0));
+            if (!sorted.length) return ($("adminCustomersList").innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا يوجد زبائن.</p>`);
+            $("adminCustomersList").innerHTML = sorted.map(u => {
+                const isB = !!u.banned;
+                let tBadge = '<b style="color:var(--success-color);">[مفرق]</b>';
+                if (u.userType === "wholesale") tBadge = '<b style="color:var(--gold-color);">[جملة]</b>';
+                else if (u.userType === "neighbors") tBadge = '<b style="color:#00b0ff;">[جيران المتجر 🏘️]</b>';
+
+                return `<div style="background:var(--bg-color); border:1px solid ${isB ? 'var(--danger-color)' : 'var(--border-color)'}; padding:8px; border-radius:6px; margin-bottom:6px; font-size:12px;">
+                    <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                        <span>👤 ${u.name} (${u.phone}) ${tBadge}</span>
+                        <span style="color:var(--gold-color);">${Math.round(u.points || 0)} نقطة</span>
+                    </div>
+                    <div style="display:flex; gap:4px; margin-top:6px; flex-wrap:wrap;">
+                        <button onclick="openAdminEditCustomerModal('${u.phone}')" class="btn" style="padding:3px 6px; font-size:10px; width:auto;">✏️ تعديل</button>
+                        <button onclick="cycleCustomerType('${u.phone}')" class="btn" style="padding:3px 6px; font-size:10px; width:auto; background:#2196F3; color:#fff;">تبديل التصنيف 🔄</button>
+                        <button onclick="toggleBanCustomer('${u.phone}')" class="btn" style="padding:3px 6px; font-size:10px; width:auto; background:${isB ? 'var(--success-color)' : '#ff9800'}; color:#000;">${isB ? 'فك الحظر' : 'حظر الزبون'}</button>
+                    </div>
+                </div>`;
+            }).join("");
+        }
+
+        function cycleCustomerType(phone) {
+            const u = users[phone]; if (!u) return;
+            let nType = "wholesale";
+            if (u.userType === "wholesale") nType = "neighbors";
+            else if (u.userType === "neighbors") nType = "retail";
+            else nType = "wholesale";
+            db.ref("users/" + phone + "/userType").set(nType);
+        }
+
+        const toggleBanCustomer = p => { if (users[p]) db.ref("users/" + p + "/banned").set(!users[p].banned); };
+        function openAdminEditCustomerModal(p) {
+            const u = users[p]; if (!u) return;
+            populateRegionSelects(); $("adminCustOrigPhone").value = p; $("adminCustName").value = u.name || ""; $("adminCustPhone").value = u.phone || p;
+            $("adminCustRegion").value = u.region || "العوينة"; $("adminCustType").value = u.userType || "retail"; $("adminCustAddress").value = u.address || ""; $("adminCustPoints").value = Math.round(u.points || 0);
+            $("adminEditCustomerModal").style.display = "flex";
+        }
+        const closeAdminEditCustomerModal = () => $("adminEditCustomerModal").style.display = "none";
+        function saveAdminCustomerEdit() {
+            const p = $("adminCustOrigPhone").value; if (!p || !users[p]) return;
+            db.ref("users/" + p).update({ name: $("adminCustName").value.trim(), region: $("adminCustRegion").value, userType: $("adminCustType").value, address: $("adminCustAddress").value.trim(), points: parseFloat($("adminCustPoints").value) || 0 }).then(() => { alert("✅ تم الحفظ!"); closeAdminEditCustomerModal(); });
+        }
+
+        function renderShortages() {
+            const container = $("shortagesList"); if (!container) return;
+            const list = Object.keys(products).filter(id => products[id] && (parseInt(products[id].stock) || 0) <= (parseInt(products[id].alertLimit) || 2));
+            container.innerHTML = !list.length ? `<p style="text-align:center; color:var(--success-color); font-size:12px;">✅ جميع الأصناف متوفرة بالمخزون.</p>` : list.map(id => `<div class="review-box" style="border-color:var(--danger-color); margin-bottom:5px;"><span><b>${products[id].name}</b> <small>(${products[id].category})</small></span><span style="color:var(--danger-color); font-weight:bold;">المتبقي: ${products[id].stock}</span></div>`).join("");
+        }
+        function renderCustomerMissingRequests() {
+            const container = $("customerMissingRequestsList"); if (!container) return;
+            const entries = Object.entries(missingRequests);
+            container.innerHTML = !entries.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد طلبات معلقة من الزبائن.</p>` : entries.map(([id, r]) => `<div class="review-box" style="margin-bottom:6px;"><div><b>${r.itemName}</b> <small>(${r.customerName} - ${r.customerPhone})</small></div><button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:11px;" onclick="db.ref('missingRequests/${id}').remove()">✖</button></div>`).join("");
+        }
+        function sendShortagesWhatsApp() {
+            const list = Object.values(products).filter(p => p && (parseInt(p.stock) || 0) <= (parseInt(p.alertLimit) || 2));
+            if (!list.length) return alert("✅ لا توجد نواقص.");
+            window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(`⚠️ *قائمة نواقص متجر معاذ*\n──────────────\n` + list.map(p => `• ${p.name} (المتبقي: ${p.stock})`).join("\n"))}`, "_blank");
+        }
+
+        async function saveCompetitionSettings() {
+            const f = $("compImageInput"); let image = compSettings.image || "";
+            if (f.files && f.files[0]) image = (await compressDualImages(f.files[0])).image;
+            db.ref("competition").set({ minRedeemPoints: parseInt($("minRedeemPointsInput").value) || 500, leaderboardLimit: parseInt($("leaderboardLimitInput").value) || 10, title: $("compTitleInput").value.trim(), desc: $("compDescInput").value.trim(), image }).then(() => alert("✅ تم حفظ إعدادات المسابقة بنجاح!"));
+        }
 
         function saveGeneralSettings() {
             collectDeliveryRegionsFromDOM();
