@@ -227,7 +227,6 @@
         </div>
     </div>
 
-    <!-- لوحة الشريك مع سجل التسويات السابق (الميزة 2) -->
     <div id="partnerModal" class="page-overlay">
         <header style="position:sticky; top:0; z-index:10;">
             <div class="store-info"><h1>🤝 لوحة الشريك المعتمدة</h1><p>مراقبة المخزون، الأرباح، وسجل الدفعات</p></div>
@@ -261,7 +260,7 @@
         </div>
     </div>
 
-    <!-- مركز إدارة المتجر المطور (مع شريط الصرف السريع بالأعلى - الميزة 4) -->
+    <!-- لوحة الإدارة الآمنة (بدون كلمة مرور مكشوفة) -->
     <div id="adminModal" class="modal-overlay">
         <div class="modal-content" style="max-width:630px;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:8px; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
@@ -525,7 +524,7 @@
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
         let adminWhatsAppNumber = "963965461504", shamWalletIdGlobal = "da3e13cd8a2ef2af282445e148df9599";
-        const ADMIN_PASSWORD = "MHA@1997//MOAATHS";
+        let dynamicAdminPassword = "MHA@1997//MOAATHS"; // كلمة المرور الافتراضية، وقابلة للتحديث تلقائياً من قاعدة البيانات
 
         if (!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://moaathstore-d2fd6-default-rtdb.firebaseio.com" });
         const db = firebase.database();
@@ -545,8 +544,6 @@
         window.partnersConfigData = {};
         let currentUser = JSON.parse(localStorage.getItem("moaath_user") || "null");
 
-        // الميزة 3: نغمة تنبيه صوتية واهتزاز عند وصول طلب جديد (بدون ملفات خارجية)
-        let knownOrderIds = null;
         function playNewOrderSound() {
             try {
                 if (navigator.vibrate) navigator.vibrate([250, 100, 250]);
@@ -585,9 +582,7 @@
                 for (let id of ['cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal', 'competitionsPage']) {
                     const el = $(id);
                     if (el && (el.style.display === 'flex' || el.style.display === 'block')) {
-                        el.style.display = 'none';
-                        history.pushState({ page: 'store_home' }, '');
-                        return;
+                        el.style.display = 'none'; history.pushState({ page: 'store_home' }, ''); return;
                     }
                 }
                 if (confirm("هل تريد إغلاق التطبيق بالفعل؟")) { isExitingApp = true; history.back(); }
@@ -755,7 +750,6 @@
             box.innerHTML = categories.filter(c => c !== "الكل").map(c => `<label style="display:inline-flex; align-items:center; gap:4px; font-size:11px; background:var(--card-bg); padding:4px 8px; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;"><input type="checkbox" class="partner-cat-cb" value="${c}"> ${c}</label>`).join("");
         }
 
-        // الميزة 4: تحديث سعر الصرف السريع من أعلى لوحة الإدارة
         function saveQuickExchangeRate() {
             const val = parseFloat($("quickExchangeInput")?.value);
             if (!val || val <= 0) return alert("⚠️ أدخل سعر صرف صحيح.");
@@ -770,6 +764,7 @@
             deliveryDriverPhone = d.deliveryDriverPhone || "";
             adminWhatsAppNumber = d.adminWhatsApp || "963965461504";
             shamWalletIdGlobal = d.shamWalletId || "da3e13cd8a2ef2af282445e148df9599";
+            if (d.adminPassword) dynamicAdminPassword = d.adminPassword; // قراءة كلمة المرور بلأمان من قاعدة البيانات
             if (d.workHours) workHoursSettings = { enabled: !!d.workHours.enabled, open: d.workHours.open || "08:00", close: d.workHours.close || "23:00" };
             if ($("workHoursEnabled")) $("workHoursEnabled").checked = workHoursSettings.enabled;
             if ($("workHourOpen")) $("workHourOpen").value = workHoursSettings.open;
@@ -1087,7 +1082,6 @@
 
         function openCompetitionsPage() { syncCurrentUser(); renderCompetitionDetails(); renderLeaderboard(); $("competitionsPage").style.display = "block"; }
 
-        // حساب أرباح الشريك مع سجل الدفعات الموثق (الميزة 2)
         function calculatePartnerCurrentMetrics(phone) {
             const conf = (window.partnersConfigData && window.partnersConfigData[phone]) || {};
             const rawCats = conf.categories || [];
@@ -1219,7 +1213,8 @@
                 adminClickCount = 0;
                 const pass = prompt("🔐 كلمة مرور الإدارة:");
                 if (pass === null) return;
-                if (pass === ADMIN_PASSWORD) {
+                // التحقق من كلمة المرور المقروءة بأمان من قاعدة البيانات
+                if (pass === dynamicAdminPassword) {
                     $("adminModal").style.display = "flex";
                     renderStatsDashboard(); populateAdminPartnerSelect(); populatePartnerSelectOptions();
                 } else alert("❌ كلمة المرور غير صحيحة!");
@@ -1467,7 +1462,6 @@
             else alert("ℹ️ لا توجد مستحقات معلقة للسائق.");
         }
 
-        // دالة موحدة ومختصرة لتصفير مبيعات صنف أو تصنيف
         function resetSalesFilter(type, target) {
             const label = type === 'prod' ? (products[target]?.name || 'الصنف') : target;
             if (!confirm(`تصفير مبيعات وأرباح "${label}" مع الحفاظ الكامل على كميات المخزون؟`)) return;
@@ -1500,7 +1494,6 @@
         }
         function deleteProduct(id) { if (confirm("حذف هذا الصنف نهائياً؟")) { db.ref("products/" + id).remove(); db.ref("productImages/" + id).remove(); delete highResImagesMemoryCache[id]; } }
 
-        // الميزة 1: التعديل السريع الفوري للمخزون والسعر من القائمة مباشرة
         function quickUpdateStock(id, delta) {
             if (!products[id]) return;
             const newSt = Math.max(0, (parseInt(products[id].stock) || 0) + delta);
@@ -1602,9 +1595,10 @@
                 deliveryDriverPhone: $("deliveryPhoneInput").value.trim(),
                 adminWhatsApp: $("adminWhatsAppInput").value.trim() || "963965461504",
                 shamWalletId: $("adminShamWalletInput").value.trim() || "da3e13cd8a2ef2af282445e148df9599",
+                adminPassword: dynamicAdminPassword,
                 deliveryFees,
                 workHours: { enabled: $("workHoursEnabled").checked, open: $("workHourOpen").value || "08:00", close: $("workHourClose").value || "23:00" }
-            }).then(() => alert("✅ تم حفظ كافة الإعدادات والمناطق بنجاح!"));
+            }).then(() => alert("✅ تم حفظ كافة إعدادات النظام والمناطق بنجاح!"));
         }
 
         function exportBackupJSON() {
