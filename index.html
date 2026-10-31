@@ -126,12 +126,13 @@
         <div class="products-grid" id="productsGrid"></div>
     </div>
 
-    <div class="cart-bar" id="cartBar" style="display:none;" onclick="openCartModal()">
-        <div style="display:flex; flex-direction:column; gap:2px; text-align:right;">
+    <!-- شريط السلة السفلي مع إصلاح حدث النقر -->
+    <div class="cart-bar" id="cartBar" style="display:none;">
+        <div style="display:flex; flex-direction:column; gap:2px; text-align:right; flex:1;" onclick="openCartModal()">
             <span style="font-size:11px; color:var(--gray-text);">المنتجات: <b id="cartCount" style="color:var(--text-color);">0</b> <small id="cartBarDeliveryNote" style="color:var(--gold-color);"></small></span>
             <span style="font-size:12px;">المجموع النهائي: <strong id="cartTotal" class="cart-bar-total-val">0 ل.س</strong></span>
         </div>
-        <button class="cart-bar-btn" type="button">🛒 إتمام الطلب الآن</button>
+        <button class="cart-bar-btn" type="button" onclick="openCartModal()">🛒 إتمام الطلب الآن</button>
     </div>
 
     <!-- النوافذ المنبثقة للزبون -->
@@ -171,11 +172,11 @@
                 <div style="display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding-top:4px; margin-top:2px; font-size:13px;"><span>الإجمالي النهائي:</span><strong style="color:#00e676; font-size:15px; font-weight:900;"><span id="modalCartTotal">0</span> ل.س</strong></div>
             </div>
             <div style="background:rgba(212,175,55,0.08); border:1px dashed var(--gold-color); padding:8px; border-radius:6px; margin-bottom:8px; text-align:center; font-size:11px;">
-                <div style="color:var(--gold-color); font-weight:bold; margin-bottom:4px;">📱 الدفع عبر محفظة شام كاش (Sham Cash)</div>
-                <button type="button" onclick="copyWalletId()" class="btn" style="padding:5px; font-size:11px; background:var(--gold-color); color:#000; font-weight:bold;">📋 نسخ كود شام كاش للدفع</button>
+                <div style="color:var(--gold-color); font-weight:bold; margin-bottom:4px;">📱 الدفع حصراً عبر محفظة شام كاش</div>
+                <button type="button" onclick="copyWalletId()" class="btn" style="padding:6px; font-size:11px; background:var(--gold-color); color:#000; font-weight:bold;">📋 نسخ كود محفظة شام كاش للدفع</button>
             </div>
             <div class="form-group" style="margin-bottom:8px;"><label style="font-size:11px;">ملاحظات إضافية (اختياري):</label><input type="text" id="orderNotes" class="form-control" placeholder="أي تفاصيل خاصة بالطلب..." style="padding:6px; font-size:12px;"></div>
-            <button type="button" onclick="submitOrder()" class="btn" style="background:var(--success-color); color:#000; margin-bottom:6px; font-size:14px; padding:10px; font-weight:900; box-shadow:0 0 12px rgba(0,230,118,0.4);">✅ تأكيد وإرسال الطلب عبر واتساب</button>
+            <button type="button" onclick="submitOrder()" class="btn" style="background:var(--success-color); color:#000; margin-bottom:6px; font-size:14px; padding:12px; font-weight:900; box-shadow:0 0 15px rgba(0,230,118,0.5);">✅ تأكيد وإرسال الطلب عبر واتساب</button>
             <button type="button" onclick="closeCartModal()" class="btn btn-danger" style="padding:6px; font-size:11px;">إغلاق</button>
         </div>
     </div>
@@ -194,7 +195,7 @@
             <div class="form-group"><label>رأيك بعد الشراء والتجربة:</label><textarea id="reviewCommentInput" class="form-control" rows="3" placeholder="اكتب تعليقك هنا..."></textarea></div>
             <div style="display:flex; gap:8px;">
                 <button onclick="submitProductReview()" class="btn">💾 إرسال التقييم</button>
-                <button onclick="closeReviewModal()" class="btn btn-danger" style="width:35%;">إغلاق</button>
+                <button onclick="closeReviewModal()" class="btn btn-danger" style="width:35%;">إلغاء</button>
             </div>
         </div>
     </div>
@@ -218,22 +219,22 @@
         </div>
     </div>
 
-    <!-- نافذة لوحة الشريك -->
+    <!-- لوحة الشريك (المحدثة لعرض المبيعات، الأرباح، ومخزون التصنيفات) -->
     <div id="partnerModal" class="page-overlay">
         <header style="position:sticky; top:0; z-index:10;">
-            <div class="store-info"><h1>🤝 لوحة أرباح الشريك</h1><p>إحصائيات الأصناف والتصنيفات الخاصة بك</p></div>
+            <div class="store-info"><h1>🤝 لوحة أرباح ومخزون الشريك</h1><p>إحصائيات الأصناف، الأرباح، والمخزون المتبقي</p></div>
             <button onclick="closePartnerDashboard()" class="btn btn-danger" style="width:auto; padding:6px 12px;">🔙 رجوع</button>
         </header>
         <div class="container">
             <div class="comp-card" style="background:linear-gradient(45deg,rgba(0,176,255,0.15),var(--card-bg)); border-color:#00b0ff;">
                 <h3 style="color:#00b0ff; margin:0 0 8px 0; font-size:15px;">👤 مرحباً بك يا شريك المتجر</h3>
-                <div style="font-size:12px; color:var(--text-color); line-height:1.6;">تظهر لك هنا حصرياً إحصائيات المبيعات والأرباح للأصناف المرتبطة بتصنيفاتك المحددة من الإدارة.</div>
+                <div style="font-size:12px; color:var(--text-color); line-height:1.6;">تظهر لك هنا حصرياً إحصائيات المبيعات، الأرباح، ومخزون الأصناف المرتبطة بالتصنيفات المخصصة لحسابك.</div>
             </div>
             <div class="stats-grid">
                 <div class="stats-box"><div style="font-size:11px; color:var(--gray-text);">إجمالي المبيعات لأصنافك</div><div class="stats-value" id="partnerTotalSales">0 ل.س</div></div>
                 <div class="stats-box"><div style="font-size:11px; color:var(--gray-text);">إجمالي أرباحك المستحقة</div><div class="stats-value" style="color:var(--success-color);" id="partnerTotalEarnings">0 ل.س</div></div>
             </div>
-            <h4 style="color:var(--gold-color); margin:14px 0 8px 0;">📦 تفصيل مبيعات أصنافك الخاصة</h4>
+            <h4 style="color:var(--gold-color); margin:14px 0 8px 0;">📦 تفصيل مخزون ومبيعات تصنيفاتك</h4>
             <div id="partnerItemsBreakdown"></div>
         </div>
     </div>
@@ -383,11 +384,11 @@
                 <input type="text" id="adminSearchCust" class="search-box" placeholder="🔍 ابحث بالاسم أو الهاتف..." oninput="renderAdminCustomers()" style="margin-bottom:8px;">
                 <div id="adminCustomersList" style="max-height:250px; overflow-y:auto; margin-bottom:12px;"></div>
                 
-                <!-- إعدادات تصنيفات الشريك -->
+                <!-- إعدادات تصنيفات الشريك المتعددة -->
                 <div style="background:var(--bg-color); border:1px solid #00b0ff; padding:10px; border-radius:8px; margin-bottom:12px;">
-                    <h5 style="color:#00b0ff; margin:0 0 6px 0; font-size:12px;">🤝 ربط التصنيفات بالشركاء (تحديد نسبة الشريك):</h5>
+                    <h5 style="color:#00b0ff; margin:0 0 6px 0; font-size:12px;">🤝 ربط تصنيفات متعددة بالشركاء:</h5>
                     <div class="form-group"><label>اختر الشريك:</label><select id="adminPartnerSelect" class="form-control" onchange="loadPartnerConfig()"><option value="">-- اختر شريكاً --</option></select></div>
-                    <div class="form-group"><label>التصنيفات التابعة له (اختر أكثر من تصنيف أو اكتبها فاصلة فواصل):</label><input type="text" id="adminPartnerCategories" class="form-control" placeholder="مثال: مواد غذائية, مشروبات"></div>
+                    <div class="form-group"><label>التصنيفات التابعة له (افصل بينها بفواصل):</label><input type="text" id="adminPartnerCategories" class="form-control" placeholder="مثال: مواد غذائية, مشروبات, منظفات"></div>
                     <div class="form-group"><label>نسبة الربح للشريك (%):</label><input type="number" step="0.1" id="adminPartnerPct" class="form-control" placeholder="مثال: 10" value="10"></div>
                     <button onclick="savePartnerCategoriesConfig()" class="btn" style="background:#00b0ff; color:#fff;">💾 حفظ تصنيفات الشريك ونسبته</button>
                 </div>
@@ -471,6 +472,7 @@
             <div style="display:flex; gap:8px;"><button onclick="saveAdminCustomerEdit()" class="btn">💾 حفظ التعديلات</button><button onclick="closeAdminEditCustomerModal()" class="btn btn-danger" style="width:35%;">إلغاء</button></div>
         </div>
     </div>
+
     <script>
         const $ = id => document.getElementById(id);
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -980,7 +982,7 @@
         function openCompetitionsPage() { syncCurrentUser(); renderCompetitionDetails(); renderLeaderboard(); $("competitionsPage").style.display = "block"; }
         const closeCompetitionsPage = () => $("competitionsPage").style.display = "none";
         
-        // لوحة الشريك (المحدثة لدعم أكثر من تصنيف)
+        // لوحة الشريك المحدثة (مبيعات، أرباح، ومخزون التصنيفات)
         function openPartnerDashboard() {
             if (!currentUser || currentUser.userType !== "partner") return;
             const phone = currentUser.phone;
@@ -990,6 +992,16 @@
 
             let totSales = 0, totEarn = 0, itemsHtml = "";
             let partnerItemsMap = {};
+
+            // جلب المخزون الحالي والمبيعات للأصناف التابعة للتصنيفات المسموحة للشريك
+            Object.values(products).forEach(p => {
+                const pCat = (p.category || "").trim().toLowerCase();
+                if (allowedCats.includes(pCat)) {
+                    if (!partnerItemsMap[p.name]) {
+                        partnerItemsMap[p.name] = { stock: parseInt(p.stock) || 0, qtySold: 0, sales: 0, earn: 0, pct: partnerPct };
+                    }
+                }
+            });
 
             Object.values(completedOrdersHistory).forEach(ord => {
                 (ord.items || []).forEach(item => {
@@ -1002,8 +1014,10 @@
                         totSales += sSale;
                         totEarn += earn;
 
-                        if (!partnerItemsMap[item.name]) partnerItemsMap[item.name] = { qty: 0, sales: 0, earn: 0, pct: partnerPct };
-                        partnerItemsMap[item.name].qty += (item.qty || 1);
+                        if (!partnerItemsMap[item.name]) {
+                            partnerItemsMap[item.name] = { stock: 0, qtySold: 0, sales: 0, earn: 0, pct: partnerPct };
+                        }
+                        partnerItemsMap[item.name].qtySold += (item.qty || 1);
                         partnerItemsMap[item.name].sales += sSale;
                         partnerItemsMap[item.name].earn += earn;
                     }
@@ -1014,10 +1028,10 @@
             $("partnerTotalEarnings").textContent = totEarn.toLocaleString() + " ل.س";
 
             const pEntries = Object.entries(partnerItemsMap);
-            if (!pEntries.length) itemsHtml = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد مبيعات مسجلة ضمن التصنيفات المحددة لحسابك بعد.</p>`;
+            if (!pEntries.length) itemsHtml = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف أو مبيعات مسجلة ضمن التصنيفات المحددة لحسابك بعد.</p>`;
             else {
-                itemsHtml = `<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:11px; text-align:center;"><thead><tr style="background:var(--bg-color); color:var(--gold-color); border-bottom:1px solid var(--border-color);"><th style="padding:6px; text-align:right;">الصنف</th><th style="padding:6px;">الكمية المباعة</th><th style="padding:6px;">المبيعات</th><th style="padding:6px;">نسبتك</th><th style="padding:6px;">أرباحك</th></tr></thead><tbody>` +
-                pEntries.map(([name, data]) => `<tr style="border-bottom:1px solid var(--border-color);"><td style="padding:6px; font-weight:bold; text-align:right;">${name}</td><td style="padding:6px;">${data.qty}</td><td style="padding:6px;">${data.sales.toLocaleString()}</td><td style="padding:6px; color:#00b0ff;">${data.pct}%</td><td style="padding:6px; color:var(--success-color); font-weight:bold;">${data.earn.toLocaleString()} ل.س</td></tr>`).join("") +
+                itemsHtml = `<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:11px; text-align:center;"><thead><tr style="background:var(--bg-color); color:var(--gold-color); border-bottom:1px solid var(--border-color);"><th style="padding:6px; text-align:right;">الصنف</th><th style="padding:6px;">المخزون المتبقي</th><th style="padding:6px;">المباع</th><th style="padding:6px;">المبيعات</th><th style="padding:6px;">نسبتك</th><th style="padding:6px;">أرباحك</th></tr></thead><tbody>` +
+                pEntries.map(([name, data]) => `<tr style="border-bottom:1px solid var(--border-color);"><td style="padding:6px; font-weight:bold; text-align:right;">${name}</td><td style="padding:6px; color:var(--gold-color); font-weight:bold;">${data.stock}</td><td style="padding:6px;">${data.qtySold}</td><td style="padding:6px;">${data.sales.toLocaleString()}</td><td style="padding:6px; color:#00b0ff;">${data.pct}%</td><td style="padding:6px; color:var(--success-color); font-weight:bold;">${data.earn.toLocaleString()} ل.س</td></tr>`).join("") +
                 `</tbody></table></div>`;
             }
             $("partnerItemsBreakdown").innerHTML = itemsHtml;
@@ -1057,7 +1071,7 @@
                 adminClickCount = 0;
                 const pass = prompt("🔐 كلمة مرور الإدارة:");
                 if (pass === ADMIN_PASSWORD) { $("adminModal").style.display = "flex"; renderStatsDashboard(); populateAdminPartnerSelect(); }
-                else if (pass !== null) alert("❌ كلمة المرور غير صحيحةة!");
+                else if (pass !== null) alert("❌ كلمة المرور غير صحيحة!");
             } else adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 1800);
         }
         $("adminTrigger").addEventListener("click", handleAdminTrigger);
@@ -1398,7 +1412,70 @@
             $("newCatInput").value = "";
         }
         function deleteCategory(idx) { const raw = categories.filter(c => c !== "الكل"); raw.splice(idx, 1); db.ref("categories").set(raw); }
+
+        function renderAdminCustomers() {
+            const q = ($("adminSearchCust").value || "").trim().toLowerCase();
+            const sorted = Object.values(users).filter(u => !q || u.name?.toLowerCase().includes(q) || u.phone?.includes(q)).sort((a, b) => (b.points || 0) - (a.points || 0));
+            if (!sorted.length) return ($("adminCustomersList").innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا يوجد زبائن.</p>`);
+            $("adminCustomersList").innerHTML = sorted.map(u => {
+                const isB = !!u.banned, ut = u.userType || "retail";
+                let badgeColor = "#00e676", badgeText = "مفرق";
+                if (ut === "wholesale") { badgeColor = "var(--gold-color)"; badgeText = "جملة"; }
+                else if (ut === "neighbors") { badgeColor = "#ff9800"; badgeText = "جيران المتجر"; }
+                else if (ut === "partner") { badgeColor = "#00b0ff"; badgeText = "شريك"; }
+
+                return `<div style="background:var(--bg-color); border:1px solid ${isB ? 'var(--danger-color)' : 'var(--border-color)'}; padding:8px; border-radius:6px; margin-bottom:6px; font-size:12px;"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>👤 ${u.name} (${u.phone}) <b style="color:${badgeColor};">[${badgeText}]</b></span><span style="color:var(--gold-color);">${Math.round(u.points || 0)} نقطة</span></div><div style="display:flex; gap:4px; margin-top:6px; flex-wrap:wrap;"><button onclick="openAdminEditCustomerModal('${u.phone}')" class="btn" style="padding:3px 6px; font-size:10px; width:auto;">✏️ تعديل</button><button onclick="toggleBanCustomer('${u.phone}')" class="btn" style="padding:3px 6px; font-size:10px; width:auto; background:${isB ? 'var(--success-color)' : '#ff9800'}; color:#000;">${isB ? 'فك الحظر' : 'حظر الزبون'}</button></div></div>`;
+            }).join("");
+        }
+        const toggleBanCustomer = p => { if (users[p]) db.ref("users/" + p + "/banned").set(!users[p].banned); };
+        function openAdminEditCustomerModal(p) {
+            const u = users[p]; if (!u) return;
+            populateRegionSelects(); $("adminCustOrigPhone").value = p; $("adminCustName").value = u.name || ""; $("adminCustPhone").value = u.phone || p;
+            $("adminCustRegion").value = u.region || "العوينة"; $("adminCustType").value = u.userType || "retail"; $("adminCustAddress").value = u.address || ""; $("adminCustPoints").value = Math.round(u.points || 0);
+            $("adminEditCustomerModal").style.display = "flex";
+        }
+        const closeAdminEditCustomerModal = () => $("adminEditCustomerModal").style.display = "none";
+        function saveAdminCustomerEdit() {
+            const p = $("adminCustOrigPhone").value; if (!p || !users[p]) return;
+            db.ref("users/" + p).update({ name: $("adminCustName").value.trim(), region: $("adminCustRegion").value, userType: $("adminCustType").value, address: $("adminCustAddress").value.trim(), points: parseFloat($("adminCustPoints").value) || 0 }).then(() => { alert("✅ تم الحفظ!"); closeAdminEditCustomerModal(); });
+        }
+
+        async function saveCompetitionSettings() {
+            const f = $("compImageInput"); let image = compSettings.image || "";
+            if (f.files && f.files[0]) image = (await compressDualImages(f.files[0])).image;
+            db.ref("competition").set({ minRedeemPoints: parseInt($("minRedeemPointsInput").value) || 500, leaderboardLimit: parseInt($("leaderboardLimitInput").value) || 10, title: $("compTitleInput").value.trim(), desc: $("compDescInput").value.trim(), image }).then(() => alert("✅ تم حفظ إعدادات المسابقة بنجاح!"));
+        }
+
+        function saveGeneralSettings() {
+            collectDeliveryRegionsFromDOM();
+            db.ref("settings").set({
+                exchangeRate: parseFloat($("exchangeRateInput").value) || 15000,
+                deliveryDriverPhone: $("deliveryPhoneInput").value.trim(),
+                adminWhatsApp: $("adminWhatsAppInput").value.trim() || "963965461504",
+                shamWalletId: $("adminShamWalletInput").value.trim() || "da3e13cd8a2ef2af282445e148df9599",
+                deliveryFees,
+                workHours: { enabled: $("workHoursEnabled").checked, open: $("workHourOpen").value || "08:00", close: $("workHourClose").value || "23:00" }
+            }).then(() => alert("✅ تم حفظ كافة الإعدادات والمناطق وساعات العمل بنجاح!"));
+        }
+
+        function exportBackupJSON() {
+            db.ref("/").once("value").then(snap => {
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(new Blob([JSON.stringify(snap.val() || {}, null, 2)], { type: "application/json" }));
+                a.download = `moaath_store_backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
+            });
+        }
+        function importBackupJSON(e) {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                try {
+                    const json = JSON.parse(ev.target.result);
+                    if (confirm("⚠️ هل أنت متأكد من استعادة النسخة الاحتياطية واستبدال البيانات الحالية؟")) db.ref("/").set(json).then(() => alert("✅ تمت استعادة النسخة بنجاح!"));
+                } catch (err) { alert("❌ الملف غير صالح!"); }
+            };
+            reader.readAsText(file);
+        }
     </script>
 </body>
 </html>
-    
