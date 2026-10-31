@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moaath-store-v9'; // قم برقم إصدار أحدث لتجبار المتصفح على التحديث
+const CACHE_NAME = 'moaath-store-v11'; // قم برقم إصدار أحدث لتجبار المتصفح على التحديث
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
