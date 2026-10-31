@@ -185,9 +185,17 @@
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">⭐ تقييم المنتج</h3>
             <div id="reviewProductName" style="font-weight:bold; font-size:13px; text-align:center; margin-bottom:12px;"></div>
             <input type="hidden" id="reviewProductId">
-            <div class="form-group"><label>التقييم:</label><select id="reviewRatingSelect" class="form-control"><option value="5">⭐⭐⭐⭐⭐ ممتاز (5/5)</option><option value="4">⭐⭐⭐⭐ جيد جداً (4/5)</option><option value="3">⭐⭐⭐ جيد (3/5)</option><option value="2">⭐⭐ مقبول (2/5)</option><option value="1">⭐ ضعيف (1/5)</option></select></div>
+            <div class="form-group">
+                <label>التقييم:</label>
+                <select id="reviewRatingSelect" class="form-control">
+                    <option value="5">⭐⭐⭐⭐⭐ ممتاز (5/5)</option><option value="4">⭐⭐⭐⭐ جيد جداً (4/5)</option><option value="3">⭐⭐⭐ جيد (3/5)</option><option value="2">⭐⭐ مقبول (2/5)</option><option value="1">⭐ ضعيف (1/5)</option>
+                </select>
+            </div>
             <div class="form-group"><label>رأيك بعد الشراء والتجربة:</label><textarea id="reviewCommentInput" class="form-control" rows="3" placeholder="اكتب تعليقك هنا..."></textarea></div>
-            <div style="display:flex; gap:8px;"><button onclick="submitProductReview()" class="btn">💾 إرسال التقييم</button><button onclick="closeReviewModal()" class="btn btn-danger" style="width:35%;">إغلاق</button></div>
+            <div style="display:flex; gap:8px;">
+                <button onclick="submitProductReview()" class="btn">💾 إرسال التقييم</button>
+                <button onclick="closeReviewModal()" class="btn btn-danger" style="width:35%;">إغلاق</button>
+            </div>
         </div>
     </div>
 
@@ -213,13 +221,13 @@
     <!-- نافذة لوحة الشريك -->
     <div id="partnerModal" class="page-overlay">
         <header style="position:sticky; top:0; z-index:10;">
-            <div class="store-info"><h1>🤝 لوحة أرباح الشريك</h1><p>إحصائيات الأصناف الخاصة بك ونسب الأرباح</p></div>
+            <div class="store-info"><h1>🤝 لوحة أرباح الشريك</h1><p>إحصائيات الأصناف والتصنيفات الخاصة بك</p></div>
             <button onclick="closePartnerDashboard()" class="btn btn-danger" style="width:auto; padding:6px 12px;">🔙 رجوع</button>
         </header>
         <div class="container">
             <div class="comp-card" style="background:linear-gradient(45deg,rgba(0,176,255,0.15),var(--card-bg)); border-color:#00b0ff;">
                 <h3 style="color:#00b0ff; margin:0 0 8px 0; font-size:15px;">👤 مرحباً بك يا شريك المتجر</h3>
-                <div style="font-size:12px; color:var(--text-color); line-height:1.6;">تظهر لك هنا حصرياً إحصائيات المبيعات والأرباح للأصناف المرتبطة بحسابك والمحددة من الإدارة.</div>
+                <div style="font-size:12px; color:var(--text-color); line-height:1.6;">تظهر لك هنا حصرياً إحصائيات المبيعات والأرباح للأصناف المرتبطة بتصنيفاتك المحددة من الإدارة.</div>
             </div>
             <div class="stats-grid">
                 <div class="stats-box"><div style="font-size:11px; color:var(--gray-text);">إجمالي المبيعات لأصنافك</div><div class="stats-value" id="partnerTotalSales">0 ل.س</div></div>
@@ -320,12 +328,6 @@
                 </div>
                 <div class="form-group"><label>التصنيف:</label><select id="prodCategory" class="form-control"></select></div>
                 <div class="form-group"><label>الموزع المعتمد:</label><select id="prodSupplierSelect" class="form-control"><option value="">-- بدون موزع معتمد --</option></select></div>
-                <div class="form-group" style="background:rgba(0,176,255,0.06); border:1px solid #00b0ff; padding:10px; border-radius:6px;">
-                    <label style="color:#00b0ff; font-weight:bold; margin-bottom:6px;">🤝 ربط الصنف بشريك (اختياري):</label>
-                    <select id="prodPartnerPhone" class="form-control" style="margin-bottom:6px;"><option value="">-- ليس صنف شريك --</option></select>
-                    <label style="font-size:11px; color:var(--gray-text);">نسبة ربح الشريك (% من صافي الربح أو المبيع):</label>
-                    <input type="number" step="0.1" id="prodPartnerProfitPct" class="form-control" placeholder="مثال: 10" value="0">
-                </div>
                 <div class="form-group"><label>صورة المنتج:</label><input type="file" id="prodImageInput" accept="image/*" class="form-control"></div>
                 <button onclick="saveProduct()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ الصنف في المتجر</button>
             </div>
@@ -349,7 +351,7 @@
                 <div id="adminOffersList"></div>
             </div>
 
-            <!-- تبويب إدارة الموزعين المعتمدين -->
+            <!-- إدارة الموزعين المعتمدين -->
             <div id="suppliersTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">🚚 إدارة الموزعين المعتمدين</h4>
                 <div style="background:var(--bg-color); border:1px dashed var(--gold-color); padding:10px; border-radius:8px; margin-bottom:12px;">
@@ -377,9 +379,19 @@
             </div>
 
             <div id="customersTab" class="admin-tab" style="display:none;">
-                <h4 style="color:var(--gold-color); margin:0 0 8px 0;">👥 الزبائن وتصنيف (مفرق / جملة / شركاء)</h4>
+                <h4 style="color:var(--gold-color); margin:0 0 8px 0;">👥 الزبائن وتصنيف (مفرق / جملة / جيران / شريك)</h4>
                 <input type="text" id="adminSearchCust" class="search-box" placeholder="🔍 ابحث بالاسم أو الهاتف..." oninput="renderAdminCustomers()" style="margin-bottom:8px;">
                 <div id="adminCustomersList" style="max-height:250px; overflow-y:auto; margin-bottom:12px;"></div>
+                
+                <!-- إعدادات تصنيفات الشريك -->
+                <div style="background:var(--bg-color); border:1px solid #00b0ff; padding:10px; border-radius:8px; margin-bottom:12px;">
+                    <h5 style="color:#00b0ff; margin:0 0 6px 0; font-size:12px;">🤝 ربط التصنيفات بالشركاء (تحديد نسبة الشريك):</h5>
+                    <div class="form-group"><label>اختر الشريك:</label><select id="adminPartnerSelect" class="form-control" onchange="loadPartnerConfig()"><option value="">-- اختر شريكاً --</option></select></div>
+                    <div class="form-group"><label>التصنيفات التابعة له (اختر أكثر من تصنيف أو اكتبها فاصلة فواصل):</label><input type="text" id="adminPartnerCategories" class="form-control" placeholder="مثال: مواد غذائية, مشروبات"></div>
+                    <div class="form-group"><label>نسبة الربح للشريك (%):</label><input type="number" step="0.1" id="adminPartnerPct" class="form-control" placeholder="مثال: 10" value="10"></div>
+                    <button onclick="savePartnerCategoriesConfig()" class="btn" style="background:#00b0ff; color:#fff;">💾 حفظ تصنيفات الشريك ونسبته</button>
+                </div>
+
                 <hr style="border-color:var(--border-color);">
                 <h4 style="color:var(--gold-color); margin:10px 0 8px 0;">🏆 إعدادات المسابقة ولوحة الشرف</h4>
                 <div class="stats-grid">
@@ -393,7 +405,7 @@
             </div>
 
             <div id="settingsTab" class="admin-tab" style="display:none;">
-                <h4 style="color:var(--gold-color); margin:0 0 8px 0;">🛵 مناطق التوصيل، ساعات الدوام، ونسب السائق والوقود</h4>
+                <h4 style="color:var(--gold-color); margin:0 0 8px 0;">🛵 مناطق التوصيل، ساعات الدوام، ونسب السائق والوقود وتوصيل الجيران</h4>
                 <div style="background:var(--bg-color); border:1px dashed var(--gold-color); padding:10px; border-radius:8px; margin-bottom:10px;">
                     <label style="font-size:11px; color:var(--gold-color); display:block; margin-bottom:6px; font-weight:bold;">➕ إضافة منطقة توصيل جديدة:</label>
                     <div style="display:flex; gap:6px; flex-wrap:wrap;">
@@ -506,7 +518,7 @@
             window.addEventListener('popstate', () => {
                 if (isExitingApp) return;
                 for (let id of ['cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal']) {
-                    if ($(id) && $(id).style.display === 'flex' || $(id)?.style.display === 'block') { $(id).style.display = 'none'; history.pushState({ page: 'store_home' }, ''); return; }
+                    if ($(id) && ($(id).style.display === 'flex' || $(id).style.display === 'block')) { $(id).style.display = 'none'; history.pushState({ page: 'store_home' }, ''); return; }
                 }
                 if ($('competitionsPage') && $('competitionsPage').style.display === 'block') {
                     $('competitionsPage').style.display = 'none'; history.pushState({ page: 'store_home' }, ''); return;
@@ -634,7 +646,6 @@
             document.querySelectorAll(".reg-fee-val").forEach(inp => {
                 const r = inp.getAttribute("data-region");
                 if (r) {
-                    const oldData = deliveryFees[r] || {};
                     deliveryFees[r] = {
                         fee: parseInt(inp.value) || 0,
                         neighborFee: parseInt(document.querySelector(`.reg-neighbor-val[data-region="${r}"]`)?.value) || 0,
@@ -689,7 +700,7 @@
 
         db.ref("categories").on("value", snap => {
             const d = snap.val() || ["مواد غذائية", "منظفات", "مشروبات"];
-            categories = ["الكل", ...d]; renderCategories(); renderAdminCategories(d); renderStatsDashboard();
+            categories = ["الكل", ...d]; renderCategories(); renderAdminCategories(d); renderStatsDashboard(); populatePartnerSelectOptions();
         });
 
         db.ref("suppliers").on("value", snap => {
@@ -702,11 +713,20 @@
             const keys = Object.keys(products);
             if (!shuffledProductKeys.length) shuffledProductKeys = [...keys].sort(() => Math.random() - 0.5);
             else { shuffledProductKeys = shuffledProductKeys.filter(k => products[k]); keys.forEach(k => { if (!shuffledProductKeys.includes(k)) shuffledProductKeys.push(k); }); }
-            renderStore(); renderAdminProducts(); renderShortages(); renderStatsDashboard(); populatePartnerSelect();
+            renderStore(); renderAdminProducts(); renderShortages(); renderStatsDashboard();
         });
 
         db.ref("specialOffers").on("value", snap => { specialOffers = snap.val() || {}; renderSpecialOffers(); renderAdminOffersList(); renderStatsDashboard(); });
-        db.ref("users").on("value", snap => { users = snap.val() || {}; syncCurrentUser(); renderAdminCustomers(); renderLeaderboard(); renderStatsDashboard(); renderStore(); populatePartnerSelect(); });
+        
+        db.ref("users").on("value", snap => {
+            users = snap.val() || {}; syncCurrentUser(); renderAdminCustomers(); renderLeaderboard(); renderStatsDashboard(); renderStore(); populateAdminPartnerSelect();
+        });
+
+        db.ref("partnersConfig").on("value", snap => {
+            window.partnersConfigData = snap.val() || {};
+            syncCurrentUser();
+        });
+
         db.ref("competition").on("value", snap => {
             if (snap.val()) compSettings = { ...compSettings, ...snap.val() };
             $("minRedeemPointsInput").value = compSettings.minRedeemPoints || 500; $("leaderboardLimitInput").value = compSettings.leaderboardLimit || 10;
@@ -746,7 +766,6 @@
             $("regPhoneError").style.display = "none";
             if (!name || !region || !address) return alert("⚠️ يرجى إدخال الاسم، المنطقة، وتفاصيل العنوان.");
             
-            // إصلاح مشكلة تكرار المستخدم عند التعديل: الاعتماد على رقم الهاتف الأساسي
             const ex = users[phone] || currentUser || {};
             currentUser = {
                 name, phone, region, address,
@@ -826,7 +845,7 @@
             keys.forEach(id => {
                 const p = products[id]; if (!p) return;
                 const pName = p.name || "";
-                if ((selectedCategory !== "N" && selectedCategory !== "الكل" && p.category !== selectedCategory) || (q && !pName.toLowerCase().includes(q))) return;
+                if ((selectedCategory !== "الكل" && p.category !== selectedCategory) || (q && !pName.toLowerCase().includes(q))) return;
                 const priceSYP = calcSYP((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0)), st = parseInt(p.stock) || 0, inC = cart[id] ? cart[id].qty : 0;
                 const btn = st <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (inC > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${id}',1)">+</button><span class="qty-text">${inC}</span><button class="qty-btn" onclick="changeQty('${id}',-1)">-</button></div>` : `<button class="btn" onclick="changeQty('${id}',1)">🛒 أضف للسلة</button>`);
                 const revs = p.reviews || {}, rKeys = Object.keys(revs), avg = rKeys.length ? (rKeys.reduce((a, k) => a + (revs[k].rating || 0), 0) / rKeys.length).toFixed(1) : 0;
@@ -867,7 +886,7 @@
                 item = { id, name: "🔥 عرض: " + so.name, category: "عروض خاصة", priceUSD: parseFloat((isW && so.wholesaleUSD > 0) ? so.wholesaleUSD : so.newPriceUSD) || 0, costPrice: parseFloat(so.costPrice) || 0, stock: parseInt(so.stock) || 0, pointsPct: parseFloat(so.pointsPct) || 2 };
             } else {
                 const p = products[id]; if (!p) return;
-                item = { id, name: p.name || "", category: p.category || "غير مصنف", priceUSD: parseFloat((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD) || 0, costPrice: parseFloat(p.costPrice) || 0, stock: parseInt(p.stock) || 0, pointsPct: parseFloat(p.pointsPct) || 2, partnerPhone: p.partnerPhone || "", partnerProfitPct: parseFloat(p.partnerProfitPct) || 0 };
+                item = { id, name: p.name || "", category: p.category || "غير مصنف", priceUSD: parseFloat((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD) || 0, costPrice: parseFloat(p.costPrice) || 0, stock: parseInt(p.stock) || 0, pointsPct: parseFloat(p.pointsPct) || 2 };
             }
             const nQty = (cart[id] ? cart[id].qty : 0) + delta;
             if (nQty > item.stock) return alert("⚠️ الكمية المطلوبة غير متوفرة بالكامل بالمخزون!");
@@ -931,18 +950,19 @@
             const ordItems = items.map(i => {
                 const uS = calcSYP(i.priceUSD), uC = calcSYP(i.costPrice || 0), sS = uS * i.qty, sC = uC * i.qty;
                 subSale += sS; totCost += sC; totPts += Math.round((i.priceUSD * i.qty) * (i.pointsPct || 2));
-                return { id: i.id, name: i.name, category: i.category || "غير مصنف", qty: i.qty, unitSaleSYP: uS, unitCostSYP: uC, subSaleSYP: sS, subCostSYP: sC, netProfitSYP: sS - sC, partnerPhone: i.partnerPhone || "", partnerProfitPct: i.partnerProfitPct || 0 };
+                return { id: i.id, name: i.name, category: i.category || "غير مصنف", qty: i.qty, unitSaleSYP: uS, unitCostSYP: uC, subSaleSYP: sS, subCostSYP: sC, netProfitSYP: sS - sC };
             });
-            const ordId = "ORD_" + Date.now(), payload = {
-                orderId: ordId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
+            const finalTotalSYP = subSale + fee, orderId = "ORD_" + Date.now();
+            const orderPayload = {
+                orderId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
                 customerName: currentUser.name, customerPhone: currentUser.phone, customerRegion: reg, customerAddress: currentUser.address,
                 paymentMethod: "شام كاش (Sham Cash)", notes: $("orderNotes").value.trim(), items: ordItems,
-                subtotalSaleSYP: subSale, deliveryFeeSYP: fee, totalSaleSYP: subSale + fee, totalCostSYP: totCost, netProfitSYP: subSale - totCost, earnedPoints: totPts
+                subtotalSaleSYP: subSale, deliveryFeeSYP: fee, totalSaleSYP: finalTotalSYP, totalCostSYP: totCost, netProfitSYP: subSale - totCost, earnedPoints: totPts
             };
-            let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n👤 الزبون: ${payload.customerName}\n📱 الهاتف: ${payload.customerPhone}\n🏘️ المنطقة: ${payload.customerRegion}\n📍 العنوان: ${payload.customerAddress}\n💳 طريقة الدفع: ${payload.paymentMethod}\n`;
-            if (payload.notes) msg += `📝 ملاحظات: ${payload.notes}\n`;
-            msg += `──────────────\n` + ordItems.map(i => `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س`).join("\n") + `\n──────────────\n📦 قيمة المواد: ${subSale.toLocaleString()} ل.س\n🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${payload.totalSaleSYP.toLocaleString()} ل.س\n🎁 النقاط المستحقة: +${totPts}`;
-            db.ref("pendingOrders/" + ordId).set(payload);
+            let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n👤 الزبون: ${orderPayload.customerName}\n📱 الهاتف: ${orderPayload.customerPhone}\n🏘️ المنطقة: ${orderPayload.customerRegion}\n📍 العنوان: ${orderPayload.customerAddress}\n💳 طريقة الدفع: ${orderPayload.paymentMethod}\n`;
+            if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}\n`;
+            msg += `──────────────\n` + ordItems.map(i => `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س`).join("\n") + `\n──────────────\n📦 قيمة المواد: ${subSale.toLocaleString()} ل.س\n🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${finalTotalSYP.toLocaleString()} ل.س\n🎁 النقاط المستحقة: +${totPts}`;
+            db.ref("pendingOrders/" + orderId).set(orderPayload);
             cart = {}; $("orderNotes").value = ""; closeCartModal(); renderStore();
             window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
         }
@@ -960,25 +980,29 @@
         function openCompetitionsPage() { syncCurrentUser(); renderCompetitionDetails(); renderLeaderboard(); $("competitionsPage").style.display = "block"; }
         const closeCompetitionsPage = () => $("competitionsPage").style.display = "none";
         
-        // لوحة الشريك
+        // لوحة الشريك (المحدثة لدعم أكثر من تصنيف)
         function openPartnerDashboard() {
             if (!currentUser || currentUser.userType !== "partner") return;
             const phone = currentUser.phone;
+            const conf = (window.partnersConfigData && window.partnersConfigData[phone]) || {};
+            const allowedCats = (conf.categories || []).map(c => c.trim().toLowerCase());
+            const partnerPct = parseFloat(conf.profitPct) || 10;
+
             let totSales = 0, totEarn = 0, itemsHtml = "";
             let partnerItemsMap = {};
 
             Object.values(completedOrdersHistory).forEach(ord => {
                 (ord.items || []).forEach(item => {
-                    if (item.partnerPhone === phone) {
+                    const itemCat = (item.category || "").trim().toLowerCase();
+                    if (allowedCats.includes(itemCat)) {
                         const sSale = item.subSaleSYP || 0;
                         const sProfit = item.netProfitSYP || (sSale - (item.subCostSYP || 0));
-                        const pct = item.partnerProfitPct || 0;
-                        const earn = Math.round((sProfit * pct) / 100);
+                        const earn = Math.round((sProfit * partnerPct) / 100);
 
                         totSales += sSale;
                         totEarn += earn;
 
-                        if (!partnerItemsMap[item.name]) partnerItemsMap[item.name] = { qty: 0, sales: 0, earn: 0, pct };
+                        if (!partnerItemsMap[item.name]) partnerItemsMap[item.name] = { qty: 0, sales: 0, earn: 0, pct: partnerPct };
                         partnerItemsMap[item.name].qty += (item.qty || 1);
                         partnerItemsMap[item.name].sales += sSale;
                         partnerItemsMap[item.name].earn += earn;
@@ -990,7 +1014,7 @@
             $("partnerTotalEarnings").textContent = totEarn.toLocaleString() + " ل.س";
 
             const pEntries = Object.entries(partnerItemsMap);
-            if (!pEntries.length) itemsHtml = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد مبيعات مسجلة لأصنافك الخاصة بعد.</p>`;
+            if (!pEntries.length) itemsHtml = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد مبيعات مسجلة ضمن التصنيفات المحددة لحسابك بعد.</p>`;
             else {
                 itemsHtml = `<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:11px; text-align:center;"><thead><tr style="background:var(--bg-color); color:var(--gold-color); border-bottom:1px solid var(--border-color);"><th style="padding:6px; text-align:right;">الصنف</th><th style="padding:6px;">الكمية المباعة</th><th style="padding:6px;">المبيعات</th><th style="padding:6px;">نسبتك</th><th style="padding:6px;">أرباحك</th></tr></thead><tbody>` +
                 pEntries.map(([name, data]) => `<tr style="border-bottom:1px solid var(--border-color);"><td style="padding:6px; font-weight:bold; text-align:right;">${name}</td><td style="padding:6px;">${data.qty}</td><td style="padding:6px;">${data.sales.toLocaleString()}</td><td style="padding:6px; color:#00b0ff;">${data.pct}%</td><td style="padding:6px; color:var(--success-color); font-weight:bold;">${data.earn.toLocaleString()} ل.س</td></tr>`).join("") +
@@ -1032,8 +1056,8 @@
             if (adminClickCount >= 5) {
                 adminClickCount = 0;
                 const pass = prompt("🔐 كلمة مرور الإدارة:");
-                if (pass === ADMIN_PASSWORD) { $("adminModal").style.display = "flex"; renderStatsDashboard(); }
-                else if (pass !== null) alert("❌ كلمة المرور غير صحيحة!");
+                if (pass === ADMIN_PASSWORD) { $("adminModal").style.display = "flex"; renderStatsDashboard(); populateAdminPartnerSelect(); }
+                else if (pass !== null) alert("❌ كلمة المرور غير صحيحةة!");
             } else adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 1800);
         }
         $("adminTrigger").addEventListener("click", handleAdminTrigger);
@@ -1115,15 +1139,39 @@
             sel.value = cur;
         }
 
-        function populatePartnerSelect() {
-            const sel = $("prodPartnerPhone"); if (!sel) return;
+        function populateAdminPartnerSelect() {
+            const sel = $("adminPartnerSelect"); if (!sel) return;
             const cur = sel.value;
             const partners = Object.values(users).filter(u => u.userType === "partner");
-            sel.innerHTML = '<option value="">-- ليس صنف شريك --</option>' + partners.map(p => `<option value="${p.phone}">${p.name} (${p.phone})</option>`).join("");
+            sel.innerHTML = '<option value="">-- اختر شريكاً --</option>' + partners.map(p => `<option value="${p.phone}">${p.name} (${p.phone})</option>`).join("");
             sel.value = cur;
         }
 
-        // إرسال فاتورة النواقص عبر واتساب للموزع
+        function loadPartnerConfig() {
+            const phone = $("adminPartnerSelect").value;
+            if (!phone || !window.partnersConfigData || !window.partnersConfigData[phone]) {
+                $("adminPartnerCategories").value = "";
+                $("adminPartnerPct").value = "10";
+                return;
+            }
+            const cfg = window.partnersConfigData[phone];
+            $("adminPartnerCategories").value = (cfg.categories || []).join(", ");
+            $("adminPartnerPct").value = cfg.profitPct || 10;
+        }
+
+        function savePartnerCategoriesConfig() {
+            const phone = $("adminPartnerSelect").value;
+            if (!phone) return alert("يرجى اختيار شريك أولاً.");
+            const catsStr = $("adminPartnerCategories").value.trim();
+            const profitPct = parseFloat($("adminPartnerPct").value) || 10;
+            const categoriesArr = catsStr.split(",").map(c => c.trim()).filter(Boolean);
+
+            db.ref("partnersConfig/" + phone).set({
+                categories: categoriesArr,
+                profitPct
+            }).then(() => alert("✅ تم حفظ تصنيفات ونسبة الشريك بنجاح!"));
+        }
+
         function sendSupplierShortagesWhatsApp(suppId) {
             const supp = suppliers[suppId]; if (!supp || !supp.phone) return alert("⚠️ هذا الموزع ليس لديه رقم هاتفا مسجلاً.");
             const list = Object.values(products).filter(p => p && p.supplierId === suppId && (parseInt(p.stock) || 0) <= (parseInt(p.alertLimit) || 2));
@@ -1145,7 +1193,6 @@
                 return;
             }
 
-            // فرز وتصنيف النواقص حسب الموزع المعتمد
             let bySupp = {};
             let unassigned = [];
             list.forEach(id => {
@@ -1295,18 +1342,18 @@
         }
 
         async function saveProduct() {
-            const editId = $("editProductId").value, name = $("prodName").value.trim(), costPrice = parseFloat($("prodCostUSD").value) || 0, priceUSD = parseFloat($("prodPriceUSD").value) || 0, wholesaleUSD = parseFloat($("prodWholesaleUSD").value) || 0, stock = parseInt($("prodStock").value) || 0, alertLimit = parseInt($("prodAlertLimit").value) || 2, pointsPct = parseFloat($("prodPointsPct").value) || 2, category = $("prodCategory").value, supplierId = $("prodSupplierSelect").value, partnerPhone = $("prodPartnerPhone").value, partnerProfitPct = parseFloat($("prodPartnerProfitPct").value) || 0, f = $("prodImageInput");
+            const editId = $("editProductId").value, name = $("prodName").value.trim(), costPrice = parseFloat($("prodCostUSD").value) || 0, priceUSD = parseFloat($("prodPriceUSD").value) || 0, wholesaleUSD = parseFloat($("prodWholesaleUSD").value) || 0, stock = parseInt($("prodStock").value) || 0, alertLimit = parseInt($("prodAlertLimit").value) || 2, pointsPct = parseFloat($("prodPointsPct").value) || 2, category = $("prodCategory").value, supplierId = $("prodSupplierSelect").value, f = $("prodImageInput");
             if (!name || priceUSD <= 0) return alert("يرجى إدخال اسم الصنف وسعر المبيع.");
             const id = editId || ("PROD_" + Date.now()); let thumb = products[id]?.thumb || "";
             if (f.files && f.files[0]) { const comp = await compressDualImages(f.files[0]); thumb = comp.thumb; highResImagesMemoryCache[id] = comp.image; await db.ref("productImages/" + id).set(comp.image); }
-            db.ref("products/" + id).set({ name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, supplierId, partnerPhone, partnerProfitPct, thumb, reviews: products[id]?.reviews || {} }).then(() => {
-                ["editProductId", "prodName", "prodCostUSD", "prodPriceUSD", "prodWholesaleUSD", "prodPartnerProfitPct", "prodImageInput"].forEach(k => $(k).value = ""); $("prodSupplierSelect").value = ""; $("prodPartnerPhone").value = ""; alert("✅ تم حفظ الصنف بنجاح!");
+            db.ref("products/" + id).set({ name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, supplierId, thumb, reviews: products[id]?.reviews || {} }).then(() => {
+                ["editProductId", "prodName", "prodCostUSD", "prodPriceUSD", "prodWholesaleUSD", "prodImageInput"].forEach(k => $(k).value = ""); $("prodSupplierSelect").value = ""; alert("✅ تم حفظ الصنف بنجاح!");
             });
         }
 
         function editProduct(id) {
             const p = products[id]; if (!p) return;
-            $("editProductId").value = id; $("prodName").value = p.name || ""; $("prodCostUSD").value = p.costPrice || 0; $("prodPriceUSD").value = p.priceUSD || 0; $("prodWholesaleUSD").value = p.wholesaleUSD || 0; $("prodStock").value = p.stock || 0; $("prodAlertLimit").value = p.alertLimit || 2; $("prodPointsPct").value = p.pointsPct || 2; $("prodCategory").value = p.category || ""; $("prodSupplierSelect").value = p.supplierId || ""; $("prodPartnerPhone").value = p.partnerPhone || ""; $("prodPartnerProfitPct").value = p.partnerProfitPct || 0;
+            $("editProductId").value = id; $("prodName").value = p.name || ""; $("prodCostUSD").value = p.costPrice || 0; $("prodPriceUSD").value = p.priceUSD || 0; $("prodWholesaleUSD").value = p.wholesaleUSD || 0; $("prodStock").value = p.stock || 0; $("prodAlertLimit").value = p.alertLimit || 2; $("prodPointsPct").value = p.pointsPct || 2; $("prodCategory").value = p.category || ""; $("prodSupplierSelect").value = p.supplierId || "";
             switchAdminTab('addProductTab', document.querySelector("button[onclick*='addProductTab']"));
         }
         function deleteProduct(id) { if (confirm("حذف هذا الصنف نهائياً من المتجر؟")) { db.ref("products/" + id).remove(); db.ref("productImages/" + id).remove(); delete highResImagesMemoryCache[id]; } }
@@ -1351,71 +1398,7 @@
             $("newCatInput").value = "";
         }
         function deleteCategory(idx) { const raw = categories.filter(c => c !== "الكل"); raw.splice(idx, 1); db.ref("categories").set(raw); }
-
-        function renderAdminCustomers() {
-            const q = ($("adminSearchCust").value || "").trim().toLowerCase();
-            const sorted = Object.values(users).filter(u => !q || u.name?.toLowerCase().includes(q) || u.phone?.includes(q)).sort((a, b) => (b.points || 0) - (a.points || 0));
-            if (!sorted.length) return ($("adminCustomersList").innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا يوجد زبائن.</p>`);
-            $("adminCustomersList").innerHTML = sorted.map(u => {
-                const isB = !!u.banned, ut = u.userType || "retail";
-                let badgeColor = "#00e676", badgeText = "مفرق";
-                if (ut === "wholesale") { badgeColor = "var(--gold-color)"; badgeText = "جملة"; }
-                else if (ut === "neighbors") { badgeColor = "#ff9800"; badgeText = "جيران المتجر"; }
-                else if (ut === "partner") { badgeColor = "#00b0ff"; badgeText = "شريك"; }
-
-                return `<div style="background:var(--bg-color); border:1px solid ${isB ? 'var(--danger-color)' : 'var(--border-color)'}; padding:8px; border-radius:6px; margin-bottom:6px; font-size:12px;"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>👤 ${u.name} (${u.phone}) <b style="color:${badgeColor};">[${badgeText}]</b></span><span style="color:var(--gold-color);">${Math.round(u.points || 0)} نقطة</span></div><div style="display:flex; gap:4px; margin-top:6px; flex-wrap:wrap;"><button onclick="openAdminEditCustomerModal('${u.phone}')" class="btn" style="padding:3px 6px; font-size:10px; width:auto;">✏️ تعديل</button><button onclick="toggleBanCustomer('${u.phone}')" class="btn" style="padding:3px 6px; font-size:10px; width:auto; background:${isB ? 'var(--success-color)' : '#ff9800'}; color:#000;">${isB ? 'فك الحظر' : 'حظر الزبون'}</button></div></div>`;
-            }).join("");
-        }
-        const toggleBanCustomer = p => { if (users[p]) db.ref("users/" + p + "/banned").set(!users[p].banned); };
-        function openAdminEditCustomerModal(p) {
-            const u = users[p]; if (!u) return;
-            populateRegionSelects(); $("adminCustOrigPhone").value = p; $("adminCustName").value = u.name || ""; $("adminCustPhone").value = u.phone || p;
-            $("adminCustRegion").value = u.region || "العوينة"; $("adminCustType").value = u.userType || "retail"; $("adminCustAddress").value = u.address || ""; $("adminCustPoints").value = Math.round(u.points || 0);
-            $("adminEditCustomerModal").style.display = "flex";
-        }
-        const closeAdminEditCustomerModal = () => $("adminEditCustomerModal").style.display = "none";
-        function saveAdminCustomerEdit() {
-            const p = $("adminCustOrigPhone").value; if (!p || !users[p]) return;
-            db.ref("users/" + p).update({ name: $("adminCustName").value.trim(), region: $("adminCustRegion").value, userType: $("adminCustType").value, address: $("adminCustAddress").value.trim(), points: parseFloat($("adminCustPoints").value) || 0 }).then(() => { alert("✅ تم الحفظ!"); closeAdminEditCustomerModal(); });
-        }
-
-        async function saveCompetitionSettings() {
-            const f = $("compImageInput"); let image = compSettings.image || "";
-            if (f.files && f.files[0]) image = (await compressDualImages(f.files[0])).image;
-            db.ref("competition").set({ minRedeemPoints: parseInt($("minRedeemPointsInput").value) || 500, leaderboardLimit: parseInt($("leaderboardLimitInput").value) || 10, title: $("compTitleInput").value.trim(), desc: $("compDescInput").value.trim(), image }).then(() => alert("✅ تم حفظ إعدادات المسابقة بنجاح!"));
-        }
-
-        function saveGeneralSettings() {
-            collectDeliveryRegionsFromDOM();
-            db.ref("settings").set({
-                exchangeRate: parseFloat($("exchangeRateInput").value) || 15000,
-                deliveryDriverPhone: $("deliveryPhoneInput").value.trim(),
-                adminWhatsApp: $("adminWhatsAppInput").value.trim() || "963965461504",
-                shamWalletId: $("adminShamWalletInput").value.trim() || "da3e13cd8a2ef2af282445e148df9599",
-                deliveryFees,
-                workHours: { enabled: $("workHoursEnabled").checked, open: $("workHourOpen").value || "08:00", close: $("workHourClose").value || "23:00" }
-            }).then(() => alert("✅ تم حفظ كافة الإعدادات والمناطق وساعات العمل بنجاح!"));
-        }
-
-        function exportBackupJSON() {
-            db.ref("/").once("value").then(snap => {
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(new Blob([JSON.stringify(snap.val() || {}, null, 2)], { type: "application/json" }));
-                a.download = `moaath_store_backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
-            });
-        }
-        function importBackupJSON(e) {
-            const file = e.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = ev => {
-                try {
-                    const json = JSON.parse(ev.target.result);
-                    if (confirm("⚠️ هل أنت متأكد من استعادة النسخة الاحتياطية واستبدال البيانات الحالية؟")) db.ref("/").set(json).then(() => alert("✅ تمت استعادة النسخة بنجاح!"));
-                } catch (err) { alert("❌ الملف غير صالح!"); }
-            };
-            reader.readAsText(file);
-        }
     </script>
 </body>
 </html>
-   
+    
