@@ -95,8 +95,6 @@
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
             <button id="mainInstallAppBtn" onclick="installAppDirectly()" class="btn" style="width:auto; padding:6px 10px; font-size:11px; background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; font-weight:bold; border-radius:15px; animation:pulse 2s infinite;">📲 تثبيت التطبيق</button>
-            <!-- زر شريك خاص يظهر للشركاء فقط -->
-            <button id="partnerDashboardBtn" onclick="openPartnerModal()" class="btn" style="width:auto; padding:6px 10px; font-size:11px; background:linear-gradient(45deg,#FFD700,#FF8C00); color:#000; font-weight:bold; border-radius:15px; display:none;">📊 لوحة شريكي</button>
             <div class="logo-circle" id="adminTrigger"><img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'"></div>
         </div>
     </header>
@@ -134,7 +132,7 @@
         <button class="cart-bar-btn" type="button">🛒 إتمام الطلب الآن</button>
     </div>
 
-    <!-- نافذة تعديل بيانات الزبون (تم إصلاح مشكلة تكرار السجلات وتحديث السجل الحالي) -->
+    <!-- نافذة تعديل بيانات الزبون -->
     <div id="profileModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">👤 تسجيل بيانات الزبون والعنوان</h3>
@@ -160,7 +158,7 @@
         </div>
     </div>
 
-    <!-- نافذة سلة المشتريات المرتبة (بدون ازدحام) -->
+    <!-- نافذة السلة المرتبة وغير المزدحمة -->
     <div id="cartModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">🛒 سلة المشتريات وإتمام الطلب</h3>
@@ -173,6 +171,7 @@
                 <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:11px; color:var(--success-color);"><span>النقاط المكتسبة:</span><strong>+<span id="modalCartPoints">0</span> نقطة 🎁</strong></div>
             </div>
 
+            <!-- زر بارز لنسخ معرف الشام كاش بدون إظهار الكود -->
             <div style="margin-bottom:10px;">
                 <button type="button" onclick="copyWalletId()" class="btn" style="background:linear-gradient(45deg, #D4AF37, #FFD700); color:#000; padding:10px; font-weight:bold; font-size:12px; display:flex; align-items:center; justify-content:center; gap:6px;">
                     📋 اضغط هنا لنسخ معرف محفظة شام كاش للدفع
@@ -181,6 +180,7 @@
 
             <div class="form-group"><label>ملاحظات إضافية أو رقم عملية التحويل (اختياري):</label><input type="text" id="orderNotes" class="form-control" placeholder="أي ملاحظة أو رقم إيصال التحويل..."></div>
 
+            <!-- زر إرسال وتأكيد الطلب بارز ومشمس وضخم -->
             <div style="display:flex; flex-direction:column; gap:6px; margin-top:10px;">
                 <button type="button" onclick="submitOrder()" class="btn" style="background:linear-gradient(45deg, #00e676, #00b0ff); color:#000; padding:14px; font-size:15px; font-weight:900; box-shadow:0 4px 15px rgba(0,230,118,0.4);">
                     ✅ إرسال وتأكيد الطلب عبر واتساب
@@ -188,18 +188,6 @@
                 <button type="button" onclick="closeCartModal()" class="btn btn-danger" style="padding:8px; font-size:12px;">إغلاق السلة</button>
             </div>
             <div hidden><span id="shamWalletId">da3e13cd8a2ef2af282445e148df9599</span></div>
-        </div>
-    </div>
-
-    <!-- نافذة لوحة الشريك الخاصة (رؤية إحصائيات الأصناف المخصصة فقط دون تعديل) -->
-    <div id="partnerModal" class="modal-overlay">
-        <div class="modal-content" style="max-width:520px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:8px; margin-bottom:12px;">
-                <h3 style="color:var(--gold-color); margin:0;">📊 لوحة إحصائيات الشريك</h3>
-                <button onclick="closePartnerModal()" class="btn btn-danger" style="width:auto; padding:5px 10px;">✖ إغلاق</button>
-            </div>
-            <p style="font-size:12px; color:var(--gray-text); margin-top:0;">هذه اللوحة مخصصة لعرض إحصائيات أصنافك الخاصة المحددة من الإدارة (للرؤية فقط دون تعديل).</p>
-            <div id="partnerItemsStatsContainer" style="max-height:350px; overflow-y:auto;"></div>
         </div>
     </div>
 
@@ -218,7 +206,7 @@
             <div class="form-group"><label>رأيك بعد الشراء والتجربة:</label><textarea id="reviewCommentInput" class="form-control" rows="3" placeholder="اكتب تعليقك هنا..."></textarea></div>
             <div style="display:flex; gap:8px;">
                 <button onclick="submitProductReview()" class="btn">💾 إرسال التقييم</button>
-                <button onclick="closeReviewModal()" class="btn btn-danger" style="width:35%;">إلغاء</button>
+                <button onclick="closeReviewModal()" class="btn btn-danger" style="width:35%;">إغلاق</button>
             </div>
         </div>
     </div>
@@ -259,7 +247,7 @@
         </div>
     </div>
 
-    <!-- لوحة الإدارة الكاملة المحدثة (مع تبويب الشركاء والموزعين) -->
+    <!-- لوحة الإدارة -->
     <div id="adminModal" class="modal-overlay">
         <div class="modal-content" style="max-width:600px;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:8px; margin-bottom:12px;">
@@ -267,15 +255,13 @@
                 <button onclick="closeAdminModal()" class="btn btn-danger" style="width:auto; padding:5px 10px;">✖ خروج</button>
             </div>
             <div class="categories" style="margin-bottom:12px;">
-                <button class="cat-btn active" onclick="switchAdminTab('statsTab', this)">📊 الجرد</button>
+                <button class="cat-btn active" onclick="switchAdminTab('statsTab', this)">📊 الجرد والأرباح</button>
                 <button class="cat-btn" onclick="switchAdminTab('ordersTab', this)">📦 الطلبات (<span id="pendingCountBadge">0</span>)</button>
-                <button class="cat-btn" onclick="switchAdminTab('suppliersTab', this)">🚚 الموزعين</button>
-                <button class="cat-btn" onclick="switchAdminTab('partnersTab', this)">🤝 الشركاء</button>
-                <button class="cat-btn" onclick="switchAdminTab('addProductTab', this)">➕ صنف</button>
-                <button class="cat-btn" onclick="switchAdminTab('offersTab', this)">🔥 العروض</button>
-                <button class="cat-btn" onclick="switchAdminTab('productsTab', this)">🛍️ المخزون</button>
-                <button class="cat-btn" onclick="switchAdminTab('customersTab', this)">👥 الزبائن</button>
-                <button class="cat-btn" onclick="switchAdminTab('settingsTab', this)">🛵 التوصيل</button>
+                <button class="cat-btn" onclick="switchAdminTab('addProductTab', this)">➕ إضافة صنف</button>
+                <button class="cat-btn" onclick="switchAdminTab('offersTab', this)">🔥 العروض الخاصة</button>
+                <button class="cat-btn" onclick="switchAdminTab('productsTab', this)">🛍️ المخزون والتعليقات</button>
+                <button class="cat-btn" onclick="switchAdminTab('customersTab', this)">👥 الزبائن والجيران</button>
+                <button class="cat-btn" onclick="switchAdminTab('settingsTab', this)">🛵 التوصيل والدوام</button>
                 <button class="cat-btn" onclick="switchAdminTab('shortagesTab', this)">⚠️ النواقص</button>
             </div>
 
@@ -323,7 +309,6 @@
                 <div id="productStatsContainer"></div>
             </div>
 
-            <!-- تبويب الطلبات مع زر إلغاء جميع الطلبات المتراكمة -->
             <div id="ordersTab" class="admin-tab" style="display:none;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
                     <h4 style="color:var(--gold-color); margin:0;">📦 الفواتير والطلبات المعلقة</h4>
@@ -332,36 +317,6 @@
                 <div id="pendingOrdersList"></div>
             </div>
 
-            <!-- تبويب الموزعين المعتمدين -->
-            <div id="suppliersTab" class="admin-tab" style="display:none;">
-                <h4 style="color:var(--gold-color); margin:0 0 8px 0;">🚚 إضافة وإدارة الموزعين المعتمدين</h4>
-                <div style="background:var(--bg-color); border:1px dashed var(--gold-color); padding:10px; border-radius:8px; margin-bottom:12px;">
-                    <div class="form-group"><label>اسم الموزع / الشركة:</label><input type="text" id="suppName" class="form-control" placeholder="مثال: شركة العوينة للمواد الغذائية"></div>
-                    <div class="form-group"><label>العنوان:</label><input type="text" id="suppAddress" class="form-control" placeholder="مثال: حماة - الصناعة"></div>
-                    <div class="form-group"><label>رقم الهاتف (واتساب مع الرمز 963):</label><input type="text" id="suppPhone" class="form-control" placeholder="9639XXXXXXXX"></div>
-                    <button onclick="saveSupplier()" class="btn" style="background:var(--success-color); color:#000;">➕ حفظ الموزع المعتمد</button>
-                </div>
-                <h5 style="color:var(--gold-color); margin:10px 0 6px 0;">📋 قائمة الموزعين المسجلين</h5>
-                <div id="suppliersListContainer"></div>
-            </div>
-
-            <!-- تبويب الشركاء الجدد وتحديد أزواجهم -->
-            <div id="partnersTab" class="admin-tab" style="display:none;">
-                <h4 style="color:var(--gold-color); margin:0 0 8px 0;">🤝 إدارة الشركاء وتخصيص الأصناف</h4>
-                <div style="background:var(--bg-color); border:1px dashed var(--gold-color); padding:10px; border-radius:8px; margin-bottom:12px;">
-                    <div class="form-group"><label>رقم هاتف الشريك (نفس رقم هاتف حساب الزبون):</label><input type="tel" id="partnerPhoneInput" class="form-control" placeholder="09XXXXXXXX" maxlength="10"></div>
-                    <div class="form-group"><label>اسم الشريك:</label><input type="text" id="partnerNameInput" class="form-control" placeholder="مثال: فلان المعلا"></div>
-                    <div class="form-group">
-                        <label>اختر الأصناف المراد ربطها بهذا الشريك:</label>
-                        <div id="partnerProductsCheckboxes" style="max-height:160px; overflow-y:auto; background:var(--card-bg); padding:6px; border-radius:6px; border:1px solid var(--border-color);"></div>
-                    </div>
-                    <button onclick="savePartnerAssignment()" class="btn" style="background:var(--success-color); color:#000;">🤝 حفظ وتخصيص الشريك</button>
-                </div>
-                <h5 style="color:var(--gold-color); margin:10px 0 6px 0;">📋 قائمة الشركاء الحاليين</h5>
-                <div id="partnersListContainer"></div>
-            </div>
-
-            <!-- تبويب إضافة صنف (مع بند الموزع) -->
             <div id="addProductTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">➕ إضافة / تعديل صنف</h4>
                 <input type="hidden" id="editProductId">
@@ -375,12 +330,10 @@
                     <div class="form-group"><label>نسبة نقاط الولاء (%):</label><input type="number" step="0.1" id="prodPointsPct" class="form-control" value="2"></div>
                 </div>
                 <div class="form-group"><label>التصنيف:</label><select id="prodCategory" class="form-control"></select></div>
-                <div class="form-group"><label>🚚 الموزع المعتمد للصنف:</label><select id="prodSupplier" class="form-control"><option value="">-- بدون موزع معتمد --</option></select></div>
                 <div class="form-group"><label>صورة المنتج:</label><input type="file" id="prodImageInput" accept="image/*" class="form-control"></div>
                 <button onclick="saveProduct()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ الصنف في المتجر</button>
             </div>
 
-            <!-- تبويب العروض -->
             <div id="offersTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">🔥 إدارة العروض الخاصة المتعددة</h4>
                 <input type="hidden" id="editOfferId">
@@ -403,7 +356,6 @@
                 <div id="adminOffersList"></div>
             </div>
 
-            <!-- تبويب المخزون -->
             <div id="productsTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 6px 0;">📋 قائمة الأصناف والتعليقات</h4>
                 <input type="text" id="adminSearchProd" class="search-box" placeholder="🔍 ابحث عن صنف لتعديله أو تصفيره..." oninput="renderAdminProducts()" style="margin-bottom:8px;">
@@ -417,7 +369,6 @@
                 <div id="adminCategoriesList"></div>
             </div>
 
-            <!-- تبويب الزبائن -->
             <div id="customersTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">👥 الزبائن وتصنيف (مفرق / جملة / جيران المتجر)</h4>
                 <input type="text" id="adminSearchCust" class="search-box" placeholder="🔍 ابحث بالاسم أو الهاتف..." oninput="renderAdminCustomers()" style="margin-bottom:8px;">
@@ -434,7 +385,6 @@
                 <button onclick="saveCompetitionSettings()" class="btn">💾 حفظ المسابقة</button>
             </div>
 
-            <!-- تبويب التوصيل -->
             <div id="settingsTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">🛵 سعر توصيل صنف "جيران المتجر" الخاص</h4>
                 <div style="background:var(--bg-color); border:1px solid var(--gold-color); padding:10px; border-radius:8px; margin-bottom:12px;">
@@ -480,12 +430,11 @@
                 <div class="form-group"><label>⬆️ استيراد نسخة احتياطية:</label><input type="file" id="importBackupInput" accept=".json" class="form-control" onchange="importBackupJSON(event)"></div>
             </div>
 
-            <!-- تبويب النواقص المصنفة حسب الموزع -->
             <div id="shortagesTab" class="admin-tab" style="display:none;">
-                <h4 style="color:var(--danger-color); margin:0 0 8px 0;">⚠️ قائمة النواقص مصنفة حسب الموزع المعتمد</h4>
-                <div id="shortagesGroupedContainer" style="margin-bottom: 15px;"></div>
-                
-                <h4 style="color:var(--gold-color); margin:15px 0 8px 0;">📝 أصناف طلبها الزبائن</h4>
+                <h4 style="color:var(--danger-color); margin:0 0 8px 0;">⚠️ أصناف أوشكت على النفاد</h4>
+                <div id="shortagesList" style="margin-bottom:12px;"></div>
+                <button onclick="sendShortagesWhatsApp()" class="btn" style="margin-bottom:15px;">📲 إرسال النواقص عبر واتساب</button>
+                <h4 style="color:var(--gold-color); margin:0 0 8px 0;">📝 أصناف طلبها الزبائن</h4>
                 <div id="customerMissingRequestsList"></div>
             </div>
         </div>
@@ -515,6 +464,7 @@
             </div>
         </div>
     </div>
+
     <script>
         const $ = id => document.getElementById(id);
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -533,7 +483,7 @@
             "المزرعة الغربية": { fee: 5000, driverPct: 80, hoursEnabled: false, open: "08:00", close: "22:00" }
         };
         let workHoursSettings = { enabled: false, open: "08:00", close: "23:00" };
-        let categories = ["الكل"], selectedCategory = "الكل", products = {}, specialOffers = {}, suppliers = {}, partners = {};
+        let categories = ["الكل"], selectedCategory = "الكل", products = {}, specialOffers = {};
         let highResImagesMemoryCache = {}, noHighResAvailableSet = {}, shuffledProductKeys = [];
         let cart = {}, users = {}, pendingOrders = {}, completedOrdersHistory = {}, missingRequests = {};
         let compSettings = { minRedeemPoints: 500, leaderboardLimit: 10, title: "", desc: "", image: "" };
@@ -561,7 +511,7 @@
             history.pushState({ page: 'store_home' }, '');
             window.addEventListener('popstate', () => {
                 if (isExitingApp) return;
-                for (let id of ['cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal']) {
+                for (let id of ['cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal']) {
                     if ($(id) && $(id).style.display === 'flex') { $(id).style.display = 'none'; history.pushState({ page: 'store_home' }, ''); return; }
                 }
                 if ($('competitionsPage') && $('competitionsPage').style.display === 'block') {
@@ -748,20 +698,6 @@
             checkStoreWorkHours(); renderStore();
         });
 
-        db.ref("suppliers").on("value", snap => {
-            suppliers = snap.val() || {};
-            renderSuppliersList();
-            populateSupplierSelect();
-            renderShortages();
-        });
-
-        db.ref("partners").on("value", snap => {
-            partners = snap.val() || {};
-            renderPartnersList();
-            renderPartnerCheckboxes();
-            checkPartnerAccess();
-        });
-
         db.ref("categories").on("value", snap => {
             const d = snap.val() || ["مواد غذائية", "منظفات", "مشروبات"];
             categories = ["الكل", ...d]; renderCategories(); renderAdminCategories(d); renderStatsDashboard();
@@ -772,19 +708,11 @@
             const keys = Object.keys(products);
             if (!shuffledProductKeys.length) shuffledProductKeys = [...keys].sort(() => Math.random() - 0.5);
             else { shuffledProductKeys = shuffledProductKeys.filter(k => products[k]); keys.forEach(k => { if (!shuffledProductKeys.includes(k)) shuffledProductKeys.push(k); }); }
-            renderStore(); renderAdminProducts(); renderShortages(); renderStatsDashboard(); renderPartnerCheckboxes();
+            renderStore(); renderAdminProducts(); renderShortages(); renderStatsDashboard();
         });
 
         db.ref("specialOffers").on("value", snap => { specialOffers = snap.val() || {}; renderSpecialOffers(); renderAdminOffersList(); renderStatsDashboard(); });
-        db.ref("users").on("value", snap => {
-            users = snap.val() || {};
-            syncCurrentUser();
-            renderAdminCustomers();
-            renderLeaderboard();
-            renderStatsDashboard();
-            renderStore();
-            checkPartnerAccess();
-        });
+        db.ref("users").on("value", snap => { users = snap.val() || {}; syncCurrentUser(); renderAdminCustomers(); renderLeaderboard(); renderStatsDashboard(); renderStore(); });
         db.ref("competition").on("value", snap => {
             if (snap.val()) compSettings = { ...compSettings, ...snap.val() };
             $("minRedeemPointsInput").value = compSettings.minRedeemPoints || 500; $("leaderboardLimitInput").value = compSettings.leaderboardLimit || 10;
@@ -818,42 +746,17 @@
         function openEditProfile() { fillProfileInputs(); $("closeProfileBtn").style.display = "block"; $("profileModal").style.display = "flex"; }
         const closeProfileModal = () => $("profileModal").style.display = "none";
 
-        // حل مشكلة تكرار المستخدمين (تحديث السجل الحالي بناءً على الهاتف بدلاً من إنشاء سجل جديد)
         function saveUserProfile() {
             const name = $("regName").value.trim(), phone = $("regPhone").value.trim().replace(/\s+/g, ""), region = $("regRegion").value, address = $("regAddress").value.trim();
             if (!validatePhoneSyrian(phone)) { $("regPhoneError").style.display = "block"; return alert("⚠️ تنبيه: يجب أن يتكون رقم الهاتف من 10 خانات ويبدأ بـ 09 حصراً."); }
             $("regPhoneError").style.display = "none";
             if (!name || !region || !address) return alert("⚠️ يرجى إدخال الاسم، المنطقة، وتفاصيل العنوان.");
-            
-            const existingKey = Object.keys(users).find(k => k === phone);
-            let existingData = existingKey ? users[existingKey] : {};
-            if (existingData.banned) return alert("🚫 عذراً، هذا الحساب محظور.");
-
-            currentUser = {
-                name, phone, region, address,
-                points: existingData.points || 0,
-                purchases: existingData.purchases || {},
-                userType: existingData.userType || "retail",
-                pointsVisibility: $("regPointsVisibility").value,
-                banned: false
-            };
-
+            const ex = users[phone] || {};
+            if (ex.banned) return alert("🚫 عذراً، هذا الحساب محظور.");
+            currentUser = { name, phone, region, address, points: ex.points || 0, purchases: ex.purchases || {}, userType: ex.userType || "retail", pointsVisibility: $("regPointsVisibility").value, banned: false };
             localStorage.setItem("moaath_user", JSON.stringify(currentUser));
-            
-            // تحديث السجل باستخدام رقم الهاتف كمفتاح أساسي فريد لمنع أي تكرار
-            db.ref("users/" + phone).update({
-                name, phone, region, address,
-                points: existingData.points || 0,
-                userType: existingData.userType || "retail",
-                pointsVisibility: currentUser.pointsVisibility,
-                banned: false
-            });
-
-            closeProfileModal();
-            syncCurrentUser();
-            updateCartBar();
-            checkStoreWorkHours();
-            checkPartnerAccess();
+            db.ref("users/" + phone).update({ name, phone, region, address, points: ex.points || 0, userType: ex.userType || "retail", pointsVisibility: currentUser.pointsVisibility });
+            closeProfileModal(); syncCurrentUser(); updateCartBar(); checkStoreWorkHours();
         }
 
         function calculateUserRank(phone) {
@@ -864,12 +767,8 @@
 
         function syncCurrentUser() {
             if (!currentUser || !currentUser.phone) return;
-            const phone = currentUser.phone;
-            if (users[phone]) {
-                currentUser = { ...currentUser, ...users[phone] };
-                localStorage.setItem("moaath_user", JSON.stringify(currentUser));
-            }
-            const pts = Math.round(currentUser.points || 0), rank = calculateUserRank(phone);
+            if (users[currentUser.phone]) { currentUser = { ...currentUser, ...users[currentUser.phone] }; localStorage.setItem("moaath_user", JSON.stringify(currentUser)); }
+            const pts = Math.round(currentUser.points || 0), rank = calculateUserRank(currentUser.phone);
             $("userNameDisplay").textContent = currentUser.name;
             $("userRegionBadge").textContent = currentUser.region ? `(${currentUser.region})` : "";
             
@@ -882,54 +781,7 @@
             if ($("userRankBadge")) { $("userRankBadge").style.display = rank !== "-" ? "inline-flex" : "none"; $("userRankBadge").textContent = `🏅 ترتيبي: ${rank}`; }
             if ($("compUserRankDisplay")) $("compUserRankDisplay").textContent = rank !== "-" ? rank : "غير مصنف";
             $("redeemPointsBtn").style.display = (pts >= (parseInt(compSettings.minRedeemPoints) || 500) && !currentUser.banned) ? "inline-block" : "none";
-            checkPartnerAccess();
         }
-
-        // فحص وإظهار زر لوحة الشريك إذا كان المستخدم الحالي مسجلاً كشريك
-        function checkPartnerAccess() {
-            const btn = $("partnerDashboardBtn");
-            if (!btn) return;
-            if (currentUser && currentUser.phone && partners[currentUser.phone]) {
-                btn.style.display = "inline-block";
-            } else {
-                btn.style.display = "none";
-            }
-        }
-
-        function openPartnerModal() {
-            if (!currentUser || !currentUser.phone || !partners[currentUser.phone]) return;
-            const pData = partners[currentUser.phone];
-            const allowedIds = pData.productIds || [];
-            const container = $("partnerItemsStatsContainer");
-
-            if (!allowedIds.length) {
-                container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لم تقم الإدارة بتخصيص أي أصناف لك بعد.</p>`;
-            } else {
-                let html = `<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:11px; text-align:center;"><thead><tr style="background:var(--bg-color); color:var(--gold-color); border-bottom:1px solid var(--border-color);"><th style="padding:6px; text-align:right;">الصنف</th><th style="padding:6px;">المخزون الحالي</th><th style="padding:6px;">إجمالي المبيعات</th><th style="padding:6px;">إجمالي الأرباح</th></tr></thead><tbody>`;
-                
-                allowedIds.forEach(pId => {
-                    const prod = products[pId];
-                    if (!prod) return;
-                    let soldQty = 0, totalSales = 0, totalProfit = 0;
-                    
-                    Object.values(completedOrdersHistory).forEach(ord => {
-                        (ord.items || []).forEach(item => {
-                            if (item.id === pId) {
-                                soldQty += (item.qty || 1);
-                                totalSales += (item.subSaleSYP || 0);
-                                totalProfit += (item.netProfitSYP || 0);
-                            }
-                        });
-                    });
-
-                    html += `<tr style="border-bottom:1px solid var(--border-color);"><td style="padding:6px; font-weight:bold; text-align:right;">${prod.name}</td><td style="padding:6px; color:var(--gold-color); font-weight:bold;">${prod.stock}</td><td style="padding:6px;">${totalSales.toLocaleString()} ل.س</td><td style="padding:6px; color:var(--success-color); font-weight:bold;">${totalProfit.toLocaleString()} ل.س</td></tr>`;
-                });
-                html += `</tbody></table></div>`;
-                container.innerHTML = html;
-            }
-            $("partnerModal").style.display = "flex";
-        }
-        const closePartnerModal = () => $("partnerModal").style.display = "none";
 
         function redeemPointsWhatsApp() {
             if (!currentUser || currentUser.banned) return;
@@ -1184,70 +1036,6 @@
             }
         }
 
-        // دوال إدارة الموزعين المعتمدين وترتيب النواقص
-        function saveSupplier() {
-            const name = $("suppName").value.trim(), address = $("suppAddress").value.trim(), phone = $("suppPhone").value.trim();
-            if (!name) return alert("⚠️ يرجى إدخال اسم الموزع.");
-            db.ref("suppliers").push({ name, address, phone }).then(() => {
-                $("suppName").value = ""; $("suppAddress").value = ""; $("suppPhone").value = "";
-                alert("✅ تم حفظ الموزع المعتمد بنجاح!");
-            });
-        }
-        function deleteSupplier(id) { if (confirm("حذف هذا الموزع؟")) db.ref("suppliers/" + id).remove(); }
-        function renderSuppliersList() {
-            const container = $("suppliersListContainer"); if (!container) return;
-            const entries = Object.entries(suppliers);
-            if (!entries.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد موزعين مسجلين.</p>`);
-            container.innerHTML = entries.map(([id, s]) => `<div class="review-box" style="margin-bottom:6px;"><div><b>🚚 ${s.name}</b><br><small style="color:var(--gray-text);">📍 ${s.address || 'بلا عنوان'} | 📱 ${s.phone || 'بلا هاتف'}</small></div><button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="deleteSupplier('${id}')">حذف</button></div>`).join("");
-        }
-        function populateSupplierSelect() {
-            const sel = $("prodSupplier"); if (!sel) return;
-            const cur = sel.value;
-            sel.innerHTML = '<option value="">-- بدون موزع معتمد --</option>' + Object.entries(suppliers).map(([id, s]) => `<option value="${id}">${s.name}</option>`).join("");
-            sel.value = cur;
-        }
-
-        // دوال إدارة الشركاء وتخصيص الأصناف
-        function savePartnerAssignment() {
-            const phone = $("partnerPhoneInput").value.trim().replace(/\s+/g, ""), name = $("partnerNameInput").value.trim();
-            if (!validatePhoneSyrian(phone)) return alert("⚠️ يرجى إدخال رقم هاتف صحيح للشريك (10 خانات يبدأ بـ 09).");
-            if (!name) return alert("⚠️ يرجى إدخال اسم الشريك.");
-            
-            const checkboxes = document.querySelectorAll(".partner-prod-chk:checked");
-            const productIds = Array.from(checkboxes).map(ch => ch.value);
-
-            db.ref("partners/" + phone).set({ name, phone, productIds }).then(() => {
-                $("partnerPhoneInput").value = ""; $("partnerNameInput").value = "";
-                alert("✅ تم حفظ وتخصيص الشريك بنجاح!");
-            });
-        }
-        function deletePartner(phone) { if (confirm("إلغاء صفة الشريك عن هذا الرقم؟")) db.ref("partners/" + phone).remove(); }
-        function renderPartnersList() {
-            const container = $("partnersListContainer"); if (!container) return;
-            const entries = Object.entries(partners);
-            if (!entries.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد شركاء مسجلين.</p>`);
-            container.innerHTML = entries.map(([ph, p]) => `<div class="review-box" style="margin-bottom:6px;"><div><b>🤝 ${p.name} (${p.phone})</b><br><small style="color:var(--gold-color);">أصناف مخصصة: ${(p.productIds || []).length} صنف</small></div><button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="deletePartner('${ph}')">حذف</button></div>`).join("");
-        }
-        function renderPartnerCheckboxes() {
-            const container = $("partnerProductsCheckboxes"); if (!container) return;
-            const keys = Object.keys(products);
-            if (!keys.length) return (container.innerHTML = `<span style="font-size:11px; color:var(--gray-text);">لا توجد أصناف مضافة للمتجر بعد.</span>`);
-            container.innerHTML = keys.map(id => `<label style="display:flex; align-items:center; gap:6px; font-size:12px; margin-bottom:4px; cursor:pointer;"><input type="checkbox" class="partner-prod-chk" value="${id}" style="width:14px; height:14px;"> ${products[id].name}</label>`).join("");
-        }
-
-        // إرسال طلبية النواقص للموزع عبر واتساب
-        function sendSupplierOrderWhatsApp(supplierId) {
-            const supp = suppliers[supplierId];
-            if (!supp || !supp.phone) return alert("⚠️ هذا الموزع ليس لديه رقم هاتف مسجل.");
-            const list = Object.values(products).filter(p => p && p.supplierId === supplierId && (parseInt(p.stock) || 0) <= (parseInt(p.alertLimit) || 2));
-            if (!list.length) return alert("ℹ️ لا توجد نواقص لهذا الموزع.");
-
-            let msg = `🛒 *طلبية بضائع ونواقص - متجر معاذ*\n👤 إلى السيد الموزع: *${supp.name}*\n──────────────\n` +
-                      list.map(i => `• ${i.name} (الكمية المطلوبة: ${Math.max(5, (parseInt(i.alertLimit) || 2) * 3 - (parseInt(i.stock) || 0))})`).join("\n") +
-                      `\n──────────────\nيرجى تأمين الطلبية في أقرب وقت ممكن. شكراً لكم 🌸`;
-            window.open(`https://wa.me/${formatWhatsAppPhone(supp.phone)}?text=${encodeURIComponent(msg)}`, "_blank");
-        }
-
         function populateStatsCategorySelect() {
             const sel = $("reportCategorySelect"); if (!sel) return;
             const cur = sel.value || "all";
@@ -1371,18 +1159,18 @@
         }
 
         async function saveProduct() {
-            const editId = $("editProductId").value, name = $("prodName").value.trim(), costPrice = parseFloat($("prodCostUSD").value) || 0, priceUSD = parseFloat($("prodPriceUSD").value) || 0, wholesaleUSD = parseFloat($("prodWholesaleUSD").value) || 0, stock = parseInt($("prodStock").value) || 0, alertLimit = parseInt($("prodAlertLimit").value) || 2, pointsPct = parseFloat($("prodPointsPct").value) || 2, category = $("prodCategory").value, supplierId = $("prodSupplier").value, f = $("prodImageInput");
+            const editId = $("editProductId").value, name = $("prodName").value.trim(), costPrice = parseFloat($("prodCostUSD").value) || 0, priceUSD = parseFloat($("prodPriceUSD").value) || 0, wholesaleUSD = parseFloat($("prodWholesaleUSD").value) || 0, stock = parseInt($("prodStock").value) || 0, alertLimit = parseInt($("prodAlertLimit").value) || 2, pointsPct = parseFloat($("prodPointsPct").value) || 2, category = $("prodCategory").value, f = $("prodImageInput");
             if (!name || priceUSD <= 0) return alert("يرجى إدخال اسم الصنف وسعر المبيع.");
             const id = editId || ("PROD_" + Date.now()); let thumb = products[id]?.thumb || "";
             if (f.files && f.files[0]) { const comp = await compressDualImages(f.files[0]); thumb = comp.thumb; highResImagesMemoryCache[id] = comp.image; await db.ref("productImages/" + id).set(comp.image); }
-            db.ref("products/" + id).set({ name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, supplierId, thumb, reviews: products[id]?.reviews || {} }).then(() => {
+            db.ref("products/" + id).set({ name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, thumb, reviews: products[id]?.reviews || {} }).then(() => {
                 ["editProductId", "prodName", "prodCostUSD", "prodPriceUSD", "prodWholesaleUSD", "prodImageInput"].forEach(k => $(k).value = ""); alert("✅ تم حفظ الصنف بنجاح!");
             });
         }
 
         function editProduct(id) {
             const p = products[id]; if (!p) return;
-            $("editProductId").value = id; $("prodName").value = p.name || ""; $("prodCostUSD").value = p.costPrice || 0; $("prodPriceUSD").value = p.priceUSD || 0; $("prodWholesaleUSD").value = p.wholesaleUSD || 0; $("prodStock").value = p.stock || 0; $("prodAlertLimit").value = p.alertLimit || 2; $("prodPointsPct").value = p.pointsPct || 2; $("prodCategory").value = p.category || ""; $("prodSupplier").value = p.supplierId || "";
+            $("editProductId").value = id; $("prodName").value = p.name || ""; $("prodCostUSD").value = p.costPrice || 0; $("prodPriceUSD").value = p.priceUSD || 0; $("prodWholesaleUSD").value = p.wholesaleUSD || 0; $("prodStock").value = p.stock || 0; $("prodAlertLimit").value = p.alertLimit || 2; $("prodPointsPct").value = p.pointsPct || 2; $("prodCategory").value = p.category || "";
             switchAdminTab('addProductTab', document.querySelector("button[onclick*='addProductTab']"));
         }
         function deleteProduct(id) { if (confirm("حذف هذا الصنف نهائياً من المتجر؟")) { db.ref("products/" + id).remove(); db.ref("productImages/" + id).remove(); delete highResImagesMemoryCache[id]; } }
@@ -1394,8 +1182,7 @@
             if (!keys.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف مطابقة.</p>`);
             container.innerHTML = keys.map(id => {
                 const p = products[id], revs = p.reviews || {}, revHtml = Object.keys(revs).map(rId => `<div style="display:flex; justify-content:space-between; align-items:center; font-size:10px; background:var(--card-bg); padding:3px 6px; margin-top:3px; border-radius:4px;"><span>⭐ ${revs[rId].rating} - <b>${revs[rId].customerName}:</b> ${revs[rId].comment}</span><b onclick="deleteProductReview('${id}','${rId}')" style="color:var(--danger-color); cursor:pointer;">🗑️</b></div>`).join("");
-                const suppName = (p.supplierId && suppliers[p.supplierId]) ? suppliers[p.supplierId].name : "بدون موزع";
-                return `<div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:8px; margin-bottom:6px; font-size:12px;"><div style="display:flex; justify-content:space-between; align-items:center;"><div><b>${p.name}</b> <small style="color:var(--gray-text);">(${p.category} | 🚚 ${suppName})</small><br><span style="font-size:11px; color:var(--gold-color);">مفرق: ${calcSYP(p.priceUSD).toLocaleString()} ل.س | المخزون: <b>${p.stock}</b></span></div><div style="display:flex; gap:4px;"><button onclick="editProduct('${id}')" class="btn" style="width:auto; padding:4px 8px; font-size:11px;">✏️</button><button onclick="resetProductSalesStats('${id}')" class="btn" style="width:auto; padding:4px 8px; font-size:11px; background:#ff9800; color:#000;">🔄</button><button onclick="deleteProduct('${id}')" class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:11px;">🗑️</button></div></div>${revHtml}</div>`;
+                return `<div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:8px; margin-bottom:6px; font-size:12px;"><div style="display:flex; justify-content:space-between; align-items:center;"><div><b>${p.name}</b> <small style="color:var(--gray-text);">(${p.category})</small><br><span style="font-size:11px; color:var(--gold-color);">مفرق: ${calcSYP(p.priceUSD).toLocaleString()} ل.س | المخزون: <b>${p.stock}</b></span></div><div style="display:flex; gap:4px;"><button onclick="editProduct('${id}')" class="btn" style="width:auto; padding:4px 8px; font-size:11px;">✏️</button><button onclick="resetProductSalesStats('${id}')" class="btn" style="width:auto; padding:4px 8px; font-size:11px; background:#ff9800; color:#000;">🔄</button><button onclick="deleteProduct('${id}')" class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:11px;">🗑️</button></div></div>${revHtml}</div>`;
             }).join("");
         }
 
