@@ -126,7 +126,7 @@
         <div class="products-grid" id="productsGrid"></div>
     </div>
 
-    <!-- شريط السلة السفلي مع إصلاح حدث النقر -->
+    <!-- شريط السلة السفلي مع إصلاح أحداث النقر المباشر -->
     <div class="cart-bar" id="cartBar" style="display:none;">
         <div style="display:flex; flex-direction:column; gap:2px; text-align:right; flex:1;" onclick="openCartModal()">
             <span style="font-size:11px; color:var(--gray-text);">المنتجات: <b id="cartCount" style="color:var(--text-color);">0</b> <small id="cartBarDeliveryNote" style="color:var(--gold-color);"></small></span>
@@ -219,7 +219,7 @@
         </div>
     </div>
 
-    <!-- لوحة الشريك (المحدثة لعرض المبيعات، الأرباح، ومخزون التصنيفات) -->
+    <!-- لوحة الشريك المحدثة (مبيعات، أرباح، ومخزون التصنيفات) -->
     <div id="partnerModal" class="page-overlay">
         <header style="position:sticky; top:0; z-index:10;">
             <div class="store-info"><h1>🤝 لوحة أرباح ومخزون الشريك</h1><p>إحصائيات الأصناف، الأرباح، والمخزون المتبقي</p></div>
@@ -472,7 +472,6 @@
             <div style="display:flex; gap:8px;"><button onclick="saveAdminCustomerEdit()" class="btn">💾 حفظ التعديلات</button><button onclick="closeAdminEditCustomerModal()" class="btn btn-danger" style="width:35%;">إلغاء</button></div>
         </div>
     </div>
-
     <script>
         const $ = id => document.getElementById(id);
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -702,7 +701,7 @@
 
         db.ref("categories").on("value", snap => {
             const d = snap.val() || ["مواد غذائية", "منظفات", "مشروبات"];
-            categories = ["الكل", ...d]; renderCategories(); renderAdminCategories(d); renderStatsDashboard(); populatePartnerSelectOptions();
+            categories = ["الكل", ...d]; renderCategories(); renderAdminCategories(d); renderStatsDashboard();
         });
 
         db.ref("suppliers").on("value", snap => {
@@ -982,7 +981,7 @@
         function openCompetitionsPage() { syncCurrentUser(); renderCompetitionDetails(); renderLeaderboard(); $("competitionsPage").style.display = "block"; }
         const closeCompetitionsPage = () => $("competitionsPage").style.display = "none";
         
-        // لوحة الشريك المحدثة (مبيعات، أرباح، ومخزون التصنيفات)
+        // لوحة الشريك المحدثة لعرض المخزون ومبيعات الأقسام
         function openPartnerDashboard() {
             if (!currentUser || currentUser.userType !== "partner") return;
             const phone = currentUser.phone;
@@ -993,7 +992,6 @@
             let totSales = 0, totEarn = 0, itemsHtml = "";
             let partnerItemsMap = {};
 
-            // جلب المخزون الحالي والمبيعات للأصناف التابعة للتصنيفات المسموحة للشريك
             Object.values(products).forEach(p => {
                 const pCat = (p.category || "").trim().toLowerCase();
                 if (allowedCats.includes(pCat)) {
@@ -1120,7 +1118,6 @@
             }
         }
 
-        // إدارة الموزعين المعتمدين
         function saveSupplier() {
             const id = $("editSupplierId").value || ("SUPP_" + Date.now());
             const name = $("suppName").value.trim(), address = $("suppAddress").value.trim(), phone = $("suppPhone").value.trim();
