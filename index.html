@@ -158,7 +158,7 @@
         </div>
     </div>
 
-    <!-- نافذة السلة المرتبة وغير المزدحمة -->
+    <!-- نافذة السلة المرتبطة بشام كاش وأجور الزبون -->
     <div id="cartModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">🛒 سلة المشتريات وإتمام الطلب</h3>
@@ -171,7 +171,6 @@
                 <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:11px; color:var(--success-color);"><span>النقاط المكتسبة:</span><strong>+<span id="modalCartPoints">0</span> نقطة 🎁</strong></div>
             </div>
 
-            <!-- زر بارز لنسخ معرف الشام كاش بدون إظهار الكود -->
             <div style="margin-bottom:10px;">
                 <button type="button" onclick="copyWalletId()" class="btn" style="background:linear-gradient(45deg, #D4AF37, #FFD700); color:#000; padding:10px; font-weight:bold; font-size:12px; display:flex; align-items:center; justify-content:center; gap:6px;">
                     📋 اضغط هنا لنسخ معرف محفظة شام كاش للدفع
@@ -180,7 +179,6 @@
 
             <div class="form-group"><label>ملاحظات إضافية أو رقم عملية التحويل (اختياري):</label><input type="text" id="orderNotes" class="form-control" placeholder="أي ملاحظة أو رقم إيصال التحويل..."></div>
 
-            <!-- زر إرسال وتأكيد الطلب بارز ومشمس وضخم -->
             <div style="display:flex; flex-direction:column; gap:6px; margin-top:10px;">
                 <button type="button" onclick="submitOrder()" class="btn" style="background:linear-gradient(45deg, #00e676, #00b0ff); color:#000; padding:14px; font-size:15px; font-weight:900; box-shadow:0 4px 15px rgba(0,230,118,0.4);">
                     ✅ إرسال وتأكيد الطلب عبر واتساب
@@ -206,7 +204,7 @@
             <div class="form-group"><label>رأيك بعد الشراء والتجربة:</label><textarea id="reviewCommentInput" class="form-control" rows="3" placeholder="اكتب تعليقك هنا..."></textarea></div>
             <div style="display:flex; gap:8px;">
                 <button onclick="submitProductReview()" class="btn">💾 إرسال التقييم</button>
-                <button onclick="closeReviewModal()" class="btn btn-danger" style="width:35%;">إغلاق</button>
+                <button onclick="closeReviewModal()" class="btn btn-danger" style="width:35%;">إلغاء</button>
             </div>
         </div>
     </div>
@@ -247,7 +245,7 @@
         </div>
     </div>
 
-    <!-- لوحة الإدارة -->
+    <!-- لوحة الإدارة المحدثة (مع تبويب الموزعين والنواقص المصنفة) -->
     <div id="adminModal" class="modal-overlay">
         <div class="modal-content" style="max-width:600px;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:8px; margin-bottom:12px;">
@@ -255,16 +253,18 @@
                 <button onclick="closeAdminModal()" class="btn btn-danger" style="width:auto; padding:5px 10px;">✖ خروج</button>
             </div>
             <div class="categories" style="margin-bottom:12px;">
-                <button class="cat-btn active" onclick="switchAdminTab('statsTab', this)">📊 الجرد والأرباح</button>
+                <button class="cat-btn active" onclick="switchAdminTab('statsTab', this)">📊 الجرد</button>
                 <button class="cat-btn" onclick="switchAdminTab('ordersTab', this)">📦 الطلبات (<span id="pendingCountBadge">0</span>)</button>
-                <button class="cat-btn" onclick="switchAdminTab('addProductTab', this)">➕ إضافة صنف</button>
-                <button class="cat-btn" onclick="switchAdminTab('offersTab', this)">🔥 العروض الخاصة</button>
-                <button class="cat-btn" onclick="switchAdminTab('productsTab', this)">🛍️ المخزون والتعليقات</button>
-                <button class="cat-btn" onclick="switchAdminTab('customersTab', this)">👥 الزبائن والجيران</button>
-                <button class="cat-btn" onclick="switchAdminTab('settingsTab', this)">🛵 التوصيل والدوام</button>
+                <button class="cat-btn" onclick="switchAdminTab('suppliersTab', this)">🚚 الموزعين</button>
+                <button class="cat-btn" onclick="switchAdminTab('addProductTab', this)">➕ صنف</button>
+                <button class="cat-btn" onclick="switchAdminTab('offersTab', this)">🔥 العروض</button>
+                <button class="cat-btn" onclick="switchAdminTab('productsTab', this)">🛍️ المخزون</button>
+                <button class="cat-btn" onclick="switchAdminTab('customersTab', this)">👥 الزبائن</button>
+                <button class="cat-btn" onclick="switchAdminTab('settingsTab', this)">🛵 التوصيل</button>
                 <button class="cat-btn" onclick="switchAdminTab('shortagesTab', this)">⚠️ النواقص</button>
             </div>
 
+            <!-- تبويب الجرد -->
             <div id="statsTab" class="admin-tab">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">📊 التقارير المالية وجرد الأرباح</h4>
                 <div class="stats-grid">
@@ -309,6 +309,7 @@
                 <div id="productStatsContainer"></div>
             </div>
 
+            <!-- تبويب الطلبات -->
             <div id="ordersTab" class="admin-tab" style="display:none;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
                     <h4 style="color:var(--gold-color); margin:0;">📦 الفواتير والطلبات المعلقة</h4>
@@ -317,6 +318,20 @@
                 <div id="pendingOrdersList"></div>
             </div>
 
+            <!-- تبويب إدارة الموزعين المعتمدين الجدد -->
+            <div id="suppliersTab" class="admin-tab" style="display:none;">
+                <h4 style="color:var(--gold-color); margin:0 0 8px 0;">🚚 إضافة وإدارة الموزعين المعتمدين</h4>
+                <div style="background:var(--bg-color); border:1px dashed var(--gold-color); padding:10px; border-radius:8px; margin-bottom:12px;">
+                    <div class="form-group"><label>اسم الموزع / الشركة:</label><input type="text" id="suppName" class="form-control" placeholder="مثال: شركة العوينة للمواد الغذائية"></div>
+                    <div class="form-group"><label>العنوان:</label><input type="text" id="suppAddress" class="form-control" placeholder="مثال: حماة - الصناعة"></div>
+                    <div class="form-group"><label>رقم الهاتف (واتساب مع الرمز 963):</label><input type="text" id="suppPhone" class="form-control" placeholder="9639XXXXXXXX"></div>
+                    <button onclick="saveSupplier()" class="btn" style="background:var(--success-color); color:#000;">➕ حفظ الموزع المعتمد</button>
+                </div>
+                <h5 style="color:var(--gold-color); margin:10px 0 6px 0;">📋 قائمة الموزعين المسجلين</h5>
+                <div id="suppliersListContainer"></div>
+            </div>
+
+            <!-- تبويب إضافة صنف مع بند الموزع المعتمد -->
             <div id="addProductTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">➕ إضافة / تعديل صنف</h4>
                 <input type="hidden" id="editProductId">
@@ -330,10 +345,12 @@
                     <div class="form-group"><label>نسبة نقاط الولاء (%):</label><input type="number" step="0.1" id="prodPointsPct" class="form-control" value="2"></div>
                 </div>
                 <div class="form-group"><label>التصنيف:</label><select id="prodCategory" class="form-control"></select></div>
+                <div class="form-group"><label>🚚 الموزع المعتمد للصنف:</label><select id="prodSupplier" class="form-control"><option value="">-- بدون موزع معتمد --</option></select></div>
                 <div class="form-group"><label>صورة المنتج:</label><input type="file" id="prodImageInput" accept="image/*" class="form-control"></div>
                 <button onclick="saveProduct()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ الصنف في المتجر</button>
             </div>
 
+            <!-- تبويب العروض -->
             <div id="offersTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">🔥 إدارة العروض الخاصة المتعددة</h4>
                 <input type="hidden" id="editOfferId">
@@ -356,6 +373,7 @@
                 <div id="adminOffersList"></div>
             </div>
 
+            <!-- تبويب المخزون -->
             <div id="productsTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 6px 0;">📋 قائمة الأصناف والتعليقات</h4>
                 <input type="text" id="adminSearchProd" class="search-box" placeholder="🔍 ابحث عن صنف لتعديله أو تصفيره..." oninput="renderAdminProducts()" style="margin-bottom:8px;">
@@ -369,6 +387,7 @@
                 <div id="adminCategoriesList"></div>
             </div>
 
+            <!-- تبويب الزبائن -->
             <div id="customersTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">👥 الزبائن وتصنيف (مفرق / جملة / جيران المتجر)</h4>
                 <input type="text" id="adminSearchCust" class="search-box" placeholder="🔍 ابحث بالاسم أو الهاتف..." oninput="renderAdminCustomers()" style="margin-bottom:8px;">
@@ -385,6 +404,7 @@
                 <button onclick="saveCompetitionSettings()" class="btn">💾 حفظ المسابقة</button>
             </div>
 
+            <!-- تبويب التوصيل -->
             <div id="settingsTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">🛵 سعر توصيل صنف "جيران المتجر" الخاص</h4>
                 <div style="background:var(--bg-color); border:1px solid var(--gold-color); padding:10px; border-radius:8px; margin-bottom:12px;">
@@ -430,11 +450,12 @@
                 <div class="form-group"><label>⬆️ استيراد نسخة احتياطية:</label><input type="file" id="importBackupInput" accept=".json" class="form-control" onchange="importBackupJSON(event)"></div>
             </div>
 
+            <!-- تبويب النواقص المصنفة حسب الموزع مع زر إرسال واتساب لكل موزع -->
             <div id="shortagesTab" class="admin-tab" style="display:none;">
-                <h4 style="color:var(--danger-color); margin:0 0 8px 0;">⚠️ أصناف أوشكت على النفاد</h4>
-                <div id="shortagesList" style="margin-bottom:12px;"></div>
-                <button onclick="sendShortagesWhatsApp()" class="btn" style="margin-bottom:15px;">📲 إرسال النواقص عبر واتساب</button>
-                <h4 style="color:var(--gold-color); margin:0 0 8px 0;">📝 أصناف طلبها الزبائن</h4>
+                <h4 style="color:var(--danger-color); margin:0 0 8px 0;">⚠️ قائمة النواقص مصنفة حسب الموزع المعتمد</h4>
+                <div id="shortagesGroupedContainer" style="margin-bottom: 15px;"></div>
+                
+                <h4 style="color:var(--gold-color); margin:15px 0 8px 0;">📝 أصناف طلبها الزبائن</h4>
                 <div id="customerMissingRequestsList"></div>
             </div>
         </div>
@@ -483,7 +504,7 @@
             "المزرعة الغربية": { fee: 5000, driverPct: 80, hoursEnabled: false, open: "08:00", close: "22:00" }
         };
         let workHoursSettings = { enabled: false, open: "08:00", close: "23:00" };
-        let categories = ["الكل"], selectedCategory = "الكل", products = {}, specialOffers = {};
+        let categories = ["الكل"], selectedCategory = "الكل", products = {}, specialOffers = {}, suppliers = {};
         let highResImagesMemoryCache = {}, noHighResAvailableSet = {}, shuffledProductKeys = [];
         let cart = {}, users = {}, pendingOrders = {}, completedOrdersHistory = {}, missingRequests = {};
         let compSettings = { minRedeemPoints: 500, leaderboardLimit: 10, title: "", desc: "", image: "" };
@@ -696,6 +717,13 @@
             $("exchangeRateInput").value = exchangeRate; $("deliveryPhoneInput").value = deliveryDriverPhone;
             $("adminWhatsAppInput").value = adminWhatsAppNumber; $("adminShamWalletInput").value = shamWalletIdGlobal;
             checkStoreWorkHours(); renderStore();
+        });
+
+        db.ref("suppliers").on("value", snap => {
+            suppliers = snap.val() || {};
+            renderSuppliersList();
+            populateSupplierSelect();
+            renderShortages();
         });
 
         db.ref("categories").on("value", snap => {
@@ -1036,6 +1064,117 @@
             }
         }
 
+        // دوال إدارة الموزعين
+        function saveSupplier() {
+            const name = $("suppName").value.trim(), address = $("suppAddress").value.trim(), phone = $("suppPhone").value.trim();
+            if (!name) return alert("⚠️ يرجى إدخال اسم الموزع.");
+            db.ref("suppliers").push({ name, address, phone }).then(() => {
+                $("suppName").value = ""; $("suppAddress").value = ""; $("suppPhone").value = "";
+                alert("✅ تم حفظ الموزع المعتمد بنجاح!");
+            });
+        }
+
+        function deleteSupplier(id) {
+            if (confirm("حذف هذا الموزع؟")) db.ref("suppliers/" + id).remove();
+        }
+
+        function renderSuppliersList() {
+            const container = $("suppliersListContainer"); if (!container) return;
+            const entries = Object.entries(suppliers);
+            if (!entries.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد موزعين مسجلين.</p>`);
+            container.innerHTML = entries.map(([id, s]) => `
+                <div class="review-box" style="margin-bottom:6px;">
+                    <div>
+                        <b>🚚 ${s.name}</b><br>
+                        <small style="color:var(--gray-text);">📍 ${s.address || 'بلا عنوان'} | 📱 ${s.phone || 'بلا هاتف'}</small>
+                    </div>
+                    <button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="deleteSupplier('${id}')">حذف</button>
+                </div>
+            `).join("");
+        }
+
+        function populateSupplierSelect() {
+            const sel = $("prodSupplier"); if (!sel) return;
+            const cur = sel.value;
+            sel.innerHTML = '<option value="">-- بدون موزع معتمد --</option>' + Object.entries(suppliers).map(([id, s]) => `<option value="${id}">${s.name}</option>`).join("");
+            sel.value = cur;
+        }
+
+        // فرز النواقص حسب الموزع مع زر إرسال واتساب لكل موزع بضغطة زر
+        function renderShortages() {
+            const container = $("shortagesGroupedContainer"); if (!container) return;
+            const list = Object.values(products).filter(p => p && (parseInt(p.stock) || 0) <= (parseInt(p.alertLimit) || 2));
+
+            if (!list.length) return (container.innerHTML = `<p style="text-align:center; color:var(--success-color); font-size:12px;">✅ جميع الأصناف متوفرة بالمخزون ولا توجد نواقص.</p>`);
+
+            // تجميع النواقص حسب الموزع
+            let grouped = {};
+            let unassigned = [];
+
+            list.forEach(p => {
+                const sId = p.supplierId;
+                if (sId && suppliers[sId]) {
+                    if (!grouped[sId]) grouped[sId] = [];
+                    grouped[sId].push(p);
+                } else {
+                    unassigned.push(p);
+                }
+            });
+
+            let html = "";
+
+            // عرض النواقص لكل موزع مع زر واتساب أنيق
+            Object.keys(grouped).forEach(sId => {
+                const supp = suppliers[sId];
+                const items = grouped[sId];
+                let itemsText = items.map(i => `• ${i.name} (المتبقي: ${i.stock})`).join("\n");
+
+                html += `
+                    <div style="background:var(--bg-color); border:1px solid var(--gold-color); border-radius:8px; padding:10px; margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <b style="color:var(--gold-color);">🚚 الموزع: ${supp.name}</b>
+                            <button onclick="sendSupplierOrderWhatsApp('${sId}')" class="btn" style="width:auto; padding:4px 10px; font-size:11px; background:var(--success-color); color:#000; font-weight:bold;">
+                                📲 إرسال الطلبية واتساب
+                            </button>
+                        </div>
+                        <div style="font-size:11px; color:var(--gray-text); margin-bottom:6px;">📱 هاتف: ${supp.phone || 'غير محدد'} | 📍 ${supp.address || ''}</div>
+                        <div style="background:var(--card-bg); padding:6px; border-radius:6px; font-size:11px;">
+                            ${items.map(i => `<div style="display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px dashed var(--border-color);"><span>• ${i.name}</span><b style="color:var(--danger-color);">المتبقي: ${i.stock}</b></div>`).join("")}
+                        </div>
+                    </div>`;
+            });
+
+            // الأصناف التي ليس لها موزع
+            if (unassigned.length > 0) {
+                html += `
+                    <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:8px; padding:10px; margin-bottom:10px;">
+                        <b style="color:var(--gray-text);">⚠️ أصناف بلا موزع معتمد:</b>
+                        <div style="background:var(--card-bg); padding:6px; border-radius:6px; font-size:11px; margin-top:6px;">
+                            ${unassigned.map(i => `<div style="display:flex; justify-content:space-between; padding:2px 0;"><span>• ${i.name}</span><b style="color:var(--danger-color);">المتبقي: ${i.stock}</b></div>`).join("")}
+                        </div>
+                    </div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function sendSupplierOrderWhatsApp(supplierId) {
+            const supp = suppliers[supplierId];
+            if (!supp || !supp.phone) {
+                return alert("⚠️ هذا الموزع ليس لديه رقم هاتف مسجل.");
+            }
+            const list = Object.values(products).filter(p => p && p.supplierId === supplierId && (parseInt(p.stock) || 0) <= (parseInt(p.alertLimit) || 2));
+            if (!list.length) return alert("ℹ️ لا توجد نواقص لهذا الموزع.");
+
+            let msg = `🛒 *طلبية بضائع ونواقص - متجر معاذ*\n` +
+                      `👤 إلى السيد الموزع: *${supp.name}*\n` +
+                      `──────────────\n` +
+                      list.map(i => `• ${i.name} (الكمية المطلوبة لتغطية النقص: ${Math.max(5, (parseInt(i.alertLimit) || 2) * 3 - (parseInt(i.stock) || 0))})`).join("\n") +
+                      `\n──────────────\nيرجى تأمين الطلبية في أقرب وقت ممكن. شكراً لكم 🌸`;
+
+            window.open(`https://wa.me/${formatWhatsAppPhone(supp.phone)}?text=${encodeURIComponent(msg)}`, "_blank");
+        }
+
         function populateStatsCategorySelect() {
             const sel = $("reportCategorySelect"); if (!sel) return;
             const cur = sel.value || "all";
@@ -1159,18 +1298,18 @@
         }
 
         async function saveProduct() {
-            const editId = $("editProductId").value, name = $("prodName").value.trim(), costPrice = parseFloat($("prodCostUSD").value) || 0, priceUSD = parseFloat($("prodPriceUSD").value) || 0, wholesaleUSD = parseFloat($("prodWholesaleUSD").value) || 0, stock = parseInt($("prodStock").value) || 0, alertLimit = parseInt($("prodAlertLimit").value) || 2, pointsPct = parseFloat($("prodPointsPct").value) || 2, category = $("prodCategory").value, f = $("prodImageInput");
+            const editId = $("editProductId").value, name = $("prodName").value.trim(), costPrice = parseFloat($("prodCostUSD").value) || 0, priceUSD = parseFloat($("prodPriceUSD").value) || 0, wholesaleUSD = parseFloat($("prodWholesaleUSD").value) || 0, stock = parseInt($("prodStock").value) || 0, alertLimit = parseInt($("prodAlertLimit").value) || 2, pointsPct = parseFloat($("prodPointsPct").value) || 2, category = $("prodCategory").value, supplierId = $("prodSupplier").value, f = $("prodImageInput");
             if (!name || priceUSD <= 0) return alert("يرجى إدخال اسم الصنف وسعر المبيع.");
             const id = editId || ("PROD_" + Date.now()); let thumb = products[id]?.thumb || "";
             if (f.files && f.files[0]) { const comp = await compressDualImages(f.files[0]); thumb = comp.thumb; highResImagesMemoryCache[id] = comp.image; await db.ref("productImages/" + id).set(comp.image); }
-            db.ref("products/" + id).set({ name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, thumb, reviews: products[id]?.reviews || {} }).then(() => {
+            db.ref("products/" + id).set({ name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, supplierId, thumb, reviews: products[id]?.reviews || {} }).then(() => {
                 ["editProductId", "prodName", "prodCostUSD", "prodPriceUSD", "prodWholesaleUSD", "prodImageInput"].forEach(k => $(k).value = ""); alert("✅ تم حفظ الصنف بنجاح!");
             });
         }
 
         function editProduct(id) {
             const p = products[id]; if (!p) return;
-            $("editProductId").value = id; $("prodName").value = p.name || ""; $("prodCostUSD").value = p.costPrice || 0; $("prodPriceUSD").value = p.priceUSD || 0; $("prodWholesaleUSD").value = p.wholesaleUSD || 0; $("prodStock").value = p.stock || 0; $("prodAlertLimit").value = p.alertLimit || 2; $("prodPointsPct").value = p.pointsPct || 2; $("prodCategory").value = p.category || "";
+            $("editProductId").value = id; $("prodName").value = p.name || ""; $("prodCostUSD").value = p.costPrice || 0; $("prodPriceUSD").value = p.priceUSD || 0; $("prodWholesaleUSD").value = p.wholesaleUSD || 0; $("prodStock").value = p.stock || 0; $("prodAlertLimit").value = p.alertLimit || 2; $("prodPointsPct").value = p.pointsPct || 2; $("prodCategory").value = p.category || ""; $("prodSupplier").value = p.supplierId || "";
             switchAdminTab('addProductTab', document.querySelector("button[onclick*='addProductTab']"));
         }
         function deleteProduct(id) { if (confirm("حذف هذا الصنف نهائياً من المتجر؟")) { db.ref("products/" + id).remove(); db.ref("productImages/" + id).remove(); delete highResImagesMemoryCache[id]; } }
@@ -1182,7 +1321,8 @@
             if (!keys.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف مطابقة.</p>`);
             container.innerHTML = keys.map(id => {
                 const p = products[id], revs = p.reviews || {}, revHtml = Object.keys(revs).map(rId => `<div style="display:flex; justify-content:space-between; align-items:center; font-size:10px; background:var(--card-bg); padding:3px 6px; margin-top:3px; border-radius:4px;"><span>⭐ ${revs[rId].rating} - <b>${revs[rId].customerName}:</b> ${revs[rId].comment}</span><b onclick="deleteProductReview('${id}','${rId}')" style="color:var(--danger-color); cursor:pointer;">🗑️</b></div>`).join("");
-                return `<div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:8px; margin-bottom:6px; font-size:12px;"><div style="display:flex; justify-content:space-between; align-items:center;"><div><b>${p.name}</b> <small style="color:var(--gray-text);">(${p.category})</small><br><span style="font-size:11px; color:var(--gold-color);">مفرق: ${calcSYP(p.priceUSD).toLocaleString()} ل.س | المخزون: <b>${p.stock}</b></span></div><div style="display:flex; gap:4px;"><button onclick="editProduct('${id}')" class="btn" style="width:auto; padding:4px 8px; font-size:11px;">✏️</button><button onclick="resetProductSalesStats('${id}')" class="btn" style="width:auto; padding:4px 8px; font-size:11px; background:#ff9800; color:#000;">🔄</button><button onclick="deleteProduct('${id}')" class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:11px;">🗑️</button></div></div>${revHtml}</div>`;
+                const suppName = (p.supplierId && suppliers[p.supplierId]) ? suppliers[p.supplierId].name : "بدون موزع";
+                return `<div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:8px; margin-bottom:6px; font-size:12px;"><div style="display:flex; justify-content:space-between; align-items:center;"><div><b>${p.name}</b> <small style="color:var(--gray-text);">(${p.category} | 🚚 ${suppName})</small><br><span style="font-size:11px; color:var(--gold-color);">مفرق: ${calcSYP(p.priceUSD).toLocaleString()} ل.س | المخزون: <b>${p.stock}</b></span></div><div style="display:flex; gap:4px;"><button onclick="editProduct('${id}')" class="btn" style="width:auto; padding:4px 8px; font-size:11px;">✏️</button><button onclick="resetProductSalesStats('${id}')" class="btn" style="width:auto; padding:4px 8px; font-size:11px; background:#ff9800; color:#000;">🔄</button><button onclick="deleteProduct('${id}')" class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:11px;">🗑️</button></div></div>${revHtml}</div>`;
             }).join("");
         }
 
@@ -1216,37 +1356,7 @@
         }
         function deleteCategory(idx) { const raw = categories.filter(c => c !== "الكل"); raw.splice(idx, 1); db.ref("categories").set(raw); }
 
-        function saveGeneralSettings() {
-            collectDeliveryRegionsFromDOM();
-            db.ref("settings").set({
-                exchangeRate: parseFloat($("exchangeRateInput").value) || 15000,
-                deliveryDriverPhone: $("deliveryPhoneInput").value.trim(),
-                adminWhatsApp: $("adminWhatsAppInput").value.trim() || "963965461504",
-                shamWalletId: $("adminShamWalletInput").value.trim() || "da3e13cd8a2ef2af282445e148df9599",
-                neighborDeliveryFee: parseInt($("neighborDeliveryFeeInput").value) || 0,
-                deliveryFees,
-                workHours: { enabled: $("workHoursEnabled").checked, open: $("workHourOpen").value || "08:00", close: $("workHourClose").value || "23:00" }
-            }).then(() => alert("✅ تم حفظ كافة الإعدادات والمناطق وساعات العمل بنجاح!"));
-        }
-
-        function exportBackupJSON() {
-            db.ref("/").once("value").then(snap => {
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(new Blob([JSON.stringify(snap.val() || {}, null, 2)], { type: "application/json" }));
-                a.download = `moaath_store_backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
-            });
-        }
-        function importBackupJSON(e) {
-            const file = e.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = ev => {
-                try {
-                    const json = JSON.parse(ev.target.result);
-                    if (confirm("⚠️ هل أنت متأكد من استعادة النسخة الاحتياطية واستبدال البيانات الحالية؟")) db.ref("/").set(json).then(() => alert("✅ تمت استعادة النسخة بنجاح!"));
-                } catch (err) { alert("❌ الملف غير صالح!"); }
-            };
-            reader.readAsText(file);
-        }
+        // التحديث الإجباري لملف sw.js من خلال هذا الإصدار v4
     </script>
 </body>
 </html>
