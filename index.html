@@ -158,12 +158,12 @@
         </div>
     </div>
 
-    <!-- نافذة السلة المرتبة وغير المزدحمة -->
+    <!-- نافذة السلة المحدثة غير المزدحمة -->
     <div id="cartModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">🛒 سلة المشتريات وإتمام الطلب</h3>
             <div id="cartItemsList" style="max-height:200px; overflow-y:auto; margin-bottom:10px;"></div>
-            
+            <div class="form-group"><label>📍 منطقة التوصيل:</label><select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()"></select></div>
             <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:8px 10px; margin-bottom:10px; font-size:12px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span>قيمة المواد:</span><strong><span id="modalCartSubtotal">0</span> ل.س</strong></div>
                 <div style="display:flex; justify-content:space-between; margin-bottom:3px; color:var(--gray-text);"><span>أجور التوصيل (<span id="modalDeliveryRegionName">-</span>):</span><strong><span id="modalDeliveryFee">0</span> ل.س</strong></div>
@@ -171,7 +171,7 @@
                 <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:11px; color:var(--success-color);"><span>النقاط المكتسبة:</span><strong>+<span id="modalCartPoints">0</span> نقطة 🎁</strong></div>
             </div>
 
-            <!-- زر بارز لنسخ معرف الشام كاش بدون إظهار الكود -->
+            <!-- زر بارز لنسخ كود الشام كاش بدون إظهار الكود المزعج -->
             <div style="margin-bottom:10px;">
                 <button type="button" onclick="copyWalletId()" class="btn" style="background:linear-gradient(45deg, #D4AF37, #FFD700); color:#000; padding:10px; font-weight:bold; font-size:12px; display:flex; align-items:center; justify-content:center; gap:6px;">
                     📋 اضغط هنا لنسخ معرف محفظة شام كاش للدفع
@@ -180,9 +180,9 @@
 
             <div class="form-group"><label>ملاحظات إضافية أو رقم عملية التحويل (اختياري):</label><input type="text" id="orderNotes" class="form-control" placeholder="أي ملاحظة أو رقم إيصال التحويل..."></div>
 
-            <!-- زر إرسال وتأكيد الطلب بارز ومشمس وضخم -->
+            <!-- زر إرسال وتأكيد الطلب بارز ومشمس -->
             <div style="display:flex; flex-direction:column; gap:6px; margin-top:10px;">
-                <button type="button" onclick="submitOrder()" class="btn" style="background:linear-gradient(45deg, #00e676, #00b0ff); color:#000; padding:14px; font-size:15px; font-weight:900; box-shadow:0 4px 15px rgba(0,230,118,0.4);">
+                <button type="button" onclick="submitOrder()" class="btn" style="background:linear-gradient(45deg, #00e676, #00b0ff); color:#000; padding:12px; font-size:14px; font-weight:900; box-shadow:0 4px 15px rgba(0,230,118,0.4);">
                     ✅ إرسال وتأكيد الطلب عبر واتساب
                 </button>
                 <button type="button" onclick="closeCartModal()" class="btn btn-danger" style="padding:8px; font-size:12px;">إغلاق السلة</button>
@@ -601,7 +601,7 @@
         function populateRegionSelects() {
             const names = Object.keys(deliveryFees);
             if (!names.length) { deliveryFees = { "العوينة": { fee: 2000, driverPct: 80, hoursEnabled: false, open: "08:00", close: "23:00" } }; names.push("العوينة"); }
-            ["regRegion", "adminCustRegion"].forEach(id => {
+            ["regRegion", "cartRegionSelect", "adminCustRegion"].forEach(id => {
                 const el = $(id); if (!el) return;
                 const prev = el.value;
                 el.innerHTML = names.map(r => `<option value="${r}">${r} (${getRegionFee(r).toLocaleString()} ل.س)</option>`).join("");
@@ -865,7 +865,7 @@
             let cnt = 0, sub = 0;
             Object.values(cart).forEach(i => { cnt += i.qty; sub += calcSYP(i.priceUSD) * i.qty; });
             if (cnt > 0) {
-                const reg = currentUser && currentUser.region ? currentUser.region : (Object.keys(deliveryFees)[0] || "العوينة"), fee = getRegionFee(reg);
+                const def = Object.keys(deliveryFees)[0] || "العوينة", reg = (currentUser && currentUser.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : def, fee = getRegionFee(reg);
                 $("cartBar").style.display = "flex"; $("cartCount").textContent = cnt; $("cartTotal").textContent = (sub + fee).toLocaleString() + " ل.س";
                 if ($("cartBarDeliveryNote")) $("cartBarDeliveryNote").textContent = `(توصيل ${currentUser && currentUser.userType === 'neighbors' ? 'جيران المتجر' : reg}: ${fee.toLocaleString()} ل.س)`;
             } else $("cartBar").style.display = "none";
@@ -873,12 +873,22 @@
 
         function openCartModal() {
             if (!checkStoreWorkHours()) return;
-            const reg = currentUser && currentUser.region ? currentUser.region : (Object.keys(deliveryFees)[0] || "العوينة");
+            const def = Object.keys(deliveryFees)[0] || "العوينة", reg = (currentUser && currentUser.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : def;
             if (!isRegionOpenNow(reg)) return alert(`⚠️ نعتذر منكم، خدمة التوصيل لمنطقة (${reg}) مغلقة حالياً حسب جدول دوامها.`);
             if (!currentUser || !currentUser.phone || !currentUser.region) return openEditProfile();
-            renderCartModalItems(); $("cartModal").style.display = "flex";
+            populateRegionSelects(); $("cartRegionSelect").value = reg; renderCartModalItems(); $("cartModal").style.display = "flex";
         }
         const closeCartModal = () => $("cartModal").style.display = "none";
+
+        function onCartRegionChange() {
+            const reg = $("cartRegionSelect").value;
+            if (!isRegionOpenNow(reg)) alert(`⚠️ تنبيه: منطقة (${reg}) مغلقة حالياً حسب ساعات دوامها.`);
+            if (currentUser && currentUser.phone) {
+                currentUser.region = reg; localStorage.setItem("moaath_user", JSON.stringify(currentUser));
+                db.ref("users/" + currentUser.phone + "/region").set(reg); $("userRegionBadge").textContent = `(${reg})`;
+            }
+            renderCartModalItems(); updateCartBar();
+        }
 
         const copyWalletId = () => navigator.clipboard.writeText($("shamWalletId").textContent).then(() => alert("✅ تم نسخ معرف محفظة شام كاش بنجاح!"));
 
@@ -889,7 +899,7 @@
                 const u = calcSYP(i.priceUSD), s = u * i.qty; sub += s; pts += Math.round((i.priceUSD * i.qty) * (i.pointsPct || 2));
                 return `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding:6px 0; font-size:12px;"><div><strong>${i.name}</strong><br><span style="color:var(--gray-text);">${u.toLocaleString()} ل.س × ${i.qty} = ${s.toLocaleString()} ل.س</span></div><div class="qty-controls" style="width:85px;"><button class="qty-btn" onclick="changeQty('${i.id}',1)">+</button><span class="qty-text">${i.qty}</span><button class="qty-btn" onclick="changeQty('${i.id}',-1)">-</button></div></div>`;
             }).join("");
-            const reg = currentUser && currentUser.region ? currentUser.region : (Object.keys(deliveryFees)[0] || "العوينة"), fee = getRegionFee(reg);
+            const reg = $("cartRegionSelect").value || (currentUser ? currentUser.region : (Object.keys(deliveryFees)[0] || "العوينة")), fee = getRegionFee(reg);
             $("modalCartSubtotal").textContent = sub.toLocaleString(); 
             $("modalDeliveryRegionName").textContent = currentUser && currentUser.userType === 'neighbors' ? 'جيران المتجر' : reg;
             $("modalDeliveryFee").textContent = fee.toLocaleString(); $("modalCartTotal").textContent = (sub + fee).toLocaleString(); $("modalCartPoints").textContent = pts;
@@ -898,7 +908,7 @@
         function submitOrder() {
             if (!checkStoreWorkHours()) return;
             if (!currentUser || !currentUser.phone || !currentUser.name || !currentUser.address) { closeCartModal(); return openEditProfile(); }
-            const reg = currentUser && currentUser.region ? currentUser.region : (Object.keys(deliveryFees)[0] || "العوينة");
+            const reg = $("cartRegionSelect").value || currentUser.region || Object.keys(deliveryFees)[0] || "العوينة";
             if (!isRegionOpenNow(reg)) return alert(`⚠️ عذراً، أوقات التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
             if (users[currentUser.phone]?.banned) return alert("🚫 عذراً، حسابك محظور.");
             const items = Object.values(cart); if (!items.length) return;
@@ -909,13 +919,12 @@
                 subSale += sS; totCost += sC; totPts += Math.round((i.priceUSD * i.qty) * (i.pointsPct || 2));
                 return { id: i.id, name: i.name, category: i.category || "غير مصنف", qty: i.qty, unitSaleSYP: uS, unitCostSYP: uC, subSaleSYP: sS, subCostSYP: sC, netProfitSYP: sS - sC };
             });
-            const finalTotal = subSale + fee;
             const ordId = "ORD_" + Date.now(), payload = {
                 orderId: ordId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
                 customerName: currentUser.name, customerPhone: currentUser.phone, customerRegion: reg, customerAddress: currentUser.address,
                 customerType: currentUser.userType || "retail",
                 paymentMethod: "شام كاش (Sham Cash)", notes: $("orderNotes").value.trim(), items: ordItems,
-                subtotalSaleSYP: subSale, deliveryFeeSYP: fee, totalSaleSYP: finalTotal, totalCostSYP: totCost, netProfitSYP: subSale - totCost, earnedPoints: totPts
+                subtotalSaleSYP: subSale, deliveryFeeSYP: fee, totalSaleSYP: subSale + fee, totalCostSYP: totCost, netProfitSYP: subSale - totCost, earnedPoints: totPts
             };
             let typeLabel = "زبون مفرق";
             if (currentUser.userType === "wholesale") typeLabel = "زبون جملة";
@@ -923,8 +932,7 @@
 
             let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n👤 الزبون: ${payload.customerName} [${typeLabel}]\n📱 الهاتف: ${payload.customerPhone}\n🏘️ المنطقة: ${payload.customerRegion}\n📍 العنوان: ${payload.customerAddress}\n💳 طريقة الدفع: شام كاش (Sham Cash)\n`;
             if (payload.notes) msg += `📝 ملاحظات: ${payload.notes}\n`;
-            msg += `──────────────\n` + ordItems.map(i => `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س`).join("\n") + `\n──────────────\n📦 قيمة المواد: ${subSale.toLocaleString()} ل.س\n🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${finalTotal.toLocaleString()} ل.س\n🎁 النقاط المستحقة: +${totPts}\n📞 هاتف التوصيل: ${deliveryDriverPhone || 'غير محدد'}`;
-            
+            msg += `──────────────\n` + ordItems.map(i => `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س`).join("\n") + `\n──────────────\n📦 قيمة المواد: ${subSale.toLocaleString()} ل.س\n🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${payload.totalSaleSYP.toLocaleString()} ل.س\n🎁 النقاط المستحقة: +${totPts}`;
             db.ref("pendingOrders/" + ordId).set(payload);
             cart = {}; $("orderNotes").value = ""; closeCartModal(); renderStore();
             window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
@@ -1016,10 +1024,7 @@
             const upPts = (users[phone]?.points || 0) + (o.earnedPoints || 0);
             db.ref(`users/${phone}`).update({ name: o.customerName, phone, region: o.customerRegion, address: o.customerAddress, points: upPts, purchases: purch });
             db.ref("completedOrdersHistory/" + orderId).set(o); db.ref("pendingOrders/" + orderId).remove();
-            
-            const custMsg = `مرحباً ${o.customerName} 🌸\nتم تأكيد طلبك في *متجر معاذ* وجاري توصيله إلى (${o.customerRegion})!\n💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س\n🎁 نقاطك الحالية: ${upPts}\n📞 هاتف التوصيل: ${deliveryDriverPhone || 'غير محدد'}`;
-            window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(custMsg)}`, "_blank");
-            
+            window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(`مرحباً ${o.customerName} 🌸\nتم تأكيد طلبك في *متجر معاذ* وجاري توصيله إلى (${o.customerRegion})!\n💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س\n🎁 نقاطك الحالية: ${upPts}`)}`, "_blank");
             if (deliveryDriverPhone) {
                 setTimeout(() => {
                     window.open(`https://wa.me/${formatWhatsAppPhone(deliveryDriverPhone)}?text=${encodeURIComponent(`🛵 *طلب توصيل - متجر معاذ*\n👤 الزبون: ${o.customerName}\n📱 الهاتف: ${o.customerPhone}\n🏘️ المنطقة: ${o.customerRegion}\n📍 العنوان: ${o.customerAddress}\n💵 *المطلوب تحصيله:* ${o.totalSaleSYP.toLocaleString()} ل.س`)}`, "_blank");
