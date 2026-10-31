@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moaath-store-v2';
+const CACHE_NAME = 'moaath-store-v5'; // قم برقم إصدار أحدث لتجبار المتصفح على التحديث
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -7,10 +7,11 @@ const ASSETS_TO_CACHE = [
 ];
 
 self.addEventListener('install', (e) => {
+  self.skipWaiting(); // لتجاوز الانتظار وتثبيت النسخة الجديدة فوراً
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
@@ -19,7 +20,9 @@ self.addEventListener('activate', (e) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) return caches.delete(key);
+          if (key !== CACHE_NAME) {
+            return caches.delete(key); // حذف الكاش القديم بالكامل
+          }
         })
       );
     }).then(() => self.clients.claim())
@@ -31,8 +34,8 @@ self.addEventListener('fetch', (e) => {
     return;
   }
   e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
-      return cachedResponse || fetch(e.request);
-    }).catch(() => caches.match('./index.html'))
+    fetch(e.request).catch(() => {
+      return caches.match(e.request);
+    })
   );
 });
