@@ -260,7 +260,7 @@
         </div>
     </div>
 
-    <!-- لوحة الإدارة الآمنة (بدون كلمة مرور مكشوفة) -->
+    <!-- لوحة الإدارة (آمنة، سريعة، ومزودة بشريط الصرف الفوري) -->
     <div id="adminModal" class="modal-overlay">
         <div class="modal-content" style="max-width:630px;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:8px; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
@@ -524,7 +524,7 @@
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
         let adminWhatsAppNumber = "963965461504", shamWalletIdGlobal = "da3e13cd8a2ef2af282445e148df9599";
-        let dynamicAdminPassword = "MHA@1997//MOAATHS"; // كلمة المرور الافتراضية، وقابلة للتحديث تلقائياً من قاعدة البيانات
+        let dynamicAdminPassword = "MHA@1997//MOAATHS";
 
         if (!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://moaathstore-d2fd6-default-rtdb.firebaseio.com" });
         const db = firebase.database();
@@ -764,7 +764,7 @@
             deliveryDriverPhone = d.deliveryDriverPhone || "";
             adminWhatsAppNumber = d.adminWhatsApp || "963965461504";
             shamWalletIdGlobal = d.shamWalletId || "da3e13cd8a2ef2af282445e148df9599";
-            if (d.adminPassword) dynamicAdminPassword = d.adminPassword; // قراءة كلمة المرور بلأمان من قاعدة البيانات
+            if (d.adminPassword) dynamicAdminPassword = d.adminPassword;
             if (d.workHours) workHoursSettings = { enabled: !!d.workHours.enabled, open: d.workHours.open || "08:00", close: d.workHours.close || "23:00" };
             if ($("workHoursEnabled")) $("workHoursEnabled").checked = workHoursSettings.enabled;
             if ($("workHourOpen")) $("workHourOpen").value = workHoursSettings.open;
@@ -1041,13 +1041,15 @@
             if ($("modalCartPoints")) $("modalCartPoints").textContent = pts;
         }
 
+        // دالة إتمام الطلب المحدثة لضمان حفظ الطلب في قاعدة البيانات أولاً ثم فتح الواتساب
         function submitOrder() {
             if (!checkStoreWorkHours()) return;
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.address) { closeModal('cartModal'); return openEditProfile(); }
             const reg = $("cartRegionSelect")?.value || currentUser.region || Object.keys(deliveryFees)[0] || "العوينة";
             if (!isRegionOpenNow(reg)) return alert(`⚠️ أوقات التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
             if (users[currentUser.phone]?.banned) return alert("🚫 حسابك محظور.");
-            const items = Object.values(cart); if (!items.length) return;
+            const items = Object.values(cart); if (!items.length) return alert("⚠️ سلة المشتريات فارغة!");
+
             const fee = getRegionFee(reg);
             let subSale = 0, totCost = 0, totPts = 0;
             const ordItems = items.map(i => {
@@ -1055,6 +1057,7 @@
                 subSale += sS; totCost += sC; totPts += Math.round((i.priceUSD * i.qty) * (i.pointsPct || 2));
                 return { id: i.id, name: i.name, category: i.category || "غير مصنف", qty: i.qty, unitSaleSYP: uS, unitCostSYP: uC, subSaleSYP: sS, subCostSYP: sC, netProfitSYP: sS - sC };
             });
+
             const finalTotalSYP = subSale + fee, orderId = "ORD_" + Date.now();
             const orderPayload = {
                 orderId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
@@ -1062,13 +1065,19 @@
                 paymentMethod: "شام كاش (Sham Cash)", notes: ($("orderNotes")?.value || "").trim(), items: ordItems,
                 subtotalSaleSYP: subSale, deliveryFeeSYP: fee, totalSaleSYP: finalTotalSYP, totalCostSYP: totCost, netProfitSYP: subSale - totCost, earnedPoints: totPts
             };
+
             let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n👤 الزبون: ${orderPayload.customerName}\n📱 الهاتف: ${orderPayload.customerPhone}\n🏘️ المنطقة: ${orderPayload.customerRegion}\n📍 العنوان: ${orderPayload.customerAddress}\n💳 الدفع: شام كاش\n`;
             if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}\n`;
             msg += `──────────────\n` + ordItems.map(i => `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س`).join("\n") + `\n──────────────\n📦 قيمة المواد: ${subSale.toLocaleString()} ل.س\n🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${finalTotalSYP.toLocaleString()} ل.س\n🎁 النقاط: +${totPts}`;
-            db.ref("pendingOrders/" + orderId).set(orderPayload);
-            cart = {}; if ($("orderNotes")) $("orderNotes").value = "";
-            closeModal('cartModal'); renderStore();
-            window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
+
+            // حفظ الطلب حصراً في قاعدة البيانات أولاً ثم فتح واتساب للإدارة
+            db.ref("pendingOrders/" + orderId).set(orderPayload).then(() => {
+                cart = {}; if ($("orderNotes")) $("orderNotes").value = "";
+                closeModal('cartModal'); renderStore();
+                window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
+            }).catch(err => {
+                alert("❌ خطأ في الاتصال أثناء إرسال الطلب. يرجى المحاولة مجدداً.");
+            });
         }
 
         function openReviewModal(id) { if (!products[id]) return; $("reviewProductId").value = id; $("reviewProductName").textContent = products[id].name; $("reviewCommentInput").value = ""; $("reviewModal").style.display = "flex"; }
@@ -1213,7 +1222,6 @@
                 adminClickCount = 0;
                 const pass = prompt("🔐 كلمة مرور الإدارة:");
                 if (pass === null) return;
-                // التحقق من كلمة المرور المقروءة بأمان من قاعدة البيانات
                 if (pass === dynamicAdminPassword) {
                     $("adminModal").style.display = "flex";
                     renderStatsDashboard(); populateAdminPartnerSelect(); populatePartnerSelectOptions();
@@ -1622,4 +1630,10 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
     
