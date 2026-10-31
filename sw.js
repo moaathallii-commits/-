@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moaath-store-v4';
+const CACHE_NAME = 'moaath-store-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
