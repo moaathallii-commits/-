@@ -95,6 +95,8 @@
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
             <button id="mainInstallAppBtn" onclick="installAppDirectly()" class="btn" style="width:auto; padding:6px 10px; font-size:11px; background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; font-weight:bold; border-radius:15px; animation:pulse 2s infinite;">📲 تثبيت التطبيق</button>
+            <!-- زر شريك خاص يظهر للشركاء فقط -->
+            <button id="partnerDashboardBtn" onclick="openPartnerModal()" class="btn" style="width:auto; padding:6px 10px; font-size:11px; background:linear-gradient(45deg,#FFD700,#FF8C00); color:#000; font-weight:bold; border-radius:15px; display:none;">📊 لوحة شريكي</button>
             <div class="logo-circle" id="adminTrigger"><img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'"></div>
         </div>
     </header>
@@ -132,7 +134,7 @@
         <button class="cart-bar-btn" type="button">🛒 إتمام الطلب الآن</button>
     </div>
 
-    <!-- نافذة تعديل بيانات الزبون -->
+    <!-- نافذة تعديل بيانات الزبون (تم إصلاح مشكلة تكرار السجلات وتحديث السجل الحالي) -->
     <div id="profileModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">👤 تسجيل بيانات الزبون والعنوان</h3>
@@ -158,7 +160,7 @@
         </div>
     </div>
 
-    <!-- نافذة السلة المرتبطة بشام كاش وأجور الزبون -->
+    <!-- نافذة سلة المشتريات المرتبة (بدون ازدحام) -->
     <div id="cartModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">🛒 سلة المشتريات وإتمام الطلب</h3>
@@ -186,6 +188,18 @@
                 <button type="button" onclick="closeCartModal()" class="btn btn-danger" style="padding:8px; font-size:12px;">إغلاق السلة</button>
             </div>
             <div hidden><span id="shamWalletId">da3e13cd8a2ef2af282445e148df9599</span></div>
+        </div>
+    </div>
+
+    <!-- نافذة لوحة الشريك الخاصة (رؤية إحصائيات الأصناف المخصصة فقط دون تعديل) -->
+    <div id="partnerModal" class="modal-overlay">
+        <div class="modal-content" style="max-width:520px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:8px; margin-bottom:12px;">
+                <h3 style="color:var(--gold-color); margin:0;">📊 لوحة إحصائيات الشريك</h3>
+                <button onclick="closePartnerModal()" class="btn btn-danger" style="width:auto; padding:5px 10px;">✖ إغلاق</button>
+            </div>
+            <p style="font-size:12px; color:var(--gray-text); margin-top:0;">هذه اللوحة مخصصة لعرض إحصائيات أصنافك الخاصة المحددة من الإدارة (للرؤية فقط دون تعديل).</p>
+            <div id="partnerItemsStatsContainer" style="max-height:350px; overflow-y:auto;"></div>
         </div>
     </div>
 
@@ -245,7 +259,7 @@
         </div>
     </div>
 
-    <!-- لوحة الإدارة المحدثة (مع تبويب الموزعين والنواقص المصنفة) -->
+    <!-- لوحة الإدارة الكاملة المحدثة (مع تبويب الشركاء والموزعين) -->
     <div id="adminModal" class="modal-overlay">
         <div class="modal-content" style="max-width:600px;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:8px; margin-bottom:12px;">
@@ -256,6 +270,7 @@
                 <button class="cat-btn active" onclick="switchAdminTab('statsTab', this)">📊 الجرد</button>
                 <button class="cat-btn" onclick="switchAdminTab('ordersTab', this)">📦 الطلبات (<span id="pendingCountBadge">0</span>)</button>
                 <button class="cat-btn" onclick="switchAdminTab('suppliersTab', this)">🚚 الموزعين</button>
+                <button class="cat-btn" onclick="switchAdminTab('partnersTab', this)">🤝 الشركاء</button>
                 <button class="cat-btn" onclick="switchAdminTab('addProductTab', this)">➕ صنف</button>
                 <button class="cat-btn" onclick="switchAdminTab('offersTab', this)">🔥 العروض</button>
                 <button class="cat-btn" onclick="switchAdminTab('productsTab', this)">🛍️ المخزون</button>
@@ -264,7 +279,6 @@
                 <button class="cat-btn" onclick="switchAdminTab('shortagesTab', this)">⚠️ النواقص</button>
             </div>
 
-            <!-- تبويب الجرد -->
             <div id="statsTab" class="admin-tab">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">📊 التقارير المالية وجرد الأرباح</h4>
                 <div class="stats-grid">
@@ -309,7 +323,7 @@
                 <div id="productStatsContainer"></div>
             </div>
 
-            <!-- تبويب الطلبات -->
+            <!-- تبويب الطلبات مع زر إلغاء جميع الطلبات المتراكمة -->
             <div id="ordersTab" class="admin-tab" style="display:none;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
                     <h4 style="color:var(--gold-color); margin:0;">📦 الفواتير والطلبات المعلقة</h4>
@@ -318,7 +332,7 @@
                 <div id="pendingOrdersList"></div>
             </div>
 
-            <!-- تبويب إدارة الموزعين المعتمدين الجدد -->
+            <!-- تبويب الموزعين المعتمدين -->
             <div id="suppliersTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">🚚 إضافة وإدارة الموزعين المعتمدين</h4>
                 <div style="background:var(--bg-color); border:1px dashed var(--gold-color); padding:10px; border-radius:8px; margin-bottom:12px;">
@@ -331,7 +345,23 @@
                 <div id="suppliersListContainer"></div>
             </div>
 
-            <!-- تبويب إضافة صنف مع بند الموزع المعتمد -->
+            <!-- تبويب الشركاء الجدد وتحديد أزواجهم -->
+            <div id="partnersTab" class="admin-tab" style="display:none;">
+                <h4 style="color:var(--gold-color); margin:0 0 8px 0;">🤝 إدارة الشركاء وتخصيص الأصناف</h4>
+                <div style="background:var(--bg-color); border:1px dashed var(--gold-color); padding:10px; border-radius:8px; margin-bottom:12px;">
+                    <div class="form-group"><label>رقم هاتف الشريك (نفس رقم هاتف حساب الزبون):</label><input type="tel" id="partnerPhoneInput" class="form-control" placeholder="09XXXXXXXX" maxlength="10"></div>
+                    <div class="form-group"><label>اسم الشريك:</label><input type="text" id="partnerNameInput" class="form-control" placeholder="مثال: فلان المعلا"></div>
+                    <div class="form-group">
+                        <label>اختر الأصناف المراد ربطها بهذا الشريك:</label>
+                        <div id="partnerProductsCheckboxes" style="max-height:160px; overflow-y:auto; background:var(--card-bg); padding:6px; border-radius:6px; border:1px solid var(--border-color);"></div>
+                    </div>
+                    <button onclick="savePartnerAssignment()" class="btn" style="background:var(--success-color); color:#000;">🤝 حفظ وتخصيص الشريك</button>
+                </div>
+                <h5 style="color:var(--gold-color); margin:10px 0 6px 0;">📋 قائمة الشركاء الحاليين</h5>
+                <div id="partnersListContainer"></div>
+            </div>
+
+            <!-- تبويب إضافة صنف (مع بند الموزع) -->
             <div id="addProductTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">➕ إضافة / تعديل صنف</h4>
                 <input type="hidden" id="editProductId">
@@ -450,7 +480,7 @@
                 <div class="form-group"><label>⬆️ استيراد نسخة احتياطية:</label><input type="file" id="importBackupInput" accept=".json" class="form-control" onchange="importBackupJSON(event)"></div>
             </div>
 
-            <!-- تبويب النواقص المصنفة حسب الموزع مع زر إرسال واتساب لكل موزع -->
+            <!-- تبويب النواقص المصنفة حسب الموزع -->
             <div id="shortagesTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--danger-color); margin:0 0 8px 0;">⚠️ قائمة النواقص مصنفة حسب الموزع المعتمد</h4>
                 <div id="shortagesGroupedContainer" style="margin-bottom: 15px;"></div>
@@ -485,7 +515,6 @@
             </div>
         </div>
     </div>
-
     <script>
         const $ = id => document.getElementById(id);
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -504,7 +533,7 @@
             "المزرعة الغربية": { fee: 5000, driverPct: 80, hoursEnabled: false, open: "08:00", close: "22:00" }
         };
         let workHoursSettings = { enabled: false, open: "08:00", close: "23:00" };
-        let categories = ["الكل"], selectedCategory = "الكل", products = {}, specialOffers = {}, suppliers = {};
+        let categories = ["الكل"], selectedCategory = "الكل", products = {}, specialOffers = {}, suppliers = {}, partners = {};
         let highResImagesMemoryCache = {}, noHighResAvailableSet = {}, shuffledProductKeys = [];
         let cart = {}, users = {}, pendingOrders = {}, completedOrdersHistory = {}, missingRequests = {};
         let compSettings = { minRedeemPoints: 500, leaderboardLimit: 10, title: "", desc: "", image: "" };
@@ -532,7 +561,7 @@
             history.pushState({ page: 'store_home' }, '');
             window.addEventListener('popstate', () => {
                 if (isExitingApp) return;
-                for (let id of ['cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal']) {
+                for (let id of ['cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal']) {
                     if ($(id) && $(id).style.display === 'flex') { $(id).style.display = 'none'; history.pushState({ page: 'store_home' }, ''); return; }
                 }
                 if ($('competitionsPage') && $('competitionsPage').style.display === 'block') {
@@ -726,6 +755,13 @@
             renderShortages();
         });
 
+        db.ref("partners").on("value", snap => {
+            partners = snap.val() || {};
+            renderPartnersList();
+            renderPartnerCheckboxes();
+            checkPartnerAccess();
+        });
+
         db.ref("categories").on("value", snap => {
             const d = snap.val() || ["مواد غذائية", "منظفات", "مشروبات"];
             categories = ["الكل", ...d]; renderCategories(); renderAdminCategories(d); renderStatsDashboard();
@@ -736,11 +772,19 @@
             const keys = Object.keys(products);
             if (!shuffledProductKeys.length) shuffledProductKeys = [...keys].sort(() => Math.random() - 0.5);
             else { shuffledProductKeys = shuffledProductKeys.filter(k => products[k]); keys.forEach(k => { if (!shuffledProductKeys.includes(k)) shuffledProductKeys.push(k); }); }
-            renderStore(); renderAdminProducts(); renderShortages(); renderStatsDashboard();
+            renderStore(); renderAdminProducts(); renderShortages(); renderStatsDashboard(); renderPartnerCheckboxes();
         });
 
         db.ref("specialOffers").on("value", snap => { specialOffers = snap.val() || {}; renderSpecialOffers(); renderAdminOffersList(); renderStatsDashboard(); });
-        db.ref("users").on("value", snap => { users = snap.val() || {}; syncCurrentUser(); renderAdminCustomers(); renderLeaderboard(); renderStatsDashboard(); renderStore(); });
+        db.ref("users").on("value", snap => {
+            users = snap.val() || {};
+            syncCurrentUser();
+            renderAdminCustomers();
+            renderLeaderboard();
+            renderStatsDashboard();
+            renderStore();
+            checkPartnerAccess();
+        });
         db.ref("competition").on("value", snap => {
             if (snap.val()) compSettings = { ...compSettings, ...snap.val() };
             $("minRedeemPointsInput").value = compSettings.minRedeemPoints || 500; $("leaderboardLimitInput").value = compSettings.leaderboardLimit || 10;
@@ -774,17 +818,42 @@
         function openEditProfile() { fillProfileInputs(); $("closeProfileBtn").style.display = "block"; $("profileModal").style.display = "flex"; }
         const closeProfileModal = () => $("profileModal").style.display = "none";
 
+        // حل مشكلة تكرار المستخدمين (تحديث السجل الحالي بناءً على الهاتف بدلاً من إنشاء سجل جديد)
         function saveUserProfile() {
             const name = $("regName").value.trim(), phone = $("regPhone").value.trim().replace(/\s+/g, ""), region = $("regRegion").value, address = $("regAddress").value.trim();
             if (!validatePhoneSyrian(phone)) { $("regPhoneError").style.display = "block"; return alert("⚠️ تنبيه: يجب أن يتكون رقم الهاتف من 10 خانات ويبدأ بـ 09 حصراً."); }
             $("regPhoneError").style.display = "none";
             if (!name || !region || !address) return alert("⚠️ يرجى إدخال الاسم، المنطقة، وتفاصيل العنوان.");
-            const ex = users[phone] || {};
-            if (ex.banned) return alert("🚫 عذراً، هذا الحساب محظور.");
-            currentUser = { name, phone, region, address, points: ex.points || 0, purchases: ex.purchases || {}, userType: ex.userType || "retail", pointsVisibility: $("regPointsVisibility").value, banned: false };
+            
+            const existingKey = Object.keys(users).find(k => k === phone);
+            let existingData = existingKey ? users[existingKey] : {};
+            if (existingData.banned) return alert("🚫 عذراً، هذا الحساب محظور.");
+
+            currentUser = {
+                name, phone, region, address,
+                points: existingData.points || 0,
+                purchases: existingData.purchases || {},
+                userType: existingData.userType || "retail",
+                pointsVisibility: $("regPointsVisibility").value,
+                banned: false
+            };
+
             localStorage.setItem("moaath_user", JSON.stringify(currentUser));
-            db.ref("users/" + phone).update({ name, phone, region, address, points: ex.points || 0, userType: ex.userType || "retail", pointsVisibility: currentUser.pointsVisibility });
-            closeProfileModal(); syncCurrentUser(); updateCartBar(); checkStoreWorkHours();
+            
+            // تحديث السجل باستخدام رقم الهاتف كمفتاح أساسي فريد لمنع أي تكرار
+            db.ref("users/" + phone).update({
+                name, phone, region, address,
+                points: existingData.points || 0,
+                userType: existingData.userType || "retail",
+                pointsVisibility: currentUser.pointsVisibility,
+                banned: false
+            });
+
+            closeProfileModal();
+            syncCurrentUser();
+            updateCartBar();
+            checkStoreWorkHours();
+            checkPartnerAccess();
         }
 
         function calculateUserRank(phone) {
@@ -795,8 +864,12 @@
 
         function syncCurrentUser() {
             if (!currentUser || !currentUser.phone) return;
-            if (users[currentUser.phone]) { currentUser = { ...currentUser, ...users[currentUser.phone] }; localStorage.setItem("moaath_user", JSON.stringify(currentUser)); }
-            const pts = Math.round(currentUser.points || 0), rank = calculateUserRank(currentUser.phone);
+            const phone = currentUser.phone;
+            if (users[phone]) {
+                currentUser = { ...currentUser, ...users[phone] };
+                localStorage.setItem("moaath_user", JSON.stringify(currentUser));
+            }
+            const pts = Math.round(currentUser.points || 0), rank = calculateUserRank(phone);
             $("userNameDisplay").textContent = currentUser.name;
             $("userRegionBadge").textContent = currentUser.region ? `(${currentUser.region})` : "";
             
@@ -809,7 +882,54 @@
             if ($("userRankBadge")) { $("userRankBadge").style.display = rank !== "-" ? "inline-flex" : "none"; $("userRankBadge").textContent = `🏅 ترتيبي: ${rank}`; }
             if ($("compUserRankDisplay")) $("compUserRankDisplay").textContent = rank !== "-" ? rank : "غير مصنف";
             $("redeemPointsBtn").style.display = (pts >= (parseInt(compSettings.minRedeemPoints) || 500) && !currentUser.banned) ? "inline-block" : "none";
+            checkPartnerAccess();
         }
+
+        // فحص وإظهار زر لوحة الشريك إذا كان المستخدم الحالي مسجلاً كشريك
+        function checkPartnerAccess() {
+            const btn = $("partnerDashboardBtn");
+            if (!btn) return;
+            if (currentUser && currentUser.phone && partners[currentUser.phone]) {
+                btn.style.display = "inline-block";
+            } else {
+                btn.style.display = "none";
+            }
+        }
+
+        function openPartnerModal() {
+            if (!currentUser || !currentUser.phone || !partners[currentUser.phone]) return;
+            const pData = partners[currentUser.phone];
+            const allowedIds = pData.productIds || [];
+            const container = $("partnerItemsStatsContainer");
+
+            if (!allowedIds.length) {
+                container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لم تقم الإدارة بتخصيص أي أصناف لك بعد.</p>`;
+            } else {
+                let html = `<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:11px; text-align:center;"><thead><tr style="background:var(--bg-color); color:var(--gold-color); border-bottom:1px solid var(--border-color);"><th style="padding:6px; text-align:right;">الصنف</th><th style="padding:6px;">المخزون الحالي</th><th style="padding:6px;">إجمالي المبيعات</th><th style="padding:6px;">إجمالي الأرباح</th></tr></thead><tbody>`;
+                
+                allowedIds.forEach(pId => {
+                    const prod = products[pId];
+                    if (!prod) return;
+                    let soldQty = 0, totalSales = 0, totalProfit = 0;
+                    
+                    Object.values(completedOrdersHistory).forEach(ord => {
+                        (ord.items || []).forEach(item => {
+                            if (item.id === pId) {
+                                soldQty += (item.qty || 1);
+                                totalSales += (item.subSaleSYP || 0);
+                                totalProfit += (item.netProfitSYP || 0);
+                            }
+                        });
+                    });
+
+                    html += `<tr style="border-bottom:1px solid var(--border-color);"><td style="padding:6px; font-weight:bold; text-align:right;">${prod.name}</td><td style="padding:6px; color:var(--gold-color); font-weight:bold;">${prod.stock}</td><td style="padding:6px;">${totalSales.toLocaleString()} ل.س</td><td style="padding:6px; color:var(--success-color); font-weight:bold;">${totalProfit.toLocaleString()} ل.س</td></tr>`;
+                });
+                html += `</tbody></table></div>`;
+                container.innerHTML = html;
+            }
+            $("partnerModal").style.display = "flex";
+        }
+        const closePartnerModal = () => $("partnerModal").style.display = "none";
 
         function redeemPointsWhatsApp() {
             if (!currentUser || currentUser.banned) return;
@@ -1064,7 +1184,7 @@
             }
         }
 
-        // دوال إدارة الموزعين
+        // دوال إدارة الموزعين المعتمدين وترتيب النواقص
         function saveSupplier() {
             const name = $("suppName").value.trim(), address = $("suppAddress").value.trim(), phone = $("suppPhone").value.trim();
             if (!name) return alert("⚠️ يرجى إدخال اسم الموزع.");
@@ -1073,26 +1193,13 @@
                 alert("✅ تم حفظ الموزع المعتمد بنجاح!");
             });
         }
-
-        function deleteSupplier(id) {
-            if (confirm("حذف هذا الموزع؟")) db.ref("suppliers/" + id).remove();
-        }
-
+        function deleteSupplier(id) { if (confirm("حذف هذا الموزع؟")) db.ref("suppliers/" + id).remove(); }
         function renderSuppliersList() {
             const container = $("suppliersListContainer"); if (!container) return;
             const entries = Object.entries(suppliers);
             if (!entries.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد موزعين مسجلين.</p>`);
-            container.innerHTML = entries.map(([id, s]) => `
-                <div class="review-box" style="margin-bottom:6px;">
-                    <div>
-                        <b>🚚 ${s.name}</b><br>
-                        <small style="color:var(--gray-text);">📍 ${s.address || 'بلا عنوان'} | 📱 ${s.phone || 'بلا هاتف'}</small>
-                    </div>
-                    <button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="deleteSupplier('${id}')">حذف</button>
-                </div>
-            `).join("");
+            container.innerHTML = entries.map(([id, s]) => `<div class="review-box" style="margin-bottom:6px;"><div><b>🚚 ${s.name}</b><br><small style="color:var(--gray-text);">📍 ${s.address || 'بلا عنوان'} | 📱 ${s.phone || 'بلا هاتف'}</small></div><button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="deleteSupplier('${id}')">حذف</button></div>`).join("");
         }
-
         function populateSupplierSelect() {
             const sel = $("prodSupplier"); if (!sel) return;
             const cur = sel.value;
@@ -1100,78 +1207,44 @@
             sel.value = cur;
         }
 
-        // فرز النواقص حسب الموزع مع زر إرسال واتساب لكل موزع بضغطة زر
-        function renderShortages() {
-            const container = $("shortagesGroupedContainer"); if (!container) return;
-            const list = Object.values(products).filter(p => p && (parseInt(p.stock) || 0) <= (parseInt(p.alertLimit) || 2));
+        // دوال إدارة الشركاء وتخصيص الأصناف
+        function savePartnerAssignment() {
+            const phone = $("partnerPhoneInput").value.trim().replace(/\s+/g, ""), name = $("partnerNameInput").value.trim();
+            if (!validatePhoneSyrian(phone)) return alert("⚠️ يرجى إدخال رقم هاتف صحيح للشريك (10 خانات يبدأ بـ 09).");
+            if (!name) return alert("⚠️ يرجى إدخال اسم الشريك.");
+            
+            const checkboxes = document.querySelectorAll(".partner-prod-chk:checked");
+            const productIds = Array.from(checkboxes).map(ch => ch.value);
 
-            if (!list.length) return (container.innerHTML = `<p style="text-align:center; color:var(--success-color); font-size:12px;">✅ جميع الأصناف متوفرة بالمخزون ولا توجد نواقص.</p>`);
-
-            // تجميع النواقص حسب الموزع
-            let grouped = {};
-            let unassigned = [];
-
-            list.forEach(p => {
-                const sId = p.supplierId;
-                if (sId && suppliers[sId]) {
-                    if (!grouped[sId]) grouped[sId] = [];
-                    grouped[sId].push(p);
-                } else {
-                    unassigned.push(p);
-                }
+            db.ref("partners/" + phone).set({ name, phone, productIds }).then(() => {
+                $("partnerPhoneInput").value = ""; $("partnerNameInput").value = "";
+                alert("✅ تم حفظ وتخصيص الشريك بنجاح!");
             });
-
-            let html = "";
-
-            // عرض النواقص لكل موزع مع زر واتساب أنيق
-            Object.keys(grouped).forEach(sId => {
-                const supp = suppliers[sId];
-                const items = grouped[sId];
-                let itemsText = items.map(i => `• ${i.name} (المتبقي: ${i.stock})`).join("\n");
-
-                html += `
-                    <div style="background:var(--bg-color); border:1px solid var(--gold-color); border-radius:8px; padding:10px; margin-bottom:10px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                            <b style="color:var(--gold-color);">🚚 الموزع: ${supp.name}</b>
-                            <button onclick="sendSupplierOrderWhatsApp('${sId}')" class="btn" style="width:auto; padding:4px 10px; font-size:11px; background:var(--success-color); color:#000; font-weight:bold;">
-                                📲 إرسال الطلبية واتساب
-                            </button>
-                        </div>
-                        <div style="font-size:11px; color:var(--gray-text); margin-bottom:6px;">📱 هاتف: ${supp.phone || 'غير محدد'} | 📍 ${supp.address || ''}</div>
-                        <div style="background:var(--card-bg); padding:6px; border-radius:6px; font-size:11px;">
-                            ${items.map(i => `<div style="display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px dashed var(--border-color);"><span>• ${i.name}</span><b style="color:var(--danger-color);">المتبقي: ${i.stock}</b></div>`).join("")}
-                        </div>
-                    </div>`;
-            });
-
-            // الأصناف التي ليس لها موزع
-            if (unassigned.length > 0) {
-                html += `
-                    <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:8px; padding:10px; margin-bottom:10px;">
-                        <b style="color:var(--gray-text);">⚠️ أصناف بلا موزع معتمد:</b>
-                        <div style="background:var(--card-bg); padding:6px; border-radius:6px; font-size:11px; margin-top:6px;">
-                            ${unassigned.map(i => `<div style="display:flex; justify-content:space-between; padding:2px 0;"><span>• ${i.name}</span><b style="color:var(--danger-color);">المتبقي: ${i.stock}</b></div>`).join("")}
-                        </div>
-                    </div>`;
-            }
-
-            container.innerHTML = html;
+        }
+        function deletePartner(phone) { if (confirm("إلغاء صفة الشريك عن هذا الرقم؟")) db.ref("partners/" + phone).remove(); }
+        function renderPartnersList() {
+            const container = $("partnersListContainer"); if (!container) return;
+            const entries = Object.entries(partners);
+            if (!entries.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد شركاء مسجلين.</p>`);
+            container.innerHTML = entries.map(([ph, p]) => `<div class="review-box" style="margin-bottom:6px;"><div><b>🤝 ${p.name} (${p.phone})</b><br><small style="color:var(--gold-color);">أصناف مخصصة: ${(p.productIds || []).length} صنف</small></div><button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="deletePartner('${ph}')">حذف</button></div>`).join("");
+        }
+        function renderPartnerCheckboxes() {
+            const container = $("partnerProductsCheckboxes"); if (!container) return;
+            const keys = Object.keys(products);
+            if (!keys.length) return (container.innerHTML = `<span style="font-size:11px; color:var(--gray-text);">لا توجد أصناف مضافة للمتجر بعد.</span>`);
+            container.innerHTML = keys.map(id => `<label style="display:flex; align-items:center; gap:6px; font-size:12px; margin-bottom:4px; cursor:pointer;"><input type="checkbox" class="partner-prod-chk" value="${id}" style="width:14px; height:14px;"> ${products[id].name}</label>`).join("");
         }
 
+        // إرسال طلبية النواقص للموزع عبر واتساب
         function sendSupplierOrderWhatsApp(supplierId) {
             const supp = suppliers[supplierId];
-            if (!supp || !supp.phone) {
-                return alert("⚠️ هذا الموزع ليس لديه رقم هاتف مسجل.");
-            }
+            if (!supp || !supp.phone) return alert("⚠️ هذا الموزع ليس لديه رقم هاتف مسجل.");
             const list = Object.values(products).filter(p => p && p.supplierId === supplierId && (parseInt(p.stock) || 0) <= (parseInt(p.alertLimit) || 2));
             if (!list.length) return alert("ℹ️ لا توجد نواقص لهذا الموزع.");
 
-            let msg = `🛒 *طلبية بضائع ونواقص - متجر معاذ*\n` +
-                      `👤 إلى السيد الموزع: *${supp.name}*\n` +
-                      `──────────────\n` +
-                      list.map(i => `• ${i.name} (الكمية المطلوبة لتغطية النقص: ${Math.max(5, (parseInt(i.alertLimit) || 2) * 3 - (parseInt(i.stock) || 0))})`).join("\n") +
+            let msg = `🛒 *طلبية بضائع ونواقص - متجر معاذ*\n👤 إلى السيد الموزع: *${supp.name}*\n──────────────\n` +
+                      list.map(i => `• ${i.name} (الكمية المطلوبة: ${Math.max(5, (parseInt(i.alertLimit) || 2) * 3 - (parseInt(i.stock) || 0))})`).join("\n") +
                       `\n──────────────\nيرجى تأمين الطلبية في أقرب وقت ممكن. شكراً لكم 🌸`;
-
             window.open(`https://wa.me/${formatWhatsAppPhone(supp.phone)}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
@@ -1356,7 +1429,37 @@
         }
         function deleteCategory(idx) { const raw = categories.filter(c => c !== "الكل"); raw.splice(idx, 1); db.ref("categories").set(raw); }
 
-        // التحديث الإجباري لملف sw.js من خلال هذا الإصدار v4
+        function saveGeneralSettings() {
+            collectDeliveryRegionsFromDOM();
+            db.ref("settings").set({
+                exchangeRate: parseFloat($("exchangeRateInput").value) || 15000,
+                deliveryDriverPhone: $("deliveryPhoneInput").value.trim(),
+                adminWhatsApp: $("adminWhatsAppInput").value.trim() || "963965461504",
+                shamWalletId: $("adminShamWalletInput").value.trim() || "da3e13cd8a2ef2af282445e148df9599",
+                neighborDeliveryFee: parseInt($("neighborDeliveryFeeInput").value) || 0,
+                deliveryFees,
+                workHours: { enabled: $("workHoursEnabled").checked, open: $("workHourOpen").value || "08:00", close: $("workHourClose").value || "23:00" }
+            }).then(() => alert("✅ تم حفظ كافة الإعدادات والمناطق وساعات العمل بنجاح!"));
+        }
+
+        function exportBackupJSON() {
+            db.ref("/").once("value").then(snap => {
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(new Blob([JSON.stringify(snap.val() || {}, null, 2)], { type: "application/json" }));
+                a.download = `moaath_store_backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
+            });
+        }
+        function importBackupJSON(e) {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                try {
+                    const json = JSON.parse(ev.target.result);
+                    if (confirm("⚠️ هل أنت متأكد من استعادة النسخة الاحتياطية واستبدال البيانات الحالية؟")) db.ref("/").set(json).then(() => alert("✅ تمت استعادة النسخة بنجاح!"));
+                } catch (err) { alert("❌ الملف غير صالح!"); }
+            };
+            reader.readAsText(file);
+        }
     </script>
 </body>
 </html>
