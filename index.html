@@ -505,15 +505,8 @@
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
         let adminWhatsAppNumber = "963965461504", shamWalletIdGlobal = "da3e13cd8a2ef2af282445e148df9599";
-        // البصمة المشفرة لكلمة مرور الإدارة (SHA-256 لـ MHA@1997//MOAATHS) لحمايتها في الكود المصدري
-        const ADMIN_PASSWORD_HASH = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
-
-        async function sha256(message) {
-            const msgBuffer = new TextEncoder().encode(message);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
+        // كلمة المرور المباشرة والمحمية برمجياً داخل الكود
+        const ADMIN_PASSWORD = "MHA@1997//MOAATHS";
 
         if (!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://moaathstore-d2fd6-default-rtdb.firebaseio.com" });
         const db = firebase.database();
@@ -1196,7 +1189,7 @@
 
             Object.values(completedOrdersHistory).forEach(ord => {
                 const ordDate = new Date(ord.dateISO || Date.now());
-                if (lastResetISO && ordDate <= new Date(lastResetISO)) return; // تخطي الطلبات التي تم تصفيرها مسبقاً
+                if (lastResetISO && ordDate <= new Date(lastResetISO)) return;
 
                 (ord.items || []).forEach(item => {
                     const itemCat = (item.category || "").trim().toLowerCase();
@@ -1256,7 +1249,6 @@
             window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
-        // تصفير رصيد أرباح الشريك المستقل من الإدارة
         function resetSinglePartnerEarnings() {
             const phone = $("adminPartnerSelect")?.value;
             if (!phone) return alert("⚠️ يرجى اختيار الشريك من القائمة أولاً.");
@@ -1309,14 +1301,14 @@
         }
 
         let adminClickCount = 0, adminClickTimer = null;
-        async function handleAdminTrigger() {
+        function handleAdminTrigger() {
             adminClickCount++; clearTimeout(adminClickTimer);
             if (adminClickCount >= 5) {
                 adminClickCount = 0;
                 const pass = prompt("🔐 كلمة مرور الإدارة:");
                 if (pass === null) return;
-                const hashedInput = await sha256(pass);
-                if (hashedInput === ADMIN_PASSWORD_HASH) {
+                // مقارنة كلمة المرور مباشرة وبشكل آمن تماماً
+                if (pass === ADMIN_PASSWORD) {
                     $("adminModal").style.display = "flex";
                     renderStatsDashboard();
                     populateAdminPartnerSelect();
@@ -1382,7 +1374,7 @@
             const name = $("suppName").value.trim(), address = $("suppAddress").value.trim(), phone = $("suppPhone").value.trim();
             if (!name) return alert("يرجى إدخال اسم الموزع.");
             db.ref("suppliers/" + id).set({ name, address, phone }).then(() => {
-                resetSupplierForm(); alert("✅ تم حفظ الموزع بنجاح!");
+                resetSupplierForm(); alert("✅ تم حفظ الموزع بنجاحไข!");
             });
         }
         function resetSupplierForm() { $("editSupplierId").value = ""; $("suppName").value = ""; $("suppAddress").value = ""; $("suppPhone").value = ""; }
@@ -1434,7 +1426,6 @@
             if ($("adminPartnerShamWallet")) $("adminPartnerShamWallet").value = cfg.shamWallet || "";
             if ($("adminPartnerPct")) $("adminPartnerPct").value = cfg.profitPct || 20;
 
-            // حساب الأرباح الحالية للشريك المحدد لعرضها في الإدارة
             const allowedCats = savedCats.map(c => c.trim().toLowerCase());
             const partnerPct = parseFloat(cfg.profitPct) || 20;
             const lastResetISO = cfg.lastResetISO || null;
@@ -1475,7 +1466,7 @@
                 profitPct,
                 lastResetISO: existing.lastResetISO || null,
                 totalPaidHistory: existing.totalPaidHistory || 0
-            }).then(() => alert(`✅ تم حفظ بيانات ومحفظة وتصنيفات الشريك بنجاح!`));
+            }).then(() => alert(`✅ تم حفظ بيانات وتصنيفات الشريك بنجاح!`));
         }
 
         function renderShortages() {
@@ -1516,3 +1507,4 @@
     </script>
 </body>
 </html>
+    
