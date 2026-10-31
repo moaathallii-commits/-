@@ -132,7 +132,7 @@
         <button class="cart-bar-btn" type="button">🛒 إتمام الطلب الآن</button>
     </div>
 
-    <!-- النوافذ المنبثقة -->
+    <!-- نافذة تعديل بيانات الزبون -->
     <div id="profileModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">👤 تسجيل بيانات الزبون والعنوان</h3>
@@ -158,11 +158,12 @@
         </div>
     </div>
 
+    <!-- نافذة السلة -->
     <div id="cartModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">🛒 سلة المشتريات وإتمام الطلب</h3>
             <div id="cartItemsList" style="max-height:220px; overflow-y:auto; margin-bottom:10px;"></div>
-            <div class="form-group"><label>📍 منطقة التوصيل (تُحدد الأجور والدوام تلقائياً):</label><select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()"></select></div>
+            <div class="form-group"><label>📍 منطقة التوصيل:</label><select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()"></select></div>
             <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:10px; margin-bottom:10px; font-size:12px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>قيمة المواد:</span><strong><span id="modalCartSubtotal">0</span> ل.س</strong></div>
                 <div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--gray-text);"><span>أجور التوصيل (<span id="modalDeliveryRegionName">-</span>):</span><strong><span id="modalDeliveryFee">0</span> ل.س</strong></div>
@@ -184,11 +185,12 @@
             <div class="form-group"><label>ملاحظات إضافية حول التوصيل أو الدفع:</label><input type="text" id="orderNotes" class="form-control" placeholder="أي تفاصيل خاصة بالطلب..."></div>
             <div style="display:flex; gap:8px;">
                 <button type="button" onclick="submitOrder()" class="btn" style="background:var(--success-color); color:#000;">✅ إرسال وتأكيد الطلب</button>
-                <button type="button" onclick="closeCartModal()" class="btn btn-danger" style="width:35%;">إغلاق</button>
+                <button type="button" onclick="closeCartModal()" class="btn btn-danger" style="width:35%;">إلغاء</button>
             </div>
         </div>
     </div>
 
+    <!-- نافذة تقييم صنف -->
     <div id="reviewModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">⭐ تقييم المنتج</h3>
@@ -208,6 +210,7 @@
         </div>
     </div>
 
+    <!-- صفحة المسابقات -->
     <div id="competitionsPage" class="page-overlay">
         <header style="position:sticky; top:0; z-index:10;">
             <div class="store-info"><h1>🏆 مسابقات متجر معاذ</h1><p>اجمع النقاط وتصدر الترتيب لتربح الجوائز!</p></div>
@@ -230,6 +233,7 @@
         </div>
     </div>
 
+    <!-- نافذة النواقص -->
     <div id="missingModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="margin-top:0; color:var(--gold-color); text-align:center;">📝 طلب توفير منتج</h3>
@@ -255,11 +259,12 @@
                 <button class="cat-btn" onclick="switchAdminTab('addProductTab', this)">➕ إضافة صنف</button>
                 <button class="cat-btn" onclick="switchAdminTab('offersTab', this)">🔥 العروض الخاصة</button>
                 <button class="cat-btn" onclick="switchAdminTab('productsTab', this)">🛍️ المخزون والتعليقات</button>
-                <button class="cat-btn" onclick="switchAdminTab('customersTab', this)">👥 الزبائن والجملة</button>
+                <button class="cat-btn" onclick="switchAdminTab('customersTab', this)">👥 الزبائن والجيران</button>
                 <button class="cat-btn" onclick="switchAdminTab('settingsTab', this)">🛵 التوصيل والدوام</button>
                 <button class="cat-btn" onclick="switchAdminTab('shortagesTab', this)">⚠️ النواقص</button>
             </div>
 
+            <!-- تبويب الجرد -->
             <div id="statsTab" class="admin-tab">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">📊 التقارير المالية وجرد الأرباح</h4>
                 <div class="stats-grid">
@@ -304,6 +309,7 @@
                 <div id="productStatsContainer"></div>
             </div>
 
+            <!-- تبويب الطلبات مع الزر البارز لإلغاء جميع الطلبات -->
             <div id="ordersTab" class="admin-tab" style="display:none;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
                     <h4 style="color:var(--gold-color); margin:0;">📦 الفواتير والطلبات المعلقة</h4>
@@ -312,6 +318,7 @@
                 <div id="pendingOrdersList"></div>
             </div>
 
+            <!-- تبويب إضافة صنف -->
             <div id="addProductTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">➕ إضافة / تعديل صنف</h4>
                 <input type="hidden" id="editProductId">
@@ -329,6 +336,7 @@
                 <button onclick="saveProduct()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ الصنف في المتجر</button>
             </div>
 
+            <!-- تبويب العروض -->
             <div id="offersTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 8px 0;">🔥 إدارة العروض الخاصة المتعددة</h4>
                 <input type="hidden" id="editOfferId">
@@ -351,6 +359,7 @@
                 <div id="adminOffersList"></div>
             </div>
 
+            <!-- تبويب المنتجات والتصنيفات -->
             <div id="productsTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--gold-color); margin:0 0 6px 0;">📋 قائمة الأصناف والتعليقات</h4>
                 <input type="text" id="adminSearchProd" class="search-box" placeholder="🔍 ابحث عن صنف لتعديله أو تصفيره..." oninput="renderAdminProducts()" style="margin-bottom:8px;">
@@ -364,8 +373,9 @@
                 <div id="adminCategoriesList"></div>
             </div>
 
+            <!-- تبويب الزبائن والجيران -->
             <div id="customersTab" class="admin-tab" style="display:none;">
-                <h4 style="color:var(--gold-color); margin:0 0 8px 0;">👥 الزبائن وتصنيف (مفرق / جملة)</h4>
+                <h4 style="color:var(--gold-color); margin:0 0 8px 0;">👥 الزبائن وتصنيف (مفرق / جملة / جيران المتجر)</h4>
                 <input type="text" id="adminSearchCust" class="search-box" placeholder="🔍 ابحث بالاسم أو الهاتف..." oninput="renderAdminCustomers()" style="margin-bottom:8px;">
                 <div id="adminCustomersList" style="max-height:250px; overflow-y:auto; margin-bottom:12px;"></div>
                 <hr style="border-color:var(--border-color);">
@@ -380,8 +390,16 @@
                 <button onclick="saveCompetitionSettings()" class="btn">💾 حفظ المسابقة</button>
             </div>
 
+            <!-- تبويب الإعدادات والمناطق مع تسعير توصيل جيران المتجر -->
             <div id="settingsTab" class="admin-tab" style="display:none;">
-                <h4 style="color:var(--gold-color); margin:0 0 8px 0;">🛵 مناطق التوصيل، ساعات الدوام، ونسب السائق والوقود</h4>
+                <h4 style="color:var(--gold-color); margin:0 0 8px 0;">🛵 سعر توصيل صنف "جيران المتجر" الخاص</h4>
+                <div style="background:var(--bg-color); border:1px solid var(--gold-color); padding:10px; border-radius:8px; margin-bottom:12px;">
+                    <label style="font-size:12px; color:var(--gold-color); display:block; margin-bottom:4px; font-weight:bold;">أجرة توصيل زبائن جيران المتجر (ل.س):</label>
+                    <input type="number" id="neighborDeliveryFeeInput" class="form-control" placeholder="مثال: 0 أو 1000" value="0">
+                    <small style="color:var(--gray-text); font-size:10px; display:block; margin-top:4px;">تُطبق هذه الأجرة حصرياً على الزبائن المصنفين كـ "جيران المتجر" بغض النظر عن المنطقة.</small>
+                </div>
+
+                <h4 style="color:var(--gold-color); margin:10px 0 8px 0;">🛵 مناطق التوصيل، ساعات الدوام، ونسب السائق والوقود</h4>
                 <div style="background:var(--bg-color); border:1px dashed var(--gold-color); padding:10px; border-radius:8px; margin-bottom:10px;">
                     <label style="font-size:11px; color:var(--gold-color); display:block; margin-bottom:6px; font-weight:bold;">➕ إضافة منطقة توصيل جديدة:</label>
                     <div style="display:flex; gap:6px; flex-wrap:wrap;">
@@ -407,6 +425,8 @@
                 <div class="stats-grid">
                     <div class="form-group"><label>سعر الصرف ($):</label><input type="number" id="exchangeRateInput" class="form-control"></div>
                     <div class="form-group"><label>واتساب الإدارة الافتراضي:</label><input type="text" id="adminWhatsAppInput" class="form-control"></div>
+                </div>
+                <div class="stats-grid">
                     <div class="form-group"><label>معرف محفظة شام كاش:</label><input type="text" id="adminShamWalletInput" class="form-control"></div>
                     <div class="form-group"><label>واتساب عامل التوصيل:</label><input type="text" id="deliveryPhoneInput" class="form-control"></div>
                 </div>
@@ -416,6 +436,7 @@
                 <div class="form-group"><label>⬆️ استيراد نسخة احتياطية:</label><input type="file" id="importBackupInput" accept=".json" class="form-control" onchange="importBackupJSON(event)"></div>
             </div>
 
+            <!-- تبويب النواقص -->
             <div id="shortagesTab" class="admin-tab" style="display:none;">
                 <h4 style="color:var(--danger-color); margin:0 0 8px 0;">⚠️ أصناف أوشكت على النفاد</h4>
                 <div id="shortagesList" style="margin-bottom:12px;"></div>
@@ -426,6 +447,7 @@
         </div>
     </div>
 
+    <!-- نافذة تعديل بيانات زبون -->
     <div id="adminEditCustomerModal" class="modal-overlay" style="z-index:1100;">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">✏️ تعديل بيانات الزبون</h3>
@@ -433,7 +455,14 @@
             <div class="form-group"><label>الاسم:</label><input type="text" id="adminCustName" class="form-control"></div>
             <div class="form-group"><label>الهاتف:</label><input type="text" id="adminCustPhone" class="form-control" disabled style="opacity:0.7;"></div>
             <div class="form-group"><label>المنطقة:</label><select id="adminCustRegion" class="form-control"></select></div>
-            <div class="form-group"><label>التصنيف:</label><select id="adminCustType" class="form-control"><option value="retail">زبون مفرق</option><option value="wholesale">زبون جملة</option></select></div>
+            <div class="form-group">
+                <label>التصنيف:</label>
+                <select id="adminCustType" class="form-control">
+                    <option value="retail">زبون مفرق</option>
+                    <option value="wholesale">زبون جملة</option>
+                    <option value="neighbors">جيران المتجر (سعر توصيل مخصص)</option>
+                </select>
+            </div>
             <div class="form-group"><label>العنوان:</label><input type="text" id="adminCustAddress" class="form-control"></div>
             <div class="form-group"><label>النقاط:</label><input type="number" id="adminCustPoints" class="form-control"></div>
             <div style="display:flex; gap:8px;">
@@ -453,7 +482,7 @@
         if (!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://moaathstore-d2fd6-default-rtdb.firebaseio.com" });
         const db = firebase.database();
 
-        let exchangeRate = 15000, deliveryDriverPhone = "";
+        let exchangeRate = 15000, deliveryDriverPhone = "", neighborDeliveryFee = 0;
         let deliveryFees = {
             "العوينة (جيران المتجر)": { fee: 0, driverPct: 100, hoursEnabled: false, open: "08:00", close: "23:00" },
             "العوينة": { fee: 2000, driverPct: 80, hoursEnabled: false, open: "08:00", close: "23:00" },
@@ -567,7 +596,13 @@
             });
         }
 
-        const getRegionFee = r => (deliveryFees[r] && typeof deliveryFees[r] === "object") ? (parseInt(deliveryFees[r].fee) || 0) : (parseInt(deliveryFees[r]) || 0);
+        function getRegionFee(r) {
+            if (currentUser && currentUser.userType === "neighbors") {
+                return parseInt(neighborDeliveryFee) || 0;
+            }
+            return (deliveryFees[r] && typeof deliveryFees[r] === "object") ? (parseInt(deliveryFees[r].fee) || 0) : (parseInt(deliveryFees[r]) || 0);
+        }
+
         const getRegionDriverPct = r => (deliveryFees[r] && typeof deliveryFees[r] === "object" && deliveryFees[r].driverPct !== undefined) ? parseFloat(deliveryFees[r].driverPct) : 80;
 
         function populateRegionSelects() {
@@ -585,7 +620,7 @@
         function renderAdminDeliveryRegions() {
             const container = $("adminDeliveryRegionsList"); if (!container) return;
             container.innerHTML = Object.keys(deliveryFees).map((reg, idx) => {
-                const item = deliveryFees[reg] || {}, fee = getRegionFee(reg), dPct = getRegionDriverPct(reg), fPct = Math.max(0, 100 - dPct);
+                const item = deliveryFees[reg] || {}, fee = (typeof item === "object") ? (parseInt(item.fee) || 0) : (parseInt(item) || 0), dPct = getRegionDriverPct(reg), fPct = Math.max(0, 100 - dPct);
                 const hEn = !!item.hoursEnabled, oT = item.open || "08:00", cT = item.close || "23:00";
                 return `<div style="background:var(--bg-color); padding:10px; border-radius:6px; border:1px solid var(--border-color); margin-bottom:8px; font-size:12px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -651,6 +686,9 @@
             deliveryDriverPhone = d.deliveryDriverPhone || "";
             adminWhatsAppNumber = d.adminWhatsApp || "963965461504";
             shamWalletIdGlobal = d.shamWalletId || "da3e13cd8a2ef2af282445e148df9599";
+            neighborDeliveryFee = parseInt(d.neighborDeliveryFee) || 0;
+            $("neighborDeliveryFeeInput").value = neighborDeliveryFee;
+
             if (d.workHours) workHoursSettings = { enabled: !!d.workHours.enabled, open: d.workHours.open || "08:00", close: d.workHours.close || "23:00" };
             $("workHoursEnabled").checked = workHoursSettings.enabled; $("workHourOpen").value = workHoursSettings.open; $("workHourClose").value = workHoursSettings.close;
             $("headerPhoneText").textContent = adminWhatsAppNumber; $("shamWalletId").textContent = shamWalletIdGlobal;
@@ -740,7 +778,12 @@
             const pts = Math.round(currentUser.points || 0), rank = calculateUserRank(currentUser.phone);
             $("userNameDisplay").textContent = currentUser.name;
             $("userRegionBadge").textContent = currentUser.region ? `(${currentUser.region})` : "";
-            $("userTypeBadge").textContent = currentUser.userType === "wholesale" ? "[زبون جملة]" : "[مفرق]";
+            
+            let badgeText = "[مفرق]";
+            if (currentUser.userType === "wholesale") badgeText = "[زبون جملة]";
+            else if (currentUser.userType === "neighbors") badgeText = "[جيران المتجر 🏘️]";
+            $("userTypeBadge").textContent = badgeText;
+
             $("userPoints").textContent = pts; $("compUserPoints").textContent = pts;
             if ($("userRankBadge")) { $("userRankBadge").style.display = rank !== "-" ? "inline-flex" : "none"; $("userRankBadge").textContent = `🏅 ترتيبي: ${rank}`; }
             if ($("compUserRankDisplay")) $("compUserRankDisplay").textContent = rank !== "-" ? rank : "غير مصنف";
@@ -831,7 +874,7 @@
             if (cnt > 0) {
                 const def = Object.keys(deliveryFees)[0] || "العوينة", reg = (currentUser && currentUser.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : def, fee = getRegionFee(reg);
                 $("cartBar").style.display = "flex"; $("cartCount").textContent = cnt; $("cartTotal").textContent = (sub + fee).toLocaleString() + " ل.س";
-                if ($("cartBarDeliveryNote")) $("cartBarDeliveryNote").textContent = `(توصيل ${reg}: ${fee.toLocaleString()} ل.س)`;
+                if ($("cartBarDeliveryNote")) $("cartBarDeliveryNote").textContent = `(توصيل ${currentUser && currentUser.userType === 'neighbors' ? 'جيران المتجر' : reg}: ${fee.toLocaleString()} ل.س)`;
             } else $("cartBar").style.display = "none";
         }
 
@@ -865,7 +908,8 @@
                 return `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding:6px 0; font-size:12px;"><div><strong>${i.name}</strong><br><span style="color:var(--gray-text);">${u.toLocaleString()} ل.س × ${i.qty} = ${s.toLocaleString()} ل.س</span></div><div class="qty-controls" style="width:85px;"><button class="qty-btn" onclick="changeQty('${i.id}',1)">+</button><span class="qty-text">${i.qty}</span><button class="qty-btn" onclick="changeQty('${i.id}',-1)">-</button></div></div>`;
             }).join("");
             const reg = $("cartRegionSelect").value || (currentUser ? currentUser.region : (Object.keys(deliveryFees)[0] || "العوينة")), fee = getRegionFee(reg);
-            $("modalCartSubtotal").textContent = sub.toLocaleString(); $("modalDeliveryRegionName").textContent = reg;
+            $("modalCartSubtotal").textContent = sub.toLocaleString(); 
+            $("modalDeliveryRegionName").textContent = currentUser && currentUser.userType === 'neighbors' ? 'جيران المتجر' : reg;
             $("modalDeliveryFee").textContent = fee.toLocaleString(); $("modalCartTotal").textContent = (sub + fee).toLocaleString(); $("modalCartPoints").textContent = pts;
         }
 
@@ -886,10 +930,15 @@
             const ordId = "ORD_" + Date.now(), payload = {
                 orderId: ordId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
                 customerName: currentUser.name, customerPhone: currentUser.phone, customerRegion: reg, customerAddress: currentUser.address,
+                customerType: currentUser.userType || "retail",
                 paymentMethod: $("paymentMethodSelect").value, notes: $("orderNotes").value.trim(), items: ordItems,
                 subtotalSaleSYP: subSale, deliveryFeeSYP: fee, totalSaleSYP: subSale + fee, totalCostSYP: totCost, netProfitSYP: subSale - totCost, earnedPoints: totPts
             };
-            let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n👤 الزبون: ${payload.customerName}\n📱 الهاتف: ${payload.customerPhone}\n🏘️ المنطقة: ${payload.customerRegion}\n📍 العنوان: ${payload.customerAddress}\n💳 طريقة الدفع: ${payload.paymentMethod}\n`;
+            let typeLabel = "زبون مفرق";
+            if (currentUser.userType === "wholesale") typeLabel = "زبون جملة";
+            else if (currentUser.userType === "neighbors") typeLabel = "جيران المتجر 🏘️";
+
+            let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n👤 الزبون: ${payload.customerName} [${typeLabel}]\n📱 الهاتف: ${payload.customerPhone}\n🏘️ المنطقة: ${payload.customerRegion}\n📍 العنوان: ${payload.customerAddress}\n💳 طريقة الدفع: ${payload.paymentMethod}\n`;
             if (payload.notes) msg += `📝 ملاحظات: ${payload.notes}\n`;
             msg += `──────────────\n` + ordItems.map(i => `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س`).join("\n") + `\n──────────────\n📦 قيمة المواد: ${subSale.toLocaleString()} ل.س\n🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${payload.totalSaleSYP.toLocaleString()} ل.س\n🎁 النقاط المستحقة: +${totPts}`;
             db.ref("pendingOrders/" + ordId).set(payload);
@@ -956,9 +1005,19 @@
         function renderPendingOrders() {
             const keys = Object.keys(pendingOrders); $("pendingCountBadge").textContent = keys.length;
             if (!keys.length) return ($("pendingOrdersList").innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد فواتير معلقة.</p>`);
-            $("pendingOrdersList").innerHTML = keys.map(id => {
+            
+            let topClearBtn = `
+                <button onclick="cancelAllPendingOrders()" class="btn btn-danger" style="margin-bottom:12px; padding:10px; font-size:13px; font-weight:bold; border:2px solid #fff;">
+                    🗑️ إلغاء ومسح جميع الطلبات المتراكمة (${keys.length} طلب)
+                </button>`;
+
+            $("pendingOrdersList").innerHTML = topClearBtn + keys.map(id => {
                 const o = pendingOrders[id], itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${i.name} × ${i.qty}</span><span>مبيع: ${i.subSaleSYP.toLocaleString()}</span></div>`).join("");
-                return `<div style="background:var(--bg-color); border:1px solid var(--gold-color); border-radius:8px; padding:10px; margin-bottom:10px; font-size:12px;"><div style="display:flex; justify-content:space-between; color:var(--gold-color); font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span></div><div style="margin-bottom:4px;">🏘️ المنطقة: <b>${o.customerRegion}</b> | 📍 ${o.customerAddress}</div><div style="border-top:1px dashed var(--border-color); border-bottom:1px dashed var(--border-color); padding:6px 0; margin:6px 0;">${itemsHtml}</div><div style="font-weight:bold; margin-bottom:8px;">الإجمالي مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</div><div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000;" onclick="confirmOrder('${id}')">✅ تأكيد وخصم المخزون</button><button class="btn btn-danger" onclick="cancelOrder('${id}')">❌ إلغاء</button></div></div>`;
+                let tBadge = "مفرق";
+                if (o.customerType === "wholesale") tBadge = "جملة";
+                else if (o.customerType === "neighbors") tBadge = "جيران المتجر";
+
+                return `<div style="background:var(--bg-color); border:1px solid var(--gold-color); border-radius:8px; padding:10px; margin-bottom:10px; font-size:12px;"><div style="display:flex; justify-content:space-between; color:var(--gold-color); font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone}) [${tBadge}]</span><span>${o.timestamp}</span></div><div style="margin-bottom:4px;">🏘️ المنطقة: <b>${o.customerRegion}</b> | 📍 ${o.customerAddress}</div><div style="border-top:1px dashed var(--border-color); border-bottom:1px dashed var(--border-color); padding:6px 0; margin:6px 0;">${itemsHtml}</div><div style="font-weight:bold; margin-bottom:8px;">الإجمالي مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س (توصيل: ${(o.deliveryFeeSYP || 0).toLocaleString()} ل.س)</div><div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000;" onclick="confirmOrder('${id}')">✅ تأكيد وخصم المخزون</button><button class="btn btn-danger" onclick="cancelOrder('${id}')">❌ إلغاء</button></div></div>`;
             }).join("");
         }
 
@@ -1080,7 +1139,7 @@
                 updates[`completedOrdersHistory/${id}/deliveryFeeSYP`] = fee - Math.round((fee * getRegionDriverPct(ord.customerRegion)) / 100);
                 cnt++;
             });
-            if (cnt > 0) db.ref().update(updates).then(() => alert(`✅ تم تصفير حساب السائق بنجاح لـ (${cnt}) طلب وحفظ رصيد الوقود.`));
+            if (cnt > 0) db.ref().update(updates).then(() => alert(`✅ تم تصفير حساب السائق بنجاح لـ (${count}) طلب وحفظ رصيد الوقود.`));
             else alert("ℹ️ لا توجد مستحقات معلقة للسائق لتصفيرها.");
         }
 
@@ -1175,11 +1234,34 @@
             const sorted = Object.values(users).filter(u => !q || u.name?.toLowerCase().includes(q) || u.phone?.includes(q)).sort((a, b) => (b.points || 0) - (a.points || 0));
             if (!sorted.length) return ($("adminCustomersList").innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا يوجد زبائن.</p>`);
             $("adminCustomersList").innerHTML = sorted.map(u => {
-                const isB = !!u.banned, isW = u.userType === "wholesale";
-                return `<div style="background:var(--bg-color); border:1px solid ${isB ? 'var(--danger-color)' : 'var(--border-color)'}; padding:8px; border-radius:6px; margin-bottom:6px; font-size:12px;"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>👤 ${u.name} (${u.phone}) <b style="color:${isW ? 'var(--gold-color)' : 'var(--success-color)'};">[${isW ? 'جملة' : 'مفرق'}]</b></span><span style="color:var(--gold-color);">${Math.round(u.points || 0)} نقطة</span></div><div style="display:flex; gap:4px; margin-top:6px; flex-wrap:wrap;"><button onclick="openAdminEditCustomerModal('${u.phone}')" class="btn" style="padding:3px 6px; font-size:10px; width:auto;">✏️ تعديل</button><button onclick="toggleCustomerType('${u.phone}')" class="btn" style="padding:3px 6px; font-size:10px; width:auto; background:#2196F3; color:#fff;">${isW ? 'تحويل لمفرق' : 'تحويل لجملة'}</button><button onclick="toggleBanCustomer('${u.phone}')" class="btn" style="padding:3px 6px; font-size:10px; width:auto; background:${isB ? 'var(--success-color)' : '#ff9800'}; color:#000;">${isB ? 'فك الحظر' : 'حظر الزبون'}</button></div></div>`;
+                const isB = !!u.banned;
+                let tBadge = '<b style="color:var(--success-color);">[مفرق]</b>';
+                if (u.userType === "wholesale") tBadge = '<b style="color:var(--gold-color);">[جملة]</b>';
+                else if (u.userType === "neighbors") tBadge = '<b style="color:#00b0ff;">[جيران المتجر 🏘️]</b>';
+
+                return `<div style="background:var(--bg-color); border:1px solid ${isB ? 'var(--danger-color)' : 'var(--border-color)'}; padding:8px; border-radius:6px; margin-bottom:6px; font-size:12px;">
+                    <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                        <span>👤 ${u.name} (${u.phone}) ${tBadge}</span>
+                        <span style="color:var(--gold-color);">${Math.round(u.points || 0)} نقطة</span>
+                    </div>
+                    <div style="display:flex; gap:4px; margin-top:6px; flex-wrap:wrap;">
+                        <button onclick="openAdminEditCustomerModal('${u.phone}')" class="btn" style="padding:3px 6px; font-size:10px; width:auto;">✏️ تعديل</button>
+                        <button onclick="cycleCustomerType('${u.phone}')" class="btn" style="padding:3px 6px; font-size:10px; width:auto; background:#2196F3; color:#fff;">تبديل التصنيف 🔄</button>
+                        <button onclick="toggleBanCustomer('${u.phone}')" class="btn" style="padding:3px 6px; font-size:10px; width:auto; background:${isB ? 'var(--success-color)' : '#ff9800'}; color:#000;">${isB ? 'فك الحظر' : 'حظر الزبون'}</button>
+                    </div>
+                </div>`;
             }).join("");
         }
-        const toggleCustomerType = p => { if (users[p]) db.ref("users/" + p + "/userType").set(users[p].userType === "wholesale" ? "retail" : "wholesale"); };
+
+        function cycleCustomerType(phone) {
+            const u = users[phone]; if (!u) return;
+            let nType = "wholesale";
+            if (u.userType === "wholesale") nType = "neighbors";
+            else if (u.userType === "neighbors") nType = "retail";
+            else nType = "wholesale";
+            db.ref("users/" + phone + "/userType").set(nType);
+        }
+
         const toggleBanCustomer = p => { if (users[p]) db.ref("users/" + p + "/banned").set(!users[p].banned); };
         function openAdminEditCustomerModal(p) {
             const u = users[p]; if (!u) return;
@@ -1222,6 +1304,7 @@
                 deliveryDriverPhone: $("deliveryPhoneInput").value.trim(),
                 adminWhatsApp: $("adminWhatsAppInput").value.trim() || "963965461504",
                 shamWalletId: $("adminShamWalletInput").value.trim() || "da3e13cd8a2ef2af282445e148df9599",
+                neighborDeliveryFee: parseInt($("neighborDeliveryFeeInput").value) || 0,
                 deliveryFees,
                 workHours: { enabled: $("workHoursEnabled").checked, open: $("workHourOpen").value || "08:00", close: $("workHourClose").value || "23:00" }
             }).then(() => alert("✅ تم حفظ كافة الإعدادات والمناطق وساعات العمل بنجاح!"));
