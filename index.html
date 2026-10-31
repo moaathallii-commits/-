@@ -230,7 +230,7 @@
         </div>
     </div>
 
-    <!-- لوحة الشريك مع زر طلب الأرباح عبر واتساب -->
+    <!-- لوحة الشريك المحدثة (مبيعات، أرباح، مخزون، وزر طلب الأرباح عبر واتساب) -->
     <div id="partnerModal" class="page-overlay">
         <header style="position:sticky; top:0; z-index:10;">
             <div class="store-info"><h1>🤝 لوحة الشريك المعتمدة</h1><p>مراقبة المخزون، الأرباح، وطلب تحويل المستحقات</p></div>
@@ -240,13 +240,13 @@
             <div class="comp-card" style="background:linear-gradient(45deg,rgba(0,176,255,0.15),var(--card-bg)); border-color:#00b0ff;">
                 <h3 style="color:#00b0ff; margin:0 0 6px 0; font-size:14px;">👤 مرحباً بك يا شريك المتجر</h3>
                 <div id="partnerAssignedCatsText" style="font-size:12px; color:var(--gold-color); font-weight:bold; margin-bottom:4px;"></div>
-                <div style="font-size:11px; color:var(--gray-text);">يمكنك مراقبة أرباحك الحالية بعد آخر عملية تسوية وطلب تحويلها عبر واتساب أدناه.</div>
+                <div style="font-size:11px; color:var(--gray-text);">يمكنك مراقبة أرباحك وطلب تحويلها عبر زر واتساب أدناه.</div>
             </div>
 
-            <!-- زر طلب الأرباح الفوري عبر واتساب -->
+            <!-- زر طلب الأرباح الجديد -->
             <div style="margin-bottom:12px;">
                 <button onclick="requestPartnerEarningsWhatsApp()" class="btn" style="background:linear-gradient(45deg,#25D366,#128C7E); color:#fff; font-size:14px; padding:12px; font-weight:900; border-radius:8px; box-shadow:0 3px 12px rgba(37,211,102,0.4);">
-                    💸 طلب صرف الأرباح المستحقة عبر واتساب
+                    💸 طلب صرف وتصفير الأرباح عبر واتساب
                 </button>
             </div>
 
@@ -404,22 +404,17 @@
                 <input type="text" id="adminSearchCust" class="search-box" placeholder="🔍 ابحث بالاسم أو الهاتف..." oninput="renderAdminCustomers()" style="margin-bottom:8px;">
                 <div id="adminCustomersList" style="max-height:240px; overflow-y:auto; margin-bottom:12px;"></div>
                 
-                <!-- إعدادات الشريك المستقلة مع زر تصفير أرباح الشريك -->
+                <!-- إعدادات تصنيفات الشريك ومعرف شام كاش -->
                 <div style="background:var(--bg-color); border:1px solid #00b0ff; padding:10px; border-radius:8px; margin-bottom:12px;">
-                    <h5 style="color:#00b0ff; margin:0 0 6px 0; font-size:12px;">🤝 تخصيص تصنيفات الشريك، نسبة الأرباح، محفظة شام كاش، والتسوية:</h5>
+                    <h5 style="color:#00b0ff; margin:0 0 6px 0; font-size:12px;">🤝 تخصيص تصنيفات الشريك، نسبة الأرباح، ومعرف شام كاش:</h5>
                     <div class="form-group"><label>اختر الشريك (محول مسبقاً إلى "شريك"):</label><select id="adminPartnerSelect" class="form-control" onchange="loadPartnerConfig()"><option value="">-- اختر شريكاً --</option></select></div>
                     <div class="form-group"><label>معرف محفظة شام كاش (Sham Cash ID):</label><input type="text" id="adminPartnerShamWallet" class="form-control" placeholder="مثال: ab12cd34ef..."></div>
                     <div class="form-group">
                         <label>حدد التصنيفات الكاملة التابعة للشريك:</label>
                         <div id="partnerCategoriesCheckboxes" style="display:flex; flex-wrap:wrap; gap:8px; background:var(--card-bg); padding:8px; border-radius:5px; border:1px solid var(--border-color);"></div>
                     </div>
-                    <div class="stats-grid">
-                        <div class="form-group"><label>نسبة ربح الشريك (%):</label><input type="number" step="0.1" id="adminPartnerPct" class="form-control" placeholder="مثال: 20" value="20"></div>
-                        <div class="form-group" style="display:flex; align-items:flex-end;">
-                            <button onclick="settlePartnerEarningsByAdmin()" class="btn" style="background:#ff9800; color:#000; font-weight:bold; height:38px;">🔄 تصفير وصرف أرباح الشريك</button>
-                        </div>
-                    </div>
-                    <button onclick="savePartnerCategoriesConfig()" class="btn" style="background:#00b0ff; color:#fff; margin-top:4px;">💾 حفظ إعدادات الشريك</button>
+                    <div class="form-group"><label>نسبة ربح الشريك (%):</label><input type="number" step="0.1" id="adminPartnerPct" class="form-control" placeholder="مثال: 20" value="20"></div>
+                    <button onclick="savePartnerCategoriesConfig()" class="btn" style="background:#00b0ff; color:#fff;">💾 حفظ بيانات ومحفظة الشريك</button>
                 </div>
 
                 <hr style="border-color:var(--border-color);">
@@ -506,15 +501,7 @@
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
         let adminWhatsAppNumber = "963965461504", shamWalletIdGlobal = "da3e13cd8a2ef2af282445e148df9599";
-        // بصمة SHA-256 المشفرة لكلمة مرور الإدارة MHA@1997//MOAATHS لحماية النظام أمنياً
-        const ADMIN_PASSWORD_HASH = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"; // ملاحظة: بصمة تجريبية أو يتم التحقق منها عبر الدالة أدناه
-
-        async function sha256(message) {
-            const msgBuffer = new TextEncoder().encode(message);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
+        const ADMIN_PASSWORD = "MHA@1997//MOAATHS";
 
         if (!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://moaathstore-d2fd6-default-rtdb.firebaseio.com" });
         const db = firebase.database();
@@ -1165,7 +1152,7 @@
         function openCompetitionsPage() { syncCurrentUser(); renderCompetitionDetails(); renderLeaderboard(); $("competitionsPage").style.display = "block"; }
         const closeCompetitionsPage = () => $("competitionsPage").style.display = "none";
 
-        // لوحة الشريك مع احتساب الأرباح بناءً على آخر تسوية وزر الطلب عبر واتساب
+        // لوحة الشريك الكاملة مع زر طلب الأرباح عبر واتساب
         function openPartnerDashboard() {
             if (!currentUser || currentUser.userType !== "partner") return;
             const phone = currentUser.phone;
@@ -1173,7 +1160,6 @@
             const rawCats = conf.categories || [];
             const allowedCats = rawCats.map(c => c.trim().toLowerCase());
             const partnerPct = parseFloat(conf.profitPct) || 20;
-            const lastSettlementISO = conf.lastSettlementISO || "2000-01-01T00:00:00.000Z";
 
             if ($("partnerAssignedCatsText")) {
                 $("partnerAssignedCatsText").textContent = rawCats.length ? `📂 تصنيفاتك المعتمدة: (${rawCats.join(" ، ")}) | نسبة الأرباح: ${partnerPct}%` : "⚠️ لم تقم الإدارة بتحديد تصنيفات لحسابك بعد.";
@@ -1201,27 +1187,24 @@
             });
 
             Object.values(completedOrdersHistory).forEach(ord => {
-                const ordDate = ord.dateISO || new Date().toISOString();
-                if (ordDate > lastSettlementISO) {
-                    (ord.items || []).forEach(item => {
-                        const itemCat = (item.category || "").trim().toLowerCase();
-                        if (allowedCats.includes(itemCat)) {
-                            const sSale = item.subSaleSYP || 0;
-                            const sProfit = item.netProfitSYP !== undefined ? item.netProfitSYP : (sSale - (item.subCostSYP || 0));
-                            const earn = Math.round((sProfit * partnerPct) / 100);
+                (ord.items || []).forEach(item => {
+                    const itemCat = (item.category || "").trim().toLowerCase();
+                    if (allowedCats.includes(itemCat)) {
+                        const sSale = item.subSaleSYP || 0;
+                        const sProfit = item.netProfitSYP !== undefined ? item.netProfitSYP : (sSale - (item.subCostSYP || 0));
+                        const earn = Math.round((sProfit * partnerPct) / 100);
 
-                            totSales += sSale;
-                            totEarn += earn;
+                        totSales += sSale;
+                        totEarn += earn;
 
-                            if (!partnerItemsMap[item.name]) {
-                                partnerItemsMap[item.name] = { cat: item.category || "-", stock: 0, priceSYP: item.unitSaleSYP || 0, qtySold: 0, sales: 0, earn: 0, pct: partnerPct };
-                            }
-                            partnerItemsMap[item.name].qtySold += (item.qty || 1);
-                            partnerItemsMap[item.name].sales += sSale;
-                            partnerItemsMap[item.name].earn += earn;
+                        if (!partnerItemsMap[item.name]) {
+                            partnerItemsMap[item.name] = { cat: item.category || "-", stock: 0, priceSYP: item.unitSaleSYP || 0, qtySold: 0, sales: 0, earn: 0, pct: partnerPct };
                         }
-                    });
-                }
+                        partnerItemsMap[item.name].qtySold += (item.qty || 1);
+                        partnerItemsMap[item.name].sales += sSale;
+                        partnerItemsMap[item.name].earn += earn;
+                    }
+                });
             });
 
             window.currentPartnerTotalEarn = totEarn;
@@ -1233,7 +1216,7 @@
 
             const pEntries = Object.entries(partnerItemsMap);
             if (!pEntries.length) {
-                itemsHtml = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف أو مبيعات جديدة مسجلة منذ آخر تسوية.</p>`;
+                itemsHtml = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف أو مبيعات مسجلة ضمن التصنيفات المحددة لحسابك بعد.</p>`;
             } else {
                 itemsHtml = `<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:11px; text-align:center;"><thead><tr style="background:var(--bg-color); color:var(--gold-color); border-bottom:1px solid var(--border-color);"><th style="padding:6px; text-align:right;">الصنف</th><th style="padding:6px;">التصنيف</th><th style="padding:6px;">المخزون</th><th style="padding:6px;">المباع</th><th style="padding:6px;">المبيعات</th><th style="padding:6px;">ربحك (${partnerPct}%)</th></tr></thead><tbody>` +
                 pEntries.map(([name, data]) => `<tr style="border-bottom:1px solid var(--border-color);"><td style="padding:6px; font-weight:bold; text-align:right;">${name}</td><td style="padding:6px; color:var(--gray-text);">${data.cat}</td><td style="padding:6px; color:${data.stock > 0 ? 'var(--gold-color)' : 'var(--danger-color)'}; font-weight:bold;">${data.stock}</td><td style="padding:6px;">${data.qtySold}</td><td style="padding:6px;">${data.sales.toLocaleString()}</td><td style="padding:6px; color:var(--success-color); font-weight:bold;">${data.earn.toLocaleString()} ل.س</td></tr>`).join("") +
@@ -1251,28 +1234,15 @@
             const shamWallet = conf.shamWallet || "غير مسجل";
             const earn = window.currentPartnerTotalEarn || 0;
 
-            if (earn <= 0) return alert("ℹ️ لا توجد أرباح مستحقة جديدة لطلبها حالياً.");
+            if (earn <= 0) return alert("ℹ️ لا توجد أرباح مستحقة لطلبها حالياً.");
 
             const msg = `مرحباً إدارة متجر معاذ 🤝\n` +
                         `أنا الشريك: *${currentUser.name}* (هاتف: ${currentUser.phone})\n` +
                         `أرغب بطلب صرف أرباحي المستحقة وقدرها: *${earn.toLocaleString()} ل.س*\n` +
                         `💳 معرف محفظة شام كاش الخاصة بي: *${shamWallet}*\n` +
-                        `يرجى تحويل المبلغ وتأكيد تسوية الحساب. شكراً لكم 🌸`;
+                        `يرجى تحويل المبلغ وتصفير الحساب بعد التأكيد. شكراً لكم 🌸`;
 
             window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
-        }
-
-        // زر تصفير أرباح الشريك المستقلة من الإدارة دون المساس بجرد المتجر
-        function settlePartnerEarningsByAdmin() {
-            const phone = $("adminPartnerSelect")?.value;
-            if (!phone) return alert("⚠️ يرجى اختيار الشريك أولاً من القائمة.");
-            if (!confirm(`هل أنت متأكد من إتمام تسوية وتصفير الأرباح المستحقة الحالية لهذا الشريك؟\n(ملاحظة: سيتم حفظ تاريخ التسوية ليبدأ حساب الأرباح الجديدة من هذه اللحظة دون المساس بجرد المتجر العام)`)) return;
-
-            const nowISO = new Date().toISOString();
-            db.ref(`partnersConfig/${phone}/lastSettlementISO`).set(nowISO).then(() => {
-                alert("✅ تمت تسوية وتصفير أرباح الشريك بنجاح وبدء دورة أرباح جديدة!");
-                loadPartnerConfig();
-            });
         }
 
         function renderCompetitionDetails() {
@@ -1307,22 +1277,17 @@
         }
 
         let adminClickCount = 0, adminClickTimer = null;
-        async function handleAdminTrigger() {
+        function handleAdminTrigger() {
             adminClickCount++; clearTimeout(adminClickTimer);
             if (adminClickCount >= 5) {
                 adminClickCount = 0;
                 const pass = prompt("🔐 كلمة مرور الإدارة:");
-                if (pass === null) return;
-                const hashedInput = await sha256(pass);
-                // مقارنة آمنة (أو مطابقة مع كلمة المرور الافتراضية المعتمدة)
-                if (pass === ADMIN_PASSWORD || hashedInput === ADMIN_PASSWORD_HASH) {
+                if (pass === ADMIN_PASSWORD) {
                     $("adminModal").style.display = "flex";
                     renderStatsDashboard();
                     populateAdminPartnerSelect();
                     populatePartnerSelectOptions();
-                } else {
-                    alert("❌ كلمة المرور غير صحيحة!");
-                }
+                } else if (pass !== null) alert("❌ كلمة المرور غير صحيحة!");
             } else adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 1800);
         }
         $("adminTrigger")?.addEventListener("click", handleAdminTrigger);
@@ -1442,13 +1407,10 @@
             const shamWallet = $("adminPartnerShamWallet").value.trim();
             const profitPct = parseFloat($("adminPartnerPct").value) || 20;
 
-            const currentCfg = (window.partnersConfigData && window.partnersConfigData[phone]) || {};
-
             db.ref("partnersConfig/" + phone).set({
                 categories: selectedCats,
                 shamWallet,
-                profitPct,
-                lastSettlementISO: currentCfg.lastSettlementISO || "2000-01-01T00:00:00.000Z"
+                profitPct
             }).then(() => alert(`✅ تم حفظ بيانات وتصنيفات الشريك بنجاح!`));
         }
 
