@@ -230,20 +230,19 @@
         </div>
     </div>
 
-    <!-- لوحة الشريك مع زر طلب الأرباح عبر واتساب -->
+    <!-- لوحة الشريك المحدثة مع رأس المال الحالي وزر طلب الأرباح -->
     <div id="partnerModal" class="page-overlay">
         <header style="position:sticky; top:0; z-index:10;">
-            <div class="store-info"><h1>🤝 لوحة الشريك المعتمدة</h1><p>مراقبة المخزون، الأرباح، وطلب تحويل المستحقات</p></div>
+            <div class="store-info"><h1>🤝 لوحة الشريك المعتمدة</h1><p>مراقبة رأس المال، المخزون، والأرباح</p></div>
             <button onclick="closePartnerDashboard()" class="btn btn-danger" style="width:auto; padding:6px 12px;">🔙 رجوع</button>
         </header>
         <div class="container">
             <div class="comp-card" style="background:linear-gradient(45deg,rgba(0,176,255,0.15),var(--card-bg)); border-color:#00b0ff;">
                 <h3 style="color:#00b0ff; margin:0 0 6px 0; font-size:14px;">👤 مرحباً بك يا شريك المتجر</h3>
                 <div id="partnerAssignedCatsText" style="font-size:12px; color:var(--gold-color); font-weight:bold; margin-bottom:4px;"></div>
-                <div style="font-size:11px; color:var(--gray-text);">يمكنك مراقبة أرباحك الحالية بعد آخر عملية تسوية وطلب تحويلها عبر واتساب أدناه.</div>
+                <div style="font-size:11px; color:var(--gray-text);">يظهر لك أدناه رأس المال الحالي لبضاعتك، أرباحك، وطلب تحويلها عبر واتساب.</div>
             </div>
 
-            <!-- زر طلب الأرباح الفوري عبر واتساب -->
             <div style="margin-bottom:12px;">
                 <button onclick="requestPartnerEarningsWhatsApp()" class="btn" style="background:linear-gradient(45deg,#25D366,#128C7E); color:#fff; font-size:14px; padding:12px; font-weight:900; border-radius:8px; box-shadow:0 3px 12px rgba(37,211,102,0.4);">
                     💸 طلب صرف الأرباح المستحقة عبر واتساب
@@ -251,10 +250,10 @@
             </div>
 
             <div class="stats-grid">
-                <div class="stats-box"><div style="font-size:11px; color:var(--gray-text);">إجمالي مبيعات تصنيفاتك</div><div class="stats-value" id="partnerTotalSales">0 ل.س</div></div>
-                <div class="stats-box"><div style="font-size:11px; color:var(--gray-text);">صافي أرباحك المستحقة</div><div class="stats-value" style="color:var(--success-color);" id="partnerTotalEarnings">0 ل.س</div></div>
-                <div class="stats-box"><div style="font-size:11px; color:var(--gray-text);">عدد أصناف تصنيفاتك</div><div class="stats-value" id="partnerTotalItemsCount" style="color:#00b0ff;">0 صنف</div></div>
-                <div class="stats-box"><div style="font-size:11px; color:var(--gray-text);">إجمالي القطع بالمخزون</div><div class="stats-value" id="partnerTotalStockUnits">0 قطعة</div></div>
+                <div class="stats-box"><div style="font-size:11px; color:var(--gray-text);">💰 رأس المال الحالي (قيمة البضاعة)</div><div class="stats-value" style="color:#00b0ff;" id="partnerCapitalVal">0 ل.س</div></div>
+                <div class="stats-box"><div style="font-size:11px; color:var(--gray-text);">🎁 صافي أرباحك المستحقة</div><div class="stats-value" style="color:var(--success-color);" id="partnerTotalEarnings">0 ل.س</div></div>
+                <div class="stats-box"><div style="font-size:11px; color:var(--gray-text);">📦 إجمالي مبيعات التصنيفات</div><div class="stats-value" id="partnerTotalSales">0 ل.س</div></div>
+                <div class="stats-box"><div style="font-size:11px; color:var(--gray-text);">📊 القطع المتبقية بالمخزون</div><div class="stats-value" id="partnerTotalStockUnits">0 قطعة</div></div>
             </div>
             <h4 style="color:var(--gold-color); margin:14px 0 8px 0;">📦 تفصيل المخزون والمبيعات لتصنيفاتك</h4>
             <div id="partnerItemsBreakdown"></div>
@@ -404,7 +403,6 @@
                 <input type="text" id="adminSearchCust" class="search-box" placeholder="🔍 ابحث بالاسم أو الهاتف..." oninput="renderAdminCustomers()" style="margin-bottom:8px;">
                 <div id="adminCustomersList" style="max-height:240px; overflow-y:auto; margin-bottom:12px;"></div>
                 
-                <!-- إعدادات الشريك المستقلة مع زر تصفير أرباح الشريك -->
                 <div style="background:var(--bg-color); border:1px solid #00b0ff; padding:10px; border-radius:8px; margin-bottom:12px;">
                     <h5 style="color:#00b0ff; margin:0 0 6px 0; font-size:12px;">🤝 تخصيص تصنيفات الشريك، نسبة الأرباح، محفظة شام كاش، والتسوية:</h5>
                     <div class="form-group"><label>اختر الشريك (محول مسبقاً إلى "شريك"):</label><select id="adminPartnerSelect" class="form-control" onchange="loadPartnerConfig()"><option value="">-- اختر شريكاً --</option></select></div>
@@ -1157,7 +1155,7 @@
         function openCompetitionsPage() { syncCurrentUser(); renderCompetitionDetails(); renderLeaderboard(); $("competitionsPage").style.display = "block"; }
         const closeCompetitionsPage = () => $("competitionsPage").style.display = "none";
 
-        // لوحة الشريك مع احتساب الأرباح بناءً على آخر تسوية وزر الطلب عبر واتساب
+        // لوحة الشريك المحدثة مع رأس المال الحالي، الأرباح، وزر طلب الأرباح عبر واتساب
         function openPartnerDashboard() {
             if (!currentUser || currentUser.userType !== "partner") return;
             const phone = currentUser.phone;
@@ -1171,13 +1169,15 @@
                 $("partnerAssignedCatsText").textContent = rawCats.length ? `📂 تصنيفاتك المعتمدة: (${rawCats.join(" ، ")}) | نسبة الأرباح: ${partnerPct}%` : "⚠️ لم تقم الإدارة بتحديد تصنيفات لحسابك بعد.";
             }
 
-            let totSales = 0, totEarn = 0, totalItemsCount = 0, totalStockUnits = 0, itemsHtml = "";
+            let totSales = 0, totEarn = 0, totalItemsCount = 0, totalStockUnits = 0, currentCapital = 0, itemsHtml = "";
             let partnerItemsMap = {};
 
             Object.values(products).forEach(p => {
                 const pCat = (p.category || "").trim().toLowerCase();
                 if (allowedCats.includes(pCat)) {
                     const st = Math.max(0, parseInt(p.stock) || 0);
+                    const itemCostSYP = calcSYP(p.costPrice || 0) * st;
+                    currentCapital += itemCostSYP;
                     totalItemsCount++;
                     totalStockUnits += st;
                     partnerItemsMap[p.name] = {
@@ -1218,9 +1218,9 @@
 
             window.currentPartnerTotalEarn = totEarn;
 
+            if ($("partnerCapitalVal")) $("partnerCapitalVal").textContent = currentCapital.toLocaleString() + " ل.س";
             if ($("partnerTotalSales")) $("partnerTotalSales").textContent = totSales.toLocaleString() + " ل.س";
             if ($("partnerTotalEarnings")) $("partnerTotalEarnings").textContent = totEarn.toLocaleString() + " ل.س";
-            if ($("partnerTotalItemsCount")) $("partnerTotalItemsCount").textContent = totalItemsCount + " صنف";
             if ($("partnerTotalStockUnits")) $("partnerTotalStockUnits").textContent = totalStockUnits + " قطعة";
 
             const pEntries = Object.entries(partnerItemsMap);
@@ -1254,7 +1254,6 @@
             window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
-        // زر تصفير أرباح الشريك المستقلة من الإدارة دون المساس بجرد المتجر
         function settlePartnerEarningsByAdmin() {
             const phone = $("adminPartnerSelect")?.value;
             if (!phone) return alert("⚠️ يرجى اختيار الشريك أولاً من القائمة.");
@@ -1305,8 +1304,6 @@
                 adminClickCount = 0;
                 const pass = prompt("🔐 كلمة مرور الإدارة:");
                 if (pass === null) return;
-                
-                // تحقق مباشر وموثوق يعمل على أي متصفح وبروتوكول
                 if (pass === ADMIN_PASSWORD) {
                     $("adminModal").style.display = "flex";
                     renderStatsDashboard();
@@ -1741,4 +1738,3 @@
     </script>
 </body>
 </html>
-    
