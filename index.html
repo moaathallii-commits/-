@@ -274,7 +274,6 @@
         </div>
     </div>
 
-    <!-- مركز إدارة المتجر الشامل -->
     <div id="adminModal" class="modal-overlay">
         <div class="modal-content" style="max-width:650px;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:8px; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
@@ -573,7 +572,6 @@
         </div>
     </div>
 
-    <!-- نافذة تعديل الزبون (تشمل إدارة الديون وتسجيل الدفعات وتصحيح الرقم وحذف الزبون) -->
     <div id="adminEditCustomerModal" class="modal-overlay" style="z-index:1100;">
         <div class="modal-content" style="max-width:520px;">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">✏️ تعديل الزبون، الرتبة، وتصحيح الهاتف</h3>
@@ -624,9 +622,10 @@
                 <button onclick="saveAdminCustomerEdit()" class="btn" style="flex:2;">💾 حفظ التعديلات ورقم الهاتف</button>
                 <button onclick="adminDeleteCustomer()" class="btn btn-danger" style="flex:1; font-size:11px;">🗑️ حذف الزبون</button>
             </div>
-            <button onclick="closeModal('adminEditCustomerModal')" class="btn btn-danger" style="padding:5px; font-size:11px; margin-top:6px;">إلغاء</button>
+            <button onclick="closeModal('adminEditCustomerModal')" class="btn btn-danger" style="padding:5px; font-size:11px; margin-top:6px;">إغلاق</button>
         </div>
     </div>
+
     <script>
         const $ = id => document.getElementById(id);
         const setTxt = (id, v) => { const el = $(id); if (el) el.textContent = v; };
@@ -874,7 +873,7 @@
         }
 
         function saveQuickExchangeRate() {
-            const val = parseFloat($("quickExchangeInput"]?.value);
+            const val = parseFloat($("quickExchangeInput").value);
             if (!val || val <= 0) return alert("⚠️ أدخل سعر صرف صحيح.");
             exchangeRate = val;
             setVal("exchangeRateInput", val);
@@ -989,16 +988,16 @@
         function openEditProfile() { fillProfileInputs(); $("closeProfileBtn").style.display = "block"; $("profileModal").style.display = "flex"; }
 
         function saveUserProfile() {
-            const name = $("regName"].value.trim(), newPhone = $("regPhone"].value.trim().replace(/\s+/g, ""), region = $("regRegion"].value, address = $("regAddress"].value.trim());
-            if (!validatePhoneSyrian(newPhone)) { $("regPhoneError"].style.display = "block"; return alert("⚠️ الرقم يجب أن يتكون من 10 خانات ويبدأ بـ 09 حصراً."); }
-            $("regPhoneError"].style.display = "none";
+            const name = $("regName").value.trim(), newPhone = $("regPhone").value.trim().replace(/\s+/g, ""), region = $("regRegion").value, address = $("regAddress").value.trim();
+            if (!validatePhoneSyrian(newPhone)) { $("regPhoneError").style.display = "block"; return alert("⚠️ الرقم يجب أن يتكون من 10 خانات ويبدأ بـ 09 حصراً."); }
+            $("regPhoneError").style.display = "none";
             if (!name || !region || !address) return alert("⚠️ يرجى إدخال الاسم، المنطقة، وتفاصيل العنوان.");
 
             const oldPhone = currentUser?.phone || null;
             const prev = (oldPhone && users[oldPhone]) ? users[oldPhone] : (users[newPhone] || currentUser || {});
             if (prev.banned) return alert("🚫 عذراً، هذا الحساب محظور.");
 
-            const updatedData = { name, phone: newPhone, region, address, points: prev.points || 0, purchases: prev.purchases || {}, userType: prev.userType || "retail", pointsVisibility: $("regPointsVisibility"].value, banned: !!prev.banned, debtBook: prev.debtBook || {} };
+            const updatedData = { name, phone: newPhone, region, address, points: prev.points || 0, purchases: prev.purchases || {}, userType: prev.userType || "retail", pointsVisibility: $("regPointsVisibility").value, banned: !!prev.banned, debtBook: prev.debtBook || {} };
             if (oldPhone && oldPhone !== newPhone && users[oldPhone]) db.ref("users/" + oldPhone).remove();
 
             currentUser = updatedData;
@@ -1024,11 +1023,11 @@
             setTxt("userTypeBadge", isP ? "[شريك]" : (isD ? "[بيع بالآجل]" : (isN ? "[جيران المتجر]" : (isW ? "[جملة]" : "[مفرق]"))));
             setTxt("userPoints", pts);
             setTxt("compUserPoints", pts);
-            if ($("userRankBadge")) { $("userRankBadge"].style.display = rank !== "-" ? "inline-flex" : "none"; setTxt("userRankBadge", `🏅 ترتيبي: ${rank}`); }
+            if ($("userRankBadge")) { $("userRankBadge").style.display = rank !== "-" ? "inline-flex" : "none"; setTxt("userRankBadge", `🏅 ترتيبي: ${rank}`); }
             setTxt("compUserRankDisplay", rank !== "-" ? rank : "غير مصنف");
-            if ($("redeemPointsBtn")) $("redeemPointsBtn"].style.display = (pts >= (parseInt(compSettings.minRedeemPoints) || 500) && !currentUser.banned) ? "inline-block" : "none";
-            if ($("partnerDashboardBtn")) $("partnerDashboardBtn"].style.display = isP ? "inline-block" : "none";
-            if ($("debtBookBtn")) $("debtBookBtn"].style.display = isD ? "inline-block" : "none";
+            if ($("redeemPointsBtn")) $("redeemPointsBtn").style.display = (pts >= (parseInt(compSettings.minRedeemPoints) || 500) && !currentUser.banned) ? "inline-block" : "none";
+            if ($("partnerDashboardBtn")) $("partnerDashboardBtn").style.display = isP ? "inline-block" : "none";
+            if ($("debtBookBtn")) $("debtBookBtn").style.display = isD ? "inline-block" : "none";
         }
 
         function redeemPointsWhatsApp() {
@@ -1081,7 +1080,7 @@
             renderSpecialOffers();
             const grid = $("productsGrid");
             if (!grid) return;
-            const q = ($("searchInput"]?.value || "").trim().toLowerCase(), isW = currentUser?.userType === "wholesale";
+            const q = ($("searchInput").value || "").trim().toLowerCase(), isW = currentUser?.userType === "wholesale";
             const keys = shuffledProductKeys.length ? shuffledProductKeys : Object.keys(products);
             let html = "";
             keys.forEach(id => {
@@ -1135,7 +1134,7 @@
             if (nQty > item.stock) return alert("⚠️ الكمية المطلوبة غير متوفرة بالكامل بالمخزون!");
             if (nQty <= 0) delete cart[id]; else cart[id] = { ...item, qty: nQty };
             renderStore();
-            if ($("cartModal"]?.style.display === "flex") renderCartModalItems();
+            if ($("cartModal")?.style.display === "flex") renderCartModalItems();
         }
 
         function updateCartBar() {
@@ -1163,7 +1162,7 @@
         }
 
         function onCartRegionChange() {
-            const reg = $("cartRegionSelect"].value;
+            const reg = $("cartRegionSelect").value;
             if (!isRegionOpenNow(reg)) alert(`⚠️ تنبيه: منطقة (${reg}) مغلقة حالياً.`);
             if (currentUser?.phone) {
                 currentUser.region = reg; localStorage.setItem("moaath_user", JSON.stringify(currentUser));
@@ -1189,7 +1188,7 @@
                     return `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding:5px 0; font-size:11px;"><div><strong>${i.name}</strong><br><span style="color:var(--gray-text);">${u.toLocaleString()} ل.س × ${i.qty} = ${s.toLocaleString()} ل.س</span></div><div class="qty-controls" style="width:75px;"><button class="qty-btn" type="button" onclick="changeQty('${i.id}',1)" style="width:24px; height:24px; font-size:13px;">+</button><span class="qty-text" style="font-size:12px;">${i.qty}</span><button class="qty-btn" type="button" onclick="changeQty('${i.id}',-1)" style="width:24px; height:24px; font-size:13px;">-</button></div></div>`;
                 }).join("");
             }
-            const reg = $("cartRegionSelect"]?.value || currentUser?.region || Object.keys(deliveryFees)[0] || "العوينة", fee = getRegionFee(reg);
+            const reg = $("cartRegionSelect")?.value || currentUser?.region || Object.keys(deliveryFees)[0] || "العوينة", fee = getRegionFee(reg);
             setTxt("modalCartSubtotal", sub.toLocaleString());
             setTxt("modalDeliveryRegionName", reg);
             setTxt("modalDeliveryFee", fee.toLocaleString());
@@ -1200,7 +1199,7 @@
         function submitOrder() {
             if (!checkStoreWorkHours()) return;
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.address) { closeModal('cartModal'); return openEditProfile(); }
-            const reg = $("cartRegionSelect"]?.value || currentUser.region || Object.keys(deliveryFees)[0] || "العوينة";
+            const reg = $("cartRegionSelect")?.value || currentUser.region || Object.keys(deliveryFees)[0] || "العوينة";
             if (!isRegionOpenNow(reg)) return alert(`⚠️ أوقات التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
             if (users[currentUser.phone]?.banned) return alert("🚫 حسابك محظور.");
             const items = Object.values(cart); if (!items.length) return;
@@ -1215,7 +1214,7 @@
             const orderPayload = {
                 orderId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
                 customerName: currentUser.name, customerPhone: currentUser.phone, customerRegion: reg, customerAddress: currentUser.address,
-                paymentMethod: "شام كاش (Sham Cash)", notes: ($("orderNotes"]?.value || "").trim(), items: ordItems,
+                paymentMethod: "شام كاش (Sham Cash)", notes: ($("orderNotes").value || "").trim(), items: ordItems,
                 subtotalSaleSYP: subSale, deliveryFeeSYP: fee, totalSaleSYP: finalTotalSYP, totalCostSYP: totCost, netProfitSYP: subSale - totCost, earnedPoints: totPts, status: "pending"
             };
             db.ref("pendingOrders/" + orderId).set(orderPayload);
@@ -1227,7 +1226,7 @@
         function openReviewModal(id) { if (!products[id]) return; setVal("reviewProductId", id); setTxt("reviewProductName", products[id].name); setVal("reviewCommentInput", ""); $("reviewModal").style.display = "flex"; }
         function submitProductReview() {
             if (!currentUser?.phone || currentUser.banned) return;
-            const id = $("reviewProductId"].value, rating = parseInt($("reviewRatingSelect"].value) || 5, comment = $("reviewCommentInput"].value.trim();
+            const id = $("reviewProductId").value, rating = parseInt($("reviewRatingSelect").value) || 5, comment = $("reviewCommentInput").value.trim();
             if (!comment) return alert("يرجى كتابة تعليق.");
             db.ref(`products/${id}/reviews/REV_${Date.now()}`).set({ customerName: currentUser.name, customerPhone: currentUser.phone, rating, comment, timestamp: new Date().toLocaleDateString("ar-SY") }).then(() => { alert("✅ تم نشر تقييمك!"); closeModal('reviewModal'); });
         }
@@ -1281,15 +1280,15 @@
             setTxt("partnerTotalStockUnits", m.totalStockUnits + " قطعة");
 
             const pEntries = Object.entries(m.partnerItemsMap);
-            $("partnerItemsBreakdown"].innerHTML = !pEntries.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد مبيعات جديدة منذ آخر تسوية.</p>` :
+            $("partnerItemsBreakdown").innerHTML = !pEntries.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد مبيعات جديدة منذ آخر تسوية.</p>` :
                 `<div style="overflow-x:auto;"><table class="tbl-clean"><thead><tr><th style="text-align:right;">الصنف</th><th>التصنيف</th><th>المخزون</th><th>المباع</th><th>المبيعات</th><th>ربحك (${m.partnerPct}%)</th></tr></thead><tbody>` +
                 pEntries.map(([name, d]) => `<tr><td style="font-weight:bold; text-align:right;">${name}</td><td style="color:var(--gray-text);">${d.cat}</td><td style="color:${d.stock > 0 ? 'var(--gold-color)' : 'var(--danger-color)'}; font-weight:bold;">${d.stock}</td><td>${d.qtySold}</td><td>${d.sales.toLocaleString()}</td><td style="color:var(--success-color); font-weight:bold;">${d.earn.toLocaleString()} ل.س</td></tr>`).join("") + `</tbody></table></div>`;
 
             const hist = Object.values(m.conf.payoutHistory || {}).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
-            $("partnerPayoutHistoryList"].innerHTML = !hist.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد دفعات مستلمة سابقة في السجل.</p>` :
+            $("partnerPayoutHistoryList").innerHTML = !hist.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد دفعات مستلمة سابقة في السجل.</p>` :
                 hist.map(h => `<div class="leader-row"><span>📅 ${h.dateStr}</span><span style="color:var(--success-color); font-weight:bold;">✅ تم استلام: ${(h.amountSYP || 0).toLocaleString()} ل.س</span></div>`).join("");
 
-            if ($("partnerModal")) $("partnerModal"].style.display = "block";
+            if ($("partnerModal")) $("partnerModal").style.display = "block";
         }
 
         function requestPartnerEarningsWhatsApp() {
@@ -1302,7 +1301,7 @@
         }
 
         function settlePartnerEarningsByAdmin(targetPhone) {
-            const phone = targetPhone || $("adminPartnerSelect"]?.value;
+            const phone = targetPhone || $("adminPartnerSelect")?.value;
             if (!phone) return alert("⚠️ يرجى اختيار الشريك أولاً.");
             const m = calculatePartnerCurrentMetrics(phone);
             const partnerName = users[phone]?.name || phone;
@@ -1320,7 +1319,7 @@
         }
 
         function saveManagersSplitPct() {
-            const pct = Math.min(100, Math.max(0, parseFloat($("importManagerPctInput"]?.value) || 50));
+            const pct = Math.min(100, Math.max(0, parseFloat($("importManagerPctInput")?.value) || 50));
             db.ref("adminAccounting/importManagerPct").set(pct);
         }
 
@@ -1330,7 +1329,7 @@
         }
 
         function addStoreExpense() {
-            const title = $("expTitleInput"].value.trim(), amount = parseInt($("expAmountInput"].value) || 0;
+            const title = $("expTitleInput").value.trim(), amount = parseInt($("expAmountInput").value) || 0;
             if (!title || amount <= 0) return alert("⚠️ يرجى كتابة سبب المصروف والمبلغ بالليرة.");
             const id = "EXP_" + Date.now();
             db.ref("storeExpenses/" + id).set({ id, title, amountSYP: amount, dateISO: new Date().toISOString(), dateStr: new Date().toLocaleDateString("ar-SY") }).then(() => {
@@ -1387,9 +1386,9 @@
             db.ref().update(updates).then(() => { alert("✅ تم تصفير نقاط جميع الزبائن بنجاح!"); renderLeaderboard(); });
         }
 
-        function openMissingRequestModal() { setVal("missingItemName", ""); $("missingModal"].style.display = "flex"; }
+        function openMissingRequestModal() { setVal("missingItemName", ""); $("missingModal").style.display = "flex"; }
         function submitMissingRequest() {
-            const itemName = $("missingItemName"].value.trim(); if (!itemName) return alert("يرجى كتابة اسم الصنف.");
+            const itemName = $("missingItemName").value.trim(); if (!itemName) return alert("يرجى كتابة اسم الصنف.");
             db.ref("missingRequests").push({ itemName, customerName: currentUser ? currentUser.name : "زائر", customerPhone: currentUser ? currentUser.phone : "-", createdAt: Date.now() });
             closeModal("missingModal"); alert("✅ تم إرسال طلبك للإدارة!");
         }
@@ -1407,7 +1406,7 @@
             if (adminClickCount >= 5) {
                 adminClickCount = 0;
                 if (localStorage.getItem("moaath_admin_unlocked") === "true") {
-                    $("adminModal"].style.display = "flex";
+                    $("adminModal").style.display = "flex";
                     renderStatsDashboard(); populateAdminPartnerSelect(); populatePartnerSelectOptions();
                     return;
                 }
@@ -1415,7 +1414,7 @@
                 if (pass === null) return;
                 if (verifyAdminPass(pass.trim())) {
                     localStorage.setItem("moaath_admin_unlocked", "true");
-                    $("adminModal"].style.display = "flex";
+                    $("adminModal").style.display = "flex";
                     renderStatsDashboard(); populateAdminPartnerSelect(); populatePartnerSelectOptions();
                 } else alert("❌ كلمة المرور غير صحيحة!");
             } else adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 1800);
@@ -1427,8 +1426,8 @@
             alert("🔒 تم قفل الإدارة بنجاح. سيتم طلب كلمة المرور عند الدخول القادم.");
         }
 
-        $("adminTrigger"]?.addEventListener("click", handleAdminTrigger);
-        $("closedAdminTrigger"]?.addEventListener("click", handleAdminTrigger);
+        $("adminTrigger")?.addEventListener("click", handleAdminTrigger);
+        $("closedAdminTrigger")?.addEventListener("click", handleAdminTrigger);
 
         function switchAdminTab(tabId, btn) {
             document.querySelectorAll(".admin-tab").forEach(t => t.style.display = "none");
