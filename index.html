@@ -114,6 +114,7 @@
         </span>
         <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
             <button id="partnerDashboardBtn" onclick="openPartnerDashboard()" style="display:none; background:linear-gradient(45deg,#00b0ff,#7c4dff); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">🤝 لوحة الشريك</button>
+            <button id="debtBookBtn" onclick="openDebtBookModal()" style="display:none; background:linear-gradient(45deg,#ff9800,#f57c00); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📖 دفتر الدين</button>
             <button onclick="shareAppWhatsApp()" style="background:linear-gradient(45deg,#25D366,#128C7E); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📢 مشاركة</button>
             <button id="redeemPointsBtn" onclick="redeemPointsWhatsApp()" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer; animation:pulse 1.5s infinite;">🎁 استبدال</button>
             <button onclick="toggleTheme()" id="themeBtn" style="background:transparent; border:none; font-size:16px; cursor:pointer; padding:0;">☀️</button>
@@ -137,6 +138,31 @@
             <span style="font-size:12px;">المجموع النهائي: <strong id="cartTotal" class="cart-bar-total-val">0 ل.س</strong></span>
         </div>
         <button class="cart-bar-btn" type="button" onclick="event.stopPropagation(); openCartModal();">🛒 إتمام الطلب الآن</button>
+    </div>
+
+    <!-- نافذة دفتر الدين للزبون (قراءة فقط) -->
+    <div id="debtBookModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">📖 دفتر الدين والحساب (قراءة فقط)</h3>
+            <div class="adm-card" style="text-align:center; margin-bottom:12px;">
+                <div style="font-size:11px; color:var(--gray-text);">إجمالي الرصيد المتبقي بذمتك:</div>
+                <div style="font-size:18px; font-weight:bold; color:var(--danger-color); margin:4px 0;"><span id="customerTotalDebtUSD">0.00</span> $ <small style="font-size:12px; color:var(--gold-color);">(<span id="customerTotalDebtSYP">0</span> ل.س)</small></div>
+            </div>
+            <h4 style="color:var(--gold-color); margin:0 0 6px 0; font-size:12px;">سجل الحركات السابقة والديون:</h4>
+            <div id="customerDebtTransactionsList" style="max-height:220px; overflow-y:auto; margin-bottom:12px;"></div>
+            <button onclick="closeModal('debtBookModal')" class="btn btn-danger" style="padding:7px; font-size:11px;">إغلاق</button>
+        </div>
+    </div>
+
+    <!-- نافذة مدير التصدير (استلام وإقرار الطلبات) -->
+    <div id="exporterModal" class="modal-overlay" style="z-index:1100;">
+        <div class="modal-content" style="max-width:550px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:8px; margin-bottom:10px;">
+                <h3 style="color:var(--gold-color); margin:0; font-size:15px;">📤 لوحة مدير التصدير (استلام الطلبات)</h3>
+                <button onclick="closeModal('exporterModal')" class="btn btn-danger" style="width:auto; padding:4px 10px;">✖ خروج</button>
+            </div>
+            <div id="exporterOrdersList"></div>
+        </div>
     </div>
 
     <div id="profileModal" class="modal-overlay">
@@ -479,7 +505,7 @@
             <!-- 4. تبويب الزبائن والشركاء والمسابقات -->
             <div id="admTabUsersPartners" class="admin-tab" style="display:none;">
                 <div class="adm-sec">
-                    <div class="adm-sec-title"><span>👥 سجل الزبائن وتحديد الرتب (مفرق / جملة / جيران / شريك)</span></div>
+                    <div class="adm-sec-title"><span>👥 سجل الزبائن وتحديد الرتب (مفرق / جملة / جيران / شريك / آجل)</span></div>
                     <input type="text" id="adminSearchCust" class="search-box" placeholder="🔍 ابحث بالاسم أو الهاتف..." oninput="renderAdminCustomers()" style="margin-bottom:8px;">
                     <div id="adminCustomersList" style="max-height:230px; overflow-y:auto;"></div>
                 </div>
@@ -564,25 +590,60 @@
         </div>
     </div>
 
+    <!-- نافذة تعديل الزبون (تشمل إدارة الديون وتسجيل الدفعات وتصحيح الرقم وحذف الزبون) -->
     <div id="adminEditCustomerModal" class="modal-overlay" style="z-index:1100;">
-        <div class="modal-content">
-            <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">✏️ تعديل بيانات الزبون والرتبة</h3>
+        <div class="modal-content" style="max-width:520px;">
+            <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">✏️ تعديل الزبون، الرتبة، وتصحيح الهاتف</h3>
             <input type="hidden" id="adminCustOrigPhone">
-            <div class="form-group"><label>الاسم:</label><input type="text" id="adminCustName" class="form-control"></div>
-            <div class="form-group"><label>الهاتف:</label><input type="text" id="adminCustPhone" class="form-control" disabled style="opacity:0.7;"></div>
-            <div class="form-group"><label>المنطقة:</label><select id="adminCustRegion" class="form-control"></select></div>
-            <div class="form-group">
-                <label>نوع الحساب (يحدد من الإدارة حصراً):</label>
-                <select id="adminCustType" class="form-control">
-                    <option value="retail">زبون مفرق عادي</option>
-                    <option value="wholesale">زبون جملة</option>
-                    <option value="neighbors">جيران المتجر (سعر مفرق + توصيل خاص)</option>
-                    <option value="partner">شريك (له لوحة أرباح ومخزون خاصة)</option>
-                </select>
+            <div class="stats-grid">
+                <div class="form-group"><label>الاسم:</label><input type="text" id="adminCustName" class="form-control"></div>
+                <div class="form-group"><label>رقم الهاتف (قابل للتصحيح):</label><input type="text" id="adminCustPhone" class="form-control"></div>
             </div>
-            <div class="form-group"><label>العنوان:</label><input type="text" id="adminCustAddress" class="form-control"></div>
-            <div class="form-group"><label>النقاط:</label><input type="number" id="adminCustPoints" class="form-control"></div>
-            <div style="display:flex; gap:8px;"><button onclick="saveAdminCustomerEdit()" class="btn">💾 حفظ التعديلات</button><button onclick="closeModal('adminEditCustomerModal')" class="btn btn-danger" style="width:35%;">إلغاء</button></div>
+            <div class="stats-grid">
+                <div class="form-group"><label>المنطقة:</label><select id="adminCustRegion" class="form-control"></select></div>
+                <div class="form-group">
+                    <label>نوع الحساب:</label>
+                    <select id="adminCustType" class="form-control">
+                        <option value="retail">زبون مفرق</option>
+                        <option value="wholesale">زبون جملة</option>
+                        <option value="neighbors">جيران المتجر</option>
+                        <option value="partner">شريك</option>
+                        <option value="debtor">زبون بيع بالآجل (دين)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group"><label>العنوان بالتفصيل:</label><input type="text" id="adminCustAddress" class="form-control"></div>
+            <div class="stats-grid">
+                <div class="form-group"><label>النقاط:</label><input type="number" id="adminCustPoints" class="form-control"></div>
+                <div class="form-group"><label>الرصيد الدفتري الحالي ($):</label><input type="text" id="adminCustDebtDisplay" class="form-control" disabled style="color:var(--danger-color); font-weight:bold;"></div>
+            </div>
+
+            <!-- قسم إدارة دفتر الدين للزبون الآجل من الإدارة -->
+            <div class="adm-card" style="border-color:#ff9800; background:rgba(255,152,0,0.06); margin:10px 0;">
+                <div style="color:#ff9800; font-weight:bold; font-size:12px; margin-bottom:6px;">📖 دفتر الدين وإدارة الدفعات:</div>
+                <div style="display:flex; gap:5px; margin-bottom:6px; flex-wrap:wrap;">
+                    <input type="text" id="adminDebtNoteInput" class="form-control" placeholder="بيان الدفعة أو العملية..." style="flex:2; min-width:120px; padding:6px;">
+                    <input type="number" step="0.01" id="adminDebtAmountInput" class="form-control" placeholder="المبلغ ($)" style="flex:1; min-width:80px; padding:6px;">
+                    <button onclick="adminAddDebtTransaction('payment')" class="btn" style="width:auto; padding:6px 10px; font-size:11px; background:var(--success-color); color:#000;">💵 تسجيل تسديد دفعة</button>
+                    <button onclick="adminAddDebtTransaction('charge')" class="btn" style="width:auto; padding:6px 10px; font-size:11px; background:var(--danger-color); color:#fff;">➕ إضافة دين</button>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                    <button onclick="adminClearCustomerDebt()" class="btn btn-danger" style="width:auto; padding:4px 10px; font-size:10px;">🔄 تصفير الحساب بالكامل</button>
+                    <small style="color:var(--gray-text);">الدين مسعر بالدولار الأمريكي ويُعرض للزبون بعملتيه.</small>
+                </div>
+            </div>
+
+            <!-- سجل نشاط الزبون: الطلبات الكاملة والملغاة -->
+            <div class="adm-card" style="margin:10px 0;">
+                <div style="color:var(--gold-color); font-weight:bold; font-size:12px; margin-bottom:4px;">📊 سجل نشاط الزبون:</div>
+                <div id="adminCustomerActivityLog" style="font-size:11px; color:var(--gray-text); line-height:1.5;">جاري التحميل...</div>
+            </div>
+
+            <div style="display:flex; gap:8px; margin-top:12px;">
+                <button onclick="saveAdminCustomerEdit()" class="btn" style="flex:2;">💾 حفظ التعديلات ورقم الهاتف</button>
+                <button onclick="adminDeleteCustomer()" class="btn btn-danger" style="flex:1; font-size:11px;">🗑️ حذف الزبون</button>
+            </div>
+            <button onclick="closeModal('adminEditCustomerModal')" class="btn btn-danger" style="padding:5px; font-size:11px; margin-top:6px;">إغلاق</button>
         </div>
     </div>
     <script>
@@ -593,7 +654,6 @@
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
         let adminWhatsAppNumber = "963965461504", shamWalletIdGlobal = "da3e13cd8a2ef2af282445e148df9599";
-        // مصفوفة التحقق المشفرة (Bitwise XOR) لإخفاء كلمة المرور نهائياً من الكود المصدري
         const _K = [102,99,106,107,26,18,18,28,4,4,102,100,106,106,127,99,120];
         const verifyAdminPass = s => typeof s === "string" && s.length === _K.length && _K.every((v, i) => (s.charCodeAt(i) ^ 43) === v);
 
@@ -659,7 +719,7 @@
             history.pushState({ page: 'store_home' }, '');
             window.addEventListener('popstate', () => {
                 if (isExitingApp) return;
-                for (let id of ['cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal', 'competitionsPage']) {
+                for (let id of ['cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal', 'competitionsPage', 'debtBookModal', 'exporterModal']) {
                     const el = $(id);
                     if (el && (el.style.display === 'flex' || el.style.display === 'block')) {
                         el.style.display = 'none';
@@ -957,7 +1017,7 @@
             const prev = (oldPhone && users[oldPhone]) ? users[oldPhone] : (users[newPhone] || currentUser || {});
             if (prev.banned) return alert("🚫 عذراً، هذا الحساب محظور.");
 
-            const updatedData = { name, phone: newPhone, region, address, points: prev.points || 0, purchases: prev.purchases || {}, userType: prev.userType || "retail", pointsVisibility: $("regPointsVisibility").value, banned: !!prev.banned };
+            const updatedData = { name, phone: newPhone, region, address, points: prev.points || 0, purchases: prev.purchases || {}, userType: prev.userType || "retail", pointsVisibility: $("regPointsVisibility").value, banned: !!prev.banned, debtBook: prev.debtBook || {} };
             if (oldPhone && oldPhone !== newPhone && users[oldPhone]) db.ref("users/" + oldPhone).remove();
 
             currentUser = updatedData;
@@ -979,14 +1039,15 @@
             const pts = Math.round(currentUser.points || 0), rank = calculateUserRank(currentUser.phone);
             setTxt("userNameDisplay", currentUser.name);
             setTxt("userRegionBadge", currentUser.region ? `(${currentUser.region})` : "");
-            const isW = currentUser.userType === "wholesale", isN = currentUser.userType === "neighbors", isP = currentUser.userType === "partner";
-            setTxt("userTypeBadge", isP ? "[شريك]" : (isN ? "[جيران المتجر]" : (isW ? "[جملة]" : "[مفرق]")));
+            const isW = currentUser.userType === "wholesale", isN = currentUser.userType === "neighbors", isP = currentUser.userType === "partner", isD = currentUser.userType === "debtor";
+            setTxt("userTypeBadge", isP ? "[شريك]" : (isD ? "[بيع بالآجل]" : (isN ? "[جيران المتجر]" : (isW ? "[جملة]" : "[مفرق]"))));
             setTxt("userPoints", pts);
             setTxt("compUserPoints", pts);
             if ($("userRankBadge")) { $("userRankBadge").style.display = rank !== "-" ? "inline-flex" : "none"; setTxt("userRankBadge", `🏅 ترتيبي: ${rank}`); }
             setTxt("compUserRankDisplay", rank !== "-" ? rank : "غير مصنف");
             if ($("redeemPointsBtn")) $("redeemPointsBtn").style.display = (pts >= (parseInt(compSettings.minRedeemPoints) || 500) && !currentUser.banned) ? "inline-block" : "none";
             if ($("partnerDashboardBtn")) $("partnerDashboardBtn").style.display = isP ? "inline-block" : "none";
+            if ($("debtBookBtn")) $("debtBookBtn").style.display = isD ? "inline-block" : "none";
         }
 
         function redeemPointsWhatsApp() {
@@ -996,6 +1057,28 @@
 
         function shareAppWhatsApp() {
             window.open(`https://wa.me/?text=${encodeURIComponent(`🌸 تفضل بزيارة تطبيق *متجر معاذ* في قرية العوينة بريف حماة لتسوق كافة المواد الغذائية والمنزلية عبر الرابط التالي:\nhttps://moaathallii-commits.github.io/-/`)}`, "_blank");
+        }
+
+        // نافذة دفتر الدين للزبون الآجل (قراءة فقط)
+        function openDebtBookModal() {
+            if (!currentUser || currentUser.userType !== "debtor") return;
+            const book = currentUser.debtBook || {};
+            let totalUSD = 0;
+            const list = Object.values(book).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
+            list.forEach(tx => {
+                if (tx.type === 'charge') totalUSD += (parseFloat(tx.amountUSD) || 0);
+                else if (tx.type === 'payment') totalUSD -= (parseFloat(tx.amountUSD) || 0);
+            });
+            totalUSD = Math.max(0, totalUSD);
+            setTxt("customerTotalDebtUSD", totalUSD.toFixed(2));
+            setTxt("customerTotalDebtSYP", calcSYP(totalUSD).toLocaleString());
+
+            $("customerDebtTransactionsList").innerHTML = !list.length ? `<div style="text-align:center; color:var(--gray-text); font-size:11px;">لا توجد حركات دين مسجلة بعد.</div>` :
+                list.map(tx => {
+                    const isCharge = tx.type === 'charge';
+                    return `<div class="leader-row" style="padding:6px 8px;"><span><b>${tx.note}</b><br><small style="color:var(--gray-text);">${tx.dateStr}</small></span><span style="color:${isCharge ? 'var(--danger-color)' : 'var(--success-color)'}; font-weight:bold;">${isCharge ? '+' : '-'}${parseFloat(tx.amountUSD || 0).toFixed(2)} $</span></div>`;
+                }).join("");
+            $("debtBookModal").style.display = "flex";
         }
 
         const renderCategories = () => { if ($("categoriesContainer")) $("categoriesContainer").innerHTML = categories.map(c => `<button class="cat-btn ${c === selectedCategory ? 'active' : ''}" onclick="selectCategory('${c}')">${c}</button>`).join(""); };
@@ -1137,7 +1220,7 @@
         function submitOrder() {
             if (!checkStoreWorkHours()) return;
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.address) { closeModal('cartModal'); return openEditProfile(); }
-            const reg = $("cartRegionSelect")?.value || currentUser.region || Object.keys(deliveryFees)[0] || "العوينة";
+            const reg = $("cartRegionSelect"]?.value || currentUser.region || Object.keys(deliveryFees)[0] || "العوينة";
             if (!isRegionOpenNow(reg)) return alert(`⚠️ أوقات التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
             if (users[currentUser.phone]?.banned) return alert("🚫 حسابك محظور.");
             const items = Object.values(cart); if (!items.length) return;
@@ -1146,22 +1229,19 @@
             const ordItems = items.map(i => {
                 const uS = calcSYP(i.priceUSD), uC = calcSYP(i.costPrice || 0), sS = uS * i.qty, sC = uC * i.qty;
                 subSale += sS; totCost += sC; totPts += Math.round((i.priceUSD * i.qty) * (i.pointsPct || 2));
-                return { id: i.id, name: i.name, category: i.category || "غير مصنف", qty: i.qty, unitSaleSYP: uS, unitCostSYP: uC, subSaleSYP: sS, subCostSYP: sC, netProfitSYP: sS - sC };
+                return { id: i.id, name: i.name, category: i.category || "غير مصنف", qty: i.qty, unitSaleSYP: uS, unitCostSYP: uC, subSaleSYP: sS, subCostSYP: sC, netProfitSYP: sS - sC, priceUSD: i.priceUSD };
             });
             const finalTotalSYP = subSale + fee, orderId = "ORD_" + Date.now();
             const orderPayload = {
                 orderId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
                 customerName: currentUser.name, customerPhone: currentUser.phone, customerRegion: reg, customerAddress: currentUser.address,
                 paymentMethod: "شام كاش (Sham Cash)", notes: ($("orderNotes")?.value || "").trim(), items: ordItems,
-                subtotalSaleSYP: subSale, deliveryFeeSYP: fee, totalSaleSYP: finalTotalSYP, totalCostSYP: totCost, netProfitSYP: subSale - totCost, earnedPoints: totPts
+                subtotalSaleSYP: subSale, deliveryFeeSYP: fee, totalSaleSYP: finalTotalSYP, totalCostSYP: totCost, netProfitSYP: subSale - totCost, earnedPoints: totPts, status: "pending"
             };
-            let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n👤 الزبون: ${orderPayload.customerName}\n📱 الهاتف: ${orderPayload.customerPhone}\n🏘️ المنطقة: ${orderPayload.customerRegion}\n📍 العنوان: ${orderPayload.customerAddress}\n💳 الدفع: شام كاش\n`;
-            if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}\n`;
-            msg += `──────────────\n` + ordItems.map(i => `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س`).join("\n") + `\n──────────────\n📦 قيمة المواد: ${subSale.toLocaleString()} ل.س\n🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${finalTotalSYP.toLocaleString()} ل.س\n🎁 النقاط: +${totPts}`;
             db.ref("pendingOrders/" + orderId).set(orderPayload);
             cart = {}; setVal("orderNotes", "");
             closeModal('cartModal'); renderStore();
-            window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
+            alert("✅ تم إرسال طلبك بنجاح! سيتم مراجعته وتأكيده من الإدارة قريباً.");
         }
 
         function openReviewModal(id) { if (!products[id]) return; setVal("reviewProductId", id); setTxt("reviewProductName", products[id].name); setVal("reviewCommentInput", ""); $("reviewModal").style.display = "flex"; }
@@ -1259,7 +1339,7 @@
         }
 
         function saveManagersSplitPct() {
-            const pct = Math.min(100, Math.max(0, parseFloat($("importManagerPctInput")?.value) || 50));
+            const pct = Math.min(100, Math.max(0, parseFloat($("importManagerPctInput"]?.value) || 50));
             db.ref("adminAccounting/importManagerPct").set(pct);
         }
 
@@ -1269,7 +1349,7 @@
         }
 
         function addStoreExpense() {
-            const title = ($("expTitleInput")?.value || "").trim(), amount = parseInt($("expAmountInput")?.value) || 0;
+            const title = $("expTitleInput").value.trim(), amount = parseInt($("expAmountInput").value) || 0;
             if (!title || amount <= 0) return alert("⚠️ يرجى كتابة سبب المصروف والمبلغ بالليرة.");
             const id = "EXP_" + Date.now();
             db.ref("storeExpenses/" + id).set({ id, title, amountSYP: amount, dateISO: new Date().toISOString(), dateStr: new Date().toLocaleDateString("ar-SY") }).then(() => {
@@ -1340,7 +1420,7 @@
                 entries.map(([id, r]) => `<div class="review-box"><div><b>${r.itemName}</b> <small>(${r.customerName} - ${r.customerPhone})</small></div><button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="db.ref('missingRequests/${id}').remove()">✖</button></div>`).join("");
         }
 
-        // نظام 5 ضغطات على الشعار + تشفير كلمة المرور + حفظ الجلسة بعد أول دخول
+        // نظام 5 ضغطات على الشعار + تشفير كلمة المرور + حفظ الجلسة
         let adminClickCount = 0, adminClickTimer = null;
         function handleAdminTrigger() {
             adminClickCount++; clearTimeout(adminClickTimer);
@@ -1388,22 +1468,66 @@
             }).join("");
         }
 
+        // تأكيد الطلب وتوثيقه مع التسجيل التلقائي للديون إذا كان الزبون آجلاً (مع صياغة الواتساب المحدثة)
         function confirmOrder(orderId) {
             const o = pendingOrders[orderId]; if (!o) return;
             (o.items || []).forEach(i => {
                 if (i.id.startsWith("OFFER_") && specialOffers[i.id]) db.ref(`specialOffers/${i.id}/stock`).set(Math.max(0, (parseInt(specialOffers[i.id].stock) || 0) - i.qty));
                 else if (products[i.id]) db.ref(`products/${i.id}/stock`).set(Math.max(0, (parseInt(products[i.id].stock) || 0) - i.qty));
             });
-            const phone = o.customerPhone, purch = users[phone]?.purchases || {};
+            const phone = o.customerPhone, uData = users[phone] || {}, purch = uData.purchases || {};
             (o.items || []).forEach(i => { if (!i.id.startsWith("OFFER_")) purch[i.id] = true; });
-            const upPts = (users[phone]?.points || 0) + (o.earnedPoints || 0);
-            db.ref(`users/${phone}`).update({ name: o.customerName, phone, region: o.customerRegion, address: o.customerAddress, points: upPts, purchases: purch });
-            db.ref("completedOrdersHistory/" + orderId).set(o); db.ref("pendingOrders/" + orderId).remove();
-            window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(`مرحباً ${o.customerName} 🌸\nتم تأكيد طلبك في *متجر معاذ* وجاري توصيله إلى (${o.customerRegion})!\n💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س\n🎁 نقاطك الحالية: ${upPts}`)}`, "_blank");
-            if (deliveryDriverPhone) setTimeout(() => window.open(`https://wa.me/${formatWhatsAppPhone(deliveryDriverPhone)}?text=${encodeURIComponent(`🛵 *طلب توصيل - متجر معاذ*\n👤 الزبون: ${o.customerName}\n📱 الهاتف: ${o.customerPhone}\n🏘️ المنطقة: ${o.customerRegion}\n📍 العنوان: ${o.customerAddress}\n💵 *المطلوب تحصيله:* ${o.totalSaleSYP.toLocaleString()} ل.س`)}`, "_blank"), 700);
+            const upPts = (uData.points || 0) + (o.earnedPoints || 0);
+
+            let updates = {};
+            updates[`users/${phone}/name`] = o.customerName;
+            updates[`users/${phone}/phone`] = phone;
+            updates[`users/${phone}/region`] = o.customerRegion;
+            updates[`users/${phone}/address`] = o.customerAddress;
+            updates[`users/${phone}/points`] = upPts;
+            updates[`users/${phone}/purchases`] = purch;
+
+            // التسجيل التلقائي للديون إذا كان الزبون آجلاً (زبون بيع بالآجل)
+            if (uData.userType === 'debtor') {
+                const totalUSD = (o.totalSaleSYP || 0) / exchangeRate;
+                const txId = "TX_" + Date.now();
+                updates[`users/${phone}/debtBook/${txId}`] = {
+                    id: txId,
+                    type: 'charge',
+                    amountUSD: parseFloat(totalUSD.toFixed(2)),
+                    note: `فاتورة طلب #${orderId.substring(4)}`,
+                    dateStr: new Date().toLocaleString("ar-SY"),
+                    dateISO: new Date().toISOString()
+                };
+            }
+
+            db.ref().update(updates);
+            db.ref("completedOrdersHistory/" + orderId).set({ ...o, status: "completed" });
+            db.ref("pendingOrders/" + orderId).remove();
+
+            // رسالة واتساب للزبون مع رقم السائق وتنبيه الدفع الصارم
+            const driverInfo = deliveryDriverPhone ? `\n🛵 هاتف عامل التوصيل: *${deliveryDriverPhone}*` : "";
+            const msg = `مرحباً ${o.customerName} 🌸\nتم تأكيد طلبك في *متجر معاذ* وجاري تجهيزه للتوصيل إلى (${o.customerRegion})!${driverInfo}\n💰 الإجمالي المطلوب: *${o.totalSaleSYP.toLocaleString()} ل.س*\n\n🚫 *تنبيه هام جداً:* الإدارة لن تستلم الطلب ولن يتم تسليمه إلا بعد إرسال صورة إشعار تحويل المبلغ المطلوب كاملاً عبر شام كاش.\nشكراً لتعاونكم وثقتكم بنا 🌸`;
+            window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
-        function cancelOrder(id) { if (confirm("إلغاء هذه الفاتورة؟")) db.ref("pendingOrders/" + id).remove(); }
+        // إلغاء الطلب (مع حفظه في سجل الملغيات للزبون)
+        function cancelOrder(id) {
+            if (!confirm("هل تريد إلغاء هذه الفاتورة؟")) return;
+            const o = pendingOrders[id];
+            if (o) {
+                const phone = o.customerPhone;
+                if (users[phone]) {
+                    const cancelId = "CANC_" + Date.now();
+                    db.ref(`users/${phone}/cancelledOrders/${cancelId}`).set({
+                        orderId: id, total: o.totalSaleSYP, dateStr: new Date().toLocaleString("ar-SY")
+                    });
+                }
+                db.ref("completedOrdersHistory/" + id).set({ ...o, status: "cancelled" });
+                db.ref("pendingOrders/" + id).remove();
+            }
+        }
+
         function cancelAllPendingOrders() {
             const cnt = Object.keys(pendingOrders || {}).length;
             if (!cnt) return alert("ℹ️ لا توجد طلبات معلقة.");
@@ -1441,7 +1565,7 @@
         }
 
         function loadPartnerConfig() {
-            const phone = $("adminPartnerSelect")?.value;
+            const phone = $("adminPartnerSelect"]?.value;
             populatePartnerSelectOptions();
             const histBox = $("adminPartnerPayoutHistory");
             if (!phone || !window.partnersConfigData?.[phone]) {
@@ -1476,13 +1600,17 @@
             }).then(() => alert(`✅ تم حفظ إعدادات الشريك بنجاح!`));
         }
 
+        // صياغة رسالة الموزع بوحدات القياس (طرد، كيس، كيلو، لتر...)
         function sendSupplierShortagesWhatsApp(suppId) {
             const supp = suppliers[suppId]; if (!supp?.phone) return alert("⚠️ هذا الموزع ليس لديه رقم هاتف مسجل.");
             const list = Object.values(products).filter(p => p && p.supplierId === suppId && (parseInt(p.stock) || 0) <= (parseInt(p.alertLimit) || 2));
             if (!list.length) return alert("✅ لا توجد نواقص لهذا الموزع.");
-            let msg = `📋 *فاتورة طلب توريد بضائع - متجر معاذ*\n👤 السادة: *${supp.name}*\n📅 التاريخ: ${new Date().toLocaleDateString("ar-SY")}\n──────────────\n`;
-            list.forEach((p, idx) => { msg += `${idx + 1}. *${p.name}* (المتبقي لدينا: ${p.stock})\n`; });
-            msg += `──────────────\nيرجى تأكيد الطلب وتزويدنا بالأصناف المذكورة 🌸`;
+            let msg = `📋 *طلب توريد بضائع - متجر معاذ*\n👤 السادة: *${supp.name}*\n📅 التاريخ: ${new Date().toLocaleDateString("ar-SY")}\n──────────────\n`;
+            list.forEach((p, idx) => {
+                const needed = Math.max(1, (p.alertLimit || 2) * 3 - (p.stock || 0));
+                msg += `${idx + 1}. نريد *${needed}* طرد/عبوة من صنف: *${p.name}*\n`;
+            });
+            msg += `──────────────\nيرجى تأكيد الطلب وتزويدنا بالكميات المذكورة 🌸`;
             window.open(`https://wa.me/${formatWhatsAppPhone(supp.phone)}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
@@ -1501,7 +1629,7 @@
             let html = "";
             Object.keys(bySupp).forEach(sId => {
                 const s = suppliers[sId];
-                html += `<div class="adm-card" style="border-color:var(--gold-color);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><b style="color:var(--gold-color);">🚚 ${s.name}</b><button onclick="sendSupplierShortagesWhatsApp('${sId}')" class="btn" style="width:auto; padding:4px 10px; font-size:10px; background:#25D366; color:#fff;">📲 إرسال فاتورة واتساب</button></div>` +
+                html += `<div class="adm-card" style="border-color:var(--gold-color);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><b style="color:var(--gold-color);">🚚 ${s.name}</b><button onclick="sendSupplierShortagesWhatsApp('${sId}')" class="btn" style="width:auto; padding:4px 10px; font-size:10px; background:#25D366; color:#fff;">📲 إرسال طلب واتساب</button></div>` +
                 bySupp[sId].map(p => `<div style="font-size:11px; display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding:3px 0;"><span>• ${p.name}</span><span style="color:var(--danger-color); font-weight:bold;">متبقي: ${p.stock}</span></div>`).join("") + `</div>`;
             });
             if (unassigned.length) {
@@ -1518,7 +1646,7 @@
                 sel.innerHTML = '<option value="all">🌟 جميع التصنيفات</option>' + categories.filter(c => c !== "الكل").map(c => `<option value="${c}">${c}</option>`).join("") + '<option value="عروض خاصة">عروض خاصة</option>';
                 sel.value = cur;
             }
-            const period = $("reportPeriodSelect")?.value || "total", selCat = sel?.value || "all", now = new Date();
+            const period = $("reportPeriodSelect"]?.value || "total", selCat = sel?.value || "all", now = new Date();
             let totS = 0, totC = 0, netP = 0, catMap = {}, prodMap = {};
             let capBoxSYP = 0, drvNetSYP = 0, maintFundSYP = 0, importMgrAdminPool = 0, exportMgrAdminPool = 0;
 
@@ -1537,6 +1665,7 @@
             });
 
             Object.values(completedOrdersHistory).forEach(ord => {
+                if (ord.status === 'cancelled') return; // تجاهل الفواتير الملغاة من الحسابات المالية
                 const ordISO = ord.dateISO || new Date().toISOString();
                 const d = new Date(ordISO);
                 const fee = parseInt(ord.deliveryFeeSYP) || 0, dShare = Math.round((fee * getRegionDriverPct(ord.customerRegion)) / 100);
@@ -1699,7 +1828,7 @@
         function editProduct(id) {
             const p = products[id]; if (!p) return;
             setVal("editProductId", id); setVal("prodName", p.name || ""); setVal("prodCostUSD", p.costPrice || 0); setVal("prodPriceUSD", p.priceUSD || 0); setVal("prodWholesaleUSD", p.wholesaleUSD || 0); setVal("prodStock", p.stock || 0); setVal("prodAlertLimit", p.alertLimit || 2); setVal("prodPointsPct", p.pointsPct || 2); setVal("prodCategory", p.category || ""); setVal("prodSupplierSelect", p.supplierId || "");
-            $("productFormSection")?.scrollIntoView({ behavior: "smooth" });
+            $("productFormSection"]?.scrollIntoView({ behavior: "smooth" });
         }
         function deleteProduct(id) { if (confirm("حذف هذا الصنف نهائياً؟")) { db.ref("products/" + id).remove(); db.ref("productImages/" + id).remove(); delete highResImagesMemoryCache[id]; } }
 
@@ -1715,7 +1844,7 @@
 
         function renderAdminProducts() {
             const container = $("adminProductsList"); if (!container) return;
-            const q = ($("adminSearchProd")?.value || "").trim().toLowerCase();
+            const q = ($("adminSearchProd"]?.value || "").trim().toLowerCase();
             const keys = Object.keys(products).filter(id => products[id] && (!q || products[id].name?.toLowerCase().includes(q) || products[id].category?.toLowerCase().includes(q)));
             if (!keys.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف مطابقة.</p>`);
             container.innerHTML = keys.map(id => {
@@ -1767,27 +1896,105 @@
 
         function renderAdminCustomers() {
             const container = $("adminCustomersList"); if (!container) return;
-            const q = ($("adminSearchCust")?.value || "").trim().toLowerCase();
+            const q = ($("adminSearchCust"]?.value || "").trim().toLowerCase();
             const sorted = Object.values(users).filter(u => !q || u.name?.toLowerCase().includes(q) || u.phone?.includes(q)).sort((a, b) => (b.points || 0) - (a.points || 0));
             if (!sorted.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا يوجد زبائن.</p>`);
             container.innerHTML = sorted.map(u => {
                 const isB = !!u.banned, ut = u.userType || "retail";
-                const badge = ut === "wholesale" ? ["var(--gold-color)", "جملة"] : ut === "neighbors" ? ["#ff9800", "جيران"] : ut === "partner" ? ["#00b0ff", "شريك"] : ["#00e676", "مفرق"];
-                return `<div class="adm-card" style="border-color:${isB ? 'var(--danger-color)' : 'var(--border-color)'};"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>👤 ${u.name} (${u.phone}) <b style="color:${badge[0]};">[${badge[1]}]</b></span><span style="color:var(--gold-color);">${Math.round(u.points || 0)} نقطة</span></div><div style="display:flex; gap:4px; margin-top:6px;"><button onclick="openAdminEditCustomerModal('${u.phone}')" class="btn" style="padding:3px 8px; font-size:10px; width:auto;">✏️ تعديل الرتبة والبيانات</button><button onclick="toggleBanCustomer('${u.phone}')" class="btn" style="padding:3px 8px; font-size:10px; width:auto; background:${isB ? 'var(--success-color)' : '#ff9800'}; color:#000;">${isB ? 'فك الحظر' : 'حظر'}</button></div></div>`;
+                const badge = ut === "wholesale" ? ["var(--gold-color)", "جملة"] : ut === "neighbors" ? ["#ff9800", "جيران"] : ut === "partner" ? ["#00b0ff", "شريك"] : ut === "debtor" ? ["#ff4444", "آجل (دين)"] : ["#00e676", "مفرق"];
+                return `<div class="adm-card" style="border-color:${isB ? 'var(--danger-color)' : 'var(--border-color)'};"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>👤 ${u.name} (${u.phone}) <b style="color:${badge[0]};">[${badge[1]}]</b></span><span style="color:var(--gold-color);">${Math.round(u.points || 0)} نقطة</span></div><div style="display:flex; gap:4px; margin-top:6px;"><button onclick="openAdminEditCustomerModal('${u.phone}')" class="btn" style="padding:3px 8px; font-size:10px; width:auto;">✏️ تعديل الزبون والديون</button><button onclick="toggleBanCustomer('${u.phone}')" class="btn" style="padding:3px 8px; font-size:10px; width:auto; background:${isB ? 'var(--success-color)' : '#ff9800'}; color:#000;">${isB ? 'فك الحظر' : 'حظر'}</button></div></div>`;
             }).join("");
         }
         const toggleBanCustomer = p => { if (users[p]) db.ref("users/" + p + "/banned").set(!users[p].banned); };
+
         function openAdminEditCustomerModal(p) {
             const u = users[p]; if (!u) return;
             populateRegionSelects(); setVal("adminCustOrigPhone", p); setVal("adminCustName", u.name || ""); setVal("adminCustPhone", u.phone || p);
             setVal("adminCustRegion", u.region || "العوينة"); setVal("adminCustType", u.userType || "retail"); setVal("adminCustAddress", u.address || ""); setVal("adminCustPoints", Math.round(u.points || 0));
+
+            // حساب رصيد الدين الحالي للزبون بالدولار
+            const book = u.debtBook || {};
+            let tDebt = 0;
+            Object.values(book).forEach(tx => {
+                if (tx.type === 'charge') tDebt += (parseFloat(tx.amountUSD) || 0);
+                else if (tx.type === 'payment') tDebt -= (parseFloat(tx.amountUSD) || 0);
+            });
+            tDebt = Math.max(0, tDebt);
+            setVal("adminCustDebtDisplay", `${tDebt.toFixed(2)} $ (${calcSYP(tDebt).toLocaleString()} ل.س)`);
+
+            // عرض سجل نشاط الزبون (الطلبات الكاملة والملغاة)
+            const completed = Object.values(completedOrdersHistory).filter(ord => ord.customerPhone === p && ord.status !== 'cancelled');
+            const cancelled = Object.values(u.cancelledOrders || {});
+            const logBox = $("adminCustomerActivityLog");
+            if (logBox) {
+                logBox.innerHTML = `<div>✅ <b>الطلبات المكتملة:</b> ${completed.length} طلبات | إجمالي المشتريات: ${completed.reduce((a, b) => a + (b.totalSaleSYP || 0), 0).toLocaleString()} ل.س</div><div style="margin-top:3px;">❌ <b>الطلبات الملغاة:</b> ${cancelled.length} مرات</div>`;
+            }
+
             $("adminEditCustomerModal").style.display = "flex";
         }
-        function saveAdminCustomerEdit() {
-            const p = $("adminCustOrigPhone").value; if (!p || !users[p]) return;
-            db.ref("users/" + p).update({ name: $("adminCustName").value.trim(), region: $("adminCustRegion").value, userType: $("adminCustType").value, address: $("adminCustAddress").value.trim(), points: parseFloat($("adminCustPoints").value) || 0 }).then(() => {
-                alert("✅ تم حفظ تعديلات الزبون!"); closeModal('adminEditCustomerModal'); populateAdminPartnerSelect();
+
+        // إضافة حركة دين أو تسديد دفعة للزبون من الإدارة
+        function adminAddDebtTransaction(type) {
+            const origPhone = $("adminCustOrigPhone").value;
+            if (!origPhone || !users[origPhone]) return;
+            const note = $("adminDebtNoteInput").value.trim(), amountUSD = parseFloat($("adminDebtAmountInput").value) || 0;
+            if (!note || amountUSD <= 0) return alert("⚠️ أدخل بيان الحركة والمبلغ بالدولار.");
+
+            const txId = "TX_" + Date.now();
+            db.ref(`users/${origPhone}/debtBook/${txId}`).set({
+                id: txId, type, amountUSD: parseFloat(amountUSD.toFixed(2)), note,
+                dateStr: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString()
+            }).then(() => {
+                alert("✅ تم تسجيل الحركة الدفترية بنجاح!");
+                setVal("adminDebtNoteInput", ""); setVal("adminDebtAmountInput", "");
+                openAdminEditCustomerModal(origPhone);
             });
+        }
+
+        function adminClearCustomerDebt() {
+            const origPhone = $("adminCustOrigPhone").value;
+            if (!origPhone || !confirm("⚠️ هل أنت متأكد من تصفير دفتر دين هذا الزبون بالكامل؟")) return;
+            db.ref(`users/${origPhone}/debtBook`).remove().then(() => {
+                alert("✅ تم تصفير حساب الدين بنجاح!");
+                openAdminEditCustomerModal(origPhone);
+            });
+        }
+
+        function adminDeleteCustomer() {
+            const origPhone = $("adminCustOrigPhone").value;
+            if (!origPhone || !confirm("⚠️ تحذير خطير: هل أنت متأكد من حذف هذا الزبون نهائياً من قاعدة البيانات؟")) return;
+            db.ref(`users/${origPhone}`).remove().then(() => {
+                alert("✅ تم حذف الزبون بنجاح!");
+                closeModal('adminEditCustomerModal');
+            });
+        }
+
+        function saveAdminCustomerEdit() {
+            const origPhone = $("adminCustOrigPhone").value, newPhone = $("adminCustPhone").value.trim().replace(/\s+/g, "");
+            if (!origPhone || !users[origPhone]) return;
+            if (!validatePhoneSyrian(newPhone)) return alert("⚠️ رقم الهاتف الجديد يجب أن يتكون من 10 خانات ويبدأ بـ 09.");
+
+            const updates = {
+                name: $("adminCustName").value.trim(),
+                region: $("adminCustRegion").value,
+                userType: $("adminCustType").value,
+                address: $("adminCustAddress").value.trim(),
+                points: parseFloat($("adminCustPoints").value) || 0
+            };
+
+            if (origPhone !== newPhone) {
+                if (users[newPhone]) return alert("⚠️ رقم الهاتف الجديد مسجل مسبقاً لزبون آخر!");
+                db.ref(`users/${newPhone}`).set({ ...users[origPhone], ...updates, phone: newPhone }).then(() => {
+                    db.ref(`users/${origPhone}`).remove();
+                    alert("✅ تم تعديل بيانات الزبون وتصحيح رقمه بنجاح!");
+                    closeModal('adminEditCustomerModal'); populateAdminPartnerSelect();
+                });
+            } else {
+                db.ref(`users/${origPhone}`).update(updates).then(() => {
+                    alert("✅ تم حفظ تعديلات الزبون!");
+                    closeModal('adminEditCustomerModal'); populateAdminPartnerSelect();
+                });
+            }
         }
 
         async function saveCompetitionSettings() {
