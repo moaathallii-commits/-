@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moaath-store-v12';
+const CACHE_NAME = 'moaath-store-v13';
 const urlsToCache = [
   './',
   './index.html',
