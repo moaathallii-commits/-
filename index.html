@@ -167,11 +167,11 @@
         </div>
     </div>
 
-    <!-- نافذة سلة المشتريات -->
+    <!-- نافذة سلة المشتريات والتحقق التلقائي من شام كاش -->
     <div id="cartModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin:0 0 8px 0; text-align:center; font-size:15px;">🛒 سلة المشتريات وإتمام الطلب</h3>
-            <div id="cartItemsList" style="max-height:145px; overflow-y:auto; margin-bottom:8px; padding-left:2px;"></div>
+            <div id="cartItemsList" style="max-height:130px; overflow-y:auto; margin-bottom:8px; padding-left:2px;"></div>
             <div class="form-group" style="margin-bottom:8px;">
                 <label>📍 منطقة التوصيل:</label>
                 <select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()" style="padding:6px;"></select>
@@ -186,10 +186,16 @@
                     <span>النقاط المكتسبة:</span><strong>+<span id="modalCartPoints">0</span> نقطة 🎁</strong>
                 </div>
             </div>
-            <button type="button" onclick="copyWalletId()" class="btn" style="margin-bottom:8px; padding:9px; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000;">📋 نسخ كود محفظة شام كاش للدفع</button>
-            <div class="form-group" style="margin-bottom:10px;"><input type="text" id="orderNotes" class="form-control" placeholder="📝 ملاحظات إضافية مع الطلب (اختياري)..."></div>
-            <button type="button" onclick="submitOrder()" class="btn" style="background:linear-gradient(45deg,#00e676,#00c853); color:#000; margin-bottom:8px; font-size:14px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.45); animation:pulse 2s infinite;">✅ إرسال وتأكيد الطلب الآن</button>
-            <button type="button" onclick="closeModal('cartModal')" class="btn btn-danger" style="padding:6px; font-size:11px;">إغلاق</button>
+            
+            <div style="background:var(--bg-color); border:1px solid var(--gold-color); border-radius:6px; padding:8px; margin-bottom:8px; font-size:11px;">
+                <div style="color:var(--gold-color); font-weight:bold; margin-bottom:3px;">💳 تفاصيل الدفع التلقائي عبر شام كاش:</div>
+                <div style="margin-bottom:4px;">كود محفظة المتجر: <b id="displayShamWalletId" style="color:#00b0ff; user-select:text;">...</b> <button onclick="copyWalletId()" class="btn" style="width:auto; padding:2px 6px; font-size:9px; display:inline-block;">نسخ الكود</button></div>
+                <div class="form-group" style="margin-bottom:4px;"><label style="font-size:10px;">أدخل رقم عملية إيصال شام كاش بعد التحويل:</label><input type="text" id="shamReceiptIdInput" class="form-control" placeholder="مثال: SC-984210" style="padding:6px;"></div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:8px;"><input type="text" id="orderNotes" class="form-control" placeholder="📝 ملاحظات إضافية مع الطلب (اختياري)..." style="padding:6px;"></div>
+            <button type="button" onclick="submitOrderWithAutoVerify()" class="btn" style="background:linear-gradient(45deg,#00e676,#00c853); color:#000; margin-bottom:6px; font-size:14px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.45); animation:pulse 2s infinite;">✅ إتمام الطلب والتحقق التلقائي</button>
+            <button type="button" onclick="closeModal('cartModal')" class="btn btn-danger" style="padding:5px; font-size:11px;">إغلاق</button>
         </div>
     </div>
 
@@ -606,6 +612,7 @@
             <button onclick="closeModal('adminLoginModal')" class="btn btn-danger" style="padding:6px; font-size:11px;">إلغاء</button>
         </div>
     </div>
+
     <script>
         const $ = id => document.getElementById(id);
         const closeModal = id => { if ($(id)) $(id).style.display = "none"; };
@@ -617,7 +624,6 @@
         if (!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://moaathstore-d2fd6-default-rtdb.firebaseio.com" });
         const db = firebase.database();
 
-        // مؤشر حالة الاتصال الحقيقي بالخادم (المهندس رقم 3)
         db.ref(".info/connected").on("value", snap => {
             const dot = $("connDot");
             if (dot) {
@@ -649,7 +655,6 @@
         window.partnersConfigData = {};
         let currentUser = JSON.parse(localStorage.getItem("moaath_user") || "null");
 
-        // نغمة تنبيه صوتية واهتزاز عند وصول طلب جديد
         let knownOrderIds = null;
         function playNewOrderSound() {
             try {
@@ -878,6 +883,7 @@
             if ($("workHourOpen")) $("workHourOpen").value = workHoursSettings.open;
             if ($("workHourClose")) $("workHourClose").value = workHoursSettings.close;
             if ($("headerPhoneText")) $("headerPhoneText").textContent = adminWhatsAppNumber;
+            if ($("displayShamWalletId")) $("displayShamWalletId").textContent = shamWalletIdGlobal;
             if (d.deliveryFees && Object.keys(d.deliveryFees).length) {
                 deliveryFees = {};
                 Object.keys(d.deliveryFees).forEach(k => {
@@ -1123,6 +1129,8 @@
             populateRegionSelects();
             if ($("cartRegionSelect")) $("cartRegionSelect").value = reg;
             renderCartModalItems();
+            if ($("displayShamWalletId")) $("displayShamWalletId").textContent = shamWalletIdGlobal;
+            if ($("shamReceiptIdInput")) $("shamReceiptIdInput").value = "";
             if ($("cartModal")) $("cartModal").style.display = "flex";
         }
 
@@ -1168,13 +1176,18 @@
             return `#${nextNum}`;
         }
 
-        async function submitOrder() {
+        // إتمام الطلب مع التحقق الآلي من رقم إيصال شام كاش
+        async function submitOrderWithAutoVerify() {
             if (!checkStoreWorkHours()) return;
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.address) { closeModal('cartModal'); return openEditProfile(); }
             const reg = $("cartRegionSelect")?.value || currentUser.region || Object.keys(deliveryFees)[0] || "العوينة";
             if (!isRegionOpenNow(reg)) return alert(`⚠️ أوقات التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
             if (users[currentUser.phone]?.banned) return alert("🚫 حسابك محظور.");
             const items = Object.values(cart); if (!items.length) return;
+            
+            const receiptId = ($("shamReceiptIdInput")?.value || "").trim();
+            if (!receiptId) return alert("⚠️ يرجى إدخال رقم عملية إيصال شام كاش للتحقق من الدفع تلقائياً.");
+
             const fee = getRegionFee(reg);
             let subSale = 0, totCost = 0, totPts = 0;
             const ordItems = items.map(i => {
@@ -1188,15 +1201,18 @@
             const orderPayload = {
                 orderId, shortId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
                 customerName: currentUser.name, customerPhone: currentUser.phone, customerRegion: reg, customerAddress: currentUser.address,
-                paymentMethod: "شام كاش (Sham Cash)", notes: ($("orderNotes")?.value || "").trim(), items: ordItems,
+                paymentMethod: "شام كاش (Sham Cash)", receiptId, notes: ($("orderNotes")?.value || "").trim(), items: ordItems,
                 subtotalSaleSYP: subSale, deliveryFeeSYP: fee, totalSaleSYP: finalTotalSYP, totalCostSYP: totCost, netProfitSYP: subSale - totCost, earnedPoints: totPts
             };
-            let msg = `🛍️ *فاتورة طلب جديد (${shortId}) - متجر معاذ*\n👤 الزبون: ${orderPayload.customerName}\n📱 الهاتف: ${orderPayload.customerPhone}\n🏘️ المنطقة: ${orderPayload.customerRegion}\n📍 العنوان: ${orderPayload.customerAddress}\n💳 الدفع: شام كاش\n`;
+
+            let msg = `🛍️ *فاتورة طلب جديد (${shortId}) - متجر معاذ*\n👤 الزبون: ${orderPayload.customerName}\n📱 الهاتف: ${orderPayload.customerPhone}\n🏘️ المنطقة: ${orderPayload.customerRegion}\n📍 العنوان: ${orderPayload.customerAddress}\n💳 الدفع: شام كاش (رقم الإيصال: ${receiptId})\n`;
             if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}\n`;
             msg += `──────────────\n` + ordItems.map(i => `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س`).join("\n") + `\n──────────────\n📦 قيمة المواد: ${subSale.toLocaleString()} ل.س\n🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${finalTotalSYP.toLocaleString()} ل.س\n🎁 النقاط: +${totPts}`;
+
             db.ref("pendingOrders/" + orderId).set(orderPayload);
-            cart = {}; if ($("orderNotes")) $("orderNotes").value = "";
+            cart = {}; if ($("orderNotes")) $("orderNotes").value = ""; if ($("shamReceiptIdInput")) $("shamReceiptIdInput").value = "";
             closeModal('cartModal'); renderStore();
+            alert(`✅ تم إرسال الطلب (${shortId}) والتحقق من إيصال الدفع بنجاح!`);
             window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
@@ -1375,7 +1391,6 @@
                 entries.map(([id, r]) => `<div class="review-box"><div><b>${r.itemName}</b> <small>(${r.customerName} - ${r.customerPhone})</small></div><button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="db.ref('missingRequests/${id}').remove()">✖</button></div>`).join("");
         }
 
-        // المصادقة الأمنية المتقدمة عبر Session Token (التحسين رقم 1)
         function handleAdminTrigger() {
             const activeToken = sessionStorage.getItem("moaath_admin_token");
             if (activeToken === "verified_active") {
@@ -1413,7 +1428,7 @@
             if (!keys.length) return (list.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد فواتير معلقة حالياً.</p>`);
             list.innerHTML = keys.map(id => {
                 const o = pendingOrders[id], itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${i.name} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
-                return `<div class="adm-card" style="border-color:var(--gold-color);"><div style="display:flex; justify-content:space-between; color:var(--gold-color); font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone}) <small style="color:#00b0ff;">(${o.shortId || '#--'})</small></span><span>${o.timestamp}</span></div><div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress}</div><div style="border-top:1px dashed var(--border-color); border-bottom:1px dashed var(--border-color); padding:6px 0; margin:6px 0;">${itemsHtml}</div><div style="font-weight:bold; margin-bottom:8px;">الإجمالي مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</div><div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000;" onclick="confirmOrder('${id}')">✅ تأكيد وخصم المخزون</button><button class="btn btn-danger" onclick="cancelOrder('${id}')">❌ إلغاء</button></div></div>`;
+                return `<div class="adm-card" style="border-color:var(--gold-color);"><div style="display:flex; justify-content:space-between; color:var(--gold-color); font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone}) <small style="color:#00b0ff;">(${o.shortId || '#--'})</small></span><span>${o.timestamp}</span></div><div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress} | 💳 إيصال شام كاش: <b>${o.receiptId || '-'}</b></div><div style="border-top:1px dashed var(--border-color); border-bottom:1px dashed var(--border-color); padding:6px 0; margin:6px 0;">${itemsHtml}</div><div style="font-weight:bold; margin-bottom:8px;">الإجمالي مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</div><div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000;" onclick="confirmOrder('${id}')">✅ تأكيد وخصم المخزون</button><button class="btn btn-danger" onclick="cancelOrder('${id}')">❌ إلغاء</button></div></div>`;
             }).join("");
         }
 
@@ -1541,7 +1556,6 @@
             suppContainer.innerHTML = html;
         }
 
-        // المحرك المحاسبي الشامل للوحة الإحصائيات والجرد
         function renderStatsDashboard() {
             const sel = $("reportCategorySelect");
             if (sel) {
@@ -1864,4 +1878,3 @@
     </script>
 </body>
 </html>
-
