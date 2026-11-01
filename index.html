@@ -29,8 +29,10 @@
         body { background-color:var(--bg-color); color:var(--text-color); font-family:Tahoma,'Segoe UI',sans-serif; margin:0; padding:0; -webkit-tap-highlight-color:transparent; transition:background-color 0.25s,color 0.25s; overscroll-behavior-y:contain; -webkit-user-select:none; user-select:none; }
         header { background-color:var(--card-bg); border-bottom:2px solid var(--gold-color); padding:10px 15px; display:flex; justify-content:space-between; align-items:center; }
         .store-info { cursor:pointer; }
-        .store-info h1 { font-size:16px; color:var(--gold-color); margin:0 0 3px 0; }
+        .store-info h1 { font-size:16px; color:var(--gold-color); margin:0 0 3px 0; display:inline-block; }
         .store-info p { font-size:11px; color:var(--gray-text); margin:0; }
+        .conn-dot { width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:5px; background:var(--danger-color); box-shadow:0 0 6px var(--danger-color); transition:0.3s; }
+        .conn-dot.online { background:var(--success-color); box-shadow:0 0 8px var(--success-color); }
         .logo-circle { width:45px; height:45px; border-radius:50%; overflow:hidden; border:2px solid var(--gold-color); cursor:pointer; background:#222; flex-shrink:0; }
         .logo-circle img { width:100%; height:100%; object-fit:cover; }
         .user-bar { background:var(--card-bg); padding:8px 15px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); font-size:12px; gap:6px; flex-wrap:wrap; }
@@ -80,6 +82,7 @@
         .quick-inp { width:65px; padding:4px; background:var(--card-bg); color:var(--gold-color); border:1px solid var(--gold-color); border-radius:4px; text-align:center; font-weight:bold; font-size:11px; }
         .mini-btn { width:24px; height:24px; border:none; border-radius:4px; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:13px; }
         #storeClosedOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(18,18,18,0.96); z-index:9999; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; box-sizing:border-box; }
+        @media print { body * { visibility:hidden; } #thermalPrintArea, #thermalPrintArea * { visibility:visible; } #thermalPrintArea { position:absolute; left:0; top:0; width:100%; } }
         @keyframes pulse { 0%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,230,118,0.7);} 70%{transform:scale(1.03);box-shadow:0 0 0 8px rgba(0,230,118,0);} 100%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,230,118,0);} }
     </style>
 </head>
@@ -95,7 +98,7 @@
 
     <header>
         <div class="store-info" onclick="window.open('https://wa.me/' + adminWhatsAppNumber, '_blank')">
-            <h1>متجر معاذ</h1>
+            <h1>متجر معاذ</h1><span id="connIndicator" class="conn-dot" title="حالة الاتصال بقاعدة البيانات"></span>
             <p>قرية العوينة | <span id="headerPhoneText">0965461504</span> 📱</p>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
@@ -138,6 +141,9 @@
         </div>
         <button class="cart-bar-btn" type="button" onclick="event.stopPropagation(); openCartModal();">🛒 إتمام الطلب الآن</button>
     </div>
+
+    <!-- نافذة الطباعة الحرارية المخفية -->
+    <div id="thermalPrintArea" style="display:none; font-family:monospace; padding:10px; background:#fff; color:#000; font-size:12px;"></div>
 
     <!-- نوافذ الزبون -->
     <div id="profileModal" class="modal-overlay">
@@ -364,7 +370,7 @@
                         <div id="storeExpensesList" style="max-height:110px; overflow-y:auto;"></div>
                     </div>
 
-                    <!-- 5. أجور السائق وصندوق الصيانة والوقود (مع تصفير مستقل لكل منهما) -->
+                    <!-- 5. أجور السائق وصندوق الصيانة والوقود -->
                     <div class="adm-card" style="border-color:#ff9800; background:rgba(255,152,0,0.06); margin:10px 0;">
                         <div style="color:#ff9800; font-weight:bold; margin-bottom:6px;">🛵 أجور السائق وصندوق صيانة الآلية والوقود</div>
                         <div class="stats-grid">
@@ -589,7 +595,6 @@
             <div style="display:flex; gap:8px;"><button onclick="saveAdminCustomerEdit()" class="btn">💾 حفظ التعديلات</button><button onclick="closeModal('adminEditCustomerModal')" class="btn btn-danger" style="width:35%;">إلغاء</button></div>
         </div>
     </div>
-
     <script>
         const $ = id => document.getElementById(id);
         const closeModal = id => { if ($(id)) $(id).style.display = "none"; };
@@ -623,6 +628,15 @@
         let compSettings = { minRedeemPoints: 500, leaderboardLimit: 10, title: "", desc: "", image: "" };
         window.partnersConfigData = {};
         let currentUser = JSON.parse(localStorage.getItem("moaath_user") || "null");
+
+        // مؤشر حالة الاتصال الحية بقاعدة البيانات (Firebase Connection State)
+        db.ref(".info/connected").on("value", snap => {
+            const dot = $("connIndicator");
+            if (dot) {
+                if (snap.val() === true) { dot.classList.add("online"); dot.title = "متصل بقاعدة البيانات بنجاح"; }
+                else { dot.classList.remove("online"); dot.title = "جاري الاتصال أو منقطع..."; }
+            }
+        });
 
         // نغمة تنبيه صوتية واهتزاز عند وصول طلب جديد
         let knownOrderIds = null;
@@ -1163,7 +1177,19 @@
             db.ref("pendingOrders/" + orderId).set(orderPayload);
             cart = {}; if ($("orderNotes")) $("orderNotes").value = "";
             closeModal('cartModal'); renderStore();
+
+            // طباعة حرارية آلية للفاتورة عبر المتصفح
+            printThermalInvoice(orderPayload);
+
             window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
+        }
+
+        function printThermalInvoice(o) {
+            const area = $("thermalPrintArea");
+            if (!area) return;
+            let itemsHtml = (o.items || []).map(i => `${i.name} x${i.qty} : ${i.subSaleSYP.toLocaleString()} ل.س`).join("\n");
+            area.innerHTML = `<div style="text-align:center; font-weight:bold;">متجر معاذ - قرية العوينة</div><div style="text-align:center;">--------------------------------</div><div>رقم الطلب: ${o.orderId}</div><div>الزبون: ${o.customerName}</div><div>الهاتف: ${o.customerPhone}</div><div>المنطقة: ${o.customerRegion}</div><div style="text-align:center;">--------------------------------</div><div>${itemsHtml}</div><div style="text-align:center;">--------------------------------</div><div>قيمة المواد: ${(o.subtotalSaleSYP || 0).toLocaleString()} ل.س</div><div>التوصيل: ${(o.deliveryFeeSYP || 0).toLocaleString()} ل.س</div><div style="font-weight:bold;">الإجمالي: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</div><div style="text-align:center;">--------------------------------</div><div style="text-align:center;">شكراً لتسوقكم معنا 🌸</div>`;
+            window.print();
         }
 
         function openReviewModal(id) { if (!products[id]) return; $("reviewProductId").value = id; $("reviewProductName").textContent = products[id].name; $("reviewCommentInput").value = ""; $("reviewModal").style.display = "flex"; }
@@ -1177,7 +1203,6 @@
 
         function openCompetitionsPage() { syncCurrentUser(); renderCompetitionDetails(); renderLeaderboard(); $("competitionsPage").style.display = "block"; }
 
-        // حساب أرباح الشريك الواحد بدقة منذ آخر تسوية له
         function calculatePartnerCurrentMetrics(phone) {
             const conf = (window.partnersConfigData && window.partnersConfigData[phone]) || {};
             const rawCats = conf.categories || [];
@@ -1256,26 +1281,20 @@
             updates[`partnersConfig/${phone}/payoutHistory/${payId}`] = { amountSYP: m.totEarn, salesSYP: m.totSales, dateStr: now.toLocaleString("ar-SY"), dateISO: nowISO };
             db.ref().update(updates).then(() => {
                 alert(`✅ تم تصفير حساب الشريك (${partnerName}) وتوثيق دفعة (${m.totEarn.toLocaleString()} ل.س)!`);
-                loadPartnerConfig();
-                renderStatsDashboard();
+                loadPartnerConfig(); renderStatsDashboard();
             });
         }
 
-        // حفظ نسبة تقسيم مدير الاستيراد ومدير التصدير
         function saveManagersSplitPct() {
             const pct = Math.min(100, Math.max(0, parseFloat($("importManagerPctInput")?.value) || 50));
             db.ref("adminAccounting/importManagerPct").set(pct);
         }
 
-        // تصفير مستقل لأي صندوق إداري (مدير الاستيراد، مدير التصدير، صندوق رأس المال، السائق، الوقود)
         function resetAdminTimestamp(fieldKey, labelName) {
             if (!confirm(`🔄 هل أنت متأكد من تصفير (${labelName}) وبدء عداد جديد له من هذه اللحظة؟\n(ملاحظة: باقي الحسابات والشركاء والجرد العام لن تتأثر نهائياً)`)) return;
-            db.ref(`adminAccounting/${fieldKey}`).set(new Date().toISOString()).then(() => {
-                alert(`✅ تم تصفير (${labelName}) بنجاح!`);
-            });
+            db.ref(`adminAccounting/${fieldKey}`).set(new Date().toISOString()).then(() => alert(`✅ تم تصفير (${labelName}) بنجاح!`));
         }
 
-        // إدارة المصاريف التشغيلية والتوالف
         function addStoreExpense() {
             const title = ($("expTitleInput")?.value || "").trim(), amount = parseInt($("expAmountInput")?.value) || 0;
             if (!title || amount <= 0) return alert("⚠️ يرجى كتابة سبب المصروف والمبلغ بالليرة.");
@@ -1288,11 +1307,10 @@
         function renderStoreExpenses() {
             const box = $("storeExpensesList"); if (!box) return;
             const list = Object.values(storeExpenses).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
-            if (!list.length) return (box.innerHTML = `<div style="font-size:10px; color:var(--gray-text); text-align:center;">لا توجد مصاريف أو توالف مسجلة.</div>`);
-            box.innerHTML = list.map(e => `<div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; border-bottom:1px dashed var(--border-color); padding:3px 0;"><span>• <b>${e.title}</b> <small style="color:var(--gray-text);">(${e.dateStr})</small></span><div><b style="color:var(--danger-color); margin-left:6px;">-${(e.amountSYP || 0).toLocaleString()} ل.س</b><span onclick="deleteStoreExpense('${e.id}')" style="cursor:pointer; color:var(--danger-color);">🗑️</span></div></div>`).join("");
+            box.innerHTML = !list.length ? `<div style="font-size:10px; color:var(--gray-text); text-align:center;">لا توجد مصاريف أو توالف مسجلة.</div>` :
+                list.map(e => `<div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; border-bottom:1px dashed var(--border-color); padding:3px 0;"><span>• <b>${e.title}</b> <small style="color:var(--gray-text);">(${e.dateStr})</small></span><div><b style="color:var(--danger-color); margin-left:6px;">-${(e.amountSYP || 0).toLocaleString()} ل.س</b><span onclick="deleteStoreExpense('${e.id}')" style="cursor:pointer; color:var(--danger-color);">🗑️</span></div></div>`).join("");
         }
 
-        // معرفة نسبة الشركاء الإجمالية على أي تصنيف معين لخصمها من ربح الإدارة بدقة
         function getCategoryPartnerSharePct(catName) {
             const cleanCat = (catName || "").trim().toLowerCase();
             let totalPartnerPct = 0;
@@ -1507,162 +1525,6 @@
             suppContainer.innerHTML = html;
         }
 
-        // المحرك المحاسبي الشامل للوحة الإحصائيات والجرد
-        function renderStatsDashboard() {
-            const sel = $("reportCategorySelect");
-            if (sel) {
-                const cur = sel.value || "all";
-                sel.innerHTML = '<option value="all">🌟 جميع التصنيفات</option>' + categories.filter(c => c !== "الكل").map(c => `<option value="${c}">${c}</option>`).join("") + '<option value="عروض خاصة">عروض خاصة</option>';
-                sel.value = cur;
-            }
-            const period = $("reportPeriodSelect")?.value || "total", selCat = sel?.value || "all", now = new Date();
-            let totS = 0, totC = 0, netP = 0, catMap = {}, prodMap = {};
-            let capBoxSYP = 0, drvNetSYP = 0, maintFundSYP = 0, importMgrAdminPool = 0, exportMgrAdminPool = 0;
-
-            const capReset = adminAccounting.capitalBoxResetISO || "2000-01-01T00:00:00.000Z";
-            const drvReset = adminAccounting.driverResetISO || "2000-01-01T00:00:00.000Z";
-            const mntReset = adminAccounting.maintenanceResetISO || "2000-01-01T00:00:00.000Z";
-            const impReset = adminAccounting.importManagerResetISO || "2000-01-01T00:00:00.000Z";
-            const expReset = adminAccounting.exportManagerResetISO || "2000-01-01T00:00:00.000Z";
-
-            categories.filter(c => c !== "الكل").forEach(c => catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 });
-            catMap["عروض خاصة"] = { sales: 0, cost: 0, profit: 0, count: 0 }; catMap["غير مصنف"] = { sales: 0, cost: 0, profit: 0, count: 0 };
-            Object.keys(products).forEach(pid => {
-                const c = products[pid].category || "غير مصنف";
-                if (!catMap[c]) catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 };
-                prodMap[pid] = { id: pid, name: products[pid].name || "صنف", category: c, stock: parseInt(products[pid].stock) || 0, qtySold: 0, sales: 0, cost: 0, profit: 0 };
-            });
-
-            Object.values(completedOrdersHistory).forEach(ord => {
-                const ordISO = ord.dateISO || new Date().toISOString();
-                const d = new Date(ordISO);
-                const fee = parseInt(ord.deliveryFeeSYP) || 0, dShare = Math.round((fee * getRegionDriverPct(ord.customerRegion)) / 100);
-                if (ordISO > drvReset) drvNetSYP += dShare;
-                if (ordISO > mntReset) maintFundSYP += (fee - dShare);
-
-                (ord.items || []).forEach(i => {
-                    const c = i.category || (i.id.startsWith("OFFER_") ? "عروض خاصة" : (products[i.id]?.category || "غير مصنف"));
-                    const sS = i.subSaleSYP || 0, sC = i.subCostSYP || 0, sP = i.netProfitSYP !== undefined ? i.netProfitSYP : (sS - sC), sQ = i.qty || 1;
-
-                    // حساب الصناديق المستقلة بالتوقيت
-                    if (ordISO > capReset) capBoxSYP += sC;
-                    const partnerSharePct = getCategoryPartnerSharePct(c);
-                    const adminPureItemProfit = Math.round((sP * (100 - partnerSharePct)) / 100);
-                    if (ordISO > impReset) importMgrAdminPool += adminPureItemProfit;
-                    if (ordISO > expReset) exportMgrAdminPool += adminPureItemProfit;
-
-                    // حساب الجرد العام حسب الفترة المختارة
-                    const inPeriod = !((period === "daily" && d.toDateString() !== now.toDateString()) || (period === "weekly" && (Math.abs(now - d) / 86400000) > 7) || (period === "monthly" && (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear())));
-                    if (inPeriod) {
-                        if (!catMap[c]) catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 };
-                        catMap[c].sales += sS; catMap[c].cost += sC; catMap[c].profit += sP; catMap[c].count += sQ;
-                        if (!prodMap[i.id]) prodMap[i.id] = { id: i.id, name: i.name || "صنف", category: c, stock: products[i.id] ? parseInt(products[i.id].stock) || 0 : 0, qtySold: 0, sales: 0, cost: 0, profit: 0 };
-                        prodMap[i.id].qtySold += sQ; prodMap[i.id].sales += sS; prodMap[i.id].cost += sC; prodMap[i.id].profit += sP;
-                        if (selCat === "all" || selCat === c) { totS += sS; totC += sC; netP += sP; }
-                    }
-                });
-            });
-
-            // خصم المصاريف التشغيلية والتوالف من وعاء الإدارة لكل مدير حسب تاريخ تصفيره
-            Object.values(storeExpenses).forEach(exp => {
-                const eISO = exp.dateISO || "";
-                const amt = parseInt(exp.amountSYP) || 0;
-                if (eISO > impReset) importMgrAdminPool -= amt;
-                if (eISO > expReset) exportMgrAdminPool -= amt;
-            });
-
-            const impPct = Math.min(100, Math.max(0, parseFloat(adminAccounting.importManagerPct ?? 50)));
-            const expPct = 100 - impPct;
-            const importManagerFinalSYP = Math.round((importMgrAdminPool * impPct) / 100);
-            const exportManagerFinalSYP = Math.round((exportMgrAdminPool * expPct) / 100);
-
-            window.latestStatsSnapshot = { totS, totC, netP, capBoxSYP, importManagerFinalSYP, exportManagerFinalSYP, drvNetSYP, maintFundSYP };
-
-            if ($("statTotalSales")) $("statTotalSales").textContent = totS.toLocaleString() + " ل.س";
-            if ($("statTotalCost")) $("statTotalCost").textContent = totC.toLocaleString() + " ل.س";
-            if ($("statNetProfit")) $("statNetProfit").textContent = netP.toLocaleString() + " ل.س";
-            if ($("statProfitMargin")) $("statProfitMargin").textContent = (totS > 0 ? ((netP / totS) * 100).toFixed(1) : 0) + "%";
-            if ($("statRecoveredCapitalBox")) $("statRecoveredCapitalBox").textContent = capBoxSYP.toLocaleString() + " ل.س";
-            if ($("importMgrPctLabel")) $("importMgrPctLabel").textContent = impPct;
-            if ($("exportMgrPctLabel")) $("exportMgrPctLabel").textContent = expPct;
-            if ($("statImportManagerProfit")) $("statImportManagerProfit").textContent = importManagerFinalSYP.toLocaleString() + " ل.س";
-            if ($("statExportManagerProfit")) $("statExportManagerProfit").textContent = exportManagerFinalSYP.toLocaleString() + " ل.س";
-            if ($("importMgrResetDateLabel")) $("importMgrResetDateLabel").textContent = impReset.startsWith("2000") ? "منذ البداية" : "منذ: " + new Date(impReset).toLocaleDateString("ar-SY");
-            if ($("exportMgrResetDateLabel")) $("exportMgrResetDateLabel").textContent = expReset.startsWith("2000") ? "منذ البداية" : "منذ: " + new Date(expReset).toLocaleDateString("ar-SY");
-            if ($("statDriverNetPay")) $("statDriverNetPay").textContent = drvNetSYP.toLocaleString() + " ل.س";
-            if ($("statMaintenanceFund")) $("statMaintenanceFund").textContent = maintFundSYP.toLocaleString() + " ل.س";
-            if ($("statRegisteredUsersCount")) $("statRegisteredUsersCount").textContent = Object.keys(users).length + " زبون";
-
-            renderAllPartnersStatsInDashboard();
-            renderGoldenAndStagnantInsights(prodMap);
-            renderCategoryBreakdownTable(catMap);
-            renderProductBreakdownTable(prodMap, selCat);
-            updateInventoryValuation(selCat);
-        }
-
-        // عرض أرباح جميع الشركاء في لوحة الإحصائيات مع زر تصفير مستقل لكل شريك
-        function renderAllPartnersStatsInDashboard() {
-            const box = $("adminAllPartnersStatsList"); if (!box) return;
-            const partners = Object.values(users).filter(u => u.userType === "partner");
-            if (!partners.length) return (box.innerHTML = `<div style="font-size:11px; color:var(--gray-text); text-align:center;">لا يوجد شركاء محددون حالياً.</div>`);
-            box.innerHTML = partners.map(p => {
-                const m = calculatePartnerCurrentMetrics(p.phone);
-                return `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--border-color); padding:6px 0; font-size:11px; flex-wrap:wrap; gap:6px;">
-                    <div><b>👤 ${p.name}</b> <small style="color:var(--gold-color);">(${m.partnerPct}% | ${m.rawCats.join("، ") || "بلا تصنيف"})</small><br><span style="color:var(--gray-text); font-size:10px;">مبيعاته: ${m.totSales.toLocaleString()} ل.س</span></div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <b style="color:var(--success-color); font-size:13px;">${m.totEarn.toLocaleString()} ل.س</b>
-                        <button onclick="settlePartnerEarningsByAdmin('${p.phone}')" class="btn" style="width:auto; padding:4px 8px; font-size:10px; background:#ff9800; color:#000;">🔄 تصفير</button>
-                    </div>
-                </div>`;
-            }).join("");
-        }
-
-        // عرض الأصناف الذهبية والراكدة
-        function renderGoldenAndStagnantInsights(prodMap) {
-            const box = $("goldenAndStagnantInsights"); if (!box) return;
-            const all = Object.values(prodMap);
-            const golden = [...all].filter(p => p.profit > 0).sort((a, b) => b.profit - a.profit).slice(0, 3);
-            const stagnant = all.filter(p => p.qtySold === 0 && p.stock > 0).slice(0, 5);
-            const goldHtml = golden.length ? golden.map(g => `<span style="color:var(--success-color); font-weight:bold;">★ ${g.name} (${g.profit.toLocaleString()} ل.س)</span>`).join(" ، ") : "لا توجد مبيعات كافية بعد";
-            const stagHtml = stagnant.length ? stagnant.map(s => `<span style="color:var(--gray-text);">${s.name} (مخزون: ${s.stock})</span>`).join(" ، ") : "لا توجد أصناف راكدة";
-            box.innerHTML = `<div>🥇 <b>الأعلى ربحاً:</b> ${goldHtml}</div><div style="margin-top:4px;">💤 <b>أصناف راكدة لم تُبع:</b> ${stagHtml}</div>`;
-        }
-
-        // إرسال ملخص الجرد الشامل عبر واتساب
-        function sendDailyAccountingReportWhatsApp() {
-            const s = window.latestStatsSnapshot || {};
-            const partners = Object.values(users).filter(u => u.userType === "partner");
-            const pLines = partners.length ? partners.map(p => { const m = calculatePartnerCurrentMetrics(p.phone); return `• الشريك ${p.name}: ${m.totEarn.toLocaleString()} ل.س`; }).join("\n") : "• لا يوجد شركاء";
-            const msg = `📊 *تقرير الجرد والتوزيع المالي - متجر معاذ*\n📅 التاريخ: ${new Date().toLocaleString("ar-SY")}\n──────────────\n💰 إجمالي المبيعات: ${(s.totS || 0).toLocaleString()} ل.س\n💵 صندوق رأس المال المسترد للدرج: ${(s.capBoxSYP || 0).toLocaleString()} ل.س\n──────────────\n🤝 *مستحقات الشركاء الحالية:*\n${pLines}\n──────────────\n👔 *صافي أرباح الإدارة:*\n📥 مدير الاستيراد: ${(s.importManagerFinalSYP || 0).toLocaleString()} ل.س\n📤 مدير التصدير: ${(s.exportManagerFinalSYP || 0).toLocaleString()} ل.س\n──────────────\n🛵 مستحقات السائق: ${(s.drvNetSYP || 0).toLocaleString()} ل.س\n⛽ صندوق الآلية والوقود: ${(s.maintFundSYP || 0).toLocaleString()} ل.س`;
-            window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
-        }
-
-        function getCategoryInventoryValue(cName) {
-            let totalCost = 0, totalSale = 0, stock = 0, productCount = 0, outOfStockCount = 0;
-            Object.values(products).forEach(p => {
-                if ((p.category || "غير مصنف") === cName) {
-                    productCount++; const s = Math.max(0, parseInt(p.stock) || 0);
-                    if (s <= 0) outOfStockCount++; stock += s; totalCost += calcSYP(p.costPrice || 0) * s; totalSale += calcSYP(p.priceUSD || 0) * s;
-                }
-            });
-            return { totalCost, totalSale, stock, productCount, outOfStockCount };
-        }
-
-        function renderCategoryBreakdownTable(catMap) {
-            const container = $("categoryStatsContainer"); if (!container) return;
-            const active = Object.keys(catMap).filter(c => { const inv = getCategoryInventoryValue(c); return inv.productCount > 0 || catMap[c].sales > 0 || inv.stock > 0; });
-            container.innerHTML = !active.length ? '<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد مبيعات.</p>' :
-                `<div style="overflow-x:auto;"><table class="tbl-clean"><thead><tr><th style="text-align:right;">التصنيف</th><th>الأصناف</th><th>المبيعات</th><th>الربح</th><th>تصفير</th></tr></thead><tbody>` + active.map(c => `<tr><td style="font-weight:bold; text-align:right;">${c}</td><td style="color:var(--gold-color); font-weight:bold;">${getCategoryInventoryValue(c).productCount}</td><td>${catMap[c].sales.toLocaleString()}</td><td style="color:var(--success-color); font-weight:bold;">${catMap[c].profit.toLocaleString()}</td><td><button onclick="resetSalesFilter('cat','${c}')" class="btn btn-danger" style="width:auto; padding:3px 7px; font-size:10px;">🔄</button></td></tr>`).join("") + `</tbody></table></div>`;
-        }
-
-        function renderProductBreakdownTable(prodMap, selCat) {
-            const container = $("productStatsContainer"); if (!container) return;
-            const q = ($("statsProductSearch")?.value || "").trim().toLowerCase();
-            const list = Object.values(prodMap).filter(p => (selCat === "all" || p.category === selCat) && (!q || p.name.toLowerCase().includes(q))).sort((a, b) => b.sales - a.sales);
-            container.innerHTML = !list.length ? '<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف مطابقة.</p>' :
-                `<div style="overflow-x:auto; max-height:240px; overflow-y:auto;"><table class="tbl-clean"><thead><tr><th style="text-align:right;">الصنف</th><th>المباع</th><th>المبيعات</th><th>الربح</th><th>المخزون</th><th>تصفير</th></tr></thead><tbody>` + list.map(i => `<tr><td style="font-weight:bold; text-align:right;">${i.name}</td><td>${i.qtySold}</td><td>${i.sales.toLocaleString()}</td><td style="color:var(--success-color); font-weight:bold;">${i.profit.toLocaleString()}</td><td style="font-weight:bold;">${i.stock}</td><td><button onclick="resetSalesFilter('prod','${i.id}')" class="btn btn-danger" style="width:auto; padding:3px 7px; font-size:10px;">🔄</button></td></tr>`).join("") + `</tbody></table></div>`;
-        }
-
         function updateInventoryValuation(selCat = "all") {
             let cost = 0, sale = 0, cnt = 0, out = 0;
             Object.values(products).forEach(p => {
@@ -1836,7 +1698,4 @@
     </script>
 </body>
 </html>
-
-
-
     
