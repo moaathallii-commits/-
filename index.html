@@ -140,7 +140,6 @@
         <button class="cart-bar-btn" type="button" onclick="event.stopPropagation(); openCartModal();">🛒 إتمام الطلب الآن</button>
     </div>
 
-    <!-- نافذة دفتر الدين للزبون (قراءة فقط) -->
     <div id="debtBookModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">📖 دفتر الدين والحساب (قراءة فقط)</h3>
@@ -151,17 +150,6 @@
             <h4 style="color:var(--gold-color); margin:0 0 6px 0; font-size:12px;">سجل الحركات السابقة والديون:</h4>
             <div id="customerDebtTransactionsList" style="max-height:220px; overflow-y:auto; margin-bottom:12px;"></div>
             <button onclick="closeModal('debtBookModal')" class="btn btn-danger" style="padding:7px; font-size:11px;">إغلاق</button>
-        </div>
-    </div>
-
-    <!-- نافذة مدير التصدير (استلام وإقرار الطلبات) -->
-    <div id="exporterModal" class="modal-overlay" style="z-index:1100;">
-        <div class="modal-content" style="max-width:550px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:8px; margin-bottom:10px;">
-                <h3 style="color:var(--gold-color); margin:0; font-size:15px;">📤 لوحة مدير التصدير (استلام الطلبات)</h3>
-                <button onclick="closeModal('exporterModal')" class="btn btn-danger" style="width:auto; padding:4px 10px;">✖ خروج</button>
-            </div>
-            <div id="exporterOrdersList"></div>
         </div>
     </div>
 
@@ -310,7 +298,6 @@
                 <button class="cat-btn" onclick="switchAdminTab('admTabSystem', this)">⚙️ الإعدادات والنظام</button>
             </div>
 
-            <!-- 1. تبويب الطلبات والجرد المالي المتقدم -->
             <div id="admTabOrdersStats" class="admin-tab">
                 <div class="adm-sec" style="border-color:var(--gold-color);">
                     <div class="adm-sec-title">
@@ -425,7 +412,6 @@
                 </div>
             </div>
 
-            <!-- 2. تبويب البضاعة والمخزون السريع والعروض -->
             <div id="admTabCatalog" class="admin-tab" style="display:none;">
                 <div class="adm-sec" id="productFormSection">
                     <div class="adm-sec-title"><span>➕ إضافة / تعديل صنف في المتجر</span><button onclick="resetProductForm()" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">تفريغ الحقول</button></div>
@@ -477,7 +463,6 @@
                 </div>
             </div>
 
-            <!-- 3. تبويب النواقص والموزعين -->
             <div id="admTabSupply" class="admin-tab" style="display:none;">
                 <div class="adm-sec" style="border-color:var(--danger-color);">
                     <div class="adm-sec-title"><span style="color:var(--danger-color);">⚠️ النواقص مفرزة حسب الموزع المعتمد</span></div>
@@ -502,7 +487,6 @@
                 </div>
             </div>
 
-            <!-- 4. تبويب الزبائن والشركاء والمسابقات -->
             <div id="admTabUsersPartners" class="admin-tab" style="display:none;">
                 <div class="adm-sec">
                     <div class="adm-sec-title"><span>👥 سجل الزبائن وتحديد الرتب (مفرق / جملة / جيران / شريك / آجل)</span></div>
@@ -544,7 +528,6 @@
                 </div>
             </div>
 
-            <!-- 5. تبويب الإعدادات والتوصيل والنسخ الاحتياطي -->
             <div id="admTabSystem" class="admin-tab" style="display:none;">
                 <div class="adm-sec">
                     <div class="adm-sec-title"><span>💳 إعدادات الصرف، شام كاش، وأرقام التواصل</span></div>
@@ -618,7 +601,6 @@
                 <div class="form-group"><label>الرصيد الدفتري الحالي ($):</label><input type="text" id="adminCustDebtDisplay" class="form-control" disabled style="color:var(--danger-color); font-weight:bold;"></div>
             </div>
 
-            <!-- قسم إدارة دفتر الدين للزبون الآجل من الإدارة -->
             <div class="adm-card" style="border-color:#ff9800; background:rgba(255,152,0,0.06); margin:10px 0;">
                 <div style="color:#ff9800; font-weight:bold; font-size:12px; margin-bottom:6px;">📖 دفتر الدين وإدارة الدفعات:</div>
                 <div style="display:flex; gap:5px; margin-bottom:6px; flex-wrap:wrap;">
@@ -629,11 +611,10 @@
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
                     <button onclick="adminClearCustomerDebt()" class="btn btn-danger" style="width:auto; padding:4px 10px; font-size:10px;">🔄 تصفير الحساب بالكامل</button>
-                    <small style="color:var(--gray-text);">الدين مسعر بالدولار الأمريكي ويُعرض للزبون بعملتيه.</small>
+                    <small style="color:var(--gray-text);">الدين مسعر بالدولار الأمريكي.</small>
                 </div>
             </div>
 
-            <!-- سجل نشاط الزبون: الطلبات الكاملة والملغاة -->
             <div class="adm-card" style="margin:10px 0;">
                 <div style="color:var(--gold-color); font-weight:bold; font-size:12px; margin-bottom:4px;">📊 سجل نشاط الزبون:</div>
                 <div id="adminCustomerActivityLog" style="font-size:11px; color:var(--gray-text); line-height:1.5;">جاري التحميل...</div>
@@ -643,7 +624,7 @@
                 <button onclick="saveAdminCustomerEdit()" class="btn" style="flex:2;">💾 حفظ التعديلات ورقم الهاتف</button>
                 <button onclick="adminDeleteCustomer()" class="btn btn-danger" style="flex:1; font-size:11px;">🗑️ حذف الزبون</button>
             </div>
-            <button onclick="closeModal('adminEditCustomerModal')" class="btn btn-danger" style="padding:5px; font-size:11px; margin-top:6px;">إغلاق</button>
+            <button onclick="closeModal('adminEditCustomerModal')" class="btn btn-danger" style="padding:5px; font-size:11px; margin-top:6px;">إلغاء</button>
         </div>
     </div>
     <script>
@@ -719,7 +700,7 @@
             history.pushState({ page: 'store_home' }, '');
             window.addEventListener('popstate', () => {
                 if (isExitingApp) return;
-                for (let id of ['cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal', 'competitionsPage', 'debtBookModal', 'exporterModal']) {
+                for (let id of ['cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal', 'competitionsPage', 'debtBookModal']) {
                     const el = $(id);
                     if (el && (el.style.display === 'flex' || el.style.display === 'block')) {
                         el.style.display = 'none';
@@ -893,7 +874,7 @@
         }
 
         function saveQuickExchangeRate() {
-            const val = parseFloat($("quickExchangeInput")?.value);
+            const val = parseFloat($("quickExchangeInput"]?.value);
             if (!val || val <= 0) return alert("⚠️ أدخل سعر صرف صحيح.");
             exchangeRate = val;
             setVal("exchangeRateInput", val);
@@ -1008,16 +989,16 @@
         function openEditProfile() { fillProfileInputs(); $("closeProfileBtn").style.display = "block"; $("profileModal").style.display = "flex"; }
 
         function saveUserProfile() {
-            const name = $("regName").value.trim(), newPhone = $("regPhone").value.trim().replace(/\s+/g, ""), region = $("regRegion").value, address = $("regAddress").value.trim();
-            if (!validatePhoneSyrian(newPhone)) { $("regPhoneError").style.display = "block"; return alert("⚠️ الرقم يجب أن يتكون من 10 خانات ويبدأ بـ 09 حصراً."); }
-            $("regPhoneError").style.display = "none";
+            const name = $("regName"].value.trim(), newPhone = $("regPhone"].value.trim().replace(/\s+/g, ""), region = $("regRegion"].value, address = $("regAddress"].value.trim());
+            if (!validatePhoneSyrian(newPhone)) { $("regPhoneError"].style.display = "block"; return alert("⚠️ الرقم يجب أن يتكون من 10 خانات ويبدأ بـ 09 حصراً."); }
+            $("regPhoneError"].style.display = "none";
             if (!name || !region || !address) return alert("⚠️ يرجى إدخال الاسم، المنطقة، وتفاصيل العنوان.");
 
             const oldPhone = currentUser?.phone || null;
             const prev = (oldPhone && users[oldPhone]) ? users[oldPhone] : (users[newPhone] || currentUser || {});
             if (prev.banned) return alert("🚫 عذراً، هذا الحساب محظور.");
 
-            const updatedData = { name, phone: newPhone, region, address, points: prev.points || 0, purchases: prev.purchases || {}, userType: prev.userType || "retail", pointsVisibility: $("regPointsVisibility").value, banned: !!prev.banned, debtBook: prev.debtBook || {} };
+            const updatedData = { name, phone: newPhone, region, address, points: prev.points || 0, purchases: prev.purchases || {}, userType: prev.userType || "retail", pointsVisibility: $("regPointsVisibility"].value, banned: !!prev.banned, debtBook: prev.debtBook || {} };
             if (oldPhone && oldPhone !== newPhone && users[oldPhone]) db.ref("users/" + oldPhone).remove();
 
             currentUser = updatedData;
@@ -1043,11 +1024,11 @@
             setTxt("userTypeBadge", isP ? "[شريك]" : (isD ? "[بيع بالآجل]" : (isN ? "[جيران المتجر]" : (isW ? "[جملة]" : "[مفرق]"))));
             setTxt("userPoints", pts);
             setTxt("compUserPoints", pts);
-            if ($("userRankBadge")) { $("userRankBadge").style.display = rank !== "-" ? "inline-flex" : "none"; setTxt("userRankBadge", `🏅 ترتيبي: ${rank}`); }
+            if ($("userRankBadge")) { $("userRankBadge"].style.display = rank !== "-" ? "inline-flex" : "none"; setTxt("userRankBadge", `🏅 ترتيبي: ${rank}`); }
             setTxt("compUserRankDisplay", rank !== "-" ? rank : "غير مصنف");
-            if ($("redeemPointsBtn")) $("redeemPointsBtn").style.display = (pts >= (parseInt(compSettings.minRedeemPoints) || 500) && !currentUser.banned) ? "inline-block" : "none";
-            if ($("partnerDashboardBtn")) $("partnerDashboardBtn").style.display = isP ? "inline-block" : "none";
-            if ($("debtBookBtn")) $("debtBookBtn").style.display = isD ? "inline-block" : "none";
+            if ($("redeemPointsBtn")) $("redeemPointsBtn"].style.display = (pts >= (parseInt(compSettings.minRedeemPoints) || 500) && !currentUser.banned) ? "inline-block" : "none";
+            if ($("partnerDashboardBtn")) $("partnerDashboardBtn"].style.display = isP ? "inline-block" : "none";
+            if ($("debtBookBtn")) $("debtBookBtn"].style.display = isD ? "inline-block" : "none";
         }
 
         function redeemPointsWhatsApp() {
@@ -1059,7 +1040,6 @@
             window.open(`https://wa.me/?text=${encodeURIComponent(`🌸 تفضل بزيارة تطبيق *متجر معاذ* في قرية العوينة بريف حماة لتسوق كافة المواد الغذائية والمنزلية عبر الرابط التالي:\nhttps://moaathallii-commits.github.io/-/`)}`, "_blank");
         }
 
-        // نافذة دفتر الدين للزبون الآجل (قراءة فقط)
         function openDebtBookModal() {
             if (!currentUser || currentUser.userType !== "debtor") return;
             const book = currentUser.debtBook || {};
@@ -1101,7 +1081,7 @@
             renderSpecialOffers();
             const grid = $("productsGrid");
             if (!grid) return;
-            const q = ($("searchInput")?.value || "").trim().toLowerCase(), isW = currentUser?.userType === "wholesale";
+            const q = ($("searchInput"]?.value || "").trim().toLowerCase(), isW = currentUser?.userType === "wholesale";
             const keys = shuffledProductKeys.length ? shuffledProductKeys : Object.keys(products);
             let html = "";
             keys.forEach(id => {
@@ -1155,7 +1135,7 @@
             if (nQty > item.stock) return alert("⚠️ الكمية المطلوبة غير متوفرة بالكامل بالمخزون!");
             if (nQty <= 0) delete cart[id]; else cart[id] = { ...item, qty: nQty };
             renderStore();
-            if ($("cartModal")?.style.display === "flex") renderCartModalItems();
+            if ($("cartModal"]?.style.display === "flex") renderCartModalItems();
         }
 
         function updateCartBar() {
@@ -1183,7 +1163,7 @@
         }
 
         function onCartRegionChange() {
-            const reg = $("cartRegionSelect").value;
+            const reg = $("cartRegionSelect"].value;
             if (!isRegionOpenNow(reg)) alert(`⚠️ تنبيه: منطقة (${reg}) مغلقة حالياً.`);
             if (currentUser?.phone) {
                 currentUser.region = reg; localStorage.setItem("moaath_user", JSON.stringify(currentUser));
@@ -1209,7 +1189,7 @@
                     return `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding:5px 0; font-size:11px;"><div><strong>${i.name}</strong><br><span style="color:var(--gray-text);">${u.toLocaleString()} ل.س × ${i.qty} = ${s.toLocaleString()} ل.س</span></div><div class="qty-controls" style="width:75px;"><button class="qty-btn" type="button" onclick="changeQty('${i.id}',1)" style="width:24px; height:24px; font-size:13px;">+</button><span class="qty-text" style="font-size:12px;">${i.qty}</span><button class="qty-btn" type="button" onclick="changeQty('${i.id}',-1)" style="width:24px; height:24px; font-size:13px;">-</button></div></div>`;
                 }).join("");
             }
-            const reg = $("cartRegionSelect")?.value || currentUser?.region || Object.keys(deliveryFees)[0] || "العوينة", fee = getRegionFee(reg);
+            const reg = $("cartRegionSelect"]?.value || currentUser?.region || Object.keys(deliveryFees)[0] || "العوينة", fee = getRegionFee(reg);
             setTxt("modalCartSubtotal", sub.toLocaleString());
             setTxt("modalDeliveryRegionName", reg);
             setTxt("modalDeliveryFee", fee.toLocaleString());
@@ -1235,7 +1215,7 @@
             const orderPayload = {
                 orderId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
                 customerName: currentUser.name, customerPhone: currentUser.phone, customerRegion: reg, customerAddress: currentUser.address,
-                paymentMethod: "شام كاش (Sham Cash)", notes: ($("orderNotes")?.value || "").trim(), items: ordItems,
+                paymentMethod: "شام كاش (Sham Cash)", notes: ($("orderNotes"]?.value || "").trim(), items: ordItems,
                 subtotalSaleSYP: subSale, deliveryFeeSYP: fee, totalSaleSYP: finalTotalSYP, totalCostSYP: totCost, netProfitSYP: subSale - totCost, earnedPoints: totPts, status: "pending"
             };
             db.ref("pendingOrders/" + orderId).set(orderPayload);
@@ -1247,7 +1227,7 @@
         function openReviewModal(id) { if (!products[id]) return; setVal("reviewProductId", id); setTxt("reviewProductName", products[id].name); setVal("reviewCommentInput", ""); $("reviewModal").style.display = "flex"; }
         function submitProductReview() {
             if (!currentUser?.phone || currentUser.banned) return;
-            const id = $("reviewProductId").value, rating = parseInt($("reviewRatingSelect").value) || 5, comment = $("reviewCommentInput").value.trim();
+            const id = $("reviewProductId"].value, rating = parseInt($("reviewRatingSelect"].value) || 5, comment = $("reviewCommentInput"].value.trim();
             if (!comment) return alert("يرجى كتابة تعليق.");
             db.ref(`products/${id}/reviews/REV_${Date.now()}`).set({ customerName: currentUser.name, customerPhone: currentUser.phone, rating, comment, timestamp: new Date().toLocaleDateString("ar-SY") }).then(() => { alert("✅ تم نشر تقييمك!"); closeModal('reviewModal'); });
         }
@@ -1271,6 +1251,7 @@
                 }
             });
             Object.values(completedOrdersHistory).forEach(ord => {
+                if (ord.status === 'cancelled') return;
                 if ((ord.dateISO || new Date().toISOString()) > lastSettlementISO) {
                     (ord.items || []).forEach(item => {
                         if (allowedCats.includes((item.category || "").trim().toLowerCase())) {
@@ -1300,15 +1281,15 @@
             setTxt("partnerTotalStockUnits", m.totalStockUnits + " قطعة");
 
             const pEntries = Object.entries(m.partnerItemsMap);
-            $("partnerItemsBreakdown").innerHTML = !pEntries.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد مبيعات جديدة منذ آخر تسوية.</p>` :
+            $("partnerItemsBreakdown"].innerHTML = !pEntries.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد مبيعات جديدة منذ آخر تسوية.</p>` :
                 `<div style="overflow-x:auto;"><table class="tbl-clean"><thead><tr><th style="text-align:right;">الصنف</th><th>التصنيف</th><th>المخزون</th><th>المباع</th><th>المبيعات</th><th>ربحك (${m.partnerPct}%)</th></tr></thead><tbody>` +
                 pEntries.map(([name, d]) => `<tr><td style="font-weight:bold; text-align:right;">${name}</td><td style="color:var(--gray-text);">${d.cat}</td><td style="color:${d.stock > 0 ? 'var(--gold-color)' : 'var(--danger-color)'}; font-weight:bold;">${d.stock}</td><td>${d.qtySold}</td><td>${d.sales.toLocaleString()}</td><td style="color:var(--success-color); font-weight:bold;">${d.earn.toLocaleString()} ل.س</td></tr>`).join("") + `</tbody></table></div>`;
 
             const hist = Object.values(m.conf.payoutHistory || {}).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
-            $("partnerPayoutHistoryList").innerHTML = !hist.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد دفعات مستلمة سابقة في السجل.</p>` :
+            $("partnerPayoutHistoryList"].innerHTML = !hist.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد دفعات مستلمة سابقة في السجل.</p>` :
                 hist.map(h => `<div class="leader-row"><span>📅 ${h.dateStr}</span><span style="color:var(--success-color); font-weight:bold;">✅ تم استلام: ${(h.amountSYP || 0).toLocaleString()} ل.س</span></div>`).join("");
 
-            if ($("partnerModal")) $("partnerModal").style.display = "block";
+            if ($("partnerModal")) $("partnerModal"].style.display = "block";
         }
 
         function requestPartnerEarningsWhatsApp() {
@@ -1321,7 +1302,7 @@
         }
 
         function settlePartnerEarningsByAdmin(targetPhone) {
-            const phone = targetPhone || $("adminPartnerSelect")?.value;
+            const phone = targetPhone || $("adminPartnerSelect"]?.value;
             if (!phone) return alert("⚠️ يرجى اختيار الشريك أولاً.");
             const m = calculatePartnerCurrentMetrics(phone);
             const partnerName = users[phone]?.name || phone;
@@ -1349,7 +1330,7 @@
         }
 
         function addStoreExpense() {
-            const title = $("expTitleInput").value.trim(), amount = parseInt($("expAmountInput").value) || 0;
+            const title = $("expTitleInput"].value.trim(), amount = parseInt($("expAmountInput"].value) || 0;
             if (!title || amount <= 0) return alert("⚠️ يرجى كتابة سبب المصروف والمبلغ بالليرة.");
             const id = "EXP_" + Date.now();
             db.ref("storeExpenses/" + id).set({ id, title, amountSYP: amount, dateISO: new Date().toISOString(), dateStr: new Date().toLocaleDateString("ar-SY") }).then(() => {
@@ -1406,9 +1387,9 @@
             db.ref().update(updates).then(() => { alert("✅ تم تصفير نقاط جميع الزبائن بنجاح!"); renderLeaderboard(); });
         }
 
-        function openMissingRequestModal() { setVal("missingItemName", ""); $("missingModal").style.display = "flex"; }
+        function openMissingRequestModal() { setVal("missingItemName", ""); $("missingModal"].style.display = "flex"; }
         function submitMissingRequest() {
-            const itemName = $("missingItemName").value.trim(); if (!itemName) return alert("يرجى كتابة اسم الصنف.");
+            const itemName = $("missingItemName"].value.trim(); if (!itemName) return alert("يرجى كتابة اسم الصنف.");
             db.ref("missingRequests").push({ itemName, customerName: currentUser ? currentUser.name : "زائر", customerPhone: currentUser ? currentUser.phone : "-", createdAt: Date.now() });
             closeModal("missingModal"); alert("✅ تم إرسال طلبك للإدارة!");
         }
@@ -1420,14 +1401,13 @@
                 entries.map(([id, r]) => `<div class="review-box"><div><b>${r.itemName}</b> <small>(${r.customerName} - ${r.customerPhone})</small></div><button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="db.ref('missingRequests/${id}').remove()">✖</button></div>`).join("");
         }
 
-        // نظام 5 ضغطات على الشعار + تشفير كلمة المرور + حفظ الجلسة
         let adminClickCount = 0, adminClickTimer = null;
         function handleAdminTrigger() {
             adminClickCount++; clearTimeout(adminClickTimer);
             if (adminClickCount >= 5) {
                 adminClickCount = 0;
                 if (localStorage.getItem("moaath_admin_unlocked") === "true") {
-                    $("adminModal").style.display = "flex";
+                    $("adminModal"].style.display = "flex";
                     renderStatsDashboard(); populateAdminPartnerSelect(); populatePartnerSelectOptions();
                     return;
                 }
@@ -1435,7 +1415,7 @@
                 if (pass === null) return;
                 if (verifyAdminPass(pass.trim())) {
                     localStorage.setItem("moaath_admin_unlocked", "true");
-                    $("adminModal").style.display = "flex";
+                    $("adminModal"].style.display = "flex";
                     renderStatsDashboard(); populateAdminPartnerSelect(); populatePartnerSelectOptions();
                 } else alert("❌ كلمة المرور غير صحيحة!");
             } else adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 1800);
@@ -1447,8 +1427,8 @@
             alert("🔒 تم قفل الإدارة بنجاح. سيتم طلب كلمة المرور عند الدخول القادم.");
         }
 
-        $("adminTrigger")?.addEventListener("click", handleAdminTrigger);
-        $("closedAdminTrigger")?.addEventListener("click", handleAdminTrigger);
+        $("adminTrigger"]?.addEventListener("click", handleAdminTrigger);
+        $("closedAdminTrigger"]?.addEventListener("click", handleAdminTrigger);
 
         function switchAdminTab(tabId, btn) {
             document.querySelectorAll(".admin-tab").forEach(t => t.style.display = "none");
@@ -1466,553 +1446,6 @@
                 const o = pendingOrders[id], itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${i.name} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
                 return `<div class="adm-card" style="border-color:var(--gold-color);"><div style="display:flex; justify-content:space-between; color:var(--gold-color); font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span></div><div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress}</div><div style="border-top:1px dashed var(--border-color); border-bottom:1px dashed var(--border-color); padding:6px 0; margin:6px 0;">${itemsHtml}</div><div style="font-weight:bold; margin-bottom:8px;">الإجمالي مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</div><div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000;" onclick="confirmOrder('${id}')">✅ تأكيد وخصم المخزون</button><button class="btn btn-danger" onclick="cancelOrder('${id}')">❌ إلغاء</button></div></div>`;
             }).join("");
-        }
-
-        // تأكيد الطلب وتوثيقه مع التسجيل التلقائي للديون إذا كان الزبون آجلاً (مع صياغة الواتساب المحدثة)
-        function confirmOrder(orderId) {
-            const o = pendingOrders[orderId]; if (!o) return;
-            (o.items || []).forEach(i => {
-                if (i.id.startsWith("OFFER_") && specialOffers[i.id]) db.ref(`specialOffers/${i.id}/stock`).set(Math.max(0, (parseInt(specialOffers[i.id].stock) || 0) - i.qty));
-                else if (products[i.id]) db.ref(`products/${i.id}/stock`).set(Math.max(0, (parseInt(products[i.id].stock) || 0) - i.qty));
-            });
-            const phone = o.customerPhone, uData = users[phone] || {}, purch = uData.purchases || {};
-            (o.items || []).forEach(i => { if (!i.id.startsWith("OFFER_")) purch[i.id] = true; });
-            const upPts = (uData.points || 0) + (o.earnedPoints || 0);
-
-            let updates = {};
-            updates[`users/${phone}/name`] = o.customerName;
-            updates[`users/${phone}/phone`] = phone;
-            updates[`users/${phone}/region`] = o.customerRegion;
-            updates[`users/${phone}/address`] = o.customerAddress;
-            updates[`users/${phone}/points`] = upPts;
-            updates[`users/${phone}/purchases`] = purch;
-
-            // التسجيل التلقائي للديون إذا كان الزبون آجلاً (زبون بيع بالآجل)
-            if (uData.userType === 'debtor') {
-                const totalUSD = (o.totalSaleSYP || 0) / exchangeRate;
-                const txId = "TX_" + Date.now();
-                updates[`users/${phone}/debtBook/${txId}`] = {
-                    id: txId,
-                    type: 'charge',
-                    amountUSD: parseFloat(totalUSD.toFixed(2)),
-                    note: `فاتورة طلب #${orderId.substring(4)}`,
-                    dateStr: new Date().toLocaleString("ar-SY"),
-                    dateISO: new Date().toISOString()
-                };
-            }
-
-            db.ref().update(updates);
-            db.ref("completedOrdersHistory/" + orderId).set({ ...o, status: "completed" });
-            db.ref("pendingOrders/" + orderId).remove();
-
-            // رسالة واتساب للزبون مع رقم السائق وتنبيه الدفع الصارم
-            const driverInfo = deliveryDriverPhone ? `\n🛵 هاتف عامل التوصيل: *${deliveryDriverPhone}*` : "";
-            const msg = `مرحباً ${o.customerName} 🌸\nتم تأكيد طلبك في *متجر معاذ* وجاري تجهيزه للتوصيل إلى (${o.customerRegion})!${driverInfo}\n💰 الإجمالي المطلوب: *${o.totalSaleSYP.toLocaleString()} ل.س*\n\n🚫 *تنبيه هام جداً:* الإدارة لن تستلم الطلب ولن يتم تسليمه إلا بعد إرسال صورة إشعار تحويل المبلغ المطلوب كاملاً عبر شام كاش.\nشكراً لتعاونكم وثقتكم بنا 🌸`;
-            window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(msg)}`, "_blank");
-        }
-
-        // إلغاء الطلب (مع حفظه في سجل الملغيات للزبون)
-        function cancelOrder(id) {
-            if (!confirm("هل تريد إلغاء هذه الفاتورة؟")) return;
-            const o = pendingOrders[id];
-            if (o) {
-                const phone = o.customerPhone;
-                if (users[phone]) {
-                    const cancelId = "CANC_" + Date.now();
-                    db.ref(`users/${phone}/cancelledOrders/${cancelId}`).set({
-                        orderId: id, total: o.totalSaleSYP, dateStr: new Date().toLocaleString("ar-SY")
-                    });
-                }
-                db.ref("completedOrdersHistory/" + id).set({ ...o, status: "cancelled" });
-                db.ref("pendingOrders/" + id).remove();
-            }
-        }
-
-        function cancelAllPendingOrders() {
-            const cnt = Object.keys(pendingOrders || {}).length;
-            if (!cnt) return alert("ℹ️ لا توجد طلبات معلقة.");
-            if (confirm(`⚠️ إلغاء جميع الطلبات المعلقة (${cnt} طلب)؟`)) db.ref("pendingOrders").remove();
-        }
-
-        function saveSupplier() {
-            const id = $("editSupplierId").value || ("SUPP_" + Date.now()), name = $("suppName").value.trim();
-            if (!name) return alert("أدخل اسم الموزع.");
-            db.ref("suppliers/" + id).set({ name, address: $("suppAddress").value.trim(), phone: $("suppPhone").value.trim() }).then(() => { resetSupplierForm(); alert("✅ تم حفظ الموزع!"); });
-        }
-        function resetSupplierForm() { ["editSupplierId", "suppName", "suppAddress", "suppPhone"].forEach(k => setVal(k, "")); }
-        function editSupplier(id) { const s = suppliers[id]; if (!s) return; setVal("editSupplierId", id); setVal("suppName", s.name || ""); setVal("suppAddress", s.address || ""); setVal("suppPhone", s.phone || ""); }
-        function deleteSupplier(id) { if (confirm("حذف هذا الموزع؟")) db.ref("suppliers/" + id).remove(); }
-
-        function renderAdminSuppliers() {
-            const container = $("adminSuppliersList"); if (!container) return;
-            const keys = Object.keys(suppliers);
-            container.innerHTML = !keys.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا يوجد موزعون مسجلون.</p>` :
-                keys.map(id => `<div class="adm-card"><div style="display:flex; justify-content:space-between;"><b>🚚 ${suppliers[id].name}</b><div style="display:flex; gap:4px;"><button onclick="editSupplier('${id}')" class="btn" style="width:auto; padding:3px 6px; font-size:10px;">✏️</button><button onclick="deleteSupplier('${id}')" class="btn btn-danger" style="width:auto; padding:3px 6px; font-size:10px;">🗑️</button></div></div><small style="color:var(--gray-text);">العنوان: ${suppliers[id].address || '-'} | الهاتف: ${suppliers[id].phone || '-'}</small></div>`).join("");
-        }
-
-        function populateSupplierSelect() {
-            const sel = $("prodSupplierSelect"); if (!sel) return;
-            const cur = sel.value;
-            sel.innerHTML = '<option value="">-- بدون موزع معتمد --</option>' + Object.keys(suppliers).map(id => `<option value="${id}">${suppliers[id].name}</option>`).join("");
-            sel.value = cur;
-        }
-
-        function populateAdminPartnerSelect() {
-            const sel = $("adminPartnerSelect"); if (!sel) return;
-            const cur = sel.value;
-            sel.innerHTML = '<option value="">-- اختر شريكاً --</option>' + Object.values(users).filter(u => u.userType === "partner").map(p => `<option value="${p.phone}">${p.name} (${p.phone})</option>`).join("");
-            if (cur) sel.value = cur;
-        }
-
-        function loadPartnerConfig() {
-            const phone = $("adminPartnerSelect"]?.value;
-            populatePartnerSelectOptions();
-            const histBox = $("adminPartnerPayoutHistory");
-            if (!phone || !window.partnersConfigData?.[phone]) {
-                setVal("adminPartnerShamWallet", ""); setVal("adminPartnerPct", "20");
-                if (histBox) histBox.innerHTML = "";
-                return;
-            }
-            const cfg = window.partnersConfigData[phone], savedCats = cfg.categories || [];
-            document.querySelectorAll(".partner-cat-cb").forEach(cb => { cb.checked = savedCats.includes(cb.value); });
-            setVal("adminPartnerShamWallet", cfg.shamWallet || "");
-            setVal("adminPartnerPct", cfg.profitPct || 20);
-
-            if (histBox) {
-                const hist = Object.values(cfg.payoutHistory || {}).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
-                histBox.innerHTML = hist.length ? `<div style="color:var(--gold-color); font-weight:bold; margin-bottom:4px;">🧾 سجل الدفعات المصروفة لهذا الشريك:</div>` + hist.map(h => `<div class="leader-row" style="padding:5px 8px;"><span>📅 ${h.dateStr}</span><span style="color:var(--success-color); font-weight:bold;">${(h.amountSYP || 0).toLocaleString()} ل.س</span></div>`).join("") : `<span style="color:var(--gray-text);">لا توجد دفعات مسجلة سابقاً لهذا الشريك.</span>`;
-            }
-        }
-
-        function savePartnerCategoriesConfig() {
-            const phone = $("adminPartnerSelect").value;
-            if (!phone) return alert("⚠️ اختر الشريك أولاً.");
-            const selectedCats = [];
-            document.querySelectorAll(".partner-cat-cb:checked").forEach(cb => selectedCats.push(cb.value));
-            if (!selectedCats.length) return alert("⚠️ حدد تصنيفاً واحداً على الأقل.");
-            const currentCfg = window.partnersConfigData?.[phone] || {};
-            db.ref("partnersConfig/" + phone).set({
-                categories: selectedCats,
-                shamWallet: $("adminPartnerShamWallet").value.trim(),
-                profitPct: parseFloat($("adminPartnerPct").value) || 20,
-                lastSettlementISO: currentCfg.lastSettlementISO || "2000-01-01T00:00:00.000Z",
-                payoutHistory: currentCfg.payoutHistory || {}
-            }).then(() => alert(`✅ تم حفظ إعدادات الشريك بنجاح!`));
-        }
-
-        // صياغة رسالة الموزع بوحدات القياس (طرد، كيس، كيلو، لتر...)
-        function sendSupplierShortagesWhatsApp(suppId) {
-            const supp = suppliers[suppId]; if (!supp?.phone) return alert("⚠️ هذا الموزع ليس لديه رقم هاتف مسجل.");
-            const list = Object.values(products).filter(p => p && p.supplierId === suppId && (parseInt(p.stock) || 0) <= (parseInt(p.alertLimit) || 2));
-            if (!list.length) return alert("✅ لا توجد نواقص لهذا الموزع.");
-            let msg = `📋 *طلب توريد بضائع - متجر معاذ*\n👤 السادة: *${supp.name}*\n📅 التاريخ: ${new Date().toLocaleDateString("ar-SY")}\n──────────────\n`;
-            list.forEach((p, idx) => {
-                const needed = Math.max(1, (p.alertLimit || 2) * 3 - (p.stock || 0));
-                msg += `${idx + 1}. نريد *${needed}* طرد/عبوة من صنف: *${p.name}*\n`;
-            });
-            msg += `──────────────\nيرجى تأكيد الطلب وتزويدنا بالكميات المذكورة 🌸`;
-            window.open(`https://wa.me/${formatWhatsAppPhone(supp.phone)}?text=${encodeURIComponent(msg)}`, "_blank");
-        }
-
-        function renderShortages() {
-            const suppContainer = $("shortagesBySupplierContainer"); if (!suppContainer) return;
-            const list = Object.keys(products).filter(id => products[id] && (parseInt(products[id].stock) || 0) <= (parseInt(products[id].alertLimit) || 2));
-            if (!list.length) return (suppContainer.innerHTML = `<p style="text-align:center; color:var(--success-color); font-size:12px;">✅ جميع الأصناف متوفرة بالمخزون بشكل جيد.</p>`);
-
-            let bySupp = {}, unassigned = [];
-            list.forEach(id => {
-                const p = products[id];
-                if (p.supplierId && suppliers[p.supplierId]) { (bySupp[p.supplierId] = bySupp[p.supplierId] || []).push(p); }
-                else unassigned.push(p);
-            });
-
-            let html = "";
-            Object.keys(bySupp).forEach(sId => {
-                const s = suppliers[sId];
-                html += `<div class="adm-card" style="border-color:var(--gold-color);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><b style="color:var(--gold-color);">🚚 ${s.name}</b><button onclick="sendSupplierShortagesWhatsApp('${sId}')" class="btn" style="width:auto; padding:4px 10px; font-size:10px; background:#25D366; color:#fff;">📲 إرسال طلب واتساب</button></div>` +
-                bySupp[sId].map(p => `<div style="font-size:11px; display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding:3px 0;"><span>• ${p.name}</span><span style="color:var(--danger-color); font-weight:bold;">متبقي: ${p.stock}</span></div>`).join("") + `</div>`;
-            });
-            if (unassigned.length) {
-                html += `<div class="adm-card"><b style="color:var(--gray-text);">📦 أصناف غير مربوطة بموزع:</b>` +
-                unassigned.map(p => `<div style="font-size:11px; display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding:3px 0;"><span>• ${p.name}</span><span style="color:var(--danger-color); font-weight:bold;">متبقي: ${p.stock}</span></div>`).join("") + `</div>`;
-            }
-            suppContainer.innerHTML = html;
-        }
-
-        function renderStatsDashboard() {
-            const sel = $("reportCategorySelect");
-            if (sel) {
-                const cur = sel.value || "all";
-                sel.innerHTML = '<option value="all">🌟 جميع التصنيفات</option>' + categories.filter(c => c !== "الكل").map(c => `<option value="${c}">${c}</option>`).join("") + '<option value="عروض خاصة">عروض خاصة</option>';
-                sel.value = cur;
-            }
-            const period = $("reportPeriodSelect"]?.value || "total", selCat = sel?.value || "all", now = new Date();
-            let totS = 0, totC = 0, netP = 0, catMap = {}, prodMap = {};
-            let capBoxSYP = 0, drvNetSYP = 0, maintFundSYP = 0, importMgrAdminPool = 0, exportMgrAdminPool = 0;
-
-            const capReset = adminAccounting.capitalBoxResetISO || "2000-01-01T00:00:00.000Z";
-            const drvReset = adminAccounting.driverResetISO || "2000-01-01T00:00:00.000Z";
-            const mntReset = adminAccounting.maintenanceResetISO || "2000-01-01T00:00:00.000Z";
-            const impReset = adminAccounting.importManagerResetISO || "2000-01-01T00:00:00.000Z";
-            const expReset = adminAccounting.exportManagerResetISO || "2000-01-01T00:00:00.000Z";
-
-            categories.filter(c => c !== "الكل").forEach(c => catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 });
-            catMap["عروض خاصة"] = { sales: 0, cost: 0, profit: 0, count: 0 }; catMap["غير مصنف"] = { sales: 0, cost: 0, profit: 0, count: 0 };
-            Object.keys(products).forEach(pid => {
-                const c = products[pid].category || "غير مصنف";
-                if (!catMap[c]) catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 };
-                prodMap[pid] = { id: pid, name: products[pid].name || "صنف", category: c, stock: parseInt(products[pid].stock) || 0, qtySold: 0, sales: 0, cost: 0, profit: 0 };
-            });
-
-            Object.values(completedOrdersHistory).forEach(ord => {
-                if (ord.status === 'cancelled') return; // تجاهل الفواتير الملغاة من الحسابات المالية
-                const ordISO = ord.dateISO || new Date().toISOString();
-                const d = new Date(ordISO);
-                const fee = parseInt(ord.deliveryFeeSYP) || 0, dShare = Math.round((fee * getRegionDriverPct(ord.customerRegion)) / 100);
-                if (ordISO > drvReset) drvNetSYP += dShare;
-                if (ordISO > mntReset) maintFundSYP += (fee - dShare);
-
-                (ord.items || []).forEach(i => {
-                    const c = i.category || (i.id.startsWith("OFFER_") ? "عروض خاصة" : (products[i.id]?.category || "غير مصنف"));
-                    const sS = i.subSaleSYP || 0, sC = i.subCostSYP || 0, sP = i.netProfitSYP !== undefined ? i.netProfitSYP : (sS - sC), sQ = i.qty || 1;
-
-                    if (ordISO > capReset) capBoxSYP += sC;
-                    const partnerSharePct = getCategoryPartnerSharePct(c);
-                    const adminPureItemProfit = Math.round((sP * (100 - partnerSharePct)) / 100);
-                    if (ordISO > impReset) importMgrAdminPool += adminPureItemProfit;
-                    if (ordISO > expReset) exportMgrAdminPool += adminPureItemProfit;
-
-                    const inPeriod = !((period === "daily" && d.toDateString() !== now.toDateString()) || (period === "weekly" && (Math.abs(now - d) / 86400000) > 7) || (period === "monthly" && (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear())));
-                    if (inPeriod) {
-                        if (!catMap[c]) catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 };
-                        catMap[c].sales += sS; catMap[c].cost += sC; catMap[c].profit += sP; catMap[c].count += sQ;
-                        if (!prodMap[i.id]) prodMap[i.id] = { id: i.id, name: i.name || "صنف", category: c, stock: products[i.id] ? parseInt(products[i.id].stock) || 0 : 0, qtySold: 0, sales: 0, cost: 0, profit: 0 };
-                        prodMap[i.id].qtySold += sQ; prodMap[i.id].sales += sS; prodMap[i.id].cost += sC; prodMap[i.id].profit += sP;
-                        if (selCat === "all" || selCat === c) { totS += sS; totC += sC; netP += sP; }
-                    }
-                });
-            });
-
-            Object.values(storeExpenses).forEach(exp => {
-                const eISO = exp.dateISO || "", amt = parseInt(exp.amountSYP) || 0;
-                if (eISO > impReset) importMgrAdminPool -= amt;
-                if (eISO > expReset) exportMgrAdminPool -= amt;
-            });
-
-            const impPct = Math.min(100, Math.max(0, parseFloat(adminAccounting.importManagerPct ?? 50)));
-            const expPct = 100 - impPct;
-            const importManagerFinalSYP = Math.round((importMgrAdminPool * impPct) / 100);
-            const exportManagerFinalSYP = Math.round((exportMgrAdminPool * expPct) / 100);
-
-            window.latestStatsSnapshot = { totS, totC, netP, capBoxSYP, importManagerFinalSYP, exportManagerFinalSYP, drvNetSYP, maintFundSYP };
-
-            setTxt("statTotalSales", totS.toLocaleString() + " ل.س");
-            setTxt("statTotalCost", totC.toLocaleString() + " ل.س");
-            setTxt("statNetProfit", netP.toLocaleString() + " ل.س");
-            setTxt("statProfitMargin", (totS > 0 ? ((netP / totS) * 100).toFixed(1) : 0) + "%");
-            setTxt("statRecoveredCapitalBox", capBoxSYP.toLocaleString() + " ل.س");
-            setTxt("importMgrPctLabel", impPct);
-            setTxt("exportMgrPctLabel", expPct);
-            setTxt("statImportManagerProfit", importManagerFinalSYP.toLocaleString() + " ل.س");
-            setTxt("statExportManagerProfit", exportManagerFinalSYP.toLocaleString() + " ل.س");
-            setTxt("importMgrResetDateLabel", impReset.startsWith("2000") ? "منذ البداية" : "منذ: " + new Date(impReset).toLocaleDateString("ar-SY"));
-            setTxt("exportMgrResetDateLabel", expReset.startsWith("2000") ? "منذ البداية" : "منذ: " + new Date(expReset).toLocaleDateString("ar-SY"));
-            setTxt("statDriverNetPay", drvNetSYP.toLocaleString() + " ل.س");
-            setTxt("statMaintenanceFund", maintFundSYP.toLocaleString() + " ل.س");
-            setTxt("statRegisteredUsersCount", Object.keys(users).length + " زبون");
-
-            renderAllPartnersStatsInDashboard();
-            renderGoldenInsights(prodMap);
-            renderCategoryBreakdownTable(catMap);
-            renderProductBreakdownTable(prodMap, selCat);
-            updateInventoryValuation(selCat);
-        }
-
-        function renderAllPartnersStatsInDashboard() {
-            const box = $("adminAllPartnersStatsList"); if (!box) return;
-            const partners = Object.values(users).filter(u => u.userType === "partner");
-            if (!partners.length) return (box.innerHTML = `<div style="font-size:11px; color:var(--gray-text); text-align:center;">لا يوجد شركاء محددون حالياً.</div>`);
-            box.innerHTML = partners.map(p => {
-                const m = calculatePartnerCurrentMetrics(p.phone);
-                return `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--border-color); padding:6px 0; font-size:11px; flex-wrap:wrap; gap:6px;">
-                    <div><b>👤 ${p.name}</b> <small style="color:var(--gold-color);">(${m.partnerPct}% | ${m.rawCats.join("، ") || "بلا تصنيف"})</small><br><span style="color:var(--gray-text); font-size:10px;">مبيعاته: ${m.totSales.toLocaleString()} ل.س</span></div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <b style="color:var(--success-color); font-size:13px;">${m.totEarn.toLocaleString()} ل.س</b>
-                        <button onclick="settlePartnerEarningsByAdmin('${p.phone}')" class="btn" style="width:auto; padding:4px 8px; font-size:10px; background:#ff9800; color:#000;">🔄 تصفير</button>
-                    </div>
-                </div>`;
-            }).join("");
-        }
-
-        function renderGoldenInsights(prodMap) {
-            const box = $("goldenAndStagnantInsights"); if (!box) return;
-            const golden = Object.values(prodMap).filter(p => p.profit > 0).sort((a, b) => b.profit - a.profit).slice(0, 3);
-            const goldHtml = golden.length ? golden.map(g => `<span style="color:var(--success-color); font-weight:bold;">★ ${g.name} (${g.profit.toLocaleString()} ل.س)</span>`).join(" ، ") : "لا توجد مبيعات كافية بعد";
-            box.innerHTML = `<div>🥇 <b>الأعلى ربحاً:</b> ${goldHtml}</div>`;
-        }
-
-        function sendDailyAccountingReportWhatsApp() {
-            const s = window.latestStatsSnapshot || {};
-            const partners = Object.values(users).filter(u => u.userType === "partner");
-            const pLines = partners.length ? partners.map(p => { const m = calculatePartnerCurrentMetrics(p.phone); return `• الشريك ${p.name}: ${m.totEarn.toLocaleString()} ل.س`; }).join("\n") : "• لا يوجد شركاء";
-            const msg = `📊 *تقرير الجرد والتوزيع المالي - متجر معاذ*\n📅 التاريخ: ${new Date().toLocaleString("ar-SY")}\n──────────────\n💰 إجمالي المبيعات: ${(s.totS || 0).toLocaleString()} ل.س\n💵 صندوق رأس المال المسترد للدرج: ${(s.capBoxSYP || 0).toLocaleString()} ل.س\n──────────────\n🤝 *مستحقات الشركاء الحالية:*\n${pLines}\n──────────────\n👔 *صافي أرباح الإدارة:*\n📥 مدير الاستيراد: ${(s.importManagerFinalSYP || 0).toLocaleString()} ل.س\n📤 مدير التصدير: ${(s.exportManagerFinalSYP || 0).toLocaleString()} ل.س\n──────────────\n🛵 مستحقات السائق: ${(s.drvNetSYP || 0).toLocaleString()} ل.س\n⛽ صندوق الآلية والوقود: ${(s.maintFundSYP || 0).toLocaleString()} ل.س`;
-            window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
-        }
-
-        function getCategoryInventoryValue(cName) {
-            let totalCost = 0, totalSale = 0, stock = 0, productCount = 0, outOfStockCount = 0;
-            Object.values(products).forEach(p => {
-                if ((p.category || "غير مصنف") === cName) {
-                    productCount++; const s = Math.max(0, parseInt(p.stock) || 0);
-                    if (s <= 0) outOfStockCount++; stock += s; totalCost += calcSYP(p.costPrice || 0) * s; totalSale += calcSYP(p.priceUSD || 0) * s;
-                }
-            });
-            return { totalCost, totalSale, stock, productCount, outOfStockCount };
-        }
-
-        function renderCategoryBreakdownTable(catMap) {
-            const container = $("categoryStatsContainer"); if (!container) return;
-            const active = Object.keys(catMap).filter(c => { const inv = getCategoryInventoryValue(c); return inv.productCount > 0 || catMap[c].sales > 0 || inv.stock > 0; });
-            container.innerHTML = !active.length ? '<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد مبيعات.</p>' :
-                `<div style="overflow-x:auto;"><table class="tbl-clean"><thead><tr><th style="text-align:right;">التصنيف</th><th>الأصناف</th><th>المبيعات</th><th>الربح</th><th>تصفير</th></tr></thead><tbody>` + active.map(c => `<tr><td style="font-weight:bold; text-align:right;">${c}</td><td style="color:var(--gold-color); font-weight:bold;">${getCategoryInventoryValue(c).productCount}</td><td>${catMap[c].sales.toLocaleString()}</td><td style="color:var(--success-color); font-weight:bold;">${catMap[c].profit.toLocaleString()}</td><td><button onclick="resetSalesFilter('cat','${c}')" class="btn btn-danger" style="width:auto; padding:3px 7px; font-size:10px;">🔄</button></td></tr>`).join("") + `</tbody></table></div>`;
-        }
-
-        function renderProductBreakdownTable(prodMap, selCat) {
-            const container = $("productStatsContainer"); if (!container) return;
-            const q = ($("statsProductSearch")?.value || "").trim().toLowerCase();
-            const list = Object.values(prodMap).filter(p => (selCat === "all" || p.category === selCat) && (!q || p.name.toLowerCase().includes(q))).sort((a, b) => b.sales - a.sales);
-            container.innerHTML = !list.length ? '<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف مطابقة.</p>' :
-                `<div style="overflow-x:auto; max-height:240px; overflow-y:auto;"><table class="tbl-clean"><thead><tr><th style="text-align:right;">الصنف</th><th>المباع</th><th>المبيعات</th><th>الربح</th><th>المخزون</th><th>تصفير</th></tr></thead><tbody>` + list.map(i => `<tr><td style="font-weight:bold; text-align:right;">${i.name}</td><td>${i.qtySold}</td><td>${i.sales.toLocaleString()}</td><td style="color:var(--success-color); font-weight:bold;">${i.profit.toLocaleString()}</td><td style="font-weight:bold;">${i.stock}</td><td><button onclick="resetSalesFilter('prod','${i.id}')" class="btn btn-danger" style="width:auto; padding:3px 7px; font-size:10px;">🔄</button></td></tr>`).join("") + `</tbody></table></div>`;
-        }
-
-        function updateInventoryValuation(selCat = "all") {
-            let cost = 0, sale = 0, cnt = 0, out = 0;
-            Object.values(products).forEach(p => {
-                const c = p.category || "غير مصنف";
-                if (selCat === "all" || selCat === c) {
-                    cnt++; const s = Math.max(0, parseInt(p.stock) || 0);
-                    if (s <= 0) out++; cost += calcSYP(p.costPrice || 0) * s; sale += calcSYP(p.priceUSD || 0) * s;
-                }
-            });
-            setTxt("invTotalCost", cost.toLocaleString() + " ل.س");
-            setTxt("invTotalSale", sale.toLocaleString() + " ل.س");
-            setTxt("invTotalProductsCount", cnt + " صنف");
-            setTxt("invOutOfStockCount", out + " صنف");
-        }
-
-        function resetSalesFilter(type, target) {
-            const label = type === 'prod' ? (products[target]?.name || 'الصنف') : target;
-            if (!confirm(`تصفير مبيعات وأرباح "${label}" نهائياً من السجل العام مع الحفاظ الكامل على كميات المخزون؟`)) return;
-            const updates = {};
-            Object.keys(completedOrdersHistory).forEach(id => {
-                const ord = completedOrdersHistory[id]; if (!ord?.items) return;
-                const rem = ord.items.filter(i => type === 'prod' ? i.id !== target : (i.category || "غير مصنف") !== target);
-                if (rem.length !== ord.items.length) {
-                    if (!rem.length) updates[id] = null;
-                    else { let sS = 0, sC = 0; rem.forEach(i => { sS += (i.subSaleSYP || 0); sC += (i.subCostSYP || 0); }); updates[id] = { ...ord, items: rem, subtotalSaleSYP: sS, totalCostSYP: sC, netProfitSYP: sS - sC }; }
-                }
-            });
-            db.ref("completedOrdersHistory").update(updates).then(() => alert(`✅ تم تصفير المبيعات بنجاح!`));
-        }
-
-        async function saveProduct() {
-            const editId = $("editProductId").value, name = $("prodName").value.trim(), costPrice = parseFloat($("prodCostUSD").value) || 0, priceUSD = parseFloat($("prodPriceUSD").value) || 0, wholesaleUSD = parseFloat($("prodWholesaleUSD").value) || 0, stock = parseInt($("prodStock").value) || 0, alertLimit = parseInt($("prodAlertLimit").value) || 2, pointsPct = parseFloat($("prodPointsPct").value) || 2, category = $("prodCategory").value, supplierId = $("prodSupplierSelect").value, f = $("prodImageInput");
-            if (!name || priceUSD <= 0) return alert("يرجى إدخال اسم الصنف وسعر المبيع.");
-            const id = editId || ("PROD_" + Date.now()); let thumb = products[id]?.thumb || "";
-            if (f.files?.[0]) { const comp = await compressDualImages(f.files[0]); thumb = comp.thumb; highResImagesMemoryCache[id] = comp.image; await db.ref("productImages/" + id).set(comp.image); }
-            db.ref("products/" + id).set({ name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, supplierId, thumb, reviews: products[id]?.reviews || {} }).then(() => { resetProductForm(); alert("✅ تم حفظ الصنف بنجاح!"); });
-        }
-
-        function resetProductForm() { ["editProductId", "prodName", "prodCostUSD", "prodPriceUSD", "prodWholesaleUSD", "prodImageInput", "prodSupplierSelect"].forEach(k => setVal(k, "")); setVal("prodStock", "10"); }
-
-        function editProduct(id) {
-            const p = products[id]; if (!p) return;
-            setVal("editProductId", id); setVal("prodName", p.name || ""); setVal("prodCostUSD", p.costPrice || 0); setVal("prodPriceUSD", p.priceUSD || 0); setVal("prodWholesaleUSD", p.wholesaleUSD || 0); setVal("prodStock", p.stock || 0); setVal("prodAlertLimit", p.alertLimit || 2); setVal("prodPointsPct", p.pointsPct || 2); setVal("prodCategory", p.category || ""); setVal("prodSupplierSelect", p.supplierId || "");
-            $("productFormSection"]?.scrollIntoView({ behavior: "smooth" });
-        }
-        function deleteProduct(id) { if (confirm("حذف هذا الصنف نهائياً؟")) { db.ref("products/" + id).remove(); db.ref("productImages/" + id).remove(); delete highResImagesMemoryCache[id]; } }
-
-        function quickUpdateStock(id, delta) {
-            if (!products[id]) return;
-            db.ref(`products/${id}/stock`).set(Math.max(0, (parseInt(products[id].stock) || 0) + delta));
-        }
-        function quickUpdatePrice(id, val) {
-            const num = parseFloat(val);
-            if (!products[id] || isNaN(num) || num <= 0) return;
-            db.ref(`products/${id}/priceUSD`).set(num);
-        }
-
-        function renderAdminProducts() {
-            const container = $("adminProductsList"); if (!container) return;
-            const q = ($("adminSearchProd"]?.value || "").trim().toLowerCase();
-            const keys = Object.keys(products).filter(id => products[id] && (!q || products[id].name?.toLowerCase().includes(q) || products[id].category?.toLowerCase().includes(q)));
-            if (!keys.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف مطابقة.</p>`);
-            container.innerHTML = keys.map(id => {
-                const p = products[id], supp = p.supplierId && suppliers[p.supplierId] ? ` | ${suppliers[p.supplierId].name}` : "", revs = p.reviews || {}, revHtml = Object.keys(revs).map(rId => `<div style="display:flex; justify-content:space-between; font-size:10px; background:var(--card-bg); padding:3px 6px; margin-top:3px; border-radius:4px;"><span>⭐ ${revs[rId].rating} - <b>${revs[rId].customerName}:</b> ${revs[rId].comment}</span><b onclick="deleteProductReview('${id}','${rId}')" style="color:var(--danger-color); cursor:pointer;">🗑️</b></div>`).join("");
-                return `<div class="adm-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                        <div><b>${p.name}</b> <small style="color:var(--gray-text);">(${p.category}${supp})</small></div>
-                        <div style="display:flex; gap:4px;">
-                            <button onclick="editProduct('${id}')" class="btn" style="width:auto; padding:3px 7px; font-size:10px;">✏️</button>
-                            <button onclick="resetSalesFilter('prod','${id}')" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:#ff9800; color:#000;">🔄</button>
-                            <button onclick="deleteProduct('${id}')" class="btn btn-danger" style="width:auto; padding:3px 7px; font-size:10px;">🗑️</button>
-                        </div>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; font-size:11px; border-top:1px dashed var(--border-color); padding-top:5px;">
-                        <div>السعر ($): <input type="number" step="0.01" class="quick-inp" value="${p.priceUSD}" onchange="quickUpdatePrice('${id}', this.value)"> <small style="color:var(--gold-color);">(${calcSYP(p.priceUSD).toLocaleString()} ل.س)</small></div>
-                        <div style="display:flex; align-items:center; gap:5px;">المخزون: <button class="mini-btn" style="background:var(--success-color); color:#000;" onclick="quickUpdateStock('${id}', 1)">+</button> <b style="min-width:22px; text-align:center;">${p.stock}</b> <button class="mini-btn" style="background:var(--danger-color); color:#fff;" onclick="quickUpdateStock('${id}', -1)">-</button></div>
-                    </div>
-                    ${revHtml}
-                </div>`;
-            }).join("");
-        }
-
-        async function saveMultipleOffer() {
-            const editId = $("editOfferId").value, name = $("offerNameInput").value.trim(), costPrice = parseFloat($("offerCostInput").value) || 0, oldPriceUSD = parseFloat($("offerOldPriceInput").value) || 0, newPriceUSD = parseFloat($("offerNewPriceInput").value) || 0, wholesaleUSD = parseFloat($("offerWholesaleInput").value) || 0, stock = parseInt($("offerStockInput").value) || 0, pointsPct = parseFloat($("offerPointsPctInput").value) || 2, f = $("offerImageInput");
-            if (!name || newPriceUSD <= 0) return alert("أدخل اسم وسعر العرض.");
-            const id = editId || ("OFFER_" + Date.now()); let thumb = specialOffers[id]?.thumb || "", image = specialOffers[id]?.image || "";
-            if (f.files?.[0]) { const comp = await compressDualImages(f.files[0]); thumb = comp.thumb; image = comp.image; }
-            db.ref("specialOffers/" + id).set({ name, costPrice, oldPriceUSD, newPriceUSD, wholesaleUSD, stock, pointsPct, thumb, image, active: true }).then(() => { clearOfferForm(); alert("✅ تم حفظ العرض الخاص!"); });
-        }
-        function clearOfferForm() { ["editOfferId", "offerNameInput", "offerCostInput", "offerOldPriceInput", "offerNewPriceInput", "offerWholesaleInput", "offerImageInput"].forEach(k => setVal(k, "")); setVal("offerStockInput", "5"); }
-        function editOffer(id) { const so = specialOffers[id]; if (!so) return; setVal("editOfferId", id); setVal("offerNameInput", so.name || ""); setVal("offerCostInput", so.costPrice || 0); setVal("offerOldPriceInput", so.oldPriceUSD || 0); setVal("offerNewPriceInput", so.newPriceUSD || 0); setVal("offerWholesaleInput", so.wholesaleUSD || 0); setVal("offerStockInput", so.stock || 0); setVal("offerPointsPctInput", so.pointsPct || 2); }
-        function deleteOffer(id) { if (confirm("حذف هذا العرض؟")) db.ref("specialOffers/" + id).remove(); }
-        function renderAdminOffersList() {
-            const container = $("adminOffersList"); if (!container) return;
-            container.innerHTML = Object.keys(specialOffers).map(id => `<div class="review-box"><div><b>🔥 ${specialOffers[id].name}</b><br><small style="color:var(--gold-color);">${calcSYP(specialOffers[id].newPriceUSD).toLocaleString()} ل.س | الكمية: ${specialOffers[id].stock}</small></div><div style="display:flex; gap:4px;"><button onclick="editOffer('${id}')" class="btn" style="width:auto; padding:4px 8px; font-size:11px;">✏️</button><button onclick="deleteOffer('${id}')" class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:11px;">🗑️</button></div></div>`).join("");
-        }
-
-        function renderAdminCategories(raw) {
-            if ($("prodCategory")) $("prodCategory").innerHTML = raw.map(c => `<option value="${c}">${c}</option>`).join("");
-            if ($("adminCategoriesList")) $("adminCategoriesList").innerHTML = raw.map((c, idx) => `<span style="display:inline-flex; align-items:center; gap:5px; background:var(--bg-color); border:1px solid var(--border-color); padding:4px 9px; border-radius:12px; font-size:11px; margin:2px;">${c}<b onclick="deleteCategory(${idx})" style="color:var(--danger-color); cursor:pointer;">×</b></span>`).join("");
-        }
-        function addCategory() {
-            const val = $("newCatInput").value.trim(); if (!val) return;
-            const raw = categories.filter(c => c !== "الكل");
-            if (!raw.includes(val)) { raw.push(val); db.ref("categories").set(raw); }
-            setVal("newCatInput", "");
-        }
-        function deleteCategory(idx) { const raw = categories.filter(c => c !== "الكل"); raw.splice(idx, 1); db.ref("categories").set(raw); }
-
-        function renderAdminCustomers() {
-            const container = $("adminCustomersList"); if (!container) return;
-            const q = ($("adminSearchCust"]?.value || "").trim().toLowerCase();
-            const sorted = Object.values(users).filter(u => !q || u.name?.toLowerCase().includes(q) || u.phone?.includes(q)).sort((a, b) => (b.points || 0) - (a.points || 0));
-            if (!sorted.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا يوجد زبائن.</p>`);
-            container.innerHTML = sorted.map(u => {
-                const isB = !!u.banned, ut = u.userType || "retail";
-                const badge = ut === "wholesale" ? ["var(--gold-color)", "جملة"] : ut === "neighbors" ? ["#ff9800", "جيران"] : ut === "partner" ? ["#00b0ff", "شريك"] : ut === "debtor" ? ["#ff4444", "آجل (دين)"] : ["#00e676", "مفرق"];
-                return `<div class="adm-card" style="border-color:${isB ? 'var(--danger-color)' : 'var(--border-color)'};"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>👤 ${u.name} (${u.phone}) <b style="color:${badge[0]};">[${badge[1]}]</b></span><span style="color:var(--gold-color);">${Math.round(u.points || 0)} نقطة</span></div><div style="display:flex; gap:4px; margin-top:6px;"><button onclick="openAdminEditCustomerModal('${u.phone}')" class="btn" style="padding:3px 8px; font-size:10px; width:auto;">✏️ تعديل الزبون والديون</button><button onclick="toggleBanCustomer('${u.phone}')" class="btn" style="padding:3px 8px; font-size:10px; width:auto; background:${isB ? 'var(--success-color)' : '#ff9800'}; color:#000;">${isB ? 'فك الحظر' : 'حظر'}</button></div></div>`;
-            }).join("");
-        }
-        const toggleBanCustomer = p => { if (users[p]) db.ref("users/" + p + "/banned").set(!users[p].banned); };
-
-        function openAdminEditCustomerModal(p) {
-            const u = users[p]; if (!u) return;
-            populateRegionSelects(); setVal("adminCustOrigPhone", p); setVal("adminCustName", u.name || ""); setVal("adminCustPhone", u.phone || p);
-            setVal("adminCustRegion", u.region || "العوينة"); setVal("adminCustType", u.userType || "retail"); setVal("adminCustAddress", u.address || ""); setVal("adminCustPoints", Math.round(u.points || 0));
-
-            // حساب رصيد الدين الحالي للزبون بالدولار
-            const book = u.debtBook || {};
-            let tDebt = 0;
-            Object.values(book).forEach(tx => {
-                if (tx.type === 'charge') tDebt += (parseFloat(tx.amountUSD) || 0);
-                else if (tx.type === 'payment') tDebt -= (parseFloat(tx.amountUSD) || 0);
-            });
-            tDebt = Math.max(0, tDebt);
-            setVal("adminCustDebtDisplay", `${tDebt.toFixed(2)} $ (${calcSYP(tDebt).toLocaleString()} ل.س)`);
-
-            // عرض سجل نشاط الزبون (الطلبات الكاملة والملغاة)
-            const completed = Object.values(completedOrdersHistory).filter(ord => ord.customerPhone === p && ord.status !== 'cancelled');
-            const cancelled = Object.values(u.cancelledOrders || {});
-            const logBox = $("adminCustomerActivityLog");
-            if (logBox) {
-                logBox.innerHTML = `<div>✅ <b>الطلبات المكتملة:</b> ${completed.length} طلبات | إجمالي المشتريات: ${completed.reduce((a, b) => a + (b.totalSaleSYP || 0), 0).toLocaleString()} ل.س</div><div style="margin-top:3px;">❌ <b>الطلبات الملغاة:</b> ${cancelled.length} مرات</div>`;
-            }
-
-            $("adminEditCustomerModal").style.display = "flex";
-        }
-
-        // إضافة حركة دين أو تسديد دفعة للزبون من الإدارة
-        function adminAddDebtTransaction(type) {
-            const origPhone = $("adminCustOrigPhone").value;
-            if (!origPhone || !users[origPhone]) return;
-            const note = $("adminDebtNoteInput").value.trim(), amountUSD = parseFloat($("adminDebtAmountInput").value) || 0;
-            if (!note || amountUSD <= 0) return alert("⚠️ أدخل بيان الحركة والمبلغ بالدولار.");
-
-            const txId = "TX_" + Date.now();
-            db.ref(`users/${origPhone}/debtBook/${txId}`).set({
-                id: txId, type, amountUSD: parseFloat(amountUSD.toFixed(2)), note,
-                dateStr: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString()
-            }).then(() => {
-                alert("✅ تم تسجيل الحركة الدفترية بنجاح!");
-                setVal("adminDebtNoteInput", ""); setVal("adminDebtAmountInput", "");
-                openAdminEditCustomerModal(origPhone);
-            });
-        }
-
-        function adminClearCustomerDebt() {
-            const origPhone = $("adminCustOrigPhone").value;
-            if (!origPhone || !confirm("⚠️ هل أنت متأكد من تصفير دفتر دين هذا الزبون بالكامل؟")) return;
-            db.ref(`users/${origPhone}/debtBook`).remove().then(() => {
-                alert("✅ تم تصفير حساب الدين بنجاح!");
-                openAdminEditCustomerModal(origPhone);
-            });
-        }
-
-        function adminDeleteCustomer() {
-            const origPhone = $("adminCustOrigPhone").value;
-            if (!origPhone || !confirm("⚠️ تحذير خطير: هل أنت متأكد من حذف هذا الزبون نهائياً من قاعدة البيانات؟")) return;
-            db.ref(`users/${origPhone}`).remove().then(() => {
-                alert("✅ تم حذف الزبون بنجاح!");
-                closeModal('adminEditCustomerModal');
-            });
-        }
-
-        function saveAdminCustomerEdit() {
-            const origPhone = $("adminCustOrigPhone").value, newPhone = $("adminCustPhone").value.trim().replace(/\s+/g, "");
-            if (!origPhone || !users[origPhone]) return;
-            if (!validatePhoneSyrian(newPhone)) return alert("⚠️ رقم الهاتف الجديد يجب أن يتكون من 10 خانات ويبدأ بـ 09.");
-
-            const updates = {
-                name: $("adminCustName").value.trim(),
-                region: $("adminCustRegion").value,
-                userType: $("adminCustType").value,
-                address: $("adminCustAddress").value.trim(),
-                points: parseFloat($("adminCustPoints").value) || 0
-            };
-
-            if (origPhone !== newPhone) {
-                if (users[newPhone]) return alert("⚠️ رقم الهاتف الجديد مسجل مسبقاً لزبون آخر!");
-                db.ref(`users/${newPhone}`).set({ ...users[origPhone], ...updates, phone: newPhone }).then(() => {
-                    db.ref(`users/${origPhone}`).remove();
-                    alert("✅ تم تعديل بيانات الزبون وتصحيح رقمه بنجاح!");
-                    closeModal('adminEditCustomerModal'); populateAdminPartnerSelect();
-                });
-            } else {
-                db.ref(`users/${origPhone}`).update(updates).then(() => {
-                    alert("✅ تم حفظ تعديلات الزبون!");
-                    closeModal('adminEditCustomerModal'); populateAdminPartnerSelect();
-                });
-            }
-        }
-
-        async function saveCompetitionSettings() {
-            const f = $("compImageInput"); let image = compSettings.image || "";
-            if (f.files?.[0]) image = (await compressDualImages(f.files[0])).image;
-            db.ref("competition").set({ minRedeemPoints: parseInt($("minRedeemPointsInput").value) || 500, leaderboardLimit: parseInt($("leaderboardLimitInput").value) || 10, title: $("compTitleInput").value.trim(), desc: $("compDescInput").value.trim(), image }).then(() => alert("✅ تم حفظ إعدادات المسابقة والمتصدرين!"));
-        }
-
-        function saveGeneralSettings() {
-            collectDeliveryRegionsFromDOM();
-            db.ref("settings").set({
-                exchangeRate: parseFloat($("exchangeRateInput").value) || 15000,
-                deliveryDriverPhone: $("deliveryPhoneInput").value.trim(),
-                adminWhatsApp: $("adminWhatsAppInput").value.trim() || "963965461504",
-                shamWalletId: $("adminShamWalletInput").value.trim() || "da3e13cd8a2ef2af282445e148df9599",
-                deliveryFees,
-                workHours: { enabled: $("workHoursEnabled").checked, open: $("workHourOpen").value || "08:00", close: $("workHourClose").value || "23:00" }
-            }).then(() => alert("✅ تم حفظ كافة الإعدادات والمناطق بنجاح!"));
         }
 
         function exportBackupJSON() {
@@ -2036,4 +1469,3 @@
     </script>
 </body>
 </html>
-    
