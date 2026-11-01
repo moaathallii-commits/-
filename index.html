@@ -1,219 +1,3 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="google" content="notranslate">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>متجر معاذ - قرية العوينة</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#121212" id="themeColorMeta">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="متجر معاذ">
-    <link rel="apple-touch-icon" href="store-icon.png">
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
-    <script>
-        window.deferredPrompt = null;
-        const isAppStandalone = () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true || document.referrer.includes('android-app://');
-        window.addEventListener("beforeinstallprompt", e => {
-            e.preventDefault(); window.deferredPrompt = e;
-            const btn = document.getElementById("mainInstallAppBtn");
-            if (btn && !isAppStandalone()) btn.style.display = "inline-block";
-        });
-    </script>
-    <style>
-        :root { --bg-color:#121212; --card-bg:#1E1E1E; --gold-color:#D4AF37; --text-color:#FFFFFF; --gray-text:#AAAAAA; --danger-color:#ff4444; --success-color:#00e676; --border-color:#333333; --info-color:#00b0ff; }
-        body.light-mode { --bg-color:#F0F2F5; --card-bg:#FFFFFF; --gold-color:#B8860B; --text-color:#1A1A1A; --gray-text:#666666; --success-color:#00a152; --border-color:#E0E0E0; }
-        body { background-color:var(--bg-color); color:var(--text-color); font-family:Tahoma,'Segoe UI',sans-serif; margin:0; padding:0; -webkit-tap-highlight-color:transparent; transition:background-color 0.25s,color 0.25s; overscroll-behavior-y:contain; -webkit-user-select:none; user-select:none; }
-        header { background-color:var(--card-bg); border-bottom:2px solid var(--gold-color); padding:10px 15px; display:flex; justify-content:space-between; align-items:center; }
-        .store-info { cursor:pointer; }
-        .store-info h1 { font-size:16px; color:var(--gold-color); margin:0 0 3px 0; }
-        .store-info p { font-size:11px; color:var(--gray-text); margin:0; }
-        .logo-circle { width:45px; height:45px; border-radius:50%; overflow:hidden; border:2px solid var(--gold-color); cursor:pointer; background:#222; flex-shrink:0; }
-        .logo-circle img { width:100%; height:100%; object-fit:cover; }
-        .user-bar { background:var(--card-bg); padding:8px 15px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); font-size:12px; gap:6px; flex-wrap:wrap; }
-        .points-badge { color:var(--gold-color); cursor:pointer; background:rgba(212,175,55,0.12); padding:5px 10px; border-radius:15px; border:1px solid var(--gold-color); display:inline-flex; align-items:center; gap:4px; font-size:12px; }
-        .container { padding:10px; }
-        .search-box { width:100%; padding:10px; background:var(--bg-color); border:1px solid var(--gold-color); color:var(--text-color); border-radius:8px; margin-bottom:10px; box-sizing:border-box; }
-        .special-offer-banner { background:linear-gradient(45deg,rgba(212,175,55,0.12),var(--card-bg)); border:1px solid var(--gold-color); border-radius:8px; padding:10px; margin-bottom:12px; display:flex; gap:12px; align-items:center; }
-        .special-offer-img-wrap { width:80px; height:80px; border-radius:6px; overflow:hidden; border:1px solid var(--gold-color); flex-shrink:0; background:var(--bg-color); }
-        .special-offer-img { width:100%; height:100%; object-fit:cover; }
-        .categories { display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:10px; scrollbar-width:none; }
-        .cat-btn { background:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color); padding:7px 13px; border-radius:15px; font-size:12px; white-space:nowrap; cursor:pointer; transition:0.2s; }
-        .cat-btn.active { background:var(--gold-color); color:#000; font-weight:bold; border-color:var(--gold-color); }
-        .products-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
-        .product-card { background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; padding:10px; text-align:center; display:flex; flex-direction:column; justify-content:space-between; }
-        .product-img-wrap { width:100%; aspect-ratio:9/16; border-radius:6px; background:var(--bg-color); margin-bottom:6px; overflow:hidden; position:relative; }
-        .product-img { width:100%; height:100%; object-fit:cover; transition:filter 0.3s ease; }
-        .img-low-res { filter:blur(5px); }
-        .img-high-res { filter:blur(0); }
-        .product-card h3 { font-size:13px; margin:4px 0; }
-        .product-card p { color:var(--gold-color); font-size:12px; margin:4px 0; font-weight:bold; }
-        .btn { background:var(--gold-color); color:#000; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; width:100%; box-sizing:border-box; }
-        .btn-danger { background:var(--danger-color); color:#fff; }
-        .btn-out { background:var(--border-color); color:var(--gray-text); cursor:not-allowed; }
-        .qty-controls { display:flex; justify-content:space-between; align-items:center; background:var(--bg-color); border:1px solid var(--gold-color); border-radius:5px; overflow:hidden; width:100%; }
-        .qty-btn { background:var(--gold-color); color:#000; border:none; width:30px; height:30px; font-size:16px; font-weight:bold; cursor:pointer; }
-        .qty-text { color:var(--text-color); font-weight:bold; font-size:13px; padding:0 8px; }
-        .cart-bar { position:fixed; bottom:0; left:0; width:100%; background:var(--card-bg); border-top:3px solid var(--gold-color); padding:10px 14px; display:flex; justify-content:space-between; align-items:center; box-sizing:border-box; z-index:99; cursor:pointer; box-shadow:0 -4px 20px rgba(0,0,0,0.6); }
-        .cart-bar-total-val { color:#00e676; font-size:15px; font-weight:900; text-shadow:0 0 10px rgba(0,230,118,0.4); }
-        .cart-bar-btn { background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; border:none; padding:9px 16px; border-radius:20px; font-weight:900; font-size:13px; cursor:pointer; box-shadow:0 3px 12px rgba(0,230,118,0.35); display:inline-flex; align-items:center; gap:5px; animation:pulse 1.8s infinite; white-space:nowrap; }
-        .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); justify-content:center; align-items:center; z-index:1000; padding:10px; box-sizing:border-box; }
-        .modal-content { background:var(--card-bg); padding:16px; border-radius:10px; border:1px solid var(--gold-color); width:100%; max-width:480px; max-height:92vh; overflow-y:auto; box-sizing:border-box; }
-        .form-group { margin-bottom:10px; text-align:right; }
-        .form-group label { display:block; font-size:11px; color:var(--gold-color); margin-bottom:4px; font-weight:bold; }
-        .form-control { width:100%; padding:8px; background:var(--bg-color); color:var(--text-color); border:1px solid var(--border-color); border-radius:5px; box-sizing:border-box; font-size:12px; }
-        .stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:8px; }
-        .stats-box { background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:9px 6px; text-align:center; }
-        .stats-value { font-size:14px; font-weight:bold; color:var(--gold-color); margin-top:4px; }
-        .page-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-color); z-index:950; overflow-y:auto; box-sizing:border-box; }
-        .comp-card { background:var(--card-bg); border:1px solid var(--gold-color); border-radius:10px; padding:14px; margin-bottom:12px; }
-        .leader-row, .review-box { display:flex; justify-content:space-between; align-items:center; background:var(--bg-color); border:1px solid var(--border-color); padding:8px 10px; border-radius:6px; margin-bottom:6px; font-size:12px; }
-        .adm-sec { background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:8px; padding:12px; margin-bottom:14px; }
-        .adm-sec-title { color:var(--gold-color); margin:0 0 10px 0; font-size:13px; border-bottom:1px dashed var(--border-color); padding-bottom:6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; }
-        .adm-card { background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:8px; margin-bottom:6px; font-size:12px; }
-        .tbl-clean { width:100%; border-collapse:collapse; font-size:11px; text-align:center; }
-        .tbl-clean th { background:var(--bg-color); color:var(--gold-color); border-bottom:1px solid var(--border-color); padding:6px; position:sticky; top:0; }
-        .tbl-clean td { padding:6px; border-bottom:1px solid var(--border-color); }
-        .quick-inp { width:65px; padding:4px; background:var(--card-bg); color:var(--gold-color); border:1px solid var(--gold-color); border-radius:4px; text-align:center; font-weight:bold; font-size:11px; }
-        .mini-btn { width:24px; height:24px; border:none; border-radius:4px; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:13px; }
-        #storeClosedOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(18,18,18,0.96); z-index:9999; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; box-sizing:border-box; }
-        @keyframes pulse { 0%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,230,118,0.7);} 70%{transform:scale(1.03);box-shadow:0 0 0 8px rgba(0,230,118,0);} 100%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,230,118,0);} }
-    </style>
-</head>
-<body>
-
-    <div id="storeClosedOverlay">
-        <div style="font-size:55px; margin-bottom:10px;">🌙</div>
-        <h2 style="color:var(--gold-color); margin:0 0 10px 0;">المتجر أو المنطقة مغلقة حالياً</h2>
-        <p id="closedMessageText" style="font-size:14px; color:var(--text-color); max-width:320px; line-height:1.6;"></p>
-        <div style="margin-top:15px; font-size:12px; color:var(--gray-text);">متجر معاذ - قرية العوينة بريف حماة 🌸</div>
-        <div class="logo-circle" id="closedAdminTrigger" style="margin-top:25px; opacity:0.8;"><img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'"></div>
-    </div>
-
-    <header>
-        <div class="store-info" onclick="window.open('https://wa.me/' + adminWhatsAppNumber, '_blank')">
-            <h1>متجر معاذ</h1>
-            <p>قرية العوينة | <span id="headerPhoneText">0965461504</span> 📱</p>
-        </div>
-        <div style="display:flex; align-items:center; gap:8px;">
-            <button id="mainInstallAppBtn" onclick="installAppDirectly()" class="btn" style="width:auto; padding:6px 10px; font-size:11px; background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; border-radius:15px; animation:pulse 2s infinite;">📲 تثبيت التطبيق</button>
-            <div class="logo-circle" id="adminTrigger"><img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'"></div>
-        </div>
-    </header>
-
-    <div class="user-bar">
-        <span style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
-            👤 <b id="userNameDisplay">زائر</b>
-            <small id="userRegionBadge" style="color:var(--gray-text); font-size:10px;"></small>
-            <small id="userTypeBadge" style="color:var(--gold-color); font-size:10px; font-weight:bold;"></small>
-            <button onclick="openEditProfile()" style="background:transparent; border:none; color:var(--gold-color); font-size:12px; cursor:pointer; padding:0;">(⚙️)</button>
-            <span id="userRankBadge" onclick="openCompetitionsPage()" style="display:none; cursor:pointer; background:rgba(0,230,118,0.15); color:var(--success-color); border:1px solid var(--success-color); padding:2px 7px; border-radius:12px; font-size:11px; font-weight:bold;">🏅 ترتيبي: -</span>
-        </span>
-        <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
-            <button id="exportManagerDashboardBtn" onclick="openExportManagerDashboard()" style="display:none; background:linear-gradient(45deg,#ff9800,#ff5722); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📦 إدارة التصدير</button>
-            <button id="customerDebtPageBtn" onclick="openCustomerDebtPage()" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer; animation:pulse 1.8s infinite;">📒 دفتر الدين</button>
-            <button id="partnerDashboardBtn" onclick="openPartnerDashboard()" style="display:none; background:linear-gradient(45deg,#00b0ff,#7c4dff); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">🤝 لوحة الشريك</button>
-            <button onclick="shareAppWhatsApp()" style="background:linear-gradient(45deg,#25D366,#128C7E); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📢 مشاركة</button>
-            <button id="redeemPointsBtn" onclick="redeemPointsWhatsApp()" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer; animation:pulse 1.5s infinite;">🎁 استبدال</button>
-            <button onclick="toggleTheme()" id="themeBtn" style="background:transparent; border:none; font-size:16px; cursor:pointer; padding:0;">☀️</button>
-            <span class="points-badge" onclick="openCompetitionsPage()">🎁 نقاطي: <b id="userPoints">0</b></span>
-        </div>
-    </div>
-
-    <div class="container" style="padding-bottom:85px;">
-        <div id="multipleOffersContainer"></div>
-        <div style="display:flex; gap:6px; margin-bottom:10px;">
-            <input type="text" id="searchInput" class="search-box" style="margin-bottom:0; flex:1;" placeholder="🔍 ابحث عن أي منتج في متجر معاذ..." oninput="renderStore()">
-            <button class="btn" style="width:auto; white-space:nowrap; background:var(--card-bg); border:1px solid var(--gold-color); color:var(--gold-color);" onclick="openMissingRequestModal()">📝 طلب صنف</button>
-        </div>
-        <div class="categories" id="categoriesContainer"></div>
-        <div class="products-grid" id="productsGrid"></div>
-    </div>
-
-    <div class="cart-bar" id="cartBar" style="display:none;" onclick="openCartModal()">
-        <div style="display:flex; flex-direction:column; gap:2px; text-align:right; flex:1;">
-            <span style="font-size:11px; color:var(--gray-text);">المنتجات: <b id="cartCount" style="color:var(--text-color);">0</b> <small id="cartBarDeliveryNote" style="color:var(--gold-color);"></small></span>
-            <span style="font-size:12px;">المجموع النهائي: <strong id="cartTotal" class="cart-bar-total-val">0 ل.س</strong></span>
-        </div>
-        <button class="cart-bar-btn" type="button" onclick="event.stopPropagation(); openCartModal();">🛒 إتمام الطلب الآن</button>
-    </div>
-
-    <!-- نافذة دفتر الدين لزبون الآجل -->
-    <div id="customerDebtPage" class="page-overlay">
-        <header style="position:sticky; top:0; z-index:10;">
-            <div class="store-info"><h1>📒 دفتر الدين الشخصي</h1><p>متابعة الأرصدة وحركات الحساب بالآجل</p></div>
-            <button onclick="closeModal('customerDebtPage')" class="btn btn-danger" style="width:auto; padding:6px 12px;">🔙 رجوع</button>
-        </header>
-        <div class="container">
-            <div class="comp-card" style="text-align:center; background:linear-gradient(45deg,rgba(212,175,55,0.15),var(--card-bg)); border-color:var(--gold-color);">
-                <div style="font-size:12px; color:var(--gray-text);">إجمالي رصيدك المستحق (الآجل):</div>
-                <div style="font-size:24px; font-weight:bold; color:var(--gold-color); margin:6px 0;"><span id="custDebtUsdDisplay">0.00</span> $</div>
-                <div style="font-size:13px; color:var(--success-color);" id="custDebtSypDisplay">0 ل.س</div>
-            </div>
-            <div class="comp-card">
-                <h3 style="color:var(--gold-color); margin:0 0 10px 0; font-size:14px; text-align:center;">📜 سجل الحركات والمشتريات والديون</h3>
-                <div id="custDebtHistoryList"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- لوحة مدير التصدير التشغيلية المستقلة -->
-    <div id="exportManagerModal" class="page-overlay">
-        <header style="position:sticky; top:0; z-index:10;">
-            <div class="store-info"><h1>📦 لوحة إدارة التصدير</h1><p>استلام ومراجعة الطلبات الواردة وتحويلها للتوصيل</p></div>
-            <button onclick="closeModal('exportManagerModal')" class="btn btn-danger" style="width:auto; padding:6px 12px;">🔙 رجوع</button>
-        </header>
-        <div class="container">
-            <div class="comp-card">
-                <h3 style="color:#ff9800; margin:0 0 10px 0; font-size:14px;">📥 الطلبات الواردة قيد المعالجة</h3>
-                <div id="exportManagerOrdersList"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- نافذة تعديل الزبون وإدارة الدين في لوحة الإدارة -->
-    <div id="adminEditCustomerModal" class="modal-overlay" style="z-index:1100;">
-        <div class="modal-content">
-            <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">✏️ تعديل الزبون وإدارة دفتر الدين</h3>
-            <input type="hidden" id="adminCustOrigPhone">
-            <div class="form-group"><label>الاسم:</label><input type="text" id="adminCustName" class="form-control"></div>
-            <div class="form-group"><label>الهاتف (قابل للتصحيح دون ضياع السجل):</label><input type="text" id="adminCustPhone" class="form-control"></div>
-            <div class="form-group"><label>المنطقة:</label><select id="adminCustRegion" class="form-control"></select></div>
-            <div class="form-group">
-                <label>نوع الحساب:</label>
-                <select id="adminCustType" class="form-control">
-                    <option value="retail">زبون مفرق عادي</option>
-                    <option value="wholesale">زبون جملة</option>
-                    <option value="neighbors">جيران المتجر</option>
-                    <option value="partner">شريك</option>
-                    <option value="debtor">📒 زبون آجل (دفتر دين)</option>
-                </select>
-            </div>
-            
-            <div id="adminDebtorManagementSection" style="background:var(--bg-color); border:1px dashed var(--gold-color); padding:10px; border-radius:6px; margin-bottom:10px; display:none;">
-                <div style="font-size:11px; color:var(--gold-color); font-weight:bold; margin-bottom:6px;">📒 إدارة رصيد الآجل والمدفوعات:</div>
-                <div style="font-size:12px; margin-bottom:6px;">الرصيد الحالي: <b id="adminCustCurrentDebtUsd" style="color:var(--danger-color);">0.00 $</b></div>
-                <div class="stats-grid">
-                    <div class="form-group"><label>إضافة دين جديد ($):</label><input type="number" step="0.01" id="adminAddDebtUsd" class="form-control" placeholder="0.00"></div>
-                    <div class="form-group"><label>نسبة تكلفة/فائدة %:</label><input type="number" step="0.1" id="adminAddDebtPct" class="form-control" value="0"></div>
-                </div>
-                <div class="form-group"><label>تسجيل دفعة واصلة ($):</label><input type="number" step="0.01" id="adminPayDebtUsd" class="form-control" placeholder="0.00"></div>
-                <div class="form-group"><label>بيان الحركة / سبب الدين:</label><input type="text" id="adminDebtNote" class="form-control" placeholder="مثال: فاتورة مواد غذائية آجل"></div>
-                <button type="button" onclick="commitDebtorTransaction()" class="btn" style="background:#ff9800; color:#000; font-size:11px;">💾 تنفيذ حركة الدين وترحيل النقدية للخزينة</button>
-            </div>
-
-            <div class="form-group"><label>العنوان:</label><input type="text" id="adminCustAddress" class="form-control"></div>
-            <div class="form-group"><label>النقاط:</label><input type="number" id="adminCustPoints" class="form-control"></div>
-            <div style="display:flex; gap:8px;">
-                <button onclick="saveAdminCustomerEdit()" class="btn">💾 حفظ التعديلات</button>
-                <button onclick="deleteCustomerAccount()" class="btn btn-danger" style="width:30%; font-size:11px;">🗑️ حذف الحساب</button>
-                <button onclick="closeModal('adminEditCustomerModal')" class="btn btn-danger" style="width:25%;">إلغاء</button>
-            </div>
-        </div>
-    </div>
 <script>
         const $ = id => document.getElementById(id);
         const setTxt = (id, v) => { const el = $(id); if (el) el.textContent = v; };
@@ -221,31 +5,27 @@
         const closeModal = id => { if ($(id)) $(id).style.display = "none"; };
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
-        let adminWhatsAppNumber = "963965461504", shamWalletIdGlobal = "da3e13cd8a2ef2af282445e148df9599", exportManagerPhone = "";
+        let adminWhatsAppNumber = "963965461504", shamWalletIdGlobal = "da3e13cd8a2ef2af282445e148df9599";
+        
+        // مصفوفة التحقق المشفرة (Bitwise XOR) لإخفاء كلمة المرور نهائياً من الكود المصدري
         const _K = [102,99,106,107,26,18,18,28,4,4,102,100,106,106,127,99,120];
         const verifyAdminPass = s => typeof s === "string" && s.length === _K.length && _K.every((v, i) => (s.charCodeAt(i) ^ 43) === v);
 
         if (!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://moaathstore-d2fd6-default-rtdb.firebaseio.com" });
         const db = firebase.database();
 
-        let exchangeRate = 15000, deliveryDriverPhone = "";
+        let exchangeRate = 15000, deliveryDriverPhone = "", exportManagerPhone = "";
         let deliveryFees = {
-            "العوينة (جيران المتجر)": { fee: 0, neighborFee: 0, driverPct: 100, hoursEnabled: false, open: "08:00", close: "23:00" },
-            "العوينة": { fee: 2000, neighborFee: 0, driverPct: 80, hoursEnabled: false, open: "08:00", close: "23:00" },
-            "المزرعة الشرقية (الريحانية)": { fee: 5000, neighborFee: 2000, driverPct: 80, hoursEnabled: false, open: "08:00", close: "22:00" },
-            "المزرعة الغربية": { fee: 5000, neighborFee: 2000, driverPct: 80, hoursEnabled: false, open: "08:00", close: "22:00" }
+            "العوينة": { fee: 2000, neighborFee: 0, driverPct: 80, hoursEnabled: false, open: "08:00", close: "23:00" }
         };
         let workHoursSettings = { enabled: false, open: "08:00", close: "23:00" };
         let categories = ["الكل"], selectedCategory = "الكل", products = {}, specialOffers = {}, suppliers = {};
         let highResImagesMemoryCache = {}, noHighResAvailableSet = {}, shuffledProductKeys = [];
         let cart = {}, users = {}, pendingOrders = {}, completedOrdersHistory = {}, missingRequests = {};
-        let storeExpenses = {}, adminAccounting = {
-            importManagerPct: 50,
-            importManagerResetISO: "2000-01-01T00:00:00.000Z",
-            exportManagerResetISO: "2000-01-01T00:00:00.000Z",
-            capitalBoxResetISO: "2000-01-01T00:00:00.000Z",
-            driverResetISO: "2000-01-01T00:00:00.000Z",
-            maintenanceResetISO: "2000-01-01T00:00:00.000Z"
+        let storeExpenses = {}, creditLedgerData = {}, adminAccounting = {
+            importManagerPct: 50, importManagerResetISO: "2000-01-01T00:00:00.000Z", exportManagerResetISO: "2000-01-01T00:00:00.000Z",
+            capitalBoxResetISO: "2000-01-01T00:00:00.000Z", driverResetISO: "2000-01-01T00:00:00.000Z",
+            maintenanceResetISO: "2000-01-01T00:00:00.000Z", treasuryDebtResetISO: "2000-01-01T00:00:00.000Z"
         };
         let compSettings = { minRedeemPoints: 500, leaderboardLimit: 10, title: "", desc: "", image: "" };
         window.partnersConfigData = {};
@@ -275,8 +55,7 @@
                 if (res?.outcome === "accepted" && installBtn) installBtn.style.display = "none";
                 window.deferredPrompt = null;
             } else if (isAppStandalone()) {
-                if (installBtn) installBtn.style.display = "none";
-                alert("✅ التطبيق مثبت بالفعل ويعمل من الشاشة الرئيسية!");
+                if (installBtn) installBtn.style.display = "none"; alert("✅ التطبيق مثبت بالفعل ويعمل من الشاشة الرئيسية!");
             } else alert("📲 لتثبيت التطبيق: افتح قائمة المتصفح (⋮) واختر 'التثبيت وإنشاء اختصار'.");
         }
         window.addEventListener("appinstalled", () => { if (installBtn) installBtn.style.display = "none"; window.deferredPrompt = null; });
@@ -287,12 +66,10 @@
             history.pushState({ page: 'store_home' }, '');
             window.addEventListener('popstate', () => {
                 if (isExitingApp) return;
-                for (let id of ['cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal', 'competitionsPage', 'customerDebtPage', 'exportManagerModal']) {
+                for (let id of ['cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal', 'competitionsPage', 'creditLedgerModal', 'exportManagerModal']) {
                     const el = $(id);
                     if (el && (el.style.display === 'flex' || el.style.display === 'block')) {
-                        el.style.display = 'none';
-                        history.pushState({ page: 'store_home' }, '');
-                        return;
+                        el.style.display = 'none'; history.pushState({ page: 'store_home' }, ''); return;
                     }
                 }
                 if (confirm("هل تريد إغلاق التطبيق بالفعل؟")) { isExitingApp = true; history.back(); }
@@ -312,39 +89,29 @@
         }
 
         function checkStoreWorkHours() {
-            const overlay = $("storeClosedOverlay");
-            if (!overlay) return true;
+            const overlay = $("storeClosedOverlay"); if (!overlay) return true;
             const defReg = Object.keys(deliveryFees)[0] || "العوينة";
             const uReg = (currentUser?.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : defReg;
             if (!isRegionOpenNow(uReg)) {
                 const r = deliveryFees[uReg], custom = r && r.hoursEnabled;
                 if ($("closedMessageText")) $("closedMessageText").innerHTML = `نعتذر منكم، خدمة التوصيل لمنطقة (<b>${uReg}</b>) مغلقة حالياً.<br>ساعات التوصيل المعتمدة: من <b>${custom ? r.open : workHoursSettings.open}</b> إلى <b>${custom ? r.close : workHoursSettings.close}</b>.`;
-                overlay.style.display = "flex";
-                return false;
+                overlay.style.display = "flex"; return false;
             }
-            overlay.style.display = "none";
-            return true;
+            overlay.style.display = "none"; return true;
         }
         setInterval(checkStoreWorkHours, 60000);
 
         const getLockedHighResImage = id => highResImagesMemoryCache[id] || ((products[id]?.image?.length > 100) ? (highResImagesMemoryCache[id] = products[id].image) : null);
         const calcSYP = usd => Math.round(((parseFloat(usd) || 0) * exchangeRate) / 5) * 5;
-        function formatWhatsAppPhone(p) {
-            let s = String(p || "").replace(/[^0-9]/g, "");
-            if (s.startsWith("00")) s = s.substring(2);
-            return s.startsWith("09") ? "963" + s.substring(1) : s;
-        }
+        const formatWhatsAppPhone = p => { let s = String(p || "").replace(/[^0-9]/g, ""); if (s.startsWith("00")) s = s.substring(2); return s.startsWith("09") ? "963" + s.substring(1) : s; };
 
         if (localStorage.getItem("moaath_theme") === "light") {
-            document.body.classList.add("light-mode");
-            setTxt("themeBtn", "🌙");
-            $("themeColorMeta")?.setAttribute("content", "#F0F2F5");
+            document.body.classList.add("light-mode"); setTxt("themeBtn", "🌙"); $("themeColorMeta")?.setAttribute("content", "#F0F2F5");
         }
         function toggleTheme() {
             const isLight = document.body.classList.toggle("light-mode");
             localStorage.setItem("moaath_theme", isLight ? "light" : "dark");
-            setTxt("themeBtn", isLight ? "🌙" : "☀️");
-            $("themeColorMeta")?.setAttribute("content", isLight ? "#F0F2F5" : "#121212");
+            setTxt("themeBtn", isLight ? "🌙" : "☀️"); $("themeColorMeta")?.setAttribute("content", isLight ? "#F0F2F5" : "#121212");
         }
 
         function compressDualImages(file) {
@@ -354,11 +121,9 @@
                     const img = new Image();
                     img.onload = () => {
                         const resize = (maxW, q) => {
-                            const c = document.createElement("canvas");
-                            let w = img.width, h = img.height;
+                            const c = document.createElement("canvas"); let w = img.width, h = img.height;
                             if (w > maxW) { h = Math.max(1, Math.round((h * maxW) / w)); w = maxW; }
-                            c.width = w; c.height = h; c.getContext("2d").drawImage(img, 0, 0, w, h);
-                            return c.toDataURL("image/jpeg", q);
+                            c.width = w; c.height = h; c.getContext("2d").drawImage(img, 0, 0, w, h); return c.toDataURL("image/jpeg", q);
                         };
                         res({ thumb: resize(36, 0.15), image: resize(360, 0.65) });
                     };
@@ -369,8 +134,7 @@
         }
 
         const getRegionFee = r => {
-            const item = deliveryFees[r];
-            if (!item) return 0;
+            const item = deliveryFees[r]; if (!item) return 0;
             if (currentUser?.userType === "neighbors" && typeof item === "object" && item.neighborFee !== undefined) return parseInt(item.neighborFee) || 0;
             return (typeof item === "object") ? (parseInt(item.fee) || 0) : (parseInt(item) || 0);
         };
@@ -378,14 +142,9 @@
 
         function populateRegionSelects() {
             const names = Object.keys(deliveryFees);
-            if (!names.length) {
-                deliveryFees = { "العوينة": { fee: 2000, neighborFee: 0, driverPct: 80, hoursEnabled: false, open: "08:00", close: "23:00" } };
-                names.push("العوينة");
-            }
+            if (!names.length) { deliveryFees = { "العوينة": { fee: 2000, neighborFee: 0, driverPct: 80, hoursEnabled: false, open: "08:00", close: "23:00" } }; names.push("العوينة"); }
             ["regRegion", "cartRegionSelect", "adminCustRegion"].forEach(id => {
-                const el = $(id);
-                if (!el) return;
-                const prev = el.value;
+                const el = $(id); if (!el) return; const prev = el.value;
                 el.innerHTML = names.map(r => `<option value="${r}">${r} (${getRegionFee(r).toLocaleString()} ل.س)</option>`).join("");
                 el.value = (prev && deliveryFees.hasOwnProperty(prev)) ? prev : ((currentUser?.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : names[0]);
             });
@@ -393,8 +152,7 @@
         }
 
         function renderAdminDeliveryRegions() {
-            const container = $("adminDeliveryRegionsList");
-            if (!container) return;
+            const container = $("adminDeliveryRegionsList"); if (!container) return;
             container.innerHTML = Object.keys(deliveryFees).map((reg, idx) => {
                 const item = deliveryFees[reg] || {}, fee = parseInt(item.fee) || 0, nFee = item.neighborFee !== undefined ? parseInt(item.neighborFee) : fee, dPct = item.driverPct !== undefined ? parseFloat(item.driverPct) : 80;
                 const hEn = !!item.hoursEnabled, oT = item.open || "08:00", cT = item.close || "23:00";
@@ -425,14 +183,7 @@
                 const r = inp.getAttribute("data-region");
                 if (r) {
                     const nInput = document.querySelector(`.reg-neighbor-val[data-region="${r}"]`);
-                    deliveryFees[r] = {
-                        fee: parseInt(inp.value) || 0,
-                        neighborFee: nInput && nInput.value !== "" ? (parseInt(nInput.value) || 0) : 0,
-                        driverPct: Math.min(100, Math.max(0, parseFloat(document.querySelector(`.reg-pct-val[data-region="${r}"]`)?.value) || 80)),
-                        hoursEnabled: document.querySelector(`.reg-hen-val[data-region="${r}"]`)?.checked || false,
-                        open: document.querySelector(`.reg-open-val[data-region="${r}"]`)?.value || "08:00",
-                        close: document.querySelector(`.reg-close-val[data-region="${r}"]`)?.value || "23:00"
-                    };
+                    deliveryFees[r] = { fee: parseInt(inp.value) || 0, neighborFee: nInput && nInput.value !== "" ? (parseInt(nInput.value) || 0) : 0, driverPct: Math.min(100, Math.max(0, parseFloat(document.querySelector(`.reg-pct-val[data-region="${r}"]`)?.value) || 80)), hoursEnabled: document.querySelector(`.reg-hen-val[data-region="${r}"]`)?.checked || false, open: document.querySelector(`.reg-open-val[data-region="${r}"]`)?.value || "08:00", close: document.querySelector(`.reg-close-val[data-region="${r}"]`)?.value || "23:00" };
                 }
             });
         }
@@ -455,16 +206,14 @@
         }
 
         function populatePartnerSelectOptions() {
-            const box = $("partnerCategoriesCheckboxes");
-            if (!box) return;
+            const box = $("partnerCategoriesCheckboxes"); if (!box) return;
             box.innerHTML = categories.filter(c => c !== "الكل").map(c => `<label style="display:inline-flex; align-items:center; gap:4px; font-size:11px; background:var(--card-bg); padding:4px 8px; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;"><input type="checkbox" class="partner-cat-cb" value="${c}"> ${c}</label>`).join("");
         }
 
         function saveQuickExchangeRate() {
             const val = parseFloat($("quickExchangeInput")?.value);
             if (!val || val <= 0) return alert("⚠️ أدخل سعر صرف صحيح.");
-            exchangeRate = val;
-            setVal("exchangeRateInput", val);
+            exchangeRate = val; setVal("exchangeRateInput", val);
             db.ref("settings/exchangeRate").set(val).then(() => alert(`✅ تم تحديث سعر الصرف إلى (${val.toLocaleString()} ل.س) فوراً!`));
         }
 
@@ -474,12 +223,10 @@
             deliveryDriverPhone = d.deliveryDriverPhone || "";
             adminWhatsAppNumber = d.adminWhatsApp || "963965461504";
             shamWalletIdGlobal = d.shamWalletId || "da3e13cd8a2ef2af282445e148df9599";
-            exportManagerPhone = formatWhatsAppPhone(d.exportManagerPhone || "");
+            exportManagerPhone = d.exportManagerPhone || "";
             if (d.workHours) workHoursSettings = { enabled: !!d.workHours.enabled, open: d.workHours.open || "08:00", close: d.workHours.close || "23:00" };
             if ($("workHoursEnabled")) $("workHoursEnabled").checked = workHoursSettings.enabled;
-            setVal("workHourOpen", workHoursSettings.open);
-            setVal("workHourClose", workHoursSettings.close);
-            setTxt("headerPhoneText", adminWhatsAppNumber);
+            setVal("workHourOpen", workHoursSettings.open); setVal("workHourClose", workHoursSettings.close); setTxt("headerPhoneText", adminWhatsAppNumber);
             if (d.deliveryFees && Object.keys(d.deliveryFees).length) {
                 deliveryFees = {};
                 Object.keys(d.deliveryFees).forEach(k => {
@@ -488,13 +235,15 @@
                 });
             }
             populateRegionSelects();
-            setVal("exchangeRateInput", exchangeRate);
-            setVal("quickExchangeInput", exchangeRate);
-            setVal("deliveryPhoneInput", deliveryDriverPhone);
-            setVal("adminWhatsAppInput", adminWhatsAppNumber);
-            setVal("adminShamWalletInput", shamWalletIdGlobal);
-            if ($("exportMgrPhoneInput")) $("exportMgrPhoneInput").value = d.exportManagerPhone || "";
-            checkStoreWorkHours(); renderStore();
+            setVal("exchangeRateInput", exchangeRate); setVal("quickExchangeInput", exchangeRate); setVal("deliveryPhoneInput", deliveryDriverPhone);
+            setVal("adminWhatsAppInput", adminWhatsAppNumber); setVal("adminShamWalletInput", shamWalletIdGlobal); setVal("exportManagerPhoneInput", exportManagerPhone);
+            checkStoreWorkHours(); renderStore(); syncCurrentUser();
+        });
+
+        db.ref("creditLedgers").on("value", snap => {
+            creditLedgerData = snap.val() || {};
+            if (currentUser && currentUser.userType === 'credit') renderCustomerCreditView();
+            renderAdminCreditLedger(); renderStatsDashboard();
         });
 
         db.ref("adminAccounting").on("value", snap => {
@@ -503,16 +252,11 @@
             renderStatsDashboard();
         });
 
-        db.ref("storeExpenses").on("value", snap => {
-            storeExpenses = snap.val() || {};
-            renderStoreExpenses();
-            renderStatsDashboard();
-        });
+        db.ref("storeExpenses").on("value", snap => { storeExpenses = snap.val() || {}; renderStoreExpenses(); renderStatsDashboard(); });
 
         db.ref("categories").on("value", snap => {
             const d = snap.val() || ["مواد غذائية", "منظفات", "مشروبات"];
-            categories = ["الكل", ...d];
-            renderCategories(); renderAdminCategories(d); populatePartnerSelectOptions(); renderStatsDashboard();
+            categories = ["الكل", ...d]; renderCategories(); renderAdminCategories(d); populatePartnerSelectOptions(); renderStatsDashboard();
         });
 
         db.ref("suppliers").on("value", snap => { suppliers = snap.val() || {}; renderAdminSuppliers(); populateSupplierSelect(); renderShortages(); });
@@ -521,34 +265,26 @@
             products = snap.val() || {};
             const keys = Object.keys(products);
             if (!shuffledProductKeys.length) shuffledProductKeys = [...keys].sort(() => Math.random() - 0.5);
-            else {
-                shuffledProductKeys = shuffledProductKeys.filter(k => products[k]);
-                keys.forEach(k => { if (!shuffledProductKeys.includes(k)) shuffledProductKeys.push(k); });
-            }
+            else { shuffledProductKeys = shuffledProductKeys.filter(k => products[k]); keys.forEach(k => { if (!shuffledProductKeys.includes(k)) shuffledProductKeys.push(k); }); }
             renderStore(); renderAdminProducts(); renderShortages(); renderStatsDashboard();
         });
 
         db.ref("specialOffers").on("value", snap => { specialOffers = snap.val() || {}; renderSpecialOffers(); renderAdminOffersList(); renderStatsDashboard(); });
-        db.ref("users").on("value", snap => { users = snap.val() || {}; syncCurrentUser(); renderAdminCustomers(); renderLeaderboard(); renderStatsDashboard(); renderStore(); populateAdminPartnerSelect(); });
+        db.ref("users").on("value", snap => { users = snap.val() || {}; syncCurrentUser(); renderAdminCustomers(); renderLeaderboard(); renderStatsDashboard(); renderStore(); populateAdminPartnerSelect(); renderAdminCreditLedger(); });
         db.ref("partnersConfig").on("value", snap => { window.partnersConfigData = snap.val() || {}; syncCurrentUser(); loadPartnerConfig(); renderStatsDashboard(); });
 
         db.ref("competition").on("value", snap => {
             if (snap.val()) compSettings = { ...compSettings, ...snap.val() };
-            setVal("minRedeemPointsInput", compSettings.minRedeemPoints || 500);
-            setVal("leaderboardLimitInput", compSettings.leaderboardLimit || 10);
-            setVal("compTitleInput", compSettings.title || "");
-            setVal("compDescInput", compSettings.desc || "");
+            setVal("minRedeemPointsInput", compSettings.minRedeemPoints || 500); setVal("leaderboardLimitInput", compSettings.leaderboardLimit || 10);
+            setVal("compTitleInput", compSettings.title || ""); setVal("compDescInput", compSettings.desc || "");
             syncCurrentUser(); renderCompetitionDetails(); renderLeaderboard();
         });
 
         db.ref("pendingOrders").on("value", snap => {
-            const newOrders = snap.val() || {};
-            const newIds = Object.keys(newOrders);
+            const newOrders = snap.val() || {}; const newIds = Object.keys(newOrders);
             if (knownOrderIds !== null && newIds.some(id => !knownOrderIds.includes(id))) playNewOrderSound();
-            knownOrderIds = newIds;
-            pendingOrders = newOrders;
-            renderPendingOrders();
-            renderExportManagerOrders();
+            knownOrderIds = newIds; pendingOrders = newOrders;
+            renderPendingOrders(); renderExportManagerOrders();
         });
 
         db.ref("completedOrdersHistory").on("value", snap => { completedOrdersHistory = snap.val() || {}; renderStatsDashboard(); renderAdminProducts(); });
@@ -559,17 +295,14 @@
         function fillProfileInputs() {
             populateRegionSelects();
             if (currentUser) {
-                setVal("regName", currentUser.name || "");
-                setVal("regPhone", currentUser.phone || "");
+                setVal("regName", currentUser.name || ""); setVal("regPhone", currentUser.phone || "");
                 if (currentUser.region && deliveryFees.hasOwnProperty(currentUser.region)) setVal("regRegion", currentUser.region);
-                setVal("regAddress", currentUser.address || "");
-                setVal("regPointsVisibility", currentUser.pointsVisibility || "public");
+                setVal("regAddress", currentUser.address || ""); setVal("regPointsVisibility", currentUser.pointsVisibility || "public");
             }
         }
 
         window.addEventListener("load", () => {
-            populateRegionSelects();
-            fillProfileInputs();
+            populateRegionSelects(); fillProfileInputs();
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.region || !validatePhoneSyrian(currentUser.phone)) {
                 $("closeProfileBtn").style.display = "none"; $("profileModal").style.display = "flex";
             } else syncCurrentUser();
@@ -588,14 +321,12 @@
             const prev = (oldPhone && users[oldPhone]) ? users[oldPhone] : (users[newPhone] || currentUser || {});
             if (prev.banned) return alert("🚫 عذراً، هذا الحساب محظور.");
 
-            const updatedData = { name, phone: newPhone, region, address, points: prev.points || 0, purchases: prev.purchases || {}, userType: prev.userType || "retail", pointsVisibility: $("regPointsVisibility").value, banned: !!prev.banned, debtUsd: prev.debtUsd || 0, debtHistory: prev.debtHistory || {} };
+            const updatedData = { name, phone: newPhone, region, address, points: prev.points || 0, purchases: prev.purchases || {}, userType: prev.userType || "retail", pointsVisibility: $("regPointsVisibility").value, banned: !!prev.banned, successOrders: prev.successOrders || 0, canceledOrders: prev.canceledOrders || 0 };
             if (oldPhone && oldPhone !== newPhone && users[oldPhone]) db.ref("users/" + oldPhone).remove();
 
-            currentUser = updatedData;
-            localStorage.setItem("moaath_user", JSON.stringify(currentUser));
+            currentUser = updatedData; localStorage.setItem("moaath_user", JSON.stringify(currentUser));
             db.ref("users/" + newPhone).update(updatedData);
-            closeModal('profileModal'); syncCurrentUser(); updateCartBar(); checkStoreWorkHours();
-            alert("✅ تم حفظ بياناتك بنجاح!");
+            closeModal('profileModal'); syncCurrentUser(); updateCartBar(); checkStoreWorkHours(); alert("✅ تم حفظ بياناتك بنجاح!");
         }
 
         function calculateUserRank(phone) {
@@ -608,75 +339,32 @@
             if (!currentUser?.phone) return;
             if (users[currentUser.phone]) { currentUser = { ...currentUser, ...users[currentUser.phone] }; localStorage.setItem("moaath_user", JSON.stringify(currentUser)); }
             const pts = Math.round(currentUser.points || 0), rank = calculateUserRank(currentUser.phone);
-            setTxt("userNameDisplay", currentUser.name);
-            setTxt("userRegionBadge", currentUser.region ? `(${currentUser.region})` : "");
-            const isW = currentUser.userType === "wholesale", isN = currentUser.userType === "neighbors", isP = currentUser.userType === "partner", isD = currentUser.userType === "debtor";
-            setTxt("userTypeBadge", isP ? "[شريك]" : (isD ? "[زبون آجل]" : (isN ? "[جيران المتجر]" : (isW ? "[جملة]" : "[مفرق]"))));
-            setTxt("userPoints", pts);
-            setTxt("compUserPoints", pts);
+            setTxt("userNameDisplay", currentUser.name); setTxt("userRegionBadge", currentUser.region ? `(${currentUser.region})` : "");
+            
+            const isW = currentUser.userType === "wholesale", isN = currentUser.userType === "neighbors", isP = currentUser.userType === "partner", isC = currentUser.userType === "credit";
+            let badgeText = "مفرق"; if(isP) badgeText = "شريك"; else if(isN) badgeText = "جيران"; else if(isW) badgeText = "جملة"; else if(isC) badgeText = "آجل";
+            setTxt("userTypeBadge", `[${badgeText}]`);
+            
+            setTxt("userPoints", pts); setTxt("compUserPoints", pts);
             if ($("userRankBadge")) { $("userRankBadge").style.display = rank !== "-" ? "inline-flex" : "none"; setTxt("userRankBadge", `🏅 ترتيبي: ${rank}`); }
             setTxt("compUserRankDisplay", rank !== "-" ? rank : "غير مصنف");
             if ($("redeemPointsBtn")) $("redeemPointsBtn").style.display = (pts >= (parseInt(compSettings.minRedeemPoints) || 500) && !currentUser.banned) ? "inline-block" : "none";
             if ($("partnerDashboardBtn")) $("partnerDashboardBtn").style.display = isP ? "inline-block" : "none";
-            if ($("customerDebtPageBtn")) $("customerDebtPageBtn").style.display = isD ? "inline-block" : "none";
-
-            // فحص صلاحية مدير التصدير عبر رقم الهاتف
-            const isExportMgr = exportManagerPhone && formatWhatsAppPhone(currentUser.phone) === exportManagerPhone;
-            if ($("exportManagerDashboardBtn")) $("exportManagerDashboardBtn").style.display = isExportMgr ? "inline-block" : "none";
-        }
-
-        // فتح دفتر الدين لزبون الآجل
-        function openCustomerDebtPage() {
-            if (!currentUser || currentUser.userType !== "debtor") return;
-            const debtUsd = parseFloat(currentUser.debtUsd) || 0;
-            setTxt("custDebtUsdDisplay", debtUsd.toFixed(2));
-            setTxt("custDebtSypDisplay", calcSYP(debtUsd * exchangeRate / exchangeRate).toLocaleString() + " ل.س (تقريبي) أو " + calcSYP(debtUsd * (exchangeRate/exchangeRate)).toLocaleString()); // سيحسب بدقة عبر calcSYP بالدولار
-            // دقة حساب بالليرة: debtUsd * exchangeRate
-            setTxt("custDebtSypDisplay", Math.round(debtUsd * exchangeRate).toLocaleString() + " ل.س");
-
-            const hist = Object.values(currentUser.debtHistory || {}).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
-            $("custDebtHistoryList").innerHTML = !hist.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد حركات مسجلة في دفتر الدين.</p>` :
-                hist.map(h => `<div class="leader-row"><div><b>${h.title}</b><br><small style="color:var(--gray-text);">${h.dateStr}</small></div><div style="text-align:left;"><b style="color:${h.type === 'debt' ? 'var(--danger-color)' : 'var(--success-color)'};">${h.type === 'debt' ? '+' : '-'}${h.amountUsd.toFixed(2)} $</b><br><small style="color:var(--gray-text);">${Math.round(h.amountUsd * exchangeRate).toLocaleString()} ل.س</small></div></div>`).join("");
-
-            $("customerDebtPage").style.display = "block";
-        }
-
-        // لوحة مدير التصدير
-        function openExportManagerDashboard() {
-            renderExportManagerOrders();
-            $("exportManagerModal").style.display = "block";
-        }
-
-        function renderExportManagerOrders() {
-            const list = $("exportManagerOrdersList"); if (!list) return;
-            const keys = Object.keys(pendingOrders);
-            if (!keys.length) return (list.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد طلبات واردة حالياً.</p>`);
-            list.innerHTML = keys.map(id => {
-                const o = pendingOrders[id], itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${i.name} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
-                return `<div class="adm-card" style="border-color:#ff9800;"><div style="display:flex; justify-content:space-between; color:#ff9800; font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span></div><div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress}</div><div style="border-top:1px dashed var(--border-color); border-bottom:1px dashed var(--border-color); padding:6px 0; margin:6px 0;">${itemsHtml}</div><div style="font-weight:bold; margin-bottom:8px;">الإجمالي مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</div><div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000;" onclick="exportManagerConfirmOrder('${id}')">✅ قبول وتحويل للتوصيل</button><button class="btn btn-danger" onclick="cancelOrder('${id}')">❌ إلغاء الطلب</button></div></div>`;
-            }).join("");
-        }
-
-        function exportManagerConfirmOrder(orderId) {
-            confirmOrder(orderId);
-            setTimeout(renderExportManagerOrders, 300);
+            if ($("creditLedgerBtn")) $("creditLedgerBtn").style.display = isC ? "inline-block" : "none";
+            if ($("exportMgrPortalBtn")) $("exportMgrPortalBtn").style.display = (exportManagerPhone && currentUser.phone === exportManagerPhone) ? "inline-block" : "none";
         }
 
         function redeemPointsWhatsApp() {
             if (!currentUser || currentUser.banned) return;
-            window.location.href = `https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(`مرحباً إدارة متجر معاذ 🎁\nأرغب باستبدال نقاطي:\n👤 الاسم: ${currentUser.name}\n📱 الهاتف: ${currentUser.phone}\n🏘️ المنطقة: ${currentUser.region}\n🌟 النقاط: ${Math.round(currentUser.points || 0)}`)}`;
+            window.location.href = `https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(`مرحباً إدارة متجر معاذ 🎁\nأرغب باستبدال نقاطي:\n👤 الاسم: ${currentUser.name}\n📱 الهاتف: ${currentUser.phone}\n🌟 النقاط: ${Math.round(currentUser.points || 0)}`)}`;
         }
-
-        function shareAppWhatsApp() {
-            window.open(`https://wa.me/?text=${encodeURIComponent(`🌸 تفضل بزيارة تطبيق *متجر معاذ* في قرية العوينة بريف حماة لتسوق كافة المواد الغذائية والمنزلية عبر الرابط التالي:\nhttps://moaathallii-commits.github.io/-/`)}`, "_blank");
-        }
+        function shareAppWhatsApp() { window.open(`https://wa.me/?text=${encodeURIComponent(`🌸 تفضل بزيارة تطبيق *متجر معاذ* للتسوق:\nhttps://moaathallii-commits.github.io/-/`)}`, "_blank"); }
 
         const renderCategories = () => { if ($("categoriesContainer")) $("categoriesContainer").innerHTML = categories.map(c => `<button class="cat-btn ${c === selectedCategory ? 'active' : ''}" onclick="selectCategory('${c}')">${c}</button>`).join(""); };
         function selectCategory(c) { selectedCategory = c; renderCategories(); renderStore(); }
 
         function renderSpecialOffers() {
-            const container = $("multipleOffersContainer");
-            if (!container) return;
+            const container = $("multipleOffersContainer"); if (!container) return;
             const keys = Object.keys(specialOffers).filter(k => specialOffers[k]?.active);
             if (!keys.length) return (container.innerHTML = "");
             const isW = currentUser?.userType === "wholesale";
@@ -689,8 +377,7 @@
 
         function renderStore() {
             renderSpecialOffers();
-            const grid = $("productsGrid");
-            if (!grid) return;
+            const grid = $("productsGrid"); if (!grid) return;
             const q = ($("searchInput")?.value || "").trim().toLowerCase(), isW = currentUser?.userType === "wholesale";
             const keys = shuffledProductKeys.length ? shuffledProductKeys : Object.keys(products);
             let html = "";
@@ -707,8 +394,7 @@
                 html += `<div class="product-card"><div><div class="product-img-wrap"><img id="prod_img_${id}" src="${src}" class="product-img ${highResImagesMemoryCache[id] ? 'img-high-res' : 'img-low-res'}"></div><h3>${pName}</h3><p>${priceSYP.toLocaleString()} ل.س ${isW && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>${rKeys.length ? `<div style="font-size:11px; color:var(--gold-color);">⭐ ${avg} (${rKeys.length})</div>` : ''}</div><div style="margin-top:6px;">${btn}${revBtn}</div></div>`;
             });
             grid.innerHTML = html || `<p style="grid-column:span 2; text-align:center; color:var(--gray-text);">لا توجد مواد مطابقة للبحث.</p>`;
-            updateCartBar();
-            setTimeout(loadHighResImagesInBatches, 100);
+            updateCartBar(); setTimeout(loadHighResImagesInBatches, 100);
         }
 
         let isBatchLoadingImages = false;
@@ -720,11 +406,7 @@
                 await Promise.all(keys.slice(i, i + 3).map(async id => {
                     try {
                         const snap = await db.ref("productImages/" + id).once("value"), hi = snap.val();
-                        if (hi && hi.length > 100) {
-                            highResImagesMemoryCache[id] = hi;
-                            const el = $("prod_img_" + id);
-                            if (el) { el.src = hi; el.classList.remove("img-low-res"); el.classList.add("img-high-res"); }
-                        } else noHighResAvailableSet[id] = true;
+                        if (hi && hi.length > 100) { highResImagesMemoryCache[id] = hi; const el = $("prod_img_" + id); if (el) { el.src = hi; el.classList.remove("img-low-res"); el.classList.add("img-high-res"); } } else noHighResAvailableSet[id] = true;
                     } catch (e) { noHighResAvailableSet[id] = true; }
                 }));
             }
@@ -754,10 +436,7 @@
             Object.values(cart).forEach(i => { cnt += i.qty; sub += calcSYP(i.priceUSD) * i.qty; });
             if (cnt > 0) {
                 const def = Object.keys(deliveryFees)[0] || "العوينة", reg = (currentUser?.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : def, fee = getRegionFee(reg);
-                bar.style.display = "flex";
-                setTxt("cartCount", cnt);
-                setTxt("cartTotal", (sub + fee).toLocaleString() + " ل.س");
-                setTxt("cartBarDeliveryNote", `(توصيل ${reg}: ${fee.toLocaleString()} ل.س)`);
+                bar.style.display = "flex"; setTxt("cartCount", cnt); setTxt("cartTotal", (sub + fee).toLocaleString() + " ل.س"); setTxt("cartBarDeliveryNote", `(توصيل ${reg}: ${fee.toLocaleString()} ل.س)`);
             } else bar.style.display = "none";
         }
 
@@ -766,10 +445,7 @@
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.region || !validatePhoneSyrian(currentUser.phone)) return openEditProfile();
             const def = Object.keys(deliveryFees)[0] || "العوينة", reg = (currentUser.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : def;
             if (!isRegionOpenNow(reg)) return alert(`⚠️ خدمة التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
-            populateRegionSelects();
-            setVal("cartRegionSelect", reg);
-            renderCartModalItems();
-            if ($("cartModal")) $("cartModal").style.display = "flex";
+            populateRegionSelects(); setVal("cartRegionSelect", reg); renderCartModalItems(); $("cartModal").style.display = "flex";
         }
 
         function onCartRegionChange() {
@@ -777,8 +453,7 @@
             if (!isRegionOpenNow(reg)) alert(`⚠️ تنبيه: منطقة (${reg}) مغلقة حالياً.`);
             if (currentUser?.phone) {
                 currentUser.region = reg; localStorage.setItem("moaath_user", JSON.stringify(currentUser));
-                db.ref("users/" + currentUser.phone + "/region").set(reg);
-                setTxt("userRegionBadge", `(${reg})`);
+                db.ref("users/" + currentUser.phone + "/region").set(reg); setTxt("userRegionBadge", `(${reg})`);
             }
             renderCartModalItems(); updateCartBar();
         }
@@ -794,17 +469,12 @@
             let sub = 0, pts = 0;
             if ($("cartItemsList")) {
                 $("cartItemsList").innerHTML = items.map(i => {
-                    const u = calcSYP(i.priceUSD), s = u * i.qty;
-                    sub += s; pts += Math.round((i.priceUSD * i.qty) * (i.pointsPct || 2));
+                    const u = calcSYP(i.priceUSD), s = u * i.qty; sub += s; pts += Math.round((i.priceUSD * i.qty) * (i.pointsPct || 2));
                     return `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding:5px 0; font-size:11px;"><div><strong>${i.name}</strong><br><span style="color:var(--gray-text);">${u.toLocaleString()} ل.س × ${i.qty} = ${s.toLocaleString()} ل.س</span></div><div class="qty-controls" style="width:75px;"><button class="qty-btn" type="button" onclick="changeQty('${i.id}',1)" style="width:24px; height:24px; font-size:13px;">+</button><span class="qty-text" style="font-size:12px;">${i.qty}</span><button class="qty-btn" type="button" onclick="changeQty('${i.id}',-1)" style="width:24px; height:24px; font-size:13px;">-</button></div></div>`;
                 }).join("");
             }
             const reg = $("cartRegionSelect")?.value || currentUser?.region || Object.keys(deliveryFees)[0] || "العوينة", fee = getRegionFee(reg);
-            setTxt("modalCartSubtotal", sub.toLocaleString());
-            setTxt("modalDeliveryRegionName", reg);
-            setTxt("modalDeliveryFee", fee.toLocaleString());
-            setTxt("modalCartTotal", (sub + fee).toLocaleString());
-            setTxt("modalCartPoints", pts);
+            setTxt("modalCartSubtotal", sub.toLocaleString()); setTxt("modalDeliveryRegionName", reg); setTxt("modalDeliveryFee", fee.toLocaleString()); setTxt("modalCartTotal", (sub + fee).toLocaleString()); setTxt("modalCartPoints", pts);
         }
 
         function submitOrder() {
@@ -832,8 +502,7 @@
             if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}\n`;
             msg += `──────────────\n` + ordItems.map(i => `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س`).join("\n") + `\n──────────────\n📦 قيمة المواد: ${subSale.toLocaleString()} ل.س\n🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${finalTotalSYP.toLocaleString()} ل.س\n🎁 النقاط: +${totPts}`;
             db.ref("pendingOrders/" + orderId).set(orderPayload);
-            cart = {}; setVal("orderNotes", "");
-            closeModal('cartModal'); renderStore();
+            cart = {}; setVal("orderNotes", ""); closeModal('cartModal'); renderStore();
             window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
@@ -848,19 +517,67 @@
 
         function openCompetitionsPage() { syncCurrentUser(); renderCompetitionDetails(); renderLeaderboard(); $("competitionsPage").style.display = "block"; }
 
+        // 1. نظام دفتر الدين لزبون الآجل بالدولار
+        function renderAdminCreditLedger() {
+            const sel = $("adminCreditCustSelect"); if (!sel) return;
+            const cur = sel.value, creditUsers = Object.values(users).filter(u => u.userType === "credit");
+            sel.innerHTML = '<option value="">-- اختر زبوناً آجلاً --</option>' + creditUsers.map(u => `<option value="${u.phone}">${u.name} (${u.phone})</option>`).join("");
+            if (cur) sel.value = cur;
+            const phone = sel.value, box = $("adminSelectedCreditBalanceBox"), list = $("adminCreditHistoryList");
+            if (!phone) { if(box) box.style.display = "none"; if(list) list.innerHTML = ""; return; }
+            const ledger = creditLedgerData[phone] || { balanceUSD: 0, history: {} };
+            if (box) {
+                box.style.display = "block";
+                box.innerHTML = `<div style="color:var(--danger-color); font-weight:bold; font-size:16px;">المستحق: $${(ledger.balanceUSD||0).toFixed(2)}</div><div style="font-size:11px; color:var(--gray-text);">ما يعادل: ${calcSYP(ledger.balanceUSD||0).toLocaleString()} ل.س</div>`;
+            }
+            if (list) {
+                const hist = Object.values(ledger.history||{}).sort((a,b) => b.timestamp - a.timestamp);
+                list.innerHTML = hist.length ? hist.map(h => `<div style="display:flex; justify-content:space-between; border-bottom:1px dashed var(--border-color); padding:4px 0;"><span>${h.type==='debt'?'🔴 دين':'🟢 دفعة'}: ${h.note}</span><b style="color:${h.type==='debt'?'var(--danger-color)':'var(--success-color)'};">$${h.amount.toFixed(2)}</b></div>`).join("") : "لا يوجد حركات مسجلة.";
+            }
+        }
+
+        function addCreditTransaction(type) {
+            const phone = $("adminCreditCustSelect")?.value; if (!phone) return alert("اختر زبوناً أولاً!");
+            const amt = parseFloat($("creditAmountUSD").value); if (!amt || amt <= 0) return alert("أدخل مبلغاً صحيحاً!");
+            const note = $("creditNoteInput").value.trim() || (type === 'debt' ? 'دين جديد' : 'تسديد دفعة');
+            let finalAmt = amt;
+            if (type === 'debt') { const pct = parseFloat($("creditMarkupPct").value) || 0; finalAmt = amt + (amt * pct / 100); }
+            const ledgerRef = db.ref(`creditLedgers/${phone}`);
+            ledgerRef.once('value').then(snap => {
+                const data = snap.val() || { balanceUSD: 0, history: {} };
+                let newBal = data.balanceUSD || 0;
+                if (type === 'debt') newBal += finalAmt; else newBal = Math.max(0, newBal - finalAmt);
+                const tId = "TRX_" + Date.now();
+                data.history = data.history || {};
+                data.history[tId] = { id: tId, type, amount: finalAmt, note, dateISO: new Date().toISOString(), timestamp: Date.now() };
+                data.balanceUSD = newBal;
+                ledgerRef.set(data).then(() => {
+                    alert(`✅ تم تسجيل ${type==='debt'?'الدين':'التسديد'} بنجاح!`);
+                    setVal("creditAmountUSD", ""); setVal("creditNoteInput", ""); setVal("creditMarkupPct", "0");
+                });
+            });
+        }
+
+        function renderCustomerCreditView() {
+            if (!currentUser || currentUser.userType !== 'credit') return;
+            const data = creditLedgerData[currentUser.phone] || { balanceUSD: 0, history: {} };
+            setTxt("custCreditBalanceUSD", `$${(data.balanceUSD||0).toFixed(2)}`);
+            setTxt("custCreditBalanceSYP", `ما يعادل: ${calcSYP(data.balanceUSD||0).toLocaleString()} ل.س`);
+            const hist = Object.values(data.history||{}).sort((a,b) => b.timestamp - a.timestamp);
+            const list = $("custCreditHistoryList");
+            if(list) list.innerHTML = hist.length ? hist.map(h => `<div class="leader-row"><span>${h.type==='debt'?'🔴 دين':'🟢 تسديد'} <small>(${h.note})</small><br><small style="color:var(--gray-text);">${new Date(h.timestamp).toLocaleDateString('ar-SY')}</small></span><b style="color:${h.type==='debt'?'var(--danger-color)':'var(--success-color)'};">$${h.amount.toFixed(2)}</b></div>`).join("") : "لا يوجد حركات مسجلة.";
+        }
+        function openCustomerCreditModal() { renderCustomerCreditView(); $("creditLedgerModal").style.display = "block"; }
+
         function calculatePartnerCurrentMetrics(phone) {
             const conf = (window.partnersConfigData && window.partnersConfigData[phone]) || {};
-            const rawCats = conf.categories || [];
-            const allowedCats = rawCats.map(c => c.trim().toLowerCase());
-            const partnerPct = parseFloat(conf.profitPct) || 20;
-            const lastSettlementISO = conf.lastSettlementISO || "2000-01-01T00:00:00.000Z";
-
+            const rawCats = conf.categories || [], allowedCats = rawCats.map(c => c.trim().toLowerCase());
+            const partnerPct = parseFloat(conf.profitPct) || 20, lastSettlementISO = conf.lastSettlementISO || "2000-01-01T00:00:00.000Z";
             let totSales = 0, totEarn = 0, totalItemsCount = 0, totalStockUnits = 0, partnerItemsMap = {};
             Object.values(products).forEach(p => {
                 if (allowedCats.includes((p.category || "").trim().toLowerCase())) {
                     const st = Math.max(0, parseInt(p.stock) || 0);
-                    totalItemsCount++; totalStockUnits += st;
-                    partnerItemsMap[p.name] = { cat: p.category, stock: st, qtySold: 0, sales: 0, earn: 0 };
+                    totalItemsCount++; totalStockUnits += st; partnerItemsMap[p.name] = { cat: p.category, stock: st, qtySold: 0, sales: 0, earn: 0 };
                 }
             });
             Object.values(completedOrdersHistory).forEach(ord => {
@@ -871,9 +588,7 @@
                             const earn = Math.round((sProfit * partnerPct) / 100);
                             totSales += sSale; totEarn += earn;
                             if (!partnerItemsMap[item.name]) partnerItemsMap[item.name] = { cat: item.category || "-", stock: 0, qtySold: 0, sales: 0, earn: 0 };
-                            partnerItemsMap[item.name].qtySold += (item.qty || 1);
-                            partnerItemsMap[item.name].sales += sSale;
-                            partnerItemsMap[item.name].earn += earn;
+                            partnerItemsMap[item.name].qtySold += (item.qty || 1); partnerItemsMap[item.name].sales += sSale; partnerItemsMap[item.name].earn += earn;
                         }
                     });
                 }
@@ -885,87 +600,60 @@
             if (!currentUser || currentUser.userType !== "partner") return;
             const m = calculatePartnerCurrentMetrics(currentUser.phone);
             window.currentPartnerTotalEarn = m.totEarn;
-
             setTxt("partnerAssignedCatsText", m.rawCats.length ? `📂 تصنيفاتك المعتمدة: (${m.rawCats.join(" ، ")}) | نسبة الأرباح: ${m.partnerPct}%` : "⚠️ لم تقم الإدارة بتحديد تصنيفات لحسابك بعد.");
-            setTxt("partnerTotalSales", m.totSales.toLocaleString() + " ل.س");
-            setTxt("partnerTotalEarnings", m.totEarn.toLocaleString() + " ل.س");
-            setTxt("partnerTotalItemsCount", m.totalItemsCount + " صنف");
-            setTxt("partnerTotalStockUnits", m.totalStockUnits + " قطعة");
-
+            setTxt("partnerTotalSales", m.totSales.toLocaleString() + " ل.س"); setTxt("partnerTotalEarnings", m.totEarn.toLocaleString() + " ل.س");
+            setTxt("partnerTotalItemsCount", m.totalItemsCount + " صنف"); setTxt("partnerTotalStockUnits", m.totalStockUnits + " قطعة");
             const pEntries = Object.entries(m.partnerItemsMap);
-            $("partnerItemsBreakdown").innerHTML = !pEntries.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد مبيعات جديدة منذ آخر تسوية.</p>` :
+            $("partnerItemsBreakdown").innerHTML = !pEntries.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد مبيعات جديدة.</p>` :
                 `<div style="overflow-x:auto;"><table class="tbl-clean"><thead><tr><th style="text-align:right;">الصنف</th><th>التصنيف</th><th>المخزون</th><th>المباع</th><th>المبيعات</th><th>ربحك (${m.partnerPct}%)</th></tr></thead><tbody>` +
                 pEntries.map(([name, d]) => `<tr><td style="font-weight:bold; text-align:right;">${name}</td><td style="color:var(--gray-text);">${d.cat}</td><td style="color:${d.stock > 0 ? 'var(--gold-color)' : 'var(--danger-color)'}; font-weight:bold;">${d.stock}</td><td>${d.qtySold}</td><td>${d.sales.toLocaleString()}</td><td style="color:var(--success-color); font-weight:bold;">${d.earn.toLocaleString()} ل.س</td></tr>`).join("") + `</tbody></table></div>`;
-
             const hist = Object.values(m.conf.payoutHistory || {}).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
-            $("partnerPayoutHistoryList").innerHTML = !hist.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد دفعات مستلمة سابقة في السجل.</p>` :
+            $("partnerPayoutHistoryList").innerHTML = !hist.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد دفعات مستلمة سابقة.</p>` :
                 hist.map(h => `<div class="leader-row"><span>📅 ${h.dateStr}</span><span style="color:var(--success-color); font-weight:bold;">✅ تم استلام: ${(h.amountSYP || 0).toLocaleString()} ل.س</span></div>`).join("");
-
-            if ($("partnerModal")) $("partnerModal").style.display = "block";
+            $("partnerModal").style.display = "block";
         }
 
         function requestPartnerEarningsWhatsApp() {
             if (!currentUser || currentUser.userType !== "partner") return;
             const conf = (window.partnersConfigData && window.partnersConfigData[currentUser.phone]) || {};
             const earn = window.currentPartnerTotalEarn || 0;
-            if (earn <= 0) return alert("ℹ️ لا توجد أرباح مستحقة جديدة لطلبها حالياً.");
-            const msg = `مرحباً إدارة متجر معاذ 🤝\nأنا الشريك: *${currentUser.name}* (${currentUser.phone})\nأرغب بطلب صرف أرباحي المستحقة وقدرها: *${earn.toLocaleString()} ل.س*\n💳 معرف محفظة شام كاش: *${conf.shamWallet || "غير مسجل"}*\nيرجى تحويل المبلغ وتوثيق التسوية. شكراً لكم 🌸`;
+            if (earn <= 0) return alert("ℹ️ لا توجد أرباح مستحقة لطلبها.");
+            const msg = `مرحباً إدارة متجر معاذ 🤝\nأنا الشريك: *${currentUser.name}* (${currentUser.phone})\nأرغب بطلب صرف أرباحي وقدرها: *${earn.toLocaleString()} ل.س*\n💳 محفظة شام كاش: *${conf.shamWallet || "غير مسجل"}*\nيرجى تحويل المبلغ وتوثيق التسوية. 🌸`;
             window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
         function settlePartnerEarningsByAdmin(targetPhone) {
-            const phone = targetPhone || $("adminPartnerSelect")?.value;
-            if (!phone) return alert("⚠️ يرجى اختيار الشريك أولاً.");
-            const m = calculatePartnerCurrentMetrics(phone);
-            const partnerName = users[phone]?.name || phone;
-            if (!confirm(`هل أنت متأكد من تصفير وتوثيق دفعة أرباح الشريك (${partnerName}) البالغة (${m.totEarn.toLocaleString()} ل.س)؟\nسيتم حفظ الدفعة في دفتر التسويات دون المساس بجرد المتجر العام.`)) return;
-
+            const phone = targetPhone || $("adminPartnerSelect")?.value; if (!phone) return alert("⚠️ اختر الشريك أولاً.");
+            const m = calculatePartnerCurrentMetrics(phone), partnerName = users[phone]?.name || phone;
+            if (!confirm(`تصفير وتوثيق دفعة الشريك (${partnerName}) البالغة (${m.totEarn.toLocaleString()} ل.س)؟`)) return;
             const now = new Date(), nowISO = now.toISOString(), payId = "PAY_" + Date.now();
-            const updates = {};
-            updates[`partnersConfig/${phone}/lastSettlementISO`] = nowISO;
-            updates[`partnersConfig/${phone}/payoutHistory/${payId}`] = { amountSYP: m.totEarn, salesSYP: m.totSales, dateStr: now.toLocaleString("ar-SY"), dateISO: nowISO };
-            db.ref().update(updates).then(() => {
-                alert(`✅ تم تصفير حساب الشريك (${partnerName}) وتوثيق دفعة (${m.totEarn.toLocaleString()} ل.س)!`);
-                loadPartnerConfig();
-                renderStatsDashboard();
-            });
+            db.ref().update({ [`partnersConfig/${phone}/lastSettlementISO`]: nowISO, [`partnersConfig/${phone}/payoutHistory/${payId}`]: { amountSYP: m.totEarn, salesSYP: m.totSales, dateStr: now.toLocaleString("ar-SY"), dateISO: nowISO } }).then(() => { alert(`✅ تم تصفير حساب الشريك!`); loadPartnerConfig(); renderStatsDashboard(); });
         }
 
-        function saveManagersSplitPct() {
-            const pct = Math.min(100, Math.max(0, parseFloat($("importManagerPctInput")?.value) || 50));
-            db.ref("adminAccounting/importManagerPct").set(pct);
-        }
+        function saveManagersSplitPct() { db.ref("adminAccounting/importManagerPct").set(Math.min(100, Math.max(0, parseFloat($("importManagerPctInput")?.value) || 50))); }
 
         function resetAdminTimestamp(fieldKey, labelName) {
-            if (!confirm(`🔄 هل أنت متأكد من تصفير (${labelName}) وبدء عداد جديد له من هذه اللحظة؟\n(ملاحظة: باقي الحسابات والشركاء والجرد العام لن تتأثر نهائياً)`)) return;
-            db.ref(`adminAccounting/${fieldKey}`).set(new Date().toISOString()).then(() => alert(`✅ تم تصفير (${labelName}) بنجاح!`));
+            if (!confirm(`🔄 تصفير (${labelName}) وبدء عداد جديد من هذه اللحظة؟`)) return;
+            db.ref(`adminAccounting/${fieldKey}`).set(new Date().toISOString()).then(() => alert(`✅ تم التصفير بنجاح!`));
         }
 
         function addStoreExpense() {
             const title = ($("expTitleInput")?.value || "").trim(), amount = parseInt($("expAmountInput")?.value) || 0;
-            if (!title || amount <= 0) return alert("⚠️ يرجى كتابة سبب المصروف والمبلغ بالليرة.");
+            if (!title || amount <= 0) return alert("⚠️ يرجى إدخال السبب والمبلغ.");
             const id = "EXP_" + Date.now();
-            db.ref("storeExpenses/" + id).set({ id, title, amountSYP: amount, dateISO: new Date().toISOString(), dateStr: new Date().toLocaleDateString("ar-SY") }).then(() => {
-                setVal("expTitleInput", ""); setVal("expAmountInput", "");
-            });
+            db.ref("storeExpenses/" + id).set({ id, title, amountSYP: amount, dateISO: new Date().toISOString(), dateStr: new Date().toLocaleDateString("ar-SY") }).then(() => { setVal("expTitleInput", ""); setVal("expAmountInput", ""); });
         }
-        function deleteStoreExpense(id) { if (confirm("حذف هذا المصروف؟")) db.ref("storeExpenses/" + id).remove(); }
+        function deleteStoreExpense(id) { if (confirm("حذف المصروف؟")) db.ref("storeExpenses/" + id).remove(); }
         function renderStoreExpenses() {
             const box = $("storeExpensesList"); if (!box) return;
             const list = Object.values(storeExpenses).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
-            if (!list.length) return (box.innerHTML = `<div style="font-size:10px; color:var(--gray-text); text-align:center;">لا توجد مصاريف أو توالف مسجلة.</div>`);
-            box.innerHTML = list.map(e => `<div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; border-bottom:1px dashed var(--border-color); padding:3px 0;"><span>• <b>${e.title}</b> <small style="color:var(--gray-text);">(${e.dateStr})</small></span><div><b style="color:var(--danger-color); margin-left:6px;">-${(e.amountSYP || 0).toLocaleString()} ل.س</b><span onclick="deleteStoreExpense('${e.id}')" style="cursor:pointer; color:var(--danger-color);">🗑️</span></div></div>`).join("");
+            box.innerHTML = !list.length ? `<div style="font-size:10px; color:var(--gray-text); text-align:center;">لا توجد مصاريف.</div>` : list.map(e => `<div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; border-bottom:1px dashed var(--border-color); padding:3px 0;"><span>• <b>${e.title}</b> <small style="color:var(--gray-text);">(${e.dateStr})</small></span><div><b style="color:var(--danger-color); margin-left:6px;">-${(e.amountSYP || 0).toLocaleString()} ل.س</b><span onclick="deleteStoreExpense('${e.id}')" style="cursor:pointer; color:var(--danger-color);">🗑️</span></div></div>`).join("");
         }
 
         function getCategoryPartnerSharePct(catName) {
-            const cleanCat = (catName || "").trim().toLowerCase();
-            let totalPartnerPct = 0;
+            const cleanCat = (catName || "").trim().toLowerCase(); let totalPartnerPct = 0;
             Object.keys(window.partnersConfigData || {}).forEach(phone => {
-                if (users[phone]?.userType === "partner") {
-                    const cfg = window.partnersConfigData[phone];
-                    const cats = (cfg.categories || []).map(c => c.trim().toLowerCase());
-                    if (cats.includes(cleanCat)) totalPartnerPct += (parseFloat(cfg.profitPct) || 0);
-                }
+                if (users[phone]?.userType === "partner" && (window.partnersConfigData[phone].categories || []).map(c => c.trim().toLowerCase()).includes(cleanCat)) totalPartnerPct += (parseFloat(window.partnersConfigData[phone].profitPct) || 0);
             });
             return Math.min(100, totalPartnerPct);
         }
@@ -973,61 +661,74 @@
         function renderCompetitionDetails() {
             const card = $("compDetailsCard"); if (!card) return;
             if (compSettings.title || compSettings.desc || compSettings.image) {
-                card.style.display = "block";
-                setTxt("compTitleDisplay", compSettings.title || "");
-                setTxt("compDescDisplay", compSettings.desc || "");
-                const img = $("compImgDisplay");
-                if (compSettings.image) { img.src = compSettings.image; img.style.display = "block"; } else img.style.display = "none";
+                card.style.display = "block"; setTxt("compTitleDisplay", compSettings.title || ""); setTxt("compDescDisplay", compSettings.desc || "");
+                const img = $("compImgDisplay"); if (compSettings.image) { img.src = compSettings.image; img.style.display = "block"; } else img.style.display = "none";
             } else card.style.display = "none";
         }
-
         function renderLeaderboard() {
             const list = $("leaderboardList"); if (!list) return;
             const sorted = Object.values(users).filter(u => (u.points || 0) > 0 && !u.banned).sort((a, b) => (b.points || 0) - (a.points || 0)).slice(0, parseInt(compSettings.leaderboardLimit) || 10);
-            if (!sorted.length) return (list.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد نقاط مسجلة بعد.</p>`);
-            list.innerHTML = sorted.map((u, idx) => {
+            list.innerHTML = !sorted.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد نقاط مسجلة.</p>` : sorted.map((u, idx) => {
                 const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
                 const pts = u.pointsVisibility === "masked" ? ((currentUser?.phone === u.phone) ? `🔒 مشفرة (${Math.round(u.points || 0)} نقطة)` : `🔒 مشفرة (***)`) : `${Math.round(u.points || 0)} نقطة`;
                 return `<div class="leader-row"><span><b>${medal}</b> ${u.name} <small>(${u.region || "العوينة"})</small></span><span style="color:var(--gold-color); font-weight:bold;">${pts}</span></div>`;
             }).join("");
         }
-
-        function resetAllUsersPoints() {
-            if (!confirm("⚠️ تحذير: هل أنت متأكد من تصفير نقاط ولاء جميع الزبائن وإعادتها إلى الصفر؟")) return;
-            const updates = {};
-            Object.keys(users).forEach(phone => { updates[`users/${phone}/points`] = 0; });
-            db.ref().update(updates).then(() => { alert("✅ تم تصفير نقاط جميع الزبائن بنجاح!"); renderLeaderboard(); });
-        }
+        function resetAllUsersPoints() { if (confirm("⚠️ تصفير نقاط جميع الزبائن وإعادتها للصفر؟")) { const updates = {}; Object.keys(users).forEach(phone => { updates[`users/${phone}/points`] = 0; }); db.ref().update(updates).then(() => { alert("✅ تم التصفير!"); renderLeaderboard(); }); } }
 
         function openMissingRequestModal() { setVal("missingItemName", ""); $("missingModal").style.display = "flex"; }
         function submitMissingRequest() {
-            const itemName = $("missingItemName").value.trim(); if (!itemName) return alert("يرجى كتابة اسم الصنف.");
+            const itemName = $("missingItemName").value.trim(); if (!itemName) return alert("يرجى كتابة الصنف.");
             db.ref("missingRequests").push({ itemName, customerName: currentUser ? currentUser.name : "زائر", customerPhone: currentUser ? currentUser.phone : "-", createdAt: Date.now() });
-            closeModal("missingModal"); alert("✅ تم إرسال طلبك للإدارة!");
+            closeModal("missingModal"); alert("✅ تم إرسال الطلب!");
+        }
+        function renderCustomerMissingRequests() {
+            const container = $("customerMissingRequestsList"), entries = Object.entries(missingRequests || {});
+            if(container) container.innerHTML = !entries.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد طلبات معلقة.</p>` : entries.map(([id, r]) => `<div class="review-box"><div><b>${r.itemName}</b> <small>(${r.customerName} - ${r.customerPhone})</small></div><button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="db.ref('missingRequests/${id}').remove()">✖</button></div>`).join("");
         }
 
-        function renderCustomerMissingRequests() {
-            const container = $("customerMissingRequestsList"); if (!container) return;
-            const entries = Object.entries(missingRequests || {});
-            container.innerHTML = !entries.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد طلبات معلقة من الزبائن.</p>` :
-                entries.map(([id, r]) => `<div class="review-box"><div><b>${r.itemName}</b> <small>(${r.customerName} - ${r.customerPhone})</small></div><button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="db.ref('missingRequests/${id}').remove()">✖</button></div>`).join("");
+        // نظام حماية الإدارة
+        let adminClickCount = 0, adminClickTimer = null;
+        function handleAdminTrigger() {
+            adminClickCount++; clearTimeout(adminClickTimer);
+            if (adminClickCount >= 5) {
+                adminClickCount = 0;
+                if (localStorage.getItem("moaath_admin_unlocked") === "true") {
+                    $("adminModal").style.display = "flex"; renderStatsDashboard(); populateAdminPartnerSelect(); populatePartnerSelectOptions(); renderAdminCreditLedger(); return;
+                }
+                const pass = prompt("🔐 كلمة مرور الإدارة:"); if (pass === null) return;
+                if (verifyAdminPass(pass.trim())) {
+                    localStorage.setItem("moaath_admin_unlocked", "true");
+                    $("adminModal").style.display = "flex"; renderStatsDashboard(); populateAdminPartnerSelect(); populatePartnerSelectOptions(); renderAdminCreditLedger();
+                } else alert("❌ كلمة المرور غير صحيحة!");
+            } else adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 1800);
         }
+        function lockAdminSession() { localStorage.removeItem("moaath_admin_unlocked"); closeModal('adminModal'); alert("🔒 تم قفل الإدارة."); }
+        $("adminTrigger")?.addEventListener("click", handleAdminTrigger); $("closedAdminTrigger")?.addEventListener("click", handleAdminTrigger);
 
         function switchAdminTab(tabId, btn) {
             document.querySelectorAll(".admin-tab").forEach(t => t.style.display = "none");
             if ($(tabId)) $(tabId).style.display = "block";
-            btn.parentElement.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
+            btn.parentElement.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active")); btn.classList.add("active");
         }
 
         function renderPendingOrders() {
-            const keys = Object.keys(pendingOrders);
-            setTxt("pendingCountBadge", keys.length);
+            const keys = Object.keys(pendingOrders); setTxt("pendingCountBadge", keys.length);
             const list = $("pendingOrdersList"); if (!list) return;
-            if (!keys.length) return (list.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد فواتير معلقة حالياً.</p>`);
-            list.innerHTML = keys.map(id => {
+            list.innerHTML = !keys.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد فواتير معلقة.</p>` : keys.map(id => {
                 const o = pendingOrders[id], itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${i.name} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
                 return `<div class="adm-card" style="border-color:var(--gold-color);"><div style="display:flex; justify-content:space-between; color:var(--gold-color); font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span></div><div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress}</div><div style="border-top:1px dashed var(--border-color); border-bottom:1px dashed var(--border-color); padding:6px 0; margin:6px 0;">${itemsHtml}</div><div style="font-weight:bold; margin-bottom:8px;">الإجمالي مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</div><div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000;" onclick="confirmOrder('${id}')">✅ تأكيد وخصم المخزون</button><button class="btn btn-danger" onclick="cancelOrder('${id}')">❌ إلغاء</button></div></div>`;
+            }).join("");
+        }
+
+        // 3. بوابة مدير التصدير المستقلة والآمنة
+        function openExportManagerModal() { $("exportManagerModal").style.display = "block"; renderExportManagerOrders(); }
+        function renderExportManagerOrders() {
+            const list = $("exportManagerOrdersList"); if(!list) return;
+            const keys = Object.keys(pendingOrders); setTxt("exportMgrBadge", keys.length);
+            list.innerHTML = !keys.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد طلبات واردة حالياً.</p>` : keys.map(id => {
+                const o = pendingOrders[id], itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${i.name} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
+                return `<div class="adm-card" style="border-color:#ff9800;"><div style="display:flex; justify-content:space-between; color:#ff9800; font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span></div><div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress}</div><div style="border-top:1px dashed var(--border-color); border-bottom:1px dashed var(--border-color); padding:6px 0; margin:6px 0;">${itemsHtml}</div><div style="font-weight:bold; margin-bottom:8px;">الإجمالي مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</div><div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000;" onclick="confirmOrder('${id}')">✅ قبول وتحويل للتوصيل</button><button class="btn btn-danger" onclick="cancelOrder('${id}')">❌ إلغاء الطلب</button></div></div>`;
             }).join("");
         }
 
@@ -1040,39 +741,22 @@
             const phone = o.customerPhone, purch = users[phone]?.purchases || {};
             (o.items || []).forEach(i => { if (!i.id.startsWith("OFFER_")) purch[i.id] = true; });
             const upPts = (users[phone]?.points || 0) + (o.earnedPoints || 0);
-            
-            // تحديث مؤشرات النشاط (زيادة الطلبات الناجحة)
-            const succCount = (users[phone]?.successOrdersCount || 0) + 1;
-
-            db.ref(`users/${phone}`).update({ name: o.customerName, phone, region: o.customerRegion, address: o.customerAddress, points: upPts, purchases: purch, successOrdersCount: succCount });
+            db.ref(`users/${phone}`).update({ name: o.customerName, phone, region: o.customerRegion, address: o.customerAddress, points: upPts, purchases: purch, successOrders: (users[phone]?.successOrders||0)+1 });
             db.ref("completedOrdersHistory/" + orderId).set(o); db.ref("pendingOrders/" + orderId).remove();
             window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(`مرحباً ${o.customerName} 🌸\nتم تأكيد طلبك في *متجر معاذ* وجاري توصيله إلى (${o.customerRegion})!\n💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س\n🎁 نقاطك الحالية: ${upPts}`)}`, "_blank");
             if (deliveryDriverPhone) setTimeout(() => window.open(`https://wa.me/${formatWhatsAppPhone(deliveryDriverPhone)}?text=${encodeURIComponent(`🛵 *طلب توصيل - متجر معاذ*\n👤 الزبون: ${o.customerName}\n📱 الهاتف: ${o.customerPhone}\n🏘️ المنطقة: ${o.customerRegion}\n📍 العنوان: ${o.customerAddress}\n💵 *المطلوب تحصيله:* ${o.totalSaleSYP.toLocaleString()} ل.س`)}`, "_blank"), 700);
         }
 
         function cancelOrder(id) {
-            const o = pendingOrders[id];
-            if (o && o.customerPhone && users[o.customerPhone]) {
-                const cancCount = (users[o.customerPhone].cancelledOrdersCount || 0) + 1;
-                db.ref(`users/${o.customerPhone}/cancelledOrdersCount`).set(cancCount);
+            if (confirm("إلغاء هذه الفاتورة؟")) {
+                const phone = pendingOrders[id]?.customerPhone;
+                if(phone) db.ref(`users/${phone}/canceledOrders`).set((users[phone]?.canceledOrders||0)+1);
+                db.ref("pendingOrders/" + id).remove();
             }
-            if (confirm("إلغاء وتتبع الطلب كملغى؟")) db.ref("pendingOrders/" + id).remove();
         }
-
         function cancelAllPendingOrders() {
-            const keys = Object.keys(pendingOrders || {});
-            const cnt = keys.length;
-            if (!cnt) return alert("ℹ️ لا توجد طلبات معلقة.");
-            if (confirm(`⚠️ إلغاء جميع الطلبات المعلقة (${cnt} طلب)؟`)) {
-                keys.forEach(id => {
-                    const o = pendingOrders[id];
-                    if (o && o.customerPhone && users[o.customerPhone]) {
-                        const cancCount = (users[o.customerPhone].cancelledOrdersCount || 0) + 1;
-                        db.ref(`users/${o.customerPhone}/cancelledOrdersCount`).set(cancCount);
-                    }
-                });
-                db.ref("pendingOrders").remove();
-            }
+            const cnt = Object.keys(pendingOrders || {}).length; if (!cnt) return alert("ℹ️ لا توجد طلبات معلقة.");
+            if (confirm(`⚠️ إلغاء جميع الطلبات المعلقة (${cnt} طلب)؟`)) db.ref("pendingOrders").remove();
         }
 
         function saveSupplier() {
@@ -1080,45 +764,34 @@
             if (!name) return alert("أدخل اسم الموزع.");
             db.ref("suppliers/" + id).set({ name, address: $("suppAddress").value.trim(), phone: $("suppPhone").value.trim() }).then(() => { resetSupplierForm(); alert("✅ تم حفظ الموزع!"); });
         }
-
+        function resetSupplierForm() { ["editSupplierId", "suppName", "suppAddress", "suppPhone"].forEach(k => setVal(k, "")); }
         function editSupplier(id) { const s = suppliers[id]; if (!s) return; setVal("editSupplierId", id); setVal("suppName", s.name || ""); setVal("suppAddress", s.address || ""); setVal("suppPhone", s.phone || ""); }
         function deleteSupplier(id) { if (confirm("حذف هذا الموزع؟")) db.ref("suppliers/" + id).remove(); }
-
         function renderAdminSuppliers() {
             const container = $("adminSuppliersList"); if (!container) return;
             const keys = Object.keys(suppliers);
-            container.innerHTML = !keys.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا يوجد موزعون مسجلون.</p>` :
-                keys.map(id => `<div class="adm-card"><div style="display:flex; justify-content:space-between;"><b>🚚 ${suppliers[id].name}</b><div style="display:flex; gap:4px;"><button onclick="editSupplier('${id}')" class="btn" style="width:auto; padding:3px 6px; font-size:10px;">✏️</button><button onclick="deleteSupplier('${id}')" class="btn btn-danger" style="width:auto; padding:3px 6px; font-size:10px;">🗑️</button></div></div><small style="color:var(--gray-text);">العنوان: ${suppliers[id].address || '-'} | الهاتف: ${suppliers[id].phone || '-'}</small></div>`).join("");
+            container.innerHTML = !keys.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا يوجد موزعون مسجلون.</p>` : keys.map(id => `<div class="adm-card"><div style="display:flex; justify-content:space-between;"><b>🚚 ${suppliers[id].name}</b><div style="display:flex; gap:4px;"><button onclick="editSupplier('${id}')" class="btn" style="width:auto; padding:3px 6px; font-size:10px;">✏️</button><button onclick="deleteSupplier('${id}')" class="btn btn-danger" style="width:auto; padding:3px 6px; font-size:10px;">🗑️</button></div></div><small style="color:var(--gray-text);">العنوان: ${suppliers[id].address || '-'} | الهاتف: ${suppliers[id].phone || '-'}</small></div>`).join("");
         }
 
         function populateSupplierSelect() {
             const sel = $("prodSupplierSelect"); if (!sel) return;
-            const cur = sel.value;
-            sel.innerHTML = '<option value="">-- بدون موزع معتمد --</option>' + Object.keys(suppliers).map(id => `<option value="${id}">${suppliers[id].name}</option>`).join("");
-            sel.value = cur;
+            const cur = sel.value; sel.innerHTML = '<option value="">-- بدون موزع --</option>' + Object.keys(suppliers).map(id => `<option value="${id}">${suppliers[id].name}</option>`).join(""); sel.value = cur;
         }
-
         function populateAdminPartnerSelect() {
             const sel = $("adminPartnerSelect"); if (!sel) return;
-            const cur = sel.value;
-            sel.innerHTML = '<option value="">-- اختر شريكاً --</option>' + Object.values(users).filter(u => u.userType === "partner").map(p => `<option value="${p.phone}">${p.name} (${p.phone})</option>`).join("");
-            if (cur) sel.value = cur;
+            const cur = sel.value; sel.innerHTML = '<option value="">-- اختر شريكاً --</option>' + Object.values(users).filter(u => u.userType === "partner").map(p => `<option value="${p.phone}">${p.name} (${p.phone})</option>`).join(""); if (cur) sel.value = cur;
         }
 
         function loadPartnerConfig() {
-            const phone = $("adminPartnerSelect")?.value;
-            populatePartnerSelectOptions();
+            const phone = $("adminPartnerSelect")?.value; populatePartnerSelectOptions();
             const histBox = $("adminPartnerPayoutHistory");
             if (!phone || !window.partnersConfigData?.[phone]) {
                 setVal("adminPartnerShamWallet", ""); setVal("adminPartnerPct", "20");
-                if (histBox) histBox.innerHTML = "";
-                return;
+                if (histBox) histBox.innerHTML = ""; return;
             }
             const cfg = window.partnersConfigData[phone], savedCats = cfg.categories || [];
             document.querySelectorAll(".partner-cat-cb").forEach(cb => { cb.checked = savedCats.includes(cb.value); });
-            setVal("adminPartnerShamWallet", cfg.shamWallet || "");
-            setVal("adminPartnerPct", cfg.profitPct || 20);
-
+            setVal("adminPartnerShamWallet", cfg.shamWallet || ""); setVal("adminPartnerPct", cfg.profitPct || 20);
             if (histBox) {
                 const hist = Object.values(cfg.payoutHistory || {}).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
                 histBox.innerHTML = hist.length ? `<div style="color:var(--gold-color); font-weight:bold; margin-bottom:4px;">🧾 سجل الدفعات المصروفة لهذا الشريك:</div>` + hist.map(h => `<div class="leader-row" style="padding:5px 8px;"><span>📅 ${h.dateStr}</span><span style="color:var(--success-color); font-weight:bold;">${(h.amountSYP || 0).toLocaleString()} ل.س</span></div>`).join("") : `<span style="color:var(--gray-text);">لا توجد دفعات مسجلة سابقاً لهذا الشريك.</span>`;
@@ -1126,103 +799,64 @@
         }
 
         function savePartnerCategoriesConfig() {
-            const phone = $("adminPartnerSelect").value;
-            if (!phone) return alert("⚠️ اختر الشريك أولاً.");
-            const selectedCats = [];
-            document.querySelectorAll(".partner-cat-cb:checked").forEach(cb => selectedCats.push(cb.value));
+            const phone = $("adminPartnerSelect").value; if (!phone) return alert("⚠️ اختر الشريك أولاً.");
+            const selectedCats = []; document.querySelectorAll(".partner-cat-cb:checked").forEach(cb => selectedCats.push(cb.value));
             if (!selectedCats.length) return alert("⚠️ حدد تصنيفاً واحداً على الأقل.");
             const currentCfg = window.partnersConfigData?.[phone] || {};
-            db.ref("partnersConfig/" + phone).set({
-                categories: selectedCats,
-                shamWallet: $("adminPartnerShamWallet").value.trim(),
-                profitPct: parseFloat($("adminPartnerPct").value) || 20,
-                lastSettlementISO: currentCfg.lastSettlementISO || "2000-01-01T00:00:00.000Z",
-                payoutHistory: currentCfg.payoutHistory || {}
-            }).then(() => alert(`✅ تم حفظ إعدادات الشريك بنجاح!`));
+            db.ref("partnersConfig/" + phone).set({ categories: selectedCats, shamWallet: $("adminPartnerShamWallet").value.trim(), profitPct: parseFloat($("adminPartnerPct").value) || 20, lastSettlementISO: currentCfg.lastSettlementISO || "2000-01-01T00:00:00.000Z", payoutHistory: currentCfg.payoutHistory || {} }).then(() => alert(`✅ تم حفظ إعدادات الشريك بنجاح!`));
         }
 
-        // إرسال النواقص للموزع بوحدة القياس الدقيقة (الميزة 2)
+        // 2. رسائل النواقص بوحدات القياس الدقيقة
         function sendSupplierShortagesWhatsApp(suppId) {
-            const supp = suppliers[suppId]; if (!supp?.phone) return alert("⚠️ هذا الموزع ليس لديه رقم هاتف مسجل.");
+            const supp = suppliers[suppId]; if (!supp?.phone) return alert("⚠️ الموزع ليس لديه هاتف مسجل.");
             const list = Object.values(products).filter(p => p && p.supplierId === suppId && (parseInt(p.stock) || 0) <= (parseInt(p.alertLimit) || 2));
             if (!list.length) return alert("✅ لا توجد نواقص لهذا الموزع.");
-            let msg = `📋 *طلب توريد بضائع - متجر معاذ*\n👤 الموزع: *${supp.name}*\n📅 التاريخ: ${new Date().toLocaleDateString("ar-SY")}\n──────────────\n`;
+            let msg = `📋 *فاتورة طلب توريد بضائع - متجر معاذ*\n👤 السادة: *${supp.name}*\n📅 التاريخ: ${new Date().toLocaleDateString("ar-SY")}\n──────────────\n`;
             list.forEach((p, idx) => {
-                const needed = Math.max(1, (p.alertLimit || 2) * 3 - (p.stock || 0));
-                const unit = p.unitMeasure || "قطعة";
-                msg += `${idx + 1}. نريد *${needed} ${unit}* من صنف (<b>${p.name}</b>)\n`;
+                const reqQty = Math.max(1, (parseInt(p.alertLimit)||2) * 3 - (parseInt(p.stock)||0));
+                msg += `${idx + 1}. نرجو توفير *${reqQty} ${(p.unit || "قطعة")}* من الصنف (${p.name})\n`;
             });
-            msg += `──────────────\nيرجى تأكيد توفر الأصناف وتوريدها بأقرب وقت 🌸`;
+            msg += `──────────────\nيرجى تأكيد الطلب وتزويدنا بالأصناف المذكورة 🌸`;
             window.open(`https://wa.me/${formatWhatsAppPhone(supp.phone)}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
         function renderShortages() {
             const suppContainer = $("shortagesBySupplierContainer"); if (!suppContainer) return;
             const list = Object.keys(products).filter(id => products[id] && (parseInt(products[id].stock) || 0) <= (parseInt(products[id].alertLimit) || 2));
-            if (!list.length) return (suppContainer.innerHTML = `<p style="text-align:center; color:var(--success-color); font-size:12px;">✅ جميع الأصناف متوفرة بالمخزون.</p>`);
-
+            if (!list.length) return (suppContainer.innerHTML = `<p style="text-align:center; color:var(--success-color); font-size:12px;">✅ جميع الأصناف متوفرة بالمخزون بشكل جيد.</p>`);
             let bySupp = {}, unassigned = [];
-            list.forEach(id => {
-                const p = products[id];
-                if (p.supplierId && suppliers[p.supplierId]) { (bySupp[p.supplierId] = bySupp[p.supplierId] || []).push(p); }
-                else unassigned.push(p);
-            });
-
+            list.forEach(id => { const p = products[id]; if (p.supplierId && suppliers[p.supplierId]) { (bySupp[p.supplierId] = bySupp[p.supplierId] || []).push(p); } else unassigned.push(p); });
             let html = "";
             Object.keys(bySupp).forEach(sId => {
-                const s = suppliers[sId];
-                html += `<div class="adm-card" style="border-color:var(--gold-color);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><b style="color:var(--gold-color);">🚚 ${s.name}</b><button onclick="sendSupplierShortagesWhatsApp('${sId}')" class="btn" style="width:auto; padding:4px 10px; font-size:10px; background:#25D366; color:#fff;">📲 إرسال فاتورة واتساب</button></div>` +
-                bySupp[sId].map(p => `<div style="font-size:11px; display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding:3px 0;"><span>• ${p.name} <small style="color:var(--gray-text);">(${p.unitMeasure || 'قطعة'})</small></span><span style="color:var(--danger-color); font-weight:bold;">متبقي: ${p.stock}</span></div>`).join("") + `</div>`;
+                html += `<div class="adm-card" style="border-color:var(--gold-color);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><b style="color:var(--gold-color);">🚚 ${suppliers[sId].name}</b><button onclick="sendSupplierShortagesWhatsApp('${sId}')" class="btn" style="width:auto; padding:4px 10px; font-size:10px; background:#25D366; color:#fff;">📲 إرسال فاتورة واتساب</button></div>` +
+                bySupp[sId].map(p => `<div style="font-size:11px; display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding:3px 0;"><span>• ${p.name} <small>(${p.unit||'قطعة'})</small></span><span style="color:var(--danger-color); font-weight:bold;">متبقي: ${p.stock}</span></div>`).join("") + `</div>`;
             });
             if (unassigned.length) {
-                html += `<div class="adm-card"><b style="color:var(--gray-text);">📦 أصناف بلا موزع محدد:</b>` +
-                unassigned.map(p => `<div style="font-size:11px; display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding:3px 0;"><span>• ${p.name}</span><span style="color:var(--danger-color); font-weight:bold;">متبقي: ${p.stock}</span></div>`).join("") + `</div>`;
+                html += `<div class="adm-card"><b style="color:var(--gray-text);">📦 أصناف غير مربوطة بموزع:</b>` + unassigned.map(p => `<div style="font-size:11px; display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding:3px 0;"><span>• ${p.name}</span><span style="color:var(--danger-color); font-weight:bold;">متبقي: ${p.stock}</span></div>`).join("") + `</div>`;
             }
             suppContainer.innerHTML = html;
         }
 
         function renderStatsDashboard() {
             const sel = $("reportCategorySelect");
-            if (sel) {
-                const cur = sel.value || "all";
-                sel.innerHTML = '<option value="all">🌟 جميع التصنيفات</option>' + categories.filter(c => c !== "الكل").map(c => `<option value="${c}">${c}</option>`).join("") + '<option value="عروض خاصة">عروض خاصة</option>';
-                sel.value = cur;
-            }
+            if (sel) { const cur = sel.value || "all"; sel.innerHTML = '<option value="all">🌟 جميع التصنيفات</option>' + categories.filter(c => c !== "الكل").map(c => `<option value="${c}">${c}</option>`).join("") + '<option value="عروض خاصة">عروض خاصة</option>'; sel.value = cur; }
             const period = $("reportPeriodSelect")?.value || "total", selCat = sel?.value || "all", now = new Date();
             let totS = 0, totC = 0, netP = 0, catMap = {}, prodMap = {};
             let capBoxSYP = 0, drvNetSYP = 0, maintFundSYP = 0, importMgrAdminPool = 0, exportMgrAdminPool = 0;
-
-            const capReset = adminAccounting.capitalBoxResetISO || "2000-01-01T00:00:00.000Z";
-            const drvReset = adminAccounting.driverResetISO || "2000-01-01T00:00:00.000Z";
-            const mntReset = adminAccounting.maintenanceResetISO || "2000-01-01T00:00:00.000Z";
-            const impReset = adminAccounting.importManagerResetISO || "2000-01-01T00:00:00.000Z";
-            const expReset = adminAccounting.exportManagerResetISO || "2000-01-01T00:00:00.000Z";
+            const capReset = adminAccounting.capitalBoxResetISO || "2000-01-01T00:00:00.000Z", drvReset = adminAccounting.driverResetISO || "2000-01-01T00:00:00.000Z", mntReset = adminAccounting.maintenanceResetISO || "2000-01-01T00:00:00.000Z", impReset = adminAccounting.importManagerResetISO || "2000-01-01T00:00:00.000Z", expReset = adminAccounting.exportManagerResetISO || "2000-01-01T00:00:00.000Z";
 
             categories.filter(c => c !== "الكل").forEach(c => catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 });
             catMap["عروض خاصة"] = { sales: 0, cost: 0, profit: 0, count: 0 }; catMap["غير مصنف"] = { sales: 0, cost: 0, profit: 0, count: 0 };
-            Object.keys(products).forEach(pid => {
-                const c = products[pid].category || "غير مصنف";
-                if (!catMap[c]) catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 };
-                prodMap[pid] = { id: pid, name: products[pid].name || "صنف", category: c, stock: parseInt(products[pid].stock) || 0, qtySold: 0, sales: 0, cost: 0, profit: 0 };
-            });
+            Object.keys(products).forEach(pid => { const c = products[pid].category || "غير مصنف"; if (!catMap[c]) catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 }; prodMap[pid] = { id: pid, name: products[pid].name || "صنف", category: c, stock: parseInt(products[pid].stock) || 0, qtySold: 0, sales: 0, cost: 0, profit: 0 }; });
 
             Object.values(completedOrdersHistory).forEach(ord => {
-                const ordISO = ord.dateISO || new Date().toISOString();
-                const d = new Date(ordISO);
-                const fee = parseInt(ord.deliveryFeeSYP) || 0, dShare = Math.round((fee * getRegionDriverPct(ord.customerRegion)) / 100);
-                if (ordISO > drvReset) drvNetSYP += dShare;
-                if (ordISO > mntReset) maintFundSYP += (fee - dShare);
-
+                const ordISO = ord.dateISO || new Date().toISOString(), d = new Date(ordISO), fee = parseInt(ord.deliveryFeeSYP) || 0, dShare = Math.round((fee * getRegionDriverPct(ord.customerRegion)) / 100);
+                if (ordISO > drvReset) drvNetSYP += dShare; if (ordISO > mntReset) maintFundSYP += (fee - dShare);
                 (ord.items || []).forEach(i => {
-                    const c = i.category || (i.id.startsWith("OFFER_") ? "عروض خاصة" : (products[i.id]?.category || "غير مصنف"));
-                    const sS = i.subSaleSYP || 0, sC = i.subCostSYP || 0, sP = i.netProfitSYP !== undefined ? i.netProfitSYP : (sS - sC), sQ = i.qty || 1;
-
+                    const c = i.category || (i.id.startsWith("OFFER_") ? "عروض خاصة" : (products[i.id]?.category || "غير مصنف")), sS = i.subSaleSYP || 0, sC = i.subCostSYP || 0, sP = i.netProfitSYP !== undefined ? i.netProfitSYP : (sS - sC), sQ = i.qty || 1;
                     if (ordISO > capReset) capBoxSYP += sC;
-                    const partnerSharePct = getCategoryPartnerSharePct(c);
-                    const adminPureItemProfit = Math.round((sP * (100 - partnerSharePct)) / 100);
-                    if (ordISO > impReset) importMgrAdminPool += adminPureItemProfit;
-                    if (ordISO > expReset) exportMgrAdminPool += adminPureItemProfit;
-
+                    const partnerSharePct = getCategoryPartnerSharePct(c), adminPureItemProfit = Math.round((sP * (100 - partnerSharePct)) / 100);
+                    if (ordISO > impReset) importMgrAdminPool += adminPureItemProfit; if (ordISO > expReset) exportMgrAdminPool += adminPureItemProfit;
                     const inPeriod = !((period === "daily" && d.toDateString() !== now.toDateString()) || (period === "weekly" && (Math.abs(now - d) / 86400000) > 7) || (period === "monthly" && (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear())));
                     if (inPeriod) {
                         if (!catMap[c]) catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 };
@@ -1234,54 +868,35 @@
                 });
             });
 
-            Object.values(storeExpenses).forEach(exp => {
-                const eISO = exp.dateISO || "", amt = parseInt(exp.amountSYP) || 0;
-                if (eISO > impReset) importMgrAdminPool -= amt;
-                if (eISO > expReset) exportMgrAdminPool -= amt;
-            });
+            Object.values(storeExpenses).forEach(exp => { const eISO = exp.dateISO || "", amt = parseInt(exp.amountSYP) || 0; if (eISO > impReset) importMgrAdminPool -= amt; if (eISO > expReset) exportMgrAdminPool -= amt; });
 
-            const impPct = Math.min(100, Math.max(0, parseFloat(adminAccounting.importManagerPct ?? 50)));
-            const expPct = 100 - impPct;
-            const importManagerFinalSYP = Math.round((importMgrAdminPool * impPct) / 100);
-            const exportManagerFinalSYP = Math.round((exportMgrAdminPool * expPct) / 100);
+            const impPct = Math.min(100, Math.max(0, parseFloat(adminAccounting.importManagerPct ?? 50))), expPct = 100 - impPct;
+            const importManagerFinalSYP = Math.round((importMgrAdminPool * impPct) / 100), exportManagerFinalSYP = Math.round((exportMgrAdminPool * expPct) / 100);
 
-            window.latestStatsSnapshot = { totS, totC, netP, capBoxSYP, importManagerFinalSYP, exportManagerFinalSYP, drvNetSYP, maintFundSYP };
+            // حساب الخزينة لتسديدات الديون
+            let treasurySYP = 0, treasuryUSD = 0, tReset = adminAccounting.treasuryDebtResetISO || "2000-01-01T00:00:00.000Z";
+            Object.values(creditLedgerData).forEach(ledger => { Object.values(ledger.history||{}).forEach(h => { if(h.type === 'payment' && h.dateISO > tReset) { treasuryUSD += h.amount; treasurySYP += calcSYP(h.amount); } }); });
 
-            setTxt("statTotalSales", totS.toLocaleString() + " ل.س");
-            setTxt("statTotalCost", totC.toLocaleString() + " ل.س");
-            setTxt("statNetProfit", netP.toLocaleString() + " ل.س");
-            setTxt("statProfitMargin", (totS > 0 ? ((netP / totS) * 100).toFixed(1) : 0) + "%");
-            setTxt("statRecoveredCapitalBox", capBoxSYP.toLocaleString() + " ل.س");
-            setTxt("importMgrPctLabel", impPct);
-            setTxt("exportMgrPctLabel", expPct);
-            setTxt("statImportManagerProfit", importManagerFinalSYP.toLocaleString() + " ل.س");
-            setTxt("statExportManagerProfit", exportManagerFinalSYP.toLocaleString() + " ل.س");
+            window.latestStatsSnapshot = { totS, totC, netP, capBoxSYP, importManagerFinalSYP, exportManagerFinalSYP, drvNetSYP, maintFundSYP, treasurySYP };
+
+            setTxt("statTotalSales", totS.toLocaleString() + " ل.س"); setTxt("statTotalCost", totC.toLocaleString() + " ل.س"); setTxt("statNetProfit", netP.toLocaleString() + " ل.س"); setTxt("statProfitMargin", (totS > 0 ? ((netP / totS) * 100).toFixed(1) : 0) + "%");
+            setTxt("statRecoveredCapitalBox", capBoxSYP.toLocaleString() + " ل.س"); setTxt("statTreasuryDebtInflow", `$${treasuryUSD.toFixed(2)} (${treasurySYP.toLocaleString()} ل.س)`);
+            setTxt("importMgrPctLabel", impPct); setTxt("exportMgrPctLabel", expPct);
+            setTxt("statImportManagerProfit", importManagerFinalSYP.toLocaleString() + " ل.س"); setTxt("statExportManagerProfit", exportManagerFinalSYP.toLocaleString() + " ل.س");
             setTxt("importMgrResetDateLabel", impReset.startsWith("2000") ? "منذ البداية" : "منذ: " + new Date(impReset).toLocaleDateString("ar-SY"));
             setTxt("exportMgrResetDateLabel", expReset.startsWith("2000") ? "منذ البداية" : "منذ: " + new Date(expReset).toLocaleDateString("ar-SY"));
-            setTxt("statDriverNetPay", drvNetSYP.toLocaleString() + " ل.س");
-            setTxt("statMaintenanceFund", maintFundSYP.toLocaleString() + " ل.س");
+            setTxt("statDriverNetPay", drvNetSYP.toLocaleString() + " ل.س"); setTxt("statMaintenanceFund", maintFundSYP.toLocaleString() + " ل.س");
             setTxt("statRegisteredUsersCount", Object.keys(users).length + " زبون");
 
-            renderAllPartnersStatsInDashboard();
-            renderGoldenInsights(prodMap);
-            renderCategoryBreakdownTable(catMap);
-            renderProductBreakdownTable(prodMap, selCat);
-            updateInventoryValuation(selCat);
+            renderAllPartnersStatsInDashboard(); renderGoldenInsights(prodMap); renderCategoryBreakdownTable(catMap); renderProductBreakdownTable(prodMap, selCat); updateInventoryValuation(selCat);
         }
 
         function renderAllPartnersStatsInDashboard() {
             const box = $("adminAllPartnersStatsList"); if (!box) return;
             const partners = Object.values(users).filter(u => u.userType === "partner");
-            if (!partners.length) return (box.innerHTML = `<div style="font-size:11px; color:var(--gray-text); text-align:center;">لا يوجد شركاء محددون حالياً.</div>`);
-            box.innerHTML = partners.map(p => {
+            box.innerHTML = !partners.length ? `<div style="font-size:11px; color:var(--gray-text); text-align:center;">لا يوجد شركاء محددون حالياً.</div>` : partners.map(p => {
                 const m = calculatePartnerCurrentMetrics(p.phone);
-                return `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--border-color); padding:6px 0; font-size:11px; flex-wrap:wrap; gap:6px;">
-                    <div><b>👤 ${p.name}</b> <small style="color:var(--gold-color);">(${m.partnerPct}% | ${m.rawCats.join("، ") || "بلا تصنيف"})</small><br><span style="color:var(--gray-text); font-size:10px;">مبيعاته: ${m.totSales.toLocaleString()} ل.س</span></div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <b style="color:var(--success-color); font-size:13px;">${m.totEarn.toLocaleString()} ل.س</b>
-                        <button onclick="settlePartnerEarningsByAdmin('${p.phone}')" class="btn" style="width:auto; padding:4px 8px; font-size:10px; background:#ff9800; color:#000;">🔄 تصفير</button>
-                    </div>
-                </div>`;
+                return `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--border-color); padding:6px 0; font-size:11px; flex-wrap:wrap; gap:6px;"><div><b>👤 ${p.name}</b> <small style="color:var(--gold-color);">(${m.partnerPct}% | ${m.rawCats.join("، ") || "بلا تصنيف"})</small><br><span style="color:var(--gray-text); font-size:10px;">مبيعاته: ${m.totSales.toLocaleString()} ل.س</span></div><div style="display:flex; align-items:center; gap:8px;"><b style="color:var(--success-color); font-size:13px;">${m.totEarn.toLocaleString()} ل.س</b><button onclick="settlePartnerEarningsByAdmin('${p.phone}')" class="btn" style="width:auto; padding:4px 8px; font-size:10px; background:#ff9800; color:#000;">🔄 تصفير</button></div></div>`;
             }).join("");
         }
 
@@ -1293,336 +908,108 @@
         }
 
         function sendDailyAccountingReportWhatsApp() {
-            const s = window.latestStatsSnapshot || {};
-            const partners = Object.values(users).filter(u => u.userType === "partner");
+            const s = window.latestStatsSnapshot || {}, partners = Object.values(users).filter(u => u.userType === "partner");
             const pLines = partners.length ? partners.map(p => { const m = calculatePartnerCurrentMetrics(p.phone); return `• الشريك ${p.name}: ${m.totEarn.toLocaleString()} ل.س`; }).join("\n") : "• لا يوجد شركاء";
-            const msg = `📊 *تقرير الجرد والتوزيع المالي - متجر معاذ*\n📅 التاريخ: ${new Date().toLocaleString("ar-SY")}\n──────────────\n💰 إجمالي المبيعات: ${(s.totS || 0).toLocaleString()} ل.س\n💵 صندوق رأس المال المسترد للدرج: ${(s.capBoxSYP || 0).toLocaleString()} ل.س\n──────────────\n🤝 *مستحقات الشركاء الحالية:*\n${pLines}\n──────────────\n👔 *صافي أرباح الإدارة:*\n📥 مدير الاستيراد: ${(s.importManagerFinalSYP || 0).toLocaleString()} ل.س\n📤 مدير التصدير: ${(s.exportManagerFinalSYP || 0).toLocaleString()} ل.س\n──────────────\n🛵 مستحقات السائق: ${(s.drvNetSYP || 0).toLocaleString()} ل.س\n⛽ صندوق الآلية والوقود: ${(s.maintFundSYP || 0).toLocaleString()} ل.س`;
+            const msg = `📊 *تقرير الجرد والتوزيع المالي - متجر معاذ*\n📅 التاريخ: ${new Date().toLocaleString("ar-SY")}\n──────────────\n💰 إجمالي المبيعات: ${(s.totS || 0).toLocaleString()} ل.س\n💵 صندوق رأس المال المسترد للدرج: ${(s.capBoxSYP || 0).toLocaleString()} ل.س\n🏦 إيراد تسديد الديون للخزينة: ${(s.treasurySYP || 0).toLocaleString()} ل.س\n──────────────\n🤝 *مستحقات الشركاء الحالية:*\n${pLines}\n──────────────\n👔 *صافي أرباح الإدارة:*\n📥 مدير الاستيراد: ${(s.importManagerFinalSYP || 0).toLocaleString()} ل.س\n📤 مدير التصدير: ${(s.exportManagerFinalSYP || 0).toLocaleString()} ل.س\n──────────────\n🛵 مستحقات السائق: ${(s.drvNetSYP || 0).toLocaleString()} ل.س\n⛽ صندوق الآلية والوقود: ${(s.maintFundSYP || 0).toLocaleString()} ل.س`;
             window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
         function getCategoryInventoryValue(cName) {
             let totalCost = 0, totalSale = 0, stock = 0, productCount = 0, outOfStockCount = 0;
-            Object.values(products).forEach(p => {
-                if ((p.category || "غير مصنف") === cName) {
-                    productCount++; const s = Math.max(0, parseInt(p.stock) || 0);
-                    if (s <= 0) outOfStockCount++; stock += s; totalCost += calcSYP(p.costPrice || 0) * s; totalSale += calcSYP(p.priceUSD || 0) * s;
-                }
-            });
+            Object.values(products).forEach(p => { if ((p.category || "غير مصنف") === cName) { productCount++; const s = Math.max(0, parseInt(p.stock) || 0); if (s <= 0) outOfStockCount++; stock += s; totalCost += calcSYP(p.costPrice || 0) * s; totalSale += calcSYP(p.priceUSD || 0) * s; } });
             return { totalCost, totalSale, stock, productCount, outOfStockCount };
         }
-
         function renderCategoryBreakdownTable(catMap) {
             const container = $("categoryStatsContainer"); if (!container) return;
             const active = Object.keys(catMap).filter(c => { const inv = getCategoryInventoryValue(c); return inv.productCount > 0 || catMap[c].sales > 0 || inv.stock > 0; });
-            container.innerHTML = !active.length ? '<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد مبيعات.</p>' :
-                `<div style="overflow-x:auto;"><table class="tbl-clean"><thead><tr><th style="text-align:right;">التصنيف</th><th>الأصناف</th><th>المبيعات</th><th>الربح</th><th>تصفير</th></tr></thead><tbody>` + active.map(c => `<tr><td style="font-weight:bold; text-align:right;">${c}</td><td style="color:var(--gold-color); font-weight:bold;">${getCategoryInventoryValue(c).productCount}</td><td>${catMap[c].sales.toLocaleString()}</td><td style="color:var(--success-color); font-weight:bold;">${catMap[c].profit.toLocaleString()}</td><td><button onclick="resetSalesFilter('cat','${c}')" class="btn btn-danger" style="width:auto; padding:3px 7px; font-size:10px;">🔄</button></td></tr>`).join("") + `</tbody></table></div>`;
+            container.innerHTML = !active.length ? '<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد مبيعات.</p>' : `<div style="overflow-x:auto;"><table class="tbl-clean"><thead><tr><th style="text-align:right;">التصنيف</th><th>الأصناف</th><th>المبيعات</th><th>الربح</th><th>تصفير</th></tr></thead><tbody>` + active.map(c => `<tr><td style="font-weight:bold; text-align:right;">${c}</td><td style="color:var(--gold-color); font-weight:bold;">${getCategoryInventoryValue(c).productCount}</td><td>${catMap[c].sales.toLocaleString()}</td><td style="color:var(--success-color); font-weight:bold;">${catMap[c].profit.toLocaleString()}</td><td><button onclick="resetSalesFilter('cat','${c}')" class="btn btn-danger" style="width:auto; padding:3px 7px; font-size:10px;">🔄</button></td></tr>`).join("") + `</tbody></table></div>`;
         }
-
         function renderProductBreakdownTable(prodMap, selCat) {
             const container = $("productStatsContainer"); if (!container) return;
-            const q = ($("statsProductSearch")?.value || "").trim().toLowerCase();
-            const list = Object.values(prodMap).filter(p => (selCat === "all" || p.category === selCat) && (!q || p.name.toLowerCase().includes(q))).sort((a, b) => b.sales - a.sales);
-            container.innerHTML = !list.length ? '<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف مطابقة.</p>' :
-                `<div style="overflow-x:auto; max-height:240px; overflow-y:auto;"><table class="tbl-clean"><thead><tr><th style="text-align:right;">الصنف</th><th>المباع</th><th>المبيعات</th><th>الربح</th><th>المخزون</th><th>تصفير</th></tr></thead><tbody>` + list.map(i => `<tr><td style="font-weight:bold; text-align:right;">${i.name}</td><td>${i.qtySold}</td><td>${i.sales.toLocaleString()}</td><td style="color:var(--success-color); font-weight:bold;">${i.profit.toLocaleString()}</td><td style="font-weight:bold;">${i.stock}</td><td><button onclick="resetSalesFilter('prod','${i.id}')" class="btn btn-danger" style="width:auto; padding:3px 7px; font-size:10px;">🔄</button></td></tr>`).join("") + `</tbody></table></div>`;
+            const q = ($("statsProductSearch")?.value || "").trim().toLowerCase(), list = Object.values(prodMap).filter(p => (selCat === "all" || p.category === selCat) && (!q || p.name.toLowerCase().includes(q))).sort((a, b) => b.sales - a.sales);
+            container.innerHTML = !list.length ? '<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف مطابقة.</p>' : `<div style="overflow-x:auto; max-height:240px; overflow-y:auto;"><table class="tbl-clean"><thead><tr><th style="text-align:right;">الصنف</th><th>المباع</th><th>المبيعات</th><th>الربح</th><th>المخزون</th><th>تصفير</th></tr></thead><tbody>` + list.map(i => `<tr><td style="font-weight:bold; text-align:right;">${i.name}</td><td>${i.qtySold}</td><td>${i.sales.toLocaleString()}</td><td style="color:var(--success-color); font-weight:bold;">${i.profit.toLocaleString()}</td><td style="font-weight:bold;">${i.stock}</td><td><button onclick="resetSalesFilter('prod','${i.id}')" class="btn btn-danger" style="width:auto; padding:3px 7px; font-size:10px;">🔄</button></td></tr>`).join("") + `</tbody></table></div>`;
         }
-
         function updateInventoryValuation(selCat = "all") {
             let cost = 0, sale = 0, cnt = 0, out = 0;
-            Object.values(products).forEach(p => {
-                const c = p.category || "غير مصنف";
-                if (selCat === "all" || selCat === c) {
-                    cnt++; const s = Math.max(0, parseInt(p.stock) || 0);
-                    if (s <= 0) out++; cost += calcSYP(p.costPrice || 0) * s; sale += calcSYP(p.priceUSD || 0) * s;
-                }
-            });
-            setTxt("invTotalCost", cost.toLocaleString() + " ل.س");
-            setTxt("invTotalSale", sale.toLocaleString() + " ل.س");
-            setTxt("invTotalProductsCount", cnt + " صنف");
-            setTxt("invOutOfStockCount", out + " صنف");
+            Object.values(products).forEach(p => { const c = p.category || "غير مصنف"; if (selCat === "all" || selCat === c) { cnt++; const s = Math.max(0, parseInt(p.stock) || 0); if (s <= 0) out++; cost += calcSYP(p.costPrice || 0) * s; sale += calcSYP(p.priceUSD || 0) * s; } });
+            setTxt("invTotalCost", cost.toLocaleString() + " ل.س"); setTxt("invTotalSale", sale.toLocaleString() + " ل.س"); setTxt("invTotalProductsCount", cnt + " صنف"); setTxt("invOutOfStockCount", out + " صنف");
         }
-
         function resetSalesFilter(type, target) {
             const label = type === 'prod' ? (products[target]?.name || 'الصنف') : target;
-            if (!confirm(`تصفير مبيعات وأرباح "${label}" نهائياً من السجل العام مع الحفاظ الكامل على كميات المخزون؟`)) return;
+            if (!confirm(`تصفير مبيعات وأرباح "${label}" نهائياً مع الحفاظ على كميات المخزون؟`)) return;
             const updates = {};
             Object.keys(completedOrdersHistory).forEach(id => {
                 const ord = completedOrdersHistory[id]; if (!ord?.items) return;
                 const rem = ord.items.filter(i => type === 'prod' ? i.id !== target : (i.category || "غير مصنف") !== target);
-                if (rem.length !== ord.items.length) {
-                    if (!rem.length) updates[id] = null;
-                    else { let sS = 0, sC = 0; rem.forEach(i => { sS += (i.subSaleSYP || 0); sC += (i.subCostSYP || 0); }); updates[id] = { ...ord, items: rem, subtotalSaleSYP: sS, totalCostSYP: sC, netProfitSYP: sS - sC }; }
-                }
+                if (rem.length !== ord.items.length) { if (!rem.length) updates[id] = null; else { let sS = 0, sC = 0; rem.forEach(i => { sS += (i.subSaleSYP || 0); sC += (i.subCostSYP || 0); }); updates[id] = { ...ord, items: rem, subtotalSaleSYP: sS, totalCostSYP: sC, netProfitSYP: sS - sC }; } }
             });
             db.ref("completedOrdersHistory").update(updates).then(() => alert(`✅ تم تصفير المبيعات بنجاح!`));
         }
 
         async function saveProduct() {
-            const editId = $("editProductId").value, name = $("prodName").value.trim(), costPrice = parseFloat($("prodCostUSD").value) || 0, priceUSD = parseFloat($("prodPriceUSD").value) || 0, wholesaleUSD = parseFloat($("prodWholesaleUSD").value) || 0, stock = parseInt($("prodStock").value) || 0, alertLimit = parseInt($("prodAlertLimit").value) || 2, pointsPct = parseFloat($("prodPointsPct").value) || 2, category = $("prodCategory").value, supplierId = $("prodSupplierSelect").value, unitMeasure = $("prodUnitMeasure")?.value || "قطعة", f = $("prodImageInput");
+            const editId = $("editProductId").value, name = $("prodName").value.trim(), costPrice = parseFloat($("prodCostUSD").value) || 0, priceUSD = parseFloat($("prodPriceUSD").value) || 0, wholesaleUSD = parseFloat($("prodWholesaleUSD").value) || 0, stock = parseInt($("prodStock").value) || 0, alertLimit = parseInt($("prodAlertLimit").value) || 2, pointsPct = parseFloat($("prodPointsPct").value) || 2, category = $("prodCategory").value, supplierId = $("prodSupplierSelect").value, unit = $("prodUnit")?.value || "قطعة", f = $("prodImageInput");
             if (!name || priceUSD <= 0) return alert("يرجى إدخال اسم الصنف وسعر المبيع.");
             const id = editId || ("PROD_" + Date.now()); let thumb = products[id]?.thumb || "";
             if (f.files?.[0]) { const comp = await compressDualImages(f.files[0]); thumb = comp.thumb; highResImagesMemoryCache[id] = comp.image; await db.ref("productImages/" + id).set(comp.image); }
-            db.ref("products/" + id).set({ name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, supplierId, unitMeasure, thumb, reviews: products[id]?.reviews || {} }).then(() => { resetProductForm(); alert("✅ تم حفظ الصنف بنجاح!"); });
+            db.ref("products/" + id).set({ name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, supplierId, unit, thumb, reviews: products[id]?.reviews || {} }).then(() => { resetProductForm(); alert("✅ تم حفظ الصنف بنجاح!"); });
         }
-
-        function resetProductForm() { ["editProductId", "prodName", "prodCostUSD", "prodPriceUSD", "prodWholesaleUSD", "prodImageInput", "prodSupplierSelect"].forEach(k => setVal(k, "")); setVal("prodStock", "10"); setVal("prodUnitMeasure", "قطعة"); }
-
+        function resetProductForm() { ["editProductId", "prodName", "prodCostUSD", "prodPriceUSD", "prodWholesaleUSD", "prodImageInput", "prodSupplierSelect"].forEach(k => { if ($(k)) $(k).value = ""; }); setVal("prodStock", "10"); setVal("prodUnit", "قطعة"); }
         function editProduct(id) {
             const p = products[id]; if (!p) return;
-            setVal("editProductId", id); setVal("prodName", p.name || ""); setVal("prodCostUSD", p.costPrice || 0); setVal("prodPriceUSD", p.priceUSD || 0); setVal("prodWholesaleUSD", p.wholesaleUSD || 0); setVal("prodStock", p.stock || 0); setVal("prodAlertLimit", p.alertLimit || 2); setVal("prodPointsPct", p.pointsPct || 2); setVal("prodCategory", p.category || ""); setVal("prodSupplierSelect", p.supplierId || ""); setVal("prodUnitMeasure", p.unitMeasure || "قطعة");
+            setVal("editProductId", id); setVal("prodName", p.name || ""); setVal("prodCostUSD", p.costPrice || 0); setVal("prodPriceUSD", p.priceUSD || 0); setVal("prodWholesaleUSD", p.wholesaleUSD || 0); setVal("prodStock", p.stock || 0); setVal("prodAlertLimit", p.alertLimit || 2); setVal("prodPointsPct", p.pointsPct || 2); setVal("prodCategory", p.category || ""); setVal("prodSupplierSelect", p.supplierId || ""); setVal("prodUnit", p.unit || "قطعة");
             $("productFormSection")?.scrollIntoView({ behavior: "smooth" });
         }
         function deleteProduct(id) { if (confirm("حذف هذا الصنف نهائياً؟")) { db.ref("products/" + id).remove(); db.ref("productImages/" + id).remove(); delete highResImagesMemoryCache[id]; } }
-
-        function quickUpdateStock(id, delta) {
-            if (!products[id]) return;
-            db.ref(`products/${id}/stock`).set(Math.max(0, (parseInt(products[id].stock) || 0) + delta));
-        }
-        function quickUpdatePrice(id, val) {
-            const num = parseFloat(val);
-            if (!products[id] || isNaN(num) || num <= 0) return;
-            db.ref(`products/${id}/priceUSD`).set(num);
-        }
+        function quickUpdateStock(id, delta) { if (products[id]) db.ref(`products/${id}/stock`).set(Math.max(0, (parseInt(products[id].stock) || 0) + delta)); }
+        function quickUpdatePrice(id, val) { const num = parseFloat(val); if (products[id] && !isNaN(num) && num > 0) db.ref(`products/${id}/priceUSD`).set(num); }
 
         function renderAdminProducts() {
             const container = $("adminProductsList"); if (!container) return;
-            const q = ($("adminSearchProd")?.value || "").trim().toLowerCase();
-            const keys = Object.keys(products).filter(id => products[id] && (!q || products[id].name?.toLowerCase().includes(q) || products[id].category?.toLowerCase().includes(q)));
-            if (!keys.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف مطابقة.</p>`);
-            container.innerHTML = keys.map(id => {
+            const q = ($("adminSearchProd")?.value || "").trim().toLowerCase(), keys = Object.keys(products).filter(id => products[id] && (!q || products[id].name?.toLowerCase().includes(q) || products[id].category?.toLowerCase().includes(q)));
+            container.innerHTML = !keys.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف مطابقة.</p>` : keys.map(id => {
                 const p = products[id], supp = p.supplierId && suppliers[p.supplierId] ? ` | ${suppliers[p.supplierId].name}` : "", revs = p.reviews || {}, revHtml = Object.keys(revs).map(rId => `<div style="display:flex; justify-content:space-between; font-size:10px; background:var(--card-bg); padding:3px 6px; margin-top:3px; border-radius:4px;"><span>⭐ ${revs[rId].rating} - <b>${revs[rId].customerName}:</b> ${revs[rId].comment}</span><b onclick="deleteProductReview('${id}','${rId}')" style="color:var(--danger-color); cursor:pointer;">🗑️</b></div>`).join("");
-                return `<div class="adm-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                        <div><b>${p.name}</b> <small style="color:var(--gray-text);">(${p.category} | ${p.unitMeasure || 'قطعة'}${supp})</small></div>
-                        <div style="display:flex; gap:4px;">
-                            <button onclick="editProduct('${id}')" class="btn" style="width:auto; padding:3px 7px; font-size:10px;">✏️</button>
-                            <button onclick="resetSalesFilter('prod','${id}')" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:#ff9800; color:#000;">🔄</button>
-                            <button onclick="deleteProduct('${id}')" class="btn btn-danger" style="width:auto; padding:3px 7px; font-size:10px;">🗑️</button>
-                        </div>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; font-size:11px; border-top:1px dashed var(--border-color); padding-top:5px;">
-                        <div>السعر ($): <input type="number" step="0.01" class="quick-inp" value="${p.priceUSD}" onchange="quickUpdatePrice('${id}', this.value)"> <small style="color:var(--gold-color);">(${calcSYP(p.priceUSD).toLocaleString()} ل.س)</small></div>
-                        <div style="display:flex; align-items:center; gap:5px;">المخزون: <button class="mini-btn" style="background:var(--success-color); color:#000;" onclick="quickUpdateStock('${id}', 1)">+</button> <b style="min-width:22px; text-align:center;">${p.stock}</b> <button class="mini-btn" style="background:var(--danger-color); color:#fff;" onclick="quickUpdateStock('${id}', -1)">-</button></div>
-                    </div>
-                    ${revHtml}
-                </div>`;
+                return `<div class="adm-card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><div><b>${p.name}</b> <small style="color:var(--gray-text);">(${p.category}${supp})</small></div><div style="display:flex; gap:4px;"><button onclick="editProduct('${id}')" class="btn" style="width:auto; padding:3px 7px; font-size:10px;">✏️</button><button onclick="resetSalesFilter('prod','${id}')" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:#ff9800; color:#000;">🔄</button><button onclick="deleteProduct('${id}')" class="btn btn-danger" style="width:auto; padding:3px 7px; font-size:10px;">🗑️</button></div></div><div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; font-size:11px; border-top:1px dashed var(--border-color); padding-top:5px;"><div>السعر ($): <input type="number" step="0.01" class="quick-inp" value="${p.priceUSD}" onchange="quickUpdatePrice('${id}', this.value)"> <small style="color:var(--gold-color);">(${calcSYP(p.priceUSD).toLocaleString()} ل.س)</small></div><div style="display:flex; align-items:center; gap:5px;">المخزون: <button class="mini-btn" style="background:var(--success-color); color:#000;" onclick="quickUpdateStock('${id}', 1)">+</button> <b style="min-width:22px; text-align:center;">${p.stock}</b> <button class="mini-btn" style="background:var(--danger-color); color:#fff;" onclick="quickUpdateStock('${id}', -1)">-</button></div></div>${revHtml}</div>`;
             }).join("");
         }
 
-        async function saveMultipleOffer() {
-            const editId = $("editOfferId").value, name = $("offerNameInput").value.trim(), costPrice = parseFloat($("offerCostInput").value) || 0, oldPriceUSD = parseFloat($("offerOldPriceInput").value) || 0, newPriceUSD = parseFloat($("offerNewPriceInput").value) || 0, wholesaleUSD = parseFloat($("offerWholesaleInput").value) || 0, stock = parseInt($("offerStockInput").value) || 0, pointsPct = parseFloat($("offerPointsPctInput").value) || 2, f = $("offerImageInput");
-            if (!name || newPriceUSD <= 0) return alert("أدخل اسم وسعر العرض.");
-            const id = editId || ("OFFER_" + Date.now()); let thumb = specialOffers[id]?.thumb || "", image = specialOffers[id]?.image || "";
-            if (f.files?.[0]) { const comp = await compressDualImages(f.files[0]); thumb = comp.thumb; image = comp.image; }
-            db.ref("specialOffers/" + id).set({ name, costPrice, oldPriceUSD, newPriceUSD, wholesaleUSD, stock, pointsPct, thumb, image, active: true }).then(() => { clearOfferForm(); alert("✅ تم حفظ العرض الخاص!"); });
-        }
-        function clearOfferForm() { ["editOfferId", "offerNameInput", "offerCostInput", "offerOldPriceInput", "offerNewPriceInput", "offerWholesaleInput", "offerImageInput"].forEach(k => setVal(k, "")); setVal("offerStockInput", "5"); }
-        function editOffer(id) { const so = specialOffers[id]; if (!so) return; setVal("editOfferId", id); setVal("offerNameInput", so.name || ""); setVal("offerCostInput", so.costPrice || 0); setVal("offerOldPriceInput", so.oldPriceUSD || 0); setVal("offerNewPriceInput", so.newPriceUSD || 0); setVal("offerWholesaleInput", so.wholesaleUSD || 0); setVal("offerStockInput", so.stock || 0); setVal("offerPointsPctInput", so.pointsPct || 2); }
-        function deleteOffer(id) { if (confirm("حذف هذا العرض؟")) db.ref("specialOffers/" + id).remove(); }
-        function renderAdminOffersList() {
-            const container = $("adminOffersList"); if (!container) return;
-            container.innerHTML = Object.keys(specialOffers).map(id => `<div class="review-box"><div><b>🔥 ${specialOffers[id].name}</b><br><small style="color:var(--gold-color);">${calcSYP(specialOffers[id].newPriceUSD).toLocaleString()} ل.س | الكمية: ${specialOffers[id].stock}</small></div><div style="display:flex; gap:4px;"><button onclick="editOffer('${id}')" class="btn" style="width:auto; padding:4px 8px; font-size:11px;">✏️</button><button onclick="deleteOffer('${id}')" class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:11px;">🗑️</button></div></div>`).join("");
-        }
-
-        function renderAdminCategories(raw) {
-            if ($("prodCategory")) $("prodCategory").innerHTML = raw.map(c => `<option value="${c}">${c}</option>`).join("");
-            if ($("adminCategoriesList")) $("adminCategoriesList").innerHTML = raw.map((c, idx) => `<span style="display:inline-flex; align-items:center; gap:5px; background:var(--bg-color); border:1px solid var(--border-color); padding:4px 9px; border-radius:12px; font-size:11px; margin:2px;">${c}<b onclick="deleteCategory(${idx})" style="color:var(--danger-color); cursor:pointer;">×</b></span>`).join("");
-        }
-        function addCategory() {
-            const val = $("newCatInput").value.trim(); if (!val) return;
-            const raw = categories.filter(c => c !== "الكل");
-            if (!raw.includes(val)) { raw.push(val); db.ref("categories").set(raw); }
-            setVal("newCatInput", "");
-        }
-        function deleteCategory(idx) { const raw = categories.filter(c => c !== "الكل"); raw.splice(idx, 1); db.ref("categories").set(raw); }
-
+        // 4. نظام الزبائن 
         function renderAdminCustomers() {
             const container = $("adminCustomersList"); if (!container) return;
-            const q = ($("adminSearchCust")?.value || "").trim().toLowerCase();
-            const sorted = Object.values(users).filter(u => !q || u.name?.toLowerCase().includes(q) || u.phone?.includes(q)).sort((a, b) => (b.points || 0) - (a.points || 0));
-            if (!sorted.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا يوجد زبائن.</p>`);
-            container.innerHTML = sorted.map(u => {
+            const q = ($("adminSearchCust")?.value || "").trim().toLowerCase(), sorted = Object.values(users).filter(u => !q || u.name?.toLowerCase().includes(q) || u.phone?.includes(q)).sort((a, b) => (b.points || 0) - (a.points || 0));
+            container.innerHTML = !sorted.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا يوجد زبائن.</p>` : sorted.map(u => {
                 const isB = !!u.banned, ut = u.userType || "retail";
-                const badge = ut === "wholesale" ? ["var(--gold-color)", "جملة"] : ut === "neighbors" ? ["#ff9800", "جيران"] : ut === "partner" ? ["#00b0ff", "شريك"] : ut === "debtor" ? ["#D4AF37", "آجل"] : ["#00e676", "مفرق"];
-                const succ = u.successOrdersCount || 0, canc = u.cancelledOrdersCount || 0;
-                return `<div class="adm-card" style="border-color:${isB ? 'var(--danger-color)' : 'var(--border-color)'};">
-                    <div style="display:flex; justify-content:space-between; font-weight:bold;">
-                        <span>👤 ${u.name} (${u.phone}) <b style="color:${badge[0]};">[${badge[1]}]</b></span>
-                        <span style="color:var(--gold-color);">${Math.round(u.points || 0)} نقطة</span>
-                    </div>
-                    <div style="font-size:10px; color:var(--gray-text); margin:3px 0;">✅ طلبات ناجحة: ${succ} | ❌ ملغاة: ${canc} ${ut === 'debtor' ? '| دين: <b>' + (parseFloat(u.debtUsd)||0).toFixed(2) + ' $</b>' : ''}</div>
-                    <div style="display:flex; gap:4px; margin-top:4px;">
-                        <button onclick="openAdminEditCustomerModal('${u.phone}')" class="btn" style="padding:3px 8px; font-size:10px; width:auto;">✏️ تعديل وتصحيح الهاتف</button>
-                        <button onclick="toggleBanCustomer('${u.phone}')" class="btn" style="padding:3px 8px; font-size:10px; width:auto; background:${isB ? 'var(--success-color)' : '#ff9800'}; color:#000;">${isB ? 'فك الحظر' : 'حظر'}</button>
-                    </div>
-                </div>`;
+                const badge = ut === "wholesale" ? ["var(--gold-color)", "جملة"] : ut === "neighbors" ? ["#ff9800", "جيران"] : ut === "partner" ? ["#00b0ff", "شريك"] : ut === "credit" ? ["#ff5722", "آجل"] : ["#00e676", "مفرق"];
+                const stats = `<span style="font-size:10px; margin-right:10px; color:var(--gray-text);">✅ ${u.successOrders||0} | ❌ ${u.canceledOrders||0}</span>`;
+                return `<div class="adm-card" style="border-color:${isB ? 'var(--danger-color)' : 'var(--border-color)'};"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>👤 ${u.name} (${u.phone}) <b style="color:${badge[0]};">[${badge[1]}]</b> ${stats}</span><span style="color:var(--gold-color);">${Math.round(u.points || 0)} نقطة</span></div><div style="display:flex; gap:4px; margin-top:6px;"><button onclick="openAdminEditCustomerModal('${u.phone}')" class="btn" style="padding:3px 8px; font-size:10px; width:auto;">✏️ تعديل الرتبة والبيانات</button><button onclick="toggleBanCustomer('${u.phone}')" class="btn" style="padding:3px 8px; font-size:10px; width:auto; background:${isB ? 'var(--success-color)' : '#ff9800'}; color:#000;">${isB ? 'فك الحظر' : 'حظر'}</button><button onclick="deleteCustomerAdmin('${u.phone}')" class="btn btn-danger" style="padding:3px 8px; font-size:10px; width:auto;">🗑️ حذف نهائي</button></div></div>`;
             }).join("");
         }
-
         const toggleBanCustomer = p => { if (users[p]) db.ref("users/" + p + "/banned").set(!users[p].banned); };
-
         function openAdminEditCustomerModal(p) {
-            const u = users[p]; if (!u) return;
-            populateRegionSelects();
-            setVal("adminCustOrigPhone", p);
-            setVal("adminCustName", u.name || "");
-            setVal("adminCustPhone", u.phone || p);
-            setVal("adminCustRegion", u.region || "العوينة");
-            setVal("adminCustType", u.userType || "retail");
-            setVal("adminCustAddress", u.address || "");
-            setVal("adminCustPoints", Math.round(u.points || 0));
-
-            const debtSec = $("adminDebtorManagementSection");
-            if (u.userType === "debtor") {
-                debtSec.style.display = "block";
-                setTxt("adminCustCurrentDebtUsd", (parseFloat(u.debtUsd) || 0).toFixed(2) + " $");
-                setVal("adminAddDebtUsd", ""); setVal("adminAddDebtPct", "0"); setVal("adminPayDebtUsd", ""); setVal("adminDebtNote", "");
-            } else debtSec.style.display = "none";
-
+            const u = users[p]; if (!u) return; populateRegionSelects();
+            setVal("adminCustOrigPhone", p); setVal("adminCustName", u.name || ""); setVal("adminCustPhone", u.phone || p);
+            setVal("adminCustRegion", u.region || "العوينة"); setVal("adminCustType", u.userType || "retail"); setVal("adminCustAddress", u.address || ""); setVal("adminCustPoints", Math.round(u.points || 0));
             $("adminEditCustomerModal").style.display = "flex";
         }
-
-        // تفاعل نوع الحساب في نافذة الإدارة (إظهار/إخفاء لوحة الدين)
-        $("adminCustType")?.addEventListener("change", function() {
-            const sec = $("adminDebtorManagementSection");
-            if (this.value === "debtor") sec.style.display = "block";
-            else sec.style.display = "none";
-        });
-
-        // تنفيذ حركة دين أو تسديد دفعة آجل مع الترحيل النقدي للخزينة
-        function commitDebtorTransaction() {
-            const p = $("adminCustOrigPhone").value; if (!p || !users[p]) return;
-            const u = users[p];
-            let currentDebt = parseFloat(u.debtUsd) || 0;
-            const addUsd = parseFloat($("adminAddDebtUsd")?.value) || 0;
-            const addPct = parseFloat($("adminAddDebtPct")?.value) || 0;
-            const payUsd = parseFloat($("adminPayDebtUsd")?.value) || 0;
-            const note = ($("adminDebtNote")?.value || "").trim() || "حركة دفتر الدين";
-
-            let history = u.debtHistory || {};
-            const now = new Date(), nowISO = now.toISOString(), dateStr = now.toLocaleString("ar-SY");
-
-            if (addUsd > 0) {
-                const finalAdd = addUsd + (addUsd * addPct / 100);
-                currentDebt += finalAdd;
-                history["MOV_" + Date.now()] = { title: note + (addPct > 0 ? ` (شامل نسبة ${addPct}%)` : ""), amountUsd: finalAdd, type: 'debt', dateStr, dateISO: nowISO };
-            }
-            if (payUsd > 0) {
-                currentDebt = Math.max(0, currentDebt - payUsd);
-                history["MOV_" + Date.now()] = { title: "تسديد دفعة نقدية: " + note, amountUsd: payUsd, type: 'payment', dateStr, dateISO: nowISO };
-
-                // الترحيل الفوري للخزينة الرئيسية (تسجيل دفعة واصلة كإيراد نقدي)
-                const paySYP = Math.round(payUsd * exchangeRate);
-                const expId = "EXP_DEBT_" + Date.now();
-                // نسجلها كمقْبوضات عبر عكس الإيراد (أو إضافتها مباشرة كدخل للخزينة)
-                db.ref("storeExpenses/" + expId).set({ id: expId, title: `قبض دفعة دين آجل من الزبون ${u.name}`, amountSYP: -paySYP, dateISO: nowISO, dateStr });
-            }
-
-            db.ref(`users/${p}`).update({ debtUsd: currentDebt, debtHistory: history }).then(() => {
-                alert("✅ تمت تسوية وتحديث حساب دفتر الدين وترحيل النقدية بنجاح!");
-                setTxt("adminCustCurrentDebtUsd", currentDebt.toFixed(2) + " $");
-                setVal("adminAddDebtUsd", ""); setVal("adminAddDebtPct", "0"); setVal("adminPayDebtUsd", ""); setVal("adminDebtNote", "");
-            });
-        }
-
         function saveAdminCustomerEdit() {
-            const origPhone = $("adminCustOrigPhone").value;
-            const newPhone = $("adminCustPhone").value.trim().replace(/\s+/g, "");
-            if (!origPhone || !users[origPhone]) return;
-            if (!validatePhoneSyrian(newPhone)) return alert("⚠️ رقم الهاتف الجديد يجب أن يكون 10 خانات ويبدأ بـ 09.");
-
-            const u = users[origPhone];
-            const updated = {
-                name: $("adminCustName").value.trim(),
-                phone: newPhone,
-                region: $("adminCustRegion").value,
-                userType: $("adminCustType").value,
-                address: $("adminCustAddress").value.trim(),
-                points: parseFloat($("adminCustPoints").value) || 0,
-                debtUsd: u.debtUsd || 0,
-                debtHistory: u.debtHistory || {},
-                successOrdersCount: u.successOrdersCount || 0,
-                cancelledOrdersCount: u.cancelledOrdersCount || 0,
-                purchases: u.purchases || {}
-            };
-
-            if (origPhone !== newPhone) {
-                db.ref("users/" + origPhone).remove();
+            const oldP = $("adminCustOrigPhone").value, newP = $("adminCustPhone").value.trim();
+            if (!oldP || !users[oldP]) return;
+            if (!validatePhoneSyrian(newP)) return alert("⚠️ رقم الهاتف الجديد غير صالح (يجب أن يكون 10 خانات ويبدأ بـ 09).");
+            const uData = { ...users[oldP], name: $("adminCustName").value.trim(), region: $("adminCustRegion").value, userType: $("adminCustType").value, address: $("adminCustAddress").value.trim(), points: parseFloat($("adminCustPoints").value) || 0, phone: newP };
+            
+            if(oldP !== newP) {
+                db.ref("users/" + newP).set(uData).then(() => {
+                    db.ref("users/" + oldP).remove();
+                    if(creditLedgerData[oldP]) db.ref("creditLedgers/" + newP).set(creditLedgerData[oldP]).then(() => db.ref("creditLedgers/" + oldP).remove());
+                    if(window.partnersConfigData[oldP]) db.ref("partnersConfig/" + newP).set(window.partnersConfigData[oldP]).then(() => db.ref("partnersConfig/" + oldP).remove());
+                });
+            } else { db.ref("users/" + oldP).update(uData); }
+            alert("✅ تم حفظ تعديلات الزبون وتصحيحها!"); closeModal('adminEditCustomerModal'); populateAdminPartnerSelect(); renderAdminCreditLedger();
+        }
+        function deleteCustomerAdmin(phone) {
+            if(confirm(`⚠️ هل أنت متأكد من حذف حساب الزبون نهائياً وحذف سجله؟`)) {
+                db.ref("users/" + phone).remove(); db.ref("creditLedgers/" + phone).remove(); db.ref("partnersConfig/" + phone).remove();
             }
-
-            db.ref("users/" + newPhone).set(updated).then(() => {
-                alert("✅ تم تحديث بيانات وزبون وحفظ سجله كاملاً بنجاح!");
-                closeModal('adminEditCustomerModal');
-                populateAdminPartnerSelect();
-            });
-        }
-
-        // الحذف التنظيمي للحسابات الوهمية أو غير الفعالة
-        function deleteCustomerAccount() {
-            const p = $("adminCustOrigPhone").value;
-            if (!p || !users[p]) return;
-            if (!confirm(`⚠️ هل أنت متأكد من حذف حساب الزبون (${users[p].name}) نهائياً من قاعدة البيانات؟`)) return;
-            db.ref("users/" + p).remove().then(() => {
-                alert("🗑️ تم حذف الحساب بنجاح.");
-                closeModal('adminEditCustomerModal');
-                populateAdminPartnerSelect();
-            });
-        }
-
-        async function saveCompetitionSettings() {
-            const f = $("compImageInput"); let image = compSettings.image || "";
-            if (f.files?.[0]) image = (await compressDualImages(f.files[0])).image;
-            db.ref("competition").set({ minRedeemPoints: parseInt($("minRedeemPointsInput").value) || 500, leaderboardLimit: parseInt($("leaderboardLimitInput").value) || 10, title: $("compTitleInput").value.trim(), desc: $("compDescInput").value.trim(), image }).then(() => alert("✅ تم حفظ إعدادات المسابقة والمتصدرين!"));
-        }
-
-        function saveGeneralSettings() {
-            collectDeliveryRegionsFromDOM();
-            db.ref("settings").set({
-                exchangeRate: parseFloat($("exchangeRateInput").value) || 15000,
-                deliveryDriverPhone: $("deliveryPhoneInput").value.trim(),
-                adminWhatsApp: $("adminWhatsAppInput").value.trim() || "963965461504",
-                shamWalletId: $("adminShamWalletInput").value.trim() || "da3e13cd8a2ef2af282445e148df9599",
-                exportManagerPhone: formatWhatsAppPhone($("exportMgrPhoneInput")?.value || ""),
-                deliveryFees,
-                workHours: { enabled: $("workHoursEnabled").checked, open: $("workHourOpen").value || "08:00", close: $("workHourClose").value || "23:00" }
-            }).then(() => alert("✅ تم حفظ كافة الإعدادات وصلاحيات مدير التصدير بنجاح!"));
-        }
-
-        function exportBackupJSON() {
-            db.ref("/").once("value").then(snap => {
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(new Blob([JSON.stringify(snap.val() || {}, null, 2)], { type: "application/json" }));
-                a.download = `moaath_store_backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
-            });
-        }
-        function importBackupJSON(e) {
-            const file = e.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = ev => {
-                try {
-                    const json = JSON.parse(ev.target.result);
-                    if (confirm("⚠️ استعادة النسخة الاحتياطية واستبدال البيانات الحالية؟")) db.ref("/").set(json).then(() => alert("✅ تمت الاستعادة بنجاح!"));
-                } catch (err) { alert("❌ الملف غير صالح!"); }
-            };
-            reader.readAsText(file);
         }
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
