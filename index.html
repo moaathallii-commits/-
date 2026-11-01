@@ -139,7 +139,6 @@
         <button class="cart-bar-btn" type="button" onclick="event.stopPropagation(); openCartModal();">🛒 إتمام الطلب الآن</button>
     </div>
 
-    <!-- نوافذ الزبون -->
     <div id="profileModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">👤 بيانات الزبون والعنوان</h3>
@@ -592,7 +591,6 @@
             <div style="display:flex; gap:8px;"><button onclick="saveAdminCustomerEdit()" class="btn">💾 حفظ التعديلات</button><button onclick="closeModal('adminEditCustomerModal')" class="btn btn-danger" style="width:35%;">إلغاء</button></div>
         </div>
     </div>
-
     <script>
         const $ = id => document.getElementById(id);
         const closeModal = id => { if ($(id)) $(id).style.display = "none"; };
@@ -627,7 +625,6 @@
         window.partnersConfigData = {};
         let currentUser = JSON.parse(localStorage.getItem("moaath_user") || "null");
 
-        // نغمة تنبيه صوتية واهتزاز عند وصول طلب جديد
         let knownOrderIds = null;
         function playNewOrderSound() {
             try {
@@ -1347,23 +1344,27 @@
                 entries.map(([id, r]) => `<div class="review-box"><div><b>${r.itemName}</b> <small>(${r.customerName} - ${r.customerPhone})</small></div><button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="db.ref('missingRequests/${id}').remove()">✖</button></div>`).join("");
         }
 
-        // ميزة الدخول لمرة واحدة بكلمة السر مع الحفظ في الجلسة (LocalStorage)
+        let adminClickCount = 0, adminClickTimer = null;
         function handleAdminTrigger() {
-            const isUnlocked = localStorage.getItem("moaath_admin_unlocked") === "true";
-            if (isUnlocked) {
-                $("adminModal").style.display = "flex";
-                renderStatsDashboard(); populateAdminPartnerSelect(); populatePartnerSelectOptions();
-                return;
-            }
-            const pass = prompt("🔐 كلمة مرور الإدارة:");
-            if (pass === null) return;
-            if (pass === ADMIN_PASSWORD) {
-                localStorage.setItem("moaath_admin_unlocked", "true");
-                $("adminModal").style.display = "flex";
-                renderStatsDashboard(); populateAdminPartnerSelect(); populatePartnerSelectOptions();
-            } else alert("❌ كلمة المرور غير صحيحة!");
+            adminClickCount++; clearTimeout(adminClickTimer);
+            if (adminClickCount >= 5) {
+                adminClickCount = 0;
+                const isUnlocked = localStorage.getItem("moaath_admin_unlocked") === "true";
+                if (isUnlocked) {
+                    $("adminModal").style.display = "flex";
+                    renderStatsDashboard(); populateAdminPartnerSelect(); populatePartnerSelectOptions();
+                    return;
+                }
+                const pass = prompt("🔐 كلمة مرور الإدارة:");
+                if (pass === null) return;
+                if (pass === ADMIN_PASSWORD) {
+                    localStorage.setItem("moaath_admin_unlocked", "true");
+                    $("adminModal").style.display = "flex";
+                    renderStatsDashboard(); populateAdminPartnerSelect(); populatePartnerSelectOptions();
+                } else alert("❌ كلمة المرور غير صحيحة!");
+            } else adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 1800);
         }
-        
+
         function lockAdminSession() {
             localStorage.removeItem("moaath_admin_unlocked");
             closeModal('adminModal');
@@ -1844,4 +1845,4 @@
     </script>
 </body>
 </html>
-    
+   
