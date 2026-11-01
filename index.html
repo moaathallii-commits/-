@@ -72,7 +72,7 @@
         .comp-card { background:var(--card-bg); border:1px solid var(--gold-color); border-radius:10px; padding:14px; margin-bottom:12px; }
         .leader-row, .review-box { display:flex; justify-content:space-between; align-items:center; background:var(--bg-color); border:1px solid var(--border-color); padding:8px 10px; border-radius:6px; margin-bottom:6px; font-size:12px; }
         .adm-sec { background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:8px; padding:12px; margin-bottom:14px; }
-        .adm-sec-title { color:var(--gold-color); margin:0 0 10px 0; font-size:13px; border-bottom:1px dashed var(--border-color); padding-bottom:6px; display:flex; justify-content:space-between; align-items:center; }
+        .adm-sec-title { color:var(--gold-color); margin:0 0 10px 0; font-size:13px; border-bottom:1px dashed var(--border-color); padding-bottom:6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; }
         .adm-card { background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:8px; margin-bottom:6px; font-size:12px; }
         .tbl-clean { width:100%; border-collapse:collapse; font-size:11px; text-align:center; }
         .tbl-clean th { background:var(--bg-color); color:var(--gold-color); border-bottom:1px solid var(--border-color); padding:6px; position:sticky; top:0; }
@@ -139,6 +139,7 @@
         <button class="cart-bar-btn" type="button" onclick="event.stopPropagation(); openCartModal();">🛒 إتمام الطلب الآن</button>
     </div>
 
+    <!-- نوافذ الزبون -->
     <div id="profileModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">👤 بيانات الزبون والعنوان</h3>
@@ -227,7 +228,6 @@
         </div>
     </div>
 
-    <!-- لوحة الشريك مع سجل التسويات السابق (الميزة 2) -->
     <div id="partnerModal" class="page-overlay">
         <header style="position:sticky; top:0; z-index:10;">
             <div class="store-info"><h1>🤝 لوحة الشريك المعتمدة</h1><p>مراقبة المخزون، الأرباح، وسجل الدفعات</p></div>
@@ -261,9 +261,9 @@
         </div>
     </div>
 
-    <!-- مركز إدارة المتجر المطور (مع شريط الصرف السريع بالأعلى - الميزة 4) -->
+    <!-- مركز إدارة المتجر الشامل والمطور -->
     <div id="adminModal" class="modal-overlay">
-        <div class="modal-content" style="max-width:630px;">
+        <div class="modal-content" style="max-width:650px;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:8px; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
                 <h3 style="color:var(--gold-color); margin:0; font-size:15px;">⚙️ مركز إدارة متجر معاذ</h3>
                 <div style="display:flex; align-items:center; gap:5px; background:var(--bg-color); padding:4px 8px; border-radius:6px; border:1px solid var(--gold-color);">
@@ -282,45 +282,115 @@
                 <button class="cat-btn" onclick="switchAdminTab('admTabSystem', this)">⚙️ الإعدادات والنظام</button>
             </div>
 
-            <!-- 1. تبويب الطلبات والجرد -->
+            <!-- 1. تبويب الطلبات والجرد المالي المتقدم -->
             <div id="admTabOrdersStats" class="admin-tab">
                 <div class="adm-sec" style="border-color:var(--gold-color);">
                     <div class="adm-sec-title">
-                        <span>📦 الطلبات والفواتير المعلقة (تنبيه صوتي مفعّل 🔔)</span>
+                        <span>📦 الطلبات والفواتير المعلقة (تنبيه صوتي 🔔)</span>
                         <button onclick="cancelAllPendingOrders()" class="btn btn-danger" style="width:auto; padding:4px 10px; font-size:10px;">🗑️ إلغاء الكل</button>
                     </div>
                     <div id="pendingOrdersList"></div>
                 </div>
 
                 <div class="adm-sec">
-                    <div class="adm-sec-title"><span>📊 التقارير المالية وجرد الأرباح</span></div>
-                    <div class="stats-grid">
-                        <div class="form-group"><label>📅 فترة الجرد:</label><select id="reportPeriodSelect" class="form-control" onchange="renderStatsDashboard()"><option value="total">📊 الإجمالي الكلي</option><option value="daily">📅 جرد اليوم</option><option value="weekly">📆 جرد الأسبوع</option><option value="monthly">🗓️ جرد الشهر</option></select></div>
-                        <div class="form-group"><label>📂 التصنيف:</label><select id="reportCategorySelect" class="form-control" onchange="renderStatsDashboard()"><option value="all">🌟 جميع التصنيفات</option></select></div>
+                    <div class="adm-sec-title">
+                        <span>📊 الجرد العام وتوزيع الأرباح الذكي</span>
+                        <button onclick="sendDailyAccountingReportWhatsApp()" class="btn" style="width:auto; padding:4px 10px; font-size:10px; background:#25D366; color:#fff;">📲 إرسال ملخص الجرد واتساب</button>
                     </div>
                     <div class="stats-grid">
-                        <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">المبيعات</div><div class="stats-value" id="statTotalSales">0 ل.س</div></div>
-                        <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">التكلفة</div><div class="stats-value" id="statTotalCost">0 ل.س</div></div>
-                        <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">صافي الأرباح</div><div class="stats-value" style="color:var(--success-color);" id="statNetProfit">0 ل.س</div></div>
-                        <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">نسبة الربح</div><div class="stats-value" id="statProfitMargin">0%</div></div>
+                        <div class="form-group"><label>📅 فترة الجرد العام:</label><select id="reportPeriodSelect" class="form-control" onchange="renderStatsDashboard()"><option value="total">📊 الإجمالي الكلي</option><option value="daily">📅 جرد اليوم</option><option value="weekly">📆 جرد الأسبوع</option><option value="monthly">🗓️ جرد الشهر</option></select></div>
+                        <div class="form-group"><label>📂 تصفية حسب التصنيف:</label><select id="reportCategorySelect" class="form-control" onchange="renderStatsDashboard()"><option value="all">🌟 جميع التصنيفات</option></select></div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">إجمالي المبيعات</div><div class="stats-value" id="statTotalSales">0 ل.س</div></div>
+                        <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">تكلفة البضاعة المباعة</div><div class="stats-value" id="statTotalCost">0 ل.س</div></div>
+                        <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">الربح الإجمالي (قبل التوزيع)</div><div class="stats-value" style="color:var(--success-color);" id="statNetProfit">0 ل.س</div></div>
+                        <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">نسبة الربح العامة</div><div class="stats-value" id="statProfitMargin">0%</div></div>
                     </div>
 
-                    <div class="adm-card" style="border-color:#00b0ff; background:rgba(0,176,255,0.06); margin:10px 0;">
-                        <div style="color:#00b0ff; font-weight:bold; margin-bottom:6px;">🛵 أجور السائق وصندوق صيانة الآلية والوقود</div>
-                        <div class="stats-grid">
-                            <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">مستحقات السائق</div><div class="stats-value" style="color:#00e676;" id="statDriverNetPay">0 ل.س</div></div>
-                            <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">صندوق الآلية والوقود</div><div class="stats-value" style="color:#ff9800;" id="statMaintenanceFund">0 ل.س</div></div>
-                        </div>
+                    <!-- 1. صندوق رأس المال المسترد للدرج -->
+                    <div class="adm-card" style="border-color:var(--gold-color); background:rgba(212,175,55,0.07); margin:10px 0;">
                         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-                            <span style="font-size:11px; color:var(--gray-text);">إجمالي التوصيل: <b id="statDriverTotalFee" style="color:var(--text-color);">0 ل.س</b></span>
-                            <button onclick="resetDeliveryFeesStats()" class="btn btn-danger" style="width:auto; padding:4px 10px; font-size:10px;">🔄 تصفير مستحقات السائق</button>
+                            <div>
+                                <div style="color:var(--gold-color); font-weight:bold; font-size:12px;">💵 صندوق رأس المال المسترد للدرج (لشراء بضاعة)</div>
+                                <div style="font-size:10px; color:var(--gray-text);">تكلفة البضاعة المباعة المتراكمة منذ آخر سحب</div>
+                            </div>
+                            <div style="text-align:left;">
+                                <div style="font-size:15px; font-weight:900; color:#fff;" id="statRecoveredCapitalBox">0 ل.س</div>
+                                <button onclick="resetAdminTimestamp('capitalBoxResetISO', 'صندوق رأس المال المسترد')" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px; margin-top:3px;">🔄 تصفير وعزل المبلغ</button>
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- 2. جدول أرباح جميع الشركاء المستقل -->
+                    <div class="adm-card" style="border-color:#00b0ff; background:rgba(0,176,255,0.06); margin:10px 0;">
+                        <div style="color:#00b0ff; font-weight:bold; font-size:12px; margin-bottom:6px;">🤝 أرباح ومستحقات الشركاء (تصفير مستقل لكل شريك)</div>
+                        <div id="adminAllPartnersStatsList"></div>
+                    </div>
+
+                    <!-- 3. تقسيم أرباح الإدارة: مدير الاستيراد ومدير التصدير -->
+                    <div class="adm-card" style="border-color:var(--success-color); background:rgba(0,230,118,0.06); margin:10px 0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+                            <span style="color:var(--success-color); font-weight:bold; font-size:12px;">👔 أرباح الإدارة الصافية (بعد خصم حصص الشركاء والمصاريف)</span>
+                            <div style="display:flex; align-items:center; gap:4px; font-size:10px;">
+                                <span>نسبة مدير الاستيراد %:</span>
+                                <input type="number" id="importManagerPctInput" class="quick-inp" style="width:48px;" value="50" min="0" max="100" onchange="saveManagersSplitPct()">
+                            </div>
+                        </div>
+                        <div class="stats-grid" style="margin-bottom:4px;">
+                            <div class="stats-box" style="border-color:var(--success-color);">
+                                <div style="font-size:11px; font-weight:bold; color:#00e676;">📥 مدير الاستيراد (<span id="importMgrPctLabel">50</span>%)</div>
+                                <div class="stats-value" style="font-size:15px; color:#fff;" id="statImportManagerProfit">0 ل.س</div>
+                                <div style="font-size:9px; color:var(--gray-text); margin:3px 0;" id="importMgrResetDateLabel">-</div>
+                                <button onclick="resetAdminTimestamp('importManagerResetISO', 'أرباح مدير الاستيراد')" class="btn" style="padding:4px 8px; font-size:10px; background:#00e676; color:#000; margin-top:4px;">🔄 تصفير واستلام</button>
+                            </div>
+                            <div class="stats-box" style="border-color:#00b0ff;">
+                                <div style="font-size:11px; font-weight:bold; color:#00b0ff;">📤 مدير التصدير (<span id="exportMgrPctLabel">50</span>%)</div>
+                                <div class="stats-value" style="font-size:15px; color:#fff;" id="statExportManagerProfit">0 ل.س</div>
+                                <div style="font-size:9px; color:var(--gray-text); margin:3px 0;" id="exportMgrResetDateLabel">-</div>
+                                <button onclick="resetAdminTimestamp('exportManagerResetISO', 'أرباح مدير التصدير')" class="btn" style="padding:4px 8px; font-size:10px; background:#00b0ff; color:#fff; margin-top:4px;">🔄 تصفير واستلام</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. سجل المصاريف التشغيلية والتوالف -->
+                    <div class="adm-card" style="border-color:#ff4444; background:rgba(255,68,68,0.05); margin:10px 0;">
+                        <div style="color:#ff4444; font-weight:bold; font-size:12px; margin-bottom:6px;">📉 المصاريف التشغيلية والتوالف (تُخصم من ربح الإدارة)</div>
+                        <div style="display:flex; gap:5px; margin-bottom:6px; flex-wrap:wrap;">
+                            <input type="text" id="expTitleInput" class="form-control" placeholder="سبب المصروف (أكياس، كهرباء، تالف)..." style="flex:2; min-width:130px; padding:6px;">
+                            <input type="number" id="expAmountInput" class="form-control" placeholder="المبلغ ل.س" style="flex:1; min-width:85px; padding:6px;">
+                            <button onclick="addStoreExpense()" class="btn btn-danger" style="width:auto; padding:6px 10px; font-size:11px;">➕ تسجيل</button>
+                        </div>
+                        <div id="storeExpensesList" style="max-height:110px; overflow-y:auto;"></div>
+                    </div>
+
+                    <!-- 5. أجور السائق وصندوق الصيانة والوقود (مع تصفير مستقل لكل منهما) -->
+                    <div class="adm-card" style="border-color:#ff9800; background:rgba(255,152,0,0.06); margin:10px 0;">
+                        <div style="color:#ff9800; font-weight:bold; margin-bottom:6px;">🛵 أجور السائق وصندوق صيانة الآلية والوقود</div>
+                        <div class="stats-grid">
+                            <div class="stats-box">
+                                <div style="font-size:10px; color:var(--gray-text);">مستحقات السائق</div>
+                                <div class="stats-value" style="color:#00e676;" id="statDriverNetPay">0 ل.س</div>
+                                <button onclick="resetAdminTimestamp('driverResetISO', 'مستحقات السائق')" class="btn btn-danger" style="padding:3px 8px; font-size:10px; margin-top:5px;">🔄 تصفير السائق</button>
+                            </div>
+                            <div class="stats-box">
+                                <div style="font-size:10px; color:var(--gray-text);">صندوق الآلية والوقود</div>
+                                <div class="stats-value" style="color:#ff9800;" id="statMaintenanceFund">0 ل.س</div>
+                                <button onclick="resetAdminTimestamp('maintenanceResetISO', 'صندوق الصيانة والوقود')" class="btn" style="padding:3px 8px; font-size:10px; background:#ff9800; color:#000; margin-top:5px;">⛽ تصفير الوقود</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. مؤشر الأصناف الذهبية والأصناف الراكدة -->
+                    <div class="adm-card" style="margin:10px 0;">
+                        <div style="color:var(--gold-color); font-weight:bold; font-size:12px; margin-bottom:6px;">🏆 مؤشر الأصناف الذهبية (الأكثر ربحاً) والراكدة</div>
+                        <div id="goldenAndStagnantInsights" style="font-size:11px; line-height:1.6;"></div>
                     </div>
 
                     <div class="stats-grid">
                         <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">👥 الزبائن المسجلين</div><div class="stats-value" id="statRegisteredUsersCount" style="color:#00b0ff;">0 زبون</div></div>
                         <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">إجمالي الأصناف</div><div class="stats-value" id="invTotalProductsCount">0 صنف</div></div>
-                        <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">رأس المال بالتكلفة</div><div class="stats-value" id="invTotalCost">0 ل.س</div></div>
+                        <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">رأس المال بالمخزون</div><div class="stats-value" id="invTotalCost">0 ل.س</div></div>
                         <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">قيمة المخزون بالمبيع</div><div class="stats-value" id="invTotalSale">0 ل.س</div></div>
                         <div class="stats-box" style="grid-column:span 2;"><div style="font-size:10px; color:var(--gray-text);">أصناف نفدت الكمية</div><div class="stats-value" style="color:var(--danger-color);" id="invOutOfStockCount">0 صنف</div></div>
                     </div>
@@ -519,6 +589,7 @@
             <div style="display:flex; gap:8px;"><button onclick="saveAdminCustomerEdit()" class="btn">💾 حفظ التعديلات</button><button onclick="closeModal('adminEditCustomerModal')" class="btn btn-danger" style="width:35%;">إلغاء</button></div>
         </div>
     </div>
+
     <script>
         const $ = id => document.getElementById(id);
         const closeModal = id => { if ($(id)) $(id).style.display = "none"; };
@@ -541,11 +612,19 @@
         let categories = ["الكل"], selectedCategory = "الكل", products = {}, specialOffers = {}, suppliers = {};
         let highResImagesMemoryCache = {}, noHighResAvailableSet = {}, shuffledProductKeys = [];
         let cart = {}, users = {}, pendingOrders = {}, completedOrdersHistory = {}, missingRequests = {};
+        let storeExpenses = {}, adminAccounting = {
+            importManagerPct: 50,
+            importManagerResetISO: "2000-01-01T00:00:00.000Z",
+            exportManagerResetISO: "2000-01-01T00:00:00.000Z",
+            capitalBoxResetISO: "2000-01-01T00:00:00.000Z",
+            driverResetISO: "2000-01-01T00:00:00.000Z",
+            maintenanceResetISO: "2000-01-01T00:00:00.000Z"
+        };
         let compSettings = { minRedeemPoints: 500, leaderboardLimit: 10, title: "", desc: "", image: "" };
         window.partnersConfigData = {};
         let currentUser = JSON.parse(localStorage.getItem("moaath_user") || "null");
 
-        // الميزة 3: نغمة تنبيه صوتية واهتزاز عند وصول طلب جديد (بدون ملفات خارجية)
+        // نغمة تنبيه صوتية واهتزاز عند وصول طلب جديد
         let knownOrderIds = null;
         function playNewOrderSound() {
             try {
@@ -755,7 +834,6 @@
             box.innerHTML = categories.filter(c => c !== "الكل").map(c => `<label style="display:inline-flex; align-items:center; gap:4px; font-size:11px; background:var(--card-bg); padding:4px 8px; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;"><input type="checkbox" class="partner-cat-cb" value="${c}"> ${c}</label>`).join("");
         }
 
-        // الميزة 4: تحديث سعر الصرف السريع من أعلى لوحة الإدارة
         function saveQuickExchangeRate() {
             const val = parseFloat($("quickExchangeInput")?.value);
             if (!val || val <= 0) return alert("⚠️ أدخل سعر صرف صحيح.");
@@ -791,6 +869,18 @@
             checkStoreWorkHours(); renderStore();
         });
 
+        db.ref("adminAccounting").on("value", snap => {
+            if (snap.val()) adminAccounting = { ...adminAccounting, ...snap.val() };
+            if ($("importManagerPctInput")) $("importManagerPctInput").value = adminAccounting.importManagerPct ?? 50;
+            renderStatsDashboard();
+        });
+
+        db.ref("storeExpenses").on("value", snap => {
+            storeExpenses = snap.val() || {};
+            renderStoreExpenses();
+            renderStatsDashboard();
+        });
+
         db.ref("categories").on("value", snap => {
             const d = snap.val() || ["مواد غذائية", "منظفات", "مشروبات"];
             categories = ["الكل", ...d];
@@ -812,7 +902,7 @@
 
         db.ref("specialOffers").on("value", snap => { specialOffers = snap.val() || {}; renderSpecialOffers(); renderAdminOffersList(); renderStatsDashboard(); });
         db.ref("users").on("value", snap => { users = snap.val() || {}; syncCurrentUser(); renderAdminCustomers(); renderLeaderboard(); renderStatsDashboard(); renderStore(); populateAdminPartnerSelect(); });
-        db.ref("partnersConfig").on("value", snap => { window.partnersConfigData = snap.val() || {}; syncCurrentUser(); loadPartnerConfig(); });
+        db.ref("partnersConfig").on("value", snap => { window.partnersConfigData = snap.val() || {}; syncCurrentUser(); loadPartnerConfig(); renderStatsDashboard(); });
 
         db.ref("competition").on("value", snap => {
             if (snap.val()) compSettings = { ...compSettings, ...snap.val() };
@@ -1087,7 +1177,7 @@
 
         function openCompetitionsPage() { syncCurrentUser(); renderCompetitionDetails(); renderLeaderboard(); $("competitionsPage").style.display = "block"; }
 
-        // حساب أرباح الشريك مع سجل الدفعات الموثق (الميزة 2)
+        // حساب أرباح الشريك الواحد بدقة منذ آخر تسوية له
         function calculatePartnerCurrentMetrics(phone) {
             const conf = (window.partnersConfigData && window.partnersConfigData[phone]) || {};
             const rawCats = conf.categories || [];
@@ -1153,20 +1243,67 @@
             window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
-        function settlePartnerEarningsByAdmin() {
-            const phone = $("adminPartnerSelect")?.value;
-            if (!phone) return alert("⚠️ يرجى اختيار الشريك أولاً من القائمة.");
+        function settlePartnerEarningsByAdmin(targetPhone) {
+            const phone = targetPhone || $("adminPartnerSelect")?.value;
+            if (!phone) return alert("⚠️ يرجى اختيار الشريك أولاً.");
             const m = calculatePartnerCurrentMetrics(phone);
-            if (!confirm(`هل أنت متأكد من تصفير وتوثيق دفعة أرباح الشريك البالغة (${m.totEarn.toLocaleString()} ل.س)؟\nسيتم حفظ الدفعة في سجل التسويات دون المساس بجرد المتجر العام.`)) return;
+            const partnerName = users[phone]?.name || phone;
+            if (!confirm(`هل أنت متأكد من تصفير وتوثيق دفعة أرباح الشريك (${partnerName}) البالغة (${m.totEarn.toLocaleString()} ل.س)؟\nسيتم حفظ الدفعة في دفتر التسويات دون المساس بجرد المتجر العام.`)) return;
 
             const now = new Date(), nowISO = now.toISOString(), payId = "PAY_" + Date.now();
             const updates = {};
             updates[`partnersConfig/${phone}/lastSettlementISO`] = nowISO;
             updates[`partnersConfig/${phone}/payoutHistory/${payId}`] = { amountSYP: m.totEarn, salesSYP: m.totSales, dateStr: now.toLocaleString("ar-SY"), dateISO: nowISO };
             db.ref().update(updates).then(() => {
-                alert(`✅ تم تصفير الحساب وتوثيق دفعة (${m.totEarn.toLocaleString()} ل.س) في دفتر الشريك!`);
+                alert(`✅ تم تصفير حساب الشريك (${partnerName}) وتوثيق دفعة (${m.totEarn.toLocaleString()} ل.س)!`);
                 loadPartnerConfig();
+                renderStatsDashboard();
             });
+        }
+
+        // حفظ نسبة تقسيم مدير الاستيراد ومدير التصدير
+        function saveManagersSplitPct() {
+            const pct = Math.min(100, Math.max(0, parseFloat($("importManagerPctInput")?.value) || 50));
+            db.ref("adminAccounting/importManagerPct").set(pct);
+        }
+
+        // تصفير مستقل لأي صندوق إداري (مدير الاستيراد، مدير التصدير، صندوق رأس المال، السائق، الوقود)
+        function resetAdminTimestamp(fieldKey, labelName) {
+            if (!confirm(`🔄 هل أنت متأكد من تصفير (${labelName}) وبدء عداد جديد له من هذه اللحظة؟\n(ملاحظة: باقي الحسابات والشركاء والجرد العام لن تتأثر نهائياً)`)) return;
+            db.ref(`adminAccounting/${fieldKey}`).set(new Date().toISOString()).then(() => {
+                alert(`✅ تم تصفير (${labelName}) بنجاح!`);
+            });
+        }
+
+        // إدارة المصاريف التشغيلية والتوالف
+        function addStoreExpense() {
+            const title = ($("expTitleInput")?.value || "").trim(), amount = parseInt($("expAmountInput")?.value) || 0;
+            if (!title || amount <= 0) return alert("⚠️ يرجى كتابة سبب المصروف والمبلغ بالليرة.");
+            const id = "EXP_" + Date.now();
+            db.ref("storeExpenses/" + id).set({ id, title, amountSYP: amount, dateISO: new Date().toISOString(), dateStr: new Date().toLocaleDateString("ar-SY") }).then(() => {
+                $("expTitleInput").value = ""; $("expAmountInput").value = "";
+            });
+        }
+        function deleteStoreExpense(id) { if (confirm("حذف هذا المصروف؟")) db.ref("storeExpenses/" + id).remove(); }
+        function renderStoreExpenses() {
+            const box = $("storeExpensesList"); if (!box) return;
+            const list = Object.values(storeExpenses).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
+            if (!list.length) return (box.innerHTML = `<div style="font-size:10px; color:var(--gray-text); text-align:center;">لا توجد مصاريف أو توالف مسجلة.</div>`);
+            box.innerHTML = list.map(e => `<div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; border-bottom:1px dashed var(--border-color); padding:3px 0;"><span>• <b>${e.title}</b> <small style="color:var(--gray-text);">(${e.dateStr})</small></span><div><b style="color:var(--danger-color); margin-left:6px;">-${(e.amountSYP || 0).toLocaleString()} ل.س</b><span onclick="deleteStoreExpense('${e.id}')" style="cursor:pointer; color:var(--danger-color);">🗑️</span></div></div>`).join("");
+        }
+
+        // معرفة نسبة الشركاء الإجمالية على أي تصنيف معين لخصمها من ربح الإدارة بدقة
+        function getCategoryPartnerSharePct(catName) {
+            const cleanCat = (catName || "").trim().toLowerCase();
+            let totalPartnerPct = 0;
+            Object.keys(window.partnersConfigData || {}).forEach(phone => {
+                if (users[phone]?.userType === "partner") {
+                    const cfg = window.partnersConfigData[phone];
+                    const cats = (cfg.categories || []).map(c => c.trim().toLowerCase());
+                    if (cats.includes(cleanCat)) totalPartnerPct += (parseFloat(cfg.profitPct) || 0);
+                }
+            });
+            return Math.min(100, totalPartnerPct);
         }
 
         function renderCompetitionDetails() {
@@ -1370,6 +1507,7 @@
             suppContainer.innerHTML = html;
         }
 
+        // المحرك المحاسبي الشامل للوحة الإحصائيات والجرد
         function renderStatsDashboard() {
             const sel = $("reportCategorySelect");
             if (sel) {
@@ -1378,7 +1516,15 @@
                 sel.value = cur;
             }
             const period = $("reportPeriodSelect")?.value || "total", selCat = sel?.value || "all", now = new Date();
-            let totS = 0, totC = 0, netP = 0, totDel = 0, drvNet = 0, maintFund = 0, catMap = {}, prodMap = {};
+            let totS = 0, totC = 0, netP = 0, catMap = {}, prodMap = {};
+            let capBoxSYP = 0, drvNetSYP = 0, maintFundSYP = 0, importMgrAdminPool = 0, exportMgrAdminPool = 0;
+
+            const capReset = adminAccounting.capitalBoxResetISO || "2000-01-01T00:00:00.000Z";
+            const drvReset = adminAccounting.driverResetISO || "2000-01-01T00:00:00.000Z";
+            const mntReset = adminAccounting.maintenanceResetISO || "2000-01-01T00:00:00.000Z";
+            const impReset = adminAccounting.importManagerResetISO || "2000-01-01T00:00:00.000Z";
+            const expReset = adminAccounting.exportManagerResetISO || "2000-01-01T00:00:00.000Z";
+
             categories.filter(c => c !== "الكل").forEach(c => catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 });
             catMap["عروض خاصة"] = { sales: 0, cost: 0, profit: 0, count: 0 }; catMap["غير مصنف"] = { sales: 0, cost: 0, profit: 0, count: 0 };
             Object.keys(products).forEach(pid => {
@@ -1386,30 +1532,109 @@
                 if (!catMap[c]) catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 };
                 prodMap[pid] = { id: pid, name: products[pid].name || "صنف", category: c, stock: parseInt(products[pid].stock) || 0, qtySold: 0, sales: 0, cost: 0, profit: 0 };
             });
+
             Object.values(completedOrdersHistory).forEach(ord => {
-                const d = new Date(ord.dateISO || Date.now());
-                if ((period === "daily" && d.toDateString() !== now.toDateString()) || (period === "weekly" && (Math.abs(now - d) / 86400000) > 7) || (period === "monthly" && (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()))) return;
+                const ordISO = ord.dateISO || new Date().toISOString();
+                const d = new Date(ordISO);
                 const fee = parseInt(ord.deliveryFeeSYP) || 0, dShare = Math.round((fee * getRegionDriverPct(ord.customerRegion)) / 100);
-                totDel += fee; drvNet += dShare; maintFund += (fee - dShare);
+                if (ordISO > drvReset) drvNetSYP += dShare;
+                if (ordISO > mntReset) maintFundSYP += (fee - dShare);
+
                 (ord.items || []).forEach(i => {
                     const c = i.category || (i.id.startsWith("OFFER_") ? "عروض خاصة" : (products[i.id]?.category || "غير مصنف"));
-                    if (!catMap[c]) catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 };
                     const sS = i.subSaleSYP || 0, sC = i.subCostSYP || 0, sP = i.netProfitSYP !== undefined ? i.netProfitSYP : (sS - sC), sQ = i.qty || 1;
-                    catMap[c].sales += sS; catMap[c].cost += sC; catMap[c].profit += sP; catMap[c].count += sQ;
-                    if (!prodMap[i.id]) prodMap[i.id] = { id: i.id, name: i.name || "صنف", category: c, stock: products[i.id] ? parseInt(products[i.id].stock) || 0 : 0, qtySold: 0, sales: 0, cost: 0, profit: 0 };
-                    prodMap[i.id].qtySold += sQ; prodMap[i.id].sales += sS; prodMap[i.id].cost += sC; prodMap[i.id].profit += sP;
-                    if (selCat === "all" || selCat === c) { totS += sS; totC += sC; netP += sP; }
+
+                    // حساب الصناديق المستقلة بالتوقيت
+                    if (ordISO > capReset) capBoxSYP += sC;
+                    const partnerSharePct = getCategoryPartnerSharePct(c);
+                    const adminPureItemProfit = Math.round((sP * (100 - partnerSharePct)) / 100);
+                    if (ordISO > impReset) importMgrAdminPool += adminPureItemProfit;
+                    if (ordISO > expReset) exportMgrAdminPool += adminPureItemProfit;
+
+                    // حساب الجرد العام حسب الفترة المختارة
+                    const inPeriod = !((period === "daily" && d.toDateString() !== now.toDateString()) || (period === "weekly" && (Math.abs(now - d) / 86400000) > 7) || (period === "monthly" && (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear())));
+                    if (inPeriod) {
+                        if (!catMap[c]) catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 };
+                        catMap[c].sales += sS; catMap[c].cost += sC; catMap[c].profit += sP; catMap[c].count += sQ;
+                        if (!prodMap[i.id]) prodMap[i.id] = { id: i.id, name: i.name || "صنف", category: c, stock: products[i.id] ? parseInt(products[i.id].stock) || 0 : 0, qtySold: 0, sales: 0, cost: 0, profit: 0 };
+                        prodMap[i.id].qtySold += sQ; prodMap[i.id].sales += sS; prodMap[i.id].cost += sC; prodMap[i.id].profit += sP;
+                        if (selCat === "all" || selCat === c) { totS += sS; totC += sC; netP += sP; }
+                    }
                 });
             });
+
+            // خصم المصاريف التشغيلية والتوالف من وعاء الإدارة لكل مدير حسب تاريخ تصفيره
+            Object.values(storeExpenses).forEach(exp => {
+                const eISO = exp.dateISO || "";
+                const amt = parseInt(exp.amountSYP) || 0;
+                if (eISO > impReset) importMgrAdminPool -= amt;
+                if (eISO > expReset) exportMgrAdminPool -= amt;
+            });
+
+            const impPct = Math.min(100, Math.max(0, parseFloat(adminAccounting.importManagerPct ?? 50)));
+            const expPct = 100 - impPct;
+            const importManagerFinalSYP = Math.round((importMgrAdminPool * impPct) / 100);
+            const exportManagerFinalSYP = Math.round((exportMgrAdminPool * expPct) / 100);
+
+            window.latestStatsSnapshot = { totS, totC, netP, capBoxSYP, importManagerFinalSYP, exportManagerFinalSYP, drvNetSYP, maintFundSYP };
+
             if ($("statTotalSales")) $("statTotalSales").textContent = totS.toLocaleString() + " ل.س";
             if ($("statTotalCost")) $("statTotalCost").textContent = totC.toLocaleString() + " ل.س";
             if ($("statNetProfit")) $("statNetProfit").textContent = netP.toLocaleString() + " ل.س";
             if ($("statProfitMargin")) $("statProfitMargin").textContent = (totS > 0 ? ((netP / totS) * 100).toFixed(1) : 0) + "%";
-            if ($("statDriverTotalFee")) $("statDriverTotalFee").textContent = totDel.toLocaleString() + " ل.س";
-            if ($("statDriverNetPay")) $("statDriverNetPay").textContent = drvNet.toLocaleString() + " ل.س";
-            if ($("statMaintenanceFund")) $("statMaintenanceFund").textContent = maintFund.toLocaleString() + " ل.س";
+            if ($("statRecoveredCapitalBox")) $("statRecoveredCapitalBox").textContent = capBoxSYP.toLocaleString() + " ل.س";
+            if ($("importMgrPctLabel")) $("importMgrPctLabel").textContent = impPct;
+            if ($("exportMgrPctLabel")) $("exportMgrPctLabel").textContent = expPct;
+            if ($("statImportManagerProfit")) $("statImportManagerProfit").textContent = importManagerFinalSYP.toLocaleString() + " ل.س";
+            if ($("statExportManagerProfit")) $("statExportManagerProfit").textContent = exportManagerFinalSYP.toLocaleString() + " ل.س";
+            if ($("importMgrResetDateLabel")) $("importMgrResetDateLabel").textContent = impReset.startsWith("2000") ? "منذ البداية" : "منذ: " + new Date(impReset).toLocaleDateString("ar-SY");
+            if ($("exportMgrResetDateLabel")) $("exportMgrResetDateLabel").textContent = expReset.startsWith("2000") ? "منذ البداية" : "منذ: " + new Date(expReset).toLocaleDateString("ar-SY");
+            if ($("statDriverNetPay")) $("statDriverNetPay").textContent = drvNetSYP.toLocaleString() + " ل.س";
+            if ($("statMaintenanceFund")) $("statMaintenanceFund").textContent = maintFundSYP.toLocaleString() + " ل.س";
             if ($("statRegisteredUsersCount")) $("statRegisteredUsersCount").textContent = Object.keys(users).length + " زبون";
-            renderCategoryBreakdownTable(catMap); renderProductBreakdownTable(prodMap, selCat); updateInventoryValuation(selCat);
+
+            renderAllPartnersStatsInDashboard();
+            renderGoldenAndStagnantInsights(prodMap);
+            renderCategoryBreakdownTable(catMap);
+            renderProductBreakdownTable(prodMap, selCat);
+            updateInventoryValuation(selCat);
+        }
+
+        // عرض أرباح جميع الشركاء في لوحة الإحصائيات مع زر تصفير مستقل لكل شريك
+        function renderAllPartnersStatsInDashboard() {
+            const box = $("adminAllPartnersStatsList"); if (!box) return;
+            const partners = Object.values(users).filter(u => u.userType === "partner");
+            if (!partners.length) return (box.innerHTML = `<div style="font-size:11px; color:var(--gray-text); text-align:center;">لا يوجد شركاء محددون حالياً.</div>`);
+            box.innerHTML = partners.map(p => {
+                const m = calculatePartnerCurrentMetrics(p.phone);
+                return `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--border-color); padding:6px 0; font-size:11px; flex-wrap:wrap; gap:6px;">
+                    <div><b>👤 ${p.name}</b> <small style="color:var(--gold-color);">(${m.partnerPct}% | ${m.rawCats.join("، ") || "بلا تصنيف"})</small><br><span style="color:var(--gray-text); font-size:10px;">مبيعاته: ${m.totSales.toLocaleString()} ل.س</span></div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <b style="color:var(--success-color); font-size:13px;">${m.totEarn.toLocaleString()} ل.س</b>
+                        <button onclick="settlePartnerEarningsByAdmin('${p.phone}')" class="btn" style="width:auto; padding:4px 8px; font-size:10px; background:#ff9800; color:#000;">🔄 تصفير</button>
+                    </div>
+                </div>`;
+            }).join("");
+        }
+
+        // عرض الأصناف الذهبية والراكدة
+        function renderGoldenAndStagnantInsights(prodMap) {
+            const box = $("goldenAndStagnantInsights"); if (!box) return;
+            const all = Object.values(prodMap);
+            const golden = [...all].filter(p => p.profit > 0).sort((a, b) => b.profit - a.profit).slice(0, 3);
+            const stagnant = all.filter(p => p.qtySold === 0 && p.stock > 0).slice(0, 5);
+            const goldHtml = golden.length ? golden.map(g => `<span style="color:var(--success-color); font-weight:bold;">★ ${g.name} (${g.profit.toLocaleString()} ل.س)</span>`).join(" ، ") : "لا توجد مبيعات كافية بعد";
+            const stagHtml = stagnant.length ? stagnant.map(s => `<span style="color:var(--gray-text);">${s.name} (مخزون: ${s.stock})</span>`).join(" ، ") : "لا توجد أصناف راكدة";
+            box.innerHTML = `<div>🥇 <b>الأعلى ربحاً:</b> ${goldHtml}</div><div style="margin-top:4px;">💤 <b>أصناف راكدة لم تُبع:</b> ${stagHtml}</div>`;
+        }
+
+        // إرسال ملخص الجرد الشامل عبر واتساب
+        function sendDailyAccountingReportWhatsApp() {
+            const s = window.latestStatsSnapshot || {};
+            const partners = Object.values(users).filter(u => u.userType === "partner");
+            const pLines = partners.length ? partners.map(p => { const m = calculatePartnerCurrentMetrics(p.phone); return `• الشريك ${p.name}: ${m.totEarn.toLocaleString()} ل.س`; }).join("\n") : "• لا يوجد شركاء";
+            const msg = `📊 *تقرير الجرد والتوزيع المالي - متجر معاذ*\n📅 التاريخ: ${new Date().toLocaleString("ar-SY")}\n──────────────\n💰 إجمالي المبيعات: ${(s.totS || 0).toLocaleString()} ل.س\n💵 صندوق رأس المال المسترد للدرج: ${(s.capBoxSYP || 0).toLocaleString()} ل.س\n──────────────\n🤝 *مستحقات الشركاء الحالية:*\n${pLines}\n──────────────\n👔 *صافي أرباح الإدارة:*\n📥 مدير الاستيراد: ${(s.importManagerFinalSYP || 0).toLocaleString()} ل.س\n📤 مدير التصدير: ${(s.exportManagerFinalSYP || 0).toLocaleString()} ل.س\n──────────────\n🛵 مستحقات السائق: ${(s.drvNetSYP || 0).toLocaleString()} ل.س\n⛽ صندوق الآلية والوقود: ${(s.maintFundSYP || 0).toLocaleString()} ل.س`;
+            window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
         function getCategoryInventoryValue(cName) {
@@ -1453,24 +1678,9 @@
             if ($("invOutOfStockCount")) $("invOutOfStockCount").textContent = out + " صنف";
         }
 
-        function resetDeliveryFeesStats() {
-            const period = $("reportPeriodSelect").value, now = new Date(), updates = {}; let cnt = 0;
-            if (!confirm(`تصفير مستحقات السائق فقط لفترة الجرد المحددة؟`)) return;
-            Object.keys(completedOrdersHistory).forEach(id => {
-                const ord = completedOrdersHistory[id]; if (!ord?.deliveryFeeSYP) return;
-                const d = new Date(ord.dateISO || Date.now());
-                if ((period === "daily" && d.toDateString() !== now.toDateString()) || (period === "weekly" && (Math.abs(now - d) / 86400000) > 7) || (period === "monthly" && (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()))) return;
-                updates[`completedOrdersHistory/${id}/deliveryFeeSYP`] = ord.deliveryFeeSYP - Math.round((ord.deliveryFeeSYP * getRegionDriverPct(ord.customerRegion)) / 100);
-                cnt++;
-            });
-            if (cnt > 0) db.ref().update(updates).then(() => alert(`✅ تم تصفير حساب السائق لـ (${cnt}) طلب!`));
-            else alert("ℹ️ لا توجد مستحقات معلقة للسائق.");
-        }
-
-        // دالة موحدة ومختصرة لتصفير مبيعات صنف أو تصنيف
         function resetSalesFilter(type, target) {
             const label = type === 'prod' ? (products[target]?.name || 'الصنف') : target;
-            if (!confirm(`تصفير مبيعات وأرباح "${label}" مع الحفاظ الكامل على كميات المخزون؟`)) return;
+            if (!confirm(`تصفير مبيعات وأرباح "${label}" نهائياً من السجل العام مع الحفاظ الكامل على كميات المخزون؟`)) return;
             const updates = {};
             Object.keys(completedOrdersHistory).forEach(id => {
                 const ord = completedOrdersHistory[id]; if (!ord?.items) return;
@@ -1500,11 +1710,9 @@
         }
         function deleteProduct(id) { if (confirm("حذف هذا الصنف نهائياً؟")) { db.ref("products/" + id).remove(); db.ref("productImages/" + id).remove(); delete highResImagesMemoryCache[id]; } }
 
-        // الميزة 1: التعديل السريع الفوري للمخزون والسعر من القائمة مباشرة
         function quickUpdateStock(id, delta) {
             if (!products[id]) return;
-            const newSt = Math.max(0, (parseInt(products[id].stock) || 0) + delta);
-            db.ref(`products/${id}/stock`).set(newSt);
+            db.ref(`products/${id}/stock`).set(Math.max(0, (parseInt(products[id].stock) || 0) + delta));
         }
         function quickUpdatePrice(id, val) {
             const num = parseFloat(val);
@@ -1628,3 +1836,7 @@
     </script>
 </body>
 </html>
+
+
+
+    
