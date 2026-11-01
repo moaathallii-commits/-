@@ -29,10 +29,8 @@
         body { background-color:var(--bg-color); color:var(--text-color); font-family:Tahoma,'Segoe UI',sans-serif; margin:0; padding:0; -webkit-tap-highlight-color:transparent; transition:background-color 0.25s,color 0.25s; overscroll-behavior-y:contain; -webkit-user-select:none; user-select:none; }
         header { background-color:var(--card-bg); border-bottom:2px solid var(--gold-color); padding:10px 15px; display:flex; justify-content:space-between; align-items:center; }
         .store-info { cursor:pointer; }
-        .store-info h1 { font-size:16px; color:var(--gold-color); margin:0 0 3px 0; display:flex; align-items:center; gap:6px; }
+        .store-info h1 { font-size:16px; color:var(--gold-color); margin:0 0 3px 0; }
         .store-info p { font-size:11px; color:var(--gray-text); margin:0; }
-        .connection-dot { width:9px; height:9px; border-radius:50%; display:inline-block; background:#ff4444; box-shadow:0 0 6px #ff4444; transition:0.3s; }
-        .connection-dot.online { background:#00e676; box-shadow:0 0 8px #00e676; }
         .logo-circle { width:45px; height:45px; border-radius:50%; overflow:hidden; border:2px solid var(--gold-color); cursor:pointer; background:#222; flex-shrink:0; }
         .logo-circle img { width:100%; height:100%; object-fit:cover; }
         .user-bar { background:var(--card-bg); padding:8px 15px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); font-size:12px; gap:6px; flex-wrap:wrap; }
@@ -97,7 +95,7 @@
 
     <header>
         <div class="store-info" onclick="window.open('https://wa.me/' + adminWhatsAppNumber, '_blank')">
-            <h1>متجر معاذ <span id="connDot" class="connection-dot" title="حالة الاتصال بالخادم"></span></h1>
+            <h1>متجر معاذ</h1>
             <p>قرية العوينة | <span id="headerPhoneText">0965461504</span> 📱</p>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
@@ -141,7 +139,7 @@
         <button class="cart-bar-btn" type="button" onclick="event.stopPropagation(); openCartModal();">🛒 إتمام الطلب الآن</button>
     </div>
 
-    <!-- نافذة بيانات الزبون -->
+    <!-- نوافذ الزبون -->
     <div id="profileModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">👤 بيانات الزبون والعنوان</h3>
@@ -167,11 +165,10 @@
         </div>
     </div>
 
-    <!-- نافذة سلة المشتريات والتحقق التلقائي من شام كاش -->
     <div id="cartModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin:0 0 8px 0; text-align:center; font-size:15px;">🛒 سلة المشتريات وإتمام الطلب</h3>
-            <div id="cartItemsList" style="max-height:130px; overflow-y:auto; margin-bottom:8px; padding-left:2px;"></div>
+            <div id="cartItemsList" style="max-height:145px; overflow-y:auto; margin-bottom:8px; padding-left:2px;"></div>
             <div class="form-group" style="margin-bottom:8px;">
                 <label>📍 منطقة التوصيل:</label>
                 <select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()" style="padding:6px;"></select>
@@ -186,20 +183,13 @@
                     <span>النقاط المكتسبة:</span><strong>+<span id="modalCartPoints">0</span> نقطة 🎁</strong>
                 </div>
             </div>
-            
-            <div style="background:var(--bg-color); border:1px solid var(--gold-color); border-radius:6px; padding:8px; margin-bottom:8px; font-size:11px;">
-                <div style="color:var(--gold-color); font-weight:bold; margin-bottom:3px;">💳 تفاصيل الدفع التلقائي عبر شام كاش:</div>
-                <div style="margin-bottom:4px;">كود محفظة المتجر: <b id="displayShamWalletId" style="color:#00b0ff; user-select:text;">...</b> <button onclick="copyWalletId()" class="btn" style="width:auto; padding:2px 6px; font-size:9px; display:inline-block;">نسخ الكود</button></div>
-                <div class="form-group" style="margin-bottom:4px;"><label style="font-size:10px;">أدخل رقم عملية إيصال شام كاش بعد التحويل:</label><input type="text" id="shamReceiptIdInput" class="form-control" placeholder="مثال: SC-984210" style="padding:6px;"></div>
-            </div>
-
-            <div class="form-group" style="margin-bottom:8px;"><input type="text" id="orderNotes" class="form-control" placeholder="📝 ملاحظات إضافية مع الطلب (اختياري)..." style="padding:6px;"></div>
-            <button type="button" onclick="submitOrderWithAutoVerify()" class="btn" style="background:linear-gradient(45deg,#00e676,#00c853); color:#000; margin-bottom:6px; font-size:14px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.45); animation:pulse 2s infinite;">✅ إتمام الطلب والتحقق التلقائي</button>
-            <button type="button" onclick="closeModal('cartModal')" class="btn btn-danger" style="padding:5px; font-size:11px;">إغلاق</button>
+            <button type="button" onclick="copyWalletId()" class="btn" style="margin-bottom:8px; padding:9px; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000;">📋 نسخ كود محفظة شام كاش للدفع</button>
+            <div class="form-group" style="margin-bottom:10px;"><input type="text" id="orderNotes" class="form-control" placeholder="📝 ملاحظات إضافية مع الطلب (اختياري)..."></div>
+            <button type="button" onclick="submitOrder()" class="btn" style="background:linear-gradient(45deg,#00e676,#00c853); color:#000; margin-bottom:8px; font-size:14px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.45); animation:pulse 2s infinite;">✅ إرسال وتأكيد الطلب الآن</button>
+            <button type="button" onclick="closeModal('cartModal')" class="btn btn-danger" style="padding:6px; font-size:11px;">إغلاق</button>
         </div>
     </div>
 
-    <!-- نافذة تقييم المنتج -->
     <div id="reviewModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">⭐ تقييم المنتج</h3>
@@ -275,7 +265,10 @@
     <div id="adminModal" class="modal-overlay">
         <div class="modal-content" style="max-width:650px;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:8px; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
-                <h3 style="color:var(--gold-color); margin:0; font-size:15px;">⚙️ مركز إدارة متجر معاذ</h3>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <h3 style="color:var(--gold-color); margin:0; font-size:15px;">⚙️ مركز إدارة متجر معاذ</h3>
+                    <button onclick="lockAdminSession()" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" title="قفل الإدارة (طلب كلمة المرور في المرة القادمة)">🔒 قفل</button>
+                </div>
                 <div style="display:flex; align-items:center; gap:5px; background:var(--bg-color); padding:4px 8px; border-radius:6px; border:1px solid var(--gold-color);">
                     <span style="font-size:11px; color:var(--gold-color); font-weight:bold;">💵 الصرف:</span>
                     <input type="number" id="quickExchangeInput" class="quick-inp" style="width:70px;">
@@ -374,7 +367,7 @@
                         <div id="storeExpensesList" style="max-height:110px; overflow-y:auto;"></div>
                     </div>
 
-                    <!-- 5. أجور السائق وصندوق الصيانة والوقود -->
+                    <!-- 5. أجور السائق وصندوق الصيانة والوقود (مع تصفير مستقل لكل منهما) -->
                     <div class="adm-card" style="border-color:#ff9800; background:rgba(255,152,0,0.06); margin:10px 0;">
                         <div style="color:#ff9800; font-weight:bold; margin-bottom:6px;">🛵 أجور السائق وصندوق صيانة الآلية والوقود</div>
                         <div class="stats-grid">
@@ -391,9 +384,9 @@
                         </div>
                     </div>
 
-                    <!-- 6. مؤشر الأصناف الذهبية -->
+                    <!-- 6. مؤشر الأصناف الذهبية (الأكثر ربحاً) -->
                     <div class="adm-card" style="margin:10px 0;">
-                        <div style="color:var(--gold-color); font-weight:bold; font-size:12px; margin-bottom:6px;">🏆 مؤشر الأصناف الذهبية (الأكثر ربحاً) والراكدة</div>
+                        <div style="color:var(--gold-color); font-weight:bold; font-size:12px; margin-bottom:6px;">🏆 مؤشر الأصناف الذهبية (الأكثر ربحاً) والأصناف الراكدة</div>
                         <div id="goldenAndStagnantInsights" style="font-size:11px; line-height:1.6;"></div>
                     </div>
 
@@ -413,7 +406,7 @@
                 </div>
             </div>
 
-            <!-- 2. تبويب البضاعة والمخزون والعروض -->
+            <!-- 2. تبويب البضاعة والمخزون السريع والعروض -->
             <div id="admTabCatalog" class="admin-tab" style="display:none;">
                 <div class="adm-sec" id="productFormSection">
                     <div class="adm-sec-title"><span>➕ إضافة / تعديل صنف في المتجر</span><button onclick="resetProductForm()" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">تفريغ الحقول</button></div>
@@ -578,7 +571,6 @@
         </div>
     </div>
 
-    <!-- نافذة تعديل زبون من الإدارة -->
     <div id="adminEditCustomerModal" class="modal-overlay" style="z-index:1100;">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">✏️ تعديل بيانات الزبون والرتبة</h3>
@@ -601,18 +593,6 @@
         </div>
     </div>
 
-    <!-- نافذة طلب كلمة المرور الأمنية للجلسة -->
-    <div id="adminLoginModal" class="modal-overlay" style="z-index:1200;">
-        <div class="modal-content" style="max-width:340px; text-align:center;">
-            <div style="font-size:35px; margin-bottom:5px;">🔐</div>
-            <h3 style="color:var(--gold-color); margin:0 0 10px 0; font-size:15px;">تسجيل دخول الإدارة الآمن</h3>
-            <p style="font-size:11px; color:var(--gray-text); margin-bottom:12px;">أدخل كلمة المرور لفتح لوحة التحكم والمحاسبة.</p>
-            <div class="form-group"><input type="password" id="adminPassInput" class="form-control" placeholder="كلمة المرور..." style="text-align:center; font-size:14px;" onkeydown="if(event.key==='Enter') verifyAdminPassword()"></div>
-            <button onclick="verifyAdminPassword()" class="btn" style="background:var(--success-color); color:#000; margin-bottom:8px;">🔓 فتح لوحة الإدارة</button>
-            <button onclick="closeModal('adminLoginModal')" class="btn btn-danger" style="padding:6px; font-size:11px;">إلغاء</button>
-        </div>
-    </div>
-
     <script>
         const $ = id => document.getElementById(id);
         const closeModal = id => { if ($(id)) $(id).style.display = "none"; };
@@ -623,14 +603,6 @@
 
         if (!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://moaathstore-d2fd6-default-rtdb.firebaseio.com" });
         const db = firebase.database();
-
-        db.ref(".info/connected").on("value", snap => {
-            const dot = $("connDot");
-            if (dot) {
-                if (snap.val() === true) { dot.classList.add("online"); dot.title = "متصل بالخادم (Online)"; }
-                else { dot.classList.remove("online"); dot.title = "منقطع عن الخادم (Offline)"; }
-            }
-        });
 
         let exchangeRate = 15000, deliveryDriverPhone = "";
         let deliveryFees = {
@@ -655,6 +627,7 @@
         window.partnersConfigData = {};
         let currentUser = JSON.parse(localStorage.getItem("moaath_user") || "null");
 
+        // نغمة تنبيه صوتية واهتزاز عند وصول طلب جديد
         let knownOrderIds = null;
         function playNewOrderSound() {
             try {
@@ -691,7 +664,7 @@
             history.pushState({ page: 'store_home' }, '');
             window.addEventListener('popstate', () => {
                 if (isExitingApp) return;
-                for (let id of ['cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal', 'competitionsPage', 'adminLoginModal']) {
+                for (let id of ['cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal', 'competitionsPage']) {
                     const el = $(id);
                     if (el && (el.style.display === 'flex' || el.style.display === 'block')) {
                         el.style.display = 'none';
@@ -883,7 +856,6 @@
             if ($("workHourOpen")) $("workHourOpen").value = workHoursSettings.open;
             if ($("workHourClose")) $("workHourClose").value = workHoursSettings.close;
             if ($("headerPhoneText")) $("headerPhoneText").textContent = adminWhatsAppNumber;
-            if ($("displayShamWalletId")) $("displayShamWalletId").textContent = shamWalletIdGlobal;
             if (d.deliveryFees && Object.keys(d.deliveryFees).length) {
                 deliveryFees = {};
                 Object.keys(d.deliveryFees).forEach(k => {
@@ -1129,8 +1101,6 @@
             populateRegionSelects();
             if ($("cartRegionSelect")) $("cartRegionSelect").value = reg;
             renderCartModalItems();
-            if ($("displayShamWalletId")) $("displayShamWalletId").textContent = shamWalletIdGlobal;
-            if ($("shamReceiptIdInput")) $("shamReceiptIdInput").value = "";
             if ($("cartModal")) $("cartModal").style.display = "flex";
         }
 
@@ -1169,25 +1139,13 @@
             if ($("modalCartPoints")) $("modalCartPoints").textContent = pts;
         }
 
-        async function getNextOrderShortId() {
-            const snap = await db.ref("settings/orderCounter").once("value");
-            let nextNum = (snap.val() || 0) + 1;
-            await db.ref("settings/orderCounter").set(nextNum);
-            return `#${nextNum}`;
-        }
-
-        // إتمام الطلب مع التحقق الآلي من رقم إيصال شام كاش
-        async function submitOrderWithAutoVerify() {
+        function submitOrder() {
             if (!checkStoreWorkHours()) return;
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.address) { closeModal('cartModal'); return openEditProfile(); }
             const reg = $("cartRegionSelect")?.value || currentUser.region || Object.keys(deliveryFees)[0] || "العوينة";
             if (!isRegionOpenNow(reg)) return alert(`⚠️ أوقات التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
             if (users[currentUser.phone]?.banned) return alert("🚫 حسابك محظور.");
             const items = Object.values(cart); if (!items.length) return;
-            
-            const receiptId = ($("shamReceiptIdInput")?.value || "").trim();
-            if (!receiptId) return alert("⚠️ يرجى إدخال رقم عملية إيصال شام كاش للتحقق من الدفع تلقائياً.");
-
             const fee = getRegionFee(reg);
             let subSale = 0, totCost = 0, totPts = 0;
             const ordItems = items.map(i => {
@@ -1196,23 +1154,18 @@
                 return { id: i.id, name: i.name, category: i.category || "غير مصنف", qty: i.qty, unitSaleSYP: uS, unitCostSYP: uC, subSaleSYP: sS, subCostSYP: sC, netProfitSYP: sS - sC };
             });
             const finalTotalSYP = subSale + fee, orderId = "ORD_" + Date.now();
-            const shortId = await getNextOrderShortId();
-
             const orderPayload = {
-                orderId, shortId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
+                orderId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
                 customerName: currentUser.name, customerPhone: currentUser.phone, customerRegion: reg, customerAddress: currentUser.address,
-                paymentMethod: "شام كاش (Sham Cash)", receiptId, notes: ($("orderNotes")?.value || "").trim(), items: ordItems,
+                paymentMethod: "شام كاش (Sham Cash)", notes: ($("orderNotes")?.value || "").trim(), items: ordItems,
                 subtotalSaleSYP: subSale, deliveryFeeSYP: fee, totalSaleSYP: finalTotalSYP, totalCostSYP: totCost, netProfitSYP: subSale - totCost, earnedPoints: totPts
             };
-
-            let msg = `🛍️ *فاتورة طلب جديد (${shortId}) - متجر معاذ*\n👤 الزبون: ${orderPayload.customerName}\n📱 الهاتف: ${orderPayload.customerPhone}\n🏘️ المنطقة: ${orderPayload.customerRegion}\n📍 العنوان: ${orderPayload.customerAddress}\n💳 الدفع: شام كاش (رقم الإيصال: ${receiptId})\n`;
+            let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n👤 الزبون: ${orderPayload.customerName}\n📱 الهاتف: ${orderPayload.customerPhone}\n🏘️ المنطقة: ${orderPayload.customerRegion}\n📍 العنوان: ${orderPayload.customerAddress}\n💳 الدفع: شام كاش\n`;
             if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}\n`;
             msg += `──────────────\n` + ordItems.map(i => `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س`).join("\n") + `\n──────────────\n📦 قيمة المواد: ${subSale.toLocaleString()} ل.س\n🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${finalTotalSYP.toLocaleString()} ل.س\n🎁 النقاط: +${totPts}`;
-
             db.ref("pendingOrders/" + orderId).set(orderPayload);
-            cart = {}; if ($("orderNotes")) $("orderNotes").value = ""; if ($("shamReceiptIdInput")) $("shamReceiptIdInput").value = "";
+            cart = {}; if ($("orderNotes")) $("orderNotes").value = "";
             closeModal('cartModal'); renderStore();
-            alert(`✅ تم إرسال الطلب (${shortId}) والتحقق من إيصال الدفع بنجاح!`);
             window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
@@ -1297,7 +1250,7 @@
             if (!phone) return alert("⚠️ يرجى اختيار الشريك أولاً.");
             const m = calculatePartnerCurrentMetrics(phone);
             const partnerName = users[phone]?.name || phone;
-            if (!confirm(`تصفير وتوثيق دفعة أرباح الشريك (${partnerName}) البالغة (${m.totEarn.toLocaleString()} ل.س)؟`)) return;
+            if (!confirm(`هل أنت متأكد من تصفير وتوثيق دفعة أرباح الشريك (${partnerName}) البالغة (${m.totEarn.toLocaleString()} ل.س)؟\nسيتم حفظ الدفعة في دفتر التسويات دون المساس بجرد المتجر العام.`)) return;
 
             const now = new Date(), nowISO = now.toISOString(), payId = "PAY_" + Date.now();
             const updates = {};
@@ -1305,7 +1258,8 @@
             updates[`partnersConfig/${phone}/payoutHistory/${payId}`] = { amountSYP: m.totEarn, salesSYP: m.totSales, dateStr: now.toLocaleString("ar-SY"), dateISO: nowISO };
             db.ref().update(updates).then(() => {
                 alert(`✅ تم تصفير حساب الشريك (${partnerName}) وتوثيق دفعة (${m.totEarn.toLocaleString()} ل.س)!`);
-                loadPartnerConfig(); renderStatsDashboard();
+                loadPartnerConfig();
+                renderStatsDashboard();
             });
         }
 
@@ -1315,13 +1269,15 @@
         }
 
         function resetAdminTimestamp(fieldKey, labelName) {
-            if (!confirm(`🔄 تصفير (${labelName}) وبدء عداد جديد له من هذه اللحظة؟`)) return;
-            db.ref(`adminAccounting/${fieldKey}`).set(new Date().toISOString()).then(() => alert(`✅ تم تصفير (${labelName}) بنجاح!`));
+            if (!confirm(`🔄 هل أنت متأكد من تصفير (${labelName}) وبدء عداد جديد له من هذه اللحظة؟\n(ملاحظة: باقي الحسابات والشركاء والجرد العام لن تتأثر نهائياً)`)) return;
+            db.ref(`adminAccounting/${fieldKey}`).set(new Date().toISOString()).then(() => {
+                alert(`✅ تم تصفير (${labelName}) بنجاح!`);
+            });
         }
 
         function addStoreExpense() {
             const title = ($("expTitleInput")?.value || "").trim(), amount = parseInt($("expAmountInput")?.value) || 0;
-            if (!title || amount <= 0) return alert("⚠️ أدخل سبب المصروف والمبلغ.");
+            if (!title || amount <= 0) return alert("⚠️ يرجى كتابة سبب المصروف والمبلغ بالليرة.");
             const id = "EXP_" + Date.now();
             db.ref("storeExpenses/" + id).set({ id, title, amountSYP: amount, dateISO: new Date().toISOString(), dateStr: new Date().toLocaleDateString("ar-SY") }).then(() => {
                 $("expTitleInput").value = ""; $("expAmountInput").value = "";
@@ -1331,8 +1287,8 @@
         function renderStoreExpenses() {
             const box = $("storeExpensesList"); if (!box) return;
             const list = Object.values(storeExpenses).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
-            box.innerHTML = !list.length ? `<div style="font-size:10px; color:var(--gray-text); text-align:center;">لا توجد مصاريف أو توالف مسجلة.</div>` :
-                list.map(e => `<div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; border-bottom:1px dashed var(--border-color); padding:3px 0;"><span>• <b>${e.title}</b> <small style="color:var(--gray-text);">(${e.dateStr})</small></span><div><b style="color:var(--danger-color); margin-left:6px;">-${(e.amountSYP || 0).toLocaleString()} ل.س</b><span onclick="deleteStoreExpense('${e.id}')" style="cursor:pointer; color:var(--danger-color);">🗑️</span></div></div>`).join("");
+            if (!list.length) return (box.innerHTML = `<div style="font-size:10px; color:var(--gray-text); text-align:center;">لا توجد مصاريف أو توالف مسجلة.</div>`);
+            box.innerHTML = list.map(e => `<div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; border-bottom:1px dashed var(--border-color); padding:3px 0;"><span>• <b>${e.title}</b> <small style="color:var(--gray-text);">(${e.dateStr})</small></span><div><b style="color:var(--danger-color); margin-left:6px;">-${(e.amountSYP || 0).toLocaleString()} ل.س</b><span onclick="deleteStoreExpense('${e.id}')" style="cursor:pointer; color:var(--danger-color);">🗑️</span></div></div>`).join("");
         }
 
         function getCategoryPartnerSharePct(catName) {
@@ -1371,15 +1327,15 @@
         }
 
         function resetAllUsersPoints() {
-            if (!confirm("⚠️ تصفير نقاط ولاء جميع الزبائن وإعادتها للصفر؟")) return;
+            if (!confirm("⚠️ تحذير: هل أنت متأكد من تصفير نقاط ولاء جميع الزبائن وإعادتها إلى الصفر؟")) return;
             const updates = {};
             Object.keys(users).forEach(phone => { updates[`users/${phone}/points`] = 0; });
-            db.ref().update(updates).then(() => { alert("✅ تم تصفير نقاط جميع الزبائن!"); renderLeaderboard(); });
+            db.ref().update(updates).then(() => { alert("✅ تم تصفير نقاط جميع الزبائن بنجاح!"); renderLeaderboard(); });
         }
 
         function openMissingRequestModal() { $("missingItemName").value = ""; $("missingModal").style.display = "flex"; }
         function submitMissingRequest() {
-            const itemName = $("missingItemName").value.trim(); if (!itemName) return alert("أدخل اسم الصنف.");
+            const itemName = $("missingItemName").value.trim(); if (!itemName) return alert("يرجى كتابة اسم الصنف.");
             db.ref("missingRequests").push({ itemName, customerName: currentUser ? currentUser.name : "زائر", customerPhone: currentUser ? currentUser.phone : "-", createdAt: Date.now() });
             closeModal("missingModal"); alert("✅ تم إرسال طلبك للإدارة!");
         }
@@ -1387,28 +1343,31 @@
         function renderCustomerMissingRequests() {
             const container = $("customerMissingRequestsList"); if (!container) return;
             const entries = Object.entries(missingRequests || {});
-            container.innerHTML = !entries.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد طلبات معلقة.</p>` :
+            container.innerHTML = !entries.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد طلبات معلقة من الزبائن.</p>` :
                 entries.map(([id, r]) => `<div class="review-box"><div><b>${r.itemName}</b> <small>(${r.customerName} - ${r.customerPhone})</small></div><button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="db.ref('missingRequests/${id}').remove()">✖</button></div>`).join("");
         }
 
+        // ميزة الدخول لمرة واحدة بكلمة السر مع الحفظ في الجلسة (LocalStorage)
         function handleAdminTrigger() {
-            const activeToken = sessionStorage.getItem("moaath_admin_token");
-            if (activeToken === "verified_active") {
+            const isUnlocked = localStorage.getItem("moaath_admin_unlocked") === "true";
+            if (isUnlocked) {
                 $("adminModal").style.display = "flex";
                 renderStatsDashboard(); populateAdminPartnerSelect(); populatePartnerSelectOptions();
-            } else {
-                $("adminPassInput").value = "";
-                $("adminLoginModal").style.display = "flex";
+                return;
             }
-        }
-        function verifyAdminPassword() {
-            const pass = $("adminPassInput")?.value;
+            const pass = prompt("🔐 كلمة مرور الإدارة:");
+            if (pass === null) return;
             if (pass === ADMIN_PASSWORD) {
-                sessionStorage.setItem("moaath_admin_token", "verified_active");
-                closeModal('adminLoginModal');
+                localStorage.setItem("moaath_admin_unlocked", "true");
                 $("adminModal").style.display = "flex";
                 renderStatsDashboard(); populateAdminPartnerSelect(); populatePartnerSelectOptions();
             } else alert("❌ كلمة المرور غير صحيحة!");
+        }
+        
+        function lockAdminSession() {
+            localStorage.removeItem("moaath_admin_unlocked");
+            closeModal('adminModal');
+            alert("🔒 تم قفل الإدارة بنجاح. سيتم طلب كلمة المرور في المرة القادمة.");
         }
 
         $("adminTrigger")?.addEventListener("click", handleAdminTrigger);
@@ -1428,7 +1387,7 @@
             if (!keys.length) return (list.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد فواتير معلقة حالياً.</p>`);
             list.innerHTML = keys.map(id => {
                 const o = pendingOrders[id], itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${i.name} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
-                return `<div class="adm-card" style="border-color:var(--gold-color);"><div style="display:flex; justify-content:space-between; color:var(--gold-color); font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone}) <small style="color:#00b0ff;">(${o.shortId || '#--'})</small></span><span>${o.timestamp}</span></div><div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress} | 💳 إيصال شام كاش: <b>${o.receiptId || '-'}</b></div><div style="border-top:1px dashed var(--border-color); border-bottom:1px dashed var(--border-color); padding:6px 0; margin:6px 0;">${itemsHtml}</div><div style="font-weight:bold; margin-bottom:8px;">الإجمالي مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</div><div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000;" onclick="confirmOrder('${id}')">✅ تأكيد وخصم المخزون</button><button class="btn btn-danger" onclick="cancelOrder('${id}')">❌ إلغاء</button></div></div>`;
+                return `<div class="adm-card" style="border-color:var(--gold-color);"><div style="display:flex; justify-content:space-between; color:var(--gold-color); font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span></div><div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress}</div><div style="border-top:1px dashed var(--border-color); border-bottom:1px dashed var(--border-color); padding:6px 0; margin:6px 0;">${itemsHtml}</div><div style="font-weight:bold; margin-bottom:8px;">الإجمالي مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</div><div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000;" onclick="confirmOrder('${id}')">✅ تأكيد وخصم المخزون</button><button class="btn btn-danger" onclick="cancelOrder('${id}')">❌ إلغاء</button></div></div>`;
             }).join("");
         }
 
@@ -1443,8 +1402,8 @@
             const upPts = (users[phone]?.points || 0) + (o.earnedPoints || 0);
             db.ref(`users/${phone}`).update({ name: o.customerName, phone, region: o.customerRegion, address: o.customerAddress, points: upPts, purchases: purch });
             db.ref("completedOrdersHistory/" + orderId).set(o); db.ref("pendingOrders/" + orderId).remove();
-            window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(`مرحباً ${o.customerName} 🌸\nتم تأكيد طلبك (${o.shortId || ''}) في *متجر معاذ* وجاري توصيله إلى (${o.customerRegion})!\n💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س\n🎁 نقاطك الحالية: ${upPts}`)}`, "_blank");
-            if (deliveryDriverPhone) setTimeout(() => window.open(`https://wa.me/${formatWhatsAppPhone(deliveryDriverPhone)}?text=${encodeURIComponent(`🛵 *طلب توصيل (${o.shortId || ''}) - متجر معاذ*\n👤 الزبون: ${o.customerName}\n📱 الهاتف: ${o.customerPhone}\n🏘️ المنطقة: ${o.customerRegion}\n📍 العنوان: ${o.customerAddress}\n💵 *المطلوب تحصيله:* ${o.totalSaleSYP.toLocaleString()} ل.س`)}`, "_blank"), 700);
+            window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(`مرحباً ${o.customerName} 🌸\nتم تأكيد طلبك في *متجر معاذ* وجاري توصيله إلى (${o.customerRegion})!\n💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س\n🎁 نقاطك الحالية: ${upPts}`)}`, "_blank");
+            if (deliveryDriverPhone) setTimeout(() => window.open(`https://wa.me/${formatWhatsAppPhone(deliveryDriverPhone)}?text=${encodeURIComponent(`🛵 *طلب توصيل - متجر معاذ*\n👤 الزبون: ${o.customerName}\n📱 الهاتف: ${o.customerPhone}\n🏘️ المنطقة: ${o.customerRegion}\n📍 العنوان: ${o.customerAddress}\n💵 *المطلوب تحصيله:* ${o.totalSaleSYP.toLocaleString()} ل.س`)}`, "_blank"), 700);
         }
 
         function cancelOrder(id) { if (confirm("إلغاء هذه الفاتورة؟")) db.ref("pendingOrders/" + id).remove(); }
@@ -1556,6 +1515,7 @@
             suppContainer.innerHTML = html;
         }
 
+        // المحرك المحاسبي الشامل للوحة الإحصائيات والجرد
         function renderStatsDashboard() {
             const sel = $("reportCategorySelect");
             if (sel) {
@@ -1592,12 +1552,14 @@
                     const c = i.category || (i.id.startsWith("OFFER_") ? "عروض خاصة" : (products[i.id]?.category || "غير مصنف"));
                     const sS = i.subSaleSYP || 0, sC = i.subCostSYP || 0, sP = i.netProfitSYP !== undefined ? i.netProfitSYP : (sS - sC), sQ = i.qty || 1;
 
+                    // حساب الصناديق المستقلة بالتوقيت
                     if (ordISO > capReset) capBoxSYP += sC;
                     const partnerSharePct = getCategoryPartnerSharePct(c);
                     const adminPureItemProfit = Math.round((sP * (100 - partnerSharePct)) / 100);
                     if (ordISO > impReset) importMgrAdminPool += adminPureItemProfit;
                     if (ordISO > expReset) exportMgrAdminPool += adminPureItemProfit;
 
+                    // حساب الجرد العام حسب الفترة المختارة
                     const inPeriod = !((period === "daily" && d.toDateString() !== now.toDateString()) || (period === "weekly" && (Math.abs(now - d) / 86400000) > 7) || (period === "monthly" && (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear())));
                     if (inPeriod) {
                         if (!catMap[c]) catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 };
@@ -1609,6 +1571,7 @@
                 });
             });
 
+            // خصم المصاريف التشغيلية والتوالف من وعاء الإدارة لكل مدير حسب تاريخ تصفيره
             Object.values(storeExpenses).forEach(exp => {
                 const eISO = exp.dateISO || "";
                 const amt = parseInt(exp.amountSYP) || 0;
@@ -1645,6 +1608,7 @@
             updateInventoryValuation(selCat);
         }
 
+        // عرض أرباح جميع الشركاء في لوحة الإحصائيات مع زر تصفير مستقل لكل شريك
         function renderAllPartnersStatsInDashboard() {
             const box = $("adminAllPartnersStatsList"); if (!box) return;
             const partners = Object.values(users).filter(u => u.userType === "partner");
@@ -1661,6 +1625,7 @@
             }).join("");
         }
 
+        // عرض الأصناف الذهبية (الأكثر ربحاً)
         function renderGoldenAndStagnantInsights(prodMap) {
             const box = $("goldenAndStagnantInsights"); if (!box) return;
             const all = Object.values(prodMap);
@@ -1671,6 +1636,7 @@
             box.innerHTML = `<div>🥇 <b>الأعلى ربحاً:</b> ${goldHtml}</div><div style="margin-top:4px;">💤 <b>أصناف راكدة لم تُبع:</b> ${stagHtml}</div>`;
         }
 
+        // إرسال ملخص الجرد الشامل عبر واتساب
         function sendDailyAccountingReportWhatsApp() {
             const s = window.latestStatsSnapshot || {};
             const partners = Object.values(users).filter(u => u.userType === "partner");
@@ -1878,3 +1844,4 @@
     </script>
 </body>
 </html>
+    
