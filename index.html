@@ -98,8 +98,7 @@
         <h2 style="color:var(--gold-color); margin:0 0 10px 0;">المتجر أو المنطقة مغلقة حالياً</h2>
         <p id="closedMessageText" style="font-size:14px; color:var(--text-color); max-width:320px; line-height:1.6;"></p>
         <div style="margin-top:15px; font-size:12px; color:var(--gray-text);">متجر معاذ - قرية العوينة بريف حماة 🌸</div>
-        <div class="logo-circle" id="closedAdminTrigger" onclick="handleAdminTrigger()" style="margin-top:25px; opacity:0.95;" title="اضغط 5 مرات لدخول الإدارة"><img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'"></div>
-        
+        <div class="logo-circle" id="closedAdminTrigger" onclick="handleAdminTrigger()" style="margin-top:25px; opacity:0.95;" title="تسجيل الدخول للإدارة"><img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'"></div>
     </div>
 
     <header>
@@ -1384,6 +1383,7 @@
             msg += `──────────────\n` + ordItems.map(i => `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س`).join("\n") + `\n──────────────\n📦 قيمة المواد: ${subSale.toLocaleString()} ل.س\n`;
             if (markupSYP > 0) msg += `📈 نسبة الآجل (${markupPct}%): +${markupSYP.toLocaleString()} ل.س\n`;
             msg += `🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${finalTotalSYP.toLocaleString()} ل.س ${isCreditUser ? `(${finalOrderUSD} $)` : ''}\n🎁 النقاط: +${totPts}`;
+            msg += `\n\n🚨 *تنبيه هام جداً:*\n⚠️ **لن تستلم الإدارة الطلب ولن يتم اعتماده قبل إرسال صورة أو إشعار التحويل من شام كاش بكامل المبلغ!**`;
             
             const updates = {};
             updates[`pendingOrders/${orderId}`] = orderPayload;
@@ -1691,7 +1691,7 @@
         }
 
         function renderExportManagerOrders() {
-            const q = ($("exportMgrSearchInput")?.value || "").trim().toLowerCase();
+            const q = ($("exportMgrSearchInput"]?.value || "").trim().toLowerCase();
             const keys = Object.keys(pendingOrders || {}).filter(id => {
                 const o = pendingOrders[id];
                 return !q || o.customerName?.toLowerCase().includes(q) || o.customerPhone?.includes(q) || o.customerRegion?.toLowerCase().includes(q);
@@ -1768,7 +1768,7 @@
                 sel.innerHTML = '<option value="all">🌟 جميع التصنيفات</option>' + categories.filter(c => c !== "الكل").map(c => `<option value="${c}">${c}</option>`).join("") + '<option value="عروض خاصة">عروض خاصة</option>';
                 sel.value = cur;
             }
-            const period = $("reportPeriodSelect")?.value || "total", selCat = sel?.value || "all", now = new Date();
+            const period = $("reportPeriodSelect"]?.value || "total", selCat = sel?.value || "all", now = new Date();
             let totS = 0, totC = 0, netP = 0, catMap = {}, prodMap = {};
             let capBoxSYP = 0, drvNetSYP = 0, maintFundSYP = 0, importMgrAdminPool = 0, exportMgrAdminPool = 0, debtCollectionsSYP = 0, debtCollectionsUSD = 0;
 
