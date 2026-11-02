@@ -227,20 +227,23 @@
             <button onclick="closeModal('exportManagerModal')" class="btn btn-danger" style="width:auto; padding:6px 12px;">🔙 رجوع</button>
         </header>
         <div class="container">
-            <div class="form-group" style="margin-bottom:8px;"><input type="text" id="exportMgrSearchInput" class="search-box" placeholder="🔍 ابحث عن زبون أو طلب..." oninput="renderExportManagerOrders(); renderExportManagerInvoicesHistory();" style="margin-bottom:0; padding:8px; font-size:11px;"></div>
-            
-            <div class="comp-card" style="border-color:#ff9800; background:linear-gradient(45deg,rgba(255,152,0,0.1),var(--card-bg));">
-                <h3 style="color:#ff9800; margin:0 0 6px 0; font-size:14px;">👔 رصيد أرباحك الحالية (مدير التصدير)</h3>
-                <div style="font-size:18px; font-weight:bold; color:var(--success-color); margin-bottom:4px;" id="exportMgrDashboardProfit">0 ل.س</div>
-                <div style="font-size:11px; color:var(--gray-text);">تُحسب الأرباح تلقائياً منذ آخر عملية تسوية وتصفير من الإدارة العامة.</div>
-            </div>
-
+            <div class="form-group" style="margin-bottom:8px;"><input type="text" id="exportMgrSearchInput" class="search-box" placeholder="🔍 ابحث عن زبون أو طلب..." oninput="renderExportManagerOrders(); renderExportManagerInvoicesHistory(); renderExportManagerEarningsView();" style="margin-bottom:0; padding:8px; font-size:11px;"></div>
             <div class="comp-card" style="border-color:#ff9800;">
                 <h3 style="color:#ff9800; margin:0 0 10px 0; font-size:14px;">🔔 الطلبات الواردة بانتظار التجهيز (<span id="exportMgrPendingCount">0</span>)</h3>
                 <div id="exportManagerOrdersList"></div>
             <div class="comp-card" style="border-color:#ff9800; margin-top:14px;">
                 <h3 style="color:#ff9800; margin:0 0 10px 0; font-size:14px;">🧾 سجل الفواتير المكتملة وإلغاء/التراجع عن فاتورة</h3>
                 <div id="exportMgrInvoicesHistoryList"></div>
+            <div class="comp-card" style="background:linear-gradient(45deg,rgba(255,152,0,0.15),var(--card-bg)); border-color:#ff9800; margin-top:10px;">
+                <h3 style="color:#ff9800; margin:0 0 6px 0; font-size:14px;">👔 أرباح ومستحقات مدير التصدير</h3>
+                <div style="font-size:16px; font-weight:bold; color:var(--success-color); margin-bottom:6px;" id="exportMgrDashboardProfit">0 ل.س</div>
+                <div style="font-size:11px; color:var(--gray-text);">تُحسب تلقائياً من أرباح الإدارة بناءً على النسبة المحددة للإدارة.</div>
+            </div>
+            <div class="comp-card" style="border-color:#ff9800; margin-top:10px;">
+                <h3 style="color:#ff9800; margin:0 0 8px 0; font-size:14px;">🧾 سجل الدفعات والتسويات السابقة لمدير التصدير</h3>
+                <div id="exportMgrPayoutHistoryList"></div>
+            </div>
+
             </div>
 
             </div>
@@ -715,9 +718,10 @@
             <!-- التبويب 11: سجل الفواتير والتراجع عنها -->
             <div id="admTab11Invoices" class="admin-tab" style="display:none;">
                 <div class="adm-sec" style="border-color:var(--gold-color);">
-                    <div class="adm-sec-title">
-                        <span>🧾 سجل الفواتير المكتملة وإمكانية التراجع عنها (للضرورة)</span>
-                        <button onclick="clearCompletedOrdersHistory()" class="btn btn-danger" style="width:auto; padding:4px 10px; font-size:10px;">🗑️ حذف سجل الفواتير السابقة</button>
+                    <div class="adm-sec-title"><span>🧾 سجل الفواتير المكتملة وإمكانية التراجع عنها (للضرورة)</span></div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <span style="color:var(--gold-color); font-weight:bold;">سجل فواتير المتجر المكتملة</span>
+                        <button onclick="clearAllCompletedInvoices()" class="btn btn-danger" style="width:auto; padding:5px 10px; font-size:11px;">🗑️ حذف سجل الفواتير السابقة بالكامل</button>
                     </div>
                     <div id="adminInvoicesHistoryList"></div>
                 </div>
@@ -1100,7 +1104,7 @@
             knownOrderIds = newIds;
             pendingOrders = newOrders;
             renderPendingOrders();
-            renderExportManagerOrders(); renderExportManagerInvoicesHistory();
+            renderExportManagerOrders(); renderExportManagerInvoicesHistory(); renderExportManagerEarningsView();
         });
 
         db.ref("completedOrdersHistory").on("value", snap => { completedOrdersHistory = snap.val() || {}; renderStatsDashboard(); renderAdminInvoicesHistory(); renderAdminProducts(); renderAdminCustomers(); });
@@ -1595,13 +1599,12 @@
         }
 
         
-        function clearCompletedOrdersHistory() {
-            if (!confirm("⚠️ تحذير خطير: هل أنت متأكد تماماً من حذف سجل الفواتير المكتملة السابقة نهائياً؟ (لا يمكن التراجع عن هذا الإجراء)")) return;
+        function clearAllCompletedInvoices() {
+            if (!confirm("⚠️ تحذير خطير جداً: هل أنت متأكد من حذف سجل الفواتير السابقة بالكامل؟ (لن يتم المساس بالمخزون أو أرصدة الديون الحالية، فقط السجل والأرشيف).")) return;
             db.ref("completedOrdersHistory").remove().then(() => {
-                alert("✅ تم حذف سجل الفواتير السابقة بنجاح!");
+                alert("✅ تم حذف سجل الفواتير السابقة بالكامل!");
                 renderAdminInvoicesHistory();
                 renderExportManagerInvoicesHistory();
-                renderStatsDashboard();
             });
         }
 
@@ -1648,38 +1651,26 @@
         }
 
         
+        function renderExportManagerEarningsView() {
+            const snapProfit = window.latestStatsSnapshot || {};
+            const expProfit = snapProfit.exportManagerFinalSYP || 0;
+            setTxt("exportMgrDashboardProfit", expProfit.toLocaleString() + " ل.س");
+
+            const histBox = $("exportMgrPayoutHistoryList");
+            if (!histBox) return;
+            // Get payout history for export manager from adminAccounting or a dedicated node
+            db.ref("adminAccounting/exportManagerPayoutHistory").once("value", snap => {
+                const hist = Object.values(snap.val() || {}).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
+                histBox.innerHTML = !hist.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد دفعات مسجلة سابقاً.</p>` :
+                    hist.map(h => `<div class="leader-row"><span>📅 ${h.dateStr}</span><span style="color:var(--success-color); font-weight:bold;">✅ تم استلام: ${(h.amountSYP || 0).toLocaleString()} ل.س</span></div>`).join("");
+            });
+        }
+
         function openExportManagerModal() {
             if (!currentUser?.phone || currentUser.phone !== exportManagerPhoneGlobal) {
                 return alert("🚫 هذه اللوحة مخصصة لمدير التصدير المعتمد فقط.");
             }
-            let exportMgrAdminPool = 0;
-            const expReset = adminAccounting.exportManagerResetISO || "2000-01-01T00:00:00.000Z";
-            Object.values(completedOrdersHistory).forEach(ord => {
-                const ordISO = ord.dateISO || new Date().toISOString();
-                if (ordISO > expReset) {
-                    (ord.items || []).forEach(i => {
-                        const c = i.category || (i.id.startsWith("OFFER_") ? "عروض خاصة" : (products[i.id]?.category || "غير مصنف"));
-                        const sS = i.subSaleSYP || 0, sC = i.subCostSYP || 0, sP = i.netProfitSYP !== undefined ? i.netProfitSYP : (sS - sC);
-                        const partnerSharePct = getCategoryPartnerSharePct(c);
-                        const adminPureItemProfit = Math.round((sP * (100 - partnerSharePct)) / 100);
-                        exportMgrAdminPool += adminPureItemProfit;
-                    });
-                }
-            });
-            Object.values(storeExpenses).forEach(exp => {
-                const eISO = exp.dateISO || "", amt = parseInt(exp.amountSYP) || 0;
-                if (eISO > expReset) exportMgrAdminPool -= amt;
-            });
-            const impPct = Math.min(100, Math.max(0, parseFloat(adminAccounting.importManagerPct ?? 50)));
-            const expPct = 100 - impPct;
-            const exportManagerFinalSYP = Math.round((exportMgrAdminPool * expPct) / 100);
-            setTxt("exportMgrDashboardProfit", exportManagerFinalSYP.toLocaleString() + " ل.س");
-
-            renderExportManagerOrders(); renderExportManagerInvoicesHistory();
-            if ($("exportManagerModal")) $("exportManagerModal").style.display = "block";
-        }
-
-            renderExportManagerOrders(); renderExportManagerInvoicesHistory();
+            renderExportManagerOrders(); renderExportManagerInvoicesHistory(); renderExportManagerEarningsView();
             if ($("exportManagerModal")) $("exportManagerModal").style.display = "block";
         }
 
@@ -2201,7 +2192,7 @@
             const upPts = (users[phone]?.points || 0) + (o.earnedPoints || 0);
             db.ref(`users/${phone}`).update({ name: o.customerName, phone, region: o.customerRegion, address: o.customerAddress, points: upPts, purchases: purch });
             db.ref("completedOrdersHistory/" + orderId).set(o); db.ref("pendingOrders/" + orderId).remove();
-            window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(`مرحباً ${o.customerName} 🌸\nتم تأكيد طلبك في *متجر معاذ* وجاري توصيله إلى (${o.customerRegion})!\n💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س\n🛵 رقم عامل التوصيل: ${deliveryDriverPhone || adminWhatsAppNumber}\n🎁 نقاطك الحالية: ${upPts}`)}`, "_blank");
+            window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(`مرحباً ${o.customerName} 🌸\nتم تأكيد طلبك في *متجر معاذ* وجاري توصيله إلى (${o.customerRegion})!\n💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س\n🛵 رقم عامل التوصيل: ${deliveryDriverPhone || adminWhatsAppNumber}\n🎁 نقاطك الحالية: ${upPts}\n\n🚨 *تنبيه هام جداً:*\n⚠️ **لن تستلم الإدارة الطلب ولن يتم اعتماده قبل إرسال صورة أو إشعار التحويل من شام كاش بكامل المبلغ!**`)}`, "_blank");
             if (deliveryDriverPhone) setTimeout(() => window.open(`https://wa.me/${formatWhatsAppPhone(deliveryDriverPhone)}?text=${encodeURIComponent(`🛵 *طلب توصيل - متجر معاذ*\n👤 الزبون: ${o.customerName}\n📱 الهاتف: ${o.customerPhone}\n🏘️ المنطقة: ${o.customerRegion}\n📍 العنوان: ${o.customerAddress}\n💵 *المطلوب تحصيله:* ${o.totalSaleSYP.toLocaleString()} ل.س`)}`, "_blank"), 700);
         }
 
