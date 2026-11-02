@@ -1758,13 +1758,24 @@
             const list = Object.values(products).filter(p => p && p.supplierId === suppId && (parseInt(p.stock) || 0) <= (parseInt(p.alertLimit) || 2));
             if (!list.length) return alert("✅ لا توجد نواقص لهذا الموزع.");
             let msg = `📋 *فاتورة طلب توريد بضائع - متجر معاذ*\n👤 السادة: *${supp.name}*\n📅 التاريخ: ${new Date().toLocaleDateString("ar-SY")}\n──────────────\n`;
+            let totalEstimatedUSD = 0, totalEstimatedSYP = 0;
+
             list.forEach((p, idx) => {
                 const stock = parseInt(p.stock) || 0;
                 const targetPacks = parseInt(p.targetOrderPacks) || 5;
+                const unitsPerPack = parseInt(p.unitsPerPack) || 1;
                 const unit = p.unitType || "قطعة";
-                msg += `${idx + 1}. *${p.name}* ⬅️ الطلب المقترح: *${targetPacks} ${unit}* (متبقي لدينا: ${stock} قطعة)\n`;
+                const costPerPieceUSD = parseFloat(p.costPrice) || 0;
+                const lineTotalPieces = targetPacks * unitsPerPack;
+                const lineCostUSD = parseFloat((lineTotalPieces * costPerPieceUSD).toFixed(2));
+                const lineCostSYP = calcSYP(lineCostUSD);
+
+                totalEstimatedUSD += lineCostUSD;
+                totalEstimatedSYP += lineCostSYP;
+
+                msg += `${idx + 1}. *${p.name}*\n   ⬅️ المطلوب: *${targetPacks} ${unit}* ${unitsPerPack > 1 ? `(تعبئة ${unitsPerPack} قطعة = ${lineTotalPieces} قطعة)` : ''}\n   💵 التكلفة التقديرية: *${lineCostSYP.toLocaleString()} ل.س* (${lineCostUSD.toFixed(2)} $)\n`;
             });
-            msg += `──────────────\nيرجى تأكيد الطلب وتزويدنا بالأصناف المذكورة 🌸`;
+            msg += `──────────────\n💰 *إجمالي تقدير الفاتورة:* ${totalEstimatedSYP.toLocaleString()} ل.س (ما يعادل: *${totalEstimatedUSD.toFixed(2)} $*)\n*(تم الحساب بناءً على: سعر تكلفة المنتج × إجمالي القطع المطلوبة)*\n──────────────\nيرجى تأكيد الطلب وتزويدنا بالأصناف المذكورة 🌸`;
             window.open(`https://wa.me/${formatWhatsAppPhone(supp.phone)}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
@@ -1783,8 +1794,25 @@
             let html = "";
             Object.keys(bySupp).forEach(sId => {
                 const s = suppliers[sId];
-                html += `<div class="adm-card" style="border-color:var(--gold-color);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><b style="color:var(--gold-color);">🚚 ${s.name}</b><button onclick="sendSupplierShortagesWhatsApp('${sId}')" class="btn" style="width:auto; padding:4px 10px; font-size:10px; background:#25D366; color:#fff;">📲 إرسال فاتورة واتساب</button></div>` +
-                bySupp[sId].map(p => `<div style="font-size:11px; display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding:3px 0;"><span>• ${p.name} <small style="color:var(--gold-color);">(${p.targetOrderPacks || 5} ${p.unitType || 'قطعة'})</small></span><span style="color:var(--danger-color); font-weight:bold;">متبقي: ${p.stock}</span></div>`).join("") + `</div>`;
+                let suppEstUSD = 0;
+                const rowsHtml = bySupp[sId].map(p => {
+                    const targetPacks = parseInt(p.targetOrderPacks) || 5;
+                    const unitsPerPack = parseInt(p.unitsPerPack) || 1;
+                    const lineUSD = targetPacks * unitsPerPack * (parseFloat(p.costPrice) || 0);
+                    suppEstUSD += lineUSD;
+                    return `<div style="font-size:11px; display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding:4px 0;">
+                        <span>• ${p.name} <small style="color:var(--gold-color);">(${targetPacks} ${p.unitType || 'قطعة'})</small></span>
+                        <span><b style="color:var(--success-color); margin-left:6px;">~${calcSYP(lineUSD).toLocaleString()} ل.س</b> <small style="color:var(--danger-color);">(متبقي: ${p.stock})</small></span>
+                    </div>`;
+                }).join("");
+
+                html += `<div class="adm-card" style="border-color:var(--gold-color);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+                        <div><b style="color:var(--gold-color);">🚚 ${s.name}</b><br><small style="color:var(--success-color); font-weight:bold;">💰 تقدير الفاتورة: ${calcSYP(suppEstUSD).toLocaleString()} ل.س (${suppEstUSD.toFixed(2)} $)</small></div>
+                        <button onclick="sendSupplierShortagesWhatsApp('${sId}')" class="btn" style="width:auto; padding:5px 10px; font-size:10px; background:#25D366; color:#fff;">📲 إرسال الفاتورة مع التقدير</button>
+                    </div>
+                    ${rowsHtml}
+                </div>`;
             });
             if (unassigned.length) {
                 html += `<div class="adm-card"><b style="color:var(--gray-text);">📦 أصناف غير مربوطة بموزع:</b>` +
