@@ -1397,11 +1397,21 @@
                 notes: ($("orderNotes")?.value || "").trim(), items: ordItems,
                 subtotalSaleSYP: subSale + markupSYP, deliveryFeeSYP: fee, totalSaleSYP: finalTotalSYP, totalCostSYP: totCost, netProfitSYP: (subSale + markupSYP) - totCost, earnedPoints: totPts
             };
-            let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n👤 الزبون: ${orderPayload.customerName}\n📱 الهاتف: ${orderPayload.customerPhone}\n🏘️ المنطقة: ${orderPayload.customerRegion}\n📍 العنوان: ${orderPayload.customerAddress}\n💳 الدفع: ${orderPayload.paymentMethod}\n`;
+            let msg = isCreditUser
+                ? `📒 *فاتورة طلب آجل (دفتر دين) - متجر معاذ* 📒\n✅ *(معتمد على الدفتر - لا يتطلب إشعار تحويل شام كاش)*\n`
+                : `🛍️ *فاتورة طلب جديد - متجر معاذ*\n`;
+
+            msg += `👤 الزبون: ${orderPayload.customerName}\n📱 الهاتف: ${orderPayload.customerPhone}\n🏘️ المنطقة: ${orderPayload.customerRegion}\n📍 العنوان: ${orderPayload.customerAddress}\n💳 الدفع: ${orderPayload.paymentMethod}\n`;
             if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}\n`;
             msg += `──────────────\n` + ordItems.map(i => `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س`).join("\n") + `\n──────────────\n📦 قيمة المواد: ${subSale.toLocaleString()} ل.س\n`;
             if (markupSYP > 0) msg += `📈 نسبة الآجل (${markupPct}%): +${markupSYP.toLocaleString()} ل.س\n`;
             msg += `🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${finalTotalSYP.toLocaleString()} ل.س ${isCreditUser ? `(${finalOrderUSD} $)` : ''}\n🎁 النقاط: +${totPts}`;
+
+            if (!isCreditUser) {
+                msg += `\n\n🚨 *تنبيه هام جداً للإدارة:*\n⚠️ *لن تستلم الإدارة الطلب ولن يتم اعتماده قبل إرسال صورة أو إشعار التحويل من شام كاش بكامل المبلغ!*`;
+            } else {
+                msg += `\n\n📌 *ملاحظة للإدارة:* تم قيد المبلغ (${finalOrderUSD} $) تلقائياً على دفتر ديون الزبون، يرجى التجهيز والتوصيل مباشرة.`;
+            }
             
             const updates = {};
             updates[`pendingOrders/${orderId}`] = orderPayload;
