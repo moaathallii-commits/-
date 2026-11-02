@@ -99,7 +99,7 @@
         <p id="closedMessageText" style="font-size:14px; color:var(--text-color); max-width:320px; line-height:1.6;"></p>
         <div style="margin-top:15px; font-size:12px; color:var(--gray-text);">متجر معاذ - قرية العوينة بريف حماة 🌸</div>
         <div class="logo-circle" id="closedAdminTrigger" onclick="handleAdminTrigger()" style="margin-top:25px; opacity:0.95;" title="اضغط 5 مرات لدخول الإدارة"><img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'"></div>
-        <small style="color:var(--gray-text); font-size:10px; margin-top:6px;">(للإدارة: اضغط 5 مرات على الشعار أعلاه)</small>
+        
     </div>
 
     <header>
@@ -232,7 +232,10 @@
                 <h3 style="color:#ff9800; margin:0 0 10px 0; font-size:14px;">🔔 الطلبات الواردة بانتظار التجهيز (<span id="exportMgrPendingCount">0</span>)</h3>
                 <div id="exportManagerOrdersList"></div>
             <div class="comp-card" style="border-color:#ff9800; margin-top:14px;">
-                <h3 style="color:#ff9800; margin:0 0 10px 0; font-size:14px;">🧾 سجل الفواتير المكتملة وإلغاء/التراجع عن فاتورة</h3>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3 style="color:#ff9800; margin:0; font-size:14px;">🧾 سجل الفواتير المكتملة وإلغاء/التراجع عن فاتورة</h3>
+                    <button onclick="clearAllCompletedInvoices()" class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:10px;">🗑️ حذف السجل</button>
+                </div>
                 <div id="exportMgrInvoicesHistoryList"></div>
             <div class="comp-card" style="background:linear-gradient(45deg,rgba(255,152,0,0.15),var(--card-bg)); border-color:#ff9800; margin-top:10px;">
                 <h3 style="color:#ff9800; margin:0 0 6px 0; font-size:14px;">👔 أرباح ومستحقات مدير التصدير</h3>
@@ -417,6 +420,7 @@
                             <div class="stats-box" style="border-color:#00b0ff;">
                                 <div style="font-size:11px; font-weight:bold; color:#00b0ff;">📤 مدير التصدير (<span id="exportMgrPctLabel">50</span>%)</div>
                                 <div class="stats-value" style="font-size:15px; color:#fff;" id="statExportManagerProfit">0 ل.س</div>
+                                <button onclick="settleExportManagerEarningsByAdmin()" class="btn" style="padding:4px 8px; font-size:10px; background:#ff9800; color:#000; margin-top:4px;">🔄 توثيق وتصفير أرباح مدير التصدير</button>
                                 <div style="font-size:9px; color:var(--gray-text); margin:3px 0;" id="exportMgrResetDateLabel">-</div>
                                 <button onclick="resetAdminTimestamp('exportManagerResetISO', 'أرباح مدير التصدير')" class="btn" style="padding:4px 8px; font-size:10px; background:#00b0ff; color:#fff; margin-top:4px;">🔄 تصفير واستلام</button>
                             </div>
@@ -617,6 +621,7 @@
                             <button onclick="recordAdminCustomerDebtPayment()" class="btn" style="background:var(--success-color); color:#000;">✅ خصم وترحيل للخزينة</button>
                         </div>
                     </div>
+                    <button onclick="clearCustomerDebtLedger()" class="btn btn-danger" style="margin-top:8px; padding:6px; font-size:11px;">🗑️ مسح وتصفير سجل الدين والرصيد للزبون</button>
                     <div id="adminCustomerDebtHistoryBox" style="max-height:180px; overflow-y:auto; margin-top:8px;"></div>
                 </div>
 
@@ -1491,6 +1496,17 @@
             db.ref(`users/${phone}/creditMarkupPct`).set(pct).then(() => alert(`✅ تم تحديد نسبة زيادة صافي حساب الآجل (${pct}%) للزبون ${users[phone].name}!`));
         }
 
+        
+        function clearCustomerDebtLedger() {
+            const phone = $("adminDebtCustomerSelect")?.value;
+            if (!phone || !users[phone]) return alert("⚠️ اختر زبون الآجل أولاً.");
+            if (!confirm(`⚠️ هل أنت متأكد من مسح وتصفير سجل الدين ورصيد الحساب للزبون ${users[phone].name} بالكامل؟`)) return;
+            db.ref(`users/${phone}`).update({ debtBalanceUSD: 0, debtLedger: null }).then(() => {
+                alert("✅ تم تصفير ومسح سجل الدين والرصيد بنجاح!");
+                loadAdminCustomerDebtLedger();
+            });
+        }
+
         function addAdminCustomerDebt() {
             const phone = $("adminDebtCustomerSelect")?.value;
             if (!phone || !users[phone]) return alert("⚠️ يرجى اختيار زبون الآجل أولاً.");
@@ -2192,7 +2208,7 @@
             const upPts = (users[phone]?.points || 0) + (o.earnedPoints || 0);
             db.ref(`users/${phone}`).update({ name: o.customerName, phone, region: o.customerRegion, address: o.customerAddress, points: upPts, purchases: purch });
             db.ref("completedOrdersHistory/" + orderId).set(o); db.ref("pendingOrders/" + orderId).remove();
-            window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(`مرحباً ${o.customerName} 🌸\nتم تأكيد طلبك في *متجر معاذ* وجاري توصيله إلى (${o.customerRegion})!\n💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س\n🛵 رقم عامل التوصيل: ${deliveryDriverPhone || adminWhatsAppNumber}\n🎁 نقاطك الحالية: ${upPts}\n\n🚨 *تنبيه هام جداً:*\n⚠️ **لن تستلم الإدارة الطلب ولن يتم اعتماده قبل إرسال صورة أو إشعار التحويل من شام كاش بكامل المبلغ!**`)}`, "_blank");
+            window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(`مرحباً ${o.customerName} 🌸\nتم تأكيد طلبك في *متجر معاذ* وجاري توصيله إلى (${o.customerRegion})!\n💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س\n🛵 رقم عامل التوصيل: ${deliveryDriverPhone || adminWhatsAppNumber}\n🎁 نقاطك الحالية: ${upPts}`)}`, "_blank");
             if (deliveryDriverPhone) setTimeout(() => window.open(`https://wa.me/${formatWhatsAppPhone(deliveryDriverPhone)}?text=${encodeURIComponent(`🛵 *طلب توصيل - متجر معاذ*\n👤 الزبون: ${o.customerName}\n📱 الهاتف: ${o.customerPhone}\n🏘️ المنطقة: ${o.customerRegion}\n📍 العنوان: ${o.customerAddress}\n💵 *المطلوب تحصيله:* ${o.totalSaleSYP.toLocaleString()} ل.س`)}`, "_blank"), 700);
         }
 
@@ -2349,6 +2365,24 @@
                 alert(`✅ تم تصفير حساب الشريك (${partnerName}) وتوثيق دفعة (${m.totEarn.toLocaleString()} ل.س)!`);
                 loadPartnerConfig();
                 renderStatsDashboard(); renderAdminInvoicesHistory();
+            });
+        }
+
+        
+        function settleExportManagerEarningsByAdmin() {
+            const snapProfit = window.latestStatsSnapshot || {};
+            const expProfit = snapProfit.exportManagerFinalSYP || 0;
+            if (expProfit <= 0) return alert("ℹ️ لا توجد أرباح مستحقة لمدير التصدير حالياً.");
+            if (!confirm(`هل أنت متأكد من توثيق وتصفير دفعة أرباح مدير التصدير البالغة (${expProfit.toLocaleString()} ل.س)؟`)) return;
+
+            const now = new Date(), nowISO = now.toISOString(), payId = "PAY_EXP_" + Date.now();
+            const updates = {};
+            updates[`adminAccounting/exportManagerResetISO`] = nowISO;
+            updates[`adminAccounting/exportManagerPayoutHistory/${payId}`] = { amountSYP: expProfit, dateStr: now.toLocaleString("ar-SY"), dateISO: nowISO };
+            db.ref().update(updates).then(() => {
+                alert(`✅ تم توثيق وتصفير أرباح مدير التصدير بنجاح!`);
+                renderStatsDashboard();
+                renderExportManagerEarningsView();
             });
         }
 
