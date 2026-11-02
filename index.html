@@ -260,9 +260,9 @@
         </div>
     </div>
 
-    <!-- مركز إدارة المتجر الشامل -->
+    <!-- مركز إدارة المتجر الشامل (9 تبويبات) -->
     <div id="adminModal" class="modal-overlay">
-        <div class="modal-content" style="max-width:650px;">
+        <div class="modal-content" style="max-width:680px;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:8px; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
                 <div style="display:flex; align-items:center; gap:8px;">
                     <h3 style="color:var(--gold-color); margin:0; font-size:15px;">⚙️ مركز إدارة متجر معاذ</h3>
@@ -277,23 +277,19 @@
             </div>
 
             <div class="categories" style="margin-bottom:12px;">
-                <button class="cat-btn active" onclick="switchAdminTab('admTabOrdersStats', this)">📦 الطلبات والجرد (<span id="pendingCountBadge">0</span>)</button>
-                <button class="cat-btn" onclick="switchAdminTab('admTabCatalog', this)">🛍️ البضاعة والعروض</button>
-                <button class="cat-btn" onclick="switchAdminTab('admTabSupply', this)">🚚 النواقص والموزعون</button>
-                <button class="cat-btn" onclick="switchAdminTab('admTabUsersPartners', this)">👥 الزبائن والشركاء</button>
+                <button class="cat-btn active" onclick="switchAdminTab('admTabStats', this)">📊 الجرد</button>
+                <button class="cat-btn" onclick="switchAdminTab('admTabOrders', this)">📦 الطلبات (<span id="pendingCountBadge">0</span>)</button>
+                <button class="cat-btn" onclick="switchAdminTab('admTabOffers', this)">🔥 العروض</button>
+                <button class="cat-btn" onclick="switchAdminTab('admTabCatalog', this)">🛍️ البضائع</button>
+                <button class="cat-btn" onclick="switchAdminTab('admTabShortages', this)">⚠️ النواقص</button>
+                <button class="cat-btn" onclick="switchAdminTab('admTabSuppliers', this)">🚚 الموزعين</button>
+                <button class="cat-btn" onclick="switchAdminTab('admTabCustomers', this)">👥 الزبائن</button>
+                <button class="cat-btn" onclick="switchAdminTab('admTabPartners', this)">🤝 الشركاء</button>
                 <button class="cat-btn" onclick="switchAdminTab('admTabSystem', this)">⚙️ الإعدادات والنظام</button>
             </div>
 
-            <!-- 1. تبويب الطلبات والجرد المالي المتقدم -->
-            <div id="admTabOrdersStats" class="admin-tab">
-                <div class="adm-sec" style="border-color:var(--gold-color);">
-                    <div class="adm-sec-title">
-                        <span>📦 الطلبات والفواتير المعلقة (تنبيه صوتي 🔔)</span>
-                        <button onclick="cancelAllPendingOrders()" class="btn btn-danger" style="width:auto; padding:4px 10px; font-size:10px;">🗑️ إلغاء الكل</button>
-                    </div>
-                    <div id="pendingOrdersList"></div>
-                </div>
-
+            <!-- 1. تبويب الجرد -->
+            <div id="admTabStats" class="admin-tab">
                 <div class="adm-sec">
                     <div class="adm-sec-title">
                         <span>📊 الجرد العام وتوزيع الأرباح الذكي</span>
@@ -321,11 +317,6 @@
                                 <button onclick="resetAdminTimestamp('capitalBoxResetISO', 'صندوق رأس المال المسترد')" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px; margin-top:3px;">🔄 تصفير وعزل المبلغ</button>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="adm-card" style="border-color:#00b0ff; background:rgba(0,176,255,0.06); margin:10px 0;">
-                        <div style="color:#00b0ff; font-weight:bold; font-size:12px; margin-bottom:6px;">🤝 أرباح ومستحقات الشركاء (تصفير مستقل لكل شريك)</div>
-                        <div id="adminAllPartnersStatsList"></div>
                     </div>
 
                     <div class="adm-card" style="border-color:var(--success-color); background:rgba(0,230,118,0.06); margin:10px 0;">
@@ -399,7 +390,38 @@
                 </div>
             </div>
 
-            <!-- 2. تبويب البضاعة والمخزون السريع والعروض -->
+            <!-- 2. تبويب الطلبات -->
+            <div id="admTabOrders" class="admin-tab" style="display:none;">
+                <div class="adm-sec" style="border-color:var(--gold-color);">
+                    <div class="adm-sec-title">
+                        <span>📦 الطلبات والفواتير المعلقة (تنبيه صوتي 🔔)</span>
+                        <button onclick="cancelAllPendingOrders()" class="btn btn-danger" style="width:auto; padding:4px 10px; font-size:10px;">🗑️ إلغاء الكل</button>
+                    </div>
+                    <div id="pendingOrdersList"></div>
+                </div>
+            </div>
+
+            <!-- 3. تبويب العروض -->
+            <div id="admTabOffers" class="admin-tab" style="display:none;">
+                <div class="adm-sec">
+                    <div class="adm-sec-title"><span>🔥 إدارة العروض الخاصة</span></div>
+                    <input type="hidden" id="editOfferId">
+                    <div class="form-group"><label>اسم العرض:</label><input type="text" id="offerNameInput" class="form-control" placeholder="مثال: بكج المتة والضيافة"></div>
+                    <div class="stats-grid">
+                        <div class="form-group"><label>التكلفة ($):</label><input type="number" step="0.01" id="offerCostInput" class="form-control"></div>
+                        <div class="form-group"><label>السعر القديم ($):</label><input type="number" step="0.01" id="offerOldPriceInput" class="form-control"></div>
+                        <div class="form-group"><label>سعر العرض ($):</label><input type="number" step="0.01" id="offerNewPriceInput" class="form-control"></div>
+                        <div class="form-group"><label>جملة العرض ($):</label><input type="number" step="0.01" id="offerWholesaleInput" class="form-control"></div>
+                        <div class="form-group"><label>الكمية المتاحة:</label><input type="number" id="offerStockInput" class="form-control" value="5"></div>
+                        <div class="form-group"><label>نسبة النقاط (%):</label><input type="number" step="0.1" id="offerPointsPctInput" class="form-control" value="2"></div>
+                    </div>
+                    <div class="form-group"><label>صورة العرض:</label><input type="file" id="offerImageInput" accept="image/*" class="form-control"></div>
+                    <div style="display:flex; gap:6px; margin-bottom:10px;"><button onclick="saveMultipleOffer()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ العرض</button><button onclick="clearOfferForm()" class="btn btn-danger" style="width:auto;">إلغاء</button></div>
+                    <div id="adminOffersList"></div>
+                </div>
+            </div>
+
+            <!-- 4. تبويب البضائع -->
             <div id="admTabCatalog" class="admin-tab" style="display:none;">
                 <div class="adm-sec" id="productFormSection">
                     <div class="adm-sec-title"><span>➕ إضافة / تعديل صنف في المتجر</span><button onclick="resetProductForm()" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">تفريغ الحقول</button></div>
@@ -432,27 +454,10 @@
                     <div style="display:flex; gap:6px; margin-bottom:8px;"><input type="text" id="newCatInput" class="form-control" placeholder="اسم تصنيف جديد..."><button onclick="addCategory()" class="btn" style="width:auto;">إضافة</button></div>
                     <div id="adminCategoriesList"></div>
                 </div>
-
-                <div class="adm-sec">
-                    <div class="adm-sec-title"><span>🔥 إدارة العروض الخاصة</span></div>
-                    <input type="hidden" id="editOfferId">
-                    <div class="form-group"><label>اسم العرض:</label><input type="text" id="offerNameInput" class="form-control" placeholder="مثال: بكج المتة والضيافة"></div>
-                    <div class="stats-grid">
-                        <div class="form-group"><label>التكلفة ($):</label><input type="number" step="0.01" id="offerCostInput" class="form-control"></div>
-                        <div class="form-group"><label>السعر القديم ($):</label><input type="number" step="0.01" id="offerOldPriceInput" class="form-control"></div>
-                        <div class="form-group"><label>سعر العرض ($):</label><input type="number" step="0.01" id="offerNewPriceInput" class="form-control"></div>
-                        <div class="form-group"><label>جملة العرض ($):</label><input type="number" step="0.01" id="offerWholesaleInput" class="form-control"></div>
-                        <div class="form-group"><label>الكمية المتاحة:</label><input type="number" id="offerStockInput" class="form-control" value="5"></div>
-                        <div class="form-group"><label>نسبة النقاط (%):</label><input type="number" step="0.1" id="offerPointsPctInput" class="form-control" value="2"></div>
-                    </div>
-                    <div class="form-group"><label>صورة العرض:</label><input type="file" id="offerImageInput" accept="image/*" class="form-control"></div>
-                    <div style="display:flex; gap:6px; margin-bottom:10px;"><button onclick="saveMultipleOffer()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ العرض</button><button onclick="clearOfferForm()" class="btn btn-danger" style="width:auto;">إلغاء</button></div>
-                    <div id="adminOffersList"></div>
-                </div>
             </div>
 
-            <!-- 3. تبويب النواقص والموزعين -->
-            <div id="admTabSupply" class="admin-tab" style="display:none;">
+            <!-- 5. تبويب النواقص -->
+            <div id="admTabShortages" class="admin-tab" style="display:none;">
                 <div class="adm-sec" style="border-color:var(--danger-color);">
                     <div class="adm-sec-title"><span style="color:var(--danger-color);">⚠️ النواقص مفرزة حسب الموزع المعتمد</span></div>
                     <div id="shortagesBySupplierContainer"></div>
@@ -462,7 +467,10 @@
                     <div class="adm-sec-title"><span>📝 أصناف طلبها الزبائن</span></div>
                     <div id="customerMissingRequestsList"></div>
                 </div>
+            </div>
 
+            <!-- 6. تبويب الموزعين -->
+            <div id="admTabSuppliers" class="admin-tab" style="display:none;">
                 <div class="adm-sec">
                     <div class="adm-sec-title"><span>🚚 إدارة الموزعين المعتمدين</span></div>
                     <input type="hidden" id="editSupplierId">
@@ -476,30 +484,12 @@
                 </div>
             </div>
 
-            <!-- 4. تبويب الزبائن والشركاء والمسابقات -->
-            <div id="admTabUsersPartners" class="admin-tab" style="display:none;">
+            <!-- 7. تبويب الزبائن -->
+            <div id="admTabCustomers" class="admin-tab" style="display:none;">
                 <div class="adm-sec">
                     <div class="adm-sec-title"><span>👥 سجل الزبائن وتحديد الرتب (مفرق / جملة / جيران / شريك)</span></div>
                     <input type="text" id="adminSearchCust" class="search-box" placeholder="🔍 ابحث بالاسم أو الهاتف..." oninput="renderAdminCustomers()" style="margin-bottom:8px;">
-                    <div id="adminCustomersList" style="max-height:230px; overflow-y:auto;"></div>
-                </div>
-
-                <div class="adm-sec" style="border-color:#00b0ff;">
-                    <div class="adm-sec-title"><span style="color:#00b0ff;">🤝 إدارة الشركاء، المحافظ، وسجل التسويات</span></div>
-                    <div class="form-group"><label>اختر الشريك (بعد تحويل رتبته إلى "شريك" من الأعلى):</label><select id="adminPartnerSelect" class="form-control" onchange="loadPartnerConfig()"><option value="">-- اختر شريكاً --</option></select></div>
-                    <div class="form-group"><label>معرف محفظة شام كاش للشريك (Sham Cash ID):</label><input type="text" id="adminPartnerShamWallet" class="form-control" placeholder="أدخل كود المحفظة..."></div>
-                    <div class="form-group">
-                        <label>حدد التصنيفات الكاملة التابعة للشريك:</label>
-                        <div id="partnerCategoriesCheckboxes" style="display:flex; flex-wrap:wrap; gap:8px; background:var(--bg-color); padding:8px; border-radius:5px; border:1px solid var(--border-color);"></div>
-                    </div>
-                    <div class="stats-grid">
-                        <div class="form-group"><label>نسبة ربح الشريك (%):</label><input type="number" step="0.1" id="adminPartnerPct" class="form-control" value="20"></div>
-                        <div class="form-group" style="display:flex; align-items:flex-end;">
-                            <button onclick="settlePartnerEarningsByAdmin()" class="btn" style="background:#ff9800; color:#000; height:36px;">🔄 تصفير وتوثيق دفعة</button>
-                        </div>
-                    </div>
-                    <button onclick="savePartnerCategoriesConfig()" class="btn" style="background:#00b0ff; color:#fff; margin-bottom:10px;">💾 حفظ إعدادات الشريك</button>
-                    <div id="adminPartnerPayoutHistory" style="font-size:11px;"></div>
+                    <div id="adminCustomersList" style="max-height:280px; overflow-y:auto;"></div>
                 </div>
 
                 <div class="adm-sec">
@@ -518,7 +508,28 @@
                 </div>
             </div>
 
-            <!-- 5. تبويب الإعدادات والتوصيل والنسخ الاحتياطي -->
+            <!-- 8. تبويب الشركاء -->
+            <div id="admTabPartners" class="admin-tab" style="display:none;">
+                <div class="adm-sec" style="border-color:#00b0ff;">
+                    <div class="adm-sec-title"><span style="color:#00b0ff;">🤝 إدارة الشركاء، المحافظ، وسجل التسويات</span></div>
+                    <div class="form-group"><label>اختر الشريك (بعد تحويل رتبته إلى "شريك" من تبويب الزبائن):</label><select id="adminPartnerSelect" class="form-control" onchange="loadPartnerConfig()"><option value="">-- اختر شريكاً --</option></select></div>
+                    <div class="form-group"><label>معرف محفظة شام كاش للشريك (Sham Cash ID):</label><input type="text" id="adminPartnerShamWallet" class="form-control" placeholder="أدخل كود المحفظة..."></div>
+                    <div class="form-group">
+                        <label>حدد التصنيفات الكاملة التابعة للشريك:</label>
+                        <div id="partnerCategoriesCheckboxes" style="display:flex; flex-wrap:wrap; gap:8px; background:var(--bg-color); padding:8px; border-radius:5px; border:1px solid var(--border-color);"></div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="form-group"><label>نسبة ربح الشريك (%):</label><input type="number" step="0.1" id="adminPartnerPct" class="form-control" value="20"></div>
+                        <div class="form-group" style="display:flex; align-items:flex-end;">
+                            <button onclick="settlePartnerEarningsByAdmin()" class="btn" style="background:#ff9800; color:#000; height:36px;">🔄 تصفير وتوثيق دفعة</button>
+                        </div>
+                    </div>
+                    <button onclick="savePartnerCategoriesConfig()" class="btn" style="background:#00b0ff; color:#fff; margin-bottom:10px;">💾 حفظ إعدادات الشريك</button>
+                    <div id="adminPartnerPayoutHistory" style="font-size:11px;"></div>
+                </div>
+            </div>
+
+            <!-- 9. تبويب الإعدادات والنظام -->
             <div id="admTabSystem" class="admin-tab" style="display:none;">
                 <div class="adm-sec">
                     <div class="adm-sec-title"><span>💳 إعدادات الصرف، شام كاش، وأرقام التواصل</span></div>
@@ -534,7 +545,7 @@
                     <div class="adm-sec-title"><span>⏰ ساعات الدوام العامة للمتجر</span></div>
                     <div class="form-group" style="display:flex; align-items:center; gap:8px;">
                         <input type="checkbox" id="workHoursEnabled" style="width:18px; height:18px;">
-                        <label for="workHoursEnabled" style="margin:0; cursor:pointer; color:var(--text-color);">تفعيل القفل التلقائي خارج ساعات الدوام</label>
+                        <label for="workHoursEnabled" style="margin:0; cursor:pointer; color:var(--text-color);">تفعيل القفل التلقائي خارج ساعات الدوام (للزبائن فقط)</label>
                     </div>
                     <div class="stats-grid">
                         <div class="form-group"><label>فتح المتجر:</label><input type="time" id="workHourOpen" class="form-control" value="08:00"></div>
@@ -585,6 +596,7 @@
             <div style="display:flex; gap:8px;"><button onclick="saveAdminCustomerEdit()" class="btn">💾 حفظ التعديلات</button><button onclick="closeModal('adminEditCustomerModal')" class="btn btn-danger" style="width:35%;">إلغاء</button></div>
         </div>
     </div>
+
     <script>
         const $ = id => document.getElementById(id);
         const setTxt = (id, v) => { const el = $(id); if (el) el.textContent = v; };
@@ -593,7 +605,6 @@
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
         let adminWhatsAppNumber = "963965461504", shamWalletIdGlobal = "da3e13cd8a2ef2af282445e148df9599";
-        // مصفوفة التحقق المشفرة (Bitwise XOR) لإخفاء كلمة المرور نهائياً من الكود المصدري
         const _K = [102,99,106,107,26,18,18,28,4,4,102,100,106,106,127,99,120];
         const verifyAdminPass = s => typeof s === "string" && s.length === _K.length && _K.every((v, i) => (s.charCodeAt(i) ^ 43) === v);
 
@@ -1066,7 +1077,7 @@
                 item = { id, name: "🔥 عرض: " + so.name, category: "عروض خاصة", priceUSD: parseFloat((isW && so.wholesaleUSD > 0) ? so.wholesaleUSD : so.newPriceUSD) || 0, costPrice: parseFloat(so.costPrice) || 0, stock: parseInt(so.stock) || 0, pointsPct: parseFloat(so.pointsPct) || 2 };
             } else {
                 const p = products[id]; if (!p) return;
-                item = { id, name: p.name || "", category: p.category || "غير مصنف", priceUSD: parseFloat((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD) || 0, costPrice: parseFloat(p.costPrice) || 0, stock: parseInt(p.stock) || 0, pointsPct: parseFloat(p.pointsPct) || 2 };
+                item = { id, name: p.name || "", category: p.category || "غير مصنف", priceUSD: parseFloat((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0)) || 0, costPrice: parseFloat(p.costPrice) || 0, stock: parseInt(p.stock) || 0, pointsPct: parseFloat(p.pointsPct) || 2 };
             }
             const nQty = (cart[id] ? cart[id].qty : 0) + delta;
             if (nQty > item.stock) return alert("⚠️ الكمية المطلوبة غير متوفرة بالكامل بالمخزون!");
@@ -1340,7 +1351,6 @@
                 entries.map(([id, r]) => `<div class="review-box"><div><b>${r.itemName}</b> <small>(${r.customerName} - ${r.customerPhone})</small></div><button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="db.ref('missingRequests/${id}').remove()">✖</button></div>`).join("");
         }
 
-        // نظام 5 ضغطات على الشعار + تشفير كلمة المرور + حفظ الجلسة بعد أول دخول
         let adminClickCount = 0, adminClickTimer = null;
         function handleAdminTrigger() {
             adminClickCount++; clearTimeout(adminClickTimer);
