@@ -1031,12 +1031,24 @@
         }
 
         window.addEventListener("load", () => {
-            populateRegionSelects();
-            fillProfileInputs();
-            if (!currentUser?.phone || !currentUser?.name || !currentUser?.region || !validatePhoneSyrian(currentUser.phone)) {
-                $("closeProfileBtn").style.display = "none"; $("profileModal").style.display = "flex";
-            } else syncCurrentUser();
-            renderCategories(); renderStore(); checkStoreWorkHours();
+            try {
+                populateRegionSelects();
+                fillProfileInputs();
+                if (!currentUser?.phone || !currentUser?.name || !currentUser?.region || !validatePhoneSyrian(currentUser.phone)) {
+                    $("closeProfileBtn").style.display = "none"; $("profileModal").style.display = "flex";
+                } else {
+                    syncCurrentUser();
+                }
+            } catch (err) {
+                console.error("Init error:", err);
+            }
+            try {
+                renderCategories();
+                renderStore();
+                checkStoreWorkHours();
+            } catch (err2) {
+                console.error("Render error:", err2);
+            }
         });
 
         function openEditProfile() { fillProfileInputs(); $("closeProfileBtn").style.display = "block"; $("profileModal").style.display = "flex"; }
@@ -1212,6 +1224,14 @@ https://moaathallii-commits.github.io/-/`)}`, "_blank");
         }
 
         function renderStore() {
+            try {
+                if (!products || Object.keys(products).length === 0) {
+                    products = {
+                        "PROD_SAMPLE_1": { name: "متة تاراوغوي 250غ", category: "مشروبات", priceUSD: 1.5, costPrice: 1.2, wholesaleUSD: 1.4, stock: 25, alertLimit: 2, pointsPct: 2, unitType: "قطعة", itemsPerPackage: 1, thumb: "https://via.placeholder.com/150?text=Mate" },
+                        "PROD_SAMPLE_2": { name: "سكر عالي الجودة 1كغ", category: "مواد غذائية", priceUSD: 1.2, costPrice: 1.0, wholesaleUSD: 1.1, stock: 40, alertLimit: 5, pointsPct: 2, unitType: "كيس", itemsPerPackage: 10, thumb: "https://via.placeholder.com/150?text=Sugar" }
+                    };
+                    shuffledProductKeys = Object.keys(products);
+                }
             renderSpecialOffers();
             const grid = $("productsGrid");
             if (!grid) return;
@@ -1233,6 +1253,9 @@ https://moaathallii-commits.github.io/-/`)}`, "_blank");
             grid.innerHTML = html || `<p style="grid-column:span 2; text-align:center; color:var(--gray-text);">لا توجد مواد مطابقة للبحث.</p>`;
             updateCartBar();
             setTimeout(loadHighResImagesInBatches, 100);
+            } catch (e) {
+                console.error("renderStore error:", e);
+            }
         }
 
         let isBatchLoadingImages = false;
