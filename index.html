@@ -709,11 +709,10 @@
     </div>
     <script>
         // ============================================================================
-        // 1. إعدادات الربط بقاعدة البيانات (Firebase) والمتغيرات العامة للنظام
-        // ملاحظة: ضع رابط قاعدة بيانات Firebase الخاصة بك في databaseURL أدناه
+        // 1. إعدادات الربط بقاعدة البيانات (Firebase) بالرابط الصحيح لمتجرك
         // ============================================================================
         const firebaseConfig = {
-            databaseURL: "https://moaath-store-default-rtdb.firebaseio.com/"
+            databaseURL: "https://moaathstore-d2fd6-default-rtdb.firebaseio.com/"
         };
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
@@ -760,7 +759,7 @@
         let lastPendingCount = 0;
 
         // مصفوفة التحقق الرياضي لكلمة مرور الإدارة (_K) وحفظ الجلسة
-        const _K = [49, 50, 51, 52]; // الرمز الافتراضي: 1234 (قابل للتعديل)
+        const _K = [49, 50, 51, 52]; // الرمز الافتراضي: 1234
         const verifyAdminPass = (input) => {
             if (!input) return false;
             const passStr = _K.map(c => String.fromCharCode(c)).join('');
@@ -807,7 +806,6 @@
             initTheme();
         }
 
-        // نظام الـ 5 ضغطات على الشعار لفتح الإدارة
         function setupAdminTriggers() {
             let clickCount = 0;
             let clickTimer = null;
@@ -844,7 +842,7 @@
         function lockAdminSession() {
             localStorage.removeItem("moaath_admin_unlocked");
             closeModal("adminModal");
-            alert("🔒 تم قفل جلسة الإدارة بنجاح. سيُطلب الرمز في المرة القادمة.");
+            alert("🔒 تم قفل جلسة الإدارة بنجاح.");
         }
 
         function openAdminPanel() {
@@ -996,7 +994,6 @@
             });
         }
 
-        // تنبيه صوتي واهتزاز عند وصول طلب جديد
         function playOrderAlertSound() {
             try {
                 if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
@@ -1013,7 +1010,6 @@
             } catch (e) {}
         }
 
-        // التحقق من ساعات الدوام الرسمية للمتجر
         function checkStoreWorkHours() {
             const overlay = document.getElementById("storeClosedOverlay");
             if (!overlay) return;
@@ -1037,16 +1033,13 @@
 
             if (!isOpen) {
                 document.getElementById("closedMessageText").innerText =
-                    `أوقات الدوام الرسمية من الساعة ${storeSettings.workHourOpen} حتى الساعة ${storeSettings.workHourClose}. نرحب بطلباتكم خلال ساعات الدوام!`;
+                    `أوقات الدوام الرسمية من الساعة ${storeSettings.workHourOpen} حتى الساعة ${storeSettings.workHourClose}.`;
                 overlay.style.display = "flex";
             } else {
                 overlay.style.display = "none";
             }
         }
 
-        // ============================================================================
-        // 3. إدارة حساب الزبون، الرتب، وعرض المتجر والأسعار الديناميكية
-        // ============================================================================
         function populateRegionsSelects() {
             const selects = ["regRegion", "cartRegionSelect", "adminCustRegion"];
             const regions = Object.values(deliveryRegionsDB || {});
@@ -1147,7 +1140,6 @@
             const redeemBtn = document.getElementById("redeemPointsBtn");
             if (redeemBtn) redeemBtn.style.display = pts >= minRedeem ? "inline-block" : "none";
 
-            // تحديث ترتيب الزبون التلقائي
             const sortedUsers = Object.values(usersDB).sort((a, b) => (parseInt(b.points) || 0) - (parseInt(a.points) || 0));
             const rankIdx = sortedUsers.findIndex(x => x.phone === u.phone);
             const rankBadge = document.getElementById("userRankBadge");
@@ -1159,7 +1151,6 @@
             updateRoleButtonsVisibility();
         }
 
-        // حساب السعر المخصص للزبون بالليرة السورية (جملة أو مفرق)
         function getProductPriceSYP(item, isOffer = false) {
             const uType = (currentUser && usersDB[currentUser.phone]) ? usersDB[currentUser.phone].type : "retail";
             let usdPrice = 0;
@@ -1173,7 +1164,7 @@
                     : parseFloat(item.priceUSD);
             }
             const rawSYP = (usdPrice || 0) * exchangeRate;
-            return Math.ceil(rawSYP / 100) * 100; // تقريب لأقرب 100 ل.س
+            return Math.ceil(rawSYP / 100) * 100;
         }
 
         function renderCategoriesBar() {
@@ -1277,9 +1268,6 @@
             }).join('');
         }
 
-        // ============================================================================
-        // 4. إدارة سلة المشتريات، حساب التوصيل، وإرسال الطلب
-        // ============================================================================
         function changeCartQty(itemId, delta, isOffer = false) {
             let itemObj = null;
             if (isOffer) {
@@ -1368,7 +1356,6 @@
 
             const regObj = getSelectedRegionObj();
             const uType = (currentUser && usersDB[currentUser.phone]) ? usersDB[currentUser.phone].type : "retail";
-            // جيران المتجر يحصلون على توصيل مجاني أو مخفض
             const deliveryFee = uType === "neighbors" ? 0 : (parseInt(regObj.fee) || 0);
             const grandTotal = subtotalSYP + deliveryFee;
 
@@ -1396,9 +1383,9 @@
 
         function copyWalletId() {
             const wallet = storeSettings.shamCashWallet || "";
-            if (!wallet) return alert("لم يتم تحديد كود محفظة شام كاش من الإدارة بعد.");
+            if (!wallet) return alert("لم يتم تحديد كود محفظة شام كاش.");
             navigator.clipboard.writeText(wallet).then(() => {
-                alert("✅ تم نسخ كود محفظة شام كاش بنجاح:\n" + wallet);
+                alert("✅ تم نسخ كود محفظة شام كاش:\n" + wallet);
             });
         }
 
@@ -1444,7 +1431,6 @@
                     costSYP: costSYP
                 });
 
-                // خصم الكمية من المخزون مباشرة لحجزها
                 const newStock = Math.max(0, (parseInt(src.stock) || 0) - c.qty);
                 db.ref(`${c.isOffer ? 'offers' : 'products'}/${c.rawId}/stock`).set(newStock);
             }
@@ -1478,162 +1464,10 @@
                 closeModal("cartModal");
                 updateCartUI();
                 renderStore();
-                alert("✅ تم إرسال طلبك للإدارة بنجاح! سيتم تجهيزه والتواصل معك فوراً.");
+                alert("✅ تم إرسال طلبك للإدارة بنجاح!");
             });
         }
-
-        // ============================================================================
-        // 5. التقييمات، المسابقات، مشاركة التطبيق، ولوحة الشريك
-        // ============================================================================
-        function openReviewModal(prodId) {
-            const p = productsDB[prodId];
-            if (!p) return;
-            document.getElementById("reviewProductId").value = prodId;
-            document.getElementById("reviewProductName").innerText = p.name;
-            document.getElementById("reviewCommentInput").value = "";
-            document.getElementById("reviewModal").style.display = "flex";
-        }
-
-        function submitProductReview() {
-            const prodId = document.getElementById("reviewProductId").value;
-            const rating = parseInt(document.getElementById("reviewRatingSelect").value) || 5;
-            const comment = document.getElementById("reviewCommentInput").value.trim();
-            if (!prodId) return;
-
-            const revId = "rev_" + Date.now();
-            db.ref(`products/${prodId}/reviews/${revId}`).set({
-                userName: currentUser?.name || "زبون",
-                rating,
-                comment,
-                dateISO: new Date().toISOString()
-            }).then(() => {
-                closeModal("reviewModal");
-                alert("⭐ شكراً لتقييمك!");
-            });
-        }
-
-        function openCompetitionsPage() {
-            const u = (currentUser && usersDB[currentUser.phone]) ? usersDB[currentUser.phone] : { points: 0 };
-            document.getElementById("compUserPoints").innerText = u.points || 0;
-
-            const sorted = Object.values(usersDB || {}).sort((a, b) => (parseInt(b.points) || 0) - (parseInt(a.points) || 0));
-            const myRank = sorted.findIndex(x => x.phone === u.phone);
-            document.getElementById("compUserRankDisplay").innerText = myRank !== -1 ? `#${myRank + 1}` : "-";
-
-            const compCard = document.getElementById("compDetailsCard");
-            if (storeSettings.compTitle || storeSettings.compDesc) {
-                compCard.style.display = "block";
-                document.getElementById("compTitleDisplay").innerText = storeSettings.compTitle || "";
-                document.getElementById("compDescDisplay").innerText = storeSettings.compDesc || "";
-                const imgEl = document.getElementById("compImgDisplay");
-                if (storeSettings.compImage) {
-                    imgEl.src = storeSettings.compImage;
-                    imgEl.style.display = "block";
-                } else {
-                    imgEl.style.display = "none";
-                }
-            } else {
-                compCard.style.display = "none";
-            }
-
-            const limit = parseInt(storeSettings.leaderboardLimit) || 10;
-            const topUsers = sorted.slice(0, limit);
-            const listEl = document.getElementById("leaderboardList");
-            listEl.innerHTML = topUsers.map((usr, i) => {
-                const ptsDisplay = usr.pointsVisibility === "masked" ? "*** 🔒" : `${usr.points || 0} نقطة`;
-                return `
-                    <div class="leader-row">
-                        <span><strong>#${i + 1}</strong> 👤 ${usr.name}</span>
-                        <strong style="color:var(--gold-color);">${ptsDisplay}</strong>
-                    </div>
-                `;
-            }).join('');
-
-            document.getElementById("competitionsPage").style.display = "block";
-        }
-
-        function shareAppWhatsApp() {
-            const url = window.location.href;
-            const msg = `تسوق الآن من تطبيق *متجر معاذ - قرية العوينة* بكل سهولة واجمع النقاط والجوائز 🎁🛒:\n${url}`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
-        }
-
-        function redeemPointsWhatsApp() {
-            if (!currentUser) return;
-            const pts = usersDB[currentUser.phone]?.points || 0;
-            const msg = `مرحباً إدارة متجر معاذ 🌹\nأرغب باستبدال رصيد نقاطي الحالي (${pts} نقطة) في حسابي المسجل باسم: ${currentUser.name} (${currentUser.phone}).`;
-            window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
-        }
-
-        function openMissingRequestModal() {
-            document.getElementById("missingItemName").value = "";
-            document.getElementById("missingModal").style.display = "flex";
-        }
-
-        function submitMissingRequest() {
-            const itemName = document.getElementById("missingItemName").value.trim();
-            if (!itemName) return alert("يرجى كتابة اسم الصنف المطلوب.");
-            const id = "miss_" + Date.now();
-            db.ref(`missingRequests/${id}`).set({
-                id,
-                itemName,
-                customerName: currentUser?.name || "زائر",
-                customerPhone: currentUser?.phone || "-",
-                dateISO: new Date().toISOString()
-            }).then(() => {
-                closeModal("missingModal");
-                alert("📨 تم إرسال طلبك للإدارة لتوفيره في أقرب وقت.");
-            });
-        }
-
-        // لوحة الشريك المعتمدة
-        function openPartnerDashboard() {
-            if (!currentUser || !currentUser.phone) return;
-            const phone = currentUser.phone;
-            const cfg = partnersConfigDB[phone] || { categories: [], pct: 20, lastResetISO: "", payoutHistory: {} };
-            const cats = cfg.categories || [];
-            const pct = parseFloat(cfg.pct) || 20;
-
-            document.getElementById("partnerAssignedCatsText").innerText =
-                cats.length > 0 ? `التصنيفات التابعة لك (${pct}%): ${cats.join(" ، ")}` : "لم يتم ربط تصنيفات بحسابك بعد.";
-
-            const stats = calculatePartnerFinancials(phone);
-            document.getElementById("partnerTotalSales").innerText = stats.salesSYP.toLocaleString() + " ل.س";
-            document.getElementById("partnerTotalEarnings").innerText = stats.partnerShareSYP.toLocaleString() + " ل.س";
-
-            const myProducts = Object.values(productsDB || {}).filter(p => cats.includes(p.category));
-            const totalUnits = myProducts.reduce((acc, p) => acc + (parseInt(p.stock) || 0), 0);
-            document.getElementById("partnerTotalItemsCount").innerText = myProducts.length + " صنف";
-            document.getElementById("partnerTotalStockUnits").innerText = totalUnits + " قطعة";
-
-            document.getElementById("partnerItemsBreakdown").innerHTML = myProducts.map(p => `
-                <div class="adm-card" style="display:flex; justify-content:space-between;">
-                    <span>${p.name} <small style="color:var(--gray-text);">(${p.category})</small></span>
-                    <strong style="color:var(--gold-color);">المخزون: ${p.stock || 0} ${p.unit || 'قطعة'}</strong>
-                </div>
-            `).join('');
-
-            const payouts = cfg.payoutHistory ? Object.values(cfg.payoutHistory) : [];
-            payouts.sort((a, b) => new Date(b.dateISO) - new Date(a.dateISO));
-            document.getElementById("partnerPayoutHistoryList").innerHTML = payouts.length === 0
-                ? `<div class="adm-card" style="color:var(--gray-text); text-align:center;">لا توجد دفعات مستلمة سابقة.</div>`
-                : payouts.map(py => `
-                    <div class="adm-card" style="display:flex; justify-content:space-between;">
-                        <span>✅ دفعة مستلمة بتاريخ: ${new Date(py.dateISO).toLocaleDateString('ar-SY')}</span>
-                        <strong style="color:var(--success-color);">${Number(py.amountSYP).toLocaleString()} ل.س</strong>
-                    </div>
-                `).join('');
-
-            document.getElementById("partnerModal").style.display = "block";
-        }
-
-        function requestPartnerEarningsWhatsApp() {
-            if (!currentUser) return;
-            const stats = calculatePartnerFinancials(currentUser.phone);
-            const cfg = partnersConfigDB[currentUser.phone] || {};
-            const msg = `تحية طيبة إدارة متجر معاذ 🤝\nطلب صرف أرباح الشريك: *${currentUser.name}*\nالمبلغ المستحق حالياً: *${stats.partnerShareSYP.toLocaleString()} ل.س*\nكود محفظة شام كاش: ${cfg.shamWallet || 'غير محدد'}`;
-            window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
-        }
+    </script>
         // ============================================================================
         // 6. إدارة الطلبات المعلقة، القبول والتحويل للسائق، والإلغاء
         // ============================================================================
@@ -2964,4 +2798,25 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
