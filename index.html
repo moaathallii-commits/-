@@ -113,8 +113,9 @@
             <span id="userRankBadge" onclick="openCompetitionsPage()" style="display:none; cursor:pointer; background:rgba(0,230,118,0.15); color:var(--success-color); border:1px solid var(--success-color); padding:2px 7px; border-radius:12px; font-size:11px; font-weight:bold;">🏅 ترتيبي: -</span>
         </span>
         <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
+            <button id="debtBookUserBtn" onclick="openDebtBookModal()" style="display:none; background:linear-gradient(45deg,#D4AF37,#B8860B); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📒 دفتر الدين</button>
+            <button id="exporterDashboardBtn" onclick="openExporterDashboard()" style="display:none; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📦 إدارة التصدير</button>
             <button id="partnerDashboardBtn" onclick="openPartnerDashboard()" style="display:none; background:linear-gradient(45deg,#00b0ff,#7c4dff); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">🤝 لوحة الشريك</button>
-            <button id="creditLedgerBtn" onclick="openCreditLedgerModal()" style="display:none; background:linear-gradient(45deg,#D4AF37,#B8860B); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📒 دفتر الدين</button>
             <button onclick="shareAppWhatsApp()" style="background:linear-gradient(45deg,#25D366,#128C7E); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📢 مشاركة</button>
             <button id="redeemPointsBtn" onclick="redeemPointsWhatsApp()" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer; animation:pulse 1.5s infinite;">🎁 استبدال</button>
             <button onclick="toggleTheme()" id="themeBtn" style="background:transparent; border:none; font-size:16px; cursor:pointer; padding:0;">☀️</button>
@@ -138,6 +139,21 @@
             <span style="font-size:12px;">المجموع النهائي: <strong id="cartTotal" class="cart-bar-total-val">0 ل.س</strong></span>
         </div>
         <button class="cart-bar-btn" type="button" onclick="event.stopPropagation(); openCartModal();">🛒 إتمام الطلب الآن</button>
+    </div>
+
+    <!-- نافذة دفتر الدين الخاصة بالزبون الآجل (قراءة فقط) -->
+    <div id="debtBookModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">📒 دفتر الدين والسحوبات</h3>
+            <div class="comp-card" style="text-align:center; margin-bottom:12px; background:rgba(212,175,55,0.08);">
+                <div style="font-size:11px; color:var(--gray-text);">إجمالي الرصيد المستحق عليك:</div>
+                <div style="font-size:18px; font-weight:bold; color:var(--gold-color); margin:4px 0;"><span id="userDebtUSD">0.00</span> $</div>
+                <div style="font-size:13px; color:var(--success-color); font-weight:bold;" id="userDebtSYP">0 ل.س</div>
+            </div>
+            <h4 style="color:var(--gold-color); margin:0 0 8px 0; font-size:12px;">📜 سجل الحركات والديون والسدادات السابقة:</h4>
+            <div id="userDebtHistoryList" style="max-height:220px; overflow-y:auto; margin-bottom:12px;"></div>
+            <button onclick="closeModal('debtBookModal')" class="btn btn-danger" style="padding:6px; font-size:11px;">إغلاق</button>
+        </div>
     </div>
 
     <div id="profileModal" class="modal-overlay">
@@ -228,6 +244,24 @@
         </div>
     </div>
 
+    <!-- لوحة مدير التصدير المستقلة والآمنة -->
+    <div id="exporterDashboardModal" class="page-overlay">
+        <header style="position:sticky; top:0; z-index:10;">
+            <div class="store-info"><h1>📦 لوحة إدارة التصدير والطلبات</h1><p>استلام ومتابعة وتأكيد طلبات الزبائن</p></div>
+            <button onclick="closeModal('exporterDashboardModal')" class="btn btn-danger" style="width:auto; padding:6px 12px;">🔙 رجوع</button>
+        </header>
+        <div class="container">
+            <div class="comp-card" style="background:linear-gradient(45deg,rgba(0,176,255,0.15),var(--card-bg)); border-color:#00b0ff;">
+                <h3 style="color:#00b0ff; margin:0 0 6px 0; font-size:14px;">📦 مرحباً بك يا مدير التصدير</h3>
+                <div style="font-size:11px; color:var(--text-color);">صلاحياتك مخصصة بالكامل لمتابعة الطلبات الواردة، مراجعتها، وتحويلها للتوصيل دون الوصول للبيانات المالية الحساسة.</div>
+            </div>
+            <div class="adm-sec" style="border-color:#00b0ff;">
+                <div class="adm-sec-title"><span style="color:#00b0ff;">📦 الطلبات والفواتير المعلقة بانتظار المعالجة</span></div>
+                <div id="exporterPendingOrdersList"></div>
+            </div>
+        </div>
+    </div>
+
     <div id="partnerModal" class="page-overlay">
         <header style="position:sticky; top:0; z-index:10;">
             <div class="store-info"><h1>🤝 لوحة الشريك المعتمدة</h1><p>مراقبة المخزون، الأرباح، وسجل الدفعات</p></div>
@@ -253,25 +287,6 @@
         </div>
     </div>
 
-    <!-- نافذة دفتر الدين لزبون الآجل -->
-    <div id="creditLedgerModal" class="page-overlay">
-        <header style="position:sticky; top:0; z-index:10;">
-            <div class="store-info"><h1>📒 دفتر الدين والحسابات الآجلة</h1><p>متابعة الأرصدة والدفعات المسجلة</p></div>
-            <button onclick="closeModal('creditLedgerModal')" class="btn btn-danger" style="width:auto; padding:6px 12px;">🔙 رجوع</button>
-        </header>
-        <div class="container">
-            <div class="comp-card" style="text-align:center; background:linear-gradient(45deg,rgba(212,175,55,0.15),var(--card-bg)); border-color:var(--gold-color);">
-                <div style="font-size:13px; color:var(--gray-text);">إجمالي الرصيد المطلوب منك</div>
-                <div style="font-size:24px; font-weight:bold; color:var(--gold-color); margin:8px 0;"><span id="creditBalanceUSD">0</span> دولار</div>
-                <div style="font-size:16px; font-weight:bold; color:var(--success-color);"><span id="creditBalanceSYP">0</span> ليرة سورية</div>
-            </div>
-            <div class="comp-card">
-                <h3 style="color:var(--gold-color); margin:0 0 10px 0; font-size:14px; text-align:center;">🕒 السجل الزمني للمعاملات والدفعات</h3>
-                <div id="creditTransactionsList"></div>
-            </div>
-        </div>
-    </div>
-
     <div id="missingModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="margin-top:0; color:var(--gold-color); text-align:center;">📝 طلب توفير منتج</h3>
@@ -286,7 +301,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:8px; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
                 <div style="display:flex; align-items:center; gap:8px;">
                     <h3 style="color:var(--gold-color); margin:0; font-size:15px;">⚙️ مركز إدارة متجر معاذ</h3>
-                    <button onclick="lockAdminSession()" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" title="قفل الإدارة (طلب كلمة المرور في المرة القادمة)">🔒 قفل</button>
+                    <button onclick="lockAdminSession()" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" title="قفل الإدارة">🔒 قفل</button>
                 </div>
                 <div style="display:flex; align-items:center; gap:5px; background:var(--bg-color); padding:4px 8px; border-radius:6px; border:1px solid var(--gold-color);">
                     <span style="font-size:11px; color:var(--gold-color); font-weight:bold;">💵 الصرف:</span>
@@ -300,7 +315,7 @@
                 <button class="cat-btn active" onclick="switchAdminTab('admTabOrdersStats', this)">📦 الطلبات والجرد (<span id="pendingCountBadge">0</span>)</button>
                 <button class="cat-btn" onclick="switchAdminTab('admTabCatalog', this)">🛍️ البضاعة والعروض</button>
                 <button class="cat-btn" onclick="switchAdminTab('admTabSupply', this)">🚚 النواقص والموزعون</button>
-                <button class="cat-btn" onclick="switchAdminTab('admTabUsersPartners', this)">👥 الزبائن والشركاء</button>
+                <button class="cat-btn" onclick="switchAdminTab('admTabUsersPartners', this)">👥 الزبائن والديون والشركاء</button>
                 <button class="cat-btn" onclick="switchAdminTab('admTabSystem', this)">⚙️ الإعدادات والنظام</button>
             </div>
 
@@ -344,7 +359,7 @@
                     </div>
 
                     <div class="adm-card" style="border-color:#00b0ff; background:rgba(0,176,255,0.06); margin:10px 0;">
-                        <div style="color:#00b0ff; font-weight:bold; font-size:12px; margin-bottom:6px;">🤝 أرباح ومستحقات الشركاء (تصفير مستقل لكل شريك)</div>
+                        <div style="color:#00b0ff; font-weight:bold; font-size:12px; margin-bottom:6px;">🤝 أرباح ومستحقات الشركاء</div>
                         <div id="adminAllPartnersStatsList"></div>
                     </div>
 
@@ -373,7 +388,7 @@
                     </div>
 
                     <div class="adm-card" style="border-color:#ff4444; background:rgba(255,68,68,0.05); margin:10px 0;">
-                        <div style="color:#ff4444; font-weight:bold; font-size:12px; margin-bottom:6px;">📉 المصاريف التشغيلية والتوالف (تُخصم من ربح الإدارة)</div>
+                        <div style="color:#ff4444; font-weight:bold; font-size:12px; margin-bottom:6px;">📉 المصاريف التشغيلية والتوالف</div>
                         <div style="display:flex; gap:5px; margin-bottom:6px; flex-wrap:wrap;">
                             <input type="text" id="expTitleInput" class="form-control" placeholder="سبب المصروف (أكياس، كهرباء، تالف)..." style="flex:2; min-width:130px; padding:6px;">
                             <input type="number" id="expAmountInput" class="form-control" placeholder="المبلغ ل.س" style="flex:1; min-width:85px; padding:6px;">
@@ -437,6 +452,26 @@
                         <div class="form-group"><label>التصنيف:</label><select id="prodCategory" class="form-control"></select></div>
                         <div class="form-group"><label>الموزع المعتمد:</label><select id="prodSupplierSelect" class="form-control"><option value="">-- بدون موزع --</option></select></div>
                     </div>
+                    <!-- ميزة وحدة القياس الدقيقة وعدد القطع في الطرد/الكرتونة -->
+                    <div class="stats-grid">
+                        <div class="form-group">
+                            <label>وحدة القياس الدقيقة:</label>
+                            <select id="prodUnitType" class="form-control">
+                                <option value="قطعة">قطعة</option>
+                                <option value="كرتونة">كرتونة</option>
+                                <option value="طرد">طرد</option>
+                                <option value="كيس">كيس</option>
+                                <option value="كيلو">كيلو</option>
+                                <option value="لتر">لتر</option>
+                                <option value="عبوة">عبوة</option>
+                                <option value="شرحة">شرحة</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>عدد القطع في الطرد/الكرتونة:</label>
+                            <input type="number" id="prodItemsPerPackage" class="form-control" value="1" min="1">
+                        </div>
+                    </div>
                     <div class="form-group"><label>صورة المنتج:</label><input type="file" id="prodImageInput" accept="image/*" class="form-control"></div>
                     <button onclick="saveProduct()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ الصنف في المتجر</button>
                 </div>
@@ -474,7 +509,7 @@
             <!-- 3. تبويب النواقص والموزعين -->
             <div id="admTabSupply" class="admin-tab" style="display:none;">
                 <div class="adm-sec" style="border-color:var(--danger-color);">
-                    <div class="adm-sec-title"><span style="color:var(--danger-color);">⚠️ النواقص مفرزة حسب الموزع المعتمد</span></div>
+                    <div class="adm-sec-title"><span style="color:var(--danger-color);">⚠️ النواقص مفرزة حسب الموزع المعتمد (بوحدات القياس الدقيقة)</span></div>
                     <div id="shortagesBySupplierContainer"></div>
                 </div>
 
@@ -496,36 +531,28 @@
                 </div>
             </div>
 
-            <!-- 4. تبويب الزبائن والشركاء والمسابقات -->
+            <!-- 4. تبويب الزبائن والديون والشركاء والمسابقات -->
             <div id="admTabUsersPartners" class="admin-tab" style="display:none;">
                 <div class="adm-sec">
-                    <div class="adm-sec-title"><span>👥 سجل الزبائن وتحديد الرتب (مفرق / جملة / جيران / شريك)</span></div>
+                    <div class="adm-sec-title"><span>👥 سجل الزبائن، مؤشرات النشاط، وتحديد الرتب (مع إدارة الديون)</span></div>
                     <input type="text" id="adminSearchCust" class="search-box" placeholder="🔍 ابحث بالاسم أو الهاتف..." oninput="renderAdminCustomers()" style="margin-bottom:8px;">
                     <div id="adminCustomersList" style="max-height:230px; overflow-y:auto;"></div>
                 </div>
 
-                <!-- قسم إدارة دفتر الدين الآجل -->
-                <div class="adm-sec" style="border-color:var(--gold-color);">
-                    <div class="adm-sec-title"><span style="color:var(--gold-color);">📒 إدارة دفتر الدين للزبائن الآجلين</span></div>
-                    <div class="form-group"><label>اختر الزبون الآجل:</label><select id="adminCreditCustomerSelect" class="form-control" onchange="loadAdminCustomerCreditInfo()"><option value="">-- اختر زبوناً آجلاً --</option></select></div>
+                <!-- قسم إدارة دفتر الدين للزبائن الآجلين -->
+                <div class="adm-sec" style="border-color:var(--gold-color); background:rgba(212,175,55,0.04);">
+                    <div class="adm-sec-title"><span style="color:var(--gold-color);">📒 إدارة دفتر الدين الآجل (إضافة ديون وتسديدات)</span></div>
+                    <div class="form-group"><label>اختر الزبون الآجل:</label><select id="adminDebtCustomerSelect" class="form-control" onchange="loadAdminCustomerDebtDetails()"><option value="">-- اختر زبون آجل --</option></select></div>
                     <div class="stats-grid">
-                        <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">الرصيد الحالي ($)</div><div class="stats-value" id="adminCustCurrentDebtUSD">0 $</div></div>
-                        <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">الرصيد الحالي (ل.س)</div><div class="stats-value" style="color:var(--success-color);" id="adminCustCurrentDebtSYP">0 ل.س</div></div>
+                        <div class="form-group"><label>إضافة دين جديد ($):</label><input type="number" step="0.01" id="adminAddDebtUSD" class="form-control" placeholder="مثال: 50"></div>
+                        <div class="form-group"><label>نسبة تكلفة/فائدة مئوية (%):</label><input type="number" step="0.1" id="adminDebtFeePct" class="form-control" value="0"></div>
                     </div>
-                    <hr style="border-color:var(--border-color); margin:10px 0;">
-                    <div style="color:var(--gold-color); font-weight:bold; font-size:12px; margin-bottom:6px;">➕ إضافة دين جديد (مع نسبة الزيادة)</div>
-                    <div class="stats-grid">
-                        <div class="form-group"><label>المبلغ الأصلي ($):</label><input type="number" step="0.01" id="adminAddDebtOriginalUSD" class="form-control" placeholder="0.00"></div>
-                        <div class="form-group"><label>نسبة الزيادة / الآجل (%):</label><input type="number" step="0.1" id="adminAddDebtPct" class="form-control" value="0"></div>
-                    </div>
-                    <div class="form-group"><label>تفاصيل الدين / الطلب:</label><input type="text" id="adminAddDebtDesc" class="form-control" placeholder="مثال: فاتورة مواد غذائية تقسيط..."></div>
-                    <button onclick="adminSubmitNewDebt()" class="btn" style="background:var(--success-color); color:#000; margin-bottom:10px;">➕ ترحيل الدين إلى حساب الزبون</button>
-                    
-                    <hr style="border-color:var(--border-color); margin:10px 0;">
-                    <div style="color:#00e676; font-weight:bold; font-size:12px; margin-bottom:6px;">💵 تسجيل دفعة واصلة (خصم من الدين وترحيل للخزينة)</div>
-                    <div class="form-group"><label>المبلغ المسدد ($):</label><input type="number" step="0.01" id="adminPaymentAmountUSD" class="form-control" placeholder="50.00"></div>
-                    <div class="form-group"><label>ملاحظات الدفعة:</label><input type="text" id="adminPaymentNotes" class="form-control" placeholder="دفعة نقدية / تحويل..."></div>
-                    <button onclick="adminSubmitPayment()" class="btn" style="background:var(--gold-color); color:#000;">✅ تسجيل الدفعة وترحيلها للخزينة</button>
+                    <div class="form-group"><label>سبب أو بيان الدين:</label><input type="text" id="adminDebtReason" class="form-control" placeholder="مثال: فاتورة مواد غذائية بالآجل"></div>
+                    <button onclick="adminAddDebtToCustomer()" class="btn" style="background:var(--gold-color); color:#000; margin-bottom:8px;">➕ تسجيل الدين على الزبون</button>
+                    <hr style="border:0; border-top:1px dashed var(--border-color); margin:10px 0;">
+                    <div class="form-group"><label>تسجيل دفعة نقدية واصلة ($):</label><input type="number" step="0.01" id="adminPayDebtUSD" class="form-control" placeholder="مثال: 30"></div>
+                    <button onclick="adminPayCustomerDebt()" class="btn" style="background:var(--success-color); color:#000; margin-bottom:8px;">✅ تسجيل تسديد دفعة (ترحيل تلقائي للخزينة)</button>
+                    <div id="adminCustomerDebtSummaryBox" style="font-size:11px; margin-top:8px; color:var(--gold-color); font-weight:bold;"></div>
                 </div>
 
                 <div class="adm-sec" style="border-color:#00b0ff;">
@@ -572,6 +599,12 @@
                         <div class="form-group"><label>معرف شام كاش المتجر:</label><input type="text" id="adminShamWalletInput" class="form-control"></div>
                         <div class="form-group"><label>واتساب سائق التوصيل:</label><input type="text" id="deliveryPhoneInput" class="form-control"></div>
                     </div>
+                    <!-- إعداد تعيين مدير التصدير برقم هاتفه -->
+                    <div class="form-group" style="margin-top:10px;">
+                        <label style="color:var(--info-color);">📱 رقم هاتف "مدير التصدير" المعتمد:</label>
+                        <input type="text" id="exporterPhoneInput" class="form-control" placeholder="09XXXXXXXX">
+                        <small style="color:var(--gray-text);">هذا الرقم يمنح صاحبه صلاحية الدخول للوحة التصدير التشغيلية حصراً دون رؤية الأموال والتكاليف.</small>
+                    </div>
                 </div>
 
                 <div class="adm-sec">
@@ -608,29 +641,33 @@
         </div>
     </div>
 
+    <!-- نافذة تعديل بيانات الزبون الآمنة (مع الحفاظ على النقاط والسجل وتعديل الهاتف) -->
     <div id="adminEditCustomerModal" class="modal-overlay" style="z-index:1100;">
         <div class="modal-content">
-            <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">✏️ تعديل بيانات الزبون والرتبة</h3>
+            <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">✏️ تعديل بيانات الزبون وتصحيح الهاتف</h3>
             <input type="hidden" id="adminCustOrigPhone">
             <div class="form-group"><label>الاسم:</label><input type="text" id="adminCustName" class="form-control"></div>
-            <div class="form-group"><label>الهاتف:</label><input type="text" id="adminCustPhone" class="form-control" disabled style="opacity:0.7;"></div>
+            <div class="form-group">
+                <label>رقم الهاتف (قابل للتعديل والتصحيح دون فقدان السجل أو النقاط):</label>
+                <input type="tel" id="adminCustPhone" class="form-control" placeholder="09XXXXXXXX" maxlength="10">
+            </div>
             <div class="form-group"><label>المنطقة:</label><select id="adminCustRegion" class="form-control"></select></div>
             <div class="form-group">
-                <label>نوع الحساب (يحدد من الإدارة حصراً):</label>
+                <label>نوع الحساب:</label>
                 <select id="adminCustType" class="form-control">
                     <option value="retail">زبون مفرق عادي</option>
                     <option value="wholesale">زبون جملة</option>
                     <option value="neighbors">جيران المتجر (سعر مفرق + توصيل خاص)</option>
+                    <option value="debt_customer">زبون آجل / دفتر دين (له دفتر حساب بالدولار)</option>
                     <option value="partner">شريك (له لوحة أرباح ومخزون خاصة)</option>
-                    <option value="credit">زبون آجل (دفتر الدين وحسابات الحماية)</option>
                 </select>
             </div>
             <div class="form-group"><label>العنوان:</label><input type="text" id="adminCustAddress" class="form-control"></div>
             <div class="form-group"><label>النقاط:</label><input type="number" id="adminCustPoints" class="form-control"></div>
-            <div style="display:flex; gap:8px;"><button onclick="saveAdminCustomerEdit()" class="btn">💾 حفظ التعديلات</button><button onclick="closeModal('adminEditCustomerModal')" class="btn btn-danger" style="width:35%;">إلغاء</button></div>
+            <div style="display:flex; gap:8px;"><button onclick="saveAdminCustomerEdit()" class="btn">💾 حفظ وتحديث السجل</button><button onclick="closeModal('adminEditCustomerModal')" class="btn btn-danger" style="width:35%;">إلغاء</button></div>
         </div>
     </div>
-    
+
     <script>
         const $ = id => document.getElementById(id);
         const setTxt = (id, v) => { const el = $(id); if (el) el.textContent = v; };
@@ -638,7 +675,7 @@
         const closeModal = id => { if ($(id)) $(id).style.display = "none"; };
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
-        let adminWhatsAppNumber = "963965461504", shamWalletIdGlobal = "da3e13cd8a2ef2af282445e148df9599";
+        let adminWhatsAppNumber = "963965461504", shamWalletIdGlobal = "da3e13cd8a2ef2af282445e148df9599", exporterPhoneGlobal = "";
         const _K = [102,99,106,107,26,18,18,28,4,4,102,100,106,106,127,99,120];
         const verifyAdminPass = s => typeof s === "string" && s.length === _K.length && _K.every((v, i) => (s.charCodeAt(i) ^ 43) === v);
 
@@ -704,7 +741,7 @@
             history.pushState({ page: 'store_home' }, '');
             window.addEventListener('popstate', () => {
                 if (isExitingApp) return;
-                for (let id of ['cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal', 'competitionsPage', 'creditLedgerModal']) {
+                for (let id of ['cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal', 'competitionsPage', 'debtBookModal', 'exporterDashboardModal']) {
                     const el = $(id);
                     if (el && (el.style.display === 'flex' || el.style.display === 'block')) {
                         el.style.display = 'none';
@@ -891,6 +928,7 @@
             deliveryDriverPhone = d.deliveryDriverPhone || "";
             adminWhatsAppNumber = d.adminWhatsApp || "963965461504";
             shamWalletIdGlobal = d.shamWalletId || "da3e13cd8a2ef2af282445e148df9599";
+            exporterPhoneGlobal = d.exporterPhone || "";
             if (d.workHours) workHoursSettings = { enabled: !!d.workHours.enabled, open: d.workHours.open || "08:00", close: d.workHours.close || "23:00" };
             if ($("workHoursEnabled")) $("workHoursEnabled").checked = workHoursSettings.enabled;
             setVal("workHourOpen", workHoursSettings.open);
@@ -909,7 +947,8 @@
             setVal("deliveryPhoneInput", deliveryDriverPhone);
             setVal("adminWhatsAppInput", adminWhatsAppNumber);
             setVal("adminShamWalletInput", shamWalletIdGlobal);
-            checkStoreWorkHours(); renderStore();
+            setVal("exporterPhoneInput", exporterPhoneGlobal);
+            checkStoreWorkHours(); renderStore(); syncCurrentUser();
         });
 
         db.ref("adminAccounting").on("value", snap => {
@@ -944,7 +983,16 @@
         });
 
         db.ref("specialOffers").on("value", snap => { specialOffers = snap.val() || {}; renderSpecialOffers(); renderAdminOffersList(); renderStatsDashboard(); });
-        db.ref("users").on("value", snap => { users = snap.val() || {}; syncCurrentUser(); renderAdminCustomers(); renderLeaderboard(); renderStatsDashboard(); renderStore(); populateAdminPartnerSelect(); populateAdminCreditCustomerSelect(); });
+        db.ref("users").on("value", snap => {
+            users = snap.val() || {};
+            syncCurrentUser();
+            renderAdminCustomers();
+            populateAdminDebtCustomerSelect();
+            renderLeaderboard();
+            renderStatsDashboard();
+            renderStore();
+            populateAdminPartnerSelect();
+        });
         db.ref("partnersConfig").on("value", snap => { window.partnersConfigData = snap.val() || {}; syncCurrentUser(); loadPartnerConfig(); renderStatsDashboard(); });
 
         db.ref("competition").on("value", snap => {
@@ -963,6 +1011,7 @@
             knownOrderIds = newIds;
             pendingOrders = newOrders;
             renderPendingOrders();
+            renderExporterPendingOrders();
         });
 
         db.ref("completedOrdersHistory").on("value", snap => { completedOrdersHistory = snap.val() || {}; renderStatsDashboard(); renderAdminProducts(); });
@@ -1002,7 +1051,18 @@
             const prev = (oldPhone && users[oldPhone]) ? users[oldPhone] : (users[newPhone] || currentUser || {});
             if (prev.banned) return alert("🚫 عذراً، هذا الحساب محظور.");
 
-            const updatedData = { name, phone: newPhone, region, address, points: prev.points || 0, purchases: prev.purchases || {}, userType: prev.userType || "retail", pointsVisibility: $("regPointsVisibility").value, banned: !!prev.banned };
+            const updatedData = {
+                name, phone: newPhone, region, address,
+                points: prev.points || 0,
+                purchases: prev.purchases || {},
+                userType: prev.userType || "retail",
+                pointsVisibility: $("regPointsVisibility").value,
+                banned: !!prev.banned,
+                successOrdersCount: prev.successOrdersCount || 0,
+                cancelledOrdersCount: prev.cancelledOrdersCount || 0,
+                debtUSD: prev.debtUSD || 0,
+                debtHistory: prev.debtHistory || {}
+            };
             if (oldPhone && oldPhone !== newPhone && users[oldPhone]) db.ref("users/" + oldPhone).remove();
 
             currentUser = updatedData;
@@ -1018,21 +1078,106 @@
             return idx !== -1 ? `#${idx + 1}` : "-";
         }
 
+        function isExporterUser() {
+            return currentUser && exporterPhoneGlobal && currentUser.phone === exporterPhoneGlobal;
+        }
+
         function syncCurrentUser() {
             if (!currentUser?.phone) return;
             if (users[currentUser.phone]) { currentUser = { ...currentUser, ...users[currentUser.phone] }; localStorage.setItem("moaath_user", JSON.stringify(currentUser)); }
             const pts = Math.round(currentUser.points || 0), rank = calculateUserRank(currentUser.phone);
             setTxt("userNameDisplay", currentUser.name);
             setTxt("userRegionBadge", currentUser.region ? `(${currentUser.region})` : "");
-            const isW = currentUser.userType === "wholesale", isN = currentUser.userType === "neighbors", isP = currentUser.userType === "partner", isC = currentUser.userType === "credit";
-            if ($("creditLedgerBtn")) $("creditLedgerBtn").style.display = isC ? "inline-block" : "none";
-            setTxt("userTypeBadge", isP ? "[شريك]" : (isC ? "[آجل]" : (isN ? "[جيران المتجر]" : (isW ? "[جملة]" : "[مفرق]"))));
+            const ut = currentUser.userType || "retail";
+            const isW = ut === "wholesale", isN = ut === "neighbors", isP = ut === "partner", isD = ut === "debt_customer";
+            setTxt("userTypeBadge", isP ? "[شريك]" : (isD ? "[آجل / دفتر]" : (isN ? "[جيران المتجر]" : (isW ? "[جملة]" : "[مفرق]"))));
             setTxt("userPoints", pts);
             setTxt("compUserPoints", pts);
             if ($("userRankBadge")) { $("userRankBadge").style.display = rank !== "-" ? "inline-flex" : "none"; setTxt("userRankBadge", `🏅 ترتيبي: ${rank}`); }
             setTxt("compUserRankDisplay", rank !== "-" ? rank : "غير مصنف");
             if ($("redeemPointsBtn")) $("redeemPointsBtn").style.display = (pts >= (parseInt(compSettings.minRedeemPoints) || 500) && !currentUser.banned) ? "inline-block" : "none";
             if ($("partnerDashboardBtn")) $("partnerDashboardBtn").style.display = isP ? "inline-block" : "none";
+            if ($("debtBookUserBtn")) $("debtBookUserBtn").style.display = isD ? "inline-block" : "none";
+            if ($("exporterDashboardBtn")) $("exporterDashboardBtn").style.display = isExporterUser() ? "inline-block" : "none";
+        }
+
+        function openDebtBookModal() {
+            if (!currentUser || currentUser.userType !== "debt_customer") return;
+            const debtUSD = currentUser.debtUSD || 0;
+            setTxt("userDebtUSD", debtUSD.toFixed(2));
+            setTxt("userDebtSYP", calcSYP(debtUSD).toLocaleString() + " ل.س");
+            const hist = Object.values(currentUser.debtHistory || {}).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
+            $("userDebtHistoryList").innerHTML = !hist.length ? `<div style="text-align:center; color:var(--gray-text); font-size:11px;">لا توجد حركات دين أو تسديد مسجلة في الدفتر.</div>` :
+                hist.map(h => `<div class="leader-row"><div><b>${h.title}</b><br><small style="color:var(--gray-text);">${h.dateStr}</small></div><div style="text-align:left;"><b style="color:${h.type === 'debt' ? 'var(--danger-color)' : 'var(--success-color)'};">${h.type === 'debt' ? '+' : '-'}${h.amountUSD.toFixed(2)} $</b><br><small style="color:var(--gold-color);">${calcSYP(h.amountUSD).toLocaleString()} ل.س</small></div></div>`).join("");
+            $("debtBookModal").style.display = "flex";
+        }
+
+        function openExporterDashboard() {
+            if (!isExporterUser()) return alert("⚠️ ليس لديك صلاحيات مدير التصدير.");
+            renderExporterPendingOrders();
+            $("exporterDashboardModal").style.display = "block";
+        }
+
+        function renderExporterPendingOrders() {
+            const list = $("exporterPendingOrdersList"); if (!list) return;
+            const keys = Object.keys(pendingOrders);
+            if (!keys.length) return (list.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد طلبات معلقة حالياً.</p>`);
+            list.innerHTML = keys.map(id => {
+                const o = pendingOrders[id], itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${i.name} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
+                return `<div class="adm-card" style="border-color:#00b0ff;"><div style="display:flex; justify-content:space-between; color:#00b0ff; font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span></div><div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress}</div><div style="border-top:1px dashed var(--border-color); border-bottom:1px dashed var(--border-color); padding:6px 0; margin:6px 0;">${itemsHtml}</div><div style="font-weight:bold; margin-bottom:8px;">الإجمالي مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</div><div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000;" onclick="exporterConfirmOrder('${id}')">✅ تأكيد الطلب وتحويله للتوصيل</button><button class="btn btn-danger" onclick="exporterCancelOrder('${id}')">❌ إلغاء الطلب</button></div></div>`;
+            }).join("");
+        }
+
+        function exporterConfirmOrder(orderId) {
+            const o = pendingOrders[orderId]; if (!o) return;
+            // تنفيذ تأكيد الطلب وخصم المخزون وزيادة عداد الطلبات الناجحة للزبون
+            (o.items || []).forEach(i => {
+                if (i.id.startsWith("OFFER_") && specialOffers[i.id]) db.ref(`specialOffers/${i.id}/stock`).set(Math.max(0, (parseInt(specialOffers[i.id].stock) || 0) - i.qty));
+                else if (products[i.id]) db.ref(`products/${i.id}/stock`).set(Math.max(0, (parseInt(products[i.id].stock) || 0) - i.qty));
+            });
+            const phone = o.customerPhone, purch = users[phone]?.purchases || {};
+            (o.items || []).forEach(i => { if (!i.id.startsWith("OFFER_")) purch[i.id] = true; });
+            const userRef = users[phone] || {};
+            const upPts = (userRef.points || 0) + (o.earnedPoints || 0);
+            const successCount = (userRef.successOrdersCount || 0) + 1;
+
+            // إذا كان الزبون من زبائن الآجل، يتم تسجيل الدين عليه تلقائياً بقيمة الفاتورة بالدولار
+            let newDebtUSD = userRef.debtUSD || 0;
+            let debtHistory = userRef.debtHistory || {};
+            if (userRef.userType === "debt_customer") {
+                const subUSD = (o.subtotalSaleSYP || 0) / exchangeRate;
+                newDebtUSD += subUSD;
+                const dId = "DEBT_" + Date.now();
+                debtHistory[dId] = { id: dId, type: 'debt', amountUSD: subUSD, title: `شراء طلب آجل رقم ${orderId}`, dateISO: new Date().toISOString(), dateStr: new Date().toLocaleString("ar-SY") };
+            }
+
+            db.ref(`users/${phone}`).update({ name: o.customerName, phone, region: o.customerRegion, address: o.customerAddress, points: upPts, purchases: purch, successOrdersCount: successCount, debtUSD: newDebtUSD, debtHistory });
+            db.ref("completedOrdersHistory/" + orderId).set(o); db.ref("pendingOrders/" + orderId).remove();
+
+            window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(`مرحباً ${o.customerName} 🌸
+تم تأكيد طلبك في *متجر معاذ* وجاري توصيله إلى (${o.customerRegion})!
+💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س
+🎁 نقاطك الحالية: ${upPts}`)}`, "_blank");
+            if (deliveryDriverPhone) setTimeout(() => window.open(`https://wa.me/${formatWhatsAppPhone(deliveryDriverPhone)}?text=${encodeURIComponent(`🛵 *طلب توصيل - متجر معاذ*
+👤 الزبون: ${o.customerName}
+📱 الهاتف: ${o.customerPhone}
+🏘️ المنطقة: ${o.customerRegion}
+📍 العنوان: ${o.customerAddress}
+💵 *المطلوب تحصيله:* ${o.totalSaleSYP.toLocaleString()} ل.س`)}`, "_blank"), 700);
+            alert("✅ تم تأكيد الطلب بنجاح وتحويله للتوصيل وتحديث المخزون ونشاط الزبون!");
+        }
+
+        function exporterCancelOrder(orderId) {
+            const o = pendingOrders[orderId];
+            if (!o) return;
+            if (!confirm("إلغاء هذا الطلب؟")) return;
+            const phone = o.customerPhone;
+            if (users[phone]) {
+                const cancelledCount = (users[phone].cancelledOrdersCount || 0) + 1;
+                db.ref(`users/${phone}/cancelledOrdersCount`).set(cancelledCount);
+            }
+            db.ref("pendingOrders/" + orderId).remove();
+            alert("❌ تم إلغاء الطلب وتسجيله في عداد الطلبات الملغاة للزبون.");
         }
 
         function redeemPointsWhatsApp() {
@@ -1118,7 +1263,7 @@ https://moaathallii-commits.github.io/-/`)}`, "_blank");
                 item = { id, name: "🔥 عرض: " + so.name, category: "عروض خاصة", priceUSD: parseFloat((isW && so.wholesaleUSD > 0) ? so.wholesaleUSD : so.newPriceUSD) || 0, costPrice: parseFloat(so.costPrice) || 0, stock: parseInt(so.stock) || 0, pointsPct: parseFloat(so.pointsPct) || 2 };
             } else {
                 const p = products[id]; if (!p) return;
-                item = { id, name: p.name || "", category: p.category || "غير مصنف", priceUSD: parseFloat((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD) || 0, costPrice: parseFloat(p.costPrice) || 0, stock: parseInt(p.stock) || 0, pointsPct: parseFloat(p.pointsPct) || 2 };
+                item = { id, name: p.name || "", category: p.category || "غير مصنف", priceUSD: parseFloat((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0)) || 0, costPrice: parseFloat(p.costPrice) || 0, stock: parseInt(p.stock) || 0, pointsPct: parseFloat(p.pointsPct) || 2 };
             }
             const nQty = (cart[id] ? cart[id].qty : 0) + delta;
             if (nQty > item.stock) return alert("⚠️ الكمية المطلوبة غير متوفرة بالكامل بالمخزون!");
@@ -1204,7 +1349,7 @@ https://moaathallii-commits.github.io/-/`)}`, "_blank");
             const orderPayload = {
                 orderId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
                 customerName: currentUser.name, customerPhone: currentUser.phone, customerRegion: reg, customerAddress: currentUser.address,
-                paymentMethod: currentUser.userType === "credit" ? "حساب آجل (Credit)" : "شام كاش (Sham Cash)", notes: ($("orderNotes")?.value || "").trim(), items: ordItems,
+                paymentMethod: "شام كاش (Sham Cash)", notes: ($("orderNotes")?.value || "").trim(), items: ordItems,
                 subtotalSaleSYP: subSale, deliveryFeeSYP: fee, totalSaleSYP: finalTotalSYP, totalCostSYP: totCost, netProfitSYP: subSale - totCost, earnedPoints: totPts
             };
             let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*
@@ -1212,7 +1357,7 @@ https://moaathallii-commits.github.io/-/`)}`, "_blank");
 📱 الهاتف: ${orderPayload.customerPhone}
 🏘️ المنطقة: ${orderPayload.customerRegion}
 📍 العنوان: ${orderPayload.customerAddress}
-💳 الدفع: ${orderPayload.paymentMethod}
+💳 الدفع: شام كاش
 `;
             if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}
 `;
@@ -1419,7 +1564,7 @@ https://moaathallii-commits.github.io/-/`)}`, "_blank");
                 adminClickCount = 0;
                 if (localStorage.getItem("moaath_admin_unlocked") === "true") {
                     $("adminModal").style.display = "flex";
-                    renderStatsDashboard(); populateAdminPartnerSelect(); populateAdminCreditCustomerSelect(); populatePartnerSelectOptions();
+                    renderStatsDashboard(); populateAdminPartnerSelect(); populatePartnerSelectOptions(); populateAdminDebtCustomerSelect();
                     return;
                 }
                 const pass = prompt("🔐 كلمة مرور الإدارة:");
@@ -1427,7 +1572,7 @@ https://moaathallii-commits.github.io/-/`)}`, "_blank");
                 if (verifyAdminPass(pass.trim())) {
                     localStorage.setItem("moaath_admin_unlocked", "true");
                     $("adminModal").style.display = "flex";
-                    renderStatsDashboard(); populateAdminPartnerSelect(); populateAdminCreditCustomerSelect(); populatePartnerSelectOptions();
+                    renderStatsDashboard(); populateAdminPartnerSelect(); populatePartnerSelectOptions(); populateAdminDebtCustomerSelect();
                 } else alert("❌ كلمة المرور غير صحيحة!");
             } else adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 1800);
         }
@@ -1465,73 +1610,60 @@ https://moaathallii-commits.github.io/-/`)}`, "_blank");
                 if (i.id.startsWith("OFFER_") && specialOffers[i.id]) db.ref(`specialOffers/${i.id}/stock`).set(Math.max(0, (parseInt(specialOffers[i.id].stock) || 0) - i.qty));
                 else if (products[i.id]) db.ref(`products/${i.id}/stock`).set(Math.max(0, (parseInt(products[i.id].stock) || 0) - i.qty));
             });
-            const phone = o.customerPhone, customerObj = users[phone] || {};
-            const purch = customerObj.purchases || {};
+            const phone = o.customerPhone, purch = users[phone]?.purchases || {};
             (o.items || []).forEach(i => { if (!i.id.startsWith("OFFER_")) purch[i.id] = true; });
-            const upPts = (customerObj.points || 0) + (o.earnedPoints || 0);
+            const userRef = users[phone] || {};
+            const upPts = (userRef.points || 0) + (o.earnedPoints || 0);
+            const successCount = (userRef.successOrdersCount || 0) + 1;
 
-            const isCreditUser = customerObj.userType === "credit";
-            let updates = {};
-
-            updates[`users/${phone}/name`] = o.customerName;
-            updates[`users/${phone}/phone`] = phone;
-            updates[`users/${phone}/region`] = o.customerRegion;
-            updates[`users/${phone}/address`] = o.customerAddress;
-            updates[`users/${phone}/points`] = upPts;
-            updates[`users/${phone}/purchases`] = purch;
-
-            if (isCreditUser) {
-                const totalInvoiceSYP = o.totalSaleSYP || 0;
-                const totalInvoiceUSD = totalInvoiceSYP / exchangeRate;
-                const currentDebt = parseFloat(customerObj.debtUSD) || 0;
-                const newDebt = currentDebt + totalInvoiceUSD;
-                
-                const txId = "TX_" + Date.now();
-                const now = new Date();
-                const txData = {
-                    id: txId,
-                    type: "debt",
-                    amountUSD: totalInvoiceUSD,
-                    originalUSD: totalInvoiceUSD,
-                    percentage: 0,
-                    desc: `طلب فاتورة آجل تلقائي (#${o.orderId})`,
-                    dateStr: now.toLocaleString("ar-SY"),
-                    timestamp: now.toISOString()
-                };
-
-                updates[`users/${phone}/debtUSD`] = newDebt;
-                updates[`users/${phone}/transactions/${txId}`] = txData;
+            let newDebtUSD = userRef.debtUSD || 0;
+            let debtHistory = userRef.debtHistory || {};
+            if (userRef.userType === "debt_customer") {
+                const subUSD = (o.subtotalSaleSYP || 0) / exchangeRate;
+                newDebtUSD += subUSD;
+                const dId = "DEBT_" + Date.now();
+                debtHistory[dId] = { id: dId, type: 'debt', amountUSD: subUSD, title: `شراء طلب آجل رقم ${orderId}`, dateISO: new Date().toISOString(), dateStr: new Date().toLocaleString("ar-SY") };
             }
 
-            updates[`completedOrdersHistory/${orderId}`] = o;
-            updates[`pendingOrders/${orderId}`] = null;
-
-            db.ref().update(updates).then(() => {
-                let msg = `مرحباً ${o.customerName} 🌸
+            db.ref(`users/${phone}`).update({ name: o.customerName, phone, region: o.customerRegion, address: o.customerAddress, points: upPts, purchases: purch, successOrdersCount: successCount, debtUSD: newDebtUSD, debtHistory });
+            db.ref("completedOrdersHistory/" + orderId).set(o); db.ref("pendingOrders/" + orderId).remove();
+            window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(`مرحباً ${o.customerName} 🌸
 تم تأكيد طلبك في *متجر معاذ* وجاري توصيله إلى (${o.customerRegion})!
-💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س`;
-                if (isCreditUser) {
-                    msg += `
-📒 تمت إضافة قيمة الفاتورة تلقائياً إلى دفتر الدين الخاص بك.`;
-                }
-                window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(msg)}`, "_blank");
-                
-                if (deliveryDriverPhone) {
-                    setTimeout(() => window.open(`https://wa.me/${formatWhatsAppPhone(deliveryDriverPhone)}?text=${encodeURIComponent(`🛵 *طلب توصيل - متجر معاذ*
+💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س
+🎁 نقاطك الحالية: ${upPts}`)}`, "_blank");
+            if (deliveryDriverPhone) setTimeout(() => window.open(`https://wa.me/${formatWhatsAppPhone(deliveryDriverPhone)}?text=${encodeURIComponent(`🛵 *طلب توصيل - متجر معاذ*
 👤 الزبون: ${o.customerName}
 📱 الهاتف: ${o.customerPhone}
 🏘️ المنطقة: ${o.customerRegion}
 📍 العنوان: ${o.customerAddress}
-💵 *المطلوب تحصيله:* ${isCreditUser ? '0 (حساب آجل)' : o.totalSaleSYP.toLocaleString() + ' ل.س'}`)}`, "_blank"), 700);
-                }
-            });
+💵 *المطلوب تحصيله:* ${o.totalSaleSYP.toLocaleString()} ل.س`)}`, "_blank"), 700);
         }
 
-        function cancelOrder(id) { if (confirm("إلغاء هذه الفاتورة؟")) db.ref("pendingOrders/" + id).remove(); }
+        function cancelOrder(id) {
+            const o = pendingOrders[id];
+            if (!o) return;
+            if (!confirm("إلغاء هذه الفاتورة؟")) return;
+            const phone = o.customerPhone;
+            if (users[phone]) {
+                const cancelledCount = (users[phone].cancelledOrdersCount || 0) + 1;
+                db.ref(`users/${phone}/cancelledOrdersCount`).set(cancelledCount);
+            }
+            db.ref("pendingOrders/" + id).remove();
+        }
+
         function cancelAllPendingOrders() {
             const cnt = Object.keys(pendingOrders || {}).length;
             if (!cnt) return alert("ℹ️ لا توجد طلبات معلقة.");
-            if (confirm(`⚠️ إلغاء جميع الطلبات المعلقة (${cnt} طلب)؟`)) db.ref("pendingOrders").remove();
+            if (confirm(`⚠️ إلغاء جميع الطلبات المعلقة (${cnt} طلب)؟`)) {
+                Object.values(pendingOrders).forEach(o => {
+                    const phone = o.customerPhone;
+                    if (users[phone]) {
+                        const cancelledCount = (users[phone].cancelledOrdersCount || 0) + 1;
+                        db.ref(`users/${phone}/cancelledOrdersCount`).set(cancelledCount);
+                    }
+                });
+                db.ref("pendingOrders").remove();
+            }
         }
 
         function saveSupplier() {
@@ -1562,6 +1694,87 @@ https://moaathallii-commits.github.io/-/`)}`, "_blank");
             const cur = sel.value;
             sel.innerHTML = '<option value="">-- اختر شريكاً --</option>' + Object.values(users).filter(u => u.userType === "partner").map(p => `<option value="${p.phone}">${p.name} (${p.phone})</option>`).join("");
             if (cur) sel.value = cur;
+        }
+
+        function populateAdminDebtCustomerSelect() {
+            const sel = $("adminDebtCustomerSelect"); if (!sel) return;
+            const cur = sel.value;
+            sel.innerHTML = '<option value="">-- اختر زبون آجل --</option>' + Object.values(users).filter(u => u.userType === "debt_customer").map(u => `<option value="${u.phone}">${u.name} (${u.phone}) - الرصيد: ${(u.debtUSD || 0).toFixed(2)}$</option>`).join("");
+            if (cur) sel.value = cur;
+        }
+
+        function loadAdminCustomerDebtDetails() {
+            const phone = $("adminDebtCustomerSelect")?.value;
+            const box = $("adminCustomerDebtSummaryBox");
+            if (!phone || !users[phone]) { if (box) box.innerHTML = ""; return; }
+            const u = users[phone];
+            const dUSD = u.debtUSD || 0;
+            if (box) box.innerHTML = `👤 الزبون: ${u.name} | الدين الحالي: ${dUSD.toFixed(2)}$ (${calcSYP(dUSD).toLocaleString()} ل.س)`;
+        }
+
+        function adminAddDebtToCustomer() {
+            const phone = $("adminDebtCustomerSelect")?.value;
+            if (!phone || !users[phone]) return alert("⚠️ يرجى اختيار زبون آجل أولاً.");
+            const addUSD = parseFloat($("adminAddDebtUSD")?.value) || 0;
+            const feePct = parseFloat($("adminDebtFeePct")?.value) || 0;
+            const reason = ($("adminDebtReason")?.value || "").trim() || "إضافة دين جديد من الإدارة";
+            if (addUSD <= 0) return alert("⚠️ أدخل مبلغ دين صحيح.");
+
+            const finalAddUSD = addUSD * (1 + (feePct / 100));
+            const u = users[phone];
+            const newDebt = (u.debtUSD || 0) + finalAddUSD;
+            const dId = "DEBT_" + Date.now();
+            const debtHistory = u.debtHistory || {};
+            debtHistory[dId] = { id: dId, type: 'debt', amountUSD: finalAddUSD, title: reason + (feePct > 0 ? ` (شامل زيادة ${feePct}%)` : ''), dateISO: new Date().toISOString(), dateStr: new Date().toLocaleString("ar-SY") };
+
+            db.ref(`users/${phone}`).update({ debtUSD: newDebt, debtHistory }).then(() => {
+                alert(`✅ تم تسجيل الدين بنجاح على الزبون (${u.name}) بقيمة ${finalAddUSD.toFixed(2)}$!`);
+                setVal("adminAddDebtUSD", ""); setVal("adminDebtFeePct", "0"); setVal("adminDebtReason", "");
+                loadAdminCustomerDebtDetails(); renderAdminCustomers();
+            });
+        }
+
+        function adminPayCustomerDebt() {
+            const phone = $("adminDebtCustomerSelect")?.value;
+            if (!phone || !users[phone]) return alert("⚠️ يرجى اختيار زبون آجل أولاً.");
+            const payUSD = parseFloat($("adminPayDebtUSD")?.value) || 0;
+            if (payUSD <= 0) return alert("⚠️ أدخل مبلغ تسديد صحيح.");
+
+            const u = users[phone];
+            const currentDebt = u.debtUSD || 0;
+            if (payUSD > currentDebt && !confirm(`⚠️ مبلغ التسديد (${payUSD}$) أكبر من الدين الحالي (${currentDebt.$ || currentDebt.toFixed(2)}$). هل تريد المتابعة وتوثيق الدفعة؟`)) return;
+
+            const newDebt = Math.max(0, currentDebt - payUSD);
+            const pId = "PAY_" + Date.now();
+            const debtHistory = u.debtHistory || {};
+            debtHistory[pId] = { id: pId, type: 'payment', amountUSD: payUSD, title: `تسديد دفعة نقدية واصلة`, dateISO: new Date().toISOString(), dateStr: new Date().toLocaleString("ar-SY") };
+
+            // الترحيل التلقائي للخزينة كإيراد نقدي واصل (عبر حفظ العملية في completedOrdersHistory أو صندوق الخزينة)
+            const paySYP = calcSYP(payUSD);
+            const treasuryEntryId = "TR_" + Date.now();
+            const treasuryUpdates = {};
+            treasuryUpdates[`users/${phone}/debtUSD`] = newDebt;
+            treasuryUpdates[`users/${phone}/debtHistory`] = debtHistory;
+            treasuryUpdates[`completedOrdersHistory/${treasuryEntryId}`] = {
+                orderId: treasuryEntryId,
+                timestamp: new Date().toLocaleString("ar-SY"),
+                dateISO: new Date().toISOString(),
+                customerName: u.name + " (تسديد دين آجل)",
+                customerPhone: phone,
+                customerRegion: u.region || "العوينة",
+                totalSaleSYP: paySYP,
+                subtotalSaleSYP: paySYP,
+                deliveryFeeSYP: 0,
+                totalCostSYP: 0,
+                netProfitSYP: paySYP,
+                items: [{ name: `تسديد دفعة دين بقيمة ${payUSD.toFixed(2)}$`, qty: 1, subSaleSYP: paySYP, subCostSYP: 0 }]
+            };
+
+            db.ref().update(treasuryUpdates).then(() => {
+                alert(`✅ تم تسجيل تسديد دفعة بقيمة ${payUSD.toFixed(2)}$ (${paySYP.toLocaleString()} ل.س) وترحيلها تلقائياً للخزينة وإيرادات المتجر!`);
+                setVal("adminPayDebtUSD", "");
+                loadAdminCustomerDebtDetails(); renderAdminCustomers(); renderStatsDashboard();
+            });
         }
 
         function loadPartnerConfig() {
@@ -1609,10 +1822,19 @@ https://moaathallii-commits.github.io/-/`)}`, "_blank");
 📅 التاريخ: ${new Date().toLocaleDateString("ar-SY")}
 ──────────────
 `;
-            list.forEach((p, idx) => { msg += `${idx + 1}. *${p.name}* (المتبقي لدينا: ${p.stock})
-`; });
+            list.forEach((p, idx) => {
+                const unit = p.unitType || "قطعة";
+                const perPkg = parseInt(p.itemsPerPackage) || 1;
+                const deficit = Math.max(1, (parseInt(p.alertLimit) || 2) - (parseInt(p.stock) || 0) + 2);
+                let qtyText = `${deficit} ${unit}`;
+                if (perPkg > 1 && (unit === "كرتونة" || unit === "طرد" || unit === "كيس")) {
+                    qtyText = `${deficit} ${unit} (تحتوي على ${deficit * perPkg} قطعة)`;
+                }
+                msg += `${idx + 1}. *${p.name}* ➔ المطلوب: *${qtyText}* (المتبقي لدينا: ${p.stock})
+`;
+            });
             msg += `──────────────
-يرجى تأكيد الطلب وتزويدنا بالأصناف المذكورة 🌸`;
+يرجى تأكيد الطلب وتزويدنا بالأصناف المذكورة بالكميات ووحدات القياس الدقيقة 🌸`;
             window.open(`https://wa.me/${formatWhatsAppPhone(supp.phone)}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
@@ -1632,7 +1854,11 @@ https://moaathallii-commits.github.io/-/`)}`, "_blank");
             Object.keys(bySupp).forEach(sId => {
                 const s = suppliers[sId];
                 html += `<div class="adm-card" style="border-color:var(--gold-color);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><b style="color:var(--gold-color);">🚚 ${s.name}</b><button onclick="sendSupplierShortagesWhatsApp('${sId}')" class="btn" style="width:auto; padding:4px 10px; font-size:10px; background:#25D366; color:#fff;">📲 إرسال فاتورة واتساب</button></div>` +
-                bySupp[sId].map(p => `<div style="font-size:11px; display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding:3px 0;"><span>• ${p.name}</span><span style="color:var(--danger-color); font-weight:bold;">متبقي: ${p.stock}</span></div>`).join("") + `</div>`;
+                bySupp[sId].map(p => {
+                    const unit = p.unitType || "قطعة";
+                    const perPkg = parseInt(p.itemsPerPackage) || 1;
+                    return `<div style="font-size:11px; display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding:3px 0;"><span>• ${p.name} <small style="color:var(--info-color);">(${unit}${perPkg > 1 ? ', ' + perPkg + ' قطع' : ''})</small></span><span style="color:var(--danger-color); font-weight:bold;">متبقي: ${p.stock}</span></div>`;
+                }).join("") + `</div>`;
             });
             if (unassigned.length) {
                 html += `<div class="adm-card"><b style="color:var(--gray-text);">📦 أصناف غير مربوطة بموزع:</b>` +
@@ -1648,7 +1874,7 @@ https://moaathallii-commits.github.io/-/`)}`, "_blank");
                 sel.innerHTML = '<option value="all">🌟 جميع التصنيفات</option>' + categories.filter(c => c !== "الكل").map(c => `<option value="${c}">${c}</option>`).join("") + '<option value="عروض خاصة">عروض خاصة</option>';
                 sel.value = cur;
             }
-            const period = $("reportPeriodSelect"]?.value || "total", selCat = sel?.value || "all", now = new Date();
+            const period = $("reportPeriodSelect")?.value || "total", selCat = sel?.value || "all", now = new Date();
             let totS = 0, totC = 0, netP = 0, catMap = {}, prodMap = {};
             let capBoxSYP = 0, drvNetSYP = 0, maintFundSYP = 0, importMgrAdminPool = 0, exportMgrAdminPool = 0;
 
@@ -1832,18 +2058,18 @@ ${pLines}
         }
 
         async function saveProduct() {
-            const editId = $("editProductId").value, name = $("prodName").value.trim(), costPrice = parseFloat($("prodCostUSD").value) || 0, priceUSD = parseFloat($("prodPriceUSD").value) || 0, wholesaleUSD = parseFloat($("prodWholesaleUSD").value) || 0, stock = parseInt($("prodStock").value) || 0, alertLimit = parseInt($("prodAlertLimit").value) || 2, pointsPct = parseFloat($("prodPointsPct").value) || 2, category = $("prodCategory").value, supplierId = $("prodSupplierSelect").value, f = $("prodImageInput");
+            const editId = $("editProductId").value, name = $("prodName").value.trim(), costPrice = parseFloat($("prodCostUSD").value) || 0, priceUSD = parseFloat($("prodPriceUSD").value) || 0, wholesaleUSD = parseFloat($("prodWholesaleUSD").value) || 0, stock = parseInt($("prodStock").value) || 0, alertLimit = parseInt($("prodAlertLimit").value) || 2, pointsPct = parseFloat($("prodPointsPct").value) || 2, category = $("prodCategory").value, supplierId = $("prodSupplierSelect").value, unitType = $("prodUnitType").value, itemsPerPackage = parseInt($("prodItemsPerPackage").value) || 1, f = $("prodImageInput");
             if (!name || priceUSD <= 0) return alert("يرجى إدخال اسم الصنف وسعر المبيع.");
             const id = editId || ("PROD_" + Date.now()); let thumb = products[id]?.thumb || "";
             if (f.files?.[0]) { const comp = await compressDualImages(f.files[0]); thumb = comp.thumb; highResImagesMemoryCache[id] = comp.image; await db.ref("productImages/" + id).set(comp.image); }
-            db.ref("products/" + id).set({ name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, supplierId, thumb, reviews: products[id]?.reviews || {} }).then(() => { resetProductForm(); alert("✅ تم حفظ الصنف بنجاح!"); });
+            db.ref("products/" + id).set({ name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, supplierId, unitType, itemsPerPackage, thumb, reviews: products[id]?.reviews || {} }).then(() => { resetProductForm(); alert("✅ تم حفظ الصنف بنجاح!"); });
         }
 
-        function resetProductForm() { ["editProductId", "prodName", "prodCostUSD", "prodPriceUSD", "prodWholesaleUSD", "prodImageInput", "prodSupplierSelect"].forEach(k => setVal(k, "")); setVal("prodStock", "10"); }
+        function resetProductForm() { ["editProductId", "prodName", "prodCostUSD", "prodPriceUSD", "prodWholesaleUSD", "prodImageInput", "prodSupplierSelect", "prodItemsPerPackage"].forEach(k => setVal(k, "")); setVal("prodStock", "10"); setVal("prodUnitType", "قطعة"); }
 
         function editProduct(id) {
             const p = products[id]; if (!p) return;
-            setVal("editProductId", id); setVal("prodName", p.name || ""); setVal("prodCostUSD", p.costPrice || 0); setVal("prodPriceUSD", p.priceUSD || 0); setVal("prodWholesaleUSD", p.wholesaleUSD || 0); setVal("prodStock", p.stock || 0); setVal("prodAlertLimit", p.alertLimit || 2); setVal("prodPointsPct", p.pointsPct || 2); setVal("prodCategory", p.category || ""); setVal("prodSupplierSelect", p.supplierId || "");
+            setVal("editProductId", id); setVal("prodName", p.name || ""); setVal("prodCostUSD", p.costPrice || 0); setVal("prodPriceUSD", p.priceUSD || 0); setVal("prodWholesaleUSD", p.wholesaleUSD || 0); setVal("prodStock", p.stock || 0); setVal("prodAlertLimit", p.alertLimit || 2); setVal("prodPointsPct", p.pointsPct || 2); setVal("prodCategory", p.category || ""); setVal("prodSupplierSelect", p.supplierId || ""); setVal("prodUnitType", p.unitType || "قطعة"); setVal("prodItemsPerPackage", p.itemsPerPackage || 1);
             $("productFormSection")?.scrollIntoView({ behavior: "smooth" });
         }
         function deleteProduct(id) { if (confirm("حذف هذا الصنف نهائياً؟")) { db.ref("products/" + id).remove(); db.ref("productImages/" + id).remove(); delete highResImagesMemoryCache[id]; } }
@@ -1864,10 +2090,10 @@ ${pLines}
             const keys = Object.keys(products).filter(id => products[id] && (!q || products[id].name?.toLowerCase().includes(q) || products[id].category?.toLowerCase().includes(q)));
             if (!keys.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف مطابقة.</p>`);
             container.innerHTML = keys.map(id => {
-                const p = products[id], supp = p.supplierId && suppliers[p.supplierId] ? ` | ${suppliers[p.supplierId].name}` : "", revs = p.reviews || {}, revHtml = Object.keys(revs).map(rId => `<div style="display:flex; justify-content:space-between; font-size:10px; background:var(--card-bg); padding:3px 6px; margin-top:3px; border-radius:4px;"><span>⭐ ${revs[rId].rating} - <b>${revs[rId].customerName}:</b> ${revs[rId].comment}</span><b onclick="deleteProductReview('${id}','${rId}')" style="color:var(--danger-color); cursor:pointer;">🗑️</b></div>`).join("");
+                const p = products[id], supp = p.supplierId && suppliers[p.supplierId] ? ` | ${suppliers[p.supplierId].name}` : "", unit = p.unitType || "قطعة", revs = p.reviews || {}, revHtml = Object.keys(revs).map(rId => `<div style="display:flex; justify-content:space-between; font-size:10px; background:var(--card-bg); padding:3px 6px; margin-top:3px; border-radius:4px;"><span>⭐ ${revs[rId].rating} - <b>${revs[rId].customerName}:</b> ${revs[rId].comment}</span><b onclick="deleteProductReview('${id}','${rId}')" style="color:var(--danger-color); cursor:pointer;">🗑️</b></div>`).join("");
                 return `<div class="adm-card">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                        <div><b>${p.name}</b> <small style="color:var(--gray-text);">(${p.category}${supp})</small></div>
+                        <div><b>${p.name}</b> <small style="color:var(--gray-text);">(${p.category}${supp}) - الوحدة: ${unit}</small></div>
                         <div style="display:flex; gap:4px;">
                             <button onclick="editProduct('${id}')" class="btn" style="width:auto; padding:3px 7px; font-size:10px;">✏️</button>
                             <button onclick="resetSalesFilter('prod','${id}')" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:#ff9800; color:#000;">🔄</button>
@@ -1917,21 +2143,75 @@ ${pLines}
             if (!sorted.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا يوجد زبائن.</p>`);
             container.innerHTML = sorted.map(u => {
                 const isB = !!u.banned, ut = u.userType || "retail";
-                const badge = ut === "wholesale" ? ["var(--gold-color)", "جملة"] : ut === "neighbors" ? ["#ff9800", "جيران"] : ut === "partner" ? ["#00b0ff", "شريك"] : ut === "credit" ? ["#D4AF37", "آجل"] : ["#00e676", "مفرق"];
-                return `<div class="adm-card" style="border-color:${isB ? 'var(--danger-color)' : 'var(--border-color)'};"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>👤 ${u.name} (${u.phone}) <b style="color:${badge[0]};">[${badge[1]}]</b></span><span style="color:var(--gold-color);">${Math.round(u.points || 0)} نقطة</span></div><div style="display:flex; gap:4px; margin-top:6px;"><button onclick="openAdminEditCustomerModal('${u.phone}')" class="btn" style="padding:3px 8px; font-size:10px; width:auto;">✏️ تعديل الرتبة والبيانات</button><button onclick="toggleBanCustomer('${u.phone}')" class="btn" style="padding:3px 8px; font-size:10px; width:auto; background:${isB ? 'var(--success-color)' : '#ff9800'}; color:#000;">${isB ? 'فك الحظر' : 'حظر'}</button></div></div>`;
+                const badge = ut === "wholesale" ? ["var(--gold-color)", "جملة"] : ut === "neighbors" ? ["#ff9800", "جيران"] : ut === "partner" ? ["#00b0ff", "شريك"] : ut === "debt_customer" ? ["#d4af37", "آجل/دين"] : ["#00e676", "مفرق"];
+                const sCount = u.successOrdersCount || 0, cCount = u.cancelledOrdersCount || 0, dUSD = u.debtUSD || 0;
+                return `<div class="adm-card" style="border-color:${isB ? 'var(--danger-color)' : 'var(--border-color)'};">
+                    <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                        <span>👤 ${u.name} (${u.phone}) <b style="color:${badge[0]};">[${badge[1]}]</b></span>
+                        <span style="color:var(--gold-color);">${Math.round(u.points || 0)} نقطة</span>
+                    </div>
+                    <div style="font-size:10px; color:var(--gray-text); margin:4px 0;">
+                        ✅ طلبات ناجحة: <b style="color:var(--success-color);">${sCount}</b> | ❌ طلبات ملغاة: <b style="color:var(--danger-color);">${cCount}</b>
+                        ${ut === 'debt_customer' ? ` | 📒 الدين: <b style="color:var(--gold-color);">${dUSD.toFixed(2)}$</b>` : ''}
+                    </div>
+                    <div style="display:flex; gap:4px; margin-top:6px; flex-wrap:wrap;">
+                        <button onclick="openAdminEditCustomerModal('${u.phone}')" class="btn" style="padding:3px 8px; font-size:10px; width:auto;">✏️ تعديل وتصحيح الهاتف</button>
+                        <button onclick="toggleBanCustomer('${u.phone}')" class="btn" style="padding:3px 8px; font-size:10px; width:auto; background:${isB ? 'var(--success-color)' : '#ff9800'}; color:#000;">${isB ? 'فك الحظر' : 'حظر'}</button>
+                        <button onclick="deleteCustomerAccount('${u.phone}')" class="btn btn-danger" style="padding:3px 8px; font-size:10px; width:auto;">🗑️ حذف الحساب</button>
+                    </div>
+                </div>`;
             }).join("");
         }
+
         const toggleBanCustomer = p => { if (users[p]) db.ref("users/" + p + "/banned").set(!users[p].banned); };
+
+        function deleteCustomerAccount(phone) {
+            if (!confirm(`⚠️ تحذير شديد: هل أنت متأكد من حذف حساب الزبون (${phone}) نهائياً من قاعدة البيانات وتطهير السجل؟`)) return;
+            db.ref("users/" + phone).remove().then(() => {
+                alert("✅ تم حذف حساب الزبون نهائياً بنجاح!");
+                renderAdminCustomers();
+                populateAdminDebtCustomerSelect();
+                populateAdminPartnerSelect();
+            });
+        }
+
         function openAdminEditCustomerModal(p) {
             const u = users[p]; if (!u) return;
             populateRegionSelects(); setVal("adminCustOrigPhone", p); setVal("adminCustName", u.name || ""); setVal("adminCustPhone", u.phone || p);
             setVal("adminCustRegion", u.region || "العوينة"); setVal("adminCustType", u.userType || "retail"); setVal("adminCustAddress", u.address || ""); setVal("adminCustPoints", Math.round(u.points || 0));
             $("adminEditCustomerModal").style.display = "flex";
         }
+
         function saveAdminCustomerEdit() {
-            const p = $("adminCustOrigPhone").value; if (!p || !users[p]) return;
-            db.ref("users/" + p).update({ name: $("adminCustName").value.trim(), region: $("adminCustRegion").value, userType: $("adminCustType").value, address: $("adminCustAddress").value.trim(), points: parseFloat($("adminCustPoints").value) || 0 }).then(() => {
-                alert("✅ تم حفظ تعديلات الزبون!"); closeModal('adminEditCustomerModal'); populateAdminPartnerSelect(); populateAdminCreditCustomerSelect();
+            const oldPhone = $("adminCustOrigPhone").value;
+            const newPhone = $("adminCustPhone").value.trim().replace(/\s+/g, "");
+            if (!oldPhone || !users[oldPhone]) return;
+            if (!validatePhoneSyrian(newPhone)) return alert("⚠️ رقم الهاتف الجديد يجب أن يتكون من 10 خانات ويبدأ بـ 09 حصراً.");
+
+            const uRef = users[oldPhone];
+            const updatedData = {
+                ...uRef,
+                name: $("adminCustName").value.trim(),
+                phone: newPhone,
+                region: $("adminCustRegion").value,
+                userType: $("adminCustType").value,
+                address: $("adminCustAddress").value.trim(),
+                points: parseFloat($("adminCustPoints").value) || 0
+            };
+
+            const updates = {};
+            if (oldPhone !== newPhone) {
+                updates[`users/${newPhone}`] = updatedData;
+                updates[`users/${oldPhone}`] = null;
+            } else {
+                updates[`users/${oldPhone}`] = updatedData;
+            }
+
+            db.ref().update(updates).then(() => {
+                alert("✅ تم حفظ تعديلات وتصحيح رقم هاتف الزبون بنجاح دون فقدان سجله أو نقاط ولائه!");
+                closeModal('adminEditCustomerModal');
+                populateAdminPartnerSelect();
+                populateAdminDebtCustomerSelect();
             });
         }
 
@@ -1948,9 +2228,10 @@ ${pLines}
                 deliveryDriverPhone: $("deliveryPhoneInput").value.trim(),
                 adminWhatsApp: $("adminWhatsAppInput").value.trim() || "963965461504",
                 shamWalletId: $("adminShamWalletInput").value.trim() || "da3e13cd8a2ef2af282445e148df9599",
+                exporterPhone: $("exporterPhoneInput").value.trim() || "",
                 deliveryFees,
                 workHours: { enabled: $("workHoursEnabled").checked, open: $("workHourOpen").value || "08:00", close: $("workHourClose").value || "23:00" }
-            }).then(() => alert("✅ تم حفظ كافة الإعدادات والمناطق بنجاح!"));
+            }).then(() => alert("✅ تم حفظ كافة الإعدادات والمناطق برقم مدير التصدير بنجاح!"));
         }
 
         function exportBackupJSON() {
@@ -1970,149 +2251,6 @@ ${pLines}
                 } catch (err) { alert("❌ الملف غير صالح!"); }
             };
             reader.readAsText(file);
-        }
-
-        // دوال ميزة دفتر الدين والحسابات الآجلة الآمنة والمحاسبة الآلية
-        function openCreditLedgerModal() {
-            if (!currentUser || currentUser.userType !== "credit") return;
-            const debtUSD = parseFloat(currentUser.debtUSD) || 0;
-            setTxt("creditBalanceUSD", debtUSD.toFixed(2));
-            setTxt("creditBalanceSYP", calcSYP(debtUSD).toLocaleString());
-            
-            const txs = Object.values(currentUser.transactions || {}).sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
-            const listContainer = $("creditTransactionsList");
-            if (listContainer) {
-                listContainer.innerHTML = !txs.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد معاملات مسجلة في دفتر الدين بعد.</p>` :
-                    txs.map(t => `<div class="leader-row" style="padding:8px 10px; margin-bottom:6px;">
-                        <div>
-                            <b style="color:${t.type === 'payment' ? 'var(--success-color)' : 'var(--danger-color)'};">${t.type === 'payment' ? '📥 دفعة مسددة' : '📤 دين مضاف'}</b>
-                            <div style="font-size:11px; color:var(--text-color); margin-top:2px;">${t.desc || '-'}</div>
-                            <small style="color:var(--gray-text);">${t.dateStr || ''}</small>
-                        </div>
-                        <div style="text-align:left;">
-                            <b style="color:${t.type === 'payment' ? 'var(--success-color)' : 'var(--danger-color)'};">${t.type === 'payment' ? '-' : '+'}${t.amountUSD.toFixed(2)} $</b>
-                            <div style="font-size:10px; color:var(--gray-text);">${calcSYP(t.amountUSD).toLocaleString()} ل.س</div>
-                        </div>
-                    </div>`).join("");
-            }
-            $("creditLedgerModal").style.display = "block";
-        }
-
-        function populateAdminCreditCustomerSelect() {
-            const sel = $("adminCreditCustomerSelect");
-            if (!sel) return;
-            const cur = sel.value;
-            sel.innerHTML = '<option value="">-- اختر زبوناً آجلاً --</option>' + 
-                Object.values(users).filter(u => u.userType === "credit").map(u => `<option value="${u.phone}">${u.name} (${u.phone}) - رصيد: ${(u.debtUSD || 0).toFixed(2)}$</option>`).join("");
-            if (cur) sel.value = cur;
-        }
-
-        function loadAdminCustomerCreditInfo() {
-            const phone = $("adminCreditCustomerSelect")?.value;
-            if (!phone || !users[phone]) {
-                setTxt("adminCustCurrentDebtUSD", "0 $");
-                setTxt("adminCustCurrentDebtSYP", "0 ل.س");
-                return;
-            }
-            const u = users[phone];
-            const debt = parseFloat(u.debtUSD) || 0;
-            setTxt("adminCustCurrentDebtUSD", debt.toFixed(2) + " $");
-            setTxt("adminCustCurrentDebtSYP", calcSYP(debt).toLocaleString() + " ل.س");
-        }
-
-        function adminSubmitNewDebt() {
-            const phone = $("adminCreditCustomerSelect")?.value;
-            if (!phone || !users[phone]) return alert("⚠️ يرجى اختيار الزبون الآجل أولاً.");
-            const origUSD = parseFloat($("adminAddDebtOriginalUSD")?.value) || 0;
-            const pct = parseFloat($("adminAddDebtPct")?.value) || 0;
-            const desc = ($("adminAddDebtDesc")?.value || "").trim() || "إضافة دين جديد";
-            if (origUSD <= 0) return alert("⚠️ يرجى إدخال مبلغ أصلي صحيح.");
-
-            const finalUSD = origUSD + (origUSD * pct / 100);
-            const u = users[phone];
-            const currentDebt = parseFloat(u.debtUSD) || 0;
-            const newDebt = currentDebt + finalUSD;
-            const txId = "TX_" + Date.now();
-            const now = new Date();
-
-            const txData = {
-                id: txId,
-                type: "debt",
-                amountUSD: finalUSD,
-                originalUSD: origUSD,
-                percentage: pct,
-                desc: `${desc} (أصلي: ${origUSD}$ + نسبة ${pct}%)`,
-                dateStr: now.toLocaleString("ar-SY"),
-                timestamp: now.toISOString()
-            };
-
-            const updates = {};
-            updates[`users/${phone}/debtUSD`] = newDebt;
-            updates[`users/${phone}/transactions/${txId}`] = txData;
-
-            db.ref().update(updates).then(() => {
-                alert(`✅ تم ترحيل الدين بقيمة (${finalUSD.toFixed(2)}$) بنجاح!`);
-                setVal("adminAddDebtOriginalUSD", "");
-                setVal("adminAddDebtPct", "0");
-                setVal("adminAddDebtDesc", "");
-                loadAdminCustomerCreditInfo();
-                populateAdminCreditCustomerSelect();
-            });
-        }
-
-        function adminSubmitPayment() {
-            const phone = $("adminCreditCustomerSelect")?.value;
-            if (!phone || !users[phone]) return alert("⚠️ يرجى اختيار الزبون الآجل أولاً.");
-            const payUSD = parseFloat($("adminPaymentAmountUSD")?.value) || 0;
-            const notes = ($("adminPaymentNotes")?.value || "").trim() || "دفعة نقدية مسددة";
-            if (payUSD <= 0) return alert("⚠️ يرجى إدخال مبلغ دفعة صحيح.");
-
-            const u = users[phone];
-            const currentDebt = parseFloat(u.debtUSD) || 0;
-            if (payUSD > currentDebt + 0.01) {
-                if (!confirm(`⚠️ المبلغ المسدد (${payUSD}$) أكبر من رصيد الدين الحالي (${currentDebt.toFixed(2)}$). هل تريد المتابعة؟`)) return;
-            }
-            const newDebt = Math.max(0, currentDebt - payUSD);
-            const txId = "TX_" + Date.now();
-            const treasId = "TREAS_" + Date.now();
-            const now = new Date();
-            const dateStr = now.toLocaleString("ar-SY");
-            const dateISO = now.toISOString();
-
-            const txData = {
-                id: txId,
-                type: "payment",
-                amountUSD: payUSD,
-                desc: `دفعة مسددة: ${notes}`,
-                dateStr,
-                timestamp: dateISO
-            };
-
-            const treasData = {
-                id: treasId,
-                customerName: u.name,
-                customerPhone: phone,
-                amountUSD: payUSD,
-                amountSYP: calcSYP(payUSD),
-                notes,
-                dateStr,
-                dateISO
-            };
-
-            // استخدام Promise.all لتنفيذ العمليات المتزامنة وتحديث رصيد الزبون وترحيل المبلغ للخزينة
-            Promise.all([
-                db.ref(`users/${phone}/debtUSD`).set(newDebt),
-                db.ref(`users/${phone}/transactions/${txId}`).set(txData),
-                db.ref(`treasury/${treasId}`).set(treasData)
-            ]).then(() => {
-                alert(`✅ تم تسجيل الدفعة (${payUSD.toFixed(2)}$) وتحديث رصيد الزبون وترحيل المبلغ للخزينة بنجاح!`);
-                setVal("adminPaymentAmountUSD", "");
-                setVal("adminPaymentNotes", "");
-                loadAdminCustomerCreditInfo();
-                populateAdminCreditCustomerSelect();
-            }).catch(err => {
-                alert("❌ حدث خطأ أثناء تنفيذ العمليات: " + err.message);
-            });
         }
     </script>
 </body>
