@@ -2193,13 +2193,7 @@
             if (!keys.length) return (list.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد فواتير معلقة حالياً.</p>`);
             list.innerHTML = keys.map(id => {
                 const o = pendingOrders[id], itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${i.name} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
-                const isCredit = o.isCreditOrder;
-                return `<div class="adm-card" style="border-color:${isCredit ? '#D4AF37' : 'var(--gold-color)'}; background:${isCredit ? 'rgba(212,175,55,0.08)' : 'var(--bg-color)'};">
-                    <div style="display:flex; justify-content:space-between; color:${isCredit ? '#FFD700' : 'var(--gold-color)'}; font-weight:bold; margin-bottom:4px;">
-                        <span>👤 ${o.customerName} (${o.customerPhone}) ${isCredit ? '📒 <b style="color:#FFD700;">[طلب آجل / دفتر الدين]</b>' : ''}</span>
-                        <span>${o.timestamp}</span>
-                    </div>
-                    <div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress} | 💳 ${o.paymentMethod}</div><div style="border-top:1px dashed var(--border-color); border-bottom:1px dashed var(--border-color); padding:6px 0; margin:6px 0;">${itemsHtml}</div><div style="font-weight:bold; margin-bottom:8px;">الإجمالي مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</div><div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000;" onclick="confirmOrder('${id}')">✅ تأكيد وخصم المخزون</button><button class="btn btn-danger" onclick="cancelOrder('${id}')">❌ إلغاء</button></div></div>`;
+                return `<div class="adm-card" style="border-color:var(--gold-color);"><div style="display:flex; justify-content:space-between; color:var(--gold-color); font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span></div><div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress}</div><div style="border-top:1px dashed var(--border-color); border-bottom:1px dashed var(--border-color); padding:6px 0; margin:6px 0;">${itemsHtml}</div><div style="font-weight:bold; margin-bottom:8px;">الإجمالي مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</div><div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000;" onclick="confirmOrder('${id}')">✅ تأكيد وخصم المخزون</button><button class="btn btn-danger" onclick="cancelOrder('${id}')">❌ إلغاء</button></div></div>`;
             }).join("");
         }
 
