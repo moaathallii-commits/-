@@ -681,6 +681,7 @@
                 <div class="adm-sec">
                     <div class="adm-sec-title"><span>💳 إعدادات الصرف، شام كاش، وأرقام التواصل</span></div>
                     <div class="stats-grid">
+                        <div class="form-group"><label>الحد الأدنى للطلب (ل.س):</label><input type="number" id="globalMinOrderInput" class="form-control" value="0"></div>
                         <div class="form-group"><label>سعر الصرف ($):</label><input type="number" id="exchangeRateInput" class="form-control"></div>
                         <div class="form-group"><label>واتساب الإدارة:</label><input type="text" id="adminWhatsAppInput" class="form-control"></div>
                         <div class="form-group"><label>معرف شام كاش المتجر:</label><input type="text" id="adminShamWalletInput" class="form-control"></div>
@@ -1021,6 +1022,8 @@
         db.ref("settings").on("value", snap => {
             const d = snap.val() || {};
             exchangeRate = parseFloat(d.exchangeRate) || 15000;
+            window.globalMinOrderSYP = parseInt(d.globalMinOrderSYP) || 0;
+            setVal("globalMinOrderInput", window.globalMinOrderSYP);
             deliveryDriverPhone = d.deliveryDriverPhone || "";
             adminWhatsAppNumber = d.adminWhatsApp || "963965461504";
             shamWalletIdGlobal = d.shamWalletId || "da3e13cd8a2ef2af282445e148df9599";
@@ -1291,10 +1294,18 @@
                 const markupPct = getCurrentUserCreditMarkupPct();
                 const markupAmt = markupPct > 0 ? Math.round((sub * markupPct) / 100) : 0;
                 const def = Object.keys(deliveryFees)[0] || "العوينة", reg = (currentUser?.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : def, fee = getRegionFee(reg);
+                
+                let deliveryNoteStr = "";
+                if (markupAmt > 0) {
+                    deliveryNoteStr = `(مواد: ${sub.toLocaleString()} + توصيل: ${fee.toLocaleString()} + آجل: ${markupAmt.toLocaleString()})`;
+                } else {
+                    deliveryNoteStr = `(توصيل ${reg}: ${fee.toLocaleString()} ل.س)`;
+                }
+
                 bar.style.display = "flex";
                 setTxt("cartCount", cnt);
                 setTxt("cartTotal", (sub + markupAmt + fee).toLocaleString() + " ل.س");
-                setTxt("cartBarDeliveryNote", `(توصيل ${reg}: ${fee.toLocaleString()} ل.س)`);
+                setTxt("cartBarDeliveryNote", deliveryNoteStr);
             } else bar.style.display = "none";
         }
 
@@ -1365,6 +1376,13 @@
                 subSale += sS; totCost += sC; subUSD += (i.priceUSD * i.qty); totPts += Math.round((i.priceUSD * i.qty) * (i.pointsPct || 2));
                 return { id: i.id, name: i.name, category: i.category || "غير مصنف", qty: i.qty, unitSaleSYP: uS, unitCostSYP: uC, subSaleSYP: sS, subCostSYP: sC, netProfitSYP: sS - sC };
             });
+            
+            const globalMin = window.globalMinOrderSYP || 0;
+            if (globalMin > 0 && subSale < globalMin) {
+                alert(`⚠️ عذراً، الحد الأدنى لقيمة المشتريات هو (${globalMin.toLocaleString()} ل.س) قبل أجور التوصيل.\nقيمة سلتك الحالية: (${subSale.toLocaleString()} ل.س). يرجى إضافة منتجات أخرى لإتمام الطلب.`);
+                return;
+            }
+
             const isCreditUser = (users[currentUser.phone]?.userType || currentUser.userType) === "credit";
             const markupPct = getCurrentUserCreditMarkupPct();
             const markupSYP = markupPct > 0 ? Math.round((subSale * markupPct) / 100) : 0;
@@ -1383,7 +1401,7 @@
             if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}\n`;
             msg += `──────────────\n` + ordItems.map(i => `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س`).join("\n") + `\n──────────────\n📦 قيمة المواد: ${subSale.toLocaleString()} ل.س\n`;
             if (markupSYP > 0) msg += `📈 نسبة الآجل (${markupPct}%): +${markupSYP.toLocaleString()} ل.س\n`;
-            msg += `🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${finalTotalSYP.toLocaleString()} ل.س ${isCreditUser ? `(${finalOrderUSD} $)` : ''}\n🎁 النقاط: +${totPts}\n\n🚨 *تنبيه هام جداً للإدارة:*\n⚠️ **لن تستلم الإدارة الطلب ولن يتم اعتماده قبل إرسال صورة أو إشعار التحويل من شام كاش بكامل المبلغ!**`;
+            msg += `🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${finalTotalSYP.toLocaleString()} ل.س ${isCreditUser ? `(${finalOrderUSD} $)` : ''}\n🎁 النقاط: +${totPts}`;
             
             const updates = {};
             updates[`pendingOrders/${orderId}`] = orderPayload;
@@ -2124,6 +2142,7 @@
         function saveGeneralSettings() {
             collectDeliveryRegionsFromDOM();
             db.ref("settings").set({
+                globalMinOrderSYP: parseInt($("globalMinOrderInput").value) || 0,
                 exchangeRate: parseFloat($("exchangeRateInput").value) || 15000,
                 deliveryDriverPhone: $("deliveryPhoneInput").value.trim(),
                 adminWhatsApp: $("adminWhatsAppInput").value.trim() || "963965461504",
