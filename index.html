@@ -1383,7 +1383,7 @@
             if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}\n`;
             msg += `──────────────\n` + ordItems.map(i => `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س`).join("\n") + `\n──────────────\n📦 قيمة المواد: ${subSale.toLocaleString()} ل.س\n`;
             if (markupSYP > 0) msg += `📈 نسبة الآجل (${markupPct}%): +${markupSYP.toLocaleString()} ل.س\n`;
-            msg += `🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${finalTotalSYP.toLocaleString()} ل.س ${isCreditUser ? `(${finalOrderUSD} $)` : ''}\n🎁 النقاط: +${totPts}`;
+            msg += `🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${finalTotalSYP.toLocaleString()} ل.س ${isCreditUser ? `(${finalOrderUSD} $)` : ''}\n🎁 النقاط: +${totPts}\n\n🚨 *تنبيه هام جداً للإدارة:*\n⚠️ **لن تستلم الإدارة الطلب ولن يتم اعتماده قبل إرسال صورة أو إشعار التحويل من شام كاش بكامل المبلغ!**`;
             
             const updates = {};
             updates[`pendingOrders/${orderId}`] = orderPayload;
