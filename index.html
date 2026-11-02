@@ -1,16 +1,4 @@
-
-
-
-
-
-
-
-
-
-
-
-
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -66,11 +54,6 @@
         .btn { background:var(--gold-color); color:#000; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; width:100%; box-sizing:border-box; }
         .btn-danger { background:var(--danger-color); color:#fff; }
         .btn-out { background:var(--border-color); color:var(--gray-text); cursor:not-allowed; }
-        
-        /* إضافات الأزرار الجديدة */
-        .btn-golden-debt { background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer; box-shadow:0 2px 8px rgba(212,175,55,0.4); }
-        .btn-export-mgr { background:linear-gradient(45deg,#8e24aa,#d50000); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer; }
-        
         .qty-controls { display:flex; justify-content:space-between; align-items:center; background:var(--bg-color); border:1px solid var(--gold-color); border-radius:5px; overflow:hidden; width:100%; }
         .qty-btn { background:var(--gold-color); color:#000; border:none; width:30px; height:30px; font-size:16px; font-weight:bold; cursor:pointer; }
         .qty-text { color:var(--text-color); font-weight:bold; font-size:13px; padding:0 8px; }
@@ -97,19 +80,6 @@
         .quick-inp { width:65px; padding:4px; background:var(--card-bg); color:var(--gold-color); border:1px solid var(--gold-color); border-radius:4px; text-align:center; font-weight:bold; font-size:11px; }
         .mini-btn { width:24px; height:24px; border:none; border-radius:4px; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:13px; }
         #storeClosedOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(18,18,18,0.96); z-index:9999; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; box-sizing:border-box; }
-        
-        /* إضافات تصميم دفتر الدين ومدير التصدير */
-        .debt-history-table { width:100%; border-collapse:collapse; font-size:11px; text-align:center; margin-top:10px; }
-        .debt-history-table th { background:rgba(212,175,55,0.1); color:var(--gold-color); border-bottom:1px solid var(--border-color); padding:6px; }
-        .debt-history-table td { padding:6px; border-bottom:1px solid var(--border-color); }
-        .debt-row-add { color:var(--danger-color); }
-        .debt-row-pay { color:var(--success-color); }
-        .user-track-badge { font-size:10px; padding:2px 5px; border-radius:4px; margin-right:4px; display:inline-block; }
-        .badge-success-orders { background:rgba(0,230,118,0.15); color:var(--success-color); border:1px solid var(--success-color); }
-        .badge-canceled-orders { background:rgba(255,68,68,0.15); color:var(--danger-color); border:1px solid var(--danger-color); }
-        #exportManagerOverlay { z-index:9999; background:var(--bg-color); position:fixed; top:0; left:0; width:100%; height:100%; overflow-y:auto; display:none; padding:15px; box-sizing:border-box; }
-        .export-order-card { background:var(--card-bg); border:1px solid #8e24aa; border-radius:8px; padding:12px; margin-bottom:10px; }
-
         @keyframes pulse { 0%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,230,118,0.7);} 70%{transform:scale(1.03);box-shadow:0 0 0 8px rgba(0,230,118,0);} 100%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,230,118,0);} }
     </style>
 </head>
@@ -129,7 +99,7 @@
             <p>قرية العوينة | <span id="headerPhoneText">0965461504</span> 📱</p>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
-            <button id="mainInstallAppBtn" onclick="installAppDirectly()" class="btn" style="width:auto; padding:6px 10px; font-size:11px; background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; border-radius:15px; animation:pulse 2s infinite;">📲 تثبيت التطبيق</button>
+            <button id="mainInstallAppBtn" onclick="installAppDirectly()" class="btn" style="width:auto; padding:6px 10px; font-size:11px; background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; border-radius:15px; animation:pulse 2s infinite; display:none;">📲 تثبيت التطبيق</button>
             <div class="logo-circle" id="adminTrigger"><img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'"></div>
         </div>
     </header>
@@ -143,15 +113,17 @@
             <span id="userRankBadge" onclick="openCompetitionsPage()" style="display:none; cursor:pointer; background:rgba(0,230,118,0.15); color:var(--success-color); border:1px solid var(--success-color); padding:2px 7px; border-radius:12px; font-size:11px; font-weight:bold;">🏅 ترتيبي: -</span>
         </span>
         <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
-            <button id="customerDebtBtn" onclick="openCustomerDebtPage()" class="btn-golden-debt" style="display:none;">📒 دفتر الدين</button>
-            <button id="exportManagerDashboardBtn" onclick="openExportManagerPanel()" class="btn-export-mgr" style="display:none;">📦 التصدير</button>
-            <button id="partnerDashboardBtn" onclick="openPartnerDashboard()" style="display:none; background:linear-gradient(45deg,#00b0ff,#7c4dff); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">🤝 الشريك</button>
+            <!-- الميزة 1 و 3: زر دفتر الدين للزبون الآجل + زر إدارة التصدير المستقل -->
+            <button id="creditBookBtn" onclick="openCustomerCreditBook()" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer; box-shadow:0 0 8px rgba(212,175,55,0.5);">📒 دفتر الدين</button>
+            <button id="exportManagerBtn" onclick="openExportManagerPanel()" style="display:none; background:linear-gradient(45deg,#ff9800,#f57c00); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📦 إدارة التصدير</button>
+            <button id="partnerDashboardBtn" onclick="openPartnerDashboard()" style="display:none; background:linear-gradient(45deg,#00b0ff,#7c4dff); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">🤝 لوحة الشريك</button>
             <button onclick="shareAppWhatsApp()" style="background:linear-gradient(45deg,#25D366,#128C7E); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📢 مشاركة</button>
             <button id="redeemPointsBtn" onclick="redeemPointsWhatsApp()" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer; animation:pulse 1.5s infinite;">🎁 استبدال</button>
             <button onclick="toggleTheme()" id="themeBtn" style="background:transparent; border:none; font-size:16px; cursor:pointer; padding:0;">☀️</button>
             <span class="points-badge" onclick="openCompetitionsPage()">🎁 نقاطي: <b id="userPoints">0</b></span>
         </div>
     </div>
+
     <div class="container" style="padding-bottom:85px;">
         <div id="multipleOffersContainer"></div>
         <div style="display:flex; gap:6px; margin-bottom:10px;">
@@ -170,56 +142,7 @@
         <button class="cart-bar-btn" type="button" onclick="event.stopPropagation(); openCartModal();">🛒 إتمام الطلب الآن</button>
     </div>
 
-    <!-- نافذة دفتر الدين الخاصة بالزبون (للعرض فقط - الميزة الجديدة) -->
-    <div id="customerDebtModal" class="page-overlay">
-        <header style="position:sticky; top:0; z-index:10; background:var(--card-bg);">
-            <div class="store-info"><h1>📒 دفتري المالي المتراكم</h1><p>كشف حساب الآجل بالدولار للحفاظ على رأس المال</p></div>
-            <button onclick="closeModal('customerDebtModal')" class="btn btn-danger" style="width:auto; padding:6px 12px;">🔙 رجوع</button>
-        </header>
-        <div class="container">
-            <div class="stats-grid" style="grid-template-columns: 1fr; margin-bottom:15px;">
-                <div class="stats-box" style="border-color:var(--danger-color); background:rgba(255,68,68,0.05);">
-                    <div style="font-size:12px; color:var(--danger-color); font-weight:bold;">إجمالي الذمة المالية المطلوبة منك</div>
-                    <div class="stats-value" style="font-size:24px; color:#fff;" id="customerDebtTotalUSD">0.00 $</div>
-                    <div style="font-size:12px; color:var(--gray-text); margin-top:5px;">بما يعادل تقريباً: <span id="customerDebtTotalSYP" style="color:var(--gold-color);">0</span> ل.س</div>
-                </div>
-            </div>
-            <h4 style="color:var(--gold-color); margin-bottom:8px;">📜 سجل الحركات والدفعات السابقة</h4>
-            <div style="background:var(--card-bg); border-radius:8px; border:1px solid var(--border-color); padding:5px; overflow-x:auto;">
-                <table class="debt-history-table">
-                    <thead><tr><th>التاريخ</th><th>البيان</th><th>المبلغ ($)</th></tr></thead>
-                    <tbody id="customerDebtHistoryList">
-                        <!-- تُملأ برمجياً -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- واجهة مدير التصدير المستقلة (الجدار الأمني - الميزة الجديدة) -->
-    <div id="exportManagerOverlay">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #8e24aa; padding-bottom:10px; margin-bottom:15px;">
-            <div>
-                <h2 style="color:#8e24aa; margin:0 0 5px 0;">📦 لوحة مدير التصدير</h2>
-                <p style="color:var(--gray-text); font-size:11px; margin:0;">صلاحيات تشغيلية معزولة: قبول/إلغاء الطلبات فقط.</p>
-            </div>
-            <button onclick="closeModal('exportManagerOverlay')" class="btn btn-danger" style="width:auto; padding:6px 12px;">تسجيل خروج</button>
-        </div>
-        
-        <div class="stats-grid" style="margin-bottom:15px;">
-            <div class="stats-box" style="border-color:#8e24aa;">
-                <div style="font-size:11px; color:var(--gray-text);">طلبات قيد الانتظار</div>
-                <div class="stats-value" id="exportPendingCount" style="color:#8e24aa;">0</div>
-            </div>
-        </div>
-
-        <h4 style="color:var(--gold-color);">📥 الطلبات الواردة من الزبائن</h4>
-        <div id="exportManagerOrdersList">
-            <!-- تُملأ برمجياً بالطلبات (دون عرض تكاليف أو أرباح) -->
-        </div>
-    </div>
-
-    <!-- نوافذ المستخدم الأساسية -->
+    <!-- نافذة تسجيل وتعديل ملف الزبون -->
     <div id="profileModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">👤 بيانات الزبون والعنوان</h3>
@@ -245,6 +168,7 @@
         </div>
     </div>
 
+    <!-- نافذة سلة المشتريات -->
     <div id="cartModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin:0 0 8px 0; text-align:center; font-size:15px;">🛒 سلة المشتريات وإتمام الطلب</h3>
@@ -270,6 +194,7 @@
         </div>
     </div>
 
+    <!-- نافذة التقييمات -->
     <div id="reviewModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">⭐ تقييم المنتج</h3>
@@ -289,6 +214,7 @@
         </div>
     </div>
 
+    <!-- شاشة المسابقات والمتصدرين -->
     <div id="competitionsPage" class="page-overlay">
         <header style="position:sticky; top:0; z-index:10;">
             <div class="store-info"><h1>🏆 مسابقات متجر معاذ</h1><p>اجمع النقاط وتصدر الترتيب لتربح الجوائز!</p></div>
@@ -308,6 +234,7 @@
         </div>
     </div>
 
+    <!-- شاشة الشريك -->
     <div id="partnerModal" class="page-overlay">
         <header style="position:sticky; top:0; z-index:10;">
             <div class="store-info"><h1>🤝 لوحة الشريك المعتمدة</h1><p>مراقبة المخزون، الأرباح، وسجل الدفعات</p></div>
@@ -333,6 +260,41 @@
         </div>
     </div>
 
+    <!-- الميزة 1: شاشة دفتر الدين الشخصي للزبون (قراءة فقط) -->
+    <div id="customerCreditModal" class="page-overlay">
+        <header style="position:sticky; top:0; z-index:10;">
+            <div class="store-info"><h1>📒 دفتر الدين الشخصي</h1><p>سجل شفاف ومحدث لجميع المعاملات الآجلة</p></div>
+            <button onclick="closeModal('customerCreditModal')" class="btn btn-danger" style="width:auto; padding:6px 12px;">🔙 رجوع</button>
+        </header>
+        <div class="container">
+            <div class="comp-card" style="text-align:center; border-color:var(--gold-color);">
+                <div style="font-size:12px; color:var(--gray-text);">إجمالي الرصيد المستحق عليك حالياً</div>
+                <div style="font-size:24px; font-weight:900; color:var(--danger-color); margin:6px 0;" id="custViewDebtUSD">0.00 $</div>
+                <div style="font-size:14px; font-weight:bold; color:var(--gold-color);" id="custViewDebtSYP">ما يعادل: 0 ل.س</div>
+                <div style="font-size:10px; color:var(--gray-text); margin-top:6px;">يتم احتساب المعادل بالليرة السورية وفق سعر الصرف الآني (<span id="custViewExRate">0</span> ل.س) لحفظ القيمة.</div>
+            </div>
+            <h4 style="color:var(--gold-color); margin:12px 0 8px 0;">📜 سجل حركات الشراء والتسديدات السابقة</h4>
+            <div id="custViewCreditHistoryList"></div>
+        </div>
+    </div>
+
+    <!-- الميزة 3: لوحة مدير التصدير المستقلة والآمنة (تشغيلية فقط) -->
+    <div id="exportManagerModal" class="page-overlay">
+        <header style="position:sticky; top:0; z-index:10;">
+            <div class="store-info"><h1>📦 لوحة إدارة التصدير والطلبات</h1><p>استلام ومراجعة الطلبات وتحويلها للتوصيل</p></div>
+            <button onclick="closeModal('exportManagerModal')" class="btn btn-danger" style="width:auto; padding:6px 12px;">🔙 إغلاق</button>
+        </header>
+        <div class="container">
+            <div class="adm-sec" style="border-color:#ff9800;">
+                <div class="adm-sec-title">
+                    <span style="color:#ff9800;">🔔 الطلبات الواردة المعلقة للمراجعة والتوجيه</span>
+                </div>
+                <div id="exportManagerOrdersList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة طلب توفير منتج -->
     <div id="missingModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="margin-top:0; color:var(--gold-color); text-align:center;">📝 طلب توفير منتج</h3>
@@ -340,13 +302,14 @@
             <div style="display:flex; gap:8px;"><button class="btn" onclick="submitMissingRequest()">📨 إرسال للإدارة</button><button class="btn btn-danger" style="width:35%;" onclick="closeModal('missingModal')">إلغاء</button></div>
         </div>
     </div>
+
     <!-- مركز إدارة المتجر الشامل -->
     <div id="adminModal" class="modal-overlay">
         <div class="modal-content" style="max-width:650px;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:8px; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
                 <div style="display:flex; align-items:center; gap:8px;">
                     <h3 style="color:var(--gold-color); margin:0; font-size:15px;">⚙️ مركز إدارة متجر معاذ</h3>
-                    <button onclick="lockAdminSession()" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" title="قفل الإدارة (طلب كلمة المرور في المرة القادمة)">🔒 قفل</button>
+                    <button onclick="lockAdminSession()" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" title="قفل الإدارة">🔒 قفل</button>
                 </div>
                 <div style="display:flex; align-items:center; gap:5px; background:var(--bg-color); padding:4px 8px; border-radius:6px; border:1px solid var(--gold-color);">
                     <span style="font-size:11px; color:var(--gold-color); font-weight:bold;">💵 الصرف:</span>
@@ -360,7 +323,7 @@
                 <button class="cat-btn active" onclick="switchAdminTab('admTabOrdersStats', this)">📦 الطلبات والجرد (<span id="pendingCountBadge">0</span>)</button>
                 <button class="cat-btn" onclick="switchAdminTab('admTabCatalog', this)">🛍️ البضاعة والعروض</button>
                 <button class="cat-btn" onclick="switchAdminTab('admTabSupply', this)">🚚 النواقص والموزعون</button>
-                <button class="cat-btn" onclick="switchAdminTab('admTabUsersPartners', this)">👥 الزبائن والديون</button>
+                <button class="cat-btn" onclick="switchAdminTab('admTabUsersPartners', this)">👥 الزبائن والشركاء</button>
                 <button class="cat-btn" onclick="switchAdminTab('admTabSystem', this)">⚙️ الإعدادات والنظام</button>
             </div>
 
@@ -399,6 +362,20 @@
                             <div style="text-align:left;">
                                 <div style="font-size:15px; font-weight:900; color:#fff;" id="statRecoveredCapitalBox">0 ل.س</div>
                                 <button onclick="resetAdminTimestamp('capitalBoxResetISO', 'صندوق رأس المال المسترد')" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px; margin-top:3px;">🔄 تصفير وعزل المبلغ</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- الميزة 1: الخزينة الرئيسية وإيرادات تسديد الديون -->
+                    <div class="adm-card" style="border-color:#00e676; background:rgba(0,230,118,0.07); margin:10px 0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                            <div>
+                                <div style="color:#00e676; font-weight:bold; font-size:12px;">🏦 الخزينة الرئيسية (إيرادات تسديد الديون النقدية)</div>
+                                <div style="font-size:10px; color:var(--gray-text);">الدفعات المرحلة تلقائياً من حسابات زبائن الآجل</div>
+                            </div>
+                            <div style="text-align:left;">
+                                <div style="font-size:14px; font-weight:900; color:#fff;" id="statTreasuryDebtCollected">0.00 $ (0 ل.س)</div>
+                                <button onclick="resetAdminTimestamp('treasuryDebtResetISO', 'إيرادات الديون بالخزينة')" class="btn" style="width:auto; padding:3px 8px; font-size:10px; margin-top:3px; background:#00e676; color:#000;">🔄 تصفير واستلام الخزينة</button>
                             </div>
                         </div>
                     </div>
@@ -482,29 +459,9 @@
             <!-- 2. تبويب البضاعة والمخزون السريع والعروض -->
             <div id="admTabCatalog" class="admin-tab" style="display:none;">
                 <div class="adm-sec" id="productFormSection">
-                    <div class="adm-sec-title"><span>➕ إضافة / تعديل صنف</span><button onclick="resetProductForm()" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">تفريغ</button></div>
+                    <div class="adm-sec-title"><span>➕ إضافة / تعديل صنف في المتجر</span><button onclick="resetProductForm()" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">تفريغ الحقول</button></div>
                     <input type="hidden" id="editProductId">
                     <div class="form-group"><label>اسم الصنف:</label><input type="text" id="prodName" class="form-control" placeholder="مثال: متة تاراوغوي 250غ"></div>
-                    
-                    <!-- الإضافة الجديدة: وحدات القياس للموزعين -->
-                    <div class="stats-grid" style="border:1px dashed var(--info-color); padding:8px; border-radius:5px; background:rgba(0,176,255,0.05); margin-bottom:10px;">
-                        <div class="form-group">
-                            <label style="color:var(--info-color);">وحدة التعبئة للموزع:</label>
-                            <select id="prodUnitType" class="form-control">
-                                <option value="قطعة">قطعة (مفرد)</option>
-                                <option value="كرتونة">كرتونة</option>
-                                <option value="طرد">طرد</option>
-                                <option value="كيس">كيس</option>
-                                <option value="عبوة">عبوة (دزينة)</option>
-                                <option value="شرحة">شرحة</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label style="color:var(--info-color);">عدد القطع داخل الوحدة:</label>
-                            <input type="number" id="prodItemsPerUnit" class="form-control" value="1" min="1" placeholder="مثال: 12">
-                        </div>
-                    </div>
-
                     <div class="stats-grid">
                         <div class="form-group"><label>التكلفة ($):</label><input type="number" step="0.01" id="prodCostUSD" class="form-control"></div>
                         <div class="form-group"><label>المبيع مفرق ($):</label><input type="number" step="0.01" id="prodPriceUSD" class="form-control"></div>
@@ -513,10 +470,24 @@
                         <div class="form-group"><label>حد تنبيه النواقص:</label><input type="number" id="prodAlertLimit" class="form-control" value="2"></div>
                         <div class="form-group"><label>نسبة النقاط (%):</label><input type="number" step="0.1" id="prodPointsPct" class="form-control" value="2"></div>
                     </div>
+                    <!-- الميزة 2: ربط كل صنف بوحدة القياس الدقيقة -->
                     <div class="stats-grid">
                         <div class="form-group"><label>التصنيف:</label><select id="prodCategory" class="form-control"></select></div>
-                        <div class="form-group"><label>الموزع المعتمد:</label><select id="prodSupplierSelect" class="form-control"><option value="">-- بدون موزع --</option></select></div>
+                        <div class="form-group">
+                            <label>وحدة القياس الدقيقة:</label>
+                            <select id="prodUnit" class="form-control">
+                                <option value="قطعة">قطعة</option>
+                                <option value="كرتونة">كرتونة</option>
+                                <option value="طرد">طرد</option>
+                                <option value="كيس">كيس</option>
+                                <option value="كيلو">كيلو</option>
+                                <option value="لتر">لتر</option>
+                                <option value="عبوة">عبوة</option>
+                                <option value="شرحة">شرحة</option>
+                            </select>
+                        </div>
                     </div>
+                    <div class="form-group"><label>الموزع المعتمد:</label><select id="prodSupplierSelect" class="form-control"><option value="">-- بدون موزع --</option></select></div>
                     <div class="form-group"><label>صورة المنتج:</label><input type="file" id="prodImageInput" accept="image/*" class="form-control"></div>
                     <button onclick="saveProduct()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ الصنف في المتجر</button>
                 </div>
@@ -554,7 +525,7 @@
             <!-- 3. تبويب النواقص والموزعين -->
             <div id="admTabSupply" class="admin-tab" style="display:none;">
                 <div class="adm-sec" style="border-color:var(--danger-color);">
-                    <div class="adm-sec-title"><span style="color:var(--danger-color);">⚠️ النواقص مفرزة حسب الموزع المعتمد</span></div>
+                    <div class="adm-sec-title"><span style="color:var(--danger-color);">⚠️ النواقص مفرزة حسب الموزع المعتمد (بوحدة القياس)</span></div>
                     <div id="shortagesBySupplierContainer"></div>
                 </div>
 
@@ -576,55 +547,49 @@
                 </div>
             </div>
 
-            <!-- 4. تبويب الزبائن والشركاء والمسابقات -->
+            <!-- 4. تبويب الزبائن، دفتر الديون، الشركاء، والمسابقات -->
             <div id="admTabUsersPartners" class="admin-tab" style="display:none;">
-                
-                <!-- عرض الزبائن مع الشارات الجديدة -->
                 <div class="adm-sec">
-                    <div class="adm-sec-title"><span>👥 إدارة الزبائن ومؤشرات النشاط (فلترة وحذف)</span></div>
+                    <div class="adm-sec-title"><span>👥 سجل الزبائن، مؤشرات النشاط، وتحديد الرتب</span></div>
                     <input type="text" id="adminSearchCust" class="search-box" placeholder="🔍 ابحث بالاسم أو الهاتف..." oninput="renderAdminCustomers()" style="margin-bottom:8px;">
-                    <div id="adminCustomersList" style="max-height:230px; overflow-y:auto;">
-                        <!-- تُملأ برمجياً (ستتضمن عدادات الطلبات الناجحة والملغاة) -->
-                    </div>
+                    <div id="adminCustomersList" style="max-height:250px; overflow-y:auto;"></div>
                 </div>
 
-                <!-- الإضافة الجديدة 1: لوحة التحكم المركزية بدفتر الديون -->
-                <div class="adm-sec" style="border-color:var(--danger-color); background:rgba(255,68,68,0.04);">
-                    <div class="adm-sec-title"><span style="color:var(--danger-color);">📒 إدارة ديون الزبائن الآجل (حفظ القيمة بالدولار)</span></div>
+                <!-- الميزة 1: لوحة إدارة الديون لزبائن الآجل -->
+                <div class="adm-sec" style="border-color:var(--gold-color); background:rgba(212,175,55,0.04);">
+                    <div class="adm-sec-title"><span style="color:var(--gold-color);">📒 إدارة الديون لزبائن الآجل (مربوطة بالخزينة الرئيسية)</span></div>
                     <div class="form-group">
-                        <label>اختر الزبون (رتبة آجل/دفتر):</label>
-                        <select id="adminDebtCustomerSelect" class="form-control" onchange="loadAdminCustomerDebt()">
-                            <option value="">-- اختر زبون دفتر دين --</option>
+                        <label>اختر الزبون الآجل:</label>
+                        <select id="adminCreditCustSelect" class="form-control" onchange="renderAdminCustomerCreditDetails()">
+                            <option value="">-- اختر زبون آجل --</option>
                         </select>
                     </div>
-                    
-                    <div id="adminDebtActionArea" style="display:none;">
-                        <div style="text-align:center; margin-bottom:12px; font-size:15px; font-weight:bold;">
-                            إجمالي الذمة الحالية: <span id="adminDebtCurrentVal" style="color:var(--danger-color); font-size:18px;">0.00 $</span>
+                    <div id="adminCreditSummaryBox" style="display:none; margin-bottom:10px;" class="adm-card">
+                        <div style="display:flex; justify-content:space-between; font-size:12px;">
+                            <span>إجمالي الدين المستحق على الزبون:</span>
+                            <strong style="color:var(--danger-color);" id="admCustTotalDebtUSD">0.00 $</strong>
                         </div>
-                        
-                        <div class="stats-grid" style="grid-template-columns:1fr; gap:10px;">
-                            <!-- تسجيل دين جديد مع نسبة مئوية -->
-                            <div class="stats-box" style="border-color:var(--danger-color);">
-                                <h5 style="margin:0 0 8px 0; color:var(--danger-color);">➕ تسجيل دين جديد للمتجر ($)</h5>
-                                <div style="display:flex; gap:6px; margin-bottom:8px;">
-                                    <input type="number" step="0.01" id="adminDebtAddAmount" class="form-control" placeholder="المبلغ ($)">
-                                    <input type="number" step="0.1" id="adminDebtInterestPct" class="form-control" placeholder="النسبة المئوية المضافة %" value="0" style="width:110px;">
-                                </div>
-                                <input type="text" id="adminDebtAddNote" class="form-control" placeholder="بيان الدين (مثال: بضاعة مسحوبة)..." style="margin-bottom:8px;">
-                                <button onclick="adminAddDebtTransaction()" class="btn btn-danger" style="padding:8px;">تسجيل في الدفتر</button>
-                            </div>
-
-                            <!-- تسجيل دفعة وتوريدها للخزينة -->
-                            <div class="stats-box" style="border-color:var(--success-color);">
-                                <h5 style="margin:0 0 8px 0; color:var(--success-color);">💵 تسجيل دفعة واصلة ($)</h5>
-                                <p style="font-size:10px; color:var(--gray-text); margin:0 0 8px 0;">الدفعة تُخصم من الدين وتُرحّل تلقائياً كإيراد في الخزينة.</p>
-                                <input type="number" step="0.01" id="adminDebtPayAmount" class="form-control" placeholder="المبلغ المسدد ($)" style="margin-bottom:8px;">
-                                <input type="text" id="adminDebtPayNote" class="form-control" placeholder="البيان (مثال: دفعة نقدية)..." style="margin-bottom:8px;">
-                                <button onclick="adminPayDebtTransaction()" class="btn" style="background:var(--success-color); color:#000; padding:8px;">تسديد وترحيل للخزينة</button>
-                            </div>
+                        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--gray-text); margin-top:4px;">
+                            <span>ما يعادله بالليرة السورية:</span>
+                            <strong style="color:var(--gold-color);" id="admCustTotalDebtSYP">0 ل.س</strong>
                         </div>
                     </div>
+                    <div class="stats-grid">
+                        <div class="adm-card">
+                            <div style="color:var(--danger-color); font-weight:bold; margin-bottom:6px;">➕ إضافة دين جديد ($)</div>
+                            <input type="number" step="0.01" id="newDebtAmountUSD" class="form-control" placeholder="المبلغ بالدولار ($)" style="margin-bottom:5px;">
+                            <input type="number" step="0.1" id="newDebtFeePct" class="form-control" placeholder="نسبة تكلفة مئوية % (اختياري)" value="0" style="margin-bottom:5px;">
+                            <input type="text" id="newDebtNote" class="form-control" placeholder="البيان / تفاصيل الفاتورة..." style="margin-bottom:6px;">
+                            <button onclick="addCustomerDebtTransaction()" class="btn btn-danger">تسجيل الدين</button>
+                        </div>
+                        <div class="adm-card">
+                            <div style="color:var(--success-color); font-weight:bold; margin-bottom:6px;">💵 تسجيل دفعة نقدية واصلة ($)</div>
+                            <input type="number" step="0.01" id="payDebtAmountUSD" class="form-control" placeholder="المبلغ الواصل بالدولار ($)" style="margin-bottom:5px;">
+                            <input type="text" id="payDebtNote" class="form-control" placeholder="ملاحظات التسديد..." style="margin-bottom:6px;">
+                            <button onclick="payCustomerDebtTransaction()" class="btn" style="background:var(--success-color); color:#000;">تسديد وترحيل للخزينة</button>
+                        </div>
+                    </div>
+                    <div id="adminCreditHistoryList" style="max-height:180px; overflow-y:auto; margin-top:8px;"></div>
                 </div>
 
                 <div class="adm-sec" style="border-color:#00b0ff;">
@@ -663,27 +628,18 @@
 
             <!-- 5. تبويب الإعدادات والتوصيل والنسخ الاحتياطي -->
             <div id="admTabSystem" class="admin-tab" style="display:none;">
-                
-                <!-- الإضافة الجديدة 3: تعيين مدير التصدير -->
-                <div class="adm-sec" style="border-color:#8e24aa; background:rgba(142,36,170,0.05);">
-                    <div class="adm-sec-title"><span style="color:#8e24aa;">🛡️ الصلاحيات الأمنية: تعيين مدير التصدير</span></div>
-                    <p style="font-size:10px; color:var(--gray-text); margin-top:0;">إعطاء صلاحية تشغيلية معزولة لرقم هاتف محدد لمعالجة الطلبات دون كشف الأرباح.</p>
-                    <div class="form-group">
-                        <label>رقم هاتف مدير التصدير (يبدأ بـ 09):</label>
-                        <div style="display:flex; gap:6px;">
-                            <input type="tel" id="sysExportManagerPhone" class="form-control" placeholder="09XXXXXXXX" maxlength="10">
-                            <button onclick="saveExportManagerRole()" class="btn" style="background:#8e24aa; color:#fff; width:auto;">حفظ وتعيين</button>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="adm-sec">
-                    <div class="adm-sec-title"><span>💳 إعدادات الصرف، شام كاش، وأرقام التواصل</span></div>
+                    <div class="adm-sec-title"><span>💳 إعدادات الصرف، شام كاش، وصلاحية مدير التصدير</span></div>
                     <div class="stats-grid">
                         <div class="form-group"><label>سعر الصرف ($):</label><input type="number" id="exchangeRateInput" class="form-control"></div>
                         <div class="form-group"><label>واتساب الإدارة:</label><input type="text" id="adminWhatsAppInput" class="form-control"></div>
                         <div class="form-group"><label>معرف شام كاش المتجر:</label><input type="text" id="adminShamWalletInput" class="form-control"></div>
                         <div class="form-group"><label>واتساب سائق التوصيل:</label><input type="text" id="deliveryPhoneInput" class="form-control"></div>
+                        <!-- الميزة 3: تعيين مدير التصدير المستقل برقم هاتفه -->
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label>📦 رقم هاتف "مدير التصدير" المستقل (صلاحية تشغيلية للطلبات فقط دون بيانات مالية):</label>
+                            <input type="tel" id="exportManagerPhoneInput" class="form-control" placeholder="09XXXXXXXX (أدخل رقم هاتفه المسجل في المتجر)">
+                        </div>
                     </div>
                 </div>
 
@@ -721,339 +677,2291 @@
         </div>
     </div>
 
-    <!-- نافذة تعديل بيانات الزبون (المحدثة مع خاصية النقل والحذف) -->
+    <!-- الميزة 1 و 4: نافذة تعديل بيانات الزبون، رتبة الآجل، تصحيح الهاتف، والحذف التنظيمي -->
     <div id="adminEditCustomerModal" class="modal-overlay" style="z-index:1100;">
         <div class="modal-content">
-            <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">✏️ تحديث بيانات الزبون ونقل الحساب</h3>
+            <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">✏️ تعديل بيانات الزبون والرتبة</h3>
             <input type="hidden" id="adminCustOrigPhone">
-            
             <div class="form-group"><label>الاسم:</label><input type="text" id="adminCustName" class="form-control"></div>
-            
-            <!-- تم تفعيل حقل الهاتف لترحيل البيانات -->
-            <div class="form-group" style="border:1px dashed var(--gold-color); padding:8px; border-radius:5px; background:rgba(212,175,55,0.05);">
-                <label>الهاتف (تغيير الرقم هنا سينقل السجل بالكامل للرقم الجديد):</label>
-                <input type="text" id="adminCustPhone" class="form-control">
-                <small style="color:var(--info-color); font-size:10px;">انتبه: سيتم نقل الطلبات، الديون، والنقاط للرقم الجديد بشكل آمن.</small>
+            <div class="form-group">
+                <label>الهاتف (يمكنك تصحيحه مع نقل السجل والنقاط تلقائياً):</label>
+                <input type="tel" id="adminCustPhone" class="form-control" maxlength="10">
             </div>
-
             <div class="form-group"><label>المنطقة:</label><select id="adminCustRegion" class="form-control"></select></div>
             <div class="form-group">
-                <label>رتبة الزبون في النظام:</label>
+                <label>نوع الحساب (يحدد من الإدارة حصراً):</label>
                 <select id="adminCustType" class="form-control">
                     <option value="retail">زبون مفرق عادي</option>
                     <option value="wholesale">زبون جملة</option>
-                    <option value="neighbors">جيران المتجر</option>
-                    <option value="partner">شريك المتجر</option>
-                    <!-- الرتبة الجديدة المضافة هنا -->
-                    <option value="deferred">زبون آجل / دفتر دين 📒</option>
+                    <option value="neighbors">جيران المتجر (سعر مفرق + توصيل خاص)</option>
+                    <option value="partner">شريك (له لوحة أرباح ومخزون خاصة)</option>
+                    <option value="credit">📒 زبون آجل (دفتر دين بالدولار)</option>
                 </select>
             </div>
             <div class="form-group"><label>العنوان:</label><input type="text" id="adminCustAddress" class="form-control"></div>
             <div class="form-group"><label>النقاط:</label><input type="number" id="adminCustPoints" class="form-control"></div>
-            
-            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:15px;">
-                <button onclick="saveAdminCustomerEdit()" class="btn" style="flex:2; background:var(--success-color); color:#000;">💾 حفظ وترحيل</button>
-                <!-- زر الحذف التنظيمي -->
-                <button onclick="deleteCustomerAdmin()" class="btn btn-danger" style="flex:1;">🗑️ حذف نهائي</button>
-                <button onclick="closeModal('adminEditCustomerModal')" class="btn" style="background:var(--border-color); color:var(--text-color); flex:1;">إلغاء</button>
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
+                <button onclick="saveAdminCustomerEdit()" class="btn">💾 حفظ التعديلات</button>
+                <button onclick="closeModal('adminEditCustomerModal')" class="btn btn-danger" style="width:35%;">إلغاء</button>
             </div>
+            <button onclick="deleteCustomerAccount()" class="btn btn-danger" style="background:#b71c1c; color:#fff; width:100%;">🗑️ حذف حساب الزبون نهائياً</button>
         </div>
     </div>
-<script>
-    // ==========================================
-    // 1. إعدادات Firebase والتهيئة الأساسية
-    // ==========================================
-    const firebaseConfig = {
-        apiKey: "AIzaSy_YOUR_API_KEY",
-        authDomain: "moaath-store.firebaseapp.com",
-        databaseURL: "https://moaath-store-default-rtdb.firebaseio.com",
-        projectId: "moaath-store",
-        storageBucket: "moaath-store.appspot.com",
-        messagingSenderId: "123456789",
-        appId: "1:123456789:web:abcdef123456"
-    };
-    
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-    const db = firebase.database();
-
-    let currentUser = null; 
-    let sysExchangeRate = 15000; 
-    let exportManagerPhone = ""; 
-    let adminWhatsAppNumber = "0965461504";
-
-    // ==========================================
-    // 2. خوارزميات دفتر الديون للزبون الآجل (حماية رأس المال)
-    // ==========================================
-    function openCustomerDebtPage() {
-        if(!currentUser || currentUser.type !== 'deferred') return;
-        document.getElementById('customerDebtModal').style.display = 'block';
-        
-        let totalDebtUSD = currentUser.totalDebtUSD || 0;
-        let totalDebtSYP = totalDebtUSD * sysExchangeRate;
-        
-        document.getElementById('customerDebtTotalUSD').innerText = totalDebtUSD.toFixed(2) + " $";
-        document.getElementById('customerDebtTotalSYP').innerText = totalDebtSYP.toLocaleString();
-        
-        db.ref(`users/${currentUser.phone}/debtHistory`).orderByChild('timestamp').once('value', snap => {
-            let html = '';
-            if(snap.exists()){
-                let history = [];
-                snap.forEach(child => { history.push(child.val()); });
-                history.reverse();
-                history.forEach(tx => {
-                    let dateStr = new Date(tx.timestamp).toLocaleDateString('ar-SY');
-                    let isAdd = tx.type === 'add';
-                    let rowClass = isAdd ? 'debt-row-add' : 'debt-row-pay';
-                    let sign = isAdd ? '+' : '-';
-                    html += `<tr class="${rowClass}">
-                        <td>${dateStr}</td>
-                        <td>${tx.note}</td>
-                        <td dir="ltr">${sign} ${tx.amount.toFixed(2)} $</td>
-                    </tr>`;
-                });
-            } else {
-                html = '<tr><td colspan="3" style="color:var(--gray-text);">لا يوجد حركات مسجلة حالياً</td></tr>';
-            }
-            document.getElementById('customerDebtHistoryList').innerHTML = html;
-        });
-    }
-
-    function loadAdminCustomerDebt() {
-        let phone = document.getElementById('adminDebtCustomerSelect').value;
-        if(!phone) {
-            document.getElementById('adminDebtActionArea').style.display = 'none';
-            return;
+    <script>
+        // ============================================================================
+        // 1. إعدادات الربط بقاعدة البيانات (Firebase) والمتغيرات العامة للنظام
+        // ملاحظة: ضع رابط قاعدة بيانات Firebase الخاصة بك في databaseURL أدناه
+        // ============================================================================
+        const firebaseConfig = {
+            databaseURL: "https://moaath-store-default-rtdb.firebaseio.com/"
+        };
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
         }
-        document.getElementById('adminDebtActionArea').style.display = 'block';
-        db.ref(`users/${phone}/totalDebtUSD`).on('value', snap => {
-            let currentVal = snap.val() || 0;
-            document.getElementById('adminDebtCurrentVal').innerText = currentVal.toFixed(2) + " $";
-        });
-    }
+        const db = firebase.database();
 
-    function adminAddDebtTransaction() {
-        let phone = document.getElementById('adminDebtCustomerSelect').value;
-        let amount = parseFloat(document.getElementById('adminDebtAddAmount').value);
-        let pct = parseFloat(document.getElementById('adminDebtInterestPct').value) || 0;
-        let note = document.getElementById('adminDebtAddNote').value || 'تسجيل دين';
-        
-        if(!phone || isNaN(amount) || amount <= 0) return alert("الرجاء إدخال مبلغ صحيح");
-        
-        let finalAmount = amount + (amount * (pct / 100));
-        let tx = { type: 'add', amount: finalAmount, note: note + (pct > 0 ? ` (شامل نسبة ${pct}%)` : ''), timestamp: Date.now() };
-        
-        db.ref(`users/${phone}/totalDebtUSD`).once('value', snap => {
-            let current = snap.val() || 0;
-            db.ref(`users/${phone}/totalDebtUSD`).set(current + finalAmount);
-            db.ref(`users/${phone}/debtHistory`).push(tx);
-            alert("✅ تم تسجيل الدين بنجاح");
-            document.getElementById('adminDebtAddAmount').value = '';
-        });
-    }
-
-    function adminPayDebtTransaction() {
-        let phone = document.getElementById('adminDebtCustomerSelect').value;
-        let amount = parseFloat(document.getElementById('adminDebtPayAmount').value);
-        let note = document.getElementById('adminDebtPayNote').value || 'دفعة نقدية واصلة';
-        
-        if(!phone || isNaN(amount) || amount <= 0) return alert("الرجاء إدخال مبلغ صحيح");
-        
-        let tx = { type: 'pay', amount: amount, note: note, timestamp: Date.now() };
-        
-        db.ref(`users/${phone}/totalDebtUSD`).once('value', snap => {
-            let current = snap.val() || 0;
-            if(current < amount) return alert("المبلغ المسدد أكبر من قيمة الدين!");
-            
-            db.ref(`users/${phone}/totalDebtUSD`).set(current - amount);
-            db.ref(`users/${phone}/debtHistory`).push(tx);
-            
-            db.ref(`admin/treasury/cashReceived`).once('value', treasurySnap => {
-                let currentTreasury = treasurySnap.val() || 0;
-                db.ref(`admin/treasury/cashReceived`).set(currentTreasury + (amount * sysExchangeRate));
-            });
-            
-            alert("✅ تم تسجيل الدفعة وترحيلها لخزينة المتجر بنجاح");
-            document.getElementById('adminDebtPayAmount').value = '';
-        });
-    }
-
-    // ==========================================
-    // 3. رسائل الموزعين الدقيقة (بوحدات القياس)
-    // ==========================================
-    function generateSupplierWhatsAppMessage(supplierName, supplierPhone, missingItemsList) {
-        let text = `مرحباً، طلبية نواقص لمتجر معاذ من الموزع (${supplierName}):\n\n`;
-        missingItemsList.forEach(item => {
-            let unit = item.unitType || 'قطعة';
-            let perUnit = item.itemsPerUnit || 1;
-            let missingQty = item.alertLimit - item.stock; 
-            if(missingQty <= 0) missingQty = 1; 
-            let unitsNeeded = Math.ceil(missingQty / perUnit); 
-            text += `🔹 نريد ${unitsNeeded} ${unit} من صنف (${item.name})\n`;
-        });
-        text += `\nيرجى تجهيز الطلبية، وشكراً.`;
-        let encodedText = encodeURIComponent(text);
-        window.open(`https://wa.me/${supplierPhone}?text=${encodedText}`, '_blank');
-    }
-
-    // ==========================================
-    // 4. نظام "مدير التصدير" (الجدار الأمني المعزول)
-    // ==========================================
-    function checkExportManagerAccess() {
-        db.ref('settings/exportManagerPhone').once('value', snap => {
-            exportManagerPhone = snap.val() || "";
-            if(currentUser && currentUser.phone === exportManagerPhone) {
-                document.getElementById('exportManagerDashboardBtn').style.display = 'inline-block';
-            }
-        });
-    }
-
-    function openExportManagerPanel() {
-        document.getElementById('exportManagerOverlay').style.display = 'block';
-        loadExportPendingOrders();
-    }
-
-    function loadExportPendingOrders() {
-        db.ref('orders').orderByChild('status').equalTo('pending').on('value', snap => {
-            let html = '';
-            let count = 0;
-            if(snap.exists()){
-                snap.forEach(child => {
-                    let order = child.val();
-                    count++;
-                    html += `<div class="export-order-card">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                            <strong>مطلوب لـ: ${order.customerName}</strong>
-                            <span style="color:var(--gray-text); font-size:11px;">${new Date(order.timestamp).toLocaleTimeString('ar-SY')}</span>
-                        </div>
-                        <div style="font-size:12px; color:var(--info-color); margin-bottom:10px;">المنطقة: ${order.regionName} | العنوان: ${order.address}</div>
-                        <ul style="margin:0 0 10px 0; padding-right:15px; font-size:12px; color:var(--text-color);">`;
-                    order.items.forEach(item => {
-                        html += `<li>${item.qty} × ${item.name}</li>`;
-                    });
-                    html += `</ul>
-                        <div style="display:flex; gap:5px;">
-                            <button onclick="exportManagerAcceptOrder('${child.key}')" class="btn" style="background:var(--success-color); color:#000;">✔️ قبول وتجهيز</button>
-                            <button onclick="exportManagerRejectOrder('${child.key}', '${order.customerPhone}')" class="btn btn-danger">❌ إلغاء</button>
-                        </div>
-                    </div>`;
-                });
-            } else {
-                html = '<div style="text-align:center; padding:20px; color:var(--gray-text);">لا يوجد طلبات حالياً</div>';
-            }
-            document.getElementById('exportManagerOrdersList').innerHTML = html;
-            document.getElementById('exportPendingCount').innerText = count;
-        });
-    }
-
-    function exportManagerAcceptOrder(orderId) {
-        db.ref(`orders/${orderId}`).update({ status: 'delivering', exportManagerApproved: true });
-    }
-
-    function saveExportManagerRole() {
-        let phone = document.getElementById('sysExportManagerPhone').value;
-        if(phone.length !== 10 || !phone.startsWith('09')) return alert("رقم هاتف غير صالح");
-        db.ref('settings/exportManagerPhone').set(phone).then(() => alert("تم تعيين مدير التصدير بنجاح."));
-    }
-
-    // ==========================================
-    // 5. إدارة الزبائن ونشاطهم
-    // ==========================================
-    function updateCustomerActivity(phone, type) {
-        let ref = db.ref(`users/${phone}/${type}Orders`);
-        ref.once('value', snap => {
-            ref.set((snap.val() || 0) + 1);
-        });
-    }
-
-    function saveAdminCustomerEdit() {
-        let oldPhone = document.getElementById('adminCustOrigPhone').value;
-        let newPhone = document.getElementById('adminCustPhone').value;
-        
-        let updatedData = {
-            name: document.getElementById('adminCustName').value,
-            phone: newPhone,
-            regionId: document.getElementById('adminCustRegion').value,
-            type: document.getElementById('adminCustType').value,
-            address: document.getElementById('adminCustAddress').value,
-            points: parseInt(document.getElementById('adminCustPoints').value) || 0
+        // المتغيرات العامة ومخازن البيانات المحلية المتزامنة
+        let exchangeRate = 15000;
+        let adminWhatsAppNumber = "963965461504";
+        let storeSettings = {
+            exchangeRate: 15000,
+            adminWhatsApp: "963965461504",
+            shamCashWallet: "",
+            deliveryPhone: "963965461504",
+            exportManagerPhone: "",
+            workHoursEnabled: false,
+            workHourOpen: "08:00",
+            workHourClose: "23:00",
+            importManagerPct: 50,
+            minRedeemPoints: 500,
+            leaderboardLimit: 10,
+            compTitle: "",
+            compDesc: "",
+            compImage: ""
         };
 
-        if (oldPhone === newPhone) {
-            db.ref(`users/${oldPhone}`).update(updatedData).then(() => {
-                alert("تم تحديث البيانات");
-                closeModal('adminEditCustomerModal');
+        let productsDB = {};
+        let categoriesDB = ["جميع المواد", "غذائيات", "منظفات", "مشروبات ومتة", "موالح وبسكويت"];
+        let offersDB = {};
+        let suppliersDB = {};
+        let usersDB = {};
+        let partnersConfigDB = {};
+        let ordersDB = {};
+        let expensesDB = {};
+        let treasuryRevenuesDB = {};
+        let missingRequestsDB = {};
+        let deliveryRegionsDB = {
+            "reg_default": { id: "reg_default", name: "قرية العوينة", fee: 3000, driverPct: 80 }
+        };
+
+        let currentUser = JSON.parse(localStorage.getItem("moaath_user") || "null");
+        let cart = JSON.parse(localStorage.getItem("moaath_cart") || "{}");
+        let activeCategory = "جميع المواد";
+        let lastPendingCount = 0;
+
+        // مصفوفة التحقق الرياضي لكلمة مرور الإدارة (_K) وحفظ الجلسة
+        const _K = [49, 50, 51, 52]; // الرمز الافتراضي: 1234 (قابل للتعديل)
+        const verifyAdminPass = (input) => {
+            if (!input) return false;
+            const passStr = _K.map(c => String.fromCharCode(c)).join('');
+            return input === passStr || input === (storeSettings.adminPass || passStr);
+        };
+
+        // ============================================================================
+        // 2. تشغيل التطبيق والمزامنة الفورية مع Firebase
+        // ============================================================================
+        window.addEventListener("DOMContentLoaded", () => {
+            initTheme();
+            setupAdminTriggers();
+            initFirebaseListeners();
+            checkUserRegistration();
+        });
+
+        function installAppDirectly() {
+            if (window.deferredPrompt) {
+                window.deferredPrompt.prompt();
+                window.deferredPrompt.userChoice.then(() => {
+                    window.deferredPrompt = null;
+                    const btn = document.getElementById("mainInstallAppBtn");
+                    if (btn) btn.style.display = "none";
+                });
+            }
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem("moaath_theme") || "dark";
+            if (savedTheme === "light") {
+                document.body.classList.add("light-mode");
+                document.getElementById("themeBtn").innerText = "🌙";
+                document.getElementById("themeColorMeta").setAttribute("content", "#F0F2F5");
+            } else {
+                document.body.classList.remove("light-mode");
+                document.getElementById("themeBtn").innerText = "☀️";
+                document.getElementById("themeColorMeta").setAttribute("content", "#121212");
+            }
+        }
+
+        function toggleTheme() {
+            const isLight = document.body.classList.toggle("light-mode");
+            localStorage.setItem("moaath_theme", isLight ? "light" : "dark");
+            initTheme();
+        }
+
+        // نظام الـ 5 ضغطات على الشعار لفتح الإدارة
+        function setupAdminTriggers() {
+            let clickCount = 0;
+            let clickTimer = null;
+            const handleTrigger = () => {
+                clickCount++;
+                clearTimeout(clickTimer);
+                clickTimer = setTimeout(() => { clickCount = 0; }, 1800);
+                if (clickCount >= 5) {
+                    clickCount = 0;
+                    attemptOpenAdminModal();
+                }
+            };
+            const t1 = document.getElementById("adminTrigger");
+            const t2 = document.getElementById("closedAdminTrigger");
+            if (t1) t1.addEventListener("click", handleTrigger);
+            if (t2) t2.addEventListener("click", handleTrigger);
+        }
+
+        function attemptOpenAdminModal() {
+            const isUnlocked = localStorage.getItem("moaath_admin_unlocked") === "true";
+            if (isUnlocked) {
+                openAdminPanel();
+            } else {
+                const pwd = prompt("🔐 أدخل كلمة مرور الإدارة:");
+                if (verifyAdminPass(pwd)) {
+                    localStorage.setItem("moaath_admin_unlocked", "true");
+                    openAdminPanel();
+                } else if (pwd !== null) {
+                    alert("❌ كلمة المرور غير صحيحة!");
+                }
+            }
+        }
+
+        function lockAdminSession() {
+            localStorage.removeItem("moaath_admin_unlocked");
+            closeModal("adminModal");
+            alert("🔒 تم قفل جلسة الإدارة بنجاح. سيُطلب الرمز في المرة القادمة.");
+        }
+
+        function openAdminPanel() {
+            document.getElementById("quickExchangeInput").value = exchangeRate;
+            document.getElementById("exchangeRateInput").value = exchangeRate;
+            document.getElementById("adminWhatsAppInput").value = storeSettings.adminWhatsApp || "";
+            document.getElementById("adminShamWalletInput").value = storeSettings.shamCashWallet || "";
+            document.getElementById("deliveryPhoneInput").value = storeSettings.deliveryPhone || "";
+            document.getElementById("exportManagerPhoneInput").value = storeSettings.exportManagerPhone || "";
+            document.getElementById("workHoursEnabled").checked = !!storeSettings.workHoursEnabled;
+            document.getElementById("workHourOpen").value = storeSettings.workHourOpen || "08:00";
+            document.getElementById("workHourClose").value = storeSettings.workHourClose || "23:00";
+            document.getElementById("importManagerPctInput").value = storeSettings.importManagerPct ?? 50;
+            document.getElementById("minRedeemPointsInput").value = storeSettings.minRedeemPoints || 500;
+            document.getElementById("leaderboardLimitInput").value = storeSettings.leaderboardLimit || 10;
+            document.getElementById("compTitleInput").value = storeSettings.compTitle || "";
+            document.getElementById("compDescInput").value = storeSettings.compDesc || "";
+
+            renderPendingOrders();
+            renderStatsDashboard();
+            renderAdminProducts();
+            renderAdminCategories();
+            renderAdminOffers();
+            renderShortagesBySupplier();
+            renderCustomerMissingRequests();
+            renderAdminSuppliers();
+            renderAdminCustomers();
+            renderAdminDeliveryRegions();
+            populatePartnerAdminSelect();
+
+            document.getElementById("adminModal").style.display = "flex";
+        }
+
+        function switchAdminTab(tabId, btnEl) {
+            document.querySelectorAll(".admin-tab").forEach(t => t.style.display = "none");
+            document.getElementById(tabId).style.display = "block";
+            if (btnEl && btnEl.parentElement) {
+                btnEl.parentElement.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+                btnEl.classList.add("active");
+            }
+        }
+
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.style.display = "none";
+        }
+
+        // الاستماع الفوري لكافة فروع قاعدة البيانات
+        function initFirebaseListeners() {
+            db.ref("settings").on("value", snap => {
+                if (snap.exists()) {
+                    storeSettings = { ...storeSettings, ...snap.val() };
+                    exchangeRate = parseFloat(storeSettings.exchangeRate) || 15000;
+                    adminWhatsAppNumber = (storeSettings.adminWhatsApp || "963965461504").replace(/^0/, "963");
+                    const hp = document.getElementById("headerPhoneText");
+                    if (hp) hp.innerText = storeSettings.adminWhatsApp || "0965461504";
+                }
+                checkStoreWorkHours();
+                updateUserBarUI();
+                renderStore();
+                updateCartUI();
             });
-        } else {
-            if(newPhone.length !== 10) return alert("الرقم الجديد غير صالح");
-            db.ref(`users/${oldPhone}`).once('value', snap => {
-                let fullData = snap.val();
-                if(fullData) {
-                    let mergedData = { ...fullData, ...updatedData };
-                    db.ref(`users/${newPhone}`).set(mergedData).then(() => {
-                        db.ref(`users/${oldPhone}`).remove();
-                        alert("✅ تم نقل حساب الزبون بنجاح إلى الرقم الجديد مع كافة بياناته.");
-                        closeModal('adminEditCustomerModal');
-                    });
+
+            db.ref("categories").on("value", snap => {
+                if (snap.exists()) {
+                    const val = snap.val();
+                    categoriesDB = Array.isArray(val) ? val : Object.values(val);
+                    if (!categoriesDB.includes("جميع المواد")) categoriesDB.unshift("جميع المواد");
+                }
+                renderCategoriesBar();
+                renderAdminCategories();
+            });
+
+            db.ref("products").on("value", snap => {
+                productsDB = snap.val() || {};
+                renderStore();
+                renderAdminProducts();
+                renderShortagesBySupplier();
+                renderStatsDashboard();
+            });
+
+            db.ref("offers").on("value", snap => {
+                offersDB = snap.val() || {};
+                renderMultipleOffers();
+                renderAdminOffers();
+            });
+
+            db.ref("suppliers").on("value", snap => {
+                suppliersDB = snap.val() || {};
+                renderAdminSuppliers();
+                renderShortagesBySupplier();
+            });
+
+            db.ref("deliveryRegions").on("value", snap => {
+                if (snap.exists()) deliveryRegionsDB = snap.val();
+                populateRegionsSelects();
+                renderAdminDeliveryRegions();
+                updateCartUI();
+            });
+
+            db.ref("users").on("value", snap => {
+                usersDB = snap.val() || {};
+                if (currentUser && currentUser.phone && usersDB[currentUser.phone]) {
+                    currentUser = usersDB[currentUser.phone];
+                    localStorage.setItem("moaath_user", JSON.stringify(currentUser));
+                }
+                updateUserBarUI();
+                renderAdminCustomers();
+                populatePartnerAdminSelect();
+                renderStore();
+            });
+
+            db.ref("partnersConfig").on("value", snap => {
+                partnersConfigDB = snap.val() || {};
+                renderStatsDashboard();
+            });
+
+            db.ref("orders").on("value", snap => {
+                ordersDB = snap.val() || {};
+                const pendingList = Object.values(ordersDB).filter(o => o.status === "pending");
+                const badge = document.getElementById("pendingCountBadge");
+                if (badge) badge.innerText = pendingList.length;
+
+                if (pendingList.length > lastPendingCount) {
+                    playOrderAlertSound();
+                }
+                lastPendingCount = pendingList.length;
+
+                renderPendingOrders();
+                renderExportManagerOrders();
+                renderStatsDashboard();
+                renderAdminCustomers();
+            });
+
+            db.ref("expenses").on("value", snap => {
+                expensesDB = snap.val() || {};
+                renderStoreExpenses();
+                renderStatsDashboard();
+            });
+
+            db.ref("treasuryRevenues").on("value", snap => {
+                treasuryRevenuesDB = snap.val() || {};
+                renderStatsDashboard();
+            });
+
+            db.ref("missingRequests").on("value", snap => {
+                missingRequestsDB = snap.val() || {};
+                renderCustomerMissingRequests();
+            });
+        }
+
+        // تنبيه صوتي واهتزاز عند وصول طلب جديد
+        function playOrderAlertSound() {
+            try {
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
+                gain.gain.setValueAtTime(0.25, ctx.currentTime);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.35);
+            } catch (e) {}
+        }
+
+        // التحقق من ساعات الدوام الرسمية للمتجر
+        function checkStoreWorkHours() {
+            const overlay = document.getElementById("storeClosedOverlay");
+            if (!overlay) return;
+            if (!storeSettings.workHoursEnabled) {
+                overlay.style.display = "none";
+                return;
+            }
+            const now = new Date();
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+            const [openH, openM] = (storeSettings.workHourOpen || "08:00").split(":").map(Number);
+            const [closeH, closeM] = (storeSettings.workHourClose || "23:00").split(":").map(Number);
+            const openMins = openH * 60 + openM;
+            const closeMins = closeH * 60 + closeM;
+
+            let isOpen = false;
+            if (closeMins >= openMins) {
+                isOpen = currentMins >= openMins && currentMins <= closeMins;
+            } else {
+                isOpen = currentMins >= openMins || currentMins <= closeMins;
+            }
+
+            if (!isOpen) {
+                document.getElementById("closedMessageText").innerText =
+                    `أوقات الدوام الرسمية من الساعة ${storeSettings.workHourOpen} حتى الساعة ${storeSettings.workHourClose}. نرحب بطلباتكم خلال ساعات الدوام!`;
+                overlay.style.display = "flex";
+            } else {
+                overlay.style.display = "none";
+            }
+        }
+
+        // ============================================================================
+        // 3. إدارة حساب الزبون، الرتب، وعرض المتجر والأسعار الديناميكية
+        // ============================================================================
+        function populateRegionsSelects() {
+            const selects = ["regRegion", "cartRegionSelect", "adminCustRegion"];
+            const regions = Object.values(deliveryRegionsDB || {});
+            selects.forEach(selId => {
+                const el = document.getElementById(selId);
+                if (!el) return;
+                const prev = el.value;
+                el.innerHTML = regions.map(r => `<option value="${r.name}">${r.name} (${Number(r.fee).toLocaleString()} ل.س)</option>`).join('');
+                if (prev) el.value = prev;
+            });
+            if (currentUser && currentUser.region) {
+                const cartSel = document.getElementById("cartRegionSelect");
+                if (cartSel) cartSel.value = currentUser.region;
+            }
+        }
+
+        function checkUserRegistration() {
+            populateRegionsSelects();
+            if (!currentUser || !currentUser.phone) {
+                document.getElementById("closeProfileBtn").style.display = "none";
+                document.getElementById("profileModal").style.display = "flex";
+            } else {
+                updateUserBarUI();
+            }
+        }
+
+        function openEditProfile() {
+            populateRegionsSelects();
+            if (currentUser) {
+                document.getElementById("regName").value = currentUser.name || "";
+                document.getElementById("regPhone").value = currentUser.phone || "";
+                document.getElementById("regRegion").value = currentUser.region || "";
+                document.getElementById("regAddress").value = currentUser.address || "";
+                document.getElementById("regPointsVisibility").value = currentUser.pointsVisibility || "public";
+                document.getElementById("closeProfileBtn").style.display = "inline-block";
+            }
+            document.getElementById("profileModal").style.display = "flex";
+        }
+
+        function saveUserProfile() {
+            const name = document.getElementById("regName").value.trim();
+            const phone = document.getElementById("regPhone").value.trim();
+            const region = document.getElementById("regRegion").value;
+            const address = document.getElementById("regAddress").value.trim();
+            const pointsVisibility = document.getElementById("regPointsVisibility").value;
+            const errEl = document.getElementById("regPhoneError");
+
+            if (!name) return alert("يرجى إدخال الاسم الثلاثي أو اللقب.");
+            if (!/^09\d{8}$/.test(phone)) {
+                errEl.style.display = "block";
+                return;
+            }
+            errEl.style.display = "none";
+
+            const existing = usersDB[phone] || {};
+            const userData = {
+                ...existing,
+                name,
+                phone,
+                region,
+                address,
+                pointsVisibility,
+                type: existing.type || "retail",
+                points: existing.points || 0,
+                debtBalanceUSD: existing.debtBalanceUSD || 0,
+                updatedAt: new Date().toISOString()
+            };
+
+            db.ref(`users/${phone}`).set(userData).then(() => {
+                currentUser = userData;
+                localStorage.setItem("moaath_user", JSON.stringify(currentUser));
+                closeModal("profileModal");
+                updateUserBarUI();
+                renderStore();
+                updateCartUI();
+            });
+        }
+
+        function updateUserBarUI() {
+            if (!currentUser) return;
+            const u = usersDB[currentUser.phone] || currentUser;
+            document.getElementById("userNameDisplay").innerText = u.name || "زائر";
+            document.getElementById("userRegionBadge").innerText = u.region ? `(${u.region})` : "";
+
+            const typeBadges = {
+                retail: "",
+                wholesale: "⭐ حساب جملة",
+                neighbors: "🏡 جيران المتجر",
+                partner: "🤝 شريك معتمد",
+                credit: "📒 حساب آجل"
+            };
+            document.getElementById("userTypeBadge").innerText = typeBadges[u.type] || "";
+
+            const pts = parseInt(u.points) || 0;
+            document.getElementById("userPoints").innerText = pts;
+
+            const minRedeem = parseInt(storeSettings.minRedeemPoints) || 500;
+            const redeemBtn = document.getElementById("redeemPointsBtn");
+            if (redeemBtn) redeemBtn.style.display = pts >= minRedeem ? "inline-block" : "none";
+
+            // تحديث ترتيب الزبون التلقائي
+            const sortedUsers = Object.values(usersDB).sort((a, b) => (parseInt(b.points) || 0) - (parseInt(a.points) || 0));
+            const rankIdx = sortedUsers.findIndex(x => x.phone === u.phone);
+            const rankBadge = document.getElementById("userRankBadge");
+            if (rankBadge && rankIdx !== -1 && pts > 0) {
+                rankBadge.style.display = "inline-block";
+                rankBadge.innerText = `🏅 ترتيبي: #${rankIdx + 1}`;
+            }
+
+            updateRoleButtonsVisibility();
+        }
+
+        // حساب السعر المخصص للزبون بالليرة السورية (جملة أو مفرق)
+        function getProductPriceSYP(item, isOffer = false) {
+            const uType = (currentUser && usersDB[currentUser.phone]) ? usersDB[currentUser.phone].type : "retail";
+            let usdPrice = 0;
+            if (isOffer) {
+                usdPrice = (uType === "wholesale" && parseFloat(item.wholesaleUSD) > 0)
+                    ? parseFloat(item.wholesaleUSD)
+                    : parseFloat(item.newPriceUSD);
+            } else {
+                usdPrice = (uType === "wholesale" && parseFloat(item.wholesaleUSD) > 0)
+                    ? parseFloat(item.wholesaleUSD)
+                    : parseFloat(item.priceUSD);
+            }
+            const rawSYP = (usdPrice || 0) * exchangeRate;
+            return Math.ceil(rawSYP / 100) * 100; // تقريب لأقرب 100 ل.س
+        }
+
+        function renderCategoriesBar() {
+            const container = document.getElementById("categoriesContainer");
+            if (!container) return;
+            container.innerHTML = categoriesDB.map(cat => `
+                <button class="cat-btn ${cat === activeCategory ? 'active' : ''}" onclick="selectCategory('${cat}')">${cat}</button>
+            `).join('');
+        }
+
+        function selectCategory(cat) {
+            activeCategory = cat;
+            renderCategoriesBar();
+            renderStore();
+        }
+
+        function renderMultipleOffers() {
+            const container = document.getElementById("multipleOffersContainer");
+            if (!container) return;
+            const offers = Object.values(offersDB || {}).filter(o => (parseInt(o.stock) || 0) > 0);
+            if (offers.length === 0) {
+                container.innerHTML = "";
+                return;
+            }
+            container.innerHTML = offers.map(off => {
+                const newSYP = getProductPriceSYP(off, true);
+                const oldSYP = Math.ceil(((parseFloat(off.oldPriceUSD) || 0) * exchangeRate) / 100) * 100;
+                const inCartQty = cart[`offer_${off.id}`]?.qty || 0;
+                return `
+                    <div class="special-offer-banner">
+                        <div class="special-offer-img-wrap">
+                            <img src="${off.image || 'store-icon.png'}" class="special-offer-img" onerror="this.src='store-icon.png'">
+                        </div>
+                        <div style="flex:1; text-align:right;">
+                            <div style="color:var(--gold-color); font-weight:bold; font-size:13px;">🔥 ${off.name}</div>
+                            <div style="font-size:11px; color:var(--gray-text); text-decoration:line-through;">${oldSYP.toLocaleString()} ل.س</div>
+                            <div style="color:var(--success-color); font-weight:900; font-size:14px; margin:2px 0;">${newSYP.toLocaleString()} ل.س</div>
+                            ${inCartQty > 0 ? `
+                                <div class="qty-controls" style="max-width:120px; margin-top:4px;">
+                                    <button class="qty-btn" onclick="changeCartQty('offer_${off.id}', 1, true)">+</button>
+                                    <span class="qty-text">${inCartQty}</span>
+                                    <button class="qty-btn" onclick="changeCartQty('offer_${off.id}', -1, true)">-</button>
+                                </div>
+                            ` : `
+                                <button class="btn" style="width:auto; padding:5px 12px; font-size:11px; margin-top:4px;" onclick="changeCartQty('offer_${off.id}', 1, true)">🛒 أضف العرض</button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderStore() {
+            const grid = document.getElementById("productsGrid");
+            if (!grid) return;
+            const q = (document.getElementById("searchInput")?.value || "").trim().toLowerCase();
+
+            const list = Object.values(productsDB || {}).filter(p => {
+                const matchCat = activeCategory === "جميع المواد" || p.category === activeCategory;
+                const matchQ = !q || (p.name || "").toLowerCase().includes(q) || (p.category || "").toLowerCase().includes(q);
+                return matchCat && matchQ;
+            });
+
+            if (list.length === 0) {
+                grid.innerHTML = `<div style="grid-column:span 2; text-align:center; padding:30px; color:var(--gray-text);">لا توجد منتجات مطابقة للبحث حالياً.</div>`;
+                return;
+            }
+
+            grid.innerHTML = list.map(p => {
+                const priceSYP = getProductPriceSYP(p, false);
+                const stock = parseInt(p.stock) || 0;
+                const unit = p.unit || "قطعة";
+                const inCartQty = cart[p.id]?.qty || 0;
+                const reviewsCount = p.reviews ? Object.keys(p.reviews).length : 0;
+
+                return `
+                    <div class="product-card">
+                        <div>
+                            <div class="product-img-wrap" onclick="openReviewModal('${p.id}')">
+                                <img src="${p.image || 'store-icon.png'}" class="product-img" loading="lazy" onerror="this.src='store-icon.png'">
+                                <span style="position:absolute; top:6px; right:6px; background:rgba(0,0,0,0.75); color:var(--gold-color); font-size:10px; padding:2px 6px; border-radius:10px;">⭐ ${reviewsCount}</span>
+                            </div>
+                            <h3>${p.name}</h3>
+                            <p>${priceSYP.toLocaleString()} ل.س <small style="color:var(--gray-text); font-weight:normal;">/ ${unit}</small></p>
+                        </div>
+                        <div style="margin-top:6px;">
+                            ${stock <= 0 ? `
+                                <button class="btn btn-out" disabled>نفدت الكمية</button>
+                            ` : inCartQty > 0 ? `
+                                <div class="qty-controls">
+                                    <button class="qty-btn" onclick="changeCartQty('${p.id}', 1, false)">+</button>
+                                    <span class="qty-text">${inCartQty} ${unit}</span>
+                                    <button class="qty-btn" onclick="changeCartQty('${p.id}', -1, false)">-</button>
+                                </div>
+                            ` : `
+                                <button class="btn" onclick="changeCartQty('${p.id}', 1, false)">🛒 أضف للسلة</button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================================================
+        // 4. إدارة سلة المشتريات، حساب التوصيل، وإرسال الطلب
+        // ============================================================================
+        function changeCartQty(itemId, delta, isOffer = false) {
+            let itemObj = null;
+            if (isOffer) {
+                const rawId = itemId.replace("offer_", "");
+                itemObj = offersDB[rawId];
+            } else {
+                itemObj = productsDB[itemId];
+            }
+            if (!itemObj) return;
+
+            const maxStock = parseInt(itemObj.stock) || 0;
+            const currentQty = cart[itemId]?.qty || 0;
+            const newQty = currentQty + delta;
+
+            if (newQty > maxStock) {
+                return alert(`⚠️ الكمية المتاحة في المخزون هي (${maxStock}) فقط.`);
+            }
+
+            if (newQty <= 0) {
+                delete cart[itemId];
+            } else {
+                cart[itemId] = {
+                    id: itemId,
+                    rawId: isOffer ? itemId.replace("offer_", "") : itemId,
+                    isOffer: isOffer,
+                    qty: newQty
+                };
+            }
+
+            localStorage.setItem("moaath_cart", JSON.stringify(cart));
+            renderStore();
+            renderMultipleOffers();
+            updateCartUI();
+        }
+
+        function getSelectedRegionObj() {
+            const regionName = document.getElementById("cartRegionSelect")?.value || currentUser?.region || "قرية العوينة";
+            const found = Object.values(deliveryRegionsDB || {}).find(r => r.name === regionName);
+            return found || { name: regionName, fee: 3000, driverPct: 80 };
+        }
+
+        function updateCartUI() {
+            const cartBar = document.getElementById("cartBar");
+            const items = Object.values(cart);
+            if (items.length === 0) {
+                if (cartBar) cartBar.style.display = "none";
+                closeModal("cartModal");
+                return;
+            }
+
+            let subtotalSYP = 0;
+            let totalCount = 0;
+            let earnedPoints = 0;
+            const cartListEl = document.getElementById("cartItemsList");
+            let listHtml = "";
+
+            items.forEach(c => {
+                const src = c.isOffer ? offersDB[c.rawId] : productsDB[c.rawId];
+                if (!src) return;
+                const unitPriceSYP = getProductPriceSYP(src, c.isOffer);
+                const lineTotal = unitPriceSYP * c.qty;
+                subtotalSYP += lineTotal;
+                totalCount += c.qty;
+
+                const pct = parseFloat(src.pointsPct) || 2;
+                const priceUSD = c.isOffer ? (parseFloat(src.newPriceUSD) || 0) : (parseFloat(src.priceUSD) || 0);
+                earnedPoints += Math.round((priceUSD * c.qty) * pct);
+
+                const unitName = src.unit || "قطعة";
+                listHtml += `
+                    <div class="adm-card" style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-weight:bold;">${src.name}</div>
+                            <div style="font-size:10px; color:var(--gold-color);">${unitPriceSYP.toLocaleString()} ل.س × ${c.qty} ${unitName} = ${lineTotal.toLocaleString()} ل.س</div>
+                        </div>
+                        <div class="qty-controls" style="width:95px;">
+                            <button class="qty-btn" onclick="changeCartQty('${c.id}', 1, ${c.isOffer})">+</button>
+                            <span class="qty-text">${c.qty}</span>
+                            <button class="qty-btn" onclick="changeCartQty('${c.id}', -1, ${c.isOffer})">-</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (cartListEl) cartListEl.innerHTML = listHtml;
+
+            const regObj = getSelectedRegionObj();
+            const uType = (currentUser && usersDB[currentUser.phone]) ? usersDB[currentUser.phone].type : "retail";
+            // جيران المتجر يحصلون على توصيل مجاني أو مخفض
+            const deliveryFee = uType === "neighbors" ? 0 : (parseInt(regObj.fee) || 0);
+            const grandTotal = subtotalSYP + deliveryFee;
+
+            document.getElementById("cartCount").innerText = totalCount;
+            document.getElementById("cartTotal").innerText = grandTotal.toLocaleString() + " ل.س";
+            document.getElementById("cartBarDeliveryNote").innerText = deliveryFee === 0 ? "(توصيل مجاني 🏡)" : `(+${deliveryFee.toLocaleString()} توصيل)`;
+            if (cartBar) cartBar.style.display = "flex";
+
+            document.getElementById("modalCartSubtotal").innerText = subtotalSYP.toLocaleString();
+            document.getElementById("modalDeliveryRegionName").innerText = regObj.name;
+            document.getElementById("modalDeliveryFee").innerText = deliveryFee.toLocaleString();
+            document.getElementById("modalCartTotal").innerText = grandTotal.toLocaleString();
+            document.getElementById("modalCartPoints").innerText = earnedPoints;
+        }
+
+        function openCartModal() {
+            populateRegionsSelects();
+            updateCartUI();
+            document.getElementById("cartModal").style.display = "flex";
+        }
+
+        function onCartRegionChange() {
+            updateCartUI();
+        }
+
+        function copyWalletId() {
+            const wallet = storeSettings.shamCashWallet || "";
+            if (!wallet) return alert("لم يتم تحديد كود محفظة شام كاش من الإدارة بعد.");
+            navigator.clipboard.writeText(wallet).then(() => {
+                alert("✅ تم نسخ كود محفظة شام كاش بنجاح:\n" + wallet);
+            });
+        }
+
+        function submitOrder() {
+            if (!currentUser || !currentUser.phone) {
+                closeModal("cartModal");
+                return checkUserRegistration();
+            }
+            const items = Object.values(cart);
+            if (items.length === 0) return;
+
+            const regObj = getSelectedRegionObj();
+            const uType = (usersDB[currentUser.phone]?.type) || "retail";
+            const deliveryFee = uType === "neighbors" ? 0 : (parseInt(regObj.fee) || 0);
+            const driverPct = parseFloat(regObj.driverPct) || 80;
+
+            let subtotalSYP = 0;
+            let totalCostSYP = 0;
+            let earnedPoints = 0;
+            const orderItems = [];
+
+            for (const c of items) {
+                const src = c.isOffer ? offersDB[c.rawId] : productsDB[c.rawId];
+                if (!src) continue;
+                const priceSYP = getProductPriceSYP(src, c.isOffer);
+                const costUSD = parseFloat(src.costUSD) || 0;
+                const costSYP = Math.round(costUSD * exchangeRate);
+                const pct = parseFloat(src.pointsPct) || 2;
+                const priceUSD = c.isOffer ? (parseFloat(src.newPriceUSD) || 0) : (parseFloat(src.priceUSD) || 0);
+
+                subtotalSYP += priceSYP * c.qty;
+                totalCostSYP += costSYP * c.qty;
+                earnedPoints += Math.round((priceUSD * c.qty) * pct);
+
+                orderItems.push({
+                    id: c.rawId,
+                    isOffer: c.isOffer,
+                    name: src.name,
+                    category: src.category || "عروض خاصة",
+                    unit: src.unit || "قطعة",
+                    qty: c.qty,
+                    priceSYP: priceSYP,
+                    costSYP: costSYP
+                });
+
+                // خصم الكمية من المخزون مباشرة لحجزها
+                const newStock = Math.max(0, (parseInt(src.stock) || 0) - c.qty);
+                db.ref(`${c.isOffer ? 'offers' : 'products'}/${c.rawId}/stock`).set(newStock);
+            }
+
+            const orderId = "ord_" + Date.now();
+            const notes = document.getElementById("orderNotes").value.trim();
+            const grandTotal = subtotalSYP + deliveryFee;
+
+            const orderData = {
+                id: orderId,
+                customerName: currentUser.name,
+                customerPhone: currentUser.phone,
+                regionName: regObj.name,
+                address: currentUser.address || "",
+                items: orderItems,
+                subtotalSYP: subtotalSYP,
+                totalCostSYP: totalCostSYP,
+                deliveryFee: deliveryFee,
+                driverPct: driverPct,
+                totalSYP: grandTotal,
+                earnedPoints: earnedPoints,
+                notes: notes,
+                status: "pending",
+                dateISO: new Date().toISOString()
+            };
+
+            db.ref(`orders/${orderId}`).set(orderData).then(() => {
+                cart = {};
+                localStorage.removeItem("moaath_cart");
+                document.getElementById("orderNotes").value = "";
+                closeModal("cartModal");
+                updateCartUI();
+                renderStore();
+                alert("✅ تم إرسال طلبك للإدارة بنجاح! سيتم تجهيزه والتواصل معك فوراً.");
+            });
+        }
+
+        // ============================================================================
+        // 5. التقييمات، المسابقات، مشاركة التطبيق، ولوحة الشريك
+        // ============================================================================
+        function openReviewModal(prodId) {
+            const p = productsDB[prodId];
+            if (!p) return;
+            document.getElementById("reviewProductId").value = prodId;
+            document.getElementById("reviewProductName").innerText = p.name;
+            document.getElementById("reviewCommentInput").value = "";
+            document.getElementById("reviewModal").style.display = "flex";
+        }
+
+        function submitProductReview() {
+            const prodId = document.getElementById("reviewProductId").value;
+            const rating = parseInt(document.getElementById("reviewRatingSelect").value) || 5;
+            const comment = document.getElementById("reviewCommentInput").value.trim();
+            if (!prodId) return;
+
+            const revId = "rev_" + Date.now();
+            db.ref(`products/${prodId}/reviews/${revId}`).set({
+                userName: currentUser?.name || "زبون",
+                rating,
+                comment,
+                dateISO: new Date().toISOString()
+            }).then(() => {
+                closeModal("reviewModal");
+                alert("⭐ شكراً لتقييمك!");
+            });
+        }
+
+        function openCompetitionsPage() {
+            const u = (currentUser && usersDB[currentUser.phone]) ? usersDB[currentUser.phone] : { points: 0 };
+            document.getElementById("compUserPoints").innerText = u.points || 0;
+
+            const sorted = Object.values(usersDB || {}).sort((a, b) => (parseInt(b.points) || 0) - (parseInt(a.points) || 0));
+            const myRank = sorted.findIndex(x => x.phone === u.phone);
+            document.getElementById("compUserRankDisplay").innerText = myRank !== -1 ? `#${myRank + 1}` : "-";
+
+            const compCard = document.getElementById("compDetailsCard");
+            if (storeSettings.compTitle || storeSettings.compDesc) {
+                compCard.style.display = "block";
+                document.getElementById("compTitleDisplay").innerText = storeSettings.compTitle || "";
+                document.getElementById("compDescDisplay").innerText = storeSettings.compDesc || "";
+                const imgEl = document.getElementById("compImgDisplay");
+                if (storeSettings.compImage) {
+                    imgEl.src = storeSettings.compImage;
+                    imgEl.style.display = "block";
+                } else {
+                    imgEl.style.display = "none";
+                }
+            } else {
+                compCard.style.display = "none";
+            }
+
+            const limit = parseInt(storeSettings.leaderboardLimit) || 10;
+            const topUsers = sorted.slice(0, limit);
+            const listEl = document.getElementById("leaderboardList");
+            listEl.innerHTML = topUsers.map((usr, i) => {
+                const ptsDisplay = usr.pointsVisibility === "masked" ? "*** 🔒" : `${usr.points || 0} نقطة`;
+                return `
+                    <div class="leader-row">
+                        <span><strong>#${i + 1}</strong> 👤 ${usr.name}</span>
+                        <strong style="color:var(--gold-color);">${ptsDisplay}</strong>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById("competitionsPage").style.display = "block";
+        }
+
+        function shareAppWhatsApp() {
+            const url = window.location.href;
+            const msg = `تسوق الآن من تطبيق *متجر معاذ - قرية العوينة* بكل سهولة واجمع النقاط والجوائز 🎁🛒:\n${url}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+        }
+
+        function redeemPointsWhatsApp() {
+            if (!currentUser) return;
+            const pts = usersDB[currentUser.phone]?.points || 0;
+            const msg = `مرحباً إدارة متجر معاذ 🌹\nأرغب باستبدال رصيد نقاطي الحالي (${pts} نقطة) في حسابي المسجل باسم: ${currentUser.name} (${currentUser.phone}).`;
+            window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
+        }
+
+        function openMissingRequestModal() {
+            document.getElementById("missingItemName").value = "";
+            document.getElementById("missingModal").style.display = "flex";
+        }
+
+        function submitMissingRequest() {
+            const itemName = document.getElementById("missingItemName").value.trim();
+            if (!itemName) return alert("يرجى كتابة اسم الصنف المطلوب.");
+            const id = "miss_" + Date.now();
+            db.ref(`missingRequests/${id}`).set({
+                id,
+                itemName,
+                customerName: currentUser?.name || "زائر",
+                customerPhone: currentUser?.phone || "-",
+                dateISO: new Date().toISOString()
+            }).then(() => {
+                closeModal("missingModal");
+                alert("📨 تم إرسال طلبك للإدارة لتوفيره في أقرب وقت.");
+            });
+        }
+
+        // لوحة الشريك المعتمدة
+        function openPartnerDashboard() {
+            if (!currentUser || !currentUser.phone) return;
+            const phone = currentUser.phone;
+            const cfg = partnersConfigDB[phone] || { categories: [], pct: 20, lastResetISO: "", payoutHistory: {} };
+            const cats = cfg.categories || [];
+            const pct = parseFloat(cfg.pct) || 20;
+
+            document.getElementById("partnerAssignedCatsText").innerText =
+                cats.length > 0 ? `التصنيفات التابعة لك (${pct}%): ${cats.join(" ، ")}` : "لم يتم ربط تصنيفات بحسابك بعد.";
+
+            const stats = calculatePartnerFinancials(phone);
+            document.getElementById("partnerTotalSales").innerText = stats.salesSYP.toLocaleString() + " ل.س";
+            document.getElementById("partnerTotalEarnings").innerText = stats.partnerShareSYP.toLocaleString() + " ل.س";
+
+            const myProducts = Object.values(productsDB || {}).filter(p => cats.includes(p.category));
+            const totalUnits = myProducts.reduce((acc, p) => acc + (parseInt(p.stock) || 0), 0);
+            document.getElementById("partnerTotalItemsCount").innerText = myProducts.length + " صنف";
+            document.getElementById("partnerTotalStockUnits").innerText = totalUnits + " قطعة";
+
+            document.getElementById("partnerItemsBreakdown").innerHTML = myProducts.map(p => `
+                <div class="adm-card" style="display:flex; justify-content:space-between;">
+                    <span>${p.name} <small style="color:var(--gray-text);">(${p.category})</small></span>
+                    <strong style="color:var(--gold-color);">المخزون: ${p.stock || 0} ${p.unit || 'قطعة'}</strong>
+                </div>
+            `).join('');
+
+            const payouts = cfg.payoutHistory ? Object.values(cfg.payoutHistory) : [];
+            payouts.sort((a, b) => new Date(b.dateISO) - new Date(a.dateISO));
+            document.getElementById("partnerPayoutHistoryList").innerHTML = payouts.length === 0
+                ? `<div class="adm-card" style="color:var(--gray-text); text-align:center;">لا توجد دفعات مستلمة سابقة.</div>`
+                : payouts.map(py => `
+                    <div class="adm-card" style="display:flex; justify-content:space-between;">
+                        <span>✅ دفعة مستلمة بتاريخ: ${new Date(py.dateISO).toLocaleDateString('ar-SY')}</span>
+                        <strong style="color:var(--success-color);">${Number(py.amountSYP).toLocaleString()} ل.س</strong>
+                    </div>
+                `).join('');
+
+            document.getElementById("partnerModal").style.display = "block";
+        }
+
+        function requestPartnerEarningsWhatsApp() {
+            if (!currentUser) return;
+            const stats = calculatePartnerFinancials(currentUser.phone);
+            const cfg = partnersConfigDB[currentUser.phone] || {};
+            const msg = `تحية طيبة إدارة متجر معاذ 🤝\nطلب صرف أرباح الشريك: *${currentUser.name}*\nالمبلغ المستحق حالياً: *${stats.partnerShareSYP.toLocaleString()} ل.س*\nكود محفظة شام كاش: ${cfg.shamWallet || 'غير محدد'}`;
+            window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
+        }
+        // ============================================================================
+        // 6. إدارة الطلبات المعلقة، القبول والتحويل للسائق، والإلغاء
+        // ============================================================================
+        function renderPendingOrders() {
+            const container = document.getElementById("pendingOrdersList");
+            if (!container) return;
+            const pending = Object.values(ordersDB || {}).filter(o => o.status === "pending");
+            pending.sort((a, b) => new Date(b.dateISO) - new Date(a.dateISO));
+
+            if (pending.length === 0) {
+                container.innerHTML = `<div class="adm-card" style="text-align:center; color:var(--gray-text);">لا توجد طلبات معلقة حالياً.</div>`;
+                return;
+            }
+
+            container.innerHTML = pending.map(o => {
+                const itemsHtml = (o.items || []).map(i =>
+                    `<li>${i.name} × <b>${i.qty} ${i.unit || 'قطعة'}</b> (${(i.priceSYP * i.qty).toLocaleString()} ل.س)</li>`
+                ).join('');
+                return `
+                    <div class="adm-card" style="border:1px solid var(--gold-color); margin-bottom:8px;">
+                        <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--gold-color);">
+                            <span>👤 ${o.customerName} (${o.customerPhone})</span>
+                            <span>🕒 ${new Date(o.dateISO).toLocaleTimeString('ar-SY', {hour:'2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <div style="font-size:11px; color:var(--gray-text); margin:3px 0;">📍 المنطقة: ${o.regionName} | العنوان: ${o.address || '-'}</div>
+                        <ul style="margin:5px 0; padding-right:18px; font-size:11px;">${itemsHtml}</ul>
+                        ${o.notes ? `<div style="font-size:11px; color:#ff9800;">📝 ملاحظة: ${o.notes}</div>` : ''}
+                        <div style="display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding-top:5px; margin-top:5px;">
+                            <span>التوصيل: ${(o.deliveryFee || 0).toLocaleString()} ل.س</span>
+                            <strong style="color:var(--success-color);">الإجمالي: ${(o.totalSYP || 0).toLocaleString()} ل.س</strong>
+                        </div>
+                        <div style="display:flex; gap:6px; margin-top:8px;">
+                            <button onclick="approvePendingOrder('${o.id}')" class="btn" style="background:var(--success-color); color:#000; flex:2;">✅ قبول وإرسال للسائق</button>
+                            <button onclick="rejectPendingOrder('${o.id}')" class="btn btn-danger" style="flex:1;">❌ إلغاء</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function approvePendingOrder(orderId) {
+            const o = ordersDB[orderId];
+            if (!o) return;
+
+            db.ref(`orders/${orderId}/status`).set("completed");
+            db.ref(`orders/${orderId}/approvedAtISO`).set(new Date().toISOString());
+
+            // إضافة النقاط للزبون وتحديث عداد الطلبات الناجحة
+            if (o.customerPhone && usersDB[o.customerPhone]) {
+                const u = usersDB[o.customerPhone];
+                const newPts = (parseInt(u.points) || 0) + (parseInt(o.earnedPoints) || 0);
+                const newCompleted = (parseInt(u.completedOrders) || 0) + 1;
+                db.ref(`users/${o.customerPhone}/points`).set(newPts);
+                db.ref(`users/${o.customerPhone}/completedOrders`).set(newCompleted);
+            }
+
+            // تجهيز رسالة واتساب لسائق التوصيل
+            const driverPhone = (storeSettings.deliveryPhone || adminWhatsAppNumber).replace(/^0/, "963").replace(/[^0-9]/g, "");
+            let msg = `🛵 *طلب توصيل جديد - متجر معاذ*\n`;
+            msg += `👤 الزبون: *${o.customerName}*\n`;
+            msg += `📱 الهاتف: ${o.customerPhone}\n`;
+            msg += `📍 المنطقة: ${o.regionName} (${o.address || 'بدون تفصيل'})\n`;
+            msg += `------------------\n`;
+            (o.items || []).forEach(i => {
+                msg += `• ${i.name} × *${i.qty} ${i.unit || 'قطعة'}*\n`;
+            });
+            msg += `------------------\n`;
+            if (o.notes) msg += `📝 ملاحظة: ${o.notes}\n`;
+            msg += `💰 *المطلوب تحصيله مع التوصيل: ${(o.totalSYP || 0).toLocaleString()} ل.س*`;
+
+            window.open(`https://wa.me/${driverPhone}?text=${encodeURIComponent(msg)}`, "_blank");
+        }
+
+        function rejectPendingOrder(orderId) {
+            const o = ordersDB[orderId];
+            if (!o) return;
+            if (!confirm(`هل أنت متأكد من إلغاء طلب الزبون (${o.customerName}) وإرجاع المواد للمخزون؟`)) return;
+
+            // إرجاع الكميات المحجوزة إلى المخزون
+            (o.items || []).forEach(i => {
+                const branch = i.isOffer ? "offers" : "products";
+                const src = i.isOffer ? offersDB[i.id] : productsDB[i.id];
+                if (src) {
+                    const restored = (parseInt(src.stock) || 0) + (parseInt(i.qty) || 0);
+                    db.ref(`${branch}/${i.id}/stock`).set(restored);
                 }
             });
-        }
-    }
 
-    function deleteCustomerAdmin() {
-        let phone = document.getElementById('adminCustOrigPhone').value;
-        if(confirm("هل أنت متأكد من حذف هذا الزبون نهائياً؟")) {
-            db.ref(`users/${phone}`).remove().then(() => {
-                alert("تم حذف الزبون التنظيمي.");
-                closeModal('adminEditCustomerModal');
+            db.ref(`orders/${orderId}/status`).set("cancelled");
+
+            // تحديث عداد الطلبات الملغاة للزبون
+            if (o.customerPhone && usersDB[o.customerPhone]) {
+                const u = usersDB[o.customerPhone];
+                const newCancelled = (parseInt(u.cancelledOrders) || 0) + 1;
+                db.ref(`users/${o.customerPhone}/cancelledOrders`).set(newCancelled);
+            }
+        }
+
+        function cancelAllPendingOrders() {
+            const pending = Object.values(ordersDB || {}).filter(o => o.status === "pending");
+            if (pending.length === 0) return alert("لا توجد طلبات معلقة لإلغائها.");
+            if (!confirm(`⚠️ هل تريد إلغاء جميع الطلبات المعلقة (${pending.length}) وإرجاع كمياتها للمخزون؟`)) return;
+            pending.forEach(o => rejectPendingOrder(o.id));
+        }
+
+        // ============================================================================
+        // 7. المحرك المحاسبي الذكي، الجرد العام، وتوزيع الأرباح
+        // ============================================================================
+        function calculatePartnerFinancials(partnerPhone) {
+            const cfg = partnersConfigDB[partnerPhone];
+            if (!cfg || !cfg.categories || cfg.categories.length === 0) {
+                return { salesSYP: 0, costSYP: 0, grossProfitSYP: 0, partnerShareSYP: 0 };
+            }
+            const cats = cfg.categories;
+            const pct = parseFloat(cfg.pct) || 20;
+            const resetISO = cfg.lastResetISO || "";
+
+            let salesSYP = 0;
+            let costSYP = 0;
+
+            Object.values(ordersDB || {}).forEach(o => {
+                if (o.status !== "completed" && o.status !== "approved") return;
+                if (resetISO && new Date(o.dateISO) <= new Date(resetISO)) return;
+
+                (o.items || []).forEach(item => {
+                    if (cats.includes(item.category)) {
+                        salesSYP += (parseInt(item.priceSYP) || 0) * (parseInt(item.qty) || 0);
+                        costSYP += (parseInt(item.costSYP) || 0) * (parseInt(item.qty) || 0);
+                    }
+                });
+            });
+
+            const grossProfitSYP = Math.max(0, salesSYP - costSYP);
+            const partnerShareSYP = Math.round(grossProfitSYP * (pct / 100));
+            return { salesSYP, costSYP, grossProfitSYP, partnerShareSYP };
+        }
+
+        function renderStatsDashboard() {
+            const period = document.getElementById("reportPeriodSelect")?.value || "total";
+            const catFilter = document.getElementById("reportCategorySelect")?.value || "all";
+
+            // تحديث قائمة التصنيفات في فلتر الجرد
+            const catSel = document.getElementById("reportCategorySelect");
+            if (catSel && catSel.options.length <= 1) {
+                catSel.innerHTML = `<option value="all">🌟 جميع التصنيفات</option>` +
+                    categoriesDB.filter(c => c !== "جميع المواد").map(c => `<option value="${c}">${c}</option>`).join('');
+            }
+
+            const now = new Date();
+            const isWithinPeriod = (iso) => {
+                if (!iso || period === "total") return true;
+                const d = new Date(iso);
+                const diffDays = (now - d) / (1000 * 60 * 60 * 24);
+                if (period === "daily") return d.toDateString() === now.toDateString();
+                if (period === "weekly") return diffDays <= 7;
+                if (period === "monthly") return diffDays <= 30;
+                return true;
+            };
+
+            let totalSales = 0;
+            let totalCost = 0;
+            let recoveredCapitalBox = 0;
+            let driverNetPay = 0;
+            let maintenanceFund = 0;
+
+            const capResetISO = storeSettings.capitalBoxResetISO || "";
+            const drvResetISO = storeSettings.driverResetISO || "";
+            const mntResetISO = storeSettings.maintenanceResetISO || "";
+
+            const catStatsMap = {};
+            const prodStatsMap = {};
+
+            Object.values(ordersDB || {}).forEach(o => {
+                if (o.status !== "completed" && o.status !== "approved") return;
+
+                // حساب أجور السائق وصندوق الوقود
+                const fee = parseInt(o.deliveryFee) || 0;
+                const drvPct = parseFloat(o.driverPct) || 80;
+                const drvShare = Math.round(fee * (drvPct / 100));
+                const mntShare = Math.max(0, fee - drvShare);
+
+                if (!drvResetISO || new Date(o.dateISO) > new Date(drvResetISO)) driverNetPay += drvShare;
+                if (!mntResetISO || new Date(o.dateISO) > new Date(mntResetISO)) maintenanceFund += mntShare;
+
+                (o.items || []).forEach(item => {
+                    const lineSales = (parseInt(item.priceSYP) || 0) * (parseInt(item.qty) || 0);
+                    const lineCost = (parseInt(item.costSYP) || 0) * (parseInt(item.qty) || 0);
+                    const lineProfit = lineSales - lineCost;
+
+                    if (!capResetISO || new Date(o.dateISO) > new Date(capResetISO)) {
+                        recoveredCapitalBox += lineCost;
+                    }
+
+                    if (isWithinPeriod(o.dateISO) && (catFilter === "all" || item.category === catFilter)) {
+                        totalSales += lineSales;
+                        totalCost += lineCost;
+
+                        const cName = item.category || "أخرى";
+                        if (!catStatsMap[cName]) catStatsMap[cName] = { sales: 0, profit: 0, qty: 0 };
+                        catStatsMap[cName].sales += lineSales;
+                        catStatsMap[cName].profit += lineProfit;
+                        catStatsMap[cName].qty += parseInt(item.qty) || 0;
+
+                        const pResetISO = productsDB[item.id]?.statsResetISO || "";
+                        if (!pResetISO || new Date(o.dateISO) > new Date(pResetISO)) {
+                            if (!prodStatsMap[item.id]) {
+                                prodStatsMap[item.id] = { id: item.id, name: item.name, qty: 0, sales: 0, profit: 0 };
+                            }
+                            prodStatsMap[item.id].qty += parseInt(item.qty) || 0;
+                            prodStatsMap[item.id].sales += lineSales;
+                            prodStatsMap[item.id].profit += lineProfit;
+                        }
+                    }
+                });
+            });
+
+            const grossProfit = totalSales - totalCost;
+            const marginPct = totalSales > 0 ? ((grossProfit / totalSales) * 100).toFixed(1) : 0;
+
+            const elSales = document.getElementById("statTotalSales");
+            if (elSales) elSales.innerText = totalSales.toLocaleString() + " ل.س";
+            const elCost = document.getElementById("statTotalCost");
+            if (elCost) elCost.innerText = totalCost.toLocaleString() + " ل.س";
+            const elProfit = document.getElementById("statNetProfit");
+            if (elProfit) elProfit.innerText = grossProfit.toLocaleString() + " ل.س";
+            const elMargin = document.getElementById("statProfitMargin");
+            if (elMargin) elMargin.innerText = marginPct + "%";
+
+            const elCap = document.getElementById("statRecoveredCapitalBox");
+            if (elCap) elCap.innerText = recoveredCapitalBox.toLocaleString() + " ل.س";
+            const elDrv = document.getElementById("statDriverNetPay");
+            if (elDrv) elDrv.innerText = driverNetPay.toLocaleString() + " ل.س";
+            const elMnt = document.getElementById("statMaintenanceFund");
+            if (elMnt) elMnt.innerText = maintenanceFund.toLocaleString() + " ل.س";
+
+            // حساب إيرادات الديون المحصلة للخزينة الرئيسية
+            const trResetISO = storeSettings.treasuryDebtResetISO || "";
+            let totalDebtRevUSD = 0;
+            let totalDebtRevSYP = 0;
+            Object.values(treasuryRevenuesDB || {}).forEach(rev => {
+                if (!trResetISO || new Date(rev.dateISO) > new Date(trResetISO)) {
+                    totalDebtRevUSD += parseFloat(rev.amountUSD) || 0;
+                    totalDebtRevSYP += parseInt(rev.amountSYP) || 0;
+                }
+            });
+            const revEl = document.getElementById("statTreasuryDebtCollected");
+            if (revEl) revEl.innerText = `${totalDebtRevUSD.toFixed(2)} $ (${totalDebtRevSYP.toLocaleString()} ل.س)`;
+
+            // عرض مستحقات الشركاء
+            const partnersListEl = document.getElementById("adminAllPartnersStatsList");
+            let totalPartnersCut = 0;
+            if (partnersListEl) {
+                const partnerUsers = Object.values(usersDB || {}).filter(u => u.type === "partner");
+                if (partnerUsers.length === 0) {
+                    partnersListEl.innerHTML = `<div style="font-size:11px; color:var(--gray-text);">لا يوجد شركاء معينون حالياً.</div>`;
+                } else {
+                    partnersListEl.innerHTML = partnerUsers.map(pu => {
+                        const pFin = calculatePartnerFinancials(pu.phone);
+                        totalPartnersCut += pFin.partnerShareSYP;
+                        return `
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed var(--border-color); font-size:11px;">
+                                <span>🤝 ${pu.name} (${partnersConfigDB[pu.phone]?.pct || 20}%)</span>
+                                <div>
+                                    <strong style="color:var(--success-color); margin-left:6px;">${pFin.partnerShareSYP.toLocaleString()} ل.س</strong>
+                                    <button onclick="quickSettlePartner('${pu.phone}')" class="btn" style="width:auto; padding:2px 6px; font-size:9px; background:#00b0ff; color:#fff;">تصفير</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+            // حساب أرباح مدير الاستيراد ومدير التصدير الصافية بعد خصم الشركاء والمصاريف
+            const impPct = parseFloat(storeSettings.importManagerPct ?? 50);
+            const expPct = 100 - impPct;
+            const impLabel = document.getElementById("importMgrPctLabel");
+            if (impLabel) impLabel.innerText = impPct;
+            const expLabel = document.getElementById("exportMgrPctLabel");
+            if (expLabel) expLabel.innerText = expPct;
+
+            const calcManagerNetProfit = (resetISO) => {
+                let profitAfterPartners = 0;
+                Object.values(ordersDB || {}).forEach(o => {
+                    if (o.status !== "completed" && o.status !== "approved") return;
+                    if (resetISO && new Date(o.dateISO) <= new Date(resetISO)) return;
+                    (o.items || []).forEach(item => {
+                        const lProfit = ((parseInt(item.priceSYP) || 0) - (parseInt(item.costSYP) || 0)) * (parseInt(item.qty) || 0);
+                        // التحقق مما إذا كان الصنف يتبع لشريك
+                        let partnerCutRatio = 0;
+                        Object.entries(partnersConfigDB || {}).forEach(([pPhone, cfg]) => {
+                            if (usersDB[pPhone]?.type === "partner" && (cfg.categories || []).includes(item.category)) {
+                                partnerCutRatio += (parseFloat(cfg.pct) || 0) / 100;
+                            }
+                        });
+                        profitAfterPartners += lProfit * Math.max(0, 1 - partnerCutRatio);
+                    });
+                });
+
+                let expensesSum = 0;
+                Object.values(expensesDB || {}).forEach(ex => {
+                    if (!resetISO || new Date(ex.dateISO) > new Date(resetISO)) {
+                        expensesSum += parseInt(ex.amountSYP) || 0;
+                    }
+                });
+
+                return Math.max(0, profitAfterPartners - expensesSum);
+            };
+
+            const impNetPool = calcManagerNetProfit(storeSettings.importManagerResetISO || "");
+            const expNetPool = calcManagerNetProfit(storeSettings.exportManagerResetISO || "");
+
+            const impProfitVal = Math.round(impNetPool * (impPct / 100));
+            const expProfitVal = Math.round(expNetPool * (expPct / 100));
+
+            const elImp = document.getElementById("statImportManagerProfit");
+            if (elImp) elImp.innerText = impProfitVal.toLocaleString() + " ل.س";
+            const elExp = document.getElementById("statExportManagerProfit");
+            if (elExp) elExp.innerText = expProfitVal.toLocaleString() + " ل.س";
+
+            // إحصائيات المخزون العامة والزبائن
+            const allProds = Object.values(productsDB || {});
+            let invCost = 0, invSale = 0, outCount = 0;
+            allProds.forEach(p => {
+                const st = parseInt(p.stock) || 0;
+                if (st <= 0) outCount++;
+                invCost += st * Math.round((parseFloat(p.costUSD) || 0) * exchangeRate);
+                invSale += st * getProductPriceSYP(p, false);
+            });
+
+            const elUsersCnt = document.getElementById("statRegisteredUsersCount");
+            if (elUsersCnt) elUsersCnt.innerText = Object.keys(usersDB || {}).length + " زبون";
+            const elProdsCnt = document.getElementById("invTotalProductsCount");
+            if (elProdsCnt) elProdsCnt.innerText = allProds.length + " صنف";
+            const elInvCost = document.getElementById("invTotalCost");
+            if (elInvCost) elInvCost.innerText = invCost.toLocaleString() + " ل.س";
+            const elInvSale = document.getElementById("invTotalSale");
+            if (elInvSale) elInvSale.innerText = invSale.toLocaleString() + " ل.س";
+            const elOutCnt = document.getElementById("invOutOfStockCount");
+            if (elOutCnt) elOutCnt.innerText = outCount + " صنف";
+
+            // الأصناف الذهبية
+            const sortedProdsByProfit = Object.values(prodStatsMap).sort((a, b) => b.profit - a.profit);
+            const goldenEl = document.getElementById("goldenAndStagnantInsights");
+            if (goldenEl) {
+                const top3 = sortedProdsByProfit.slice(0, 3);
+                goldenEl.innerHTML = top3.length > 0
+                    ? top3.map((p, i) => `<div>#${i + 1} 🌟 <b>${p.name}</b> — ربح صافي: <span style="color:var(--success-color);">${p.profit.toLocaleString()} ل.س</span> (${p.qty} مباع)</div>`).join('')
+                    : `<div style="color:var(--gray-text);">لا توجد بيانات مبيعات كافية بعد.</div>`;
+            }
+
+            // جدول جرد التصنيفات
+            const catContainer = document.getElementById("categoryStatsContainer");
+            if (catContainer) {
+                catContainer.innerHTML = Object.entries(catStatsMap).map(([cName, st]) => `
+                    <div class="adm-card" style="display:flex; justify-content:space-between;">
+                        <span>📂 <b>${cName}</b> (${st.qty} مباع)</span>
+                        <span>مبيعات: ${st.sales.toLocaleString()} | <b style="color:var(--success-color);">ربح: ${st.profit.toLocaleString()} ل.س</b></span>
+                    </div>
+                `).join('');
+            }
+
+            // جدول جرد الأصناف الفردية
+            const prodSearchQ = (document.getElementById("statsProductSearch")?.value || "").trim().toLowerCase();
+            const prodContainer = document.getElementById("productStatsContainer");
+            if (prodContainer) {
+                const filteredStats = sortedProdsByProfit.filter(p => !prodSearchQ || p.name.toLowerCase().includes(prodSearchQ));
+                prodContainer.innerHTML = filteredStats.map(p => `
+                    <div class="adm-card" style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <b>${p.name}</b> <small style="color:var(--gold-color);">(${p.qty} مباع)</small>
+                            <div style="font-size:10px; color:var(--gray-text);">مبيعات: ${p.sales.toLocaleString()} | ربح: <b style="color:var(--success-color);">${p.profit.toLocaleString()} ل.س</b></div>
+                        </div>
+                        <button onclick="resetSingleProductStats('${p.id}')" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">🔄 تصفير</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function resetAdminTimestamp(fieldKey, titleText) {
+            if (!confirm(`⚠️ هل أنت متأكد من تصفير (${titleText}) وبدء حساب جديد من هذه اللحظة؟`)) return;
+            db.ref(`settings/${fieldKey}`).set(new Date().toISOString());
+        }
+
+        function resetSingleProductStats(prodId) {
+            if (!confirm("تصفير عداد مبيعات وأرباح هذا الصنف؟")) return;
+            db.ref(`products/${prodId}/statsResetISO`).set(new Date().toISOString());
+        }
+
+        function saveManagersSplitPct() {
+            const val = Math.min(100, Math.max(0, parseFloat(document.getElementById("importManagerPctInput").value) || 50));
+            db.ref("settings/importManagerPct").set(val);
+        }
+
+        function addStoreExpense() {
+            const title = document.getElementById("expTitleInput").value.trim();
+            const amountSYP = parseInt(document.getElementById("expAmountInput").value);
+            if (!title || isNaN(amountSYP) || amountSYP <= 0) return alert("يرجى إدخال سبب المصروف والمبلغ بشكل صحيح.");
+            const id = "exp_" + Date.now();
+            db.ref(`expenses/${id}`).set({
+                id,
+                title,
+                amountSYP,
+                dateISO: new Date().toISOString()
+            }).then(() => {
+                document.getElementById("expTitleInput").value = "";
+                document.getElementById("expAmountInput").value = "";
             });
         }
-    }
 
-    // الدوال العامة لتشغيل التطبيق
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-    function switchAdminTab(tabId, btn) {
-        document.querySelectorAll('.admin-tab').forEach(t => t.style.display = 'none');
-        document.getElementById(tabId).style.display = 'block';
-        document.querySelectorAll('#adminModal .cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-    }
-    function toggleTheme() {
-        document.body.classList.toggle('light-mode');
-        document.getElementById('themeBtn').innerText = document.body.classList.contains('light-mode') ? '🌙' : '☀️';
-    }
-    function installAppDirectly() {
-        if(window.deferredPrompt) {
-            window.deferredPrompt.prompt();
-            window.deferredPrompt.userChoice.then(() => { window.deferredPrompt = null; });
+        function renderStoreExpenses() {
+            const el = document.getElementById("storeExpensesList");
+            if (!el) return;
+            const list = Object.values(expensesDB || {}).sort((a, b) => new Date(b.dateISO) - new Date(a.dateISO));
+            el.innerHTML = list.map(ex => `
+                <div class="adm-card" style="display:flex; justify-content:space-between; align-items:center; font-size:11px;">
+                    <span>📉 ${ex.title} (${new Date(ex.dateISO).toLocaleDateString('ar-SY')})</span>
+                    <div>
+                        <strong style="color:var(--danger-color); margin-left:6px;">${Number(ex.amountSYP).toLocaleString()} ل.س</strong>
+                        <button onclick="db.ref('expenses/${ex.id}').remove()" class="mini-btn btn-danger">✖</button>
+                    </div>
+                </div>
+            `).join('');
         }
-    }
-</script>
+
+        function sendDailyAccountingReportWhatsApp() {
+            const sales = document.getElementById("statTotalSales")?.innerText || "0";
+            const profit = document.getElementById("statNetProfit")?.innerText || "0";
+            const capBox = document.getElementById("statRecoveredCapitalBox")?.innerText || "0";
+            const treasury = document.getElementById("statTreasuryDebtCollected")?.innerText || "0";
+            const msg = `📊 *ملخص الجرد المحاسبي - متجر معاذ*\n` +
+                        `• إجمالي المبيعات: ${sales}\n` +
+                        `• الربح الإجمالي: ${profit}\n` +
+                        `• رأس المال المسترد للدرج: ${capBox}\n` +
+                        `• إيرادات الديون بالخزينة: ${treasury}\n` +
+                        `🕒 التاريخ: ${new Date().toLocaleString('ar-SY')}`;
+            window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
+        }
+
+        // ============================================================================
+        // 8. إدارة الأصناف، التعديل السريع (Quick-Edit)، ووحدات القياس الدقيقة (الميزة 2)
+        // ============================================================================
+        function compressImageFile(file, maxWidth = 600, quality = 0.75) {
+            return new Promise((resolve) => {
+                if (!file) return resolve(null);
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement("canvas");
+                        let w = img.width, h = img.height;
+                        if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
+                        canvas.width = w; canvas.height = h;
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL("image/jpeg", quality));
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function saveProduct() {
+            const editId = document.getElementById("editProductId").value;
+            const name = document.getElementById("prodName").value.trim();
+            const costUSD = parseFloat(document.getElementById("prodCostUSD").value) || 0;
+            const priceUSD = parseFloat(document.getElementById("prodPriceUSD").value) || 0;
+            const wholesaleUSD = parseFloat(document.getElementById("prodWholesaleUSD").value) || priceUSD;
+            const stock = parseInt(document.getElementById("prodStock").value) || 0;
+            const alertLimit = parseInt(document.getElementById("prodAlertLimit").value) || 2;
+            const pointsPct = parseFloat(document.getElementById("prodPointsPct").value) || 2;
+            const category = document.getElementById("prodCategory").value || "غذائيات";
+            const unit = document.getElementById("prodUnit").value || "قطعة";
+            const supplierId = document.getElementById("prodSupplierSelect").value || "";
+            const fileInput = document.getElementById("prodImageInput");
+
+            if (!name || priceUSD <= 0) return alert("يرجى إدخال اسم الصنف وسعر المبيع بالدولار.");
+
+            const id = editId || ("prod_" + Date.now());
+            const existing = productsDB[id] || {};
+            let imageBase64 = existing.image || "store-icon.png";
+
+            if (fileInput.files && fileInput.files[0]) {
+                imageBase64 = await compressImageFile(fileInput.files[0]);
+            }
+
+            const prodData = {
+                ...existing,
+                id,
+                name,
+                costUSD,
+                priceUSD,
+                wholesaleUSD,
+                stock,
+                alertLimit,
+                pointsPct,
+                category,
+                unit,
+                supplierId,
+                image: imageBase64,
+                updatedAt: new Date().toISOString()
+            };
+
+            db.ref(`products/${id}`).set(prodData).then(() => {
+                resetProductForm();
+                alert("✅ تم حفظ الصنف ووحدة القياس في المتجر بنجاح.");
+            });
+        }
+
+        function editProduct(id) {
+            const p = productsDB[id];
+            if (!p) return;
+            document.getElementById("editProductId").value = p.id;
+            document.getElementById("prodName").value = p.name || "";
+            document.getElementById("prodCostUSD").value = p.costUSD || 0;
+            document.getElementById("prodPriceUSD").value = p.priceUSD || 0;
+            document.getElementById("prodWholesaleUSD").value = p.wholesaleUSD || p.priceUSD || 0;
+            document.getElementById("prodStock").value = p.stock ?? 0;
+            document.getElementById("prodAlertLimit").value = p.alertLimit ?? 2;
+            document.getElementById("prodPointsPct").value = p.pointsPct ?? 2;
+            document.getElementById("prodCategory").value = p.category || "";
+            document.getElementById("prodUnit").value = p.unit || "قطعة";
+            document.getElementById("prodSupplierSelect").value = p.supplierId || "";
+            document.getElementById("productFormSection").scrollIntoView({ behavior: "smooth" });
+        }
+
+        function resetProductForm() {
+            document.getElementById("editProductId").value = "";
+            document.getElementById("prodName").value = "";
+            document.getElementById("prodCostUSD").value = "";
+            document.getElementById("prodPriceUSD").value = "";
+            document.getElementById("prodWholesaleUSD").value = "";
+            document.getElementById("prodStock").value = "10";
+            document.getElementById("prodAlertLimit").value = "2";
+            document.getElementById("prodUnit").value = "قطعة";
+            document.getElementById("prodImageInput").value = "";
+        }
+
+        function renderAdminProducts() {
+            const container = document.getElementById("adminProductsList");
+            if (!container) return;
+            const q = (document.getElementById("adminSearchProd")?.value || "").trim().toLowerCase();
+
+            const list = Object.values(productsDB || {}).filter(p => !q || (p.name || "").toLowerCase().includes(q));
+            container.innerHTML = list.map(p => `
+                <div class="adm-card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                    <div style="flex:1; min-width:140px;">
+                        <b>${p.name}</b> <small style="color:var(--gold-color);">(${p.unit || 'قطعة'})</small>
+                        <div style="font-size:10px; color:var(--gray-text);">${p.category} | مبيع: ${getProductPriceSYP(p).toLocaleString()} ل.س</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:4px;">
+                        <span style="font-size:10px;">$:</span>
+                        <input type="number" step="0.01" value="${p.priceUSD}" class="quick-inp" style="width:52px;" onchange="db.ref('products/${p.id}/priceUSD').set(parseFloat(this.value)||0)">
+                        <span style="font-size:10px;">كمية:</span>
+                        <input type="number" value="${p.stock}" class="quick-inp" style="width:45px;" onchange="db.ref('products/${p.id}/stock').set(parseInt(this.value)||0)">
+                        <button onclick="editProduct('${p.id}')" class="mini-btn" style="background:var(--gold-color); color:#000;">✏️</button>
+                        <button onclick="if(confirm('حذف الصنف؟')) db.ref('products/${p.id}').remove()" class="mini-btn btn-danger">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAdminCategories() {
+            const prodCatSel = document.getElementById("prodCategory");
+            if (prodCatSel) {
+                prodCatSel.innerHTML = categoriesDB.filter(c => c !== "جميع المواد").map(c => `<option value="${c}">${c}</option>`).join('');
+            }
+            const listEl = document.getElementById("adminCategoriesList");
+            if (listEl) {
+                listEl.innerHTML = categoriesDB.filter(c => c !== "جميع المواد").map(c => `
+                    <span style="display:inline-flex; align-items:center; gap:5px; background:var(--bg-color); border:1px solid var(--border-color); padding:4px 8px; border-radius:12px; margin:3px; font-size:11px;">
+                        ${c} <button onclick="deleteCategory('${c}')" style="background:none; border:none; color:var(--danger-color); cursor:pointer;">✖</button>
+                    </span>
+                `).join('');
+            }
+        }
+
+        function addCategory() {
+            const val = document.getElementById("newCatInput").value.trim();
+            if (!val || categoriesDB.includes(val)) return;
+            categoriesDB.push(val);
+            db.ref("categories").set(categoriesDB);
+            document.getElementById("newCatInput").value = "";
+        }
+
+        function deleteCategory(cat) {
+            if (!confirm(`حذف التصنيف (${cat})؟`)) return;
+            categoriesDB = categoriesDB.filter(c => c !== cat);
+            db.ref("categories").set(categoriesDB);
+        }
+
+        async function saveMultipleOffer() {
+            const editId = document.getElementById("editOfferId").value;
+            const name = document.getElementById("offerNameInput").value.trim();
+            const costUSD = parseFloat(document.getElementById("offerCostInput").value) || 0;
+            const oldPriceUSD = parseFloat(document.getElementById("offerOldPriceInput").value) || 0;
+            const newPriceUSD = parseFloat(document.getElementById("offerNewPriceInput").value) || 0;
+            const wholesaleUSD = parseFloat(document.getElementById("offerWholesaleInput").value) || newPriceUSD;
+            const stock = parseInt(document.getElementById("offerStockInput").value) || 5;
+            const pointsPct = parseFloat(document.getElementById("offerPointsPctInput").value) || 2;
+            const fileInput = document.getElementById("offerImageInput");
+
+            if (!name || newPriceUSD <= 0) return alert("يرجى إدخال اسم العرض وسعره.");
+            const id = editId || ("off_" + Date.now());
+            const existing = offersDB[id] || {};
+            let image = existing.image || "store-icon.png";
+            if (fileInput.files && fileInput.files[0]) image = await compressImageFile(fileInput.files[0]);
+
+            db.ref(`offers/${id}`).set({
+                id, name, costUSD, oldPriceUSD, newPriceUSD, wholesaleUSD, stock, pointsPct, image
+            }).then(() => {
+                clearOfferForm();
+                alert("✅ تم حفظ العرض الخاص.");
+            });
+        }
+
+        function clearOfferForm() {
+            document.getElementById("editOfferId").value = "";
+            document.getElementById("offerNameInput").value = "";
+            document.getElementById("offerCostInput").value = "";
+            document.getElementById("offerOldPriceInput").value = "";
+            document.getElementById("offerNewPriceInput").value = "";
+            document.getElementById("offerWholesaleInput").value = "";
+        }
+
+        function renderAdminOffers() {
+            const el = document.getElementById("adminOffersList");
+            if (!el) return;
+            el.innerHTML = Object.values(offersDB || {}).map(o => `
+                <div class="adm-card" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>🔥 <b>${o.name}</b> (${o.newPriceUSD}$ | مخزون: ${o.stock})</span>
+                    <button onclick="db.ref('offers/${o.id}').remove()" class="mini-btn btn-danger">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        // ============================================================================
+        // 9. النواقص والموزعون مع رسائل واتساب بوحدات القياس الدقيقة (الميزة 2)
+        // ============================================================================
+        function saveSupplier() {
+            const editId = document.getElementById("editSupplierId").value;
+            const name = document.getElementById("suppName").value.trim();
+            const address = document.getElementById("suppAddress").value.trim();
+            const phone = document.getElementById("suppPhone").value.trim();
+            if (!name) return alert("أدخل اسم الموزع.");
+            const id = editId || ("supp_" + Date.now());
+            db.ref(`suppliers/${id}`).set({ id, name, address, phone }).then(() => {
+                resetSupplierForm();
+            });
+        }
+
+        function resetSupplierForm() {
+            document.getElementById("editSupplierId").value = "";
+            document.getElementById("suppName").value = "";
+            document.getElementById("suppAddress").value = "";
+            document.getElementById("suppPhone").value = "";
+        }
+
+        function renderAdminSuppliers() {
+            const sel = document.getElementById("prodSupplierSelect");
+            const list = Object.values(suppliersDB || {});
+            if (sel) {
+                sel.innerHTML = `<option value="">-- بدون موزع --</option>` +
+                    list.map(s => `<option value="${s.id}">${s.name} (${s.address || '-'})</option>`).join('');
+            }
+            const container = document.getElementById("adminSuppliersList");
+            if (container) {
+                container.innerHTML = list.map(s => `
+                    <div class="adm-card" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>🚚 <b>${s.name}</b> | ${s.address || '-'} | 📱 ${s.phone || '-'}</span>
+                        <button onclick="db.ref('suppliers/${s.id}').remove()" class="mini-btn btn-danger">🗑️</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function renderShortagesBySupplier() {
+            const container = document.getElementById("shortagesBySupplierContainer");
+            if (!container) return;
+
+            const shortages = Object.values(productsDB || {}).filter(p => (parseInt(p.stock) || 0) <= (parseInt(p.alertLimit) ?? 2));
+            if (shortages.length === 0) {
+                container.innerHTML = `<div class="adm-card" style="text-align:center; color:var(--success-color);">✅ جميع الأصناف متوفرة بكميات جيدة فوق حد التنبيه.</div>`;
+                return;
+            }
+
+            const grouped = {};
+            shortages.forEach(p => {
+                const sId = p.supplierId || "no_supplier";
+                if (!grouped[sId]) grouped[sId] = [];
+                grouped[sId].push(p);
+            });
+
+            container.innerHTML = Object.entries(grouped).map(([sId, items]) => {
+                const supp = suppliersDB[sId];
+                const suppTitle = supp ? `🚚 الموزع: ${supp.name} (${supp.phone})` : `⚠️ أصناف بدون موزع محدد`;
+                const itemsHtml = items.map(i => `
+                    <div style="display:flex; justify-content:space-between; font-size:11px; padding:3px 0; border-bottom:1px dashed var(--border-color);">
+                        <span>• ${i.name}</span>
+                        <strong style="color:var(--danger-color);">المتبقي: ${i.stock || 0} ${i.unit || 'قطعة'}</strong>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="adm-card" style="border-color:var(--danger-color); margin-bottom:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <strong style="color:var(--gold-color);">${suppTitle}</strong>
+                            ${supp ? `<button onclick="sendSupplierShortageWhatsApp('${sId}')" class="btn" style="width:auto; padding:4px 10px; font-size:10px; background:#25D366; color:#fff;">📲 إرسال طلبية النواقص واتساب</button>` : ''}
+                        </div>
+                        ${itemsHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // الميزة 2: صياغة رسالة الموزع تلقائياً مع الكمية المطلوبة ووحدة القياس الخاصة بكل صنف
+        function sendSupplierShortageWhatsApp(supplierId) {
+            const supplier = suppliersDB[supplierId];
+            if (!supplier || !supplier.phone) return alert("رقم واتساب الموزع غير متوفر.");
+
+            const shortageItems = Object.values(productsDB || {}).filter(p => {
+                const stock = parseInt(p.stock) || 0;
+                const limit = parseInt(p.alertLimit) ?? 2;
+                return p.supplierId === supplierId && stock <= limit;
+            });
+
+            if (shortageItems.length === 0) return alert("لا توجد نواقص مسجلة لهذا الموزع حالياً.");
+
+            let msg = `تحية طيبة أستاذ *${supplier.name}* المحترم 🌹\n`;
+            msg += `نرجو تزويد *متجر معاذ - قرية العوينة* بالطلبيات التالية:\n\n`;
+
+            shortageItems.forEach((item, idx) => {
+                const unit = item.unit || "قطعة";
+                const currentStock = parseInt(item.stock) || 0;
+                const targetStock = Math.max((parseInt(item.alertLimit) || 2) * 3, 10);
+                const neededQty = Math.max(targetStock - currentStock, 1);
+
+                msg += `${idx + 1}. نريد *${neededQty} ${unit}* من صنف (${item.name})\n`;
+            });
+
+            msg += `\nشكراً لتعاونكم الدائم 🤝`;
+
+            const cleanPhone = supplier.phone.replace(/^0/, "963").replace(/[^0-9]/g, "");
+            window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, "_blank");
+        }
+
+        function renderCustomerMissingRequests() {
+            const el = document.getElementById("customerMissingRequestsList");
+            if (!el) return;
+            const list = Object.values(missingRequestsDB || {});
+            el.innerHTML = list.length === 0
+                ? `<div class="adm-card" style="color:var(--gray-text); text-align:center;">لا توجد طلبات توفير حالياً.</div>`
+                : list.map(r => `
+                    <div class="adm-card" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>📝 <b>${r.itemName}</b> — طلب: ${r.customerName} (${r.customerPhone})</span>
+                        <button onclick="db.ref('missingRequests/${r.id}').remove()" class="mini-btn btn-danger">🗑️</button>
+                    </div>
+                `).join('');
+        }
+
+        // ============================================================================
+        // 10. الميزة 1 و 3 و 4: دفتر الدين والخزينة + مدير التصدير + مراقبة وتصحيح الزبائن
+        // ============================================================================
+
+        // تحديث أزرار الصلاحيات في شريط الزبون العلوي
+        function updateRoleButtonsVisibility() {
+            const creditBtn = document.getElementById("creditBookBtn");
+            const exportBtn = document.getElementById("exportManagerBtn");
+            const partnerBtn = document.getElementById("partnerDashboardBtn");
+
+            if (!currentUser || !currentUser.phone) {
+                if (creditBtn) creditBtn.style.display = "none";
+                if (exportBtn) exportBtn.style.display = "none";
+                if (partnerBtn) partnerBtn.style.display = "none";
+                return;
+            }
+
+            const userRecord = usersDB[currentUser.phone] || currentUser;
+
+            // إظهار زر دفتر الدين لزبون الآجل
+            if (creditBtn) {
+                const hasDebt = (parseFloat(userRecord.debtBalanceUSD) || 0) > 0;
+                creditBtn.style.display = (userRecord.type === "credit" || hasDebt) ? "inline-block" : "none";
+            }
+
+            // إظهار زر لوحة الشريك
+            if (partnerBtn) {
+                partnerBtn.style.display = (userRecord.type === "partner") ? "inline-block" : "none";
+            }
+
+            // إظهار زر مدير التصدير المستقل والآمن
+            if (exportBtn) {
+                const assignedExportPhone = (storeSettings.exportManagerPhone || "").trim();
+                exportBtn.style.display = (assignedExportPhone && currentUser.phone === assignedExportPhone) ? "inline-block" : "none";
+            }
+        }
+
+        // فتح شاشة دفتر الدين للزبون (قراءة فقط)
+        function openCustomerCreditBook() {
+            if (!currentUser || !currentUser.phone) return;
+            const userRecord = usersDB[currentUser.phone] || {};
+            const debtUSD = parseFloat(userRecord.debtBalanceUSD) || 0;
+            const rate = parseFloat(exchangeRate) || 15000;
+            const debtSYP = Math.round(debtUSD * rate);
+
+            document.getElementById("custViewDebtUSD").innerText = debtUSD.toFixed(2) + " $";
+            document.getElementById("custViewDebtSYP").innerText = "ما يعادل: " + debtSYP.toLocaleString() + " ل.س";
+            document.getElementById("custViewExRate").innerText = rate.toLocaleString();
+
+            const historyContainer = document.getElementById("custViewCreditHistoryList");
+            const ledger = userRecord.creditLedger ? Object.values(userRecord.creditLedger) : [];
+            ledger.sort((a, b) => new Date(b.dateISO) - new Date(a.dateISO));
+
+            if (ledger.length === 0) {
+                historyContainer.innerHTML = `<div class="adm-card" style="text-align:center; color:var(--gray-text);">لا توجد حركات مسجلة في دفتر الدين حتى الآن.</div>`;
+            } else {
+                historyContainer.innerHTML = ledger.map(tx => {
+                    const isDebt = tx.type === "debt";
+                    const color = isDebt ? "var(--danger-color)" : "var(--success-color)";
+                    const sign = isDebt ? "➕ دين مضاف" : "➖ دفعة مسددة";
+                    const syVal = Math.round((parseFloat(tx.finalAmountUSD) || 0) * rate);
+                    return `
+                        <div class="adm-card" style="border-right:4px solid ${color}; margin-bottom:8px;">
+                            <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                                <span style="color:${color};">${sign}</span>
+                                <span>${parseFloat(tx.finalAmountUSD).toFixed(2)} $ (${syVal.toLocaleString()} ل.س)</span>
+                            </div>
+                            <div style="font-size:11px; color:var(--text-color); margin-top:4px;">📝 البيان: ${tx.note || '-'}</div>
+                            ${tx.feePct > 0 ? `<div style="font-size:10px; color:var(--gold-color);">شامل نسبة التكلفة: ${tx.feePct}% (الأصل: ${parseFloat(tx.baseAmountUSD).toFixed(2)} $)</div>` : ''}
+                            <div style="font-size:10px; color:var(--gray-text); margin-top:3px;">🕒 ${new Date(tx.dateISO).toLocaleString('ar-SY')}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            document.getElementById("customerCreditModal").style.display = "block";
+        }
+
+        // إدارة الديون في لوحة الإدارة والترحيل التلقائي للخزينة
+        function populateAdminCreditCustomersSelect() {
+            const sel = document.getElementById("adminCreditCustSelect");
+            if (!sel) return;
+            const currentVal = sel.value;
+            sel.innerHTML = `<option value="">-- اختر زبون آجل --</option>`;
+            Object.values(usersDB || {}).forEach(u => {
+                if (u.type === "credit" || (parseFloat(u.debtBalanceUSD) || 0) > 0) {
+                    const debt = (parseFloat(u.debtBalanceUSD) || 0).toFixed(2);
+                    sel.innerHTML += `<option value="${u.phone}">${u.name} (${u.phone}) - الرصيد: ${debt} $</option>`;
+                }
+            });
+            if (currentVal && usersDB[currentVal]) sel.value = currentVal;
+        }
+
+        function renderAdminCustomerCreditDetails() {
+            const phone = document.getElementById("adminCreditCustSelect").value;
+            const summaryBox = document.getElementById("adminCreditSummaryBox");
+            const histList = document.getElementById("adminCreditHistoryList");
+
+            if (!phone || !usersDB[phone]) {
+                summaryBox.style.display = "none";
+                histList.innerHTML = "";
+                return;
+            }
+
+            const u = usersDB[phone];
+            const debtUSD = parseFloat(u.debtBalanceUSD) || 0;
+            const rate = parseFloat(exchangeRate) || 15000;
+            summaryBox.style.display = "block";
+            document.getElementById("admCustTotalDebtUSD").innerText = debtUSD.toFixed(2) + " $";
+            document.getElementById("admCustTotalDebtSYP").innerText = Math.round(debtUSD * rate).toLocaleString() + " ل.س";
+
+            const ledger = u.creditLedger ? Object.values(u.creditLedger) : [];
+            ledger.sort((a, b) => new Date(b.dateISO) - new Date(a.dateISO));
+
+            histList.innerHTML = ledger.map(tx => {
+                const isDebt = tx.type === "debt";
+                return `
+                    <div class="adm-card" style="display:flex; justify-content:space-between; align-items:center; border-right:3px solid ${isDebt ? '#ff4444' : '#00e676'};">
+                        <div>
+                            <strong style="color:${isDebt ? '#ff4444' : '#00e676'};">${isDebt ? 'دين:' : 'تسديد:'} ${parseFloat(tx.finalAmountUSD).toFixed(2)} $</strong>
+                            <div style="font-size:10px; color:var(--gray-text);">${tx.note || ''} | ${new Date(tx.dateISO).toLocaleDateString('ar-SY')}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addCustomerDebtTransaction() {
+            const phone = document.getElementById("adminCreditCustSelect").value;
+            if (!phone || !usersDB[phone]) return alert("يرجى اختيار الزبون الآجل أولاً.");
+
+            const baseUSD = parseFloat(document.getElementById("newDebtAmountUSD").value);
+            const feePct = parseFloat(document.getElementById("newDebtFeePct").value) || 0;
+            const note = document.getElementById("newDebtNote").value.trim() || "فاتورة مشتريات آجلة";
+
+            if (isNaN(baseUSD) || baseUSD <= 0) return alert("يرجى إدخال مبلغ دين صحيح بالدولار.");
+
+            const finalUSD = baseUSD + (baseUSD * (feePct / 100));
+            const currentDebt = parseFloat(usersDB[phone].debtBalanceUSD) || 0;
+            const newBalance = +(currentDebt + finalUSD).toFixed(2);
+            const txId = "tx_" + Date.now();
+
+            const txData = {
+                id: txId,
+                type: "debt",
+                baseAmountUSD: baseUSD,
+                feePct: feePct,
+                finalAmountUSD: +finalUSD.toFixed(2),
+                note: note,
+                dateISO: new Date().toISOString()
+            };
+
+            db.ref(`users/${phone}/debtBalanceUSD`).set(newBalance);
+            db.ref(`users/${phone}/creditLedger/${txId}`).set(txData).then(() => {
+                document.getElementById("newDebtAmountUSD").value = "";
+                document.getElementById("newDebtNote").value = "";
+                populateAdminCreditCustomersSelect();
+                renderAdminCustomerCreditDetails();
+                alert(`✅ تم تسجيل دين بقيمة ${finalUSD.toFixed(2)} $ على حساب الزبون.`);
+            });
+        }
+
+        function payCustomerDebtTransaction() {
+            const phone = document.getElementById("adminCreditCustSelect").value;
+            if (!phone || !usersDB[phone]) return alert("يرجى اختيار الزبون الآجل أولاً.");
+
+            const payUSD = parseFloat(document.getElementById("payDebtAmountUSD").value);
+            const note = document.getElementById("payDebtNote").value.trim() || "دفعة نقدية واصلة";
+
+            if (isNaN(payUSD) || payUSD <= 0) return alert("يرجى إدخال مبلغ التسديد بالدولار.");
+
+            const currentDebt = parseFloat(usersDB[phone].debtBalanceUSD) || 0;
+            const newBalance = Math.max(0, +(currentDebt - payUSD).toFixed(2));
+            const rate = parseFloat(exchangeRate) || 15000;
+            const amountSYP = Math.round(payUSD * rate);
+            const txId = "pay_" + Date.now();
+            const nowISO = new Date().toISOString();
+
+            const txData = {
+                id: txId,
+                type: "payment",
+                baseAmountUSD: payUSD,
+                feePct: 0,
+                finalAmountUSD: +payUSD.toFixed(2),
+                amountSYP: amountSYP,
+                exchangeRateUsed: rate,
+                note: note,
+                dateISO: nowISO
+            };
+
+            // 1. خصم الدفعة من رصيد دين الزبون
+            db.ref(`users/${phone}/debtBalanceUSD`).set(newBalance);
+            db.ref(`users/${phone}/creditLedger/${txId}`).set(txData);
+
+            // 2. الترحيل التلقائي الفوري إلى الخزينة الرئيسية للمتجر كإيراد نقدي واصل
+            db.ref(`treasuryRevenues/${txId}`).set({
+                id: txId,
+                customerPhone: phone,
+                customerName: usersDB[phone].name,
+                amountUSD: +payUSD.toFixed(2),
+                amountSYP: amountSYP,
+                note: `تسديد دين من الزبون: ${usersDB[phone].name} (${note})`,
+                dateISO: nowISO
+            }).then(() => {
+                document.getElementById("payDebtAmountUSD").value = "";
+                document.getElementById("payDebtNote").value = "";
+                populateAdminCreditCustomersSelect();
+                renderAdminCustomerCreditDetails();
+                renderStatsDashboard();
+                alert(`✅ تم خصم ${payUSD.toFixed(2)} $ من دين الزبون وترحيل (${amountSYP.toLocaleString()} ل.س) كإيراد نقدي واصل إلى الخزينة الرئيسية.`);
+            });
+        }
+
+        // الميزة 3: لوحة مدير التصدير المستقلة والآمنة (تشغيلية فقط)
+        function openExportManagerPanel() {
+            const assignedExportPhone = (storeSettings.exportManagerPhone || "").trim();
+            if (!currentUser || !assignedExportPhone || currentUser.phone !== assignedExportPhone) {
+                return alert("⛔ عذراً، هذه اللوحة مخصصة لمدير التصدير المعتمد فقط.");
+            }
+            renderExportManagerOrders();
+            document.getElementById("exportManagerModal").style.display = "block";
+        }
+
+        function renderExportManagerOrders() {
+            const container = document.getElementById("exportManagerOrdersList");
+            if (!container) return;
+
+            const pendingOrders = Object.values(ordersDB || {}).filter(o => o.status === "pending");
+            pendingOrders.sort((a, b) => new Date(b.dateISO) - new Date(a.dateISO));
+
+            if (pendingOrders.length === 0) {
+                container.innerHTML = `<div class="adm-card" style="text-align:center; color:var(--gray-text);">لا توجد طلبات واردة معلقة حالياً.</div>`;
+                return;
+            }
+
+            container.innerHTML = pendingOrders.map(order => {
+                const itemsHtml = (order.items || []).map(i =>
+                    `<li>${i.name} × <b>${i.qty} ${i.unit || 'قطعة'}</b> (${(i.priceSYP * i.qty).toLocaleString()} ل.س)</li>`
+                ).join('');
+                return `
+                    <div class="adm-card" style="border:1px solid var(--gold-color); margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--gold-color);">
+                            <span>👤 ${order.customerName} (${order.customerPhone})</span>
+                            <span>🕒 ${new Date(order.dateISO).toLocaleTimeString('ar-SY', {hour:'2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <div style="font-size:11px; color:var(--gray-text); margin:4px 0;">📍 المنطقة: ${order.regionName} | العنوان: ${order.address || '-'}</div>
+                        <ul style="margin:6px 0; padding-right:18px; font-size:12px;">${itemsHtml}</ul>
+                        ${order.notes ? `<div style="font-size:11px; color:#ff9800; margin-bottom:6px;">📝 ملاحظة: ${order.notes}</div>` : ''}
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--border-color); padding-top:6px; margin-top:6px;">
+                            <strong style="color:var(--success-color); font-size:13px;">الإجمالي مع التوصيل: ${(order.totalSYP || 0).toLocaleString()} ل.س</strong>
+                        </div>
+                        <div style="display:flex; gap:6px; margin-top:8px;">
+                            <button onclick="approvePendingOrder('${order.id}')" class="btn" style="background:var(--success-color); color:#000; flex:2;">✅ قبول وتحويل للتوصيل</button>
+                            <button onclick="rejectPendingOrder('${order.id}')" class="btn btn-danger" style="flex:1;">❌ إلغاء الطلب</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // الميزة 4: مراقبة نشاط الزبائن، تصحيح الهواتف، والحذف التنظيمي
+        function getCustomerOrderStats(phone) {
+            let completed = 0, cancelled = 0;
+            Object.values(ordersDB || {}).forEach(o => {
+                if (o.customerPhone === phone) {
+                    if (o.status === "completed" || o.status === "approved") completed++;
+                    else if (o.status === "cancelled" || o.status === "rejected") cancelled++;
+                }
+            });
+            return { completed, cancelled };
+        }
+
+        function renderAdminCustomers() {
+            const container = document.getElementById("adminCustomersList");
+            if (!container) return;
+            const q = (document.getElementById("adminSearchCust")?.value || "").trim().toLowerCase();
+
+            const typeLabels = {
+                retail: "مفرق",
+                wholesale: "جملة 📦",
+                neighbors: "جيران 🏡",
+                partner: "شريك 🤝",
+                credit: "آجل / دفتر 📒"
+            };
+
+            const list = Object.values(usersDB || {}).filter(u =>
+                (u.name || "").toLowerCase().includes(q) || (u.phone || "").includes(q)
+            );
+
+            container.innerHTML = list.map(u => {
+                const stats = getCustomerOrderStats(u.phone);
+                const completedCount = u.completedOrders !== undefined ? u.completedOrders : stats.completed;
+                const cancelledCount = u.cancelledOrders !== undefined ? u.cancelledOrders : stats.cancelled;
+
+                return `
+                    <div class="adm-card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                        <div>
+                            <div style="font-weight:bold; font-size:12px;">
+                                👤 ${u.name} <span style="color:var(--gold-color);">(${typeLabels[u.type] || 'مفرق'})</span>
+                            </div>
+                            <div style="font-size:11px; color:var(--gray-text);">📱 ${u.phone} | 📍 ${u.region || '-'} | 🎁 ${u.points || 0} نقطة</div>
+                            <div style="font-size:11px; margin-top:3px; font-weight:bold;">
+                                <span style="color:var(--success-color);">✅ طلبات ناجحة: ${completedCount}</span> | 
+                                <span style="color:var(--danger-color);">❌ طلبات ملغاة: ${cancelledCount}</span>
+                            </div>
+                        </div>
+                        <button onclick="openAdminEditCustomerModal('${u.phone}')" class="btn" style="width:auto; padding:5px 10px; font-size:11px;">✏️ تعديل البيانات</button>
+                    </div>
+                `;
+            }).join('');
+
+            populateAdminCreditCustomersSelect();
+        }
+
+        function openAdminEditCustomerModal(phone) {
+            const u = usersDB[phone];
+            if (!u) return;
+            populateRegionsSelects();
+            document.getElementById("adminCustOrigPhone").value = u.phone;
+            document.getElementById("adminCustName").value = u.name || "";
+            document.getElementById("adminCustPhone").value = u.phone || "";
+            document.getElementById("adminCustRegion").value = u.region || "";
+            document.getElementById("adminCustType").value = u.type || "retail";
+            document.getElementById("adminCustAddress").value = u.address || "";
+            document.getElementById("adminCustPoints").value = u.points || 0;
+            document.getElementById("adminEditCustomerModal").style.display = "flex";
+        }
+
+        function saveAdminCustomerEdit() {
+            const origPhone = document.getElementById("adminCustOrigPhone").value;
+            const newPhone = document.getElementById("adminCustPhone").value.trim();
+            const name = document.getElementById("adminCustName").value.trim();
+            const region = document.getElementById("adminCustRegion").value;
+            const type = document.getElementById("adminCustType").value;
+            const address = document.getElementById("adminCustAddress").value.trim();
+            const points = parseInt(document.getElementById("adminCustPoints").value) || 0;
+
+            if (!/^09\d{8}$/.test(newPhone)) {
+                return alert("⚠️ رقم الهاتف يجب أن يتكون من 10 خانات ويبدأ بـ 09 حصراً.");
+            }
+
+            const oldData = usersDB[origPhone] || {};
+            const updatedUser = {
+                ...oldData,
+                name,
+                phone: newPhone,
+                region,
+                type,
+                address,
+                points
+            };
+
+            if (origPhone !== newPhone) {
+                if (usersDB[newPhone]) {
+                    return alert("⚠️ الرقم الجديد مسجل مسبقاً لحساب آخر في قاعدة البيانات!");
+                }
+                db.ref(`users/${newPhone}`).set(updatedUser).then(() => {
+                    db.ref(`users/${origPhone}`).remove();
+                    Object.values(ordersDB || {}).forEach(order => {
+                        if (order.customerPhone === origPhone) {
+                            db.ref(`orders/${order.id}/customerPhone`).set(newPhone);
+                        }
+                    });
+                    closeModal("adminEditCustomerModal");
+                    renderAdminCustomers();
+                    alert("✅ تم تصحيح رقم الهاتف ونقل سجل الزبون ونقاطه بنجاح.");
+                });
+            } else {
+                db.ref(`users/${origPhone}`).set(updatedUser).then(() => {
+                    closeModal("adminEditCustomerModal");
+                    renderAdminCustomers();
+                    alert("✅ تم تحديث بيانات الزبون بنجاح.");
+                });
+            }
+        }
+
+        function deleteCustomerAccount() {
+            const phone = document.getElementById("adminCustOrigPhone").value;
+            if (!phone || !usersDB[phone]) return;
+            if (!confirm(`⚠️ هل أنت متأكد من حذف حساب الزبون (${usersDB[phone].name} - ${phone}) نهائياً من قاعدة البيانات؟`)) return;
+
+            db.ref(`users/${phone}`).remove().then(() => {
+                closeModal("adminEditCustomerModal");
+                renderAdminCustomers();
+                renderStatsDashboard();
+                alert("🗑️ تم حذف حساب الزبون نهائياً.");
+            });
+        }
+
+        // ============================================================================
+        // 11. إعدادات الشركاء، المسابقات، المناطق، والنسخ الاحتياطي (.json)
+        // ============================================================================
+        function populatePartnerAdminSelect() {
+            const sel = document.getElementById("adminPartnerSelect");
+            if (!sel) return;
+            const prev = sel.value;
+            const partners = Object.values(usersDB || {}).filter(u => u.type === "partner");
+            sel.innerHTML = `<option value="">-- اختر شريكاً --</option>` +
+                partners.map(p => `<option value="${p.phone}">${p.name} (${p.phone})</option>`).join('');
+            if (prev) sel.value = prev;
+        }
+
+        function loadPartnerConfig() {
+            const phone = document.getElementById("adminPartnerSelect").value;
+            const boxContainer = document.getElementById("partnerCategoriesCheckboxes");
+            if (!phone) {
+                boxContainer.innerHTML = "";
+                return;
+            }
+            const cfg = partnersConfigDB[phone] || { categories: [], pct: 20, shamWallet: "" };
+            document.getElementById("adminPartnerShamWallet").value = cfg.shamWallet || "";
+            document.getElementById("adminPartnerPct").value = cfg.pct ?? 20;
+
+            boxContainer.innerHTML = categoriesDB.filter(c => c !== "جميع المواد").map(c => {
+                const checked = (cfg.categories || []).includes(c) ? "checked" : "";
+                return `<label style="display:inline-flex; align-items:center; gap:4px; font-size:11px; color:var(--text-color);"><input type="checkbox" class="partner-cat-chk" value="${c}" ${checked}> ${c}</label>`;
+            }).join('');
+        }
+
+        function savePartnerCategoriesConfig() {
+            const phone = document.getElementById("adminPartnerSelect").value;
+            if (!phone) return alert("يرجى اختيار الشريك أولاً.");
+            const shamWallet = document.getElementById("adminPartnerShamWallet").value.trim();
+            const pct = parseFloat(document.getElementById("adminPartnerPct").value) || 20;
+            const selectedCats = Array.from(document.querySelectorAll(".partner-cat-chk:checked")).map(el => el.value);
+
+            const existing = partnersConfigDB[phone] || {};
+            db.ref(`partnersConfig/${phone}`).set({
+                ...existing,
+                phone,
+                shamWallet,
+                pct,
+                categories: selectedCats
+            }).then(() => alert("✅ تم حفظ إعدادات الشريك بنجاح."));
+        }
+
+        function settlePartnerEarningsByAdmin() {
+            const phone = document.getElementById("adminPartnerSelect").value;
+            if (!phone) return alert("اختر الشريك أولاً.");
+            quickSettlePartner(phone);
+        }
+
+        function quickSettlePartner(phone) {
+            const fin = calculatePartnerFinancials(phone);
+            if (!confirm(`تصفير وتوثيق دفعة للشريك بقيمة (${fin.partnerShareSYP.toLocaleString()} ل.س)؟`)) return;
+            const nowISO = new Date().toISOString();
+            const payId = "py_" + Date.now();
+            db.ref(`partnersConfig/${phone}/lastResetISO`).set(nowISO);
+            db.ref(`partnersConfig/${phone}/payoutHistory/${payId}`).set({
+                id: payId,
+                amountSYP: fin.partnerShareSYP,
+                dateISO: nowISO
+            });
+        }
+
+        async function saveCompetitionSettings() {
+            const minRedeemPoints = parseInt(document.getElementById("minRedeemPointsInput").value) || 500;
+            const leaderboardLimit = parseInt(document.getElementById("leaderboardLimitInput").value) || 10;
+            const compTitle = document.getElementById("compTitleInput").value.trim();
+            const compDesc = document.getElementById("compDescInput").value.trim();
+            const fileInput = document.getElementById("compImageInput");
+
+            let compImage = storeSettings.compImage || "";
+            if (fileInput.files && fileInput.files[0]) {
+                compImage = await compressImageFile(fileInput.files[0]);
+            }
+
+            db.ref("settings").update({
+                minRedeemPoints,
+                leaderboardLimit,
+                compTitle,
+                compDesc,
+                compImage
+            }).then(() => alert("✅ تم حفظ إعدادات المسابقة والمتصدرين."));
+        }
+
+        function resetAllUsersPoints() {
+            if (!confirm("⚠️ هل أنت متأكد من تصفير نقاط جميع الزبائن لبدء موسم مسابقة جديد؟")) return;
+            Object.keys(usersDB || {}).forEach(phone => {
+                db.ref(`users/${phone}/points`).set(0);
+            });
+            alert("✅ تم تصفير نقاط جميع الزبائن.");
+        }
+
+        function saveQuickExchangeRate() {
+            const val = parseFloat(document.getElementById("quickExchangeInput").value);
+            if (!val || val <= 0) return;
+            db.ref("settings/exchangeRate").set(val).then(() => alert("✅ تم تحديث سعر الصرف فوراً."));
+        }
+
+        function addDeliveryRegion() {
+            const name = document.getElementById("newRegionNameInput").value.trim();
+            const fee = parseInt(document.getElementById("newRegionFeeInput").value) || 0;
+            const driverPct = parseFloat(document.getElementById("newRegionDriverPctInput").value) || 80;
+            if (!name) return alert("أدخل اسم المنطقة.");
+            const id = "reg_" + Date.now();
+            db.ref(`deliveryRegions/${id}`).set({ id, name, fee, driverPct }).then(() => {
+                document.getElementById("newRegionNameInput").value = "";
+            });
+        }
+
+        function renderAdminDeliveryRegions() {
+            const el = document.getElementById("adminDeliveryRegionsList");
+            if (!el) return;
+            el.innerHTML = Object.values(deliveryRegionsDB || {}).map(r => `
+                <div class="adm-card" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>🛵 <b>${r.name}</b> — الأجرة: ${Number(r.fee).toLocaleString()} ل.س (للسائق: ${r.driverPct}%)</span>
+                    <button onclick="db.ref('deliveryRegions/${r.id}').remove()" class="mini-btn btn-danger">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        function saveGeneralSettings() {
+            const rate = parseFloat(document.getElementById("exchangeRateInput").value) || exchangeRate;
+            const adminWhatsApp = document.getElementById("adminWhatsAppInput").value.trim();
+            const shamCashWallet = document.getElementById("adminShamWalletInput").value.trim();
+            const deliveryPhone = document.getElementById("deliveryPhoneInput").value.trim();
+            const exportManagerPhone = document.getElementById("exportManagerPhoneInput").value.trim();
+            const workHoursEnabled = document.getElementById("workHoursEnabled").checked;
+            const workHourOpen = document.getElementById("workHourOpen").value || "08:00";
+            const workHourClose = document.getElementById("workHourClose").value || "23:00";
+
+            db.ref("settings").update({
+                exchangeRate: rate,
+                adminWhatsApp,
+                shamCashWallet,
+                deliveryPhone,
+                exportManagerPhone,
+                workHoursEnabled,
+                workHourOpen,
+                workHourClose
+            }).then(() => {
+                updateRoleButtonsVisibility();
+                alert("✅ تم حفظ كافة إعدادات النظام وصلاحيات مدير التصدير بنجاح.");
+            });
+        }
+
+        function exportBackupJSON() {
+            db.ref("/").once("value", snap => {
+                const data = JSON.stringify(snap.val() || {}, null, 2);
+                const blob = new Blob([data], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `moaath-store-backup-${new Date().toISOString().slice(0, 10)}.json`;
+                a.click();
+            });
+        }
+
+        function importBackupJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!confirm("⚠️ استعادة النسخة الاحتياطية ستقوم باستبدال البيانات الحالية. هل تريد المتابعة؟")) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    db.ref("/").set(parsed).then(() => alert("✅ تمت استعادة النسخة الاحتياطية بنجاح!"));
+                } catch (err) {
+                    alert("❌ ملف النسخة الاحتياطية غير صالح.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("sw.js").catch(() => {});
+        }
+    </script>
 </body>
 </html>
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     
