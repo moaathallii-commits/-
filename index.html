@@ -2,99 +2,195 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>متجر معاذ - قرية العوينة</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121212" id="themeColorMeta">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="متجر معاذ">
+    <link rel="apple-touch-icon" href="store-icon.png">
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+    <script>
+        window.deferredPrompt = null;
+        const isAppStandalone = () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true || document.referrer.includes('android-app://');
+        window.addEventListener("beforeinstallprompt", e => {
+            e.preventDefault(); window.deferredPrompt = e;
+            const btn = document.getElementById("mainInstallAppBtn");
+            if (btn && !isAppStandalone()) btn.style.display = "inline-block";
+        });
+    </script>
     <style>
-        :root { --bg-color:#121212; --card-bg:#1E1E1E; --gold-color:#D4AF37; --text-color:#FFFFFF; --gray-text:#AAAAAA; --danger-color:#ff4444; --success-color:#00e676; --border-color:#333333; }
-        body { background-color:var(--bg-color); color:var(--text-color); font-family:Tahoma,sans-serif; margin:0; padding:0; direction:rtl; }
-        header { background:var(--card-bg); border-bottom:2px solid var(--gold-color); padding:10px 15px; display:flex; justify-content:space-between; align-items:center; }
-        .container { padding:15px; }
-        .btn { background:var(--gold-color); color:#000; border:none; padding:10px 15px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px; margin-top:10px; }
-        .products-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:15px; }
-        .product-card { background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; padding:10px; text-align:center; }
-        .product-card h3 { font-size:14px; color:var(--text-color); margin:5px 0; }
-        .product-card p { color:var(--gold-color); font-size:13px; font-weight:bold; }
+        :root { --bg-color:#121212; --card-bg:#1E1E1E; --gold-color:#D4AF37; --text-color:#FFFFFF; --gray-text:#AAAAAA; --danger-color:#ff4444; --success-color:#00e676; --border-color:#333333; --info-color:#00b0ff; }
+        body.light-mode { --bg-color:#F0F2F5; --card-bg:#FFFFFF; --gold-color:#B8860B; --text-color:#1A1A1A; --gray-text:#666666; --success-color:#00a152; --border-color:#E0E0E0; }
+        body { background-color:var(--bg-color); color:var(--text-color); font-family:Tahoma,'Segoe UI',sans-serif; margin:0; padding:0; -webkit-tap-highlight-color:transparent; transition:background-color 0.25s,color 0.25s; overscroll-behavior-y:contain; -webkit-user-select:none; user-select:none; }
+        header { background-color:var(--card-bg); border-bottom:2px solid var(--gold-color); padding:10px 15px; display:flex; justify-content:space-between; align-items:center; }
+        .store-info { cursor:pointer; }
+        .store-info h1 { font-size:16px; color:var(--gold-color); margin:0 0 3px 0; }
+        .store-info p { font-size:11px; color:var(--gray-text); margin:0; }
+        .logo-circle { width:45px; height:45px; border-radius:50%; overflow:hidden; border:2px solid var(--gold-color); cursor:pointer; background:#222; flex-shrink:0; }
+        .logo-circle img { width:100%; height:100%; object-fit:cover; }
+        .user-bar { background:var(--card-bg); padding:8px 15px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); font-size:12px; gap:6px; flex-wrap:wrap; }
+        .points-badge { color:var(--gold-color); cursor:pointer; background:rgba(212,175,55,0.12); padding:5px 10px; border-radius:15px; border:1px solid var(--gold-color); display:inline-flex; align-items:center; gap:4px; font-size:12px; }
+        .container { padding:10px; }
+        .search-box { width:100%; padding:10px; background:var(--bg-color); border:1px solid var(--gold-color); color:var(--text-color); border-radius:8px; margin-bottom:10px; box-sizing:border-box; }
+        .special-offer-banner { background:linear-gradient(45deg,rgba(212,175,55,0.12),var(--card-bg)); border:1px solid var(--gold-color); border-radius:8px; padding:10px; margin-bottom:12px; display:flex; gap:12px; align-items:center; }
+        .special-offer-img-wrap { width:80px; height:80px; border-radius:6px; overflow:hidden; border:1px solid var(--gold-color); flex-shrink:0; background:var(--bg-color); }
+        .special-offer-img { width:100%; height:100%; object-fit:cover; }
+        .categories { display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:10px; scrollbar-width:none; }
+        .cat-btn { background:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color); padding:7px 13px; border-radius:15px; font-size:12px; white-space:nowrap; cursor:pointer; transition:0.2s; }
+        .cat-btn.active { background:var(--gold-color); color:#000; font-weight:bold; border-color:var(--gold-color); }
+        .products-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+        .product-card { background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; padding:10px; text-align:center; display:flex; flex-direction:column; justify-content:space-between; }
+        .product-img-wrap { width:100%; aspect-ratio:9/16; border-radius:6px; background:var(--bg-color); margin-bottom:6px; overflow:hidden; position:relative; }
+        .product-img { width:100%; height:100%; object-fit:cover; transition:filter 0.3s ease; }
+        .img-low-res { filter:blur(5px); }
+        .img-high-res { filter:blur(0); }
+        .product-card h3 { font-size:13px; margin:4px 0; }
+        .product-card p { color:var(--gold-color); font-size:12px; margin:4px 0; font-weight:bold; }
+        .btn { background:var(--gold-color); color:#000; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; width:100%; box-sizing:border-box; }
+        .btn-danger { background:var(--danger-color); color:#fff; }
+        .btn-out { background:var(--border-color); color:var(--gray-text); cursor:not-allowed; }
+        .qty-controls { display:flex; justify-content:space-between; align-items:center; background:var(--bg-color); border:1px solid var(--gold-color); border-radius:5px; overflow:hidden; width:100%; }
+        .qty-btn { background:var(--gold-color); color:#000; border:none; width:30px; height:30px; font-size:16px; font-weight:bold; cursor:pointer; }
+        .qty-text { color:var(--text-color); font-weight:bold; font-size:13px; padding:0 8px; }
+        .cart-bar { position:fixed; bottom:0; left:0; width:100%; background:var(--card-bg); border-top:3px solid var(--gold-color); padding:10px 14px; display:flex; justify-content:space-between; align-items:center; box-sizing:border-box; z-index:99; cursor:pointer; box-shadow:0 -4px 20px rgba(0,0,0,0.6); }
+        .cart-bar-total-val { color:#00e676; font-size:15px; font-weight:900; text-shadow:0 0 10px rgba(0,230,118,0.4); }
+        .cart-bar-btn { background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; border:none; padding:9px 16px; border-radius:20px; font-weight:900; font-size:13px; cursor:pointer; box-shadow:0 3px 12px rgba(0,230,118,0.35); display:inline-flex; align-items:center; gap:5px; animation:pulse 1.8s infinite; white-space:nowrap; }
+        .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); justify-content:center; align-items:center; z-index:1000; padding:10px; box-sizing:border-box; }
+        .modal-content { background:var(--card-bg); padding:16px; border-radius:10px; border:1px solid var(--gold-color); width:100%; max-width:480px; max-height:92vh; overflow-y:auto; box-sizing:border-box; }
+        .form-group { margin-bottom:10px; text-align:right; }
+        .form-group label { display:block; font-size:11px; color:var(--gold-color); margin-bottom:4px; font-weight:bold; }
+        .form-control { width:100%; padding:8px; background:var(--bg-color); color:var(--text-color); border:1px solid var(--border-color); border-radius:5px; box-sizing:border-box; font-size:12px; }
+        .stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:8px; }
+        .stats-box { background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:9px 6px; text-align:center; }
+        .stats-value { font-size:14px; font-weight:bold; color:var(--gold-color); margin-top:4px; }
+        .page-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-color); z-index:950; overflow-y:auto; box-sizing:border-box; }
+        .comp-card { background:var(--card-bg); border:1px solid var(--gold-color); border-radius:10px; padding:14px; margin-bottom:12px; }
+        .leader-row, .review-box { display:flex; justify-content:space-between; align-items:center; background:var(--bg-color); border:1px solid var(--border-color); padding:8px 10px; border-radius:6px; margin-bottom:6px; font-size:12px; }
+        .adm-sec { background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:8px; padding:12px; margin-bottom:14px; }
+        .adm-sec-title { color:var(--gold-color); margin:0 0 10px 0; font-size:13px; border-bottom:1px dashed var(--border-color); padding-bottom:6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; }
+        .adm-card { background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:8px; margin-bottom:6px; font-size:12px; }
+        .tbl-clean { width:100%; border-collapse:collapse; font-size:11px; text-align:center; }
+        .tbl-clean th { background:var(--bg-color); color:var(--gold-color); border-bottom:1px solid var(--border-color); padding:6px; position:sticky; top:0; }
+        .tbl-clean td { padding:6px; border-bottom:1px solid var(--border-color); }
+        .quick-inp { width:65px; padding:4px; background:var(--card-bg); color:var(--gold-color); border:1px solid var(--gold-color); border-radius:4px; text-align:center; font-weight:bold; font-size:11px; }
+        .mini-btn { width:24px; height:24px; border:none; border-radius:4px; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:13px; }
+        #storeClosedOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(18,18,18,0.96); z-index:9999; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; box-sizing:border-box; }
+        @keyframes pulse { 0%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,230,118,0.7);} 70%{transform:scale(1.03);box-shadow:0 0 0 8px rgba(0,230,118,0);} 100%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,230,118,0);} }
     </style>
 </head>
 <body>
+
+    <div id="storeClosedOverlay">
+        <div style="font-size:55px; margin-bottom:10px;">🌙</div>
+        <h2 style="color:var(--gold-color); margin:0 0 10px 0;">المتجر أو المنطقة مغلقة حالياً</h2>
+        <p id="closedMessageText" style="font-size:14px; color:var(--text-color); max-width:320px; line-height:1.6;"></p>
+        <div style="margin-top:15px; font-size:12px; color:var(--gray-text);">متجر معاذ - قرية العوينة بريف حماة 🌸</div>
+        <div class="logo-circle" id="closedAdminTrigger" style="margin-top:25px; opacity:0.8;"><img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'"></div>
+    </div>
+
     <header>
-        <div>
-            <h1 style="color:var(--gold-color); margin:0; font-size:18px;">متجر معاذ</h1>
-            <p style="color:var(--gray-text); margin:0; font-size:12px;">قرية العوينة بريف حماة</p>
+        <div class="store-info" onclick="window.open('https://wa.me/' + adminWhatsAppNumber, '_blank')">
+            <h1>متجر معاذ</h1>
+            <p>قرية العوينة | <span id="headerPhoneText">0965461504</span> 📱</p>
         </div>
-        <div id="adminTrigger" style="width:40px; height:40px; border-radius:50%; background:var(--gold-color); display:flex; align-items:center; justify-content:center; color:#000; font-weight:bold; cursor:pointer;">م</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <button id="mainInstallAppBtn" onclick="installAppDirectly()" class="btn" style="width:auto; padding:6px 10px; font-size:11px; background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; border-radius:15px; animation:pulse 2s infinite;">📲 تثبيت التطبيق</button>
+            <div class="logo-circle" id="adminTrigger"><img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'"></div>
+        </div>
     </header>
 
-    <div class="container">
-        <input type="text" id="searchInput" placeholder="🔍 ابحث عن منتج..." style="width:100%; padding:10px; background:#1E1E1E; border:1px solid var(--gold-color); color:#fff; border-radius:8px; box-sizing:border-box;" oninput="renderStore()">
-        
-        <div class="categories" id="categoriesContainer" style="display:flex; gap:6px; margin-top:10px; overflow-x:auto;">
-            <button class="cat-btn" style="background:var(--gold-color); color:#000; border:none; padding:6px 12px; border-radius:15px; font-weight:bold;" onclick="selectCat('الكل')">الكل</button>
-        </div>
-
-        <div class="products-grid" id="productsGrid">
-            <!-- المنتجات ستعرض هنا -->
+    <div class="user-bar">
+        <span style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
+            👤 <b id="userNameDisplay">زائر</b>
+            <small id="userRegionBadge" style="color:var(--gray-text); font-size:10px;"></small>
+            <small id="userTypeBadge" style="color:var(--gold-color); font-size:10px; font-weight:bold;"></small>
+            <button onclick="openEditProfile()" style="background:transparent; border:none; color:var(--gold-color); font-size:12px; cursor:pointer; padding:0;">(⚙️)</button>
+            <span id="userRankBadge" onclick="openCompetitionsPage()" style="display:none; cursor:pointer; background:rgba(0,230,118,0.15); color:var(--success-color); border:1px solid var(--success-color); padding:2px 7px; border-radius:12px; font-size:11px; font-weight:bold;">🏅 ترتيبي: -</span>
+        </span>
+        <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
+            <button id="partnerDashboardBtn" onclick="openPartnerDashboard()" style="display:none; background:linear-gradient(45deg,#00b0ff,#7c4dff); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">🤝 لوحة الشريك</button>
+            <button onclick="shareAppWhatsApp()" style="background:linear-gradient(45deg,#25D366,#128C7E); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📢 مشاركة</button>
+            <button id="redeemPointsBtn" onclick="redeemPointsWhatsApp()" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer; animation:pulse 1.5s infinite;">🎁 استبدال</button>
+            <button onclick="toggleTheme()" id="themeBtn" style="background:transparent; border:none; font-size:16px; cursor:pointer; padding:0;">☀️</button>
+            <span class="points-badge" onclick="openCompetitionsPage()">🎁 نقاطي: <b id="userPoints">0</b></span>
         </div>
     </div>
 
-    <script>
-        if(!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://moaathstore-d2fd6-default-rtdb.firebaseio.com" });
-        const db = firebase.database();
+    <div class="container" style="padding-bottom:85px;">
+        <div id="multipleOffersContainer"></div>
+        <div style="display:flex; gap:6px; margin-bottom:10px;">
+            <input type="text" id="searchInput" class="search-box" style="margin-bottom:0; flex:1;" placeholder="🔍 ابحث عن أي منتج في متجر معاذ..." oninput="renderStore()">
+            <button class="btn" style="width:auto; white-space:nowrap; background:var(--card-bg); border:1px solid var(--gold-color); color:var(--gold-color);" onclick="openMissingRequestModal()">📝 طلب صنف</button>
+        </div>
+        <div class="categories" id="categoriesContainer"></div>
+        <div class="products-grid" id="productsGrid"></div>
+    </div>
 
-        let products = {
-            "p1": { name: "متة تاراوغوي 250غ", category: "مشروبات", priceUSD: 1.5, stock: 20, thumb: "" },
-            "p2": { name: "سكر 1كغ", category: "مواد غذائية", priceUSD: 1.2, stock: 35, thumb: "" }
-        };
-        let exchangeRate = 15000;
-        let selectedCat = "الكل";
+    <div class="cart-bar" id="cartBar" style="display:none;" onclick="openCartModal()">
+        <div style="display:flex; flex-direction:column; gap:2px; text-align:right; flex:1;">
+            <span style="font-size:11px; color:var(--gray-text);">المنتجات: <b id="cartCount" style="color:var(--text-color);">0</b> <small id="cartBarDeliveryNote" style="color:var(--gold-color);"></small></span>
+            <span style="font-size:12px;">المجموع النهائي: <strong id="cartTotal" class="cart-bar-total-val">0 ل.س</strong></span>
+        </div>
+        <button class="cart-bar-btn" type="button" onclick="event.stopPropagation(); openCartModal();">🛒 إتمام الطلب الآن</button>
+    </div>
 
-        function calcSYP(usd) { return Math.round((usd * exchangeRate) / 5) * 5; }
+    <!-- نوافذ الزبون -->
+    <div id="profileModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">👤 بيانات الزبون والعنوان</h3>
+            <div class="form-group"><label>الاسم الثلاثي أو اللقب:</label><input type="text" id="regName" class="form-control" placeholder="مثال: أحمد محمد العلي"></div>
+            <div class="form-group">
+                <label>رقم الهاتف للتواصل (10 خانات تبدأ بـ 09):</label>
+                <input type="tel" id="regPhone" class="form-control" placeholder="09XXXXXXXX" maxlength="10">
+                <small id="regPhoneError" style="color:var(--danger-color); font-size:11px; display:none;">⚠️ الرقم يجب أن يتكون من 10 خانات ويبدأ بـ 09 حصراً</small>
+            </div>
+            <div class="form-group"><label>منطقة التوصيل:</label><select id="regRegion" class="form-control"></select></div>
+            <div class="form-group"><label>العنوان بالتفصيل:</label><input type="text" id="regAddress" class="form-control" placeholder="مثال: العوينة - الحي الشمالي"></div>
+            <div class="form-group">
+                <label>خصوصية النقاط في لوحة المتصدرين:</label>
+                <select id="regPointsVisibility" class="form-control">
+                    <option value="public">🌐 إظهار رصيد نقاطي علناً</option>
+                    <option value="masked">🔒 تشفير رصيد نقاطي (إظهار النقاط كـ ***)</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:15px;">
+                <button onclick="saveUserProfile()" class="btn">💾 حفظ ومتابعة</button>
+                <button id="closeProfileBtn" onclick="closeModal('profileModal')" class="btn btn-danger" style="display:none; width:35%;">إلغاء</button>
+            </div>
+        </div>
+    </div>
 
-        function renderStore() {
-            const grid = document.getElementById("productsGrid");
-            if(!grid) return;
-            const query = (document.getElementById("searchInput")?.value || "").toLowerCase();
-            let html = "";
-            Object.keys(products).forEach(id => {
-                const p = products[id];
-                if(selectedCat !== "الكل" && p.category !== selectedCat) return;
-                if(query && !p.name.toLowerCase().includes(query)) return;
-                const priceSYP = calcSYP(p.priceUSD);
-                html += `<div class="product-card">
-                    <h3>${p.name}</h3>
-                    <p>${priceSYP.toLocaleString()} ل.س</p>
-                    <button class="btn" onclick="alert('تمت الإضافة للسلة')">🛒 أضف</button>
-                </div>`;
-            });
-            grid.innerHTML = html || '<p style="grid-column:span 2; text-align:center; color:#888;">لا توجد مواد مطابقة.</p>';
-        }
+    <div id="cartModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color:var(--gold-color); margin:0 0 8px 0; text-align:center; font-size:15px;">🛒 سلة المشتريات وإتمام الطلب</h3>
+            <div id="cartItemsList" style="max-height:145px; overflow-y:auto; margin-bottom:8px; padding-left:2px;"></div>
+            <div class="form-group" style="margin-bottom:8px;">
+                <label>📍 منطقة التوصيل:</label>
+                <select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()" style="padding:6px;"></select>
+            </div>
+            <div class="adm-card" style="margin-bottom:8px; font-size:11px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span>قيمة المواد:</span><strong><span id="modalCartSubtotal">0</span> ل.س</strong></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:3px; color:var(--gray-text);"><span>أجور التوصيل (<span id="modalDeliveryRegionName">-</span>):</span><strong><span id="modalDeliveryFee">0</span> ل.س</strong></div>
+                <div style="display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding-top:4px; margin-top:3px; font-size:13px;">
+                    <span>الإجمالي النهائي:</span><strong style="color:#00e676; font-size:15px; font-weight:900;"><span id="modalCartTotal">0</span> ل.س</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:3px; font-size:10px; color:var(--gold-color);">
+                    <span>النقاط المكتسبة:</span><strong>+<span id="modalCartPoints">0</span> نقطة 🎁</strong>
+                </div>
+            </div>
+            <button type="button" onclick="copyWalletId()" class="btn" style="margin-bottom:8px; padding:9px; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000;">📋 نسخ كود محفظة شام كاش للدفع</button>
+            <div class="form-group" style="margin-bottom:10px;"><input type="text" id="orderNotes" class="form-control" placeholder="📝 ملاحظات إضافية مع الطلب (اختياري)..."></div>
+            <button type="button" onclick="submitOrder()" class="btn" style="background:linear-gradient(45deg,#00e676,#00c853); color:#000; margin-bottom:8px; font-size:14px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.45); animation:pulse 2s infinite;">✅ إرسال وتأكيد الطلب الآن</button>
+            <button type="button" onclick="closeModal('cartModal')" class="btn btn-danger" style="padding:6px; font-size:11px;">إغلاق</button>
+        </div>
+    </div>
 
-        function selectCat(cat) {
-            selectedCat = cat;
-            renderStore();
-        }
-
-        // سحب البيانات من فايربيس في حال توفرها
-        db.ref("products").on("value", snap => {
-            const data = snap.val();
-            if(data) {
-                products = data;
-                renderStore();
-            }
-        });
-
-        db.ref("settings/exchangeRate").on("value", snap => {
-            if(snap.val()) {
-                exchangeRate = parseFloat(snap.val()) || 15000;
-                renderStore();
-            }
-        });
-
-        window.onload = () => {
-            renderStore();
-        };
-    </script>
-</body>
-</html>
+    <div id="reviewModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">⭐ تقييم المنتج</h3>
+            <div id="reviewProductName" style="font-weight:bold; font-size:13px; text-align:center; margin-bottom:12px;"></
