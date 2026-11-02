@@ -90,7 +90,6 @@
         <h2 style="color:var(--gold-color); margin:0 0 10px 0;">المتجر أو المنطقة مغلقة حالياً</h2>
         <p id="closedMessageText" style="font-size:14px; color:var(--text-color); max-width:320px; line-height:1.6;"></p>
         <div style="margin-top:15px; font-size:12px; color:var(--gray-text);">متجر معاذ - قرية العوينة بريف حماة 🌸</div>
-        <div class="logo-circle" id="closedAdminTrigger" style="margin-top:25px; opacity:0.8;"><img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'"></div>
     </div>
 
     <header>
@@ -1100,10 +1099,8 @@
         }
 
         function openCartModal() {
-            if (!checkStoreWorkHours()) return;
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.region || !validatePhoneSyrian(currentUser.phone)) return openEditProfile();
             const def = Object.keys(deliveryFees)[0] || "العوينة", reg = (currentUser.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : def;
-            if (!isRegionOpenNow(reg)) return alert(`⚠️ خدمة التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
             populateRegionSelects();
             setVal("cartRegionSelect", reg);
             renderCartModalItems();
@@ -1112,7 +1109,6 @@
 
         function onCartRegionChange() {
             const reg = $("cartRegionSelect").value;
-            if (!isRegionOpenNow(reg)) alert(`⚠️ تنبيه: منطقة (${reg}) مغلقة حالياً.`);
             if (currentUser?.phone) {
                 currentUser.region = reg; localStorage.setItem("moaath_user", JSON.stringify(currentUser));
                 db.ref("users/" + currentUser.phone + "/region").set(reg);
@@ -1146,10 +1142,8 @@
         }
 
         function submitOrder() {
-            if (!checkStoreWorkHours()) return;
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.address) { closeModal('cartModal'); return openEditProfile(); }
             const reg = $("cartRegionSelect")?.value || currentUser.region || Object.keys(deliveryFees)[0] || "العوينة";
-            if (!isRegionOpenNow(reg)) return alert(`⚠️ أوقات التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
             if (users[currentUser.phone]?.banned) return alert("🚫 حسابك محظور.");
             const items = Object.values(cart); if (!items.length) return;
             const fee = getRegionFee(reg);
@@ -1378,7 +1372,6 @@
         }
 
         $("adminTrigger")?.addEventListener("click", handleAdminTrigger);
-        $("closedAdminTrigger")?.addEventListener("click", handleAdminTrigger);
 
         function switchAdminTab(tabId, btn) {
             document.querySelectorAll(".admin-tab").forEach(t => t.style.display = "none");
@@ -1836,6 +1829,8 @@
             };
             reader.readAsText(file);
         }
+
+        $("adminTrigger")?.addEventListener("click", handleAdminTrigger);
     </script>
 </body>
 </html>
