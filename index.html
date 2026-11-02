@@ -131,6 +131,7 @@
         <div class="categories" id="categoriesContainer"></div>
         <div class="products-grid" id="productsGrid"></div>
     </div>
+
     <div class="cart-bar" id="cartBar" style="display:none;" onclick="openCartModal()">
         <div style="display:flex; flex-direction:column; gap:2px; text-align:right; flex:1;">
             <span style="font-size:11px; color:var(--gray-text);">المنتجات: <b id="cartCount" style="color:var(--text-color);">0</b> <small id="cartBarDeliveryNote" style="color:var(--gold-color);"></small></span>
@@ -1036,11 +1037,17 @@
 
         function redeemPointsWhatsApp() {
             if (!currentUser || currentUser.banned) return;
-            window.location.href = `https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(`مرحباً إدارة متجر معاذ 🎁\nأرغب باستبدال نقاطي:\n👤 الاسم: ${currentUser.name}\n📱 الهاتف: ${currentUser.phone}\n🏘️ المنطقة: ${currentUser.region}\n🌟 النقاط: ${Math.round(currentUser.points || 0)}`)}`;
+            window.location.href = `https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(`مرحباً إدارة متجر معاذ 🎁
+أرغب باستبدال نقاطي:
+👤 الاسم: ${currentUser.name}
+📱 الهاتف: ${currentUser.phone}
+🏘️ المنطقة: ${currentUser.region}
+🌟 النقاط: ${Math.round(currentUser.points || 0)}`)}`;
         }
 
         function shareAppWhatsApp() {
-            window.open(`https://wa.me/?text=${encodeURIComponent(`🌸 تفضل بزيارة تطبيق *متجر معاذ* في قرية العوينة بريف حماة لتسوق كافة المواد الغذائية والمنزلية عبر الرابط التالي:\nhttps://moaathallii-commits.github.io/-/`)}`, "_blank");
+            window.open(`https://wa.me/?text=${encodeURIComponent(`🌸 تفضل بزيارة تطبيق *متجر معاذ* في قرية العوينة بريف حماة لتسوق كافة المواد الغذائية والمنزلية عبر الرابط التالي:
+https://moaathallii-commits.github.io/-/`)}`, "_blank");
         }
 
         const renderCategories = () => { if ($("categoriesContainer")) $("categoriesContainer").innerHTML = categories.map(c => `<button class="cat-btn ${c === selectedCategory ? 'active' : ''}" onclick="selectCategory('${c}')">${c}</button>`).join(""); };
@@ -1197,12 +1204,26 @@
             const orderPayload = {
                 orderId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
                 customerName: currentUser.name, customerPhone: currentUser.phone, customerRegion: reg, customerAddress: currentUser.address,
-                paymentMethod: "شام كاش (Sham Cash)", notes: ($("orderNotes")?.value || "").trim(), items: ordItems,
+                paymentMethod: currentUser.userType === "credit" ? "حساب آجل (Credit)" : "شام كاش (Sham Cash)", notes: ($("orderNotes")?.value || "").trim(), items: ordItems,
                 subtotalSaleSYP: subSale, deliveryFeeSYP: fee, totalSaleSYP: finalTotalSYP, totalCostSYP: totCost, netProfitSYP: subSale - totCost, earnedPoints: totPts
             };
-            let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*\n👤 الزبون: ${orderPayload.customerName}\n📱 الهاتف: ${orderPayload.customerPhone}\n🏘️ المنطقة: ${orderPayload.customerRegion}\n📍 العنوان: ${orderPayload.customerAddress}\n💳 الدفع: شام كاش\n`;
-            if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}\n`;
-            msg += `──────────────\n` + ordItems.map(i => `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س`).join("\n") + `\n──────────────\n📦 قيمة المواد: ${subSale.toLocaleString()} ل.س\n🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${finalTotalSYP.toLocaleString()} ل.س\n🎁 النقاط: +${totPts}`;
+            let msg = `🛍️ *فاتورة طلب جديد - متجر معاذ*
+👤 الزبون: ${orderPayload.customerName}
+📱 الهاتف: ${orderPayload.customerPhone}
+🏘️ المنطقة: ${orderPayload.customerRegion}
+📍 العنوان: ${orderPayload.customerAddress}
+💳 الدفع: ${orderPayload.paymentMethod}
+`;
+            if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}
+`;
+            msg += `──────────────
+` + ordItems.map(i => `• ${i.name} (×${i.qty}) = ${i.subSaleSYP.toLocaleString()} ل.س`).join("
+") + `
+──────────────
+📦 قيمة المواد: ${subSale.toLocaleString()} ل.س
+🛵 التوصيل: ${fee.toLocaleString()} ل.س
+💰 *الإجمالي النهائي:* ${finalTotalSYP.toLocaleString()} ل.س
+🎁 النقاط: +${totPts}`;
             db.ref("pendingOrders/" + orderId).set(orderPayload);
             cart = {}; setVal("orderNotes", "");
             closeModal('cartModal'); renderStore();
@@ -1281,7 +1302,11 @@
             const conf = (window.partnersConfigData && window.partnersConfigData[currentUser.phone]) || {};
             const earn = window.currentPartnerTotalEarn || 0;
             if (earn <= 0) return alert("ℹ️ لا توجد أرباح مستحقة جديدة لطلبها حالياً.");
-            const msg = `مرحباً إدارة متجر معاذ 🤝\nأنا الشريك: *${currentUser.name}* (${currentUser.phone})\nأرغب بطلب صرف أرباحي المستحقة وقدرها: *${earn.toLocaleString()} ل.س*\n💳 معرف محفظة شام كاش: *${conf.shamWallet || "غير مسجل"}*\nيرجى تحويل المبلغ وتوثيق التسوية. شكراً لكم 🌸`;
+            const msg = `مرحباً إدارة متجر معاذ 🤝
+أنا الشريك: *${currentUser.name}* (${currentUser.phone})
+أرغب بطلب صرف أرباحي المستحقة وقدرها: *${earn.toLocaleString()} ل.س*
+💳 معرف محفظة شام كاش: *${conf.shamWallet || "غير مسجل"}*
+يرجى تحويل المبلغ وتوثيق التسوية. شكراً لكم 🌸`;
             window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
@@ -1290,7 +1315,8 @@
             if (!phone) return alert("⚠️ يرجى اختيار الشريك أولاً.");
             const m = calculatePartnerCurrentMetrics(phone);
             const partnerName = users[phone]?.name || phone;
-            if (!confirm(`هل أنت متأكد من تصفير وتوثيق دفعة أرباح الشريك (${partnerName}) البالغة (${m.totEarn.toLocaleString()} ل.س)؟\nسيتم حفظ الدفعة في دفتر التسويات دون المساس بجرد المتجر العام.`)) return;
+            if (!confirm(`هل أنت متأكد من تصفير وتوثيق دفعة أرباح الشريك (${partnerName}) البالغة (${m.totEarn.toLocaleString()} ل.س)؟
+سيتم حفظ الدفعة في دفتر التسويات دون المساس بجرد المتجر العام.`)) return;
 
             const now = new Date(), nowISO = now.toISOString(), payId = "PAY_" + Date.now();
             const updates = {};
@@ -1309,7 +1335,8 @@
         }
 
         function resetAdminTimestamp(fieldKey, labelName) {
-            if (!confirm(`🔄 هل أنت متأكد من تصفير (${labelName}) وبدء عداد جديد له من هذه اللحظة؟\n(ملاحظة: باقي الحسابات والشركاء والجرد العام لن تتأثر نهائياً)`)) return;
+            if (!confirm(`🔄 هل أنت متأكد من تصفير (${labelName}) وبدء عداد جديد له من هذه اللحظة؟
+(ملاحظة: باقي الحسابات والشركاء والجرد العام لن تتأثر نهائياً)`)) return;
             db.ref(`adminAccounting/${fieldKey}`).set(new Date().toISOString()).then(() => alert(`✅ تم تصفير (${labelName}) بنجاح!`));
         }
 
@@ -1438,13 +1465,66 @@
                 if (i.id.startsWith("OFFER_") && specialOffers[i.id]) db.ref(`specialOffers/${i.id}/stock`).set(Math.max(0, (parseInt(specialOffers[i.id].stock) || 0) - i.qty));
                 else if (products[i.id]) db.ref(`products/${i.id}/stock`).set(Math.max(0, (parseInt(products[i.id].stock) || 0) - i.qty));
             });
-            const phone = o.customerPhone, purch = users[phone]?.purchases || {};
+            const phone = o.customerPhone, customerObj = users[phone] || {};
+            const purch = customerObj.purchases || {};
             (o.items || []).forEach(i => { if (!i.id.startsWith("OFFER_")) purch[i.id] = true; });
-            const upPts = (users[phone]?.points || 0) + (o.earnedPoints || 0);
-            db.ref(`users/${phone}`).update({ name: o.customerName, phone, region: o.customerRegion, address: o.customerAddress, points: upPts, purchases: purch });
-            db.ref("completedOrdersHistory/" + orderId).set(o); db.ref("pendingOrders/" + orderId).remove();
-            window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(`مرحباً ${o.customerName} 🌸\nتم تأكيد طلبك في *متجر معاذ* وجاري توصيله إلى (${o.customerRegion})!\n💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س\n🎁 نقاطك الحالية: ${upPts}`)}`, "_blank");
-            if (deliveryDriverPhone) setTimeout(() => window.open(`https://wa.me/${formatWhatsAppPhone(deliveryDriverPhone)}?text=${encodeURIComponent(`🛵 *طلب توصيل - متجر معاذ*\n👤 الزبون: ${o.customerName}\n📱 الهاتف: ${o.customerPhone}\n🏘️ المنطقة: ${o.customerRegion}\n📍 العنوان: ${o.customerAddress}\n💵 *المطلوب تحصيله:* ${o.totalSaleSYP.toLocaleString()} ل.س`)}`, "_blank"), 700);
+            const upPts = (customerObj.points || 0) + (o.earnedPoints || 0);
+
+            const isCreditUser = customerObj.userType === "credit";
+            let updates = {};
+
+            updates[`users/${phone}/name`] = o.customerName;
+            updates[`users/${phone}/phone`] = phone;
+            updates[`users/${phone}/region`] = o.customerRegion;
+            updates[`users/${phone}/address`] = o.customerAddress;
+            updates[`users/${phone}/points`] = upPts;
+            updates[`users/${phone}/purchases`] = purch;
+
+            if (isCreditUser) {
+                const totalInvoiceSYP = o.totalSaleSYP || 0;
+                const totalInvoiceUSD = totalInvoiceSYP / exchangeRate;
+                const currentDebt = parseFloat(customerObj.debtUSD) || 0;
+                const newDebt = currentDebt + totalInvoiceUSD;
+                
+                const txId = "TX_" + Date.now();
+                const now = new Date();
+                const txData = {
+                    id: txId,
+                    type: "debt",
+                    amountUSD: totalInvoiceUSD,
+                    originalUSD: totalInvoiceUSD,
+                    percentage: 0,
+                    desc: `طلب فاتورة آجل تلقائي (#${o.orderId})`,
+                    dateStr: now.toLocaleString("ar-SY"),
+                    timestamp: now.toISOString()
+                };
+
+                updates[`users/${phone}/debtUSD`] = newDebt;
+                updates[`users/${phone}/transactions/${txId}`] = txData;
+            }
+
+            updates[`completedOrdersHistory/${orderId}`] = o;
+            updates[`pendingOrders/${orderId}`] = null;
+
+            db.ref().update(updates).then(() => {
+                let msg = `مرحباً ${o.customerName} 🌸
+تم تأكيد طلبك في *متجر معاذ* وجاري توصيله إلى (${o.customerRegion})!
+💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س`;
+                if (isCreditUser) {
+                    msg += `
+📒 تمت إضافة قيمة الفاتورة تلقائياً إلى دفتر الدين الخاص بك.`;
+                }
+                window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(msg)}`, "_blank");
+                
+                if (deliveryDriverPhone) {
+                    setTimeout(() => window.open(`https://wa.me/${formatWhatsAppPhone(deliveryDriverPhone)}?text=${encodeURIComponent(`🛵 *طلب توصيل - متجر معاذ*
+👤 الزبون: ${o.customerName}
+📱 الهاتف: ${o.customerPhone}
+🏘️ المنطقة: ${o.customerRegion}
+📍 العنوان: ${o.customerAddress}
+💵 *المطلوب تحصيله:* ${isCreditUser ? '0 (حساب آجل)' : o.totalSaleSYP.toLocaleString() + ' ل.س'}`)}`, "_blank"), 700);
+                }
+            });
         }
 
         function cancelOrder(id) { if (confirm("إلغاء هذه الفاتورة؟")) db.ref("pendingOrders/" + id).remove(); }
@@ -1524,9 +1604,15 @@
             const supp = suppliers[suppId]; if (!supp?.phone) return alert("⚠️ هذا الموزع ليس لديه رقم هاتف مسجل.");
             const list = Object.values(products).filter(p => p && p.supplierId === suppId && (parseInt(p.stock) || 0) <= (parseInt(p.alertLimit) || 2));
             if (!list.length) return alert("✅ لا توجد نواقص لهذا الموزع.");
-            let msg = `📋 *فاتورة طلب توريد بضائع - متجر معاذ*\n👤 السادة: *${supp.name}*\n📅 التاريخ: ${new Date().toLocaleDateString("ar-SY")}\n──────────────\n`;
-            list.forEach((p, idx) => { msg += `${idx + 1}. *${p.name}* (المتبقي لدينا: ${p.stock})\n`; });
-            msg += `──────────────\nيرجى تأكيد الطلب وتزويدنا بالأصناف المذكورة 🌸`;
+            let msg = `📋 *فاتورة طلب توريد بضائع - متجر معاذ*
+👤 السادة: *${supp.name}*
+📅 التاريخ: ${new Date().toLocaleDateString("ar-SY")}
+──────────────
+`;
+            list.forEach((p, idx) => { msg += `${idx + 1}. *${p.name}* (المتبقي لدينا: ${p.stock})
+`; });
+            msg += `──────────────
+يرجى تأكيد الطلب وتزويدنا بالأصناف المذكورة 🌸`;
             window.open(`https://wa.me/${formatWhatsAppPhone(supp.phone)}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
@@ -1562,7 +1648,7 @@
                 sel.innerHTML = '<option value="all">🌟 جميع التصنيفات</option>' + categories.filter(c => c !== "الكل").map(c => `<option value="${c}">${c}</option>`).join("") + '<option value="عروض خاصة">عروض خاصة</option>';
                 sel.value = cur;
             }
-            const period = $("reportPeriodSelect")?.value || "total", selCat = sel?.value || "all", now = new Date();
+            const period = $("reportPeriodSelect"]?.value || "total", selCat = sel?.value || "all", now = new Date();
             let totS = 0, totC = 0, netP = 0, catMap = {}, prodMap = {};
             let capBoxSYP = 0, drvNetSYP = 0, maintFundSYP = 0, importMgrAdminPool = 0, exportMgrAdminPool = 0;
 
@@ -1669,8 +1755,23 @@
         function sendDailyAccountingReportWhatsApp() {
             const s = window.latestStatsSnapshot || {};
             const partners = Object.values(users).filter(u => u.userType === "partner");
-            const pLines = partners.length ? partners.map(p => { const m = calculatePartnerCurrentMetrics(p.phone); return `• الشريك ${p.name}: ${m.totEarn.toLocaleString()} ل.س`; }).join("\n") : "• لا يوجد شركاء";
-            const msg = `📊 *تقرير الجرد والتوزيع المالي - متجر معاذ*\n📅 التاريخ: ${new Date().toLocaleString("ar-SY")}\n──────────────\n💰 إجمالي المبيعات: ${(s.totS || 0).toLocaleString()} ل.س\n💵 صندوق رأس المال المسترد للدرج: ${(s.capBoxSYP || 0).toLocaleString()} ل.س\n──────────────\n🤝 *مستحقات الشركاء الحالية:*\n${pLines}\n──────────────\n👔 *صافي أرباح الإدارة:*\n📥 مدير الاستيراد: ${(s.importManagerFinalSYP || 0).toLocaleString()} ل.س\n📤 مدير التصدير: ${(s.exportManagerFinalSYP || 0).toLocaleString()} ل.س\n──────────────\n🛵 مستحقات السائق: ${(s.drvNetSYP || 0).toLocaleString()} ل.س\n⛽ صندوق الآلية والوقود: ${(s.maintFundSYP || 0).toLocaleString()} ل.س`;
+            const pLines = partners.length ? partners.map(p => { const m = calculatePartnerCurrentMetrics(p.phone); return `• الشريك ${p.name}: ${m.totEarn.toLocaleString()} ل.س`; }).join("
+") : "• لا يوجد شركاء";
+            const msg = `📊 *تقرير الجرد والتوزيع المالي - متجر معاذ*
+📅 التاريخ: ${new Date().toLocaleString("ar-SY")}
+──────────────
+💰 إجمالي المبيعات: ${(s.totS || 0).toLocaleString()} ل.س
+💵 صندوق رأس المال المسترد للدرج: ${(s.capBoxSYP || 0).toLocaleString()} ل.س
+──────────────
+🤝 *مستحقات الشركاء الحالية:*
+${pLines}
+──────────────
+👔 *صافي أرباح الإدارة:*
+📥 مدير الاستيراد: ${(s.importManagerFinalSYP || 0).toLocaleString()} ل.س
+📤 مدير التصدير: ${(s.exportManagerFinalSYP || 0).toLocaleString()} ل.س
+──────────────
+🛵 مستحقات السائق: ${(s.drvNetSYP || 0).toLocaleString()} ل.س
+⛽ صندوق الآلية والوقود: ${(s.maintFundSYP || 0).toLocaleString()} ل.س`;
             window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
@@ -1998,7 +2099,7 @@
                 dateISO
             };
 
-            // استخدام Promise.all لتنفيذ العمليتين المتزامنتين بدقة مع Firebase
+            // استخدام Promise.all لتنفيذ العمليات المتزامنة وتحديث رصيد الزبون وترحيل المبلغ للخزينة
             Promise.all([
                 db.ref(`users/${phone}/debtUSD`).set(newDebt),
                 db.ref(`users/${phone}/transactions/${txId}`).set(txData),
@@ -2016,17 +2117,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
