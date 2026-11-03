@@ -1790,44 +1790,11 @@
             list.innerHTML = keys.map(id => {
                 const o = pendingOrders[id], isCred = !!o.isCreditOrder;
                 const itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${i.name} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
-                
-                let realSubSale = 0;
-                const isW = (users[o.customerPhone] && users[o.customerPhone].userType === "wholesale") || false;
-                (o.items || []).forEach(i => {
-                    let p = i.id.startsWith("OFFER_") ? specialOffers[i.id] : products[i.id];
-                    if (p) {
-                        let price = (isW && parseFloat(p.wholesaleUSD) > 0) ? parseFloat(p.wholesaleUSD) : parseFloat(p.newPriceUSD || p.priceUSD || 0);
-                        realSubSale += calcSYP(price) * i.qty;
-                    }
-                });
-                const realFee = getRegionFee(o.customerRegion);
-                const realMarkup = (o.creditMarkupPct || 0) > 0 ? Math.round((realSubSale * o.creditMarkupPct) / 100) : 0;
-                const realTotal = realSubSale + realMarkup + realFee;
-                const isTampered = Math.abs(realTotal - (o.totalSaleSYP || 0)) > 50;
-                const tamperWarning = isTampered ? `<div style="background:rgba(255,0,0,0.15); color:#ff4444; padding:8px; border-radius:5px; margin-bottom:8px; font-weight:bold; font-size:11px; border:1px solid #ff4444; box-shadow:0 0 8px rgba(255,0,0,0.5);">⚠️ تنبيه أمني: إجمالي الطلب المرسل (${(o.totalSaleSYP || 0).toLocaleString()}) يختلف عن الإجمالي الحقيقي (${realTotal.toLocaleString()})! (قد يكون تلاعباً أو تغيّر بالأسعار).</div>` : '';
-
-                
-                let realSubSale = 0;
-                const isW = (users[o.customerPhone] && users[o.customerPhone].userType === "wholesale") || false;
-                (o.items || []).forEach(i => {
-                    let p = i.id.startsWith("OFFER_") ? specialOffers[i.id] : products[i.id];
-                    if (p) {
-                        let price = (isW && parseFloat(p.wholesaleUSD) > 0) ? parseFloat(p.wholesaleUSD) : parseFloat(p.newPriceUSD || p.priceUSD || 0);
-                        realSubSale += calcSYP(price) * i.qty;
-                    }
-                });
-                const realFee = getRegionFee(o.customerRegion);
-                const realMarkup = (o.creditMarkupPct || 0) > 0 ? Math.round((realSubSale * o.creditMarkupPct) / 100) : 0;
-                const realTotal = realSubSale + realMarkup + realFee;
-                const isTampered = Math.abs(realTotal - (o.totalSaleSYP || 0)) > 50;
-                const tamperWarning = isTampered ? `<div style="background:rgba(255,0,0,0.15); color:#ff4444; padding:8px; border-radius:5px; margin-bottom:8px; font-weight:bold; font-size:11px; border:1px solid #ff4444; box-shadow:0 0 8px rgba(255,0,0,0.5);">⚠️ تنبيه أمني: إجمالي الطلب المرسل (${(o.totalSaleSYP || 0).toLocaleString()}) يختلف عن الإجمالي الحقيقي (${realTotal.toLocaleString()})! (قد يكون تلاعباً أو تغيّر بالأسعار).</div>` : '';
-
                 const creditBanner = isCred
                     ? `<div style="background:linear-gradient(45deg,#ff0000,#cc0000); color:#fff; padding:6px 8px; border-radius:5px; font-weight:bold; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; text-shadow:1px 1px 2px rgba(0,0,0,0.5);"><span>🚨 طلب زبون دين (آجل)</span><span>⚡ جهّز الطلب فوراً</span></div>`
                     : `<div style="background:rgba(255,152,0,0.12); color:#ff9800; padding:4px 8px; border-radius:5px; font-size:10px; margin-bottom:6px;">💳 دفع شام كاش (تأكد من إشعار التحويل مع الإدارة)</div>`;
                 return `<div class="adm-card" style="border:3px solid ${isCred ? '#ff0000' : '#ff9800'}; background:${isCred ? 'rgba(255,0,0,0.08)' : 'var(--bg-color)'}; color:${isCred ? '#ff4444' : 'inherit'};">
                     ${creditBanner}
-                    ${tamperWarning}
                     <div style="display:flex; justify-content:space-between; color:${isCred ? '#ff4444' : 'var(--gold-color)'}; font-weight:bold; margin-bottom:4px;">
                         <span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span>
                     </div>
@@ -1892,7 +1859,7 @@
                     suppEstUSD += lineUSD;
                     return `<div style="font-size:11px; display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding:4px 0;">
                         <span>• ${p.name} <small style="color:var(--gold-color);">(${targetPacks} ${p.unitType || 'قطعة'})</small></span>
-                        <span style="color:var(--danger-color); font-weight:bold;">متبقي: ${p.stock}</span>
+                        <span><b style="color:var(--success-color); margin-left:6px;">~${calcSYP(lineUSD).toLocaleString()} ل.س</b> <small style="color:var(--danger-color);">(متبقي: ${p.stock})</small></span>
                     </div>`;
                 }).join("");
 
@@ -2345,44 +2312,11 @@
             list.innerHTML = keys.map(id => {
                 const o = pendingOrders[id], isCred = !!o.isCreditOrder;
                 const itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${i.name} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
-                
-                let realSubSale = 0;
-                const isW = (users[o.customerPhone] && users[o.customerPhone].userType === "wholesale") || false;
-                (o.items || []).forEach(i => {
-                    let p = i.id.startsWith("OFFER_") ? specialOffers[i.id] : products[i.id];
-                    if (p) {
-                        let price = (isW && parseFloat(p.wholesaleUSD) > 0) ? parseFloat(p.wholesaleUSD) : parseFloat(p.newPriceUSD || p.priceUSD || 0);
-                        realSubSale += calcSYP(price) * i.qty;
-                    }
-                });
-                const realFee = getRegionFee(o.customerRegion);
-                const realMarkup = (o.creditMarkupPct || 0) > 0 ? Math.round((realSubSale * o.creditMarkupPct) / 100) : 0;
-                const realTotal = realSubSale + realMarkup + realFee;
-                const isTampered = Math.abs(realTotal - (o.totalSaleSYP || 0)) > 50;
-                const tamperWarning = isTampered ? `<div style="background:rgba(255,0,0,0.15); color:#ff4444; padding:8px; border-radius:5px; margin-bottom:8px; font-weight:bold; font-size:11px; border:1px solid #ff4444; box-shadow:0 0 8px rgba(255,0,0,0.5);">⚠️ تنبيه أمني: إجمالي الطلب المرسل (${(o.totalSaleSYP || 0).toLocaleString()}) يختلف عن الإجمالي الحقيقي (${realTotal.toLocaleString()})! (قد يكون تلاعباً أو تغيّر بالأسعار).</div>` : '';
-
-                
-                let realSubSale = 0;
-                const isW = (users[o.customerPhone] && users[o.customerPhone].userType === "wholesale") || false;
-                (o.items || []).forEach(i => {
-                    let p = i.id.startsWith("OFFER_") ? specialOffers[i.id] : products[i.id];
-                    if (p) {
-                        let price = (isW && parseFloat(p.wholesaleUSD) > 0) ? parseFloat(p.wholesaleUSD) : parseFloat(p.newPriceUSD || p.priceUSD || 0);
-                        realSubSale += calcSYP(price) * i.qty;
-                    }
-                });
-                const realFee = getRegionFee(o.customerRegion);
-                const realMarkup = (o.creditMarkupPct || 0) > 0 ? Math.round((realSubSale * o.creditMarkupPct) / 100) : 0;
-                const realTotal = realSubSale + realMarkup + realFee;
-                const isTampered = Math.abs(realTotal - (o.totalSaleSYP || 0)) > 50;
-                const tamperWarning = isTampered ? `<div style="background:rgba(255,0,0,0.15); color:#ff4444; padding:8px; border-radius:5px; margin-bottom:8px; font-weight:bold; font-size:11px; border:1px solid #ff4444; box-shadow:0 0 8px rgba(255,0,0,0.5);">⚠️ تنبيه أمني: إجمالي الطلب المرسل (${(o.totalSaleSYP || 0).toLocaleString()}) يختلف عن الإجمالي الحقيقي (${realTotal.toLocaleString()})! (قد يكون تلاعباً أو تغيّر بالأسعار).</div>` : '';
-
                 const creditBanner = isCred
                     ? `<div style="background:linear-gradient(45deg,#ff0000,#cc0000); color:#fff; padding:6px 8px; border-radius:5px; font-weight:bold; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; text-shadow:1px 1px 2px rgba(0,0,0,0.5);"><span>🚨 طلب زبون آجل (دفتر دين)</span><span>✅ لا ينتظر إشعار تحويل (${o.orderTotalUSD || 0} $)</span></div>`
                     : `<div style="background:rgba(212,175,55,0.12); color:var(--gold-color); padding:4px 8px; border-radius:5px; font-size:10px; margin-bottom:6px;">💳 دفع شام كاش (بانتظار إشعار التحويل)</div>`;
                 return `<div class="adm-card" style="border:3px solid ${isCred ? '#ff0000' : 'var(--gold-color)'}; background:${isCred ? 'rgba(255,0,0,0.08)' : 'var(--bg-color)'}; color:${isCred ? '#ff4444' : 'inherit'};">
                     ${creditBanner}
-                    ${tamperWarning}
                     <div style="display:flex; justify-content:space-between; color:${isCred ? '#ff4444' : 'var(--gold-color)'}; font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span></div>
                     <div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress}</div>
                     ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${o.notes}</div>` : ''}
