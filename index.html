@@ -99,7 +99,7 @@
         @keyframes toastOut { from { opacity:1; transform:translateY(0); } to { opacity:0; transform:translateY(20px); } }
 
         /* Floating Animation */
-        .fly-to-cart { position:fixed; z-index:10000; border-radius:50%; transition:all 0.6s cubic-bezier(0.2, 1, 0.3, 1); pointer-events:none; box-shadow:0 0 10px rgba(0,230,118,0.8); }
+        .fly-to-cart { position:fixed; z-index:10000; border-radius:50%; transition:all 1.0s cubic-bezier(0.2, 1, 0.3, 1); pointer-events:none; box-shadow:0 0 10px rgba(0,230,118,0.8); }
 
         /* Clear Search */
         .search-wrap { position:relative; display:flex; flex:1; }
@@ -109,8 +109,6 @@
         .user-menu-btn { background:var(--card-bg); border:1px solid var(--gold-color); color:var(--gold-color); padding:5px 10px; border-radius:15px; font-size:11px; cursor:pointer; font-weight:bold; }
         .user-menu-dropdown { display:none; position:absolute; top:calc(100% + 5px); left:0; background:var(--card-bg); border:1px solid var(--gold-color); border-radius:8px; padding:8px; box-shadow:0 4px 15px rgba(0,0,0,0.6); flex-direction:column; gap:6px; z-index:100; min-width:140px; }
         .user-menu-wrap { position:relative; }
-
-        .categories { position:sticky; top:56px; z-index:11; background:var(--bg-color); padding-top:10px; margin-top:-10px; }
     </style>
 </head>
 <body>
@@ -207,9 +205,9 @@
 
     <div id="cartModal" class="modal-overlay">
         <div class="modal-content">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:5px; border-bottom:1px dashed var(--border-color);">
                 <h3 style="color:var(--gold-color); margin:0; font-size:15px;">🛒 سلة المشتريات</h3>
-                <button onclick="emptyCart()" class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:10px;">🗑️ إفراغ السلة</button>
+                <button onclick="emptyCart()" class="btn btn-danger" style="width:auto; padding:5px 10px; font-size:11px; border-radius:8px;">🗑️ إفراغ السلة</button>
             </div>
             <div id="cartItemsList" style="max-height:145px; overflow-y:auto; margin-bottom:8px; padding-left:2px;"></div>
             <div class="form-group" style="margin-bottom:8px;">
@@ -896,8 +894,8 @@
             flyEl.className = "fly-to-cart";
             flyEl.style.left = btnRect.left + "px";
             flyEl.style.top = btnRect.top + "px";
-            flyEl.style.width = "20px";
-            flyEl.style.height = "20px";
+            flyEl.style.width = "40px";
+            flyEl.style.height = "40px";
             flyEl.style.background = "var(--success-color)";
             document.body.appendChild(flyEl);
             
@@ -907,15 +905,15 @@
                 const targetY = cartRect.top + 10;
                 flyEl.style.left = targetX + "px";
                 flyEl.style.top = targetY + "px";
-                flyEl.style.transform = "scale(0.3)";
+                flyEl.style.transform = "scale(0.5)";
                 flyEl.style.opacity = "0";
             }, 20);
             
             setTimeout(() => {
                 if(flyEl.parentNode) flyEl.parentNode.removeChild(flyEl);
-                cartBar.style.transform = "scale(1.02)";
+                cartBar.style.transform = "scale(1.05)";
                 setTimeout(() => cartBar.style.transform = "scale(1)", 150);
-            }, 600);
+            }, 1000);
         }
 
         let knownOrderIds = null;
@@ -1973,7 +1971,7 @@
                 totalEstimatedUSD += lineCostUSD;
                 totalEstimatedSYP += lineCostSYP;
 
-                msg += `${idx + 1}. *${p.name}*\n   ⬅️ المطلوب: *${targetPacks} ${unit}* ${unitsPerPack > 1 ? `(تعبئة ${unitsPerPack} قطعة = ${lineTotalPieces} قطعة)` : ''}\n   💵 التكلفة التقديرية: *${lineCostSYP.toLocaleString()} ل.س* (${lineCostUSD.toFixed(2)} $)\n`;
+                msg += `${idx + 1}. *${p.name}*\n   ⬅️ المطلوب: *${targetPacks} ${unit}* ${unitsPerPack > 1 ? `(تعبئة ${unitsPerPack} قطعة = ${lineTotalPieces} قطعة)` : ''}\n`;
             });
             msg += `──────────────\n💰 *إجمالي تقدير الفاتورة:* ${totalEstimatedSYP.toLocaleString()} ل.س (ما يعادل: *${totalEstimatedUSD.toFixed(2)} $*)\n*(تم الحساب بناءً على: سعر تكلفة المنتج × إجمالي القطع المطلوبة)*\n──────────────\nيرجى تأكيد الطلب وتزويدنا بالأصناف المذكورة 🌸`;
             window.open(`https://wa.me/${formatWhatsAppPhone(supp.phone)}?text=${encodeURIComponent(msg)}`, "_blank");
