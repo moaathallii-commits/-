@@ -89,6 +89,28 @@
         .page-overlay header .store-info h1 { font-size:15px; color:var(--gold-color); margin:0 0 2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .page-overlay header .store-info p { font-size:11px; color:var(--gray-text); margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
+
+        /* Toasts */
+        #toastContainer { position:fixed; bottom:80px; left:50%; transform:translateX(-50%); z-index:10050; display:flex; flex-direction:column; gap:10px; pointer-events:none; width:90%; max-width:350px; }
+        .toast-msg { background:var(--card-bg); color:var(--text-color); border:1px solid var(--gold-color); padding:10px 15px; border-radius:8px; font-size:13px; font-weight:bold; box-shadow:0 4px 15px rgba(0,0,0,0.5); animation:toastIn 0.3s ease-out forwards, toastOut 0.3s ease-in forwards 2.7s; opacity:0; pointer-events:auto; display:flex; align-items:center; gap:8px; text-align:center; justify-content:center; }
+        .toast-success { border-color:var(--success-color); color:var(--success-color); }
+        .toast-danger { border-color:var(--danger-color); color:var(--danger-color); }
+        @keyframes toastIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes toastOut { from { opacity:1; transform:translateY(0); } to { opacity:0; transform:translateY(20px); } }
+
+        /* Floating Animation */
+        .fly-to-cart { position:fixed; z-index:10000; border-radius:50%; transition:all 0.6s cubic-bezier(0.2, 1, 0.3, 1); pointer-events:none; box-shadow:0 0 10px rgba(0,230,118,0.8); }
+
+        /* Clear Search */
+        .search-wrap { position:relative; display:flex; flex:1; }
+        .search-clear { position:absolute; left:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--gray-text); font-size:16px; cursor:pointer; display:none; padding:5px; }
+
+        /* Menu */
+        .user-menu-btn { background:var(--card-bg); border:1px solid var(--gold-color); color:var(--gold-color); padding:5px 10px; border-radius:15px; font-size:11px; cursor:pointer; font-weight:bold; }
+        .user-menu-dropdown { display:none; position:absolute; top:calc(100% + 5px); left:0; background:var(--card-bg); border:1px solid var(--gold-color); border-radius:8px; padding:8px; box-shadow:0 4px 15px rgba(0,0,0,0.6); flex-direction:column; gap:6px; z-index:100; min-width:140px; }
+        .user-menu-wrap { position:relative; }
+
+        .categories { position:sticky; top:56px; z-index:11; background:var(--bg-color); padding-top:10px; margin-top:-10px; }
     </style>
 </head>
 <body>
@@ -121,21 +143,29 @@
             <button onclick="openEditProfile()" style="background:transparent; border:none; color:var(--gold-color); font-size:12px; cursor:pointer; padding:0;">(⚙️)</button>
             <span id="userRankBadge" onclick="openCompetitionsPage()" style="display:none; cursor:pointer; background:rgba(0,230,118,0.15); color:var(--success-color); border:1px solid var(--success-color); padding:2px 7px; border-radius:12px; font-size:11px; font-weight:bold;">🏅 ترتيبي: -</span>
         </span>
-        <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
-            <button id="exportManagerBtn" onclick="openExportManagerModal()" style="display:none; background:linear-gradient(45deg,#ff9800,#ff5722); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📦 إدارة التصدير</button>
-            <button id="customerDebtBtn" onclick="openCustomerDebtModal()" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📒 دفتر الدين</button>
-            <button id="partnerDashboardBtn" onclick="openPartnerDashboard()" style="display:none; background:linear-gradient(45deg,#00b0ff,#7c4dff); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">🤝 لوحة الشريك</button>
-            <button onclick="shareAppWhatsApp()" style="background:linear-gradient(45deg,#25D366,#128C7E); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📢 مشاركة</button>
-            <button id="redeemPointsBtn" onclick="redeemPointsWhatsApp()" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer; animation:pulse 1.5s infinite;">🎁 استبدال</button>
-            <button onclick="toggleTheme()" id="themeBtn" style="background:transparent; border:none; font-size:16px; cursor:pointer; padding:0;">☀️</button>
+        <div style="display:flex; gap:5px; align-items:center;">
             <span class="points-badge" onclick="openCompetitionsPage()">🎁 نقاطي: <b id="userPoints">0</b></span>
+            <div class="user-menu-wrap">
+                <button class="user-menu-btn" onclick="document.getElementById('userDropdown').style.display = document.getElementById('userDropdown').style.display === 'flex' ? 'none' : 'flex'">⚙️ خيارات</button>
+                <div id="userDropdown" class="user-menu-dropdown">
+                    <button id="exportManagerBtn" onclick="openExportManagerModal(); $('userDropdown').style.display='none'" style="display:none; background:linear-gradient(45deg,#ff9800,#ff5722); color:#fff; border:none; padding:6px; border-radius:8px; font-size:11px; font-weight:bold; cursor:pointer;">📦 إدارة التصدير</button>
+                    <button id="customerDebtBtn" onclick="openCustomerDebtModal(); $('userDropdown').style.display='none'" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:6px; border-radius:8px; font-size:11px; font-weight:bold; cursor:pointer;">📒 دفتر الدين</button>
+                    <button id="partnerDashboardBtn" onclick="openPartnerDashboard(); $('userDropdown').style.display='none'" style="display:none; background:linear-gradient(45deg,#00b0ff,#7c4dff); color:#fff; border:none; padding:6px; border-radius:8px; font-size:11px; font-weight:bold; cursor:pointer;">🤝 لوحة الشريك</button>
+                    <button id="redeemPointsBtn" onclick="redeemPointsWhatsApp(); $('userDropdown').style.display='none'" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:6px; border-radius:8px; font-size:11px; font-weight:bold; cursor:pointer; animation:pulse 1.5s infinite;">🎁 استبدال النقاط</button>
+                    <button onclick="shareAppWhatsApp(); $('userDropdown').style.display='none'" style="background:linear-gradient(45deg,#25D366,#128C7E); color:#fff; border:none; padding:6px; border-radius:8px; font-size:11px; font-weight:bold; cursor:pointer;">📢 مشاركة التطبيق</button>
+                    <button onclick="toggleTheme(); $('userDropdown').style.display='none'" id="themeBtn" style="background:var(--bg-color); color:var(--text-color); border:1px solid var(--border-color); padding:6px; border-radius:8px; font-size:11px; font-weight:bold; cursor:pointer;">☀️ وضع الإضاءة</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="container" style="padding-bottom:85px;">
         <div id="multipleOffersContainer"></div>
         <div style="display:flex; gap:6px; margin-bottom:10px;">
-            <input type="text" id="searchInput" class="search-box" style="margin-bottom:0; flex:1;" placeholder="🔍 ابحث عن أي منتج في متجر معاذ..." oninput="renderStore()">
+            <div class="search-wrap">
+                <input type="text" id="searchInput" class="search-box" style="margin-bottom:0;" placeholder="🔍 ابحث عن أي منتج في متجر معاذ..." oninput="onSearchInput()">
+                <button id="searchClearBtn" class="search-clear" onclick="clearSearch()">✖</button>
+            </div>
             <button class="btn" style="width:auto; white-space:nowrap; background:var(--card-bg); border:1px solid var(--gold-color); color:var(--gold-color);" onclick="openMissingRequestModal()">📝 طلب صنف</button>
         </div>
         <div class="categories" id="categoriesContainer"></div>
@@ -177,7 +207,10 @@
 
     <div id="cartModal" class="modal-overlay">
         <div class="modal-content">
-            <h3 style="color:var(--gold-color); margin:0 0 8px 0; text-align:center; font-size:15px;">🛒 سلة المشتريات وإتمام الطلب</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h3 style="color:var(--gold-color); margin:0; font-size:15px;">🛒 سلة المشتريات</h3>
+                <button onclick="emptyCart()" class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:10px;">🗑️ إفراغ السلة</button>
+            </div>
             <div id="cartItemsList" style="max-height:145px; overflow-y:auto; margin-bottom:8px; padding-left:2px;"></div>
             <div class="form-group" style="margin-bottom:8px;">
                 <label>📍 منطقة التوصيل:</label>
@@ -831,6 +864,60 @@
         loadCachedData();
 
 
+        
+        function showToast(msg, type = "info") {
+            let container = $("toastContainer");
+            if (!container) {
+                container = document.createElement("div");
+                container.id = "toastContainer";
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement("div");
+            toast.className = `toast-msg toast-${type}`;
+            const icon = type === 'success' ? '✅' : type === 'danger' ? '⚠️' : 'ℹ️';
+            toast.innerHTML = `<span>${msg.replace(/\n/g, '<br>')}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 3000);
+        }
+        
+        window.nativeAlert = window.alert;
+        window.alert = function(msg) {
+            let type = "info";
+            if (msg.includes("⚠️") || msg.includes("🚫") || msg.includes("❌")) type = "danger";
+            if (msg.includes("✅")) type = "success";
+            showToast(msg, type);
+        };
+
+        function animateToCart(btnEl) {
+            const cartBar = $("cartBar");
+            if (!cartBar) return;
+            const btnRect = btnEl.getBoundingClientRect();
+            const flyEl = document.createElement("div");
+            flyEl.className = "fly-to-cart";
+            flyEl.style.left = btnRect.left + "px";
+            flyEl.style.top = btnRect.top + "px";
+            flyEl.style.width = "20px";
+            flyEl.style.height = "20px";
+            flyEl.style.background = "var(--success-color)";
+            document.body.appendChild(flyEl);
+            
+            setTimeout(() => {
+                const cartRect = cartBar.getBoundingClientRect();
+                const targetX = cartRect.left + (cartRect.width / 2);
+                const targetY = cartRect.top + 10;
+                flyEl.style.left = targetX + "px";
+                flyEl.style.top = targetY + "px";
+                flyEl.style.transform = "scale(0.3)";
+                flyEl.style.opacity = "0";
+            }, 20);
+            
+            setTimeout(() => {
+                if(flyEl.parentNode) flyEl.parentNode.removeChild(flyEl);
+                cartBar.style.transform = "scale(1.02)";
+                setTimeout(() => cartBar.style.transform = "scale(1)", 150);
+            }, 600);
+        }
+
         let knownOrderIds = null;
         function playNewOrderSound() {
             try {
@@ -863,6 +950,15 @@
         document.addEventListener("DOMContentLoaded", () => { if (isAppStandalone() && installBtn) installBtn.style.display = "none"; });
 
         let isExitingApp = false;
+        
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('userDropdown');
+            const btn = document.querySelector('.user-menu-btn');
+            if (dropdown && btn && !dropdown.contains(event.target) && event.target !== btn) {
+                dropdown.style.display = 'none';
+            }
+        });
+
         window.addEventListener('load', () => {
             history.pushState({ page: 'store_home' }, '');
             window.addEventListener('popstate', () => {
@@ -1236,6 +1332,18 @@
             window.open(`https://wa.me/?text=${encodeURIComponent(`🌸 تفضل بزيارة تطبيق *متجر معاذ* في قرية العوينة بريف حماة لتسوق كافة المواد الغذائية والمنزلية عبر الرابط التالي:\nhttps://moaathallii-commits.github.io/-/`)}`, "_blank");
         }
 
+        
+        function onSearchInput() {
+            const v = $("searchInput").value;
+            $("searchClearBtn").style.display = v ? "block" : "none";
+            renderStore();
+        }
+        function clearSearch() {
+            $("searchInput").value = "";
+            $("searchClearBtn").style.display = "none";
+            renderStore();
+        }
+
         const renderCategories = () => { if ($("categoriesContainer")) $("categoriesContainer").innerHTML = categories.map(c => `<button class="cat-btn ${c === selectedCategory ? 'active' : ''}" onclick="selectCategory('${c}')">${c}</button>`).join(""); };
         function selectCategory(c) { selectedCategory = c; renderCategories(); renderStore(); }
 
@@ -1247,7 +1355,7 @@
             const isW = currentUser?.userType === "wholesale";
             container.innerHTML = keys.map(k => {
                 const so = specialOffers[k], eff = (isW && so.wholesaleUSD > 0) ? so.wholesaleUSD : so.newPriceUSD, q = cart[k] ? cart[k].qty : 0, st = parseInt(so.stock) || 0;
-                const act = st <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (q > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${k}',1)">+</button><span class="qty-text">${q}</span><button class="qty-btn" onclick="changeQty('${k}',-1)">-</button></div>` : `<button class="btn" onclick="changeQty('${k}',1)">➕ أضف للسلة</button>`);
+                const act = st <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (q > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick=\"changeQty('${k}', 1, event)\">+</button><span class="qty-text">${q}</span><button class="qty-btn" onclick=\"changeQty('${k}', -1, event)\">-</button></div>` : `<button class="btn" onclick=\"changeQty('${k}', 1, event)\">➕ أضف للسلة</button>`);
                 return `<div class="special-offer-banner"><div class="special-offer-img-wrap"><img src="${so.image || so.thumb || 'store-icon.png'}" class="special-offer-img"></div><div style="flex:1;"><h3 style="color:var(--gold-color); font-size:13px; margin:0 0 3px 0;">🔥 عرض خاص محدث!</h3><div style="font-size:12px; margin-bottom:3px; font-weight:bold;">${so.name}</div><div style="font-size:12px; margin-bottom:5px;"><s style="color:#ff4444; margin-left:5px;">${calcSYP(so.oldPriceUSD).toLocaleString()} ل.س</s><strong style="color:var(--success-color); font-size:13px;">${calcSYP(eff).toLocaleString()} ل.س ${isW ? '<small>(جملة)</small>' : ''}</strong></div><div style="width:110px;">${act}</div></div></div>`;
             }).join("");
         }
@@ -1259,17 +1367,39 @@
             const q = ($("searchInput")?.value || "").trim().toLowerCase(), isW = currentUser?.userType === "wholesale";
             const keys = shuffledProductKeys.length ? shuffledProductKeys : Object.keys(products);
             let html = "";
+            
+            let filtered = [];
             keys.forEach(id => {
                 const p = products[id]; if (!p) return;
+                const pName = (p.name || "").toLowerCase();
+                const pCat = p.category || "غير مصنف";
+                
+                if (q) {
+                    if (pName.includes(q)) {
+                        filtered.push({ id, p, priority: pCat === selectedCategory ? 1 : 2 });
+                    }
+                } else {
+                    if (selectedCategory === "الكل" || pCat === selectedCategory) {
+                        filtered.push({ id, p, priority: 1 });
+                    }
+                }
+            });
+
+            if (q) {
+                filtered.sort((a, b) => a.priority - b.priority);
+            }
+
+            filtered.forEach(item => {
+                const id = item.id;
+                const p = item.p;
                 const pName = p.name || "";
-                if ((selectedCategory !== "الكل" && p.category !== selectedCategory) || (q && !pName.toLowerCase().includes(q))) return;
                 const priceSYP = calcSYP((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0)), st = parseInt(p.stock) || 0, inC = cart[id] ? cart[id].qty : 0;
-                const btn = st <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (inC > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${id}',1)">+</button><span class="qty-text">${inC}</span><button class="qty-btn" onclick="changeQty('${id}',-1)">-</button></div>` : `<button class="btn" onclick="changeQty('${id}',1)">🛒 أضف للسلة</button>`);
+                const btn = st <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (inC > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${id}', 1, event)">+</button><span class="qty-text">${inC}</span><button class="qty-btn" onclick="changeQty('${id}', -1, event)">-</button></div>` : `<button class="btn" onclick="changeQty('${id}', 1, event)">🛒 أضف للسلة</button>`);
                 const revs = p.reviews || {}, rKeys = Object.keys(revs), avg = rKeys.length ? (rKeys.reduce((a, k) => a + (revs[k].rating || 0), 0) / rKeys.length).toFixed(1) : 0;
                 const bought = currentUser?.phone && users[currentUser.phone]?.purchases?.[id];
                 const revBtn = (bought && !currentUser.banned) ? `<button onclick="openReviewModal('${id}')" class="btn" style="background:transparent; border:1px solid var(--gold-color); color:var(--gold-color); margin-top:5px; font-size:11px; padding:4px;">⭐ قيّم الصنف</button>` : "";
                 const src = getLockedHighResImage(id) || p.thumb || p.image || "store-icon.png";
-                html += `<div class="product-card"><div><div class="product-img-wrap"><img id="prod_img_${id}" src="${src}" class="product-img ${highResImagesMemoryCache[id] ? 'img-high-res' : 'img-low-res'}"></div><h3>${pName}</h3><p>${priceSYP.toLocaleString()} ل.س ${isW && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>${rKeys.length ? `<div style="font-size:11px; color:var(--gold-color);">⭐ ${avg} (${rKeys.length})</div>` : ''}</div><div style="margin-top:6px;">${btn}${revBtn}</div></div>`;
+                html += `<div class="product-card" ${item.priority === 2 ? 'style="border-color:var(--border-color); opacity:0.9;"' : ''}><div><div class="product-img-wrap"><img id="prod_img_${id}" src="${src}" class="product-img ${highResImagesMemoryCache[id] ? 'img-high-res' : 'img-low-res'}"></div><h3>${pName}</h3><p>${priceSYP.toLocaleString()} ل.س ${isW && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>${rKeys.length ? `<div style="font-size:11px; color:var(--gold-color);">⭐ ${avg} (${rKeys.length})</div>` : ''}</div><div style="margin-top:6px;">${btn}${revBtn}</div></div>`;
             });
             grid.innerHTML = html || `<p style="grid-column:span 2; text-align:center; color:var(--gray-text);">لا توجد مواد مطابقة للبحث.</p>`;
             updateCartBar();
@@ -1296,7 +1426,10 @@
             isBatchLoadingImages = false;
         }
 
-        function changeQty(id, delta) {
+        function changeQty(id, delta, event) {
+            if (delta > 0 && event && event.target && event.target.tagName === 'BUTTON') {
+                animateToCart(event.target);
+            }
             const isW = currentUser?.userType === "wholesale";
             let item;
             if (id.startsWith("OFFER_")) {
@@ -1369,6 +1502,16 @@
             else { const t = document.createElement("textarea"); t.value = shamWalletIdGlobal; document.body.appendChild(t); t.select(); document.execCommand("copy"); document.body.removeChild(t); alert("✅ تم نسخ كود محفظة شام كاش بنجاح!"); }
         }
 
+        
+        function emptyCart() {
+            if (!confirm("هل أنت متأكد من إفراغ سلة المشتريات بالكامل؟")) return;
+            cart = {};
+            renderStore();
+            renderCartModalItems();
+            updateCartBar();
+            closeModal('cartModal');
+        }
+
         function renderCartModalItems() {
             const items = Object.values(cart);
             if (!items.length) return closeModal('cartModal');
@@ -1377,7 +1520,7 @@
                 $("cartItemsList").innerHTML = items.map(i => {
                     const u = calcSYP(i.priceUSD), s = u * i.qty;
                     sub += s; pts += Math.round((i.priceUSD * i.qty) * (i.pointsPct || 2));
-                    return `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding:5px 0; font-size:11px;"><div><strong>${i.name}</strong><br><span style="color:var(--gray-text);">${u.toLocaleString()} ل.س × ${i.qty} = ${s.toLocaleString()} ل.س</span></div><div class="qty-controls" style="width:75px;"><button class="qty-btn" type="button" onclick="changeQty('${i.id}',1)" style="width:24px; height:24px; font-size:13px;">+</button><span class="qty-text" style="font-size:12px;">${i.qty}</span><button class="qty-btn" type="button" onclick="changeQty('${i.id}',-1)" style="width:24px; height:24px; font-size:13px;">-</button></div></div>`;
+                    return `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding:5px 0; font-size:11px;"><div><strong>${i.name}</strong><br><span style="color:var(--gray-text);">${u.toLocaleString()} ل.س × ${i.qty} = ${s.toLocaleString()} ل.س</span></div><div class="qty-controls" style="width:75px;"><button class="qty-btn" type="button" onclick=\"changeQty('${i.id}', 1, event)\" style="width:24px; height:24px; font-size:13px;">+</button><span class="qty-text" style="font-size:12px;">${i.qty}</span><button class="qty-btn" type="button" onclick=\"changeQty('${i.id}', -1, event)\" style="width:24px; height:24px; font-size:13px;">-</button></div></div>`;
                 }).join("");
             }
             const markupPct = getCurrentUserCreditMarkupPct();
@@ -1830,7 +1973,7 @@
                 totalEstimatedUSD += lineCostUSD;
                 totalEstimatedSYP += lineCostSYP;
 
-                msg += `${idx + 1}. *${p.name}*\n   ⬅️ المطلوب: *${targetPacks} ${unit}* ${unitsPerPack > 1 ? `(تعبئة ${unitsPerPack} قطعة = ${lineTotalPieces} قطعة)` : ''}\n`;
+                msg += `${idx + 1}. *${p.name}*\n   ⬅️ المطلوب: *${targetPacks} ${unit}* ${unitsPerPack > 1 ? `(تعبئة ${unitsPerPack} قطعة = ${lineTotalPieces} قطعة)` : ''}\n   💵 التكلفة التقديرية: *${lineCostSYP.toLocaleString()} ل.س* (${lineCostUSD.toFixed(2)} $)\n`;
             });
             msg += `──────────────\n💰 *إجمالي تقدير الفاتورة:* ${totalEstimatedSYP.toLocaleString()} ل.س (ما يعادل: *${totalEstimatedUSD.toFixed(2)} $*)\n*(تم الحساب بناءً على: سعر تكلفة المنتج × إجمالي القطع المطلوبة)*\n──────────────\nيرجى تأكيد الطلب وتزويدنا بالأصناف المذكورة 🌸`;
             window.open(`https://wa.me/${formatWhatsAppPhone(supp.phone)}?text=${encodeURIComponent(msg)}`, "_blank");
