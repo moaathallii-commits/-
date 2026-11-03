@@ -603,6 +603,7 @@
                                 <input type="number" step="0.5" id="adminCustCreditMarkupPct" class="quick-inp" style="width:55px;" value="0">
                                 <button onclick="saveCustomerCreditMarkupPct()" class="btn" style="width:auto; padding:4px 8px; font-size:10px;">حفظ النسبة</button>
                             </div>
+                            <button onclick="exportCustomerDebtCSV()" class="btn" style="width:auto; padding:4px 8px; font-size:10px; background:#4CAF50; color:#fff;">📊 تحميل كشف حساب (Excel)</button>
                         </div>
                     </div>
                     <div class="stats-grid">
@@ -646,6 +647,7 @@
                         <div class="form-group" style="display:flex; align-items:flex-end;">
                             <button onclick="settlePartnerEarningsByAdmin()" class="btn" style="background:#ff9800; color:#000; height:36px;">🔄 تصفير وتوثيق دفعة</button>
                         </div>
+                        <button onclick="exportPartnerReportCSV()" class="btn" style="width:auto; padding:4px 8px; font-size:10px; background:#4CAF50; color:#fff;">📊 تحميل تقرير أرباح الشريك (Excel)</button>
                     </div>
                     <button onclick="savePartnerCategoriesConfig()" class="btn" style="background:#00b0ff; color:#fff; margin-bottom:10px;">💾 حفظ إعدادات الشريك</button>
                     <div id="adminPartnerPayoutHistory" style="font-size:11px;"></div>
@@ -801,6 +803,33 @@
         let compSettings = { minRedeemPoints: 500, leaderboardLimit: 10, title: "", desc: "", image: "" };
         window.partnersConfigData = {};
         let currentUser = JSON.parse(localStorage.getItem("moaath_user") || "null");
+
+        // Offline Persistence & Caching
+        function loadCachedData() {
+            try {
+                if (localStorage.getItem("cache_settings")) {
+                    const d = JSON.parse(localStorage.getItem("cache_settings"));
+                    exchangeRate = d.exchangeRate || 15000;
+                    deliveryFees = d.deliveryFees || deliveryFees;
+                    adminWhatsAppNumber = d.adminWhatsApp || "963965461504";
+                }
+                if (localStorage.getItem("cache_categories")) {
+                    categories = ["الكل", ...JSON.parse(localStorage.getItem("cache_categories"))];
+                    renderCategories();
+                }
+                if (localStorage.getItem("cache_products")) {
+                    products = JSON.parse(localStorage.getItem("cache_products"));
+                    renderStore();
+                }
+                if (localStorage.getItem("cache_specialOffers")) {
+                    specialOffers = JSON.parse(localStorage.getItem("cache_specialOffers"));
+                    renderSpecialOffers();
+                }
+            } catch (e) { console.log("Error loading cache", e); }
+        }
+        // Call immediately on load to show UI before Firebase connects
+        loadCachedData();
+
 
         let knownOrderIds = null;
         function playNewOrderSound() {
@@ -1048,6 +1077,7 @@
             setVal("adminShamWalletInput", shamWalletIdGlobal);
             setVal("exportManagerPhoneInput", exportManagerPhoneGlobal);
             syncCurrentUser();
+            localStorage.setItem("cache_settings", JSON.stringify(d));
             checkStoreWorkHours(); renderStore();
         });
 
@@ -1071,6 +1101,7 @@
         db.ref("categories").on("value", snap => {
             const d = snap.val() || ["مواد غذائية", "منظفات", "مشروبات"];
             categories = ["الكل", ...d];
+            localStorage.setItem("cache_categories", JSON.stringify(d));
             renderCategories(); renderAdminCategories(d); populatePartnerSelectOptions(); renderStatsDashboard(); renderAdminInvoicesHistory();
         });
 
@@ -1084,10 +1115,12 @@
                 shuffledProductKeys = shuffledProductKeys.filter(k => products[k]);
                 keys.forEach(k => { if (!shuffledProductKeys.includes(k)) shuffledProductKeys.push(k); });
             }
+            localStorage.setItem("cache_products", JSON.stringify(products));
             renderStore(); renderAdminProducts(); renderShortages(); renderStatsDashboard(); renderAdminInvoicesHistory();
         });
 
-        db.ref("specialOffers").on("value", snap => { specialOffers = snap.val() || {}; renderSpecialOffers(); renderAdminOffersList(); renderStatsDashboard(); renderAdminInvoicesHistory(); });
+        db.ref("specialOffers").on("value", snap => { specialOffers = snap.val() || {}; localStorage.setItem("cache_specialOffers", JSON.stringify(specialOffers));
+            renderSpecialOffers(); renderAdminOffersList(); renderStatsDashboard(); renderAdminInvoicesHistory(); });
         db.ref("users").on("value", snap => {
             users = snap.val() || {};
             syncCurrentUser(); renderAdminCustomers(); renderLeaderboard(); renderStatsDashboard(); renderAdminInvoicesHistory(); renderStore();
@@ -1487,6 +1520,30 @@
             if (cur && users[cur]) sel.value = cur;
         }
 
+        
+        function exportCustomerDebtCSV() {
+            const phone = $("adminDebtCustomerSelect")?.value;
+            if (!phone || !users[phone]) return alert("⚠️ اختر زبون الآجل أولاً.");
+            const u = users[phone];
+            const entries = Object.values(u.debtLedger || {}).sort((a, b) => (a.dateISO || "").localeCompare(b.dateISO || ""));
+            if (!entries.length) return alert("لا توجد حركات لتصديرها.");
+            
+            let csv = "التاريخ والوقت,نوع الحركة,البيان,المبلغ بالدولار,المبلغ بالليرة\n";
+            entries.forEach(e => {
+                const type = e.type === "payment" ? "تسديد دفعة" : "تسجيل دين";
+                const amtUSD = parseFloat(e.finalAmountUSD || e.amountUSD || 0).toFixed(2);
+                const amtSYP = calcSYP(amtUSD);
+                csv += `"${e.dateStr}","${type}","${e.note || '-'}","${e.type === 'payment' ? '-' : '+'}${amtUSD} $","${amtSYP} ل.س"\n`;
+            });
+            csv += `\n,,الرصيد النهائي المستحق:,${(parseFloat(u.debtBalanceUSD) || 0).toFixed(2)} $,${calcSYP(parseFloat(u.debtBalanceUSD) || 0)} ل.س\n`;
+            
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `كشف_حساب_${u.name.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+        }
+
         function loadAdminCustomerDebtLedger() {
             const phone = $("adminDebtCustomerSelect")?.value;
             const summaryBox = $("adminDebtCustomerSummary"), histBox = $("adminCustomerDebtHistoryBox");
@@ -1733,11 +1790,44 @@
             list.innerHTML = keys.map(id => {
                 const o = pendingOrders[id], isCred = !!o.isCreditOrder;
                 const itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${i.name} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
+                
+                let realSubSale = 0;
+                const isW = (users[o.customerPhone] && users[o.customerPhone].userType === "wholesale") || false;
+                (o.items || []).forEach(i => {
+                    let p = i.id.startsWith("OFFER_") ? specialOffers[i.id] : products[i.id];
+                    if (p) {
+                        let price = (isW && parseFloat(p.wholesaleUSD) > 0) ? parseFloat(p.wholesaleUSD) : parseFloat(p.newPriceUSD || p.priceUSD || 0);
+                        realSubSale += calcSYP(price) * i.qty;
+                    }
+                });
+                const realFee = getRegionFee(o.customerRegion);
+                const realMarkup = (o.creditMarkupPct || 0) > 0 ? Math.round((realSubSale * o.creditMarkupPct) / 100) : 0;
+                const realTotal = realSubSale + realMarkup + realFee;
+                const isTampered = Math.abs(realTotal - (o.totalSaleSYP || 0)) > 50;
+                const tamperWarning = isTampered ? `<div style="background:rgba(255,0,0,0.15); color:#ff4444; padding:8px; border-radius:5px; margin-bottom:8px; font-weight:bold; font-size:11px; border:1px solid #ff4444; box-shadow:0 0 8px rgba(255,0,0,0.5);">⚠️ تنبيه أمني: إجمالي الطلب المرسل (${(o.totalSaleSYP || 0).toLocaleString()}) يختلف عن الإجمالي الحقيقي (${realTotal.toLocaleString()})! (قد يكون تلاعباً أو تغيّر بالأسعار).</div>` : '';
+
+                
+                let realSubSale = 0;
+                const isW = (users[o.customerPhone] && users[o.customerPhone].userType === "wholesale") || false;
+                (o.items || []).forEach(i => {
+                    let p = i.id.startsWith("OFFER_") ? specialOffers[i.id] : products[i.id];
+                    if (p) {
+                        let price = (isW && parseFloat(p.wholesaleUSD) > 0) ? parseFloat(p.wholesaleUSD) : parseFloat(p.newPriceUSD || p.priceUSD || 0);
+                        realSubSale += calcSYP(price) * i.qty;
+                    }
+                });
+                const realFee = getRegionFee(o.customerRegion);
+                const realMarkup = (o.creditMarkupPct || 0) > 0 ? Math.round((realSubSale * o.creditMarkupPct) / 100) : 0;
+                const realTotal = realSubSale + realMarkup + realFee;
+                const isTampered = Math.abs(realTotal - (o.totalSaleSYP || 0)) > 50;
+                const tamperWarning = isTampered ? `<div style="background:rgba(255,0,0,0.15); color:#ff4444; padding:8px; border-radius:5px; margin-bottom:8px; font-weight:bold; font-size:11px; border:1px solid #ff4444; box-shadow:0 0 8px rgba(255,0,0,0.5);">⚠️ تنبيه أمني: إجمالي الطلب المرسل (${(o.totalSaleSYP || 0).toLocaleString()}) يختلف عن الإجمالي الحقيقي (${realTotal.toLocaleString()})! (قد يكون تلاعباً أو تغيّر بالأسعار).</div>` : '';
+
                 const creditBanner = isCred
                     ? `<div style="background:linear-gradient(45deg,#ff0000,#cc0000); color:#fff; padding:6px 8px; border-radius:5px; font-weight:bold; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; text-shadow:1px 1px 2px rgba(0,0,0,0.5);"><span>🚨 طلب زبون دين (آجل)</span><span>⚡ جهّز الطلب فوراً</span></div>`
                     : `<div style="background:rgba(255,152,0,0.12); color:#ff9800; padding:4px 8px; border-radius:5px; font-size:10px; margin-bottom:6px;">💳 دفع شام كاش (تأكد من إشعار التحويل مع الإدارة)</div>`;
                 return `<div class="adm-card" style="border:3px solid ${isCred ? '#ff0000' : '#ff9800'}; background:${isCred ? 'rgba(255,0,0,0.08)' : 'var(--bg-color)'}; color:${isCred ? '#ff4444' : 'inherit'};">
                     ${creditBanner}
+                    ${tamperWarning}
                     <div style="display:flex; justify-content:space-between; color:${isCred ? '#ff4444' : 'var(--gold-color)'}; font-weight:bold; margin-bottom:4px;">
                         <span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span>
                     </div>
@@ -1773,7 +1863,7 @@
                 totalEstimatedUSD += lineCostUSD;
                 totalEstimatedSYP += lineCostSYP;
 
-                msg += `${idx + 1}. *${p.name}*\n   ⬅️ المطلوب: *${targetPacks} ${unit}* ${unitsPerPack > 1 ? `(تعبئة ${unitsPerPack} قطعة = ${lineTotalPieces} قطعة)` : ''}\n   💵 التكلفة التقديرية: *${lineCostSYP.toLocaleString()} ل.س* (${lineCostUSD.toFixed(2)} $)\n`;
+                msg += `${idx + 1}. *${p.name}*\n   ⬅️ المطلوب: *${targetPacks} ${unit}* ${unitsPerPack > 1 ? `(تعبئة ${unitsPerPack} قطعة = ${lineTotalPieces} قطعة)` : ''}\n`;
             });
             msg += `──────────────\n💰 *إجمالي تقدير الفاتورة:* ${totalEstimatedSYP.toLocaleString()} ل.س (ما يعادل: *${totalEstimatedUSD.toFixed(2)} $*)\n*(تم الحساب بناءً على: سعر تكلفة المنتج × إجمالي القطع المطلوبة)*\n──────────────\nيرجى تأكيد الطلب وتزويدنا بالأصناف المذكورة 🌸`;
             window.open(`https://wa.me/${formatWhatsAppPhone(supp.phone)}?text=${encodeURIComponent(msg)}`, "_blank");
@@ -1802,7 +1892,7 @@
                     suppEstUSD += lineUSD;
                     return `<div style="font-size:11px; display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding:4px 0;">
                         <span>• ${p.name} <small style="color:var(--gold-color);">(${targetPacks} ${p.unitType || 'قطعة'})</small></span>
-                        <span><b style="color:var(--success-color); margin-left:6px;">~${calcSYP(lineUSD).toLocaleString()} ل.س</b> <small style="color:var(--danger-color);">(متبقي: ${p.stock})</small></span>
+                        <span style="color:var(--danger-color); font-weight:bold;">متبقي: ${p.stock}</span>
                     </div>`;
                 }).join("");
 
@@ -2255,11 +2345,44 @@
             list.innerHTML = keys.map(id => {
                 const o = pendingOrders[id], isCred = !!o.isCreditOrder;
                 const itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${i.name} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
+                
+                let realSubSale = 0;
+                const isW = (users[o.customerPhone] && users[o.customerPhone].userType === "wholesale") || false;
+                (o.items || []).forEach(i => {
+                    let p = i.id.startsWith("OFFER_") ? specialOffers[i.id] : products[i.id];
+                    if (p) {
+                        let price = (isW && parseFloat(p.wholesaleUSD) > 0) ? parseFloat(p.wholesaleUSD) : parseFloat(p.newPriceUSD || p.priceUSD || 0);
+                        realSubSale += calcSYP(price) * i.qty;
+                    }
+                });
+                const realFee = getRegionFee(o.customerRegion);
+                const realMarkup = (o.creditMarkupPct || 0) > 0 ? Math.round((realSubSale * o.creditMarkupPct) / 100) : 0;
+                const realTotal = realSubSale + realMarkup + realFee;
+                const isTampered = Math.abs(realTotal - (o.totalSaleSYP || 0)) > 50;
+                const tamperWarning = isTampered ? `<div style="background:rgba(255,0,0,0.15); color:#ff4444; padding:8px; border-radius:5px; margin-bottom:8px; font-weight:bold; font-size:11px; border:1px solid #ff4444; box-shadow:0 0 8px rgba(255,0,0,0.5);">⚠️ تنبيه أمني: إجمالي الطلب المرسل (${(o.totalSaleSYP || 0).toLocaleString()}) يختلف عن الإجمالي الحقيقي (${realTotal.toLocaleString()})! (قد يكون تلاعباً أو تغيّر بالأسعار).</div>` : '';
+
+                
+                let realSubSale = 0;
+                const isW = (users[o.customerPhone] && users[o.customerPhone].userType === "wholesale") || false;
+                (o.items || []).forEach(i => {
+                    let p = i.id.startsWith("OFFER_") ? specialOffers[i.id] : products[i.id];
+                    if (p) {
+                        let price = (isW && parseFloat(p.wholesaleUSD) > 0) ? parseFloat(p.wholesaleUSD) : parseFloat(p.newPriceUSD || p.priceUSD || 0);
+                        realSubSale += calcSYP(price) * i.qty;
+                    }
+                });
+                const realFee = getRegionFee(o.customerRegion);
+                const realMarkup = (o.creditMarkupPct || 0) > 0 ? Math.round((realSubSale * o.creditMarkupPct) / 100) : 0;
+                const realTotal = realSubSale + realMarkup + realFee;
+                const isTampered = Math.abs(realTotal - (o.totalSaleSYP || 0)) > 50;
+                const tamperWarning = isTampered ? `<div style="background:rgba(255,0,0,0.15); color:#ff4444; padding:8px; border-radius:5px; margin-bottom:8px; font-weight:bold; font-size:11px; border:1px solid #ff4444; box-shadow:0 0 8px rgba(255,0,0,0.5);">⚠️ تنبيه أمني: إجمالي الطلب المرسل (${(o.totalSaleSYP || 0).toLocaleString()}) يختلف عن الإجمالي الحقيقي (${realTotal.toLocaleString()})! (قد يكون تلاعباً أو تغيّر بالأسعار).</div>` : '';
+
                 const creditBanner = isCred
                     ? `<div style="background:linear-gradient(45deg,#ff0000,#cc0000); color:#fff; padding:6px 8px; border-radius:5px; font-weight:bold; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; text-shadow:1px 1px 2px rgba(0,0,0,0.5);"><span>🚨 طلب زبون آجل (دفتر دين)</span><span>✅ لا ينتظر إشعار تحويل (${o.orderTotalUSD || 0} $)</span></div>`
                     : `<div style="background:rgba(212,175,55,0.12); color:var(--gold-color); padding:4px 8px; border-radius:5px; font-size:10px; margin-bottom:6px;">💳 دفع شام كاش (بانتظار إشعار التحويل)</div>`;
                 return `<div class="adm-card" style="border:3px solid ${isCred ? '#ff0000' : 'var(--gold-color)'}; background:${isCred ? 'rgba(255,0,0,0.08)' : 'var(--bg-color)'}; color:${isCred ? '#ff4444' : 'inherit'};">
                     ${creditBanner}
+                    ${tamperWarning}
                     <div style="display:flex; justify-content:space-between; color:${isCred ? '#ff4444' : 'var(--gold-color)'}; font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span></div>
                     <div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress}</div>
                     ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${o.notes}</div>` : ''}
@@ -2320,6 +2443,33 @@
             const cur = sel.value;
             sel.innerHTML = '<option value="">-- اختر شريكاً --</option>' + Object.values(users).filter(u => u.userType === "partner").map(p => `<option value="${p.phone}">${p.name} (${p.phone})</option>`).join("");
             if (cur) sel.value = cur;
+        }
+
+        
+        function exportPartnerReportCSV() {
+            const phone = $("adminPartnerSelect")?.value;
+            if (!phone || !users[phone]) return alert("⚠️ اختر الشريك أولاً.");
+            const partnerName = users[phone].name;
+            const m = calculatePartnerCurrentMetrics(phone);
+            
+            let csv = `تقرير أرباح الشريك: ${partnerName}\n`;
+            csv += `التصنيفات المعتمدة:,"${m.rawCats.join("، ")}"\n`;
+            csv += `نسبة الشراكة:,${m.partnerPct}%\n`;
+            csv += `إجمالي مبيعات التصنيفات منذ آخر تسوية:,${m.totSales} ل.س\n`;
+            csv += `صافي الأرباح المستحقة للشريك حالياً:,${m.totEarn} ل.س\n\n`;
+            
+            csv += "الصنف,التصنيف,المباع,إجمالي المبيعات,حصة الشريك (الربح)\n";
+            Object.entries(m.partnerItemsMap).forEach(([name, d]) => {
+                if (d.qtySold > 0) {
+                    csv += `"${name}","${d.cat}",${d.qtySold},${d.sales},${d.earn}\n`;
+                }
+            });
+            
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `تقرير_أرباح_الشريك_${partnerName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
         }
 
         function loadPartnerConfig() {
