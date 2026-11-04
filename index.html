@@ -2422,7 +2422,9 @@
                 const txId = "DEBT_ORD_" + orderId, now = new Date();
                 updates[`users/${phone}/debtLedger/${txId}`] = {
                     id: txId, type: "debt", baseAmountUSD: parseFloat((finalOrderUSD / (1 + (o.creditMarkupPct||0)/100)).toFixed(2)), feePct: o.creditMarkupPct || 0, finalAmountUSD: finalOrderUSD,
-                    note: `طلب شراء فاتورة #${orderId.slice(-6)}`, dateISO: now.toISOString(), dateStr: now.toLocaleString("ar-SY")
+                    note: `فاتورة #${orderId.slice(-6)}: ` + (o.items || []).map(i => `${i.name} (×${i.qty})`).join('، '),
+                    items: o.items || [],
+                    dateISO: now.toISOString(), dateStr: now.toLocaleString("ar-SY")
                 };
             }
             
@@ -2751,7 +2753,7 @@
         function openCompetitionsPage() { syncCurrentUser(); renderCompetitionDetails(); renderLeaderboard(); $("competitionsPage").style.display = "block"; }
     </script>
 
-    <div id="orderImagesModal" class="modal-overlay">
+    <div id="orderImagesModal" class="modal-overlay" style="z-index: 10025 !important;">
         <div class="modal-content" style="max-width:400px;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:6px; margin-bottom:10px;">
                 <h3 style="color:var(--gold-color); margin:0; font-size:14px;" id="orderImagesTitle">🖼️ صور مواد الطلب والتجهيز</h3>
