@@ -1821,7 +1821,7 @@
                     ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${o.notes}</div>` : ''}
                     <div style="border-top:1px dashed ${isCred ? '#ff4444' : 'var(--border-color)'}; border-bottom:1px dashed ${isCred ? '#ff4444' : 'var(--border-color)'}; padding:6px 0; margin:6px 0;">${itemsHtml}</div>
                     <div style="font-weight:bold; margin-bottom:8px;">المطلوب تحصيله مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</div>
-                    <div style="display:flex; gap:6px;">
+                    <div style="display:flex; gap:6px; margin-bottom:6px;"><button class="btn" style="background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-size:11px; padding:6px;" onclick="openOrderImagesModal('${id}')">🖼️ عرض صور وقطع الطلب</button></div><div style="display:flex; gap:6px;">
                         <button class="btn" style="background:var(--success-color); color:#000;" onclick="confirmOrder('${id}')">✅ قبول وتحويل للتوصيل</button>
                         <button class="btn btn-danger" onclick="cancelOrder('${id}')">❌ إلغاء الطلب</button>
                     </div>
@@ -2325,6 +2325,29 @@
             btn.classList.add("active");
         }
 
+        
+        function openOrderImagesModal(orderId) {
+            const o = pendingOrders[orderId];
+            if (!o || !o.items) return alert("⚠️ الطلب غير موجود.");
+            setTxt("orderImagesTitle", `🖼️ صور مواد الطلب #${orderId.slice(-6)} - ${o.customerName}`);
+            const grid = $("orderImagesGrid");
+            if (!grid) return;
+            
+            grid.innerHTML = o.items.map(i => {
+                const p = products[i.id] || specialOffers[i.id] || {};
+                const imgSrc = getLockedHighResImage(i.id) || p.thumb || p.image || 'store-icon.png';
+                return `<div class="adm-card" style="text-align:center; padding:8px; margin:0; background:var(--bg-color);">
+                    <div style="width:100%; aspect-ratio:9/16; border-radius:6px; overflow:hidden; background:#111; margin-bottom:6px; border:1px solid var(--gold-color);">
+                        <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;">
+                    </div>
+                    <div style="font-size:11px; font-weight:bold; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${i.name}</div>
+                    <div style="font-size:12px; color:var(--success-color); font-weight:bold; background:rgba(0,230,118,0.1); padding:3px; border-radius:4px;">الكمية المطلوبة: ${i.qty} قطعة</div>
+                </div>`;
+            }).join("");
+            
+            if ($("orderImagesModal")) $("orderImagesModal").style.display = "flex";
+        }
+
         function renderPendingOrders() {
             const keys = Object.keys(pendingOrders);
             setTxt("pendingCountBadge", keys.length);
@@ -2368,7 +2391,7 @@
                     ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${o.notes}</div>` : ''}
                     <div style="border-top:1px dashed ${isCred ? '#ff4444' : 'var(--border-color)'}; border-bottom:1px dashed ${isCred ? '#ff4444' : 'var(--border-color)'}; padding:6px 0; margin:6px 0;">${itemsHtml}</div>
                     <div style="font-weight:bold; margin-bottom:8px;">الإجمالي مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س ${isCred ? `<span style="color:#00e676;">(مقيد بالدين: ${o.orderTotalUSD} $)</span>` : ''}</div>
-                    <div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000;" onclick="confirmOrder('${id}')">✅ تأكيد وخصم المخزون</button><button class="btn btn-danger" onclick="cancelOrder('${id}')">❌ إلغاء</button></div>
+                    <div style="display:flex; gap:6px; margin-bottom:6px;"><button class="btn" style="background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-size:11px; padding:6px;" onclick="openOrderImagesModal('${id}')">🖼️ عرض صور وقطع الطلب</button></div><div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000;" onclick="confirmOrder('${id}')">✅ تأكيد وخصم المخزون</button><button class="btn btn-danger" onclick="cancelOrder('${id}')">❌ إلغاء</button></div>
                 </div>`;
             }).join("");
         }
@@ -2727,5 +2750,17 @@
 
         function openCompetitionsPage() { syncCurrentUser(); renderCompetitionDetails(); renderLeaderboard(); $("competitionsPage").style.display = "block"; }
     </script>
+
+    <div id="orderImagesModal" class="modal-overlay">
+        <div class="modal-content" style="max-width:400px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:6px; margin-bottom:10px;">
+                <h3 style="color:var(--gold-color); margin:0; font-size:14px;" id="orderImagesTitle">🖼️ صور مواد الطلب والتجهيز</h3>
+                <button onclick="closeModal('orderImagesModal')" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">✖</button>
+            </div>
+            <div id="orderImagesGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; max-height:60vh; overflow-y:auto;"></div>
+            <button onclick="closeModal('orderImagesModal')" class="btn" style="margin-top:12px;">إغلاق</button>
+        </div>
+    </div>
+
 </body>
 </html>
