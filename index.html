@@ -1812,7 +1812,7 @@
                 const creditBanner = isCred
                     ? `<div style="background:linear-gradient(45deg,#ff0000,#cc0000); color:#fff; padding:6px 8px; border-radius:5px; font-weight:bold; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; text-shadow:1px 1px 2px rgba(0,0,0,0.5);"><span>🚨 طلب زبون دين (آجل)</span><span>⚡ جهّز الطلب فوراً</span></div>`
                     : `<div style="background:rgba(255,152,0,0.12); color:#ff9800; padding:4px 8px; border-radius:5px; font-size:10px; margin-bottom:6px;">💳 دفع شام كاش (تأكد من إشعار التحويل مع الإدارة)</div>`;
-                return `<div class="adm-card" style="border:3px solid ${isCred ? '#ff0000' : '#ff9800'}; background:${isCred ? 'rgba(255,0,0,0.08)' : 'var(--bg-color)'}; color:${isCred ? '#ff4444' : 'inherit'};">
+                return `<div class="adm-card" style="margin-bottom: 16px; border:3px solid ${isCred ? '#ff0000' : '#ff9800'}; background:${isCred ? 'rgba(255,0,0,0.08)' : 'var(--bg-color)'}; color:${isCred ? '#ff4444' : 'inherit'};">
                     ${creditBanner}
                     <div style="display:flex; justify-content:space-between; color:${isCred ? '#ff4444' : 'var(--gold-color)'}; font-weight:bold; margin-bottom:4px;">
                         <span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span>
@@ -2383,7 +2383,7 @@
                     ? `<div style="background:linear-gradient(45deg,#ff0000,#cc0000); color:#fff; padding:6px 8px; border-radius:5px; font-weight:bold; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; text-shadow:1px 1px 2px rgba(0,0,0,0.5);"><span>🚨 طلب زبون آجل (دفتر دين)</span><span>✅ لا ينتظر إشعار تحويل (${o.orderTotalUSD || 0} $)</span></div>`
                     : `<div style="background:rgba(212,175,55,0.12); color:var(--gold-color); padding:4px 8px; border-radius:5px; font-size:10px; margin-bottom:6px;">💳 دفع شام كاش (بانتظار إشعار التحويل)</div>`;
                 const tamperAlert = isTampered ? `<div style="background:var(--danger-color); color:#fff; font-weight:bold; font-size:12px; padding:6px; border-radius:5px; margin-bottom:6px; text-align:center; animation:pulse 1s infinite;">⚠️ تنبيه: تم اكتشاف تلاعب في أسعار هذه الفاتورة! (المبلغ الحقيقي: ${expectedTotal.toLocaleString()} ل.س)</div>` : '';
-                return `<div class="adm-card" style="border:3px solid ${isTampered ? 'var(--danger-color)' : (isCred ? '#ff0000' : 'var(--gold-color)')}; background:${isCred ? 'rgba(255,0,0,0.08)' : 'var(--bg-color)'}; color:${isCred ? '#ff4444' : 'inherit'};">
+                return `<div class="adm-card" style="margin-bottom: 16px; border:3px solid ${isTampered ? 'var(--danger-color)' : (isCred ? '#ff0000' : 'var(--gold-color)')}; background:${isCred ? 'rgba(255,0,0,0.08)' : 'var(--bg-color)'}; color:${isCred ? '#ff4444' : 'inherit'};">
                     ${tamperAlert}
                     ${creditBanner}
                     <div style="display:flex; justify-content:space-between; color:${isCred ? '#ff4444' : 'var(--gold-color)'}; font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span></div>
