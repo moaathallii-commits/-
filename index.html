@@ -89,26 +89,6 @@
         .page-overlay header .store-info h1 { font-size:15px; color:var(--gold-color); margin:0 0 2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .page-overlay header .store-info p { font-size:11px; color:var(--gray-text); margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-
-        /* Toasts */
-        #toastContainer { position:fixed; bottom:80px; left:50%; transform:translateX(-50%); z-index:10050; display:flex; flex-direction:column; gap:10px; pointer-events:none; width:90%; max-width:350px; }
-        .toast-msg { background:var(--card-bg); color:var(--text-color); border:1px solid var(--gold-color); padding:10px 15px; border-radius:8px; font-size:13px; font-weight:bold; box-shadow:0 4px 15px rgba(0,0,0,0.5); animation:toastIn 0.3s ease-out forwards, toastOut 0.3s ease-in forwards 2.7s; opacity:0; pointer-events:auto; display:flex; align-items:center; gap:8px; text-align:center; justify-content:center; }
-        .toast-success { border-color:var(--success-color); color:var(--success-color); }
-        .toast-danger { border-color:var(--danger-color); color:var(--danger-color); }
-        @keyframes toastIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes toastOut { from { opacity:1; transform:translateY(0); } to { opacity:0; transform:translateY(20px); } }
-
-        /* Floating Animation */
-        .fly-to-cart { position:fixed; z-index:10000; border-radius:50%; transition:all 1.0s cubic-bezier(0.2, 1, 0.3, 1); pointer-events:none; box-shadow:0 0 10px rgba(0,230,118,0.8); }
-
-        /* Clear Search */
-        .search-wrap { position:relative; display:flex; flex:1; }
-        .search-clear { position:absolute; left:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--gray-text); font-size:16px; cursor:pointer; display:none; padding:5px; }
-
-        /* Menu */
-        .user-menu-btn { background:var(--card-bg); border:1px solid var(--gold-color); color:var(--gold-color); padding:5px 10px; border-radius:15px; font-size:11px; cursor:pointer; font-weight:bold; }
-        .user-menu-dropdown { display:none; position:absolute; top:calc(100% + 5px); left:0; background:var(--card-bg); border:1px solid var(--gold-color); border-radius:8px; padding:8px; box-shadow:0 4px 15px rgba(0,0,0,0.6); flex-direction:column; gap:6px; z-index:100; min-width:140px; }
-        .user-menu-wrap { position:relative; }
     </style>
 </head>
 <body>
@@ -141,29 +121,21 @@
             <button onclick="openEditProfile()" style="background:transparent; border:none; color:var(--gold-color); font-size:12px; cursor:pointer; padding:0;">(⚙️)</button>
             <span id="userRankBadge" onclick="openCompetitionsPage()" style="display:none; cursor:pointer; background:rgba(0,230,118,0.15); color:var(--success-color); border:1px solid var(--success-color); padding:2px 7px; border-radius:12px; font-size:11px; font-weight:bold;">🏅 ترتيبي: -</span>
         </span>
-        <div style="display:flex; gap:5px; align-items:center;">
+        <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
+            <button id="exportManagerBtn" onclick="openExportManagerModal()" style="display:none; background:linear-gradient(45deg,#ff9800,#ff5722); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📦 إدارة التصدير</button>
+            <button id="customerDebtBtn" onclick="openCustomerDebtModal()" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📒 دفتر الدين</button>
+            <button id="partnerDashboardBtn" onclick="openPartnerDashboard()" style="display:none; background:linear-gradient(45deg,#00b0ff,#7c4dff); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">🤝 لوحة الشريك</button>
+            <button onclick="shareAppWhatsApp()" style="background:linear-gradient(45deg,#25D366,#128C7E); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📢 مشاركة</button>
+            <button id="redeemPointsBtn" onclick="redeemPointsWhatsApp()" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer; animation:pulse 1.5s infinite;">🎁 استبدال</button>
+            <button onclick="toggleTheme()" id="themeBtn" style="background:transparent; border:none; font-size:16px; cursor:pointer; padding:0;">☀️</button>
             <span class="points-badge" onclick="openCompetitionsPage()">🎁 نقاطي: <b id="userPoints">0</b></span>
-            <div class="user-menu-wrap">
-                <button class="user-menu-btn" onclick="document.getElementById('userDropdown').style.display = document.getElementById('userDropdown').style.display === 'flex' ? 'none' : 'flex'">⚙️ خيارات</button>
-                <div id="userDropdown" class="user-menu-dropdown">
-                    <button id="exportManagerBtn" onclick="openExportManagerModal(); $('userDropdown').style.display='none'" style="display:none; background:linear-gradient(45deg,#ff9800,#ff5722); color:#fff; border:none; padding:6px; border-radius:8px; font-size:11px; font-weight:bold; cursor:pointer;">📦 إدارة التصدير</button>
-                    <button id="customerDebtBtn" onclick="openCustomerDebtModal(); $('userDropdown').style.display='none'" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:6px; border-radius:8px; font-size:11px; font-weight:bold; cursor:pointer;">📒 دفتر الدين</button>
-                    <button id="partnerDashboardBtn" onclick="openPartnerDashboard(); $('userDropdown').style.display='none'" style="display:none; background:linear-gradient(45deg,#00b0ff,#7c4dff); color:#fff; border:none; padding:6px; border-radius:8px; font-size:11px; font-weight:bold; cursor:pointer;">🤝 لوحة الشريك</button>
-                    <button id="redeemPointsBtn" onclick="redeemPointsWhatsApp(); $('userDropdown').style.display='none'" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:6px; border-radius:8px; font-size:11px; font-weight:bold; cursor:pointer; animation:pulse 1.5s infinite;">🎁 استبدال النقاط</button>
-                    <button onclick="shareAppWhatsApp(); $('userDropdown').style.display='none'" style="background:linear-gradient(45deg,#25D366,#128C7E); color:#fff; border:none; padding:6px; border-radius:8px; font-size:11px; font-weight:bold; cursor:pointer;">📢 مشاركة التطبيق</button>
-                    <button onclick="toggleTheme(); $('userDropdown').style.display='none'" id="themeBtn" style="background:var(--bg-color); color:var(--text-color); border:1px solid var(--border-color); padding:6px; border-radius:8px; font-size:11px; font-weight:bold; cursor:pointer;">☀️ وضع الإضاءة</button>
-                </div>
-            </div>
         </div>
     </div>
 
     <div class="container" style="padding-bottom:85px;">
         <div id="multipleOffersContainer"></div>
         <div style="display:flex; gap:6px; margin-bottom:10px;">
-            <div class="search-wrap">
-                <input type="text" id="searchInput" class="search-box" style="margin-bottom:0;" placeholder="🔍 ابحث عن أي منتج في متجر معاذ..." oninput="onSearchInput()">
-                <button id="searchClearBtn" class="search-clear" onclick="clearSearch()">✖</button>
-            </div>
+            <input type="text" id="searchInput" class="search-box" style="margin-bottom:0; flex:1;" placeholder="🔍 ابحث عن أي منتج في متجر معاذ..." oninput="renderStore()">
             <button class="btn" style="width:auto; white-space:nowrap; background:var(--card-bg); border:1px solid var(--gold-color); color:var(--gold-color);" onclick="openMissingRequestModal()">📝 طلب صنف</button>
         </div>
         <div class="categories" id="categoriesContainer"></div>
@@ -205,10 +177,7 @@
 
     <div id="cartModal" class="modal-overlay">
         <div class="modal-content">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:5px; border-bottom:1px dashed var(--border-color);">
-                <h3 style="color:var(--gold-color); margin:0; font-size:15px;">🛒 سلة المشتريات</h3>
-                <button onclick="emptyCart()" class="btn btn-danger" style="width:auto; padding:5px 10px; font-size:11px; border-radius:8px;">🗑️ إفراغ السلة</button>
-            </div>
+            <h3 style="color:var(--gold-color); margin:0 0 8px 0; text-align:center; font-size:15px;">🛒 سلة المشتريات وإتمام الطلب</h3>
             <div id="cartItemsList" style="max-height:145px; overflow-y:auto; margin-bottom:8px; padding-left:2px;"></div>
             <div class="form-group" style="margin-bottom:8px;">
                 <label>📍 منطقة التوصيل:</label>
@@ -338,8 +307,8 @@
             <div class="stats-grid">
                 <div class="stats-box"><div style="font-size:11px; color:var(--gray-text);">إجمالي مبيعات تصنيفاتك</div><div class="stats-value" id="partnerTotalSales">0 ل.س</div></div>
                 <div class="stats-box"><div style="font-size:11px; color:var(--gray-text);">صافي أرباحك المستحقة</div><div class="stats-value" style="color:var(--success-color);" id="partnerTotalEarnings">0 ل.س</div></div>
-                <div class="stats-box"><div style="font-size:11px; color:var(--gray-text);">عدد أصناف تصنيفاتك</div><div class="stats-value" id="partnerTotalItemsCount" style="color:#00b0ff;">0 صنف</div></div>
-                <div class="stats-box"><div style="font-size:11px; color:var(--gray-text);">إجمالي القطع بالمخزون</div><div class="stats-value" id="partnerTotalStockUnits">0 قطعة</div></div>
+                <div class="stats-box"><div style="font-size:11px; color:var(--gray-text);">رأس مال بضاعتك الحالي</div><div class="stats-value" id="partnerTotalStockValueSYP" style="color:#ff9800; font-size:13px;">0 ل.س</div><div style="font-size:10px; color:var(--gray-text);" id="partnerTotalStockValueUSD">0 $</div></div>
+                <div class="stats-box"><div style="font-size:11px; color:var(--gray-text);">إجمالي القطع بالمخزون</div><div class="stats-value" id="partnerTotalStockUnits">0 قطعة</div><div style="font-size:10px; color:var(--gray-text);" id="partnerTotalItemsCount">0 صنف</div></div>
             </div>
             <h4 style="color:var(--gold-color); margin:14px 0 8px 0;">📦 تفصيل المخزون والمبيعات لتصنيفاتك</h4>
             <div id="partnerItemsBreakdown" style="margin-bottom:14px;"></div>
@@ -459,9 +428,10 @@
                     </div>
 
                     <div class="adm-card" style="border-color:#ff4444; background:rgba(255,68,68,0.05); margin:10px 0;">
-                        <div style="color:#ff4444; font-weight:bold; font-size:12px; margin-bottom:6px;">📉 المصاريف التشغيلية والتوالف (تُخصم من ربح الإدارة)</div>
+                        <div style="color:#ff4444; font-weight:bold; font-size:12px; margin-bottom:6px;">📉 المصاريف التشغيلية والتوالف</div>
+                        <div class="form-group" style="margin-bottom:6px;"><select id="expTargetSelect" class="form-control"><option value="admin">خصم من أرباح الإدارة العامة (افتراضي)</option></select></div>
                         <div style="display:flex; gap:5px; margin-bottom:6px; flex-wrap:wrap;">
-                            <input type="text" id="expTitleInput" class="form-control" placeholder="سبب المصروف (أكياس، كهرباء، تالف)..." style="flex:2; min-width:130px; padding:6px;">
+                            <input type="text" id="expTitleInput" class="form-control" placeholder="سبب المصروف أو التالف..." style="flex:2; min-width:130px; padding:6px;">
                             <input type="number" id="expAmountInput" class="form-control" placeholder="المبلغ ل.س" style="flex:1; min-width:85px; padding:6px;">
                             <button onclick="addStoreExpense()" class="btn btn-danger" style="width:auto; padding:6px 10px; font-size:11px;">➕ تسجيل</button>
                         </div>
@@ -820,7 +790,7 @@
         let workHoursSettings = { enabled: false, open: "08:00", close: "23:00" };
         let categories = ["الكل"], selectedCategory = "الكل", products = {}, specialOffers = {}, suppliers = {};
         let highResImagesMemoryCache = {}, noHighResAvailableSet = {}, shuffledProductKeys = [];
-        let cart = {}, users = {}, pendingOrders = {}, completedOrdersHistory = {}, missingRequests = {};
+        let cart = JSON.parse(localStorage.getItem('moaath_cart')) || {}, users = {}, pendingOrders = {}, completedOrdersHistory = {}, missingRequests = {};
         let storeExpenses = {}, treasuryDebtCollections = {};
         let adminAccounting = {
             importManagerPct: 50,
@@ -862,60 +832,6 @@
         loadCachedData();
 
 
-        
-        function showToast(msg, type = "info") {
-            let container = $("toastContainer");
-            if (!container) {
-                container = document.createElement("div");
-                container.id = "toastContainer";
-                document.body.appendChild(container);
-            }
-            const toast = document.createElement("div");
-            toast.className = `toast-msg toast-${type}`;
-            const icon = type === 'success' ? '✅' : type === 'danger' ? '⚠️' : 'ℹ️';
-            toast.innerHTML = `<span>${msg.replace(/\n/g, '<br>')}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 3000);
-        }
-        
-        window.nativeAlert = window.alert;
-        window.alert = function(msg) {
-            let type = "info";
-            if (msg.includes("⚠️") || msg.includes("🚫") || msg.includes("❌")) type = "danger";
-            if (msg.includes("✅")) type = "success";
-            showToast(msg, type);
-        };
-
-        function animateToCart(btnEl) {
-            const cartBar = $("cartBar");
-            if (!cartBar) return;
-            const btnRect = btnEl.getBoundingClientRect();
-            const flyEl = document.createElement("div");
-            flyEl.className = "fly-to-cart";
-            flyEl.style.left = btnRect.left + "px";
-            flyEl.style.top = btnRect.top + "px";
-            flyEl.style.width = "40px";
-            flyEl.style.height = "40px";
-            flyEl.style.background = "var(--success-color)";
-            document.body.appendChild(flyEl);
-            
-            setTimeout(() => {
-                const cartRect = cartBar.getBoundingClientRect();
-                const targetX = cartRect.left + (cartRect.width / 2);
-                const targetY = cartRect.top + 10;
-                flyEl.style.left = targetX + "px";
-                flyEl.style.top = targetY + "px";
-                flyEl.style.transform = "scale(0.5)";
-                flyEl.style.opacity = "0";
-            }, 20);
-            
-            setTimeout(() => {
-                if(flyEl.parentNode) flyEl.parentNode.removeChild(flyEl);
-                cartBar.style.transform = "scale(1.05)";
-                setTimeout(() => cartBar.style.transform = "scale(1)", 150);
-            }, 1000);
-        }
-
         let knownOrderIds = null;
         function playNewOrderSound() {
             try {
@@ -948,15 +864,6 @@
         document.addEventListener("DOMContentLoaded", () => { if (isAppStandalone() && installBtn) installBtn.style.display = "none"; });
 
         let isExitingApp = false;
-        
-        document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('userDropdown');
-            const btn = document.querySelector('.user-menu-btn');
-            if (dropdown && btn && !dropdown.contains(event.target) && event.target !== btn) {
-                dropdown.style.display = 'none';
-            }
-        });
-
         window.addEventListener('load', () => {
             history.pushState({ page: 'store_home' }, '');
             window.addEventListener('popstate', () => {
@@ -1218,7 +1125,7 @@
         db.ref("users").on("value", snap => {
             users = snap.val() || {};
             syncCurrentUser(); renderAdminCustomers(); renderLeaderboard(); renderStatsDashboard(); renderAdminInvoicesHistory(); renderStore();
-            populateAdminPartnerSelect(); populateAdminDebtCustomerSelect(); loadAdminCustomerDebtLedger();
+            populateAdminPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); loadAdminCustomerDebtLedger();
             if ($("customerDebtModal")?.style.display === "block") renderCustomerDebtModalView();
         });
         db.ref("partnersConfig").on("value", snap => { window.partnersConfigData = snap.val() || {}; syncCurrentUser(); loadPartnerConfig(); renderStatsDashboard(); renderAdminInvoicesHistory(); });
@@ -1330,18 +1237,6 @@
             window.open(`https://wa.me/?text=${encodeURIComponent(`🌸 تفضل بزيارة تطبيق *متجر معاذ* في قرية العوينة بريف حماة لتسوق كافة المواد الغذائية والمنزلية عبر الرابط التالي:\nhttps://moaathallii-commits.github.io/-/`)}`, "_blank");
         }
 
-        
-        function onSearchInput() {
-            const v = $("searchInput").value;
-            $("searchClearBtn").style.display = v ? "block" : "none";
-            renderStore();
-        }
-        function clearSearch() {
-            $("searchInput").value = "";
-            $("searchClearBtn").style.display = "none";
-            renderStore();
-        }
-
         const renderCategories = () => { if ($("categoriesContainer")) $("categoriesContainer").innerHTML = categories.map(c => `<button class="cat-btn ${c === selectedCategory ? 'active' : ''}" onclick="selectCategory('${c}')">${c}</button>`).join(""); };
         function selectCategory(c) { selectedCategory = c; renderCategories(); renderStore(); }
 
@@ -1353,7 +1248,7 @@
             const isW = currentUser?.userType === "wholesale";
             container.innerHTML = keys.map(k => {
                 const so = specialOffers[k], eff = (isW && so.wholesaleUSD > 0) ? so.wholesaleUSD : so.newPriceUSD, q = cart[k] ? cart[k].qty : 0, st = parseInt(so.stock) || 0;
-                const act = st <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (q > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick=\"changeQty('${k}', 1, event)\">+</button><span class="qty-text">${q}</span><button class="qty-btn" onclick=\"changeQty('${k}', -1, event)\">-</button></div>` : `<button class="btn" onclick=\"changeQty('${k}', 1, event)\">➕ أضف للسلة</button>`);
+                const act = st <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (q > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${k}',1)">+</button><span class="qty-text">${q}</span><button class="qty-btn" onclick="changeQty('${k}',-1)">-</button></div>` : `<button class="btn" onclick="changeQty('${k}',1)">➕ أضف للسلة</button>`);
                 return `<div class="special-offer-banner"><div class="special-offer-img-wrap"><img src="${so.image || so.thumb || 'store-icon.png'}" class="special-offer-img"></div><div style="flex:1;"><h3 style="color:var(--gold-color); font-size:13px; margin:0 0 3px 0;">🔥 عرض خاص محدث!</h3><div style="font-size:12px; margin-bottom:3px; font-weight:bold;">${so.name}</div><div style="font-size:12px; margin-bottom:5px;"><s style="color:#ff4444; margin-left:5px;">${calcSYP(so.oldPriceUSD).toLocaleString()} ل.س</s><strong style="color:var(--success-color); font-size:13px;">${calcSYP(eff).toLocaleString()} ل.س ${isW ? '<small>(جملة)</small>' : ''}</strong></div><div style="width:110px;">${act}</div></div></div>`;
             }).join("");
         }
@@ -1365,39 +1260,17 @@
             const q = ($("searchInput")?.value || "").trim().toLowerCase(), isW = currentUser?.userType === "wholesale";
             const keys = shuffledProductKeys.length ? shuffledProductKeys : Object.keys(products);
             let html = "";
-            
-            let filtered = [];
             keys.forEach(id => {
                 const p = products[id]; if (!p) return;
-                const pName = (p.name || "").toLowerCase();
-                const pCat = p.category || "غير مصنف";
-                
-                if (q) {
-                    if (pName.includes(q)) {
-                        filtered.push({ id, p, priority: pCat === selectedCategory ? 1 : 2 });
-                    }
-                } else {
-                    if (selectedCategory === "الكل" || pCat === selectedCategory) {
-                        filtered.push({ id, p, priority: 1 });
-                    }
-                }
-            });
-
-            if (q) {
-                filtered.sort((a, b) => a.priority - b.priority);
-            }
-
-            filtered.forEach(item => {
-                const id = item.id;
-                const p = item.p;
                 const pName = p.name || "";
+                if ((selectedCategory !== "الكل" && p.category !== selectedCategory) || (q && !pName.toLowerCase().includes(q))) return;
                 const priceSYP = calcSYP((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0)), st = parseInt(p.stock) || 0, inC = cart[id] ? cart[id].qty : 0;
-                const btn = st <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (inC > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${id}', 1, event)">+</button><span class="qty-text">${inC}</span><button class="qty-btn" onclick="changeQty('${id}', -1, event)">-</button></div>` : `<button class="btn" onclick="changeQty('${id}', 1, event)">🛒 أضف للسلة</button>`);
+                const btn = st <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (inC > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${id}',1)">+</button><span class="qty-text">${inC}</span><button class="qty-btn" onclick="changeQty('${id}',-1)">-</button></div>` : `<button class="btn" onclick="changeQty('${id}',1)">🛒 أضف للسلة</button>`);
                 const revs = p.reviews || {}, rKeys = Object.keys(revs), avg = rKeys.length ? (rKeys.reduce((a, k) => a + (revs[k].rating || 0), 0) / rKeys.length).toFixed(1) : 0;
                 const bought = currentUser?.phone && users[currentUser.phone]?.purchases?.[id];
                 const revBtn = (bought && !currentUser.banned) ? `<button onclick="openReviewModal('${id}')" class="btn" style="background:transparent; border:1px solid var(--gold-color); color:var(--gold-color); margin-top:5px; font-size:11px; padding:4px;">⭐ قيّم الصنف</button>` : "";
                 const src = getLockedHighResImage(id) || p.thumb || p.image || "store-icon.png";
-                html += `<div class="product-card" ${item.priority === 2 ? 'style="border-color:var(--border-color); opacity:0.9;"' : ''}><div><div class="product-img-wrap"><img id="prod_img_${id}" src="${src}" class="product-img ${highResImagesMemoryCache[id] ? 'img-high-res' : 'img-low-res'}"></div><h3>${pName}</h3><p>${priceSYP.toLocaleString()} ل.س ${isW && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>${rKeys.length ? `<div style="font-size:11px; color:var(--gold-color);">⭐ ${avg} (${rKeys.length})</div>` : ''}</div><div style="margin-top:6px;">${btn}${revBtn}</div></div>`;
+                html += `<div class="product-card"><div><div class="product-img-wrap"><img id="prod_img_${id}" src="${src}" class="product-img ${highResImagesMemoryCache[id] ? 'img-high-res' : 'img-low-res'}"></div><h3>${pName}</h3><p>${priceSYP.toLocaleString()} ل.س ${isW && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>${rKeys.length ? `<div style="font-size:11px; color:var(--gold-color);">⭐ ${avg} (${rKeys.length})</div>` : ''}</div><div style="margin-top:6px;">${btn}${revBtn}</div></div>`;
             });
             grid.innerHTML = html || `<p style="grid-column:span 2; text-align:center; color:var(--gray-text);">لا توجد مواد مطابقة للبحث.</p>`;
             updateCartBar();
@@ -1424,10 +1297,7 @@
             isBatchLoadingImages = false;
         }
 
-        function changeQty(id, delta, event) {
-            if (delta > 0 && event && event.target && event.target.tagName === 'BUTTON') {
-                animateToCart(event.target);
-            }
+        function changeQty(id, delta) {
             const isW = currentUser?.userType === "wholesale";
             let item;
             if (id.startsWith("OFFER_")) {
@@ -1440,6 +1310,7 @@
             const nQty = (cart[id] ? cart[id].qty : 0) + delta;
             if (nQty > item.stock) return alert("⚠️ الكمية المطلوبة غير متوفرة بالكامل بالمخزون!");
             if (nQty <= 0) delete cart[id]; else cart[id] = { ...item, qty: nQty };
+            localStorage.setItem('moaath_cart', JSON.stringify(cart));
             renderStore();
             if ($("cartModal")?.style.display === "flex") renderCartModalItems();
         }
@@ -1500,16 +1371,6 @@
             else { const t = document.createElement("textarea"); t.value = shamWalletIdGlobal; document.body.appendChild(t); t.select(); document.execCommand("copy"); document.body.removeChild(t); alert("✅ تم نسخ كود محفظة شام كاش بنجاح!"); }
         }
 
-        
-        function emptyCart() {
-            if (!confirm("هل أنت متأكد من إفراغ سلة المشتريات بالكامل؟")) return;
-            cart = {};
-            renderStore();
-            renderCartModalItems();
-            updateCartBar();
-            closeModal('cartModal');
-        }
-
         function renderCartModalItems() {
             const items = Object.values(cart);
             if (!items.length) return closeModal('cartModal');
@@ -1518,7 +1379,7 @@
                 $("cartItemsList").innerHTML = items.map(i => {
                     const u = calcSYP(i.priceUSD), s = u * i.qty;
                     sub += s; pts += Math.round((i.priceUSD * i.qty) * (i.pointsPct || 2));
-                    return `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding:5px 0; font-size:11px;"><div><strong>${i.name}</strong><br><span style="color:var(--gray-text);">${u.toLocaleString()} ل.س × ${i.qty} = ${s.toLocaleString()} ل.س</span></div><div class="qty-controls" style="width:75px;"><button class="qty-btn" type="button" onclick=\"changeQty('${i.id}', 1, event)\" style="width:24px; height:24px; font-size:13px;">+</button><span class="qty-text" style="font-size:12px;">${i.qty}</span><button class="qty-btn" type="button" onclick=\"changeQty('${i.id}', -1, event)\" style="width:24px; height:24px; font-size:13px;">-</button></div></div>`;
+                    return `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding:5px 0; font-size:11px;"><div><strong>${i.name}</strong><br><span style="color:var(--gray-text);">${u.toLocaleString()} ل.س × ${i.qty} = ${s.toLocaleString()} ل.س</span></div><div class="qty-controls" style="width:75px;"><button class="qty-btn" type="button" onclick="changeQty('${i.id}',1)" style="width:24px; height:24px; font-size:13px;">+</button><span class="qty-text" style="font-size:12px;">${i.qty}</span><button class="qty-btn" type="button" onclick="changeQty('${i.id}',-1)" style="width:24px; height:24px; font-size:13px;">-</button></div></div>`;
                 }).join("");
             }
             const markupPct = getCurrentUserCreditMarkupPct();
@@ -1598,16 +1459,10 @@
                     alert(`⚠️ عذراً، لا يمكن إتمام الطلب لأن إجمالي الدين (${newDebt} $) سيتجاوز سقف الديون المسموح به لحسابك (${debtLimit} $). يرجى مراجعة الإدارة أو تسديد دفعة.`);
                     return;
                 }
-                updates[`users/${currentUser.phone}/debtBalanceUSD`] = newDebt;
-                const txId = "DEBT_ORD_" + Date.now(), now = new Date();
-                updates[`users/${currentUser.phone}/debtLedger/${txId}`] = {
-                    id: txId, type: "debt", baseAmountUSD: finalOrderUSD, feePct: markupPct, finalAmountUSD: finalOrderUSD,
-                    note: `طلب شراء فاتورة #${orderId.slice(-6)}`, dateISO: now.toISOString(), dateStr: now.toLocaleString("ar-SY")
-                };
             }
 
             db.ref().update(updates);
-            cart = {}; setVal("orderNotes", "");
+            cart = {}; localStorage.setItem('moaath_cart', '{}'); setVal("orderNotes", "");
             closeModal('cartModal'); renderStore();
             window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
         }
@@ -1931,6 +1786,29 @@
             list.innerHTML = keys.map(id => {
                 const o = pendingOrders[id], isCred = !!o.isCreditOrder;
                 const itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${i.name} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
+
+                let isTampered = false;
+                let realTotalSYP = 0;
+                (o.items || []).forEach(i => {
+                    if (i.id.startsWith("OFFER_") && specialOffers[i.id]) {
+                        const isW = users[o.customerPhone]?.userType === "wholesale";
+                        const rPrice = parseFloat((isW && specialOffers[i.id].wholesaleUSD > 0) ? specialOffers[i.id].wholesaleUSD : specialOffers[i.id].newPriceUSD) || 0;
+                        realTotalSYP += calcSYP(rPrice) * i.qty;
+                    } else if (products[i.id]) {
+                        const isW = users[o.customerPhone]?.userType === "wholesale";
+                        const rPrice = parseFloat((isW && products[i.id].wholesaleUSD > 0) ? products[i.id].wholesaleUSD : products[i.id].priceUSD) || 0;
+                        realTotalSYP += calcSYP(rPrice) * i.qty;
+                    }
+                });
+                const fee = getRegionFee(o.customerRegion);
+                const rMarkupAmt = o.creditMarkupPct > 0 ? Math.round((realTotalSYP * o.creditMarkupPct) / 100) : 0;
+                const expectedTotal = realTotalSYP + rMarkupAmt + fee;
+                
+                // Allow a small margin of error due to rounding differences (e.g., 50 SYP)
+                if (Math.abs(expectedTotal - o.totalSaleSYP) > 50) {
+                    isTampered = true;
+                }
+
                 const creditBanner = isCred
                     ? `<div style="background:linear-gradient(45deg,#ff0000,#cc0000); color:#fff; padding:6px 8px; border-radius:5px; font-weight:bold; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; text-shadow:1px 1px 2px rgba(0,0,0,0.5);"><span>🚨 طلب زبون دين (آجل)</span><span>⚡ جهّز الطلب فوراً</span></div>`
                     : `<div style="background:rgba(255,152,0,0.12); color:#ff9800; padding:4px 8px; border-radius:5px; font-size:10px; margin-bottom:6px;">💳 دفع شام كاش (تأكد من إشعار التحويل مع الإدارة)</div>`;
@@ -2083,8 +1961,10 @@
 
             Object.values(storeExpenses).forEach(exp => {
                 const eISO = exp.dateISO || "", amt = parseInt(exp.amountSYP) || 0;
-                if (eISO > impReset) importMgrAdminPool -= amt;
-                if (eISO > expReset) exportMgrAdminPool -= amt;
+                if ((!exp.target || exp.target === 'admin')) {
+                    if (eISO > impReset) importMgrAdminPool -= amt;
+                    if (eISO > expReset) exportMgrAdminPool -= amt;
+                }
             });
 
             const impPct = Math.min(100, Math.max(0, parseFloat(adminAccounting.importManagerPct ?? 50)));
@@ -2419,7 +2299,7 @@
                 adminClickCount = 0;
                 if (localStorage.getItem("moaath_admin_unlocked") === "true") {
                     $("adminModal").style.display = "flex";
-                    renderStatsDashboard(); renderAdminInvoicesHistory(); populateAdminPartnerSelect(); populateAdminDebtCustomerSelect(); populatePartnerSelectOptions();
+                    renderStatsDashboard(); renderAdminInvoicesHistory(); populateAdminPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); populatePartnerSelectOptions();
                     return;
                 }
                 const pass = prompt("🔐 كلمة مرور الإدارة:");
@@ -2427,7 +2307,7 @@
                 if (verifyAdminPass(pass.trim())) {
                     localStorage.setItem("moaath_admin_unlocked", "true");
                     $("adminModal").style.display = "flex";
-                    renderStatsDashboard(); renderAdminInvoicesHistory(); populateAdminPartnerSelect(); populateAdminDebtCustomerSelect(); populatePartnerSelectOptions();
+                    renderStatsDashboard(); renderAdminInvoicesHistory(); populateAdminPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); populatePartnerSelectOptions();
                 } else alert("❌ كلمة المرور غير صحيحة!");
             } else adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 1800);
         }
@@ -2453,10 +2333,35 @@
             list.innerHTML = keys.map(id => {
                 const o = pendingOrders[id], isCred = !!o.isCreditOrder;
                 const itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${i.name} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
+
+                let isTampered = false;
+                let realTotalSYP = 0;
+                (o.items || []).forEach(i => {
+                    if (i.id.startsWith("OFFER_") && specialOffers[i.id]) {
+                        const isW = users[o.customerPhone]?.userType === "wholesale";
+                        const rPrice = parseFloat((isW && specialOffers[i.id].wholesaleUSD > 0) ? specialOffers[i.id].wholesaleUSD : specialOffers[i.id].newPriceUSD) || 0;
+                        realTotalSYP += calcSYP(rPrice) * i.qty;
+                    } else if (products[i.id]) {
+                        const isW = users[o.customerPhone]?.userType === "wholesale";
+                        const rPrice = parseFloat((isW && products[i.id].wholesaleUSD > 0) ? products[i.id].wholesaleUSD : products[i.id].priceUSD) || 0;
+                        realTotalSYP += calcSYP(rPrice) * i.qty;
+                    }
+                });
+                const fee = getRegionFee(o.customerRegion);
+                const rMarkupAmt = o.creditMarkupPct > 0 ? Math.round((realTotalSYP * o.creditMarkupPct) / 100) : 0;
+                const expectedTotal = realTotalSYP + rMarkupAmt + fee;
+                
+                // Allow a small margin of error due to rounding differences (e.g., 50 SYP)
+                if (Math.abs(expectedTotal - o.totalSaleSYP) > 50) {
+                    isTampered = true;
+                }
+
                 const creditBanner = isCred
                     ? `<div style="background:linear-gradient(45deg,#ff0000,#cc0000); color:#fff; padding:6px 8px; border-radius:5px; font-weight:bold; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; text-shadow:1px 1px 2px rgba(0,0,0,0.5);"><span>🚨 طلب زبون آجل (دفتر دين)</span><span>✅ لا ينتظر إشعار تحويل (${o.orderTotalUSD || 0} $)</span></div>`
                     : `<div style="background:rgba(212,175,55,0.12); color:var(--gold-color); padding:4px 8px; border-radius:5px; font-size:10px; margin-bottom:6px;">💳 دفع شام كاش (بانتظار إشعار التحويل)</div>`;
-                return `<div class="adm-card" style="border:3px solid ${isCred ? '#ff0000' : 'var(--gold-color)'}; background:${isCred ? 'rgba(255,0,0,0.08)' : 'var(--bg-color)'}; color:${isCred ? '#ff4444' : 'inherit'};">
+                const tamperAlert = isTampered ? `<div style="background:var(--danger-color); color:#fff; font-weight:bold; font-size:12px; padding:6px; border-radius:5px; margin-bottom:6px; text-align:center; animation:pulse 1s infinite;">⚠️ تنبيه: تم اكتشاف تلاعب في أسعار هذه الفاتورة! (المبلغ الحقيقي: ${expectedTotal.toLocaleString()} ل.س)</div>` : '';
+                return `<div class="adm-card" style="border:3px solid ${isTampered ? 'var(--danger-color)' : (isCred ? '#ff0000' : 'var(--gold-color)')}; background:${isCred ? 'rgba(255,0,0,0.08)' : 'var(--bg-color)'}; color:${isCred ? '#ff4444' : 'inherit'};">
+                    ${tamperAlert}
                     ${creditBanner}
                     <div style="display:flex; justify-content:space-between; color:${isCred ? '#ff4444' : 'var(--gold-color)'}; font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span></div>
                     <div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress}</div>
@@ -2477,8 +2382,31 @@
             const phone = o.customerPhone, purch = users[phone]?.purchases || {};
             (o.items || []).forEach(i => { if (!i.id.startsWith("OFFER_")) purch[i.id] = true; });
             const upPts = (users[phone]?.points || 0) + (o.earnedPoints || 0);
-            db.ref(`users/${phone}`).update({ name: o.customerName, phone, region: o.customerRegion, address: o.customerAddress, points: upPts, purchases: purch });
-            db.ref("completedOrdersHistory/" + orderId).set(o); db.ref("pendingOrders/" + orderId).remove();
+            
+            const updates = {};
+            updates[`users/${phone}/name`] = o.customerName;
+            updates[`users/${phone}/phone`] = phone;
+            updates[`users/${phone}/region`] = o.customerRegion;
+            updates[`users/${phone}/address`] = o.customerAddress;
+            updates[`users/${phone}/points`] = upPts;
+            updates[`users/${phone}/purchases`] = purch;
+            
+            if (o.isCreditOrder && o.orderTotalUSD) {
+                const currentDebt = parseFloat(users[phone]?.debtBalanceUSD) || 0;
+                const finalOrderUSD = parseFloat(o.orderTotalUSD);
+                updates[`users/${phone}/debtBalanceUSD`] = parseFloat((currentDebt + finalOrderUSD).toFixed(2));
+                
+                const txId = "DEBT_ORD_" + orderId, now = new Date();
+                updates[`users/${phone}/debtLedger/${txId}`] = {
+                    id: txId, type: "debt", baseAmountUSD: parseFloat((finalOrderUSD / (1 + (o.creditMarkupPct||0)/100)).toFixed(2)), feePct: o.creditMarkupPct || 0, finalAmountUSD: finalOrderUSD,
+                    note: `طلب شراء فاتورة #${orderId.slice(-6)}`, dateISO: now.toISOString(), dateStr: now.toLocaleString("ar-SY")
+                };
+            }
+            
+            updates[`completedOrdersHistory/${orderId}`] = o;
+            updates[`pendingOrders/${orderId}`] = null;
+            
+            db.ref().update(updates);
             window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(`مرحباً ${o.customerName} 🌸\nتم تأكيد طلبك في *متجر معاذ* وجاري توصيله إلى (${o.customerRegion})!\n💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س\n🛵 رقم عامل التوصيل: ${deliveryDriverPhone || adminWhatsAppNumber}\n🎁 نقاطك الحالية: ${upPts}`)}`, "_blank");
             if (deliveryDriverPhone) setTimeout(() => window.open(`https://wa.me/${formatWhatsAppPhone(deliveryDriverPhone)}?text=${encodeURIComponent(`🛵 *طلب توصيل - متجر معاذ*\n👤 الزبون: ${o.customerName}\n📱 الهاتف: ${o.customerPhone}\n🏘️ المنطقة: ${o.customerRegion}\n📍 العنوان: ${o.customerAddress}\n💵 *المطلوب تحصيله:* ${o.totalSaleSYP.toLocaleString()} ل.س`)}`, "_blank"), 700);
         }
@@ -2513,6 +2441,12 @@
             sel.value = cur;
         }
 
+        function populateExpenseTargetSelect() {
+            const sel = $("expTargetSelect"); if (!sel) return;
+            const cur = sel.value;
+            sel.innerHTML = '<option value="admin">خصم من أرباح الإدارة العامة (افتراضي)</option>' + Object.values(users).filter(u => u.userType === "partner").map(p => `<option value="${p.phone}">خصم من أرباح الشريك: ${p.name}</option>`).join("");
+            if (cur) sel.value = cur;
+        }
         function populateAdminPartnerSelect() {
             const sel = $("adminPartnerSelect"); if (!sel) return;
             const cur = sel.value;
@@ -2590,11 +2524,14 @@
             const partnerPct = parseFloat(conf.profitPct) || 20;
             const lastSettlementISO = conf.lastSettlementISO || "2000-01-01T00:00:00.000Z";
 
-            let totSales = 0, totEarn = 0, totalItemsCount = 0, totalStockUnits = 0, partnerItemsMap = {};
+            let totSales = 0, totEarn = 0, totalItemsCount = 0, totalStockUnits = 0, totalStockValueUSD = 0, totalStockValueSYP = 0, partnerItemsMap = {};
             Object.values(products).forEach(p => {
                 if (allowedCats.includes((p.category || "").trim().toLowerCase())) {
                     const st = Math.max(0, parseInt(p.stock) || 0);
                     totalItemsCount++; totalStockUnits += st;
+                    const valUSD = st * (parseFloat(p.costPrice) || 0);
+                    totalStockValueUSD += valUSD;
+                    totalStockValueSYP += calcSYP(valUSD);
                     partnerItemsMap[p.name] = { cat: p.category, stock: st, qtySold: 0, sales: 0, earn: 0 };
                 }
             });
@@ -2613,7 +2550,13 @@
                     });
                 }
             });
-            return { conf, rawCats, partnerPct, totSales, totEarn, totalItemsCount, totalStockUnits, partnerItemsMap };
+            
+            Object.values(storeExpenses).forEach(exp => {
+                if (exp.target === phone && (exp.dateISO || "") > lastSettlementISO) {
+                    totEarn -= (parseInt(exp.amountSYP) || 0);
+                }
+            });
+            return { conf, rawCats, partnerPct, totSales, totEarn, totalItemsCount, totalStockUnits, totalStockValueUSD, totalStockValueSYP, partnerItemsMap };
         }
 
         function openPartnerDashboard() {
@@ -2626,6 +2569,8 @@
             setTxt("partnerTotalEarnings", m.totEarn.toLocaleString() + " ل.س");
             setTxt("partnerTotalItemsCount", m.totalItemsCount + " صنف");
             setTxt("partnerTotalStockUnits", m.totalStockUnits + " قطعة");
+            setTxt("partnerTotalStockValueSYP", (m.totalStockValueSYP || 0).toLocaleString() + " ل.س");
+            setTxt("partnerTotalStockValueUSD", "(" + (m.totalStockValueUSD || 0).toFixed(2) + " $)");
 
             const pEntries = Object.entries(m.partnerItemsMap);
             $("partnerItemsBreakdown").innerHTML = !pEntries.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد مبيعات جديدة منذ آخر تسوية.</p>` :
@@ -2696,9 +2641,10 @@
 
         function addStoreExpense() {
             const title = ($("expTitleInput")?.value || "").trim(), amount = parseInt($("expAmountInput")?.value) || 0;
+            const target = $("expTargetSelect")?.value || "admin";
             if (!title || amount <= 0) return alert("⚠️ يرجى كتابة سبب المصروف والمبلغ بالليرة.");
             const id = "EXP_" + Date.now();
-            db.ref("storeExpenses/" + id).set({ id, title, amountSYP: amount, dateISO: new Date().toISOString(), dateStr: new Date().toLocaleDateString("ar-SY") }).then(() => {
+            db.ref("storeExpenses/" + id).set({ id, title, amountSYP: amount, target, dateISO: new Date().toISOString(), dateStr: new Date().toLocaleDateString("ar-SY") }).then(() => {
                 setVal("expTitleInput", ""); setVal("expAmountInput", "");
             });
         }
@@ -2707,7 +2653,10 @@
             const box = $("storeExpensesList"); if (!box) return;
             const list = Object.values(storeExpenses).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
             if (!list.length) return (box.innerHTML = `<div style="font-size:10px; color:var(--gray-text); text-align:center;">لا توجد مصاريف أو توالف مسجلة.</div>`);
-            box.innerHTML = list.map(e => `<div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; border-bottom:1px dashed var(--border-color); padding:3px 0;"><span>• <b>${e.title}</b> <small style="color:var(--gray-text);">(${e.dateStr})</small></span><div><b style="color:var(--danger-color); margin-left:6px;">-${(e.amountSYP || 0).toLocaleString()} ل.س</b><span onclick="deleteStoreExpense('${e.id}')" style="cursor:pointer; color:var(--danger-color);">🗑️</span></div></div>`).join("");
+            box.innerHTML = list.map(e => {
+                const targetName = e.target && e.target !== 'admin' && users[e.target] ? users[e.target].name : 'الإدارة';
+                return `<div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; border-bottom:1px dashed var(--border-color); padding:3px 0;"><span>• <b>${e.title}</b> <small style="color:var(--gold-color);">[${targetName}]</small> <small style="color:var(--gray-text);">(${e.dateStr})</small></span><div><b style="color:var(--danger-color); margin-left:6px;">-${(e.amountSYP || 0).toLocaleString()} ل.س</b><span onclick="deleteStoreExpense('${e.id}')" style="cursor:pointer; color:var(--danger-color);">🗑️</span></div></div>`;
+            }).join("");
         }
 
         function getCategoryPartnerSharePct(catName) {
