@@ -1159,7 +1159,6 @@
             renderSpecialOffers(); renderAdminOffersList(); renderStatsDashboard(); renderAdminInvoicesHistory(); });
         db.ref("users").on("value", snap => {
             users = snap.val() || {};
-            isUsersFetched = true;
             syncCurrentUser(); renderAdminCustomers(); renderLeaderboard(); renderStatsDashboard(); renderAdminInvoicesHistory(); renderStore();
             populateAdminPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); loadAdminCustomerDebtLedger();
             if ($("customerDebtModal")?.style.display === "block") renderCustomerDebtModalView();
@@ -1204,6 +1203,14 @@
 
         window.addEventListener("load", () => {
             populateRegionSelects();
+            
+            // Force logout for legacy users who don't have a password set
+            if (currentUser && !currentUser.password) {
+                localStorage.removeItem("moaath_user");
+                currentUser = null;
+                alert("🔒 تم ترقية الأمان: يرجى إعداد كلمة مرور لحسابك (أدخل بياناتك السابقة مع كلمة مرور جديدة).");
+            }
+            
             fillProfileInputs();
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.region || !validatePhoneSyrian(currentUser.phone)) {
                 $("closeProfileBtn").style.display = "none"; $("profileModal").style.display = "flex";
@@ -1239,7 +1246,6 @@
                     pointsVisibility: $("regPointsVisibility").value
                 };
 
-                users[newPhone] = updatedData; // Optimistic update
                 currentUser = updatedData;
                 localStorage.setItem("moaath_user", JSON.stringify(currentUser));
                 db.ref("users/" + newPhone).update(updatedData);
@@ -1257,7 +1263,6 @@
                 };
                 if (oldPhone && oldPhone !== newPhone) db.ref("users/" + oldPhone).remove();
 
-                users[newPhone] = updatedData; // Optimistic update
                 currentUser = updatedData;
                 localStorage.setItem("moaath_user", JSON.stringify(currentUser));
                 db.ref("users/" + newPhone).update(updatedData);
@@ -1274,25 +1279,22 @@
 
         function syncCurrentUser() {
             if (!currentUser?.phone) return;
-            
-            if (isUsersFetched) {
-                if (users[currentUser.phone]) {
-                    if (users[currentUser.phone].banned) {
-                        alert("🚫 حسابك محظور من قبل الإدارة.");
-                        localStorage.removeItem("moaath_user");
-                        currentUser = null;
-                        location.reload();
-                        return;
-                    }
-                    currentUser = { ...currentUser, ...users[currentUser.phone] }; 
-                    localStorage.setItem("moaath_user", JSON.stringify(currentUser)); 
-                } else {
-                    alert("⚠️ تم حذف حسابك من قبل الإدارة. يرجى التسجيل من جديد.");
+            if (users[currentUser.phone]) {
+                if (users[currentUser.phone].banned) {
+                    alert("🚫 حسابك محظور من قبل الإدارة.");
                     localStorage.removeItem("moaath_user");
                     currentUser = null;
                     location.reload();
                     return;
                 }
+                currentUser = { ...currentUser, ...users[currentUser.phone] }; 
+                localStorage.setItem("moaath_user", JSON.stringify(currentUser)); 
+            } else {
+                alert("⚠️ تم حذف حسابك من قبل الإدارة. يرجى التسجيل من جديد.");
+                localStorage.removeItem("moaath_user");
+                currentUser = null;
+                location.reload();
+                return;
             }
             const pts = Math.round(currentUser.points || 0), rank = calculateUserRank(currentUser.phone);
             setTxt("userNameDisplay", currentUser.name);
@@ -1372,8 +1374,16 @@
                             highResImagesMemoryCache[id] = hi;
                             const el = $("prod_img_" + id);
                             if (el) { el.src = hi; el.classList.remove("img-low-res"); el.classList.add("img-high-res"); }
-                        } else noHighResAvailableSet[id] = true;
-                    } catch (e) { noHighResAvailableSet[id] = true; }
+                        } else {
+                            noHighResAvailableSet[id] = true;
+                            const el = $("prod_img_" + id);
+                            if (el) { el.classList.remove("img-low-res"); }
+                        }
+                    } catch (e) { 
+                        noHighResAvailableSet[id] = true; 
+                        const el = $("prod_img_" + id);
+                        if (el) { el.classList.remove("img-low-res"); }
+                    }
                 }));
             }
             isBatchLoadingImages = false;
@@ -2459,7 +2469,6 @@
             reader.readAsText(file);
         }
 
-        let isUsersFetched = false;
         let adminClickCount = 0, adminClickTimer = null;
         function handleAdminTrigger() {
             adminClickCount++; clearTimeout(adminClickTimer);
