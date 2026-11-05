@@ -98,7 +98,7 @@
         <h2 style="color:var(--gold-color); margin:0 0 10px 0;">المتجر أو المنطقة مغلقة حالياً</h2>
         <p id="closedMessageText" style="font-size:14px; color:var(--text-color); max-width:320px; line-height:1.6;"></p>
         <div style="margin-top:15px; font-size:12px; color:var(--gray-text);">متجر معاذ - قرية العوينة بريف حماة 🌸</div>
-        <div class="logo-circle" id="closedAdminTrigger" onclick="handleAdminTrigger()" style="margin-top:25px; opacity:0.95;" title="دخول الإدارة المخفي"><img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'"></div>
+        <div class="logo-circle" id="closedAdminTrigger" onclick="handleAdminTrigger()" style="margin-top:25px; opacity:0.95;" title="اضغط 5 مرات لدخول الإدارة"><img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'"></div>
         
     </div>
 
@@ -162,11 +162,6 @@
             <div class="form-group"><label>منطقة التوصيل:</label><select id="regRegion" class="form-control"></select></div>
             <div class="form-group"><label>العنوان بالتفصيل:</label><input type="text" id="regAddress" class="form-control" placeholder="مثال: العوينة - الحي الشمالي"></div>
             <div class="form-group">
-                <label>🔐 كلمة المرور (للتسجيل أول مرة، أو للدخول):</label>
-                <input type="password" id="regPassword" class="form-control" placeholder="أدخل كلمة مرور لإنشاء حساب أو تسجيل الدخول...">
-                <small id="regPassError" style="color:var(--danger-color); font-size:11px; display:none;">⚠️ كلمة المرور غير صحيحة، أو الرقم مسجل مسبقاً.</small>
-            </div>
-            <div class="form-group">
                 <label>خصوصية النقاط في لوحة المتصدرين:</label>
                 <select id="regPointsVisibility" class="form-control">
                     <option value="public">🌐 إظهار رصيد نقاطي علناً</option>
@@ -224,10 +219,7 @@
                 <div style="font-size:15px; font-weight:bold; color:var(--gold-color);">ما يعادل: <span id="custDebtBalanceSYP">0</span> ل.س</div>
                 <div id="custDebtMarkupNote" style="font-size:11px; color:var(--gray-text); margin-top:6px;"></div>
             </div>
-            <div style="display:flex; gap:6px; margin-bottom:10px;">
-                <input type="text" id="custDebtSearchInput" class="search-box" placeholder="🔍 ابحث في سجل الحركات والديون..." oninput="renderCustomerDebtModalView()" style="margin-bottom:0; padding:8px; font-size:11px; flex:1;">
-                <button class="btn" style="width:auto; padding:0 14px; font-size:12px;" onclick="renderCustomerDebtModalView()">بحث</button>
-            </div>
+            <div class="form-group" style="margin-bottom:8px;"><input type="text" id="custDebtSearchInput" class="search-box" placeholder="🔍 ابحث في سجل الحركات والديون..." oninput="renderCustomerDebtModalView()" style="margin-bottom:0; padding:8px; font-size:11px;"></div>
             <div class="comp-card">
                 <h3 style="color:var(--gold-color); margin:0 0 10px 0; font-size:14px;">📜 سجل الحركات والديون والتسديدات</h3>
                 <div id="customerDebtHistoryList"></div>
@@ -662,10 +654,6 @@
                         </div>
                     </div>
                     <button onclick="clearCustomerDebtLedger()" class="btn btn-danger" style="margin-top:8px; padding:6px; font-size:11px;">🗑️ مسح وتصفير سجل الدين والرصيد للزبون</button>
-                    <div style="display:flex; gap:6px; margin-top:10px; margin-bottom:8px;">
-                        <input type="text" id="adminCustDebtSearchInput" class="search-box" placeholder="🔍 ابحث في دفتر الزبون الحالي..." oninput="loadAdminCustomerDebtLedger()" style="margin-bottom:0; padding:8px; font-size:11px; flex:1;">
-                        <button class="btn" style="width:auto; padding:0 14px; font-size:12px;" onclick="loadAdminCustomerDebtLedger()">بحث</button>
-                    </div>
                     <div id="adminCustomerDebtHistoryBox" style="max-height:180px; overflow-y:auto; margin-top:8px;"></div>
                 </div>
 
@@ -803,7 +791,6 @@
                 <div class="form-group"><label>💳 سقف الديون ($):</label><input type="number" step="1" id="adminCustDebtLimitInput" class="form-control" value="100"></div>
             </div>
             <div class="form-group"><label>العنوان:</label><input type="text" id="adminCustAddress" class="form-control"></div>
-            <div class="form-group"><label>🔐 كلمة المرور (للاسترداد/تعديل):</label><input type="text" id="adminCustPassword" class="form-control"></div>
             <div class="form-group"><label>النقاط:</label><input type="number" id="adminCustPoints" class="form-control"></div>
             <div style="display:flex; gap:8px;"><button onclick="saveAdminCustomerEdit()" class="btn">💾 حفظ التعديلات</button><button onclick="closeModal('adminEditCustomerModal')" class="btn btn-danger" style="width:35%;">إلغاء</button></div>
         </div>
@@ -1204,7 +1191,6 @@
                 setVal("regPhone", currentUser.phone || "");
                 if (currentUser.region && deliveryFees.hasOwnProperty(currentUser.region)) setVal("regRegion", currentUser.region);
                 setVal("regAddress", currentUser.address || "");
-                setVal("regPassword", currentUser.password || "");
                 setVal("regPointsVisibility", currentUser.pointsVisibility || "public");
             }
         }
@@ -1222,38 +1208,17 @@
 
         function saveUserProfile() {
             const name = $("regName").value.trim(), newPhone = $("regPhone").value.trim().replace(/\s+/g, ""), region = $("regRegion").value, address = $("regAddress").value.trim();
-            const password = $("regPassword").value.trim();
-            
             if (!validatePhoneSyrian(newPhone)) { $("regPhoneError").style.display = "block"; return alert("⚠️ الرقم يجب أن يتكون من 10 خانات ويبدأ بـ 09 حصراً."); }
             $("regPhoneError").style.display = "none";
-            if (!name || !region || !address || !password) return alert("⚠️ يرجى تعبئة كافة الحقول بما فيها كلمة المرور.");
+            if (!name || !region || !address) return alert("⚠️ يرجى إدخال الاسم، المنطقة، وتفاصيل العنوان.");
 
-            const existingUser = users[newPhone];
             const oldPhone = currentUser?.phone || null;
-
-            if (existingUser && oldPhone !== newPhone) {
-                // A user is trying to log in to an existing account
-                if (existingUser.password && existingUser.password !== password) {
-                    $("regPassError").style.display = "block";
-                    $("regPassError").innerText = "⚠️ هذا الرقم مسجل مسبقاً. كلمة المرور غير صحيحة!";
-                    return;
-                }
-            } else if (existingUser && oldPhone === newPhone) {
-                // Logged in user updating their own profile
-                if (existingUser.password && existingUser.password !== password) {
-                    $("regPassError").style.display = "block";
-                    $("regPassError").innerText = "⚠️ كلمة المرور الحالية غير مطابقة للتعديل.";
-                    return;
-                }
-            }
-            $("regPassError").style.display = "none";
-
             const prev = (oldPhone && users[oldPhone]) ? users[oldPhone] : (users[newPhone] || currentUser || {});
             if (prev.banned) return alert("🚫 عذراً، هذا الحساب محظور.");
 
             const updatedData = {
                 ...prev,
-                name, phone: newPhone, region, address, password,
+                name, phone: newPhone, region, address,
                 points: prev.points || 0, purchases: prev.purchases || {},
                 userType: prev.userType || "retail",
                 pointsVisibility: $("regPointsVisibility").value,
@@ -1265,7 +1230,7 @@
             localStorage.setItem("moaath_user", JSON.stringify(currentUser));
             db.ref("users/" + newPhone).update(updatedData);
             closeModal('profileModal'); syncCurrentUser(); updateCartBar(); checkStoreWorkHours();
-            alert("✅ تم تسجيل الدخول بنجاح!");
+            alert("✅ تم حفظ بياناتك بنجاح!");
         }
 
         function calculateUserRank(phone) {
@@ -1612,7 +1577,7 @@
 
             const list = $("customerDebtHistoryList");
             if (!list) return;
-            const q = ($("adminCustDebtSearchInput")?.value || "").trim().toLowerCase();
+            const q = ($("custDebtSearchInput")?.value || "").trim().toLowerCase();
             const entries = Object.values(u.debtLedger || {}).filter(e => !q || e.note?.toLowerCase().includes(q) || e.dateStr?.toLowerCase().includes(q) || String(e.finalAmountUSD || "").includes(q)).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
             if (!entries.length) {
                 list.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد حركات مسجلة في دفتر الدين حتى الآن.</p>`;
@@ -1683,7 +1648,7 @@
             setVal("adminCustCreditMarkupPct", parseFloat(u.creditMarkupPct) || 0);
 
             if (histBox) {
-                const q = ($("adminCustDebtSearchInput")?.value || "").trim().toLowerCase();
+                const q = ($("custDebtSearchInput")?.value || "").trim().toLowerCase();
             const entries = Object.values(u.debtLedger || {}).filter(e => !q || e.note?.toLowerCase().includes(q) || e.dateStr?.toLowerCase().includes(q) || String(e.finalAmountUSD || "").includes(q)).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
                 histBox.innerHTML = !entries.length ? `<div style="font-size:11px; color:var(--gray-text); text-align:center;">لا توجد حركات مسجلة لهذا الزبون.</div>` :
                     entries.map(e => {
@@ -2382,7 +2347,6 @@
             setVal("adminCustMarkupModalInput", parseFloat(u.creditMarkupPct) || 0);
             setVal("adminCustDebtLimitInput", parseFloat(u.debtLimitUSD) || 100);
             setVal("adminCustAddress", u.address || ""); setVal("adminCustPoints", Math.round(u.points || 0));
-            setVal("adminCustPassword", u.password || "");
             $("adminEditCustomerModal").style.display = "flex";
         }
 
@@ -2402,8 +2366,7 @@
                 creditMarkupPct: parseFloat($("adminCustMarkupModalInput")?.value) || 0,
                 debtLimitUSD: parseFloat($("adminCustDebtLimitInput")?.value) || 100,
                 address: $("adminCustAddress").value.trim(),
-                points: parseFloat($("adminCustPoints").value) || 0,
-                password: $("adminCustPassword").value.trim() || u.password
+                points: parseFloat($("adminCustPoints").value) || 0
             };
 
             const updates = {};
@@ -2462,7 +2425,7 @@
         let adminClickCount = 0, adminClickTimer = null;
         function handleAdminTrigger() {
             adminClickCount++; clearTimeout(adminClickTimer);
-            if (adminClickCount >= 25) {
+            if (adminClickCount >= 5) {
                 adminClickCount = 0;
                 if (localStorage.getItem("moaath_admin_unlocked") === "true") {
                     $("adminModal").style.display = "flex";
@@ -2476,7 +2439,7 @@
                     $("adminModal").style.display = "flex";
                     renderStatsDashboard(); renderAdminInvoicesHistory(); populateAdminPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); populatePartnerSelectOptions();
                 } else alert("❌ كلمة المرور غير صحيحة!");
-            } else adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 3000);
+            } else adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 1800);
         }
 
         function lockAdminSession() {
