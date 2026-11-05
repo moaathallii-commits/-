@@ -825,7 +825,7 @@
         let workHoursSettings = { enabled: false, open: "08:00", close: "23:00" };
         let categories = ["الكل"], selectedCategory = "الكل", products = {}, specialOffers = {}, suppliers = {};
         let highResImagesMemoryCache = {}, noHighResAvailableSet = {}, shuffledProductKeys = [];
-        let cart = JSON.parse(localStorage.getItem('moaath_cart')) || {}, users = {}, pendingOrders = {}, completedOrdersHistory = {}, missingRequests = {};
+        let cart = JSON.parse(localStorage.getItem('moaath_cart')) || {}, users = {}, isUsersLoaded = false, pendingOrders = {}, completedOrdersHistory = {}, missingRequests = {};
         let storeExpenses = {}, treasuryDebtCollections = {};
         let adminAccounting = {
             importManagerPct: 50,
@@ -1159,6 +1159,7 @@
             renderSpecialOffers(); renderAdminOffersList(); renderStatsDashboard(); renderAdminInvoicesHistory(); });
         db.ref("users").on("value", snap => {
             users = snap.val() || {};
+            isUsersLoaded = true;
             syncCurrentUser(); renderAdminCustomers(); renderLeaderboard(); renderStatsDashboard(); renderAdminInvoicesHistory(); renderStore();
             populateAdminPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); loadAdminCustomerDebtLedger();
             if ($("customerDebtModal")?.style.display === "block") renderCustomerDebtModalView();
@@ -1238,6 +1239,7 @@
                     pointsVisibility: $("regPointsVisibility").value
                 };
 
+                users[newPhone] = updatedData;
                 currentUser = updatedData;
                 localStorage.setItem("moaath_user", JSON.stringify(currentUser));
                 db.ref("users/" + newPhone).update(updatedData);
@@ -1255,6 +1257,7 @@
                 };
                 if (oldPhone && oldPhone !== newPhone) db.ref("users/" + oldPhone).remove();
 
+                users[newPhone] = updatedData;
                 currentUser = updatedData;
                 localStorage.setItem("moaath_user", JSON.stringify(currentUser));
                 db.ref("users/" + newPhone).update(updatedData);
@@ -1281,7 +1284,7 @@
                 }
                 currentUser = { ...currentUser, ...users[currentUser.phone] }; 
                 localStorage.setItem("moaath_user", JSON.stringify(currentUser)); 
-            } else {
+            } else if (isUsersLoaded) {
                 alert("⚠️ تم حذف حسابك من قبل الإدارة. يرجى التسجيل من جديد.");
                 localStorage.removeItem("moaath_user");
                 currentUser = null;
