@@ -98,7 +98,7 @@
         <h2 style="color:var(--gold-color); margin:0 0 10px 0;">المتجر أو المنطقة مغلقة حالياً</h2>
         <p id="closedMessageText" style="font-size:14px; color:var(--text-color); max-width:320px; line-height:1.6;"></p>
         <div style="margin-top:15px; font-size:12px; color:var(--gray-text);">متجر معاذ - قرية العوينة بريف حماة 🌸</div>
-        <div class="logo-circle" id="closedAdminTrigger" onclick="handleAdminTrigger()" style="margin-top:25px; opacity:0.95;" title="اضغط 5 مرات لدخول الإدارة"><img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'"></div>
+        <div class="logo-circle" id="closedAdminTrigger" onclick="handleAdminTrigger()" style="margin-top:25px; opacity:0.95;" title="اضغط 25 مرة لدخول الإدارة"><img src="store-icon.png" onerror="this.src='https://via.placeholder.com/45?text=M'"></div>
         
     </div>
 
@@ -161,6 +161,7 @@
             </div>
             <div class="form-group"><label>منطقة التوصيل:</label><select id="regRegion" class="form-control"></select></div>
             <div class="form-group"><label>العنوان بالتفصيل:</label><input type="text" id="regAddress" class="form-control" placeholder="مثال: العوينة - الحي الشمالي"></div>
+            <div class="form-group"><label>كلمة المرور (للتسجيل والدخول):</label><input type="password" id="regPassword" class="form-control" placeholder="أدخل كلمة مرور قوية للحساب..."></div>
             <div class="form-group">
                 <label>خصوصية النقاط في لوحة المتصدرين:</label>
                 <select id="regPointsVisibility" class="form-control">
@@ -607,6 +608,9 @@
             <div id="admTab7Customers" class="admin-tab" style="display:none;">
                 <div class="adm-sec" style="border-color:var(--gold-color); background:rgba(212,175,55,0.05);">
                     <div class="adm-sec-title"><span>📒 إدارة دفتر الديون لزبائن الآجل (ترحيل تلقائي للخزينة)</span></div>
+                    <div class="form-group" style="margin-bottom:6px;">
+                        <input type="text" id="adminDebtCustomerSearchInput" class="search-box" placeholder="🔍 ابحث عن زبون بالاسم أو الهاتف لاختياره..." oninput="populateAdminDebtCustomerSelect()" style="margin-bottom:0; padding:8px; font-size:11px;">
+                    </div>
                     <div class="form-group">
                         <label>اختر زبون الآجل (بعد تحويل رتبته إلى "زبون آجل / دفتر" من القائمة أدناه):</label>
                         <select id="adminDebtCustomerSelect" class="form-control" onchange="loadAdminCustomerDebtLedger()"><option value="">-- اختر زبون آجل --</option></select>
@@ -790,6 +794,7 @@
                 <div class="form-group"><label>📈 نسبة زيادة الآجل (%):</label><input type="number" step="0.5" id="adminCustMarkupModalInput" class="form-control" value="0"></div>
                 <div class="form-group"><label>💳 سقف الديون ($):</label><input type="number" step="1" id="adminCustDebtLimitInput" class="form-control" value="100"></div>
             </div>
+            <div class="form-group"><label>كلمة المرور (للاسترداد والتعديل):</label><input type="text" id="adminCustPassword" class="form-control"></div>
             <div class="form-group"><label>العنوان:</label><input type="text" id="adminCustAddress" class="form-control"></div>
             <div class="form-group"><label>النقاط:</label><input type="number" id="adminCustPoints" class="form-control"></div>
             <div style="display:flex; gap:8px;"><button onclick="saveAdminCustomerEdit()" class="btn">💾 حفظ التعديلات</button><button onclick="closeModal('adminEditCustomerModal')" class="btn btn-danger" style="width:35%;">إلغاء</button></div>
@@ -820,7 +825,7 @@
         let workHoursSettings = { enabled: false, open: "08:00", close: "23:00" };
         let categories = ["الكل"], selectedCategory = "الكل", products = {}, specialOffers = {}, suppliers = {};
         let highResImagesMemoryCache = {}, noHighResAvailableSet = {}, shuffledProductKeys = [];
-        let cart = JSON.parse(localStorage.getItem('moaath_cart')) || {}, users = {}, pendingOrders = {}, completedOrdersHistory = {}, missingRequests = {};
+        let cart = JSON.parse(localStorage.getItem('moaath_cart')) || {}, users = {}, isUsersLoaded = false, pendingOrders = {}, completedOrdersHistory = {}, missingRequests = {};
         let storeExpenses = {}, treasuryDebtCollections = {};
         let adminAccounting = {
             importManagerPct: 50,
@@ -1154,6 +1159,7 @@
             renderSpecialOffers(); renderAdminOffersList(); renderStatsDashboard(); renderAdminInvoicesHistory(); });
         db.ref("users").on("value", snap => {
             users = snap.val() || {};
+            isUsersLoaded = true;
             syncCurrentUser(); renderAdminCustomers(); renderLeaderboard(); renderStatsDashboard(); renderAdminInvoicesHistory(); renderStore();
             populateAdminPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); loadAdminCustomerDebtLedger();
             if ($("customerDebtModal")?.style.display === "block") renderCustomerDebtModalView();
@@ -1191,6 +1197,7 @@
                 setVal("regPhone", currentUser.phone || "");
                 if (currentUser.region && deliveryFees.hasOwnProperty(currentUser.region)) setVal("regRegion", currentUser.region);
                 setVal("regAddress", currentUser.address || "");
+                setVal("regPassword", currentUser.password || "");
                 setVal("regPointsVisibility", currentUser.pointsVisibility || "public");
             }
         }
@@ -1208,29 +1215,55 @@
 
         function saveUserProfile() {
             const name = $("regName").value.trim(), newPhone = $("regPhone").value.trim().replace(/\s+/g, ""), region = $("regRegion").value, address = $("regAddress").value.trim();
+            const pass = $("regPassword").value.trim();
             if (!validatePhoneSyrian(newPhone)) { $("regPhoneError").style.display = "block"; return alert("⚠️ الرقم يجب أن يتكون من 10 خانات ويبدأ بـ 09 حصراً."); }
             $("regPhoneError").style.display = "none";
-            if (!name || !region || !address) return alert("⚠️ يرجى إدخال الاسم، المنطقة، وتفاصيل العنوان.");
+            if (!name || !region || !address || !pass) return alert("⚠️ يرجى إدخال جميع البيانات المطلوبة بما فيها كلمة المرور.");
 
+            const existingUser = users[newPhone];
             const oldPhone = currentUser?.phone || null;
-            const prev = (oldPhone && users[oldPhone]) ? users[oldPhone] : (users[newPhone] || currentUser || {});
-            if (prev.banned) return alert("🚫 عذراً، هذا الحساب محظور.");
+            
+            if (existingUser) {
+                if (existingUser.banned) return alert("🚫 عذراً، هذا الحساب محظور.");
+                if (existingUser.password && existingUser.password !== pass) {
+                    return alert("❌ كلمة المرور غير صحيحة. الحساب موجود مسبقاً. إذا نسيت كلمة المرور، يرجى التواصل مع إدارة المتجر.");
+                }
+                
+                if (oldPhone && oldPhone !== newPhone && !users[newPhone]) {
+                    db.ref("users/" + oldPhone).remove();
+                }
 
-            const updatedData = {
-                ...prev,
-                name, phone: newPhone, region, address,
-                points: prev.points || 0, purchases: prev.purchases || {},
-                userType: prev.userType || "retail",
-                pointsVisibility: $("regPointsVisibility").value,
-                banned: !!prev.banned
-            };
-            if (oldPhone && oldPhone !== newPhone && users[oldPhone]) db.ref("users/" + oldPhone).remove();
+                const updatedData = {
+                    ...existingUser,
+                    name, region, address, password: pass,
+                    pointsVisibility: $("regPointsVisibility").value
+                };
 
-            currentUser = updatedData;
-            localStorage.setItem("moaath_user", JSON.stringify(currentUser));
-            db.ref("users/" + newPhone).update(updatedData);
-            closeModal('profileModal'); syncCurrentUser(); updateCartBar(); checkStoreWorkHours();
-            alert("✅ تم حفظ بياناتك بنجاح!");
+                currentUser = updatedData;
+                users[newPhone] = updatedData; // Update local cache instantly
+                localStorage.setItem("moaath_user", JSON.stringify(currentUser));
+                db.ref("users/" + newPhone).update(updatedData);
+                closeModal('profileModal'); syncCurrentUser(); updateCartBar(); checkStoreWorkHours();
+                alert("✅ تم تسجيل الدخول وتحديث البيانات بنجاح!");
+            } else {
+                const prev = (oldPhone && users[oldPhone]) ? users[oldPhone] : {};
+                const updatedData = {
+                    ...prev,
+                    name, phone: newPhone, region, address, password: pass,
+                    points: prev.points || 0, purchases: prev.purchases || {},
+                    userType: prev.userType || "retail",
+                    pointsVisibility: $("regPointsVisibility").value,
+                    banned: false
+                };
+                if (oldPhone && oldPhone !== newPhone) db.ref("users/" + oldPhone).remove();
+
+                currentUser = updatedData;
+                users[newPhone] = updatedData; // Update local cache instantly
+                localStorage.setItem("moaath_user", JSON.stringify(currentUser));
+                db.ref("users/" + newPhone).update(updatedData);
+                closeModal('profileModal'); syncCurrentUser(); updateCartBar(); checkStoreWorkHours();
+                alert("✅ تم إنشاء الحساب بنجاح!");
+            }
         }
 
         function calculateUserRank(phone) {
@@ -1241,6 +1274,15 @@
 
         function syncCurrentUser() {
             if (!currentUser?.phone) return;
+            
+            if (isUsersLoaded && !users[currentUser.phone]) {
+                alert("⚠️ تم حذف حسابك من قبل الإدارة. يرجى التسجيل من جديد.");
+                localStorage.removeItem("moaath_user");
+                currentUser = null;
+                location.reload();
+                return;
+            }
+
             if (users[currentUser.phone]) {
                 if (users[currentUser.phone].banned) {
                     alert("🚫 حسابك محظور من قبل الإدارة.");
@@ -1251,13 +1293,8 @@
                 }
                 currentUser = { ...currentUser, ...users[currentUser.phone] }; 
                 localStorage.setItem("moaath_user", JSON.stringify(currentUser)); 
-            } else {
-                alert("⚠️ تم حذف حسابك من قبل الإدارة. يرجى التسجيل من جديد.");
-                localStorage.removeItem("moaath_user");
-                currentUser = null;
-                location.reload();
-                return;
             }
+            
             const pts = Math.round(currentUser.points || 0), rank = calculateUserRank(currentUser.phone);
             setTxt("userNameDisplay", currentUser.name);
             setTxt("userRegionBadge", currentUser.region ? `(${currentUser.region})` : "");
@@ -2346,7 +2383,7 @@
             setVal("adminCustRegion", u.region || "العوينة"); setVal("adminCustType", u.userType || "retail");
             setVal("adminCustMarkupModalInput", parseFloat(u.creditMarkupPct) || 0);
             setVal("adminCustDebtLimitInput", parseFloat(u.debtLimitUSD) || 100);
-            setVal("adminCustAddress", u.address || ""); setVal("adminCustPoints", Math.round(u.points || 0));
+            setVal("adminCustAddress", u.address || ""); setVal("adminCustPoints", Math.round(u.points || 0)); setVal("adminCustPassword", u.password || "");
             $("adminEditCustomerModal").style.display = "flex";
         }
 
@@ -2366,6 +2403,7 @@
                 creditMarkupPct: parseFloat($("adminCustMarkupModalInput")?.value) || 0,
                 debtLimitUSD: parseFloat($("adminCustDebtLimitInput")?.value) || 100,
                 address: $("adminCustAddress").value.trim(),
+                password: $("adminCustPassword").value.trim(),
                 points: parseFloat($("adminCustPoints").value) || 0
             };
 
@@ -2425,7 +2463,7 @@
         let adminClickCount = 0, adminClickTimer = null;
         function handleAdminTrigger() {
             adminClickCount++; clearTimeout(adminClickTimer);
-            if (adminClickCount >= 5) {
+            if (adminClickCount >= 25) {
                 adminClickCount = 0;
                 if (localStorage.getItem("moaath_admin_unlocked") === "true") {
                     $("adminModal").style.display = "flex";
@@ -2439,7 +2477,7 @@
                     $("adminModal").style.display = "flex";
                     renderStatsDashboard(); renderAdminInvoicesHistory(); populateAdminPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); populatePartnerSelectOptions();
                 } else alert("❌ كلمة المرور غير صحيحة!");
-            } else adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 1800);
+            } else adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 4000);
         }
 
         function lockAdminSession() {
