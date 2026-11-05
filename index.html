@@ -199,7 +199,13 @@
                     <span>النقاط المكتسبة:</span><strong>+<span id="modalCartPoints">0</span> نقطة 🎁</strong>
                 </div>
             </div>
-            <button type="button" onclick="copyWalletId()" class="btn" style="margin-bottom:8px; padding:9px; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000;">📋 نسخ كود محفظة شام كاش للدفع</button>
+            <div class="form-group" style="margin-bottom:8px;">
+                <label>💳 طريقة الدفع:</label>
+                <select id="cartPaymentMethod" class="form-control" onchange="renderCartModalItems()" style="padding:6px; font-weight:bold;"></select>
+            </div>
+            <div id="shamCashInfoBox" style="display:none; text-align:center;">
+                <button type="button" onclick="copyWalletId()" class="btn" style="margin-bottom:8px; padding:9px; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000;">📋 نسخ كود محفظة شام كاش للدفع</button>
+            </div>
             <div class="form-group" style="margin-bottom:10px;"><input type="text" id="orderNotes" class="form-control" placeholder="📝 ملاحظات إضافية مع الطلب (اختياري)..."></div>
             <button type="button" onclick="submitOrder()" class="btn" style="background:linear-gradient(45deg,#00e676,#00c853); color:#000; margin-bottom:8px; font-size:14px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.45); animation:pulse 2s infinite;">✅ إرسال وتأكيد الطلب الآن</button>
             <button type="button" onclick="closeModal('cartModal')" class="btn btn-danger" style="padding:6px; font-size:11px;">إغلاق</button>
@@ -379,6 +385,18 @@
                         <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">نسبة الربح العامة</div><div class="stats-value" id="statProfitMargin">0%</div></div>
                     </div>
 
+                    
+                    <div class="adm-card" style="border-color:#00e676; background:rgba(0,230,118,0.07); margin:10px 0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                            <div>
+                                <div style="color:#00e676; font-weight:bold; font-size:12px;">🟢 أرصدة المحافظ المسبقة (التزام للزبائن)</div>
+                                <div style="font-size:10px; color:var(--gray-text);">إجمالي الأموال المقبوضة مقدماً من الزبائن ولم تُستهلك بعد</div>
+                            </div>
+                            <div style="text-align:left;">
+                                <div style="font-size:15px; font-weight:900; color:#fff;" id="statTotalPrepaidWallets">0.00 $</div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="adm-card" style="border-color:#00e676; background:rgba(0,230,118,0.07); margin:10px 0;">
                         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
                             <div>
@@ -614,6 +632,18 @@
                             </div>
                             <button onclick="exportCustomerDebtCSV()" class="btn" style="width:auto; padding:4px 8px; font-size:10px; background:#4CAF50; color:#fff;">📊 تحميل كشف حساب (Excel)</button>
                         </div>
+                    </div>
+                                        <div class="adm-card" style="border-color:#00e676; background:rgba(0,230,118,0.05); margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
+                            <span style="color:#00e676; font-weight:bold; font-size:13px;">🟢 إدارة المحافظ مسبقة الدفع (شحن الرصيد)</span>
+                            <div style="font-size:11px; color:var(--gray-text);">رصيد الزبون الحالي: <b id="admPrepaidCurrUSD" style="color:var(--text-color); font-size:14px;">0.00 $</b></div>
+                        </div>
+                        <div class="stats-grid">
+                            <div class="form-group"><label>مبلغ الشحن الجديد ($):</label><input type="number" step="0.01" id="newPrepaidAmountUSD" class="form-control" placeholder="مثال: 50"></div>
+                            <div class="form-group"><label>بيان الشحن (طريقة القبض):</label><input type="text" id="newPrepaidNote" class="form-control" placeholder="مثال: حوالة شام كاش / نقد باليد"></div>
+                        </div>
+                        <button onclick="addAdminCustomerPrepaid()" class="btn" style="background:var(--success-color); color:#000;">➕ شحن المحفظة فوراً</button>
+                        <div id="adminCustomerPrepaidHistoryBox" style="max-height:120px; overflow-y:auto; margin-top:8px;"></div>
                     </div>
                     <div class="stats-grid">
                         <div class="adm-card" style="border-color:var(--danger-color);">
@@ -1246,7 +1276,23 @@
 
         function syncCurrentUser() {
             if (!currentUser?.phone) return;
-            if (users[currentUser.phone]) { currentUser = { ...currentUser, ...users[currentUser.phone] }; localStorage.setItem("moaath_user", JSON.stringify(currentUser)); }
+            if (users[currentUser.phone]) {
+                if (users[currentUser.phone].banned) {
+                    alert("🚫 حسابك محظور من قبل الإدارة.");
+                    localStorage.removeItem("moaath_user");
+                    currentUser = null;
+                    location.reload();
+                    return;
+                }
+                currentUser = { ...currentUser, ...users[currentUser.phone] }; 
+                localStorage.setItem("moaath_user", JSON.stringify(currentUser)); 
+            } else {
+                alert("⚠️ تم حذف حسابك من قبل الإدارة. يرجى التسجيل من جديد.");
+                localStorage.removeItem("moaath_user");
+                currentUser = null;
+                location.reload();
+                return;
+            }
             const pts = Math.round(currentUser.points || 0), rank = calculateUserRank(currentUser.phone);
             setTxt("userNameDisplay", currentUser.name);
             setTxt("userRegionBadge", currentUser.region ? `(${currentUser.region})` : "");
@@ -1417,7 +1463,40 @@
                     return `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding:5px 0; font-size:11px;"><div><strong>${i.name}</strong><br><span style="color:var(--gray-text);">${u.toLocaleString()} ل.س × ${i.qty} = ${s.toLocaleString()} ل.س</span></div><div class="qty-controls" style="width:75px;"><button class="qty-btn" type="button" onclick="changeQty('${i.id}',1)" style="width:24px; height:24px; font-size:13px;">+</button><span class="qty-text" style="font-size:12px;">${i.qty}</span><button class="qty-btn" type="button" onclick="changeQty('${i.id}',-1)" style="width:24px; height:24px; font-size:13px;">-</button></div></div>`;
                 }).join("");
             }
-            const markupPct = getCurrentUserCreditMarkupPct();
+            const u = currentUser?.phone && users[currentUser.phone] ? users[currentUser.phone] : currentUser;
+            const isCreditUser = (u?.userType === "credit");
+            const prepaidBalUSD = parseFloat(u?.prepaidBalanceUSD) || 0;
+            
+            const paySelect = $("cartPaymentMethod");
+            const currPay = paySelect ? paySelect.value : "شام كاش";
+            
+            let payOptionsHtml = `<option value="شام كاش">شام كاش (الدفع الفوري)</option>`;
+            if (isCreditUser) payOptionsHtml += `<option value="آجل (دفتر الدين)">دفتر الدين (الدفع الآجل)</option>`;
+            
+            const feeSYP_temp = getRegionFee($("cartRegionSelect")?.value || u?.region || Object.keys(deliveryFees)[0] || "العوينة");
+            const subUSD_temp = Object.values(cart).reduce((a,i) => a + (i.priceUSD * i.qty), 0);
+            const totalUSD_temp = parseFloat((subUSD_temp + (feeSYP_temp / exchangeRate)).toFixed(2));
+            
+            if (prepaidBalUSD > 0) {
+                if (prepaidBalUSD >= totalUSD_temp) {
+                    payOptionsHtml += `<option value="محفظة مسبقة الدفع">محفظة الدفع المسبق (رصيدك: $${prepaidBalUSD.toFixed(2)})</option>`;
+                } else {
+                    payOptionsHtml += `<option value="شام كاش" disabled>محفظة المسبق (رصيدك $${prepaidBalUSD.toFixed(2)} لا يكفي)</option>`;
+                }
+            }
+            
+            if (paySelect) {
+                paySelect.innerHTML = payOptionsHtml;
+                if (paySelect.querySelector(`option[value="${currPay}"]`) && !paySelect.querySelector(`option[value="${currPay}"]`).disabled) {
+                    paySelect.value = currPay;
+                }
+            }
+            
+            const selectedPay = paySelect ? paySelect.value : "شام كاش";
+            const useCreditPricing = (selectedPay === "آجل (دفتر الدين)");
+            if ($("shamCashInfoBox")) $("shamCashInfoBox").style.display = (selectedPay === "شام كاش") ? "block" : "none";
+
+            const markupPct = useCreditPricing ? getCurrentUserCreditMarkupPct() : 0;
             const markupAmt = markupPct > 0 ? Math.round((sub * markupPct) / 100) : 0;
             if ($("modalCreditMarkupRow")) {
                 $("modalCreditMarkupRow").style.display = markupPct > 0 ? "flex" : "none";
@@ -1453,8 +1532,11 @@
                 return;
             }
 
-            const isCreditUser = (users[currentUser.phone]?.userType || currentUser.userType) === "credit";
-            const markupPct = getCurrentUserCreditMarkupPct();
+            const selectedPayMethod = $("cartPaymentMethod") ? $("cartPaymentMethod").value : "شام كاش";
+            const isCreditUser = (selectedPayMethod === "آجل (دفتر الدين)");
+            const isPrepaidUser = (selectedPayMethod === "محفظة مسبقة الدفع");
+            
+            const markupPct = isCreditUser ? getCurrentUserCreditMarkupPct() : 0;
             const markupSYP = markupPct > 0 ? Math.round((subSale * markupPct) / 100) : 0;
             const finalTotalSYP = subSale + markupSYP + fee, orderId = "ORD_" + Date.now();
             const finalOrderUSD = parseFloat(((subUSD * (1 + markupPct / 100)) + (fee / exchangeRate)).toFixed(2));
@@ -1463,13 +1545,15 @@
                 orderId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
                 customerName: currentUser.name, customerPhone: currentUser.phone, customerRegion: reg, customerAddress: currentUser.address,
                 isCreditOrder: isCreditUser, creditMarkupPct: markupPct, creditMarkupSYP: markupSYP, orderTotalUSD: finalOrderUSD,
-                paymentMethod: isCreditUser ? "آجل (دفتر الدين)" : "شام كاش (Sham Cash)",
+                paymentMethod: selectedPayMethod,
                 notes: ($("orderNotes")?.value || "").trim(), items: ordItems,
                 subtotalSaleSYP: subSale + markupSYP, deliveryFeeSYP: fee, totalSaleSYP: finalTotalSYP, totalCostSYP: totCost, netProfitSYP: (subSale + markupSYP) - totCost, earnedPoints: totPts
             };
-            let msg = isCreditUser
+            let msg = isCreditUser 
                 ? `📒 *فاتورة طلب آجل (دفتر دين) - متجر معاذ* 📒\n✅ *(معتمد على الدفتر - لا يتطلب إشعار تحويل شام كاش)*\n`
-                : `🛍️ *فاتورة طلب جديد - متجر معاذ*\n`;
+                : (isPrepaidUser 
+                   ? `🟢 *فاتورة طلب مدفوع مسبقاً - متجر معاذ* 🟢\n✅ *(سيتم الخصم من المحفظة تلقائياً - لا يتطلب إشعار تحويل)*\n`
+                   : `🛍️ *فاتورة طلب جديد - متجر معاذ* (بانتظار شام كاش)\n`);
 
             msg += `👤 الزبون: ${orderPayload.customerName}\n📱 الهاتف: ${orderPayload.customerPhone}\n🏘️ المنطقة: ${orderPayload.customerRegion}\n📍 العنوان: ${orderPayload.customerAddress}\n💳 الدفع: ${orderPayload.paymentMethod}\n`;
             if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}\n`;
@@ -1477,21 +1561,29 @@
             if (markupSYP > 0) msg += `📈 نسبة الآجل (${markupPct}%): +${markupSYP.toLocaleString()} ل.س\n`;
             msg += `🛵 التوصيل: ${fee.toLocaleString()} ل.س\n💰 *الإجمالي النهائي:* ${finalTotalSYP.toLocaleString()} ل.س ${isCreditUser ? `(${finalOrderUSD} $)` : ''}\n🎁 النقاط: +${totPts}`;
 
-            if (!isCreditUser) {
-                msg += `\n\n🚨 *تنبيه هام جداً للإدارة:*\n⚠️ *لن تستلم الإدارة الطلب ولن يتم اعتماده قبل إرسال صورة أو إشعار التحويل من شام كاش بكامل المبلغ!*`;
-            } else {
-                msg += `\n\n📌 *ملاحظة للإدارة:* تم قيد المبلغ (${finalOrderUSD} $) تلقائياً على دفتر ديون الزبون، يرجى التجهيز والتوصيل مباشرة.`;
+            if (selectedPayMethod === "شام كاش") {
+                msg += `\n\n🚨 *تنبيه هام جداً للإدارة:*\n⚠️ *لن يتم الاعتماد قبل إرسال صورة إشعار التحويل من شام كاش بكامل المبلغ!*`;
+            } else if (isCreditUser) {
+                msg += `\n\n📌 *ملاحظة للإدارة:* سيتم قيد المبلغ (${finalOrderUSD} $) تلقائياً على دفتر ديون الزبون عند التأكيد.`;
+            } else if (isPrepaidUser) {
+                msg += `\n\n📌 *ملاحظة للإدارة:* سيتم خصم (${finalOrderUSD} $) تلقائياً من محفظة الزبون المسبقة عند التأكيد.`;
             }
             
             const updates = {};
             updates[`pendingOrders/${orderId}`] = orderPayload;
+            const u = users[currentUser.phone] || {};
             if (isCreditUser) {
-                const u = users[currentUser.phone] || {};
                 const currentDebt = parseFloat(u.debtBalanceUSD) || 0;
                 const debtLimit = parseFloat(u.debtLimitUSD) || 100;
                 const newDebt = parseFloat((currentDebt + finalOrderUSD).toFixed(2));
                 if (newDebt > debtLimit) {
-                    alert(`⚠️ عذراً، لا يمكن إتمام الطلب لأن إجمالي الدين (${newDebt} $) سيتجاوز سقف الديون المسموح به لحسابك (${debtLimit} $). يرجى مراجعة الإدارة أو تسديد دفعة.`);
+                    alert(`⚠️ عذراً، لا يمكن إتمام الطلب لأن إجمالي الدين (${newDebt} $) سيتجاوز سقف الديون المسموح به لحسابك (${debtLimit} $). يرجى تسديد دفعة.`);
+                    return;
+                }
+            } else if (isPrepaidUser) {
+                const prepaidBal = parseFloat(u.prepaidBalanceUSD) || 0;
+                if (prepaidBal < finalOrderUSD) {
+                    alert(`⚠️ عذراً، رصيد محفظتك المسبقة ($${prepaidBal.toFixed(2)}) لا يغطي إجمالي الطلب ($${finalOrderUSD}).`);
                     return;
                 }
             }
@@ -1620,6 +1712,31 @@
             db.ref(`users/${phone}`).update({ debtBalanceUSD: 0, debtLedger: null }).then(() => {
                 alert("✅ تم تصفير ومسح سجل الدين والرصيد بنجاح!");
                 loadAdminCustomerDebtLedger();
+            });
+        }
+
+        
+        function addAdminCustomerPrepaid() {
+            const phone = $("adminDebtCustomerSelect")?.value;
+            if (!phone || !users[phone]) return alert("⚠️ يرجى اختيار زبون من القائمة أعلاه أولاً.");
+            const amt = parseFloat($("newPrepaidAmountUSD")?.value) || 0;
+            if (amt <= 0) return alert("⚠️ يرجى إدخال مبلغ صالح للشحن.");
+            const note = ($("newPrepaidNote")?.value || "").trim() || "شحن رصيد مسبق الدفع";
+            
+            const u = users[phone];
+            const newBal = parseFloat(((parseFloat(u.prepaidBalanceUSD) || 0) + amt).toFixed(2));
+            const txId = "PREP_" + Date.now();
+            const now = new Date();
+            
+            const updates = {};
+            updates[`users/${phone}/prepaidBalanceUSD`] = newBal;
+            updates[`users/${phone}/prepaidLedger/${txId}`] = {
+                id: txId, type: "deposit", amountUSD: amt, note,
+                dateISO: now.toISOString(), dateStr: now.toLocaleString("ar-SY")
+            };
+            db.ref().update(updates).then(() => {
+                setVal("newPrepaidAmountUSD", ""); setVal("newPrepaidNote", "");
+                alert(`✅ تم شحن محفظة ${escapeHTML(u.name)} بقيمة ($${amt.toFixed(2)}) بنجاح!`);
             });
         }
 
@@ -1819,49 +1936,59 @@
                 return;
             }
             list.innerHTML = keys.map(id => {
-                const o = pendingOrders[id], isCred = !!o.isCreditOrder;
-                const itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${i.name} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
-
+                                const o = pendingOrders[id];
+                const itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${escapeHTML(i.name)} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
                 let isTampered = false;
                 let realTotalSYP = 0;
                 (o.items || []).forEach(i => {
-                    if (i.id.startsWith("OFFER_") && specialOffers[i.id]) {
-                        const isW = users[o.customerPhone]?.userType === "wholesale";
-                        const rPrice = parseFloat((isW && specialOffers[i.id].wholesaleUSD > 0) ? specialOffers[i.id].wholesaleUSD : specialOffers[i.id].newPriceUSD) || 0;
-                        realTotalSYP += calcSYP(rPrice) * i.qty;
-                    } else if (products[i.id]) {
-                        const isW = users[o.customerPhone]?.userType === "wholesale";
-                        const rPrice = parseFloat((isW && products[i.id].wholesaleUSD > 0) ? products[i.id].wholesaleUSD : products[i.id].priceUSD) || 0;
-                        realTotalSYP += calcSYP(rPrice) * i.qty;
-                    }
+                    const isW = users[o.customerPhone]?.userType === "wholesale";
+                    const pItem = products[i.id] || specialOffers[i.id] || {};
+                    const rPrice = parseFloat((isW && pItem.wholesaleUSD > 0) ? pItem.wholesaleUSD : (pItem.priceUSD || pItem.newPriceUSD)) || 0;
+                    realTotalSYP += calcSYP(rPrice) * i.qty;
                 });
                 const fee = getRegionFee(o.customerRegion);
                 const rMarkupAmt = o.creditMarkupPct > 0 ? Math.round((realTotalSYP * o.creditMarkupPct) / 100) : 0;
                 const expectedTotal = realTotalSYP + rMarkupAmt + fee;
+                if (Math.abs(expectedTotal - o.totalSaleSYP) > 50) isTampered = true;
+
+                const payMethod = o.paymentMethod || (o.isCreditOrder ? "آجل (دفتر الدين)" : "شام كاش");
+                const isCred = payMethod === "آجل (دفتر الدين)";
+                const isPrep = payMethod === "محفظة مسبقة الدفع";
                 
-                // Allow a small margin of error due to rounding differences (e.g., 50 SYP)
-                if (Math.abs(expectedTotal - o.totalSaleSYP) > 50) {
-                    isTampered = true;
+                let borderColor = '#ff9800', bgColor = 'var(--bg-color)', textCol = 'var(--gold-color)';
+                let bannerHtml = `<div style="background:rgba(255,152,0,0.12); color:#ff9800; padding:6px 8px; border-radius:5px; font-weight:bold; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;"><span>⏳ بانتظار تأكيد إشعار تحويل (شام كاش)</span></div>`;
+                let warningHtml = `<div style="color:var(--danger-color); font-size:11px; font-weight:bold; margin-bottom:6px;">⚠️ تنبيه: لا تقم بقبول الطلب قبل مطابقة إشعار شام كاش مع إجمالي (${(o.totalSaleSYP||0).toLocaleString()} ل.س)</div>`;
+                let confirmBtnStr = "✅ تأكيد استلام التحويل وقبول الطلب";
+                
+                if (isCred) {
+                    borderColor = '#ff0000'; bgColor = 'rgba(255,0,0,0.08)'; textCol = '#ff4444';
+                    const curDebt = parseFloat(users[o.customerPhone]?.debtBalanceUSD) || 0;
+                    const limit = parseFloat(users[o.customerPhone]?.debtLimitUSD) || 100;
+                    bannerHtml = `<div style="background:linear-gradient(45deg,#ff0000,#cc0000); color:#fff; padding:6px 8px; border-radius:5px; font-weight:bold; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; text-shadow:1px 1px 2px rgba(0,0,0,0.5);"><span>🚨 طلب زبون آجل (دفتر الدين)</span><span>⏳ دين متوقع: $${(curDebt + (o.orderTotalUSD||0)).toFixed(2)} / السقف: $${limit}</span></div>`;
+                    warningHtml = `<div style="color:#ff4444; font-size:11px; font-weight:bold; margin-bottom:6px;">📌 طلب معتمد على الدفتر (لا يتطلب تحويل). سيتم القيد تلقائياً عند التأكيد.</div>`;
+                    confirmBtnStr = "✅ تأكيد الطلب وترحيل الدين فوراً";
+                } else if (isPrep) {
+                    borderColor = '#00e676'; bgColor = 'rgba(0,230,118,0.05)'; textCol = '#00e676';
+                    const remBal = (parseFloat(users[o.customerPhone]?.prepaidBalanceUSD) || 0) - (parseFloat(o.orderTotalUSD) || 0);
+                    bannerHtml = `<div style="background:linear-gradient(45deg,#00a152,#00e676); color:#000; padding:6px 8px; border-radius:5px; font-weight:900; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;"><span>🟢 طلب مدفوع مسبقاً (محفظة)</span><span>💰 متبقي بالمحفظة: $${remBal.toFixed(2)}</span></div>`;
+                    warningHtml = `<div style="color:var(--success-color); font-size:11px; font-weight:bold; margin-bottom:6px;">✨ هذا الطلب خالص ومخصوم مسبقاً، جاهز للتحويل الفوري للتوصيل!</div>`;
+                    confirmBtnStr = "✅ قبول الطلب وتحويله للسائق مباشرة";
                 }
 
-                const creditBanner = isCred
-                    ? `<div style="background:linear-gradient(45deg,#ff0000,#cc0000); color:#fff; padding:6px 8px; border-radius:5px; font-weight:bold; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; text-shadow:1px 1px 2px rgba(0,0,0,0.5);"><span>🚨 طلب زبون دين (آجل)</span><span>⚡ جهّز الطلب فوراً</span></div>`
-                    : `<div style="background:rgba(255,152,0,0.12); color:#ff9800; padding:4px 8px; border-radius:5px; font-size:10px; margin-bottom:6px;">💳 دفع شام كاش (تأكد من إشعار التحويل مع الإدارة)</div>`;
-                return `<div class="adm-card" style="margin-bottom: 24px; border:3px solid ${isCred ? '#ff0000' : '#ff9800'}; background:${isCred ? 'rgba(255,0,0,0.08)' : 'var(--bg-color)'}; color:${isCred ? '#ff4444' : 'inherit'};">
-                    ${creditBanner}
-                    <div style="display:flex; justify-content:space-between; color:${isCred ? '#ff4444' : 'var(--gold-color)'}; font-weight:bold; margin-bottom:4px;">
-                        <span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span>
-                    </div>
-                    <div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress} | 💳 ${o.paymentMethod || 'شام كاش'}</div>
-                    ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${o.notes}</div>` : ''}
-                    <div style="border-top:1px dashed ${isCred ? '#ff4444' : 'var(--border-color)'}; border-bottom:1px dashed ${isCred ? '#ff4444' : 'var(--border-color)'}; padding:6px 0; margin:6px 0;">${itemsHtml}</div>
-                    <div style="font-weight:bold; margin-bottom:8px;">المطلوب تحصيله مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</div>
-                    <div style="margin-bottom:10px;"><button class="btn" style="width:100%; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-size:13px; padding:10px; font-weight:900; border-radius:6px; box-shadow:0 4px 12px rgba(0,176,255,0.25); text-shadow:0px 0px 1px rgba(0,0,0,0.2);" onclick="openOrderImagesModal('${id}')">🖼️ عرض صور وقطع الطلب لتجهيزها</button></div><div style="display:flex; gap:6px;">
-                        <button class="btn" style="background:var(--success-color); color:#000;" onclick="confirmOrder('${id}')">✅ قبول وتحويل للتوصيل</button>
-                        <button class="btn btn-danger" onclick="cancelOrder('${id}')">❌ إلغاء الطلب</button>
-                    </div>
+                const tamperAlert = isTampered ? `<div style="background:var(--danger-color); color:#fff; font-weight:bold; font-size:12px; padding:6px; border-radius:5px; margin-bottom:6px; text-align:center; animation:pulse 1s infinite;">⚠️ تنبيه: تم اكتشاف تلاعب في أسعار هذه الفاتورة! (المبلغ الحقيقي: ${expectedTotal.toLocaleString()} ل.س)</div>` : '';
+                return `<div class="adm-card" style="margin-bottom: 24px; border:3px solid ${isTampered ? 'var(--danger-color)' : borderColor}; background:${bgColor}; color:${isCred ? '#ff4444' : 'inherit'};">
+                    ${tamperAlert}
+                    ${bannerHtml}
+                    <div style="display:flex; justify-content:space-between; color:${textCol}; font-weight:bold; margin-bottom:4px;"><span>👤 ${escapeHTML(o.customerName)} (${escapeHTML(o.customerPhone)})</span><span>${o.timestamp}</span></div>
+                    <div style="margin-bottom:4px;">🏘️ ${escapeHTML(o.customerRegion)} | 📍 ${escapeHTML(o.customerAddress)} | 💳 ${payMethod}</div>
+                    ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${escapeHTML(o.notes)}</div>` : ''}
+                    <div style="border-top:1px dashed ${borderColor}; border-bottom:1px dashed ${borderColor}; padding:6px 0; margin:6px 0;">${itemsHtml}</div>
+                    <div style="font-weight:bold; margin-bottom:6px;">المطلوب تحصيله: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س ${isCred || isPrep ? `<span style="color:${textCol};">(${(o.orderTotalUSD||0).toFixed(2)} $)</span>` : ''}</div>
+                    ${warningHtml}
+                    <div style="margin-bottom:10px;"><button class="btn" style="width:100%; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-size:13px; padding:10px; font-weight:900; border-radius:6px; box-shadow:0 4px 12px rgba(0,176,255,0.25); text-shadow:0px 0px 1px rgba(0,0,0,0.2);" onclick="openOrderImagesModal('${id}')">🖼️ عرض صور وقطع الطلب لتجهيزها</button></div>
+                    <div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000; font-size:11px;" onclick="confirmOrder('${id}')">${confirmBtnStr}</button><button class="btn btn-danger" style="font-size:11px;" onclick="cancelOrder('${id}')">❌ إلغاء</button></div>
                 </div>`;
-            }).join("");
+}).join("");
         }
 
         function sendSupplierShortagesWhatsApp(suppId) {
@@ -2014,6 +2141,9 @@
             setTxt("statNetProfit", netP.toLocaleString() + " ل.س");
             setTxt("statProfitMargin", (totS > 0 ? ((netP / totS) * 100).toFixed(1) : 0) + "%");
             setTxt("statTreasuryDebtCollections", `${debtCollectionsSYP.toLocaleString()} ل.س (${debtCollectionsUSD.toFixed(2)} $)`);
+            let totalPrepaidUSD = 0;
+            Object.values(users).forEach(u => totalPrepaidUSD += (parseFloat(u.prepaidBalanceUSD) || 0));
+            if ($("statTotalPrepaidWallets")) setTxt("statTotalPrepaidWallets", totalPrepaidUSD.toFixed(2) + " $");
             setTxt("statRecoveredCapitalBox", capBoxSYP.toLocaleString() + " ل.س");
             setTxt("importMgrPctLabel", impPct);
             setTxt("exportMgrPctLabel", expPct);
@@ -2391,46 +2521,59 @@
             const list = $("pendingOrdersList"); if (!list) return;
             if (!keys.length) return (list.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد فواتير معلقة حالياً.</p>`);
             list.innerHTML = keys.map(id => {
-                const o = pendingOrders[id], isCred = !!o.isCreditOrder;
-                const itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${i.name} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
-
+                                const o = pendingOrders[id];
+                const itemsHtml = (o.items || []).map(i => `<div style="font-size:11px; display:flex; justify-content:space-between;"><span>• ${escapeHTML(i.name)} × ${i.qty}</span><span>${i.subSaleSYP.toLocaleString()} ل.س</span></div>`).join("");
                 let isTampered = false;
                 let realTotalSYP = 0;
                 (o.items || []).forEach(i => {
-                    if (i.id.startsWith("OFFER_") && specialOffers[i.id]) {
-                        const isW = users[o.customerPhone]?.userType === "wholesale";
-                        const rPrice = parseFloat((isW && specialOffers[i.id].wholesaleUSD > 0) ? specialOffers[i.id].wholesaleUSD : specialOffers[i.id].newPriceUSD) || 0;
-                        realTotalSYP += calcSYP(rPrice) * i.qty;
-                    } else if (products[i.id]) {
-                        const isW = users[o.customerPhone]?.userType === "wholesale";
-                        const rPrice = parseFloat((isW && products[i.id].wholesaleUSD > 0) ? products[i.id].wholesaleUSD : products[i.id].priceUSD) || 0;
-                        realTotalSYP += calcSYP(rPrice) * i.qty;
-                    }
+                    const isW = users[o.customerPhone]?.userType === "wholesale";
+                    const pItem = products[i.id] || specialOffers[i.id] || {};
+                    const rPrice = parseFloat((isW && pItem.wholesaleUSD > 0) ? pItem.wholesaleUSD : (pItem.priceUSD || pItem.newPriceUSD)) || 0;
+                    realTotalSYP += calcSYP(rPrice) * i.qty;
                 });
                 const fee = getRegionFee(o.customerRegion);
                 const rMarkupAmt = o.creditMarkupPct > 0 ? Math.round((realTotalSYP * o.creditMarkupPct) / 100) : 0;
                 const expectedTotal = realTotalSYP + rMarkupAmt + fee;
+                if (Math.abs(expectedTotal - o.totalSaleSYP) > 50) isTampered = true;
+
+                const payMethod = o.paymentMethod || (o.isCreditOrder ? "آجل (دفتر الدين)" : "شام كاش");
+                const isCred = payMethod === "آجل (دفتر الدين)";
+                const isPrep = payMethod === "محفظة مسبقة الدفع";
                 
-                // Allow a small margin of error due to rounding differences (e.g., 50 SYP)
-                if (Math.abs(expectedTotal - o.totalSaleSYP) > 50) {
-                    isTampered = true;
+                let borderColor = '#ff9800', bgColor = 'var(--bg-color)', textCol = 'var(--gold-color)';
+                let bannerHtml = `<div style="background:rgba(255,152,0,0.12); color:#ff9800; padding:6px 8px; border-radius:5px; font-weight:bold; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;"><span>⏳ بانتظار تأكيد إشعار تحويل (شام كاش)</span></div>`;
+                let warningHtml = `<div style="color:var(--danger-color); font-size:11px; font-weight:bold; margin-bottom:6px;">⚠️ تنبيه: لا تقم بقبول الطلب قبل مطابقة إشعار شام كاش مع إجمالي (${(o.totalSaleSYP||0).toLocaleString()} ل.س)</div>`;
+                let confirmBtnStr = "✅ تأكيد استلام التحويل وقبول الطلب";
+                
+                if (isCred) {
+                    borderColor = '#ff0000'; bgColor = 'rgba(255,0,0,0.08)'; textCol = '#ff4444';
+                    const curDebt = parseFloat(users[o.customerPhone]?.debtBalanceUSD) || 0;
+                    const limit = parseFloat(users[o.customerPhone]?.debtLimitUSD) || 100;
+                    bannerHtml = `<div style="background:linear-gradient(45deg,#ff0000,#cc0000); color:#fff; padding:6px 8px; border-radius:5px; font-weight:bold; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; text-shadow:1px 1px 2px rgba(0,0,0,0.5);"><span>🚨 طلب زبون آجل (دفتر الدين)</span><span>⏳ دين متوقع: $${(curDebt + (o.orderTotalUSD||0)).toFixed(2)} / السقف: $${limit}</span></div>`;
+                    warningHtml = `<div style="color:#ff4444; font-size:11px; font-weight:bold; margin-bottom:6px;">📌 طلب معتمد على الدفتر (لا يتطلب تحويل). سيتم القيد تلقائياً عند التأكيد.</div>`;
+                    confirmBtnStr = "✅ تأكيد الطلب وترحيل الدين فوراً";
+                } else if (isPrep) {
+                    borderColor = '#00e676'; bgColor = 'rgba(0,230,118,0.05)'; textCol = '#00e676';
+                    const remBal = (parseFloat(users[o.customerPhone]?.prepaidBalanceUSD) || 0) - (parseFloat(o.orderTotalUSD) || 0);
+                    bannerHtml = `<div style="background:linear-gradient(45deg,#00a152,#00e676); color:#000; padding:6px 8px; border-radius:5px; font-weight:900; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;"><span>🟢 طلب مدفوع مسبقاً (محفظة)</span><span>💰 متبقي بالمحفظة: $${remBal.toFixed(2)}</span></div>`;
+                    warningHtml = `<div style="color:var(--success-color); font-size:11px; font-weight:bold; margin-bottom:6px;">✨ هذا الطلب خالص ومخصوم مسبقاً، جاهز للتحويل الفوري للتوصيل!</div>`;
+                    confirmBtnStr = "✅ قبول الطلب وتحويله للسائق مباشرة";
                 }
 
-                const creditBanner = isCred
-                    ? `<div style="background:linear-gradient(45deg,#ff0000,#cc0000); color:#fff; padding:6px 8px; border-radius:5px; font-weight:bold; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; text-shadow:1px 1px 2px rgba(0,0,0,0.5);"><span>🚨 طلب زبون آجل (دفتر دين)</span><span>✅ لا ينتظر إشعار تحويل (${o.orderTotalUSD || 0} $)</span></div>`
-                    : `<div style="background:rgba(212,175,55,0.12); color:var(--gold-color); padding:4px 8px; border-radius:5px; font-size:10px; margin-bottom:6px;">💳 دفع شام كاش (بانتظار إشعار التحويل)</div>`;
                 const tamperAlert = isTampered ? `<div style="background:var(--danger-color); color:#fff; font-weight:bold; font-size:12px; padding:6px; border-radius:5px; margin-bottom:6px; text-align:center; animation:pulse 1s infinite;">⚠️ تنبيه: تم اكتشاف تلاعب في أسعار هذه الفاتورة! (المبلغ الحقيقي: ${expectedTotal.toLocaleString()} ل.س)</div>` : '';
-                return `<div class="adm-card" style="margin-bottom: 24px; border:3px solid ${isTampered ? 'var(--danger-color)' : (isCred ? '#ff0000' : 'var(--gold-color)')}; background:${isCred ? 'rgba(255,0,0,0.08)' : 'var(--bg-color)'}; color:${isCred ? '#ff4444' : 'inherit'};">
+                return `<div class="adm-card" style="margin-bottom: 24px; border:3px solid ${isTampered ? 'var(--danger-color)' : borderColor}; background:${bgColor}; color:${isCred ? '#ff4444' : 'inherit'};">
                     ${tamperAlert}
-                    ${creditBanner}
-                    <div style="display:flex; justify-content:space-between; color:${isCred ? '#ff4444' : 'var(--gold-color)'}; font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span></div>
-                    <div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress}</div>
-                    ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${o.notes}</div>` : ''}
-                    <div style="border-top:1px dashed ${isCred ? '#ff4444' : 'var(--border-color)'}; border-bottom:1px dashed ${isCred ? '#ff4444' : 'var(--border-color)'}; padding:6px 0; margin:6px 0;">${itemsHtml}</div>
-                    <div style="font-weight:bold; margin-bottom:8px;">الإجمالي مع التوصيل: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س ${isCred ? `<span style="color:#00e676;">(مقيد بالدين: ${o.orderTotalUSD} $)</span>` : ''}</div>
-                    <div style="margin-bottom:10px;"><button class="btn" style="width:100%; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-size:13px; padding:10px; font-weight:900; border-radius:6px; box-shadow:0 4px 12px rgba(0,176,255,0.25); text-shadow:0px 0px 1px rgba(0,0,0,0.2);" onclick="openOrderImagesModal('${id}')">🖼️ عرض صور وقطع الطلب لتجهيزها</button></div><div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000;" onclick="confirmOrder('${id}')">✅ تأكيد وخصم المخزون</button><button class="btn btn-danger" onclick="cancelOrder('${id}')">❌ إلغاء</button></div>
+                    ${bannerHtml}
+                    <div style="display:flex; justify-content:space-between; color:${textCol}; font-weight:bold; margin-bottom:4px;"><span>👤 ${escapeHTML(o.customerName)} (${escapeHTML(o.customerPhone)})</span><span>${o.timestamp}</span></div>
+                    <div style="margin-bottom:4px;">🏘️ ${escapeHTML(o.customerRegion)} | 📍 ${escapeHTML(o.customerAddress)} | 💳 ${payMethod}</div>
+                    ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${escapeHTML(o.notes)}</div>` : ''}
+                    <div style="border-top:1px dashed ${borderColor}; border-bottom:1px dashed ${borderColor}; padding:6px 0; margin:6px 0;">${itemsHtml}</div>
+                    <div style="font-weight:bold; margin-bottom:6px;">المطلوب تحصيله: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س ${isCred || isPrep ? `<span style="color:${textCol};">(${(o.orderTotalUSD||0).toFixed(2)} $)</span>` : ''}</div>
+                    ${warningHtml}
+                    <div style="margin-bottom:10px;"><button class="btn" style="width:100%; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-size:13px; padding:10px; font-weight:900; border-radius:6px; box-shadow:0 4px 12px rgba(0,176,255,0.25); text-shadow:0px 0px 1px rgba(0,0,0,0.2);" onclick="openOrderImagesModal('${id}')">🖼️ عرض صور وقطع الطلب لتجهيزها</button></div>
+                    <div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000; font-size:11px;" onclick="confirmOrder('${id}')">${confirmBtnStr}</button><button class="btn btn-danger" style="font-size:11px;" onclick="cancelOrder('${id}')">❌ إلغاء</button></div>
                 </div>`;
-            }).join("");
+}).join("");
         }
 
         function confirmOrder(orderId) {
