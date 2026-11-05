@@ -124,6 +124,7 @@
         <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
             <button id="exportManagerBtn" onclick="openExportManagerModal()" style="display:none; background:linear-gradient(45deg,#ff9800,#ff5722); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📦 إدارة التصدير</button>
             <button id="customerDebtBtn" onclick="openCustomerDebtModal()" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📒 دفتر الدين</button>
+            <button id="customerPrepaidBtn" onclick="openPrepaidModal()" style="display:none; background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">💳 محفظتي المسبقة</button>
             <button id="partnerDashboardBtn" onclick="openPartnerDashboard()" style="display:none; background:linear-gradient(45deg,#00b0ff,#7c4dff); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">🤝 لوحة الشريك</button>
             <button onclick="shareAppWhatsApp()" style="background:linear-gradient(45deg,#25D366,#128C7E); color:#fff; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer;">📢 مشاركة</button>
             <button id="redeemPointsBtn" onclick="redeemPointsWhatsApp()" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; border:none; padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; cursor:pointer; animation:pulse 1.5s infinite;">🎁 استبدال</button>
@@ -194,7 +195,16 @@
                     <span>النقاط المكتسبة:</span><strong>+<span id="modalCartPoints">0</span> نقطة 🎁</strong>
                 </div>
             </div>
-            <button type="button" onclick="copyWalletId()" class="btn" style="margin-bottom:8px; padding:9px; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000;">📋 نسخ كود محفظة شام كاش للدفع</button>
+            
+            <div id="paymentMethodSelectorBox" class="form-group" style="margin-bottom:8px;">
+                <label>💳 طريقة الدفع:</label>
+                <select id="cartPaymentMethodSelect" class="form-control" onchange="onCartPaymentMethodChange()" style="padding:6px; font-weight:bold;">
+                    <option value="sham">شام كاش (Sham Cash)</option>
+                    <option value="prepaid" id="prepaidOptOption" style="display:none; color:var(--success-color);">💳 خصم مباشر من رصيد المحفظة المسبقة ($)</option>
+                </select>
+            </div>
+            <button type="button" id="copyWalletBtnElement" onclick="copyWalletId()" class="btn" style="margin-bottom:8px; padding:9px; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000;">📋 نسخ كود محفظة شام كاش للدفع</button>
+
             <div class="form-group" style="margin-bottom:10px;"><input type="text" id="orderNotes" class="form-control" placeholder="📝 ملاحظات إضافية مع الطلب (اختياري)..."></div>
             <button type="button" onclick="submitOrder()" class="btn" style="background:linear-gradient(45deg,#00e676,#00c853); color:#000; margin-bottom:8px; font-size:14px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.45); animation:pulse 2s infinite;">✅ إرسال وتأكيد الطلب الآن</button>
             <button type="button" onclick="closeModal('cartModal')" class="btn btn-danger" style="padding:6px; font-size:11px;">إغلاق</button>
@@ -371,7 +381,20 @@
                         <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">نسبة الربح العامة</div><div class="stats-value" id="statProfitMargin">0%</div></div>
                     </div>
 
-                    <div class="adm-card" style="border-color:#00e676; background:rgba(0,230,118,0.07); margin:10px 0;">
+                    
+                    <div class="adm-card" style="border-color:#00b0ff; background:rgba(0,176,255,0.07); margin:10px 0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                            <div>
+                                <div style="color:#00b0ff; font-weight:bold; font-size:12px;">💳 إجمالي أرصدة المحافظ المسبقة (التزام للزبائن)</div>
+                                <div style="font-size:10px; color:var(--gray-text);">إجمالي الأموال المدفوعة مقدماً من كافة الزبائن ولم تُستهلك بعد</div>
+                            </div>
+                            <div style="text-align:left;">
+                                <div style="font-size:15px; font-weight:900; color:#fff;" id="statTotalPrepaidLiabilities">0.00 $ (0 ل.س)</div>
+                            </div>
+                        </div>
+                    </div>
+
+<div class="adm-card" style="border-color:#00e676; background:rgba(0,230,118,0.07); margin:10px 0;">
                         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
                             <div>
                                 <div style="color:#00e676; font-weight:bold; font-size:12px;">💳 إيرادات تسديدات الديون الواصلة للخزينة</div>
@@ -508,7 +531,11 @@
                 <div class="adm-sec" id="productFormSection">
                     <div class="adm-sec-title"><span>➕ إضافة / تعديل صنف في المتجر</span><button onclick="resetProductForm()" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">تفريغ الحقول</button></div>
                     <input type="hidden" id="editProductId">
-                    <div class="form-group"><label>اسم الصنف:</label><input type="text" id="prodName" class="form-control" placeholder="مثال: متة تاراوغوي 250غ"></div>
+                    <div class="form-group">
+    <label>اسم الصنف (مع اقتراحات ذكية للمنتجات الموجودة):</label>
+    <input type="text" id="prodName" class="form-control" list="existingProductsList" placeholder="مثال: متة تاراوغوي 250غ" oninput="onProdNameInput(this.value)" onchange="onProdNameChange(this.value)">
+    <datalist id="existingProductsList"></datalist>
+</div>
                     <div class="stats-grid">
                         <div class="form-group"><label>التكلفة ($):</label><input type="number" step="0.01" id="prodCostUSD" class="form-control"></div>
                         <div class="form-group"><label>المبيع مفرق ($):</label><input type="number" step="0.01" id="prodPriceUSD" class="form-control"></div>
@@ -625,6 +652,17 @@
                     </div>
                     <button onclick="clearCustomerDebtLedger()" class="btn btn-danger" style="margin-top:8px; padding:6px; font-size:11px;">🗑️ مسح وتصفير سجل الدين والرصيد للزبون</button>
                     <div id="adminCustomerDebtHistoryBox" style="max-height:180px; overflow-y:auto; margin-top:8px;"></div>
+
+                <div class="adm-card" style="border-color:var(--success-color); background:rgba(0,230,118,0.05); margin-top:10px;">
+                    <div style="color:var(--success-color); font-weight:bold; margin-bottom:6px;">💳 شحن رصيد المحفظة المسبقة للزبون ($)</div>
+                    <div class="form-group"><label>اختر الزبون:</label><select id="adminPrepaidCustomerSelect" class="form-control"><option value="">-- اختر زبون --</option></select></div>
+                    <div class="stats-grid">
+                        <div class="form-group"><label>المبلغ المراد شحنه ($):</label><input type="number" step="0.01" id="adminPrepaidDepositUSD" class="form-control" placeholder="مثال: 50"></div>
+                        <div class="form-group"><label>ملاحظة / بيان الشحن:</label><input type="text" id="adminPrepaidDepositNote" class="form-control" placeholder="مثال: استلام نقد باليد / تحويل شام كاش"></div>
+                    </div>
+                    <button onclick="recordAdminPrepaidDeposit()" class="btn" style="background:var(--success-color); color:#000;">📥 إضافة وشحن رصيد المحفظة</button>
+                </div>
+
                 </div>
 
                 <div class="adm-sec">
@@ -753,6 +791,7 @@
                     <option value="wholesale">زبون جملة</option>
                     <option value="neighbors">جيران المتجر (سعر مفرق + توصيل خاص)</option>
                     <option value="credit">زبون آجل / دفتر دين (حفظ القيمة بالدولار)</option>
+                    <option value="prepaid">زبون دفع مسبق / رصيد محفظة (Prepaid)</option>
                     <option value="partner">شريك (له لوحة أرباح ومخزون خاصة)</option>
                 </select>
             </div>
@@ -1117,7 +1156,7 @@
                 keys.forEach(k => { if (!shuffledProductKeys.includes(k)) shuffledProductKeys.push(k); });
             }
             localStorage.setItem("cache_products", JSON.stringify(products));
-            renderStore(); renderAdminProducts(); renderShortages(); renderStatsDashboard(); renderAdminInvoicesHistory();
+            renderStore(); renderAdminProducts(); populateExistingProductsDatalist(); renderShortages(); renderStatsDashboard(); renderAdminInvoicesHistory();
         });
 
         db.ref("specialOffers").on("value", snap => { specialOffers = snap.val() || {}; localStorage.setItem("cache_specialOffers", JSON.stringify(specialOffers));
@@ -1125,7 +1164,7 @@
         db.ref("users").on("value", snap => {
             users = snap.val() || {};
             syncCurrentUser(); renderAdminCustomers(); renderLeaderboard(); renderStatsDashboard(); renderAdminInvoicesHistory(); renderStore();
-            populateAdminPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); loadAdminCustomerDebtLedger();
+            populateAdminPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); populateAdminPrepaidCustomerSelect(); loadAdminCustomerDebtLedger();
             if ($("customerDebtModal")?.style.display === "block") renderCustomerDebtModalView();
         });
         db.ref("partnersConfig").on("value", snap => { window.partnersConfigData = snap.val() || {}; syncCurrentUser(); loadPartnerConfig(); renderStatsDashboard(); renderAdminInvoicesHistory(); });
@@ -1216,7 +1255,7 @@
             setTxt("userNameDisplay", currentUser.name);
             setTxt("userRegionBadge", currentUser.region ? `(${currentUser.region})` : "");
             const ut = currentUser.userType || "retail";
-            const badgeLabel = ut === "partner" ? "[شريك]" : ut === "neighbors" ? "[جيران المتجر]" : ut === "wholesale" ? "[جملة]" : ut === "credit" ? "[زبون آجل / دفتر]" : "[مفرق]";
+            const badgeLabel = ut === "partner" ? "[شريك]" : ut === "prepaid" ? "[دفع مسبق]" : ut === "neighbors" ? "[جيران المتجر]" : ut === "wholesale" ? "[جملة]" : ut === "credit" ? "[زبون آجل / دفتر]" : "[مفرق]";
             setTxt("userTypeBadge", badgeLabel);
             setTxt("userPoints", pts);
             setTxt("compUserPoints", pts);
@@ -1226,6 +1265,7 @@
             if ($("partnerDashboardBtn")) $("partnerDashboardBtn").style.display = (ut === "partner") ? "inline-block" : "none";
             if ($("customerDebtBtn")) $("customerDebtBtn").style.display = (ut === "credit") ? "inline-block" : "none";
             if ($("exportManagerBtn")) $("exportManagerBtn").style.display = (exportManagerPhoneGlobal && currentUser.phone === exportManagerPhoneGlobal) ? "inline-block" : "none";
+            if ($("customerPrepaidBtn")) $("customerPrepaidBtn").style.display = (ut === "prepaid" || (parseFloat(currentUser.prepaidBalanceUSD) || 0) > 0) ? "inline-block" : "none";
         }
 
         function redeemPointsWhatsApp() {
@@ -1312,7 +1352,7 @@
             if (nQty <= 0) delete cart[id]; else cart[id] = { ...item, qty: nQty };
             localStorage.setItem('moaath_cart', JSON.stringify(cart));
             renderStore();
-            if ($("cartModal")?.style.display === "flex") renderCartModalItems();
+            if ($("cartModal")?.style.display === "flex") renderCartModalItems(); onCartPaymentMethodSelectVisibility(); onCartPaymentMethodChange();
         }
 
         function getCurrentUserCreditMarkupPct() {
@@ -1344,6 +1384,37 @@
             } else bar.style.display = "none";
         }
 
+        
+        function onCartPaymentMethodSelectVisibility() {
+            const opt = $("prepaidOptOption");
+            const btn = $("copyWalletBtnElement");
+            const sel = $("cartPaymentMethodSelect");
+            if (!opt || !currentUser) return;
+            const u = users[currentUser.phone] || currentUser;
+            const bal = parseFloat(u.prepaidBalanceUSD) || 0;
+            
+            // let's calculate cart total in USD
+            let subUSD = 0;
+            Object.values(cart).forEach(i => { subUSD += (i.priceUSD * i.qty); });
+            const reg = $("cartRegionSelect")?.value || currentUser.region || Object.keys(deliveryFees)[0] || "العوينة";
+            const feeUSD = getRegionFee(reg) / exchangeRate;
+            const markupPct = currentUser.userType === 'credit' ? getCurrentUserCreditMarkupPct() : 0;
+            const totalUSD = (subUSD * (1 + markupPct / 100)) + feeUSD;
+            
+            if (bal > 0) {
+                opt.style.display = "block";
+                opt.textContent = `💳 الدفع من الرصيد المسبق (المتاح لديك: ${bal.toFixed(2)} $)`;
+            } else {
+                opt.style.display = "none";
+            }
+        }
+        
+        function onCartPaymentMethodChange() {
+            const m = $("cartPaymentMethodSelect")?.value;
+            const btn = $("copyWalletBtnElement");
+            if (btn) btn.style.display = (m === "prepaid") ? "none" : "block";
+        }
+
         function openCartModal() {
             if (!checkStoreWorkHours()) return;
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.region || !validatePhoneSyrian(currentUser.phone)) return openEditProfile();
@@ -1351,7 +1422,7 @@
             if (!isRegionOpenNow(reg)) return alert(`⚠️ خدمة التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
             populateRegionSelects();
             setVal("cartRegionSelect", reg);
-            renderCartModalItems();
+            renderCartModalItems(); onCartPaymentMethodSelectVisibility(); onCartPaymentMethodChange();
             if ($("cartModal")) $("cartModal").style.display = "flex";
         }
 
@@ -1363,7 +1434,7 @@
                 db.ref("users/" + currentUser.phone + "/region").set(reg);
                 setTxt("userRegionBadge", `(${reg})`);
             }
-            renderCartModalItems(); updateCartBar();
+            renderCartModalItems(); onCartPaymentMethodSelectVisibility(); onCartPaymentMethodChange(); updateCartBar();
         }
 
         function copyWalletId() {
@@ -1419,16 +1490,28 @@
             }
 
             const isCreditUser = (users[currentUser.phone]?.userType || currentUser.userType) === "credit";
-            const markupPct = getCurrentUserCreditMarkupPct();
+            const paymentMethodVal = $("cartPaymentMethodSelect")?.value || "sham";
+            const isPrepaidOrder = (paymentMethodVal === "prepaid");
+            
+            const markupPct = isCreditUser ? getCurrentUserCreditMarkupPct() : 0;
             const markupSYP = markupPct > 0 ? Math.round((subSale * markupPct) / 100) : 0;
             const finalTotalSYP = subSale + markupSYP + fee, orderId = "ORD_" + Date.now();
             const finalOrderUSD = parseFloat(((subUSD * (1 + markupPct / 100)) + (fee / exchangeRate)).toFixed(2));
+            
+            if (isPrepaidOrder) {
+                const u = users[currentUser.phone] || currentUser;
+                const bal = parseFloat(u.prepaidBalanceUSD) || 0;
+                if (bal < finalOrderUSD) {
+                    alert(`⚠️ عذراً، رصيد محفظتك المسبقة (${bal.toFixed(2)} $) لا يغطي إجمالي الطلب (${finalOrderUSD} $). يرجى الشحن أو اختيار شام كاش.`);
+                    return;
+                }
+            }
 
             const orderPayload = {
                 orderId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
                 customerName: currentUser.name, customerPhone: currentUser.phone, customerRegion: reg, customerAddress: currentUser.address,
                 isCreditOrder: isCreditUser, creditMarkupPct: markupPct, creditMarkupSYP: markupSYP, orderTotalUSD: finalOrderUSD,
-                paymentMethod: isCreditUser ? "آجل (دفتر الدين)" : "شام كاش (Sham Cash)",
+                paymentMethod: isCreditUser ? "آجل (دفتر الدين)" : (isPrepaidOrder ? "دفع مسبق (من المحفظة)" : "شام كاش (Sham Cash)"),
                 notes: ($("orderNotes")?.value || "").trim(), items: ordItems,
                 subtotalSaleSYP: subSale + markupSYP, deliveryFeeSYP: fee, totalSaleSYP: finalTotalSYP, totalCostSYP: totCost, netProfitSYP: (subSale + markupSYP) - totCost, earnedPoints: totPts
             };
@@ -1465,6 +1548,36 @@
             cart = {}; localStorage.setItem('moaath_cart', '{}'); setVal("orderNotes", "");
             closeModal('cartModal'); renderStore();
             window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
+        }
+
+        
+        function openPrepaidModal() {
+            if (!currentUser?.phone) return;
+            const u = users[currentUser.phone] || currentUser;
+            const balUSD = parseFloat(u.prepaidBalanceUSD) || 0;
+            setTxt("userPrepaidBalanceUSD", balUSD.toFixed(2));
+            setTxt("userPrepaidBalanceSYP", calcSYP(balUSD).toLocaleString());
+            
+            const list = $("userPrepaidHistoryList");
+            if (list) {
+                const entries = Object.values(u.prepaidLedger || {}).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
+                list.innerHTML = !entries.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد حركات مسجلة في المحفظة حتى الآن.</p>` :
+                    entries.map(e => {
+                        const isDep = e.type === "deposit";
+                        const amtUSD = parseFloat(e.amountUSD || 0).toFixed(2);
+                        return `<div class="adm-card" style="border-color:${isDep ? 'var(--success-color)' : '#ff9800'};">
+                            <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:4px;">
+                                <span style="color:${isDep ? 'var(--success-color)' : '#ff9800'};">${isDep ? '📥 شحنة رصيد مسبق' : '🛒 خصم ثمن طلب'}</span>
+                                <span style="color:var(--gray-text); font-size:11px;">${e.dateStr || ''}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:12px;">${e.note || '-'}</span>
+                                <strong style="font-size:13px; color:${isDep ? 'var(--success-color)' : '#ff4444'};">${isDep ? '+' : '-'}${amtUSD} $</strong>
+                            </div>
+                        </div>`;
+                    }).join("");
+            }
+            if ($("prepaidModal")) $("prepaidModal").style.display = "block";
         }
 
         function openCustomerDebtModal() {
@@ -1506,6 +1619,39 @@
                     </div>
                 </div>`;
             }).join("");
+        }
+
+        
+        function populateAdminPrepaidCustomerSelect() {
+            const sel = $("adminPrepaidCustomerSelect"); if (!sel) return;
+            const cur = sel.value;
+            const allUsers = Object.values(users);
+            sel.innerHTML = '<option value="">-- اختر زبون --</option>' + allUsers.map(u => `<option value="${u.phone}">${u.name} (${u.phone}) - محفظة: ${(parseFloat(u.prepaidBalanceUSD) || 0).toFixed(2)} $</option>`).join("");
+            if (cur && users[cur]) sel.value = cur;
+        }
+
+        function recordAdminPrepaidDeposit() {
+            const phone = $("adminPrepaidCustomerSelect")?.value;
+            if (!phone || !users[phone]) return alert("⚠️ يرجى اختيار الزبون أولاً.");
+            const depUSD = parseFloat($("adminPrepaidDepositUSD")?.value) || 0;
+            if (depUSD <= 0) return alert("⚠️ يرجى إدخال مبلغ الشحن بالدولار.");
+            const note = ($("adminPrepaidDepositNote")?.value || "").trim() || "شحن رصيد محفظة مسبقة";
+            const u = users[phone];
+            const currentBal = parseFloat(u.prepaidBalanceUSD) || 0;
+            const newBal = parseFloat((currentBal + depUSD).toFixed(2));
+            const txId = "DEP_" + Date.now(), now = new Date();
+
+            const updates = {};
+            updates[`users/${phone}/prepaidBalanceUSD`] = newBal;
+            updates[`users/${phone}/prepaidLedger/${txId}`] = {
+                id: txId, type: "deposit", amountUSD: depUSD,
+                note, dateISO: now.toISOString(), dateStr: now.toLocaleString("ar-SY")
+            };
+            db.ref().update(updates).then(() => {
+                setVal("adminPrepaidDepositUSD", ""); setVal("adminPrepaidDepositNote", "");
+                alert(`✅ تم شحن رصيد المحفظة بنجاح بقيمة (${depUSD} $) للزبون ${u.name}!
+الرصيد الإجمالي الجديد: ${newBal} $`);
+            });
         }
 
         function populateAdminDebtCustomerSelect() {
@@ -1972,7 +2118,14 @@
             const importManagerFinalSYP = Math.round((importMgrAdminPool * impPct) / 100);
             const exportManagerFinalSYP = Math.round((exportMgrAdminPool * expPct) / 100);
 
-            window.latestStatsSnapshot = { totS, totC, netP, capBoxSYP, importManagerFinalSYP, exportManagerFinalSYP, drvNetSYP, maintFundSYP, debtCollectionsSYP, debtCollectionsUSD };
+            
+            let totalPrepaidUSD = 0;
+            Object.values(users).forEach(u => {
+                totalPrepaidUSD += (parseFloat(u.prepaidBalanceUSD) || 0);
+            });
+            setTxt("statTotalPrepaidLiabilities", `${totalPrepaidUSD.toFixed(2)} $ (${calcSYP(totalPrepaidUSD).toLocaleString()} ل.س)`);
+
+            window.latestStatsSnapshot = { totS, totC, netP, capBoxSYP, importManagerFinalSYP, exportManagerFinalSYP, drvNetSYP, maintFundSYP, debtCollectionsSYP, debtCollectionsUSD, totalPrepaidUSD };
 
             setTxt("statTotalSales", totS.toLocaleString() + " ل.س");
             setTxt("statTotalCost", totC.toLocaleString() + " ل.س");
@@ -2084,7 +2237,42 @@
             db.ref("completedOrdersHistory").update(updates).then(() => alert(`✅ تم تصفير المبيعات بنجاح!`));
         }
 
-        async function saveProduct() {
+        async 
+        function populateExistingProductsDatalist() {
+            const list = $("existingProductsList");
+            if (!list) return;
+            list.innerHTML = Object.values(products).map(p => `<option value="${p.name}">`).join("");
+        }
+
+        function onProdNameInput(val) {
+            populateExistingProductsDatalist();
+        }
+
+        function onProdNameChange(val) {
+            const cleanName = (val || "").trim().toLowerCase();
+            if (!cleanName) return;
+            // Find if product already exists by name
+            const foundId = Object.keys(products).find(id => products[id].name && products[id].name.trim().toLowerCase() === cleanName);
+            if (foundId) {
+                const p = products[foundId];
+                if (confirm(`✨ تم العثور على صنف موجود مسبقاً باسم "${p.name}". هل تريد استيراد بياناته السابقة للتعديل عليها؟`)) {
+                    setVal("editProductId", foundId);
+                    setVal("prodCostUSD", p.costPrice || 0);
+                    setVal("prodPriceUSD", p.priceUSD || 0);
+                    setVal("prodWholesaleUSD", p.wholesaleUSD || 0);
+                    setVal("prodStock", p.stock || 0);
+                    setVal("prodAlertLimit", p.alertLimit || 2);
+                    setVal("prodPointsPct", p.pointsPct || 2);
+                    setVal("prodCategory", p.category || "");
+                    setVal("prodSupplierSelect", p.supplierId || "");
+                    setVal("prodUnitType", p.unitType || "قطعة");
+                    setVal("prodUnitsPerPack", p.unitsPerPack || 1);
+                    setVal("prodTargetOrderPacks", p.targetOrderPacks || 5);
+                }
+            }
+        }
+
+        function saveProduct() {
             const editId = $("editProductId").value, name = $("prodName").value.trim(), costPrice = parseFloat($("prodCostUSD").value) || 0, priceUSD = parseFloat($("prodPriceUSD").value) || 0, wholesaleUSD = parseFloat($("prodWholesaleUSD").value) || 0, stock = parseInt($("prodStock").value) || 0, alertLimit = parseInt($("prodAlertLimit").value) || 2, pointsPct = parseFloat($("prodPointsPct").value) || 2, category = $("prodCategory").value, supplierId = $("prodSupplierSelect").value;
             const unitType = $("prodUnitType").value || "قطعة", unitsPerPack = parseInt($("prodUnitsPerPack").value) || 1, targetOrderPacks = parseInt($("prodTargetOrderPacks").value) || 5;
             const f = $("prodImageInput");
@@ -2249,7 +2437,7 @@
                 alert("✅ تم تحديث بيانات الزبون ورقم هاتفه بنجاح دون فقدان سجله أو نقاطه!");
                 closeModal('adminEditCustomerModal');
                 populateAdminPartnerSelect();
-                populateAdminDebtCustomerSelect();
+                populateAdminDebtCustomerSelect(); populateAdminPrepaidCustomerSelect();
             });
         }
 
@@ -2299,7 +2487,7 @@
                 adminClickCount = 0;
                 if (localStorage.getItem("moaath_admin_unlocked") === "true") {
                     $("adminModal").style.display = "flex";
-                    renderStatsDashboard(); renderAdminInvoicesHistory(); populateAdminPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); populatePartnerSelectOptions();
+                    renderStatsDashboard(); renderAdminInvoicesHistory(); populateAdminPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); populateAdminPrepaidCustomerSelect(); populatePartnerSelectOptions();
                     return;
                 }
                 const pass = prompt("🔐 كلمة مرور الإدارة:");
@@ -2307,7 +2495,7 @@
                 if (verifyAdminPass(pass.trim())) {
                     localStorage.setItem("moaath_admin_unlocked", "true");
                     $("adminModal").style.display = "flex";
-                    renderStatsDashboard(); renderAdminInvoicesHistory(); populateAdminPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); populatePartnerSelectOptions();
+                    renderStatsDashboard(); renderAdminInvoicesHistory(); populateAdminPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); populateAdminPrepaidCustomerSelect(); populatePartnerSelectOptions();
                 } else alert("❌ كلمة المرور غير صحيحة!");
             } else adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 1800);
         }
@@ -2424,6 +2612,20 @@
                     id: txId, type: "debt", baseAmountUSD: parseFloat((finalOrderUSD / (1 + (o.creditMarkupPct||0)/100)).toFixed(2)), feePct: o.creditMarkupPct || 0, finalAmountUSD: finalOrderUSD,
                     note: `فاتورة #${orderId.slice(-6)}: ` + (o.items || []).map(i => `${i.name} (×${i.qty})`).join('، '),
                     items: o.items || [],
+                    dateISO: now.toISOString(), dateStr: now.toLocaleString("ar-SY")
+                };
+            }
+            
+            if (o.paymentMethod === "دفع مسبق (من المحفظة)" && o.orderTotalUSD) {
+                const uBal = parseFloat(users[phone]?.prepaidBalanceUSD) || 0;
+                const ordUSD = parseFloat(o.orderTotalUSD) || 0;
+                const newPrepaid = Math.max(0, parseFloat((uBal - ordUSD).toFixed(2)));
+                updates[`users/${phone}/prepaidBalanceUSD`] = newPrepaid;
+                
+                const pTxId = "PREPAID_ORD_" + orderId, now = new Date();
+                updates[`users/${phone}/prepaidLedger/${pTxId}`] = {
+                    id: pTxId, type: "withdrawal", amountUSD: ordUSD,
+                    note: `خصم ثمن فاتورة #${orderId.slice(-6)}`,
                     dateISO: now.toISOString(), dateStr: now.toLocaleString("ar-SY")
                 };
             }
@@ -2761,6 +2963,25 @@
             </div>
             <div id="orderImagesGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; max-height:60vh; overflow-y:auto;"></div>
             <button onclick="closeModal('orderImagesModal')" class="btn" style="margin-top:12px;">إغلاق</button>
+        </div>
+    </div>
+
+
+    <div id="prepaidModal" class="page-overlay">
+        <header style="position:sticky; top:0; z-index:10;">
+            <div class="store-info"><h1>💳 المحفظة المسبقة للرصيد</h1><p>رصيدك المدفوع مقدماً للتسوق السريع بدون معامللات دفع متكررة</p></div>
+            <button onclick="closeModal('prepaidModal')" class="btn btn-danger" style="width:auto; padding:6px 12px;">🔙 رجوع</button>
+        </header>
+        <div class="container">
+            <div class="comp-card" style="text-align:center; border-color:var(--success-color); background:linear-gradient(45deg,rgba(0,230,118,0.12),var(--card-bg));">
+                <div style="font-size:12px; color:var(--gray-text);">رصيدك المتاح في المحفظة حالياً</div>
+                <div style="font-size:26px; font-weight:900; color:var(--success-color); margin:6px 0;"><span id="userPrepaidBalanceUSD">0.00</span> $</div>
+                <div style="font-size:15px; font-weight:bold; color:var(--gold-color);">ما يعادل: <span id="userPrepaidBalanceSYP">0</span> ل.س</div>
+            </div>
+            <div class="comp-card">
+                <h3 style="color:var(--gold-color); margin:0 0 10px 0; font-size:14px;">📜 سجل شحنات واستهلاكات المحفظة المسبقة</h3>
+                <div id="userPrepaidHistoryList"></div>
+            </div>
         </div>
     </div>
 
