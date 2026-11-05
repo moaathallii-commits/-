@@ -825,7 +825,7 @@
         let workHoursSettings = { enabled: false, open: "08:00", close: "23:00" };
         let categories = ["الكل"], selectedCategory = "الكل", products = {}, specialOffers = {}, suppliers = {};
         let highResImagesMemoryCache = {}, noHighResAvailableSet = {}, shuffledProductKeys = [];
-        let cart = JSON.parse(localStorage.getItem('moaath_cart')) || {}, users = {}, isUsersLoaded = false, pendingOrders = {}, completedOrdersHistory = {}, missingRequests = {};
+        let cart = JSON.parse(localStorage.getItem('moaath_cart')) || {}, users = {}, pendingOrders = {}, completedOrdersHistory = {}, missingRequests = {};
         let storeExpenses = {}, treasuryDebtCollections = {};
         let adminAccounting = {
             importManagerPct: 50,
@@ -1159,7 +1159,7 @@
             renderSpecialOffers(); renderAdminOffersList(); renderStatsDashboard(); renderAdminInvoicesHistory(); });
         db.ref("users").on("value", snap => {
             users = snap.val() || {};
-            isUsersLoaded = true;
+            isUsersFetched = true;
             syncCurrentUser(); renderAdminCustomers(); renderLeaderboard(); renderStatsDashboard(); renderAdminInvoicesHistory(); renderStore();
             populateAdminPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); loadAdminCustomerDebtLedger();
             if ($("customerDebtModal")?.style.display === "block") renderCustomerDebtModalView();
@@ -1239,8 +1239,8 @@
                     pointsVisibility: $("regPointsVisibility").value
                 };
 
+                users[newPhone] = updatedData; // Optimistic update
                 currentUser = updatedData;
-                users[newPhone] = updatedData; // Update local cache instantly
                 localStorage.setItem("moaath_user", JSON.stringify(currentUser));
                 db.ref("users/" + newPhone).update(updatedData);
                 closeModal('profileModal'); syncCurrentUser(); updateCartBar(); checkStoreWorkHours();
@@ -1257,8 +1257,8 @@
                 };
                 if (oldPhone && oldPhone !== newPhone) db.ref("users/" + oldPhone).remove();
 
+                users[newPhone] = updatedData; // Optimistic update
                 currentUser = updatedData;
-                users[newPhone] = updatedData; // Update local cache instantly
                 localStorage.setItem("moaath_user", JSON.stringify(currentUser));
                 db.ref("users/" + newPhone).update(updatedData);
                 closeModal('profileModal'); syncCurrentUser(); updateCartBar(); checkStoreWorkHours();
@@ -1275,26 +1275,25 @@
         function syncCurrentUser() {
             if (!currentUser?.phone) return;
             
-            if (isUsersLoaded && !users[currentUser.phone]) {
-                alert("⚠️ تم حذف حسابك من قبل الإدارة. يرجى التسجيل من جديد.");
-                localStorage.removeItem("moaath_user");
-                currentUser = null;
-                location.reload();
-                return;
-            }
-
-            if (users[currentUser.phone]) {
-                if (users[currentUser.phone].banned) {
-                    alert("🚫 حسابك محظور من قبل الإدارة.");
+            if (isUsersFetched) {
+                if (users[currentUser.phone]) {
+                    if (users[currentUser.phone].banned) {
+                        alert("🚫 حسابك محظور من قبل الإدارة.");
+                        localStorage.removeItem("moaath_user");
+                        currentUser = null;
+                        location.reload();
+                        return;
+                    }
+                    currentUser = { ...currentUser, ...users[currentUser.phone] }; 
+                    localStorage.setItem("moaath_user", JSON.stringify(currentUser)); 
+                } else {
+                    alert("⚠️ تم حذف حسابك من قبل الإدارة. يرجى التسجيل من جديد.");
                     localStorage.removeItem("moaath_user");
                     currentUser = null;
                     location.reload();
                     return;
                 }
-                currentUser = { ...currentUser, ...users[currentUser.phone] }; 
-                localStorage.setItem("moaath_user", JSON.stringify(currentUser)); 
             }
-            
             const pts = Math.round(currentUser.points || 0), rank = calculateUserRank(currentUser.phone);
             setTxt("userNameDisplay", currentUser.name);
             setTxt("userRegionBadge", currentUser.region ? `(${currentUser.region})` : "");
@@ -2460,6 +2459,7 @@
             reader.readAsText(file);
         }
 
+        let isUsersFetched = false;
         let adminClickCount = 0, adminClickTimer = null;
         function handleAdminTrigger() {
             adminClickCount++; clearTimeout(adminClickTimer);
