@@ -2375,12 +2375,17 @@
             const f = $("prodImageInput");
             if (!name || priceUSD <= 0) return alert("يرجى إدخال اسم الصنف وسعر المبيع.");
             const id = editId || ("PROD_" + Date.now()); let thumb = products[id]?.thumb || "";
-            if (f.files?.[0]) { const comp = await compressDualImages(f.files[0]); thumb = comp.thumb; highResImagesMemoryCache[id] = comp.image; await db.ref("productImages/" + id).set(comp.image); }
-            db.ref("products/" + id).set({
-                name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, supplierId,
-                unitType, unitsPerPack, targetOrderPacks,
-                thumb, reviews: products[id]?.reviews || {}
-            }).then(() => { resetProductForm(); alert("✅ تم حفظ الصنف بنجاح!"); });
+            try {
+                if (f.files?.[0]) { const comp = await compressDualImages(f.files[0]); thumb = comp.thumb; highResImagesMemoryCache[id] = comp.image; await db.ref("productImages/" + id).set(comp.image); }
+                await db.ref("products/" + id).set({
+                    name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, supplierId,
+                    unitType, unitsPerPack, targetOrderPacks,
+                    thumb, reviews: products[id]?.reviews || {}
+                });
+                resetProductForm(); alert("✅ تم حفظ الصنف بنجاح!");
+            } catch (err) {
+                alert("❌ خطأ في الصلاحيات أو الاتصال أثناء الحفظ: " + err.message);
+            }
         }
 
         function resetProductForm() {
@@ -2435,8 +2440,13 @@
             const editId = $("editOfferId").value, name = $("offerNameInput").value.trim(), costPrice = parseFloat($("offerCostInput").value) || 0, oldPriceUSD = parseFloat($("offerOldPriceInput").value) || 0, newPriceUSD = parseFloat($("offerNewPriceInput").value) || 0, wholesaleUSD = parseFloat($("offerWholesaleInput").value) || 0, stock = parseInt($("offerStockInput").value) || 0, pointsPct = parseFloat($("offerPointsPctInput").value) || 2, f = $("offerImageInput");
             if (!name || newPriceUSD <= 0) return alert("أدخل اسم وسعر العرض.");
             const id = editId || ("OFFER_" + Date.now()); let thumb = specialOffers[id]?.thumb || "", image = specialOffers[id]?.image || "";
-            if (f.files?.[0]) { const comp = await compressDualImages(f.files[0]); thumb = comp.thumb; image = comp.image; }
-            db.ref("specialOffers/" + id).set({ name, costPrice, oldPriceUSD, newPriceUSD, wholesaleUSD, stock, pointsPct, thumb, image, active: true }).then(() => { clearOfferForm(); alert("✅ تم حفظ العرض الخاص!"); });
+            try {
+                if (f.files?.[0]) { const comp = await compressDualImages(f.files[0]); thumb = comp.thumb; image = comp.image; }
+                await db.ref("specialOffers/" + id).set({ name, costPrice, oldPriceUSD, newPriceUSD, wholesaleUSD, stock, pointsPct, thumb, image, active: true });
+                clearOfferForm(); alert("✅ تم حفظ العرض الخاص!");
+            } catch (err) {
+                alert("❌ خطأ في الصلاحيات أو الاتصال أثناء الحفظ: " + err.message);
+            }
         }
         function clearOfferForm() { ["editOfferId", "offerNameInput", "offerCostInput", "offerOldPriceInput", "offerNewPriceInput", "offerWholesaleInput", "offerImageInput"].forEach(k => setVal(k, "")); setVal("offerStockInput", "5"); }
         function editOffer(id) { const so = specialOffers[id]; if (!so) return; setVal("editOfferId", id); setVal("offerNameInput", so.name || ""); setVal("offerCostInput", so.costPrice || 0); setVal("offerOldPriceInput", so.oldPriceUSD || 0); setVal("offerNewPriceInput", so.newPriceUSD || 0); setVal("offerWholesaleInput", so.wholesaleUSD || 0); setVal("offerStockInput", so.stock || 0); setVal("offerPointsPctInput", so.pointsPct || 2); }
