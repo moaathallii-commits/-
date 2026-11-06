@@ -807,7 +807,7 @@
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">✏️ تعديل بيانات الزبون، الهاتف، والرتبة</h3>
             <input type="hidden" id="adminCustOrigPhone">
             <div class="form-group"><label>الاسم:</label><input type="text" id="adminCustName" class="form-control"></div>
-            <div class="form-group"><label>رقم الهاتف (يمكنك تصحيحه مع نقل كافة بياناته وسجله):</label><input type="tel" id="adminCustPhone" class="form-control" maxlength="10"></div>
+            <div class="form-group"><label>رقم الهاتف (لا يمكن تغييره لارتباطه بنظام المصادقة الأمني):</label><input type="tel" id="adminCustPhone" class="form-control" maxlength="10" disabled style="background:#333; cursor:not-allowed;"></div>
             <div class="form-group"><label>المنطقة:</label><select id="adminCustRegion" class="form-control"></select></div>
             <div class="form-group">
                 <label>نوع الحساب (يحدد من الإدارة حصراً):</label>
@@ -1284,6 +1284,10 @@
                     return db.ref("users/" + phone).set(userData).then(() => {
                         $("authErrorMsg").textContent = "";
                         $("authModal").style.display = "none";
+                        currentUser = userData;
+                        localStorage.setItem("moaath_user", JSON.stringify(currentUser));
+                        syncCurrentUser();
+                        updateCartBar();
                     });
                 })
                 .catch(err => {
@@ -1320,6 +1324,8 @@
                         syncCurrentUser();
                         updateCartBar();
                     }
+                    // If snap doesn't exist, it means handleRegister hasn't finished writing DB yet.
+                    // We safely ignore it here; handleRegister's .then() will update the UI correctly.
                 });
             } else {
                 $("authModal").style.display = "flex";
@@ -1373,6 +1379,22 @@
             const ut = currentUser.userType || "retail";
             const badgeLabel = ut === "partner" ? "[شريك]" : ut === "neighbors" ? "[جيران المتجر]" : ut === "wholesale" ? "[جملة]" : ut === "credit" ? "[زبون آجل / دفتر]" : "[مفرق]";
             setTxt("userTypeBadge", badgeLabel);
+            
+            const prepBalUSD = parseFloat(currentUser.prepaidBalanceUSD) || 0;
+            const prepBox = $("userPrepaidBadge");
+            if (prepBalUSD > 0) {
+                if (!prepBox) {
+                    const el = document.createElement("span");
+                    el.id = "userPrepaidBadge";
+                    el.style.cssText = "background:rgba(0,230,118,0.15); color:var(--success-color); border:1px solid var(--success-color); padding:2px 7px; border-radius:12px; font-size:10px; font-weight:bold; cursor:help;";
+                    el.title = "رصيد مدفوع مسبقاً جاهز للاستخدام";
+                    $("userNameDisplay").parentNode.insertBefore(el, $("userNameDisplay").nextSibling);
+                }
+                const balSYP = calcSYP(prepBalUSD);
+                $("userPrepaidBadge").innerHTML = `💳 رصيدي: ${balSYP.toLocaleString()} ل.س`;
+            } else if (prepBox) {
+                prepBox.remove();
+            }
             setTxt("userPoints", pts);
             setTxt("compUserPoints", pts);
             if ($("userRankBadge")) { $("userRankBadge").style.display = rank !== "-" ? "inline-flex" : "none"; setTxt("userRankBadge", `🏅 ترتيبي: ${rank}`); }
@@ -1542,28 +1564,33 @@
             const prepaidBalUSD = parseFloat(u?.prepaidBalanceUSD) || 0;
             
             const paySelect = $("cartPaymentMethod");
-            const currPay = paySelect ? paySelect.value : "شام كاش";
+            const currPay = paySelect ? paySelect.value : ""; // Get current selection if any
             
-            // Rebuild payment options dynamically based on balance and type
-            let payOptionsHtml = `<option value="شام كاش">شام كاش (الدفع الفوري)</option>`;
-            if (isCreditUser) payOptionsHtml += `<option value="آجل (دفتر الدين)">دفتر الدين (الدفع الآجل)</option>`;
-            
-            // Calculate temp order USD to check if prepaid covers it (without markup, since prepaid is cash)
+            // Calculate temp order USD to check if prepaid covers it
             const feeSYP_temp = getRegionFee($("cartRegionSelect")?.value || u?.region || Object.keys(deliveryFees)[0] || "العوينة");
             const subUSD_temp = Object.values(cart).reduce((a,i) => a + (i.priceUSD * i.qty), 0);
             const totalUSD_temp = parseFloat((subUSD_temp + (feeSYP_temp / exchangeRate)).toFixed(2));
             
-            if (prepaidBalUSD > 0) {
-                if (prepaidBalUSD >= totalUSD_temp) {
-                    payOptionsHtml += `<option value="محفظة مسبقة الدفع">محفظة الدفع المسبق (رصيدك: $${prepaidBalUSD.toFixed(2)})</option>`;
-                } else {
-                    payOptionsHtml += `<option value="شام كاش" disabled>محفظة المسبق (رصيدك $${prepaidBalUSD.toFixed(2)} لا يكفي)</option>`;
-                }
+            let payOptionsHtml = "";
+            let canUsePrepaid = (prepaidBalUSD > 0 && prepaidBalUSD >= totalUSD_temp);
+            
+            // If prepaid is sufficient, make it the FIRST (default) option
+            if (canUsePrepaid) {
+                payOptionsHtml += `<option value="محفظة مسبقة الدفع">محفظة الدفع المسبق (رصيدك: $${prepaidBalUSD.toFixed(2)})</option>`;
+            }
+            
+            payOptionsHtml += `<option value="شام كاش">شام كاش (الدفع الفوري)</option>`;
+            
+            if (isCreditUser) payOptionsHtml += `<option value="آجل (دفتر الدين)">دفتر الدين (الدفع الآجل)</option>`;
+            
+            if (prepaidBalUSD > 0 && !canUsePrepaid) {
+                payOptionsHtml += `<option value="disabled_prep" disabled>محفظة المسبق (رصيدك $${prepaidBalUSD.toFixed(2)} لا يكفي)</option>`;
             }
             
             if (paySelect) {
                 paySelect.innerHTML = payOptionsHtml;
-                if (paySelect.querySelector(`option[value="${currPay}"]`) && !paySelect.querySelector(`option[value="${currPay}"]`).disabled) {
+                // Preserve previous selection if it's still valid, otherwise it defaults to the first option
+                if (currPay && paySelect.querySelector(`option[value="${currPay}"]`) && !paySelect.querySelector(`option[value="${currPay}"]`).disabled) {
                     paySelect.value = currPay;
                 }
             }
@@ -1648,18 +1675,30 @@
             const updates = {};
             updates[`pendingOrders/${orderId}`] = orderPayload;
             const u = users[currentUser.phone] || {};
+            
+            // Security Fix: Calculate currently pending limits to prevent rapid simultaneous ordering exploits
+            let pendingDebt = 0;
+            let pendingPrepaid = 0;
+            Object.values(pendingOrders || {}).forEach(po => {
+                if (po.customerPhone === currentUser.phone) {
+                    if (po.paymentMethod === "آجل (دفتر الدين)") pendingDebt += (parseFloat(po.orderTotalUSD) || 0);
+                    if (po.paymentMethod === "محفظة مسبقة الدفع") pendingPrepaid += (parseFloat(po.orderTotalUSD) || 0);
+                }
+            });
+
             if (isCreditUser) {
                 const currentDebt = parseFloat(u.debtBalanceUSD) || 0;
                 const debtLimit = parseFloat(u.debtLimitUSD) || 100;
-                const newDebt = parseFloat((currentDebt + finalOrderUSD).toFixed(2));
+                const newDebt = parseFloat((currentDebt + pendingDebt + finalOrderUSD).toFixed(2));
                 if (newDebt > debtLimit) {
-                    alert(`⚠️ عذراً، لا يمكن إتمام الطلب لأن إجمالي الدين (${newDebt} $) سيتجاوز سقف الديون المسموح به لحسابك (${debtLimit} $). يرجى تسديد دفعة.`);
+                    alert(`⚠️ عذراً، لا يمكن إتمام الطلب! إجمالي ديونك الحالية مع طلباتك المعلقة (${newDebt} $) يتجاوز سقفك المسموح (${debtLimit} $).`);
                     return;
                 }
             } else if (isPrepaidUser) {
                 const prepaidBal = parseFloat(u.prepaidBalanceUSD) || 0;
-                if (prepaidBal < finalOrderUSD) {
-                    alert(`⚠️ عذراً، رصيد محفظتك المسبقة ($${prepaidBal.toFixed(2)}) لا يغطي إجمالي الطلب ($${finalOrderUSD}).`);
+                const availablePrep = parseFloat((prepaidBal - pendingPrepaid).toFixed(2));
+                if (availablePrep < finalOrderUSD) {
+                    alert(`⚠️ عذراً، رصيد محفظتك المتاح بعد حجز طلباتك المعلقة ($${availablePrep}) لا يغطي هذا الطلب ($${finalOrderUSD}).`);
                     return;
                 }
             }
@@ -2467,16 +2506,13 @@
         }
 
         function saveAdminCustomerEdit() {
-            const oldPhone = $("adminCustOrigPhone").value;
-            const newPhone = $("adminCustPhone").value.trim().replace(/\s+/g, "");
-            if (!oldPhone || !users[oldPhone]) return;
-            if (!validatePhoneSyrian(newPhone)) return alert("⚠️ رقم الهاتف غير صالح. يجب أن يتكون من 10 خانات ويبدأ بـ 09.");
+            const phone = $("adminCustOrigPhone").value;
+            if (!phone || !users[phone]) return;
 
-            const u = users[oldPhone];
+            const u = users[phone];
             const updatedData = {
                 ...u,
                 name: $("adminCustName").value.trim(),
-                phone: newPhone,
                 region: $("adminCustRegion").value,
                 userType: $("adminCustType").value,
                 creditMarkupPct: parseFloat($("adminCustMarkupModalInput")?.value) || 0,
@@ -2485,14 +2521,8 @@
                 points: parseFloat($("adminCustPoints").value) || 0
             };
 
-            const updates = {};
-            if (oldPhone !== newPhone) {
-                updates["users/" + oldPhone] = null;
-            }
-            updates["users/" + newPhone] = updatedData;
-
-            db.ref().update(updates).then(() => {
-                alert("✅ تم تحديث بيانات الزبون ورقم هاتفه بنجاح دون فقدان سجله أو نقاطه!");
+            db.ref("users/" + phone).update(updatedData).then(() => {
+                alert("✅ تم تحديث بيانات الزبون بنجاح!");
                 closeModal('adminEditCustomerModal');
                 populateAdminPartnerSelect();
                 populateAdminDebtCustomerSelect();
@@ -2671,6 +2701,10 @@
             
             if (payMethod === "آجل (دفتر الدين)" && finalOrderUSD) {
                 const currentDebt = parseFloat(users[phone]?.debtBalanceUSD) || 0;
+                const limit = parseFloat(users[phone]?.debtLimitUSD) || 100;
+                if ((currentDebt + finalOrderUSD) > limit) {
+                    if (!confirm(`⚠️ تحذير إداري: تأكيد هذا الطلب سيتجاوز سقف ديون الزبون المسموح! هل أنت متأكد من الاستمرار وترحيل الدين؟`)) return;
+                }
                 updates[`users/${phone}/debtBalanceUSD`] = parseFloat((currentDebt + finalOrderUSD).toFixed(2));
                 const txId = "DEBT_ORD_" + orderId;
                 updates[`users/${phone}/debtLedger/${txId}`] = {
@@ -2681,6 +2715,10 @@
                 };
             } else if (payMethod === "محفظة مسبقة الدفع" && finalOrderUSD) {
                 const currentPrep = parseFloat(users[phone]?.prepaidBalanceUSD) || 0;
+                if (currentPrep < finalOrderUSD) {
+                    alert(`❌ خطأ أمني: رصيد محفظة الزبون المسبق حالياً ($${currentPrep}) لم يعد يكفي لتغطية هذا الطلب ($${finalOrderUSD})! ربما تم استهلاك الرصيد في طلب آخر. لا يمكن التأكيد.`);
+                    return; // Abort confirmation
+                }
                 updates[`users/${phone}/prepaidBalanceUSD`] = Math.max(0, parseFloat((currentPrep - finalOrderUSD).toFixed(2)));
                 const txId = "PREP_ORD_" + orderId;
                 updates[`users/${phone}/prepaidLedger/${txId}`] = {
