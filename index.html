@@ -999,25 +999,13 @@
             $("themeColorMeta")?.setAttribute("content", isLight ? "#F0F2F5" : "#121212");
         }
 
-        function compressDualImages(file) {
-            return new Promise((res, rej) => {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const resize = (maxW, q) => {
-                            const c = document.createElement("canvas");
-                            let w = img.width, h = img.height;
-                            if (w > maxW) { h = Math.max(1, Math.round((h * maxW) / w)); w = maxW; }
-                            c.width = w; c.height = h; c.getContext("2d").drawImage(img, 0, 0, w, h);
-                            return c.toDataURL("image/jpeg", q);
-                        };
-                        res({ thumb: resize(36, 0.15), image: resize(360, 0.65) });
-                    };
-                    img.onerror = rej; img.src = e.target.result;
-                };
-                reader.onerror = rej; reader.readAsDataURL(file);
-            });
+        async function uploadToImgBB(file) {
+            const formData = new FormData();
+            formData.append("image", file);
+            const res = await fetch("https://api.imgbb.com/1/upload?key=6afbd42dcbe7973b83a6e39de0c32e28", { method: "POST", body: formData });
+            const json = await res.json();
+            if (json.success) return { url: json.data.url, thumb: json.data.thumb.url };
+            throw new Error(json.error?.message || "فشل رفع الصورة");
         }
 
         const getRegionFee = r => {
@@ -1446,8 +1434,9 @@
                 const revs = p.reviews || {}, rKeys = Object.keys(revs), avg = rKeys.length ? (rKeys.reduce((a, k) => a + (revs[k].rating || 0), 0) / rKeys.length).toFixed(1) : 0;
                 const bought = currentUser?.phone && users[currentUser.phone]?.purchases?.[id];
                 const revBtn = (bought && !currentUser.banned) ? `<button onclick="openReviewModal('${id}')" class="btn" style="background:transparent; border:1px solid var(--gold-color); color:var(--gold-color); margin-top:5px; font-size:11px; padding:4px;">⭐ قيّم الصنف</button>` : "";
-                const src = getLockedHighResImage(id) || p.thumb || p.image || "store-icon.png";
-                html += `<div class="product-card"><div><div class="product-img-wrap"><img id="prod_img_${id}" src="${src}" class="product-img ${highResImagesMemoryCache[id] ? 'img-high-res' : 'img-low-res'}"></div><h3>${pName}</h3><p>${priceSYP.toLocaleString()} ل.س ${isW && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>${rKeys.length ? `<div style="font-size:11px; color:var(--gold-color);">⭐ ${avg} (${rKeys.length})</div>` : ''}</div><div style="margin-top:6px;">${btn}${revBtn}</div></div>`;
+                const src = p.image || getLockedHighResImage(id) || p.thumb || "store-icon.png";
+                const isHighRes = !!(p.image || highResImagesMemoryCache[id]);
+                html += `<div class="product-card"><div><div class="product-img-wrap"><img id="prod_img_${id}" src="${src}" class="product-img ${isHighRes ? 'img-high-res' : 'img-low-res'}"></div><h3>${pName}</h3><p>${priceSYP.toLocaleString()} ل.س ${isW && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>${rKeys.length ? `<div style="font-size:11px; color:var(--gold-color);">⭐ ${avg} (${rKeys.length})</div>` : ''}</div><div style="margin-top:6px;">${btn}${revBtn}</div></div>`;
             });
             grid.innerHTML = html || `<p style="grid-column:span 2; text-align:center; color:var(--gray-text);">لا توجد مواد مطابقة للبحث.</p>`;
             updateCartBar();
@@ -1458,7 +1447,7 @@
         async function loadHighResImagesInBatches() {
             if (isBatchLoadingImages) return;
             isBatchLoadingImages = true;
-            const keys = Object.keys(products).filter(id => !highResImagesMemoryCache[id] && !noHighResAvailableSet[id]);
+            const keys = Object.keys(products).filter(id => !highResImagesMemoryCache[id] && !noHighResAvailableSet[id] && !products[id].image);
             for (let i = 0; i < keys.length; i += 3) {
                 await Promise.all(keys.slice(i, i + 3).map(async id => {
                     try {
@@ -2374,13 +2363,20 @@
             const unitType = $("prodUnitType").value || "قطعة", unitsPerPack = parseInt($("prodUnitsPerPack").value) || 1, targetOrderPacks = parseInt($("prodTargetOrderPacks").value) || 5;
             const f = $("prodImageInput");
             if (!name || priceUSD <= 0) return alert("يرجى إدخال اسم الصنف وسعر المبيع.");
-            const id = editId || ("PROD_" + Date.now()); let thumb = products[id]?.thumb || "";
+            const id = editId || ("PROD_" + Date.now()); 
+            let thumb = products[id]?.thumb || "";
+            let image = products[id]?.image || "";
             try {
-                if (f.files?.[0]) { const comp = await compressDualImages(f.files[0]); thumb = comp.thumb; highResImagesMemoryCache[id] = comp.image; await db.ref("productImages/" + id).set(comp.image); }
+                if (f.files?.[0]) { 
+                    $("authErrorMsg") ? $("authErrorMsg").textContent = "⏳ جاري رفع الصورة..." : null;
+                    const uploaded = await uploadToImgBB(f.files[0]); 
+                    thumb = uploaded.thumb; 
+                    image = uploaded.url; 
+                }
                 await db.ref("products/" + id).set({
                     name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, supplierId,
                     unitType, unitsPerPack, targetOrderPacks,
-                    thumb, reviews: products[id]?.reviews || {}
+                    thumb, image, reviews: products[id]?.reviews || {}
                 });
                 resetProductForm(); alert("✅ تم حفظ الصنف بنجاح!");
             } catch (err) {
@@ -2441,7 +2437,7 @@
             if (!name || newPriceUSD <= 0) return alert("أدخل اسم وسعر العرض.");
             const id = editId || ("OFFER_" + Date.now()); let thumb = specialOffers[id]?.thumb || "", image = specialOffers[id]?.image || "";
             try {
-                if (f.files?.[0]) { const comp = await compressDualImages(f.files[0]); thumb = comp.thumb; image = comp.image; }
+                if (f.files?.[0]) { const uploaded = await uploadToImgBB(f.files[0]); thumb = uploaded.thumb; image = uploaded.url; }
                 await db.ref("specialOffers/" + id).set({ name, costPrice, oldPriceUSD, newPriceUSD, wholesaleUSD, stock, pointsPct, thumb, image, active: true });
                 clearOfferForm(); alert("✅ تم حفظ العرض الخاص!");
             } catch (err) {
@@ -2541,8 +2537,11 @@
 
         async function saveCompetitionSettings() {
             const f = $("compImageInput"); let image = compSettings.image || "";
-            if (f.files?.[0]) image = (await compressDualImages(f.files[0])).image;
-            db.ref("competition").set({ minRedeemPoints: parseInt($("minRedeemPointsInput").value) || 500, leaderboardLimit: parseInt($("leaderboardLimitInput").value) || 10, title: $("compTitleInput").value.trim(), desc: $("compDescInput").value.trim(), image }).then(() => alert("✅ تم حفظ إعدادات المسابقة والمتصدرين!"));
+            try {
+                if (f.files?.[0]) image = (await uploadToImgBB(f.files[0])).url;
+                await db.ref("competition").set({ minRedeemPoints: parseInt($("minRedeemPointsInput").value) || 500, leaderboardLimit: parseInt($("leaderboardLimitInput").value) || 10, title: $("compTitleInput").value.trim(), desc: $("compDescInput").value.trim(), image });
+                alert("✅ تم حفظ إعدادات المسابقة والمتصدرين!");
+            } catch(e) { alert("❌ خطأ: " + e.message); }
         }
 
         function saveGeneralSettings() {
@@ -2614,7 +2613,7 @@
             
             grid.innerHTML = o.items.map(i => {
                 const p = products[i.id] || specialOffers[i.id] || {};
-                const imgSrc = getLockedHighResImage(i.id) || p.thumb || p.image || 'store-icon.png';
+                const imgSrc = p.image || getLockedHighResImage(i.id) || p.thumb || 'store-icon.png';
                 return `<div class="adm-card" style="text-align:center; padding:8px; margin:0; background:var(--bg-color);">
                     <div style="width:100%; aspect-ratio:9/16; border-radius:6px; overflow:hidden; background:#111; margin-bottom:6px; border:1px solid var(--gold-color);">
                         <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;">
