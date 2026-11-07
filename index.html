@@ -90,6 +90,12 @@
         .page-overlay header .store-info h1 { font-size:15px; color:var(--gold-color); margin:0 0 2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .page-overlay header .store-info p { font-size:11px; color:var(--gray-text); margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
+    
+        /* Toast Notification Styling */
+        #toastContainer { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; width: 90%; max-width: 350px; text-align: center; }
+        .toast-msg { background: rgba(30, 30, 30, 0.95); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 12px; font-weight: bold; border: 1px solid var(--gold-color); box-shadow: 0 4px 15px rgba(0,0,0,0.5); pointer-events: auto; animation: fadeInOut 2.5s ease forwards; }
+        @keyframes fadeInOut { 0% { opacity: 0; transform: translateY(-10px); } 15% { opacity: 1; transform: translateY(0); } 85% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-10px); } }
+
     </style>
 </head>
 <body>
@@ -831,6 +837,22 @@
 
     <script>
         const $ = id => document.getElementById(id);
+
+        function showToast(message, isError = false) {
+            let container = document.getElementById("toastContainer");
+            if (!container) {
+                container = document.createElement("div");
+                container.id = "toastContainer";
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement("div");
+            toast.className = "toast-msg";
+            if (isError) toast.style.borderColor = "var(--danger-color)";
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 2500);
+        }
+
         const setTxt = (id, v) => { const el = $(id); if (el) el.textContent = v; };
         const setVal = (id, v) => { const el = $(id); if (el) el.value = v; };
         const closeModal = id => { if ($(id)) $(id).style.display = "none"; };
@@ -1474,7 +1496,7 @@
                 item = { id, name: p.name || "", category: p.category || "غير مصنف", priceUSD: parseFloat((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD) || 0, costPrice: parseFloat(p.costPrice) || 0, stock: parseInt(p.stock) || 0, pointsPct: parseFloat(p.pointsPct) || 2 };
             }
             const nQty = (cart[id] ? cart[id].qty : 0) + delta;
-            if (nQty > item.stock) return alert("⚠️ الكمية المطلوبة غير متوفرة بالكامل بالمخزون!");
+            if (nQty > item.stock) return showToast("⚠️ الكمية المطلوبة غير متوفرة بالكامل بالمخزون!", true);
             if (nQty <= 0) delete cart[id]; else cart[id] = { ...item, qty: nQty };
             localStorage.setItem('moaath_cart', JSON.stringify(cart));
             renderStore();
