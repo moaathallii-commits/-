@@ -186,7 +186,10 @@
             <span style="font-size:11px; color:var(--gray-text);">المنتجات: <b id="cartCount" style="color:var(--text-color);">0</b> <small id="cartBarDeliveryNote" style="color:var(--gold-color);"></small></span>
             <span style="font-size:12px;">المجموع النهائي: <strong id="cartTotal" class="cart-bar-total-val">0 ل.س</strong></span>
         </div>
-        <button class="cart-bar-btn" type="button" onclick="event.stopPropagation(); openCartModal();">🛒 إتمام الطلب الآن</button>
+        <div style="display:flex; align-items:center; gap:6px;">
+            <button type="button" onclick="event.stopPropagation(); clearCartQuick();" style="background:rgba(255,68,68,0.2); color:var(--danger-color); border:1px solid var(--danger-color); border-radius:50%; width:36px; height:36px; font-size:14px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;" title="إفراغ السلة فوراً">🗑️</button>
+            <button class="cart-bar-btn" type="button" onclick="event.stopPropagation(); openCartModal();">🛒 إتمام الطلب الآن</button>
+        </div>
     </div>
 
     <div id="profileModal" class="modal-overlay">
@@ -1358,8 +1361,8 @@
         }, {passive: true});
 
         function handlePullToRefresh() {
-            // If scrolled to top and pulled down by more than 120px
-            if (window.scrollY === 0 && (touchendY - touchstartY) > 120) {
+            // If scrolled to top and pulled down by more than 220px (less sensitive to avoid accidental reloads)
+            if (window.scrollY === 0 && (touchendY - touchstartY) > 220) {
                 showToast("🔄 جاري تحديث الصفحة...", false);
                 setTimeout(() => {
                     location.reload();
@@ -1508,6 +1511,16 @@
                 }));
             }
             isBatchLoadingImages = false;
+        }
+
+        
+        function clearCartQuick() {
+            if (confirm("هل تريد إفراغ السلة بالكامل؟")) {
+                cart = {};
+                localStorage.setItem('moaath_cart', '{}');
+                renderStore();
+                showToast("🗑️ تم إفراغ السلة بنجاح", true);
+            }
         }
 
         function changeQty(id, delta) {
