@@ -552,29 +552,10 @@
                     <input type="hidden" id="editOfferId">
                     <div class="form-group"><label>اسم العرض:</label><input type="text" id="offerNameInput" class="form-control" placeholder="مثال: بكج المتة والضيافة"></div>
                     <div class="stats-grid">
-                        <div class="form-group">
-                            <label>التكلفة (ل.س):</label>
-                            <input type="number" id="offerCostSYP" class="form-control" oninput="updateLiveUSD('offerCostSYP', 'offerCostUSDPreview', 'offerCostInput')">
-                            <small id="offerCostUSDPreview" style="color:var(--success-color); font-size:10px; font-weight:bold;">≈ 0.00 $</small>
-                            <input type="hidden" id="offerCostInput">
-                        </div>
-                        <div class="form-group">
-                            <label>السعر القديم (ل.س):</label>
-                            <input type="number" id="offerOldSYP" class="form-control" oninput="updateLiveUSD('offerOldSYP', 'offerOldUSDPreview', 'offerOldPriceInput')">
-                            <small id="offerOldUSDPreview" style="color:var(--success-color); font-size:10px; font-weight:bold;">≈ 0.00 $</small>
-                            <input type="hidden" id="offerOldPriceInput">
-                        </div>
-                        <div class="form-group">
-                            <label>سعر العرض (ل.س):</label>
-                            <input type="number" id="offerNewSYP" class="form-control" oninput="updateLiveUSD('offerNewSYP', 'offerNewUSDPreview', 'offerNewPriceInput')">
-                            <small id="offerNewUSDPreview" style="color:var(--success-color); font-size:10px; font-weight:bold;">≈ 0.00 $</small>
-                            <input type="hidden" id="offerNewPriceInput">
-                        </div>
-                        <div class="form-group">
-                            <label>جملة العرض (ل.س):</label><input type="number" id="offerWholesaleSYP" class="form-control" oninput="updateLiveUSD('offerWholesaleSYP', 'offerWholesaleUSDPreview', 'offerWholesaleInput')">
-                            <small id="offerWholesaleUSDPreview" style="color:var(--success-color); font-size:10px; font-weight:bold;">≈ 0.00 $</small>
-                            <input type="hidden" id="offerWholesaleInput">
-                        </div>
+                        <div class="form-group"><label>التكلفة ($):</label><input type="number" step="0.01" id="offerCostInput" class="form-control"></div>
+                        <div class="form-group"><label>السعر القديم ($):</label><input type="number" step="0.01" id="offerOldPriceInput" class="form-control"></div>
+                        <div class="form-group"><label>سعر العرض ($):</label><input type="number" step="0.01" id="offerNewPriceInput" class="form-control"></div>
+                        <div class="form-group"><label>جملة العرض ($):</label><input type="number" step="0.01" id="offerWholesaleInput" class="form-control"></div>
                         <div class="form-group"><label>الكمية المتاحة:</label><input type="number" id="offerStockInput" class="form-control" value="5"></div>
                         <div class="form-group"><label>نسبة النقاط (%):</label><input type="number" step="0.1" id="offerPointsPctInput" class="form-control" value="2"></div>
                     </div>
@@ -590,24 +571,9 @@
                     <input type="hidden" id="editProductId">
                     <div class="form-group"><label>اسم الصنف:</label><input type="text" id="prodName" class="form-control" placeholder="مثال: متة تاراوغوي 250غ"></div>
                     <div class="stats-grid">
-                        <div class="form-group">
-                            <label>التكلفة (ل.س):</label>
-                            <input type="number" id="prodCostSYP" class="form-control" oninput="updateLiveUSD('prodCostSYP', 'prodCostUSDPreview', 'prodCostUSD')">
-                            <small id="prodCostUSDPreview" style="color:var(--success-color); font-size:10px; font-weight:bold;">≈ 0.00 $</small>
-                            <input type="hidden" id="prodCostUSD">
-                        </div>
-                        <div class="form-group">
-                            <label>المبيع مفرق (ل.س):</label>
-                            <input type="number" id="prodPriceSYP" class="form-control" oninput="updateLiveUSD('prodPriceSYP', 'prodPriceUSDPreview', 'prodPriceUSD')">
-                            <small id="prodPriceUSDPreview" style="color:var(--success-color); font-size:10px; font-weight:bold;">≈ 0.00 $</small>
-                            <input type="hidden" id="prodPriceUSD">
-                        </div>
-                        <div class="form-group">
-                            <label>سعر الجملة (ل.س):</label>
-                            <input type="number" id="prodWorkflowSYP" class="form-control" oninput="updateLiveUSD('prodWorkflowSYP', 'prodWholesaleUSDPreview', 'prodWholesaleUSD')">
-                            <small id="prodWholesaleUSDPreview" style="color:var(--success-color); font-size:10px; font-weight:bold;">≈ 0.00 $</small>
-                            <input type="hidden" id="prodWholesaleUSD">
-                        </div>
+                        <div class="form-group"><label>التكلفة ($):</label><input type="number" step="0.01" id="prodCostUSD" class="form-control"></div>
+                        <div class="form-group"><label>المبيع مفرق ($):</label><input type="number" step="0.01" id="prodPriceUSD" class="form-control"></div>
+                        <div class="form-group"><label>سعر الجملة ($):</label><input type="number" step="0.01" id="prodWholesaleUSD" class="form-control"></div>
                         <div class="form-group"><label>الكمية المتوفرة (بالقطعة):</label><input type="number" id="prodStock" class="form-control" value="10"></div>
                         <div class="form-group"><label>حد تنبيه النواقص:</label><input type="number" id="prodAlertLimit" class="form-control" value="2"></div>
                         <div class="form-group"><label>نسبة النقاط (%):</label><input type="number" step="0.1" id="prodPointsPct" class="form-control" value="2"></div>
@@ -638,6 +604,16 @@
                     <div class="stats-grid">
                         <div class="form-group"><label>التصنيف:</label><select id="prodCategory" class="form-control"></select></div>
                         <div class="form-group"><label>الموزع المعتمد:</label><select id="prodSupplierSelect" class="form-control"><option value="">-- بدون موزع --</option></select></div>
+                    </div>
+                    <div class="stats-grid" style="background:rgba(0,176,255,0.05); padding:8px; border-radius:6px; border:1px dashed var(--info-color); margin-bottom:10px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label style="color:#00b0ff;">🤝 شريك مخصص لهذه القطعة (اختياري):</label>
+                            <select id="prodPartnerSelect" class="form-control"><option value="">-- عام (حسب تصنيف القسم) --</option></select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label style="color:#00b0ff;">📈 نسبة ربح الشريك بالقطعة (%):</label>
+                            <input type="number" step="0.5" id="prodPartnerPctInput" class="form-control" value="20" min="0" max="100">
+                        </div>
                     </div>
                     <div class="form-group"><label>صورة المنتج:</label><input type="file" id="prodImageInput" accept="image/*" class="form-control"></div>
                     <button onclick="saveProduct()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ الصنف في المتجر</button>
@@ -708,12 +684,7 @@
                             <div style="font-size:11px; color:var(--gray-text);">رصيد الزبون الحالي: <b id="admPrepaidCurrUSD" style="color:var(--text-color); font-size:14px;">0.00 $</b></div>
                         </div>
                         <div class="stats-grid">
-                            <div class="form-group">
-                                <label>مبلغ الشحن الجديد (ل.س):</label>
-                                <input type="number" id="newPrepaidAmountSYP" class="form-control" oninput="updateLiveUSD('newPrepaidAmountSYP', 'newPrepaidUSDPreview', 'newPrepaidAmountUSD')" placeholder="مثال: 500000">
-                                <small id="newPrepaidUSDPreview" style="color:var(--success-color); font-size:10px; font-weight:bold;">≈ 0.00 $</small>
-                                <input type="hidden" id="newPrepaidAmountUSD">
-                            </div>
+                            <div class="form-group"><label>مبلغ الشحن الجديد ($):</label><input type="number" step="0.01" id="newPrepaidAmountUSD" class="form-control" placeholder="مثال: 50"></div>
                             <div class="form-group"><label>بيان الشحن (طريقة القبض):</label><input type="text" id="newPrepaidNote" class="form-control" placeholder="مثال: حوالة شام كاش / نقد باليد"></div>
                         </div>
                         <button onclick="addAdminCustomerPrepaid()" class="btn" style="background:var(--success-color); color:#000;">➕ شحن المحفظة فوراً</button>
@@ -1230,7 +1201,7 @@
             renderCategories(); renderAdminCategories(d); populatePartnerSelectOptions(); renderStatsDashboard(); renderAdminInvoicesHistory();
         });
 
-        db.ref("suppliers").on("value", snap => { suppliers = snap.val() || {}; renderAdminSuppliers(); populateSupplierSelect(); renderShortages(); });
+        db.ref("suppliers").on("value", snap => { suppliers = snap.val() || {}; renderAdminSuppliers(); populateSupplierSelect(); populateProductPartnerSelect(); renderShortages(); });
 
         db.ref("products").on("value", snap => {
             products = snap.val() || {};
@@ -1553,14 +1524,6 @@
         }
 
         
-        
-        function updateLiveUSD(sypInputId, previewId, usdHiddenId) {
-            const sypVal = parseFloat($(sypInputId)?.value) || 0;
-            const usdVal = exchangeRate > 0 ? parseFloat((sypVal / exchangeRate).toFixed(2)) : 0;
-            setVal(usdHiddenId, usdVal);
-            setTxt(previewId, `≈ ${usdVal.toFixed(2)} $`);
-        }
-
         function clearCartQuick() {
             if (confirm("هل تريد إفراغ السلة بالكامل؟")) {
                 cart = {};
@@ -2321,7 +2284,8 @@
                     const sS = i.subSaleSYP || 0, sC = i.subCostSYP || 0, sP = i.netProfitSYP !== undefined ? i.netProfitSYP : (sS - sC), sQ = i.qty || 1;
 
                     if (ordISO > capReset) capBoxSYP += sC;
-                    const partnerSharePct = getCategoryPartnerSharePct(c);
+                    const partnerInfo = getItemPartnerShareInfo(i.id, c);
+                    const partnerSharePct = partnerInfo.pct;
                     const adminPureItemProfit = Math.round((sP * (100 - partnerSharePct)) / 100);
                     if (ordISO > impReset) importMgrAdminPool += adminPureItemProfit;
                     if (ordISO > expReset) exportMgrAdminPool += adminPureItemProfit;
@@ -2480,9 +2444,12 @@
                     thumb = uploaded.thumb; 
                     image = uploaded.url; 
                 }
+                const partnerPhone = $("prodPartnerSelect").value;
+                const partnerPct = parseFloat($("prodPartnerPctInput").value) || 0;
                 await db.ref("products/" + id).set({
                     name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, supplierId,
                     unitType, unitsPerPack, targetOrderPacks,
+                    partnerPhone, partnerPct,
                     thumb, image, reviews: products[id]?.reviews || {}
                 });
                 resetProductForm(); alert("✅ تم حفظ الصنف بنجاح!");
@@ -2492,28 +2459,13 @@
         }
 
         function resetProductForm() {
-            ["editProductId", "prodName", "prodCostUSD", "prodCostSYP", "prodPriceUSD", "prodPriceSYP", "prodWholesaleUSD", "prodWorkflowSYP", "prodImageInput", "prodSupplierSelect"].forEach(k => setVal(k, ""));
-            ["prodCostUSDPreview", "prodPriceUSDPreview", "prodWholesaleUSDPreview"].forEach(k => setTxt(k, "≈ 0.00 $"));
+            ["editProductId", "prodName", "prodCostUSD", "prodPriceUSD", "prodWholesaleUSD", "prodImageInput", "prodSupplierSelect"].forEach(k => setVal(k, ""));
             setVal("prodStock", "10"); setVal("prodUnitsPerPack", "1"); setVal("prodTargetOrderPacks", "5"); setVal("prodUnitType", "قطعة");
         }
 
         function editProduct(id) {
             const p = products[id]; if (!p) return;
-            setVal("editProductId", id); setVal("prodName", p.name || ""); 
-            
-            setVal("prodCostUSD", p.costPrice || 0); 
-            setVal("prodCostSYP", Math.round((p.costPrice || 0) * exchangeRate)); 
-            setTxt("prodCostUSDPreview", `≈ ${(parseFloat(p.costPrice)||0).toFixed(2)} $`);
-
-            setVal("prodPriceUSD", p.priceUSD || 0); 
-            setVal("prodPriceSYP", Math.round((p.priceUSD || 0) * exchangeRate)); 
-            setTxt("prodPriceUSDPreview", `≈ ${(parseFloat(p.priceUSD)||0).toFixed(2)} $`);
-
-            setVal("prodWholesaleUSD", p.wholesaleUSD || 0); 
-            setVal("prodWorkflowSYP", Math.round((p.wholesaleUSD || 0) * exchangeRate)); 
-            setTxt("prodWholesaleUSDPreview", `≈ ${(parseFloat(p.wholesaleUSD)||0).toFixed(2)} $`);
-
-            setVal("prodStock", p.stock || 0); setVal("prodAlertLimit", p.alertLimit || 2); setVal("prodPointsPct", p.pointsPct || 2); setVal("prodCategory", p.category || ""); setVal("prodSupplierSelect", p.supplierId || "");
+            setVal("editProductId", id); setVal("prodName", p.name || ""); setVal("prodCostUSD", p.costPrice || 0); setVal("prodPriceUSD", p.priceUSD || 0); setVal("prodWholesaleUSD", p.wholesaleUSD || 0); setVal("prodStock", p.stock || 0); setVal("prodAlertLimit", p.alertLimit || 2); setVal("prodPointsPct", p.pointsPct || 2); setVal("prodCategory", p.category || ""); setVal("prodSupplierSelect", p.supplierId || "");
             setVal("prodUnitType", p.unitType || "قطعة"); setVal("prodUnitsPerPack", p.unitsPerPack || 1); setVal("prodTargetOrderPacks", p.targetOrderPacks || 5);
             $("productFormSection")?.scrollIntoView({ behavior: "smooth" });
         }
@@ -2566,22 +2518,8 @@
                 alert("❌ خطأ في الصلاحيات أو الاتصال أثناء الحفظ: " + err.message);
             }
         }
-        function clearOfferForm() { 
-            ["editOfferId", "offerNameInput", "offerCostInput", "offerCostSYP", "offerOldPriceInput", "offerOldSYP", "offerNewPriceInput", "offerNewSYP", "offerWholesaleInput", "offerWholesaleSYP", "offerImageInput"].forEach(k => setVal(k, "")); 
-            ["offerCostUSDPreview", "offerOldUSDPreview", "offerNewUSDPreview", "offerWholesaleUSDPreview"].forEach(k => setTxt(k, "≈ 0.00 $"));
-            setVal("offerStockInput", "5"); 
-        }
-        function editOffer(id) { 
-            const so = specialOffers[id]; if (!so) return; 
-            setVal("editOfferId", id); setVal("offerNameInput", so.name || ""); 
-            
-            setVal("offerCostInput", so.costPrice || 0); setVal("offerCostSYP", Math.round((so.costPrice||0)*exchangeRate)); setTxt("offerCostUSDPreview", `≈ ${(parseFloat(so.costPrice)||0).toFixed(2)} $`);
-            setVal("offerOldPriceInput", so.oldPriceUSD || 0); setVal("offerOldSYP", Math.round((so.oldPriceUSD||0)*exchangeRate)); setTxt("offerOldUSDPreview", `≈ ${(parseFloat(so.oldPriceUSD)||0).toFixed(2)} $`);
-            setVal("offerNewPriceInput", so.newPriceUSD || 0); setVal("offerNewSYP", Math.round((so.newPriceUSD||0)*exchangeRate)); setTxt("offerNewUSDPreview", `≈ ${(parseFloat(so.newPriceUSD)||0).toFixed(2)} $`);
-            setVal("offerWholesaleInput", so.wholesaleUSD || 0); setVal("offerWholesaleSYP", Math.round((so.wholesaleUSD||0)*exchangeRate)); setTxt("offerWholesaleUSDPreview", `≈ ${(parseFloat(so.wholesaleUSD)||0).toFixed(2)} $`);
-
-            setVal("offerStockInput", so.stock || 0); setVal("offerPointsPctInput", so.pointsPct || 2); 
-        }
+        function clearOfferForm() { ["editOfferId", "offerNameInput", "offerCostInput", "offerOldPriceInput", "offerNewPriceInput", "offerWholesaleInput", "offerImageInput"].forEach(k => setVal(k, "")); setVal("offerStockInput", "5"); }
+        function editOffer(id) { const so = specialOffers[id]; if (!so) return; setVal("editOfferId", id); setVal("offerNameInput", so.name || ""); setVal("offerCostInput", so.costPrice || 0); setVal("offerOldPriceInput", so.oldPriceUSD || 0); setVal("offerNewPriceInput", so.newPriceUSD || 0); setVal("offerWholesaleInput", so.wholesaleUSD || 0); setVal("offerStockInput", so.stock || 0); setVal("offerPointsPctInput", so.pointsPct || 2); }
         function deleteOffer(id) { if (confirm("حذف هذا العرض؟")) db.ref("specialOffers/" + id).remove(); }
         function renderAdminOffersList() {
             const container = $("adminOffersList"); if (!container) return;
@@ -2905,6 +2843,16 @@
                 keys.map(id => `<div class="adm-card"><div style="display:flex; justify-content:space-between;"><b>🚚 ${suppliers[id].name}</b><div style="display:flex; gap:4px;"><button onclick="editSupplier('${id}')" class="btn" style="width:auto; padding:3px 6px; font-size:10px;">✏️</button><button onclick="deleteSupplier('${id}')" class="btn btn-danger" style="width:auto; padding:3px 6px; font-size:10px;">🗑️</button></div></div><small style="color:var(--gray-text);">العنوان: ${suppliers[id].address || '-'} | الهاتف: ${suppliers[id].phone || '-'}</small></div>`).join("");
         }
 
+        
+        function populateProductPartnerSelect() {
+            const sel = $("prodPartnerSelect");
+            if (!sel) return;
+            const cur = sel.value;
+            const partners = Object.values(users).filter(u => u.userType === "partner");
+            sel.innerHTML = '<option value="">-- عام (حسب تصنيف القسم) --</option>' + partners.map(p => `<option value="${p.phone}">🤝 الشريك: ${p.name} (${p.phone})</option>`).join("");
+            if (cur) sel.value = cur;
+        }
+
         function populateSupplierSelect() {
             const sel = $("prodSupplierSelect"); if (!sel) return;
             const cur = sel.value;
@@ -2992,12 +2940,16 @@
             const conf = (window.partnersConfigData && window.partnersConfigData[phone]) || {};
             const rawCats = conf.categories || [];
             const allowedCats = rawCats.map(c => c.trim().toLowerCase());
-            const partnerPct = parseFloat(conf.profitPct) || 20;
+            const defaultPartnerPct = parseFloat(conf.profitPct) || 20;
             const lastSettlementISO = conf.lastSettlementISO || "2000-01-01T00:00:00.000Z";
 
             let totSales = 0, totEarn = 0, totalItemsCount = 0, totalStockUnits = 0, totalStockValueUSD = 0, totalStockValueSYP = 0, partnerItemsMap = {};
-            Object.values(products).forEach(p => {
-                if (allowedCats.includes((p.category || "").trim().toLowerCase())) {
+            
+            Object.keys(products).forEach(pid => {
+                const p = products[pid];
+                const info = getItemPartnerShareInfo(pid, p.category);
+                const isAssigned = (p.partnerPhone === phone) || (info.phone === phone && !p.partnerPhone);
+                if (isAssigned) {
                     const st = Math.max(0, parseInt(p.stock) || 0);
                     totalItemsCount++; totalStockUnits += st;
                     const valUSD = st * (parseFloat(p.costPrice) || 0);
@@ -3006,17 +2958,23 @@
                     partnerItemsMap[p.name] = { cat: p.category, stock: st, qtySold: 0, sales: 0, earn: 0 };
                 }
             });
+
             Object.values(completedOrdersHistory).forEach(ord => {
                 if ((ord.dateISO || new Date().toISOString()) > lastSettlementISO) {
                     (ord.items || []).forEach(item => {
-                        if (allowedCats.includes((item.category || "").trim().toLowerCase())) {
+                        const info = getItemPartnerShareInfo(item.id, item.category);
+                        const pObj = products[item.id];
+                        const isAssigned = (pObj?.partnerPhone === phone) || (info.phone === phone && !pObj?.partnerPhone);
+                        if (isAssigned) {
+                            const pPct = (pObj?.partnerPhone === phone) ? (parseFloat(pObj.partnerPct) || 20) : info.pct;
                             const sSale = item.subSaleSYP || 0, sProfit = item.netProfitSYP !== undefined ? item.netProfitSYP : (sSale - (item.subCostSYP || 0));
-                            const earn = Math.round((sProfit * partnerPct) / 100);
+                            const earn = Math.round((sProfit * pPct) / 100);
                             totSales += sSale; totEarn += earn;
-                            if (!partnerItemsMap[item.name]) partnerItemsMap[item.name] = { cat: item.category || "-", stock: 0, qtySold: 0, sales: 0, earn: 0 };
-                            partnerItemsMap[item.name].qtySold += (item.qty || 1);
-                            partnerItemsMap[item.name].sales += sSale;
-                            partnerItemsMap[item.name].earn += earn;
+                            const itemName = item.name || "صنف";
+                            if (!partnerItemsMap[itemName]) partnerItemsMap[itemName] = { cat: item.category || "-", stock: 0, qtySold: 0, sales: 0, earn: 0 };
+                            partnerItemsMap[itemName].qtySold += (item.qty || 1);
+                            partnerItemsMap[itemName].sales += sSale;
+                            partnerItemsMap[itemName].earn += earn;
                         }
                     });
                 }
@@ -3027,7 +2985,7 @@
                     totEarn -= (parseInt(exp.amountSYP) || 0);
                 }
             });
-            return { conf, rawCats, partnerPct, totSales, totEarn, totalItemsCount, totalStockUnits, totalStockValueUSD, totalStockValueSYP, partnerItemsMap };
+            return { conf, rawCats, partnerPct: defaultPartnerPct, totSales, totEarn, totalItemsCount, totalStockUnits, totalStockValueUSD, totalStockValueSYP, partnerItemsMap };
         }
 
         function openPartnerDashboard() {
@@ -3130,17 +3088,40 @@
             }).join("");
         }
 
-        function getCategoryPartnerSharePct(catName) {
+        function getItemPartnerShareInfo(itemId, catName) {
+            // Check if item has specific partner assigned
+            const p = products[itemId];
+            if (p && p.partnerPhone && users[p.partnerPhone]?.userType === "partner") {
+                return { phone: p.partnerPhone, pct: parseFloat(p.partnerPct) || 20 };
+            }
+            // Fall back to category-level partner(s)
             const cleanCat = (catName || "").trim().toLowerCase();
-            let totalPartnerPct = 0;
+            let matchedPartner = null, matchedPct = 0;
             Object.keys(window.partnersConfigData || {}).forEach(phone => {
                 if (users[phone]?.userType === "partner") {
                     const cfg = window.partnersConfigData[phone];
                     const cats = (cfg.categories || []).map(c => c.trim().toLowerCase());
-                    if (cats.includes(cleanCat)) totalPartnerPct += (parseFloat(cfg.profitPct) || 0);
+                    if (cats.includes(cleanCat)) {
+                        matchedPartner = phone;
+                        matchedPct += (parseFloat(cfg.profitPct) || 0);
+                    }
                 }
             });
-            return Math.min(100, totalPartnerPct);
+            return { phone: matchedPartner, pct: Math.min(100, matchedPct) };
+        }
+
+        function getCategoryPartnerSharePct(catName) {
+            // Retained for simple category sum checks
+            let totalPct = 0;
+            const cleanCat = (catName || "").trim().toLowerCase();
+            Object.keys(window.partnersConfigData || {}).forEach(phone => {
+                if (users[phone]?.userType === "partner") {
+                    const cfg = window.partnersConfigData[phone];
+                    const cats = (cfg.categories || []).map(c => c.trim().toLowerCase());
+                    if (cats.includes(cleanCat)) totalPct += (parseFloat(cfg.profitPct) || 0);
+                }
+            });
+            return Math.min(100, totalPct);
         }
 
         function renderCompetitionDetails() {
