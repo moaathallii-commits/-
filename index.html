@@ -639,16 +639,6 @@
                         <div class="form-group"><label>التصنيف:</label><select id="prodCategory" class="form-control"></select></div>
                         <div class="form-group"><label>الموزع المعتمد:</label><select id="prodSupplierSelect" class="form-control"><option value="">-- بدون موزع --</option></select></div>
                     </div>
-                    <div class="stats-grid" style="background:rgba(0,176,255,0.06); padding:8px; border-radius:6px; border:1px dashed #00b0ff; margin-bottom:10px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label style="color:#00b0ff;">🤝 شريك مخصص لهذا الصنف فقط (اختياري):</label>
-                            <select id="prodPartnerSelect" class="form-control"><option value="">-- يتبع لتصنيف الشركاء العام --</option></select>
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label style="color:#00b0ff;">📈 نسبة ربح الشريك في هذا الصنف (%):</label>
-                            <input type="number" step="0.5" id="prodPartnerPctInput" class="form-control" placeholder="تركه فارغاً يعتمد النسبة العامة للشريك">
-                        </div>
-                    </div>
                     <div class="form-group"><label>صورة المنتج:</label><input type="file" id="prodImageInput" accept="image/*" class="form-control"></div>
                     <button onclick="saveProduct()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ الصنف في المتجر</button>
                 </div>
@@ -1732,8 +1722,7 @@
             const ordItems = items.map(i => {
                 const uS = calcSYP(i.priceUSD), uC = calcSYP(i.costPrice || 0), sS = uS * i.qty, sC = uC * i.qty;
                 subSale += sS; totCost += sC; subUSD += (i.priceUSD * i.qty); totPts += Math.round((i.priceUSD * i.qty) * (i.pointsPct || 2));
-                const pObj = products[i.id] || {};
-                return { id: i.id, name: i.name, category: i.category || "غير مصنف", partnerPhone: pObj.partnerPhone || "", partnerPct: (pObj.partnerPct !== undefined && pObj.partnerPct !== null) ? pObj.partnerPct : null, qty: i.qty, unitSaleSYP: uS, unitCostSYP: uC, subSaleSYP: sS, subCostSYP: sC, netProfitSYP: sS - sC };
+                return { id: i.id, name: i.name, category: i.category || "غير مصنف", qty: i.qty, unitSaleSYP: uS, unitCostSYP: uC, subSaleSYP: sS, subCostSYP: sC, netProfitSYP: sS - sC };
             });
             
             const globalMin = window.globalMinOrderSYP || 0;
@@ -2332,9 +2321,8 @@
                     const sS = i.subSaleSYP || 0, sC = i.subCostSYP || 0, sP = i.netProfitSYP !== undefined ? i.netProfitSYP : (sS - sC), sQ = i.qty || 1;
 
                     if (ordISO > capReset) capBoxSYP += sC;
-                    const partnerSharePct = getItemTotalPartnerSharePct(i, c);
-                    const remainingAdminPct = Math.max(0, 100 - partnerSharePct);
-                    const adminPureItemProfit = Math.round((sP * remainingAdminPct) / 100);
+                    const partnerSharePct = getCategoryPartnerSharePct(c);
+                    const adminPureItemProfit = Math.round((sP * (100 - partnerSharePct)) / 100);
                     if (ordISO > impReset) importMgrAdminPool += adminPureItemProfit;
                     if (ordISO > expReset) exportMgrAdminPool += adminPureItemProfit;
 
@@ -2396,9 +2384,8 @@
             if (!partners.length) return (box.innerHTML = `<div style="font-size:11px; color:var(--gray-text); text-align:center;">لا يوجد شركاء محددون حالياً.</div>`);
             box.innerHTML = partners.map(p => {
                 const m = calculatePartnerCurrentMetrics(p.phone);
-                const scopeStr = [m.rawCats.length ? `تصنيفات: ${m.rawCats.join("، ")} (${m.partnerPct}%)` : "", (m.customProductNames && m.customProductNames.length) ? `أصناف خاصة: ${m.customProductNames.join("، ")}` : ""].filter(Boolean).join(" + ") || "بلا تخصيص";
                 return `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--border-color); padding:6px 0; font-size:11px; flex-wrap:wrap; gap:6px;">
-                    <div><b>👤 ${p.name}</b> <small style="color:var(--gold-color);">(${scopeStr})</small><br><span style="color:var(--gray-text); font-size:10px;">مبيعاته: ${m.totSales.toLocaleString()} ل.س</span></div>
+                    <div><b>👤 ${p.name}</b> <small style="color:var(--gold-color);">(${m.partnerPct}% | ${m.rawCats.join("، ") || "بلا تصنيف"})</small><br><span style="color:var(--gray-text); font-size:10px;">مبيعاته: ${m.totSales.toLocaleString()} ل.س</span></div>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <b style="color:var(--success-color); font-size:13px;">${m.totEarn.toLocaleString()} ل.س</b>
                         <button onclick="settlePartnerEarningsByAdmin('${p.phone}')" class="btn" style="width:auto; padding:4px 8px; font-size:10px; background:#ff9800; color:#000;">🔄 تصفير</button>
@@ -2480,8 +2467,6 @@
 
         async function saveProduct() {
             const editId = $("editProductId").value, name = $("prodName").value.trim(), costPrice = parseFloat($("prodCostUSD").value) || 0, priceUSD = parseFloat($("prodPriceUSD").value) || 0, wholesaleUSD = parseFloat($("prodWholesaleUSD").value) || 0, stock = parseInt($("prodStock").value) || 0, alertLimit = parseInt($("prodAlertLimit").value) || 2, pointsPct = parseFloat($("prodPointsPct").value) || 2, category = $("prodCategory").value, supplierId = $("prodSupplierSelect").value;
-            const partnerPhone = $("prodPartnerSelect") ? $("prodPartnerSelect").value : "";
-            const partnerPct = $("prodPartnerPctInput") && $("prodPartnerPctInput").value !== "" ? (parseFloat($("prodPartnerPctInput").value) || 0) : null;
             const unitType = $("prodUnitType").value || "قطعة", unitsPerPack = parseInt($("prodUnitsPerPack").value) || 1, targetOrderPacks = parseInt($("prodTargetOrderPacks").value) || 5;
             const f = $("prodImageInput");
             if (!name || priceUSD <= 0) return alert("يرجى إدخال اسم الصنف وسعر المبيع.");
@@ -2497,7 +2482,6 @@
                 }
                 await db.ref("products/" + id).set({
                     name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, supplierId,
-                    partnerPhone, partnerPct,
                     unitType, unitsPerPack, targetOrderPacks,
                     thumb, image, reviews: products[id]?.reviews || {}
                 });
@@ -2508,7 +2492,7 @@
         }
 
         function resetProductForm() {
-            ["editProductId", "prodName", "prodCostUSD", "prodCostSYP", "prodPriceUSD", "prodPriceSYP", "prodWholesaleUSD", "prodWorkflowSYP", "prodImageInput", "prodSupplierSelect", "prodPartnerSelect", "prodPartnerPctInput"].forEach(k => setVal(k, ""));
+            ["editProductId", "prodName", "prodCostUSD", "prodCostSYP", "prodPriceUSD", "prodPriceSYP", "prodWholesaleUSD", "prodWorkflowSYP", "prodImageInput", "prodSupplierSelect"].forEach(k => setVal(k, ""));
             ["prodCostUSDPreview", "prodPriceUSDPreview", "prodWholesaleUSDPreview"].forEach(k => setTxt(k, "≈ 0.00 $"));
             setVal("prodStock", "10"); setVal("prodUnitsPerPack", "1"); setVal("prodTargetOrderPacks", "5"); setVal("prodUnitType", "قطعة");
         }
@@ -2530,9 +2514,6 @@
             setTxt("prodWholesaleUSDPreview", `≈ ${(parseFloat(p.wholesaleUSD)||0).toFixed(2)} $`);
 
             setVal("prodStock", p.stock || 0); setVal("prodAlertLimit", p.alertLimit || 2); setVal("prodPointsPct", p.pointsPct || 2); setVal("prodCategory", p.category || ""); setVal("prodSupplierSelect", p.supplierId || "");
-            populateAdminPartnerSelect();
-            setVal("prodPartnerSelect", p.partnerPhone || "");
-            setVal("prodPartnerPctInput", (p.partnerPct !== undefined && p.partnerPct !== null) ? p.partnerPct : "");
             setVal("prodUnitType", p.unitType || "قطعة"); setVal("prodUnitsPerPack", p.unitsPerPack || 1); setVal("prodTargetOrderPacks", p.targetOrderPacks || 5);
             $("productFormSection")?.scrollIntoView({ behavior: "smooth" });
         }
@@ -2554,10 +2535,10 @@
             const keys = Object.keys(products).filter(id => products[id] && (!q || products[id].name?.toLowerCase().includes(q) || products[id].category?.toLowerCase().includes(q)));
             if (!keys.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف مطابقة.</p>`);
             container.innerHTML = keys.map(id => {
-                const p = products[id], supp = p.supplierId && suppliers[p.supplierId] ? ` | ${suppliers[p.supplierId].name}` : "", partBadge = (p.partnerPhone && users[p.partnerPhone]) ? ` | <span style="color:#00b0ff; font-weight:bold;">🤝 شريك الصنف: ${users[p.partnerPhone].name} (${p.partnerPct || window.partnersConfigData?.[p.partnerPhone]?.profitPct || 20}%)</span>` : "", revs = p.reviews || {}, revHtml = Object.keys(revs).map(rId => `<div style="display:flex; justify-content:space-between; font-size:10px; background:var(--card-bg); padding:3px 6px; margin-top:3px; border-radius:4px;"><span>⭐ ${revs[rId].rating} - <b>${revs[rId].customerName}:</b> ${revs[rId].comment}</span><b onclick="deleteProductReview('${id}','${rId}')" style="color:var(--danger-color); cursor:pointer;">🗑️</b></div>`).join("");
+                const p = products[id], supp = p.supplierId && suppliers[p.supplierId] ? ` | ${suppliers[p.supplierId].name}` : "", revs = p.reviews || {}, revHtml = Object.keys(revs).map(rId => `<div style="display:flex; justify-content:space-between; font-size:10px; background:var(--card-bg); padding:3px 6px; margin-top:3px; border-radius:4px;"><span>⭐ ${revs[rId].rating} - <b>${revs[rId].customerName}:</b> ${revs[rId].comment}</span><b onclick="deleteProductReview('${id}','${rId}')" style="color:var(--danger-color); cursor:pointer;">🗑️</b></div>`).join("");
                 return `<div class="adm-card">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                        <div><b>${p.name}</b> <small style="color:var(--gray-text);">(${p.category}${supp}${partBadge})</small></div>
+                        <div><b>${p.name}</b> <small style="color:var(--gray-text);">(${p.category}${supp})</small></div>
                         <div style="display:flex; gap:4px;">
                             <button onclick="editProduct('${id}')" class="btn" style="width:auto; padding:3px 7px; font-size:10px;">✏️</button>
                             <button onclick="resetSalesFilter('prod','${id}')" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:#ff9800; color:#000;">🔄</button>
@@ -2938,19 +2919,10 @@
             if (cur) sel.value = cur;
         }
         function populateAdminPartnerSelect() {
-            const partnersList = Object.values(users).filter(u => u.userType === "partner");
-            const sel = $("adminPartnerSelect");
-            if (sel) {
-                const cur = sel.value;
-                sel.innerHTML = '<option value="">-- اختر شريكاً --</option>' + partnersList.map(p => `<option value="${p.phone}">${p.name} (${p.phone})</option>`).join("");
-                if (cur) sel.value = cur;
-            }
-            const prodSel = $("prodPartnerSelect");
-            if (prodSel) {
-                const curP = prodSel.value;
-                prodSel.innerHTML = '<option value="">-- يتبع لتصنيف الشركاء العام --</option>' + partnersList.map(p => `<option value="${p.phone}">🤝 ${p.name} (${p.phone})</option>`).join("");
-                if (curP) prodSel.value = curP;
-            }
+            const sel = $("adminPartnerSelect"); if (!sel) return;
+            const cur = sel.value;
+            sel.innerHTML = '<option value="">-- اختر شريكاً --</option>' + Object.values(users).filter(u => u.userType === "partner").map(p => `<option value="${p.phone}">${p.name} (${p.phone})</option>`).join("");
+            if (cur) sel.value = cur;
         }
 
         
@@ -3005,7 +2977,7 @@
             if (!phone) return alert("⚠️ اختر الشريك أولاً.");
             const selectedCats = [];
             document.querySelectorAll(".partner-cat-cb:checked").forEach(cb => selectedCats.push(cb.value));
-            // يمكن للشريك أن يكون شريكاً في أصناف محددة فقط بدون تصنيف كامل
+            if (!selectedCats.length) return alert("⚠️ حدد تصنيفاً واحداً على الأقل.");
             const currentCfg = window.partnersConfigData?.[phone] || {};
             db.ref("partnersConfig/" + phone).set({
                 categories: selectedCats,
@@ -3019,31 +2991,29 @@
         function calculatePartnerCurrentMetrics(phone) {
             const conf = (window.partnersConfigData && window.partnersConfigData[phone]) || {};
             const rawCats = conf.categories || [];
+            const allowedCats = rawCats.map(c => c.trim().toLowerCase());
             const partnerPct = parseFloat(conf.profitPct) || 20;
             const lastSettlementISO = conf.lastSettlementISO || "2000-01-01T00:00:00.000Z";
 
-            let totSales = 0, totEarn = 0, totalItemsCount = 0, totalStockUnits = 0, totalStockValueUSD = 0, totalStockValueSYP = 0, partnerItemsMap = {}, customProductNames = [];
-            Object.entries(products).forEach(([pid, p]) => {
-                const effPct = getPartnerPctForProduct(phone, pid, p.category);
-                if (effPct > 0) {
+            let totSales = 0, totEarn = 0, totalItemsCount = 0, totalStockUnits = 0, totalStockValueUSD = 0, totalStockValueSYP = 0, partnerItemsMap = {};
+            Object.values(products).forEach(p => {
+                if (allowedCats.includes((p.category || "").trim().toLowerCase())) {
                     const st = Math.max(0, parseInt(p.stock) || 0);
                     totalItemsCount++; totalStockUnits += st;
                     const valUSD = st * (parseFloat(p.costPrice) || 0);
                     totalStockValueUSD += valUSD;
                     totalStockValueSYP += calcSYP(valUSD);
-                    if (p.partnerPhone === phone) customProductNames.push(`${p.name} (${effPct}%)`);
-                    partnerItemsMap[p.name] = { cat: p.category + (p.partnerPhone === phone ? ` [شراكة خاصة ${effPct}%]` : ""), stock: st, qtySold: 0, sales: 0, earn: 0, pct: effPct };
+                    partnerItemsMap[p.name] = { cat: p.category, stock: st, qtySold: 0, sales: 0, earn: 0 };
                 }
             });
             Object.values(completedOrdersHistory).forEach(ord => {
                 if ((ord.dateISO || new Date().toISOString()) > lastSettlementISO) {
                     (ord.items || []).forEach(item => {
-                        const effPct = getPartnerPctForProduct(phone, item.id, item.category, item);
-                        if (effPct > 0) {
+                        if (allowedCats.includes((item.category || "").trim().toLowerCase())) {
                             const sSale = item.subSaleSYP || 0, sProfit = item.netProfitSYP !== undefined ? item.netProfitSYP : (sSale - (item.subCostSYP || 0));
-                            const earn = Math.round((sProfit * effPct) / 100);
+                            const earn = Math.round((sProfit * partnerPct) / 100);
                             totSales += sSale; totEarn += earn;
-                            if (!partnerItemsMap[item.name]) partnerItemsMap[item.name] = { cat: item.category || "-", stock: 0, qtySold: 0, sales: 0, earn: 0, pct: effPct };
+                            if (!partnerItemsMap[item.name]) partnerItemsMap[item.name] = { cat: item.category || "-", stock: 0, qtySold: 0, sales: 0, earn: 0 };
                             partnerItemsMap[item.name].qtySold += (item.qty || 1);
                             partnerItemsMap[item.name].sales += sSale;
                             partnerItemsMap[item.name].earn += earn;
@@ -3057,7 +3027,7 @@
                     totEarn -= (parseInt(exp.amountSYP) || 0);
                 }
             });
-            return { conf, rawCats, customProductNames, partnerPct, totSales, totEarn, totalItemsCount, totalStockUnits, totalStockValueUSD, totalStockValueSYP, partnerItemsMap };
+            return { conf, rawCats, partnerPct, totSales, totEarn, totalItemsCount, totalStockUnits, totalStockValueUSD, totalStockValueSYP, partnerItemsMap };
         }
 
         function openPartnerDashboard() {
@@ -3065,10 +3035,7 @@
             const m = calculatePartnerCurrentMetrics(currentUser.phone);
             window.currentPartnerTotalEarn = m.totEarn;
 
-                        let scopeDesc = [];
-            if (m.rawCats.length) scopeDesc.push(`📂 التصنيفات: (${m.rawCats.join(" ، ")}) بنسبة ${m.partnerPct}%`);
-            if (m.customProductNames && m.customProductNames.length) scopeDesc.push(`📦 أصناف مخصصة: (${m.customProductNames.join(" ، ")})`);
-            setTxt("partnerAssignedCatsText", scopeDesc.length ? scopeDesc.join(" | ") : "⚠️ لم تقم الإدارة بتحديد تصنيفات أو أصناف لحسابك بعد.");
+            setTxt("partnerAssignedCatsText", m.rawCats.length ? `📂 تصنيفاتك المعتمدة: (${m.rawCats.join(" ، ")}) | نسبة الأرباح: ${m.partnerPct}%` : "⚠️ لم تقم الإدارة بتحديد تصنيفات لحسابك بعد.");
             setTxt("partnerTotalSales", m.totSales.toLocaleString() + " ل.س");
             setTxt("partnerTotalEarnings", m.totEarn.toLocaleString() + " ل.س");
             setTxt("partnerTotalItemsCount", m.totalItemsCount + " صنف");
@@ -3163,38 +3130,8 @@
             }).join("");
         }
 
-        function getPartnerPctForProduct(phone, prodId, catName, itemSnapshot = null) {
-            if (!phone || users[phone]?.userType !== "partner") return 0;
-            const cfg = (window.partnersConfigData && window.partnersConfigData[phone]) || {};
-            const defaultPartnerPct = parseFloat(cfg.profitPct) || 20;
-            const p = products[prodId] || {};
-            const effPartnerPhone = (itemSnapshot && itemSnapshot.partnerPhone !== undefined) ? itemSnapshot.partnerPhone : p.partnerPhone;
-            const effPartnerPct = (itemSnapshot && itemSnapshot.partnerPct !== undefined && itemSnapshot.partnerPct !== null) ? itemSnapshot.partnerPct : p.partnerPct;
-
-            // إذا كان هذا المنتج مخصصاً لشريك معين بذاته
-            if (effPartnerPhone) {
-                if (effPartnerPhone === phone) {
-                    return (effPartnerPct !== undefined && effPartnerPct !== null && effPartnerPct !== "") ? (parseFloat(effPartnerPct) || 0) : defaultPartnerPct;
-                }
-                return 0; // شريك آخر لا يأخذ من هذا الصنف المخصص
-            }
-
-            // إذا لم يكن الصنف مخصصاً لشريك بعينه، نتحقق مما إذا كان التصنيف تابعاً لهذا الشريك
-            const allowedCats = (cfg.categories || []).map(c => c.trim().toLowerCase());
-            const cleanCat = (catName || p.category || "").trim().toLowerCase();
-            if (allowedCats.includes(cleanCat)) {
-                return defaultPartnerPct;
-            }
-            return 0;
-        }
-
-        function getItemTotalPartnerSharePct(item, catName) {
-            const p = products[item.id] || {};
-            const effPartnerPhone = item.partnerPhone || p.partnerPhone;
-            if (effPartnerPhone && users[effPartnerPhone]?.userType === "partner") {
-                return Math.min(100, getPartnerPctForProduct(effPartnerPhone, item.id, catName, item));
-            }
-            const cleanCat = (catName || item.category || p.category || "").trim().toLowerCase();
+        function getCategoryPartnerSharePct(catName) {
+            const cleanCat = (catName || "").trim().toLowerCase();
             let totalPartnerPct = 0;
             Object.keys(window.partnersConfigData || {}).forEach(phone => {
                 if (users[phone]?.userType === "partner") {
