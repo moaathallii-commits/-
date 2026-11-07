@@ -348,7 +348,7 @@
         </header>
         <div class="container">
             <div class="comp-card" style="background:linear-gradient(45deg,rgba(0,176,255,0.15),var(--card-bg)); border-color:#00b0ff;">
-                <h3 style="color:#00b0ff; margin:0 0 6px 0; font-size:14px;" id="partnerHeaderTitle">👤 مرحباً بك يا شريك المتجر</h3>
+                <h3 style="color:#00b0ff; margin:0 0 6px 0; font-size:14px;">👤 مرحباً بك يا شريك المتجر</h3>
                 <div id="partnerAssignedCatsText" style="font-size:12px; color:var(--gold-color); font-weight:bold; margin-bottom:4px;"></div>
                 <div style="font-size:11px; color:var(--gray-text);">تُحسب الأرباح أدناه تلقائياً منذ آخر عملية تسوية مع الإدارة.</div>
             </div>
@@ -401,6 +401,7 @@
                 <button class="cat-btn" onclick="switchAdminTab('admTab9Competitions', this)">🏆 المسابقات</button>
                 <button class="cat-btn" onclick="switchAdminTab('admTab10System', this)">⚙️ الإعدادات والنظام</button>
                 <button class="cat-btn" onclick="switchAdminTab('admTab11Invoices', this)">🧾 الفواتير والسجل</button>
+                <button class="cat-btn" onclick="switchAdminTab('admTab12Consignment', this)">📦 موردو الأمانة</button>
             </div>
 
             <div id="admTab1Stats" class="admin-tab">
@@ -815,6 +816,20 @@
                 </div>
             </div>
 
+            <!-- التبويب 12: إحصائيات ومتابعة موردي ما بعد البيع (أمانة القطع) -->
+            <div id="admTab12Consignment" class="admin-tab" style="display:none;">
+                <div class="adm-sec" style="border-color:#00b0ff;">
+                    <div class="adm-sec-title"><span style="color:#00b0ff;">📦 إحصائيات وحسابات موردي ما بعد البيع (أمانة القطع الفردية)</span></div>
+                    <div class="form-group">
+                        <label>اختر المورد المعني للمتابعة والتسوية:</label>
+                        <select id="adminConsignmentSupplierSelect" class="form-control" onchange="loadAdminConsignmentSupplierReport()">
+                            <option value="">-- اختر مورداً --</option>
+                        </select>
+                    </div>
+                    <div id="adminConsignmentReportBox" style="margin-top:10px;"></div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -832,7 +847,8 @@
                     <option value="wholesale">زبون جملة</option>
                     <option value="neighbors">جيران المتجر (سعر مفرق + توصيل خاص)</option>
                     <option value="credit">زبون آجل / دفتر دين (حفظ القيمة بالدولار)</option>
-                    <option value="partner">شريك (تصنيف كامل)</option><option value="consignment_supplier">مورد ما بعد البيع (قطع فردية أمانة)</option>
+                    <option value="partner">شريك (تصنيف كامل)</option>
+                    <option value="consignment_supplier">مورد ما بعد البيع (قطع فردية بالأمانة)</option>
                 </select>
             </div>
             <div class="stats-grid">
@@ -1216,7 +1232,7 @@
         db.ref("users").on("value", snap => {
             users = snap.val() || {};
             syncCurrentUser(); renderAdminCustomers(); renderLeaderboard(); renderStatsDashboard(); renderAdminInvoicesHistory(); renderStore();
-            populateAdminPartnerSelect(); populateConsignmentPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); loadAdminCustomerDebtLedger();
+            populateAdminPartnerSelect(); populateConsignmentPartnerSelect(); populateAdminConsignmentSupplierSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); loadAdminCustomerDebtLedger();
             if ($("customerDebtModal")?.style.display === "block") renderCustomerDebtModalView();
         });
         db.ref("partnersConfig").on("value", snap => { window.partnersConfigData = snap.val() || {}; syncCurrentUser(); loadPartnerConfig(); renderStatsDashboard(); renderAdminInvoicesHistory(); });
@@ -2601,7 +2617,7 @@
             db.ref("users/" + phone).update(updatedData).then(() => {
                 alert("✅ تم تحديث بيانات الزبون بنجاح!");
                 closeModal('adminEditCustomerModal');
-                populateAdminPartnerSelect(); populateConsignmentPartnerSelect();
+                populateAdminPartnerSelect(); populateConsignmentPartnerSelect(); populateAdminConsignmentSupplierSelect();
                 populateAdminDebtCustomerSelect();
             });
         }
@@ -2656,7 +2672,7 @@
                 const adminLocalPhone = adminWhatsAppNumber.replace(/^963/, "0");
                 if (currentUser && currentUser.phone === adminLocalPhone) {
                     $("adminModal").style.display = "flex";
-                    renderStatsDashboard(); renderAdminInvoicesHistory(); populateAdminPartnerSelect(); populateConsignmentPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); populatePartnerSelectOptions();
+                    renderStatsDashboard(); renderAdminInvoicesHistory(); populateAdminPartnerSelect(); populateConsignmentPartnerSelect(); populateAdminConsignmentSupplierSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); populatePartnerSelectOptions();
                 } else {
                     alert("🚫 عذراً، لا تمتلك صلاحيات الإدارة.");
                 }
@@ -2854,6 +2870,65 @@
             if (cur) sel.value = cur;
         }
         
+        
+        function populateAdminConsignmentSupplierSelect() {
+            const sel = $("adminConsignmentSupplierSelect"); if (!sel) return;
+            const cur = sel.value;
+            const suppliersList = Object.values(users).filter(u => u.userType === "consignment_supplier" || u.userType === "partner");
+            sel.innerHTML = '<option value="">-- اختر مورداً --</option>' + suppliersList.map(s => `<option value="${s.phone}">${s.name} (${s.phone})</option>`).join("");
+            if (cur) sel.value = cur;
+        }
+
+        function loadAdminConsignmentSupplierReport() {
+            const phone = $("adminConsignmentSupplierSelect")?.value;
+            const box = $("adminConsignmentReportBox");
+            if (!phone || !users[phone]) {
+                if (box) box.innerHTML = "";
+                return;
+            }
+            const supp = users[phone];
+            const m = calculatePartnerCurrentMetrics(phone);
+            const itemsEntries = Object.entries(m.partnerItemsMap);
+
+            box.innerHTML = `
+                <div class="adm-card" style="border-color:#00b0ff; background:rgba(0,176,255,0.05);">
+                    <div style="font-weight:bold; color:#00b0ff; margin-bottom:6px;">👤 المورد: ${supp.name} (${supp.phone})</div>
+                    <div class="stats-grid">
+                        <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">إجمالي المبيعات لقطعه</div><div class="stats-value">${m.totSales.toLocaleString()} ل.س</div></div>
+                        <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">مستحقاته الكلية (رأس مال + ربح)</div><div class="stats-value" style="color:var(--success-color);">${m.totEarn.toLocaleString()} ل.س</div></div>
+                        <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">عدد القطع بالمخزون</div><div class="stats-value" style="color:var(--gold-color);">${m.totalStockUnits} قطعة</div></div>
+                        <div class="stats-box"><div style="font-size:10px; color:var(--gray-text);">قيمة رأس مال بضاعته بالمخزون</div><div class="stats-value">${(m.totalStockValueSYP||0).toLocaleString()} ل.س</div></div>
+                    </div>
+                </div>
+                <h4 style="color:var(--gold-color); margin:12px 0 6px 0; font-size:13px;">📦 تفصيل القطع والأصناف الخاصة بهذا المورد</h4>
+                <div style="overflow-x:auto;">
+                    <table class="tbl-clean">
+                        <thead>
+                            <tr>
+                                <th style="text-align:right;">الصنف</th>
+                                <th>المخزون الحالي</th>
+                                <th>القطع المباعة</th>
+                                <th>إجمالي المبيعات</th>
+                                <th>مستحقاته للقطعة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsEntries.length === 0 ? '<tr><td colspan="5" style="color:var(--gray-text); padding:10px;">لا توجد قطع مضافة أو مسجلة لهذا المورد حتى الآن.</td></tr>' : 
+                                itemsEntries.map(([name, d]) => `
+                                    <tr>
+                                        <td style="font-weight:bold; text-align:right;">${name}</td>
+                                        <td style="color:var(--gold-color); font-weight:bold;">${d.stock}</td>
+                                        <td>${d.qtySold}</td>
+                                        <td>${d.sales.toLocaleString()} ل.س</td>
+                                        <td style="color:var(--success-color); font-weight:bold;">${d.earn.toLocaleString()} ل.س</td>
+                                    </tr>
+                                `).join("")}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
         function populateConsignmentPartnerSelect() {
             const sel = $("prodConsignmentPhone"); if (!sel) return;
             const cur = sel.value;
@@ -2933,19 +3008,15 @@
         }
 
         function calculatePartnerCurrentMetrics(phone) {
-            const u = users[phone] || {};
-            const isItemConsignment = (u.userType === "consignment_supplier");
             const conf = (window.partnersConfigData && window.partnersConfigData[phone]) || {};
             const rawCats = conf.categories || [];
             const allowedCats = rawCats.map(c => c.trim().toLowerCase());
-            const partnerPct = parseFloat(conf.profitPct) || (isItemConsignment ? 50 : 20);
+            const partnerPct = parseFloat(conf.profitPct) || 20;
             const lastSettlementISO = conf.lastSettlementISO || "2000-01-01T00:00:00.000Z";
 
             let totSales = 0, totEarn = 0, totalItemsCount = 0, totalStockUnits = 0, totalStockValueUSD = 0, totalStockValueSYP = 0, partnerItemsMap = {};
-            
             Object.values(products).forEach(p => {
-                let isMatch = isItemConsignment ? (p.consignmentPhone === phone) : allowedCats.includes((p.category || "").trim().toLowerCase());
-                if (isMatch) {
+                if (allowedCats.includes((p.category || "").trim().toLowerCase())) {
                     const st = Math.max(0, parseInt(p.stock) || 0);
                     totalItemsCount++; totalStockUnits += st;
                     const valUSD = st * (parseFloat(p.costPrice) || 0);
@@ -2954,18 +3025,12 @@
                     partnerItemsMap[p.name] = { cat: p.category, stock: st, qtySold: 0, sales: 0, earn: 0 };
                 }
             });
-
             Object.values(completedOrdersHistory).forEach(ord => {
                 if ((ord.dateISO || new Date().toISOString()) > lastSettlementISO) {
                     (ord.items || []).forEach(item => {
-                        const p = products[item.id] || {};
-                        let isMatch = isItemConsignment ? (p.consignmentPhone === phone) : allowedCats.includes((item.category || "").trim().toLowerCase());
-                        if (isMatch) {
-                            const sSale = item.subSaleSYP || 0, sCost = item.subCostSYP || 0;
-                            const sProfit = item.netProfitSYP !== undefined ? item.netProfitSYP : (sSale - sCost);
-                            const profitShare = Math.round((sProfit * partnerPct) / 100);
-                            const earn = isItemConsignment ? (sCost + profitShare) : Math.round((sProfit * partnerPct) / 100);
-                            
+                        if (allowedCats.includes((item.category || "").trim().toLowerCase())) {
+                            const sSale = item.subSaleSYP || 0, sProfit = item.netProfitSYP !== undefined ? item.netProfitSYP : (sSale - (item.subCostSYP || 0));
+                            const earn = Math.round((sProfit * partnerPct) / 100);
                             totSales += sSale; totEarn += earn;
                             if (!partnerItemsMap[item.name]) partnerItemsMap[item.name] = { cat: item.category || "-", stock: 0, qtySold: 0, sales: 0, earn: 0 };
                             partnerItemsMap[item.name].qtySold += (item.qty || 1);
@@ -2985,13 +3050,11 @@
         }
 
         function openPartnerDashboard() {
-            if (!currentUser || (currentUser.userType !== "partner" && currentUser.userType !== "consignment_supplier")) return;
-            const isConsig = (currentUser.userType === "consignment_supplier");
-            setTxt("partnerHeaderTitle", isConsig ? "👤 لوحة مورد ما بعد البيع (أمانة القطع الفردية)" : "👤 مرحباً بك يا شريك المتجر");
+            if (!currentUser || currentUser.userType !== "partner") return;
             const m = calculatePartnerCurrentMetrics(currentUser.phone);
             window.currentPartnerTotalEarn = m.totEarn;
 
-            setTxt("partnerAssignedCatsText", isConsig ? `📦 أمانتك: قطع فردية مخصصة بحسابك | نسبة ربحك من صافي البيع: ${m.partnerPct}%` : (m.rawCats.length ? `📂 تصنيفاتك المعتمدة: (${m.rawCats.join(" ، ")}) | نسبة الأرباح: ${m.partnerPct}%` : "⚠️ لم تقم الإدارة بتحديد تصنيفات لحسابك بعد."));
+            setTxt("partnerAssignedCatsText", m.rawCats.length ? `📂 تصنيفاتك المعتمدة: (${m.rawCats.join(" ، ")}) | نسبة الأرباح: ${m.partnerPct}%` : "⚠️ لم تقم الإدارة بتحديد تصنيفات لحسابك بعد.");
             setTxt("partnerTotalSales", m.totSales.toLocaleString() + " ل.س");
             setTxt("partnerTotalEarnings", m.totEarn.toLocaleString() + " ل.س");
             setTxt("partnerTotalItemsCount", m.totalItemsCount + " صنف");
