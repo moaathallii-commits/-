@@ -1343,6 +1343,30 @@
             }
         });
 
+        
+        // Pull to Refresh Implementation
+        let touchstartY = 0;
+        let touchendY = 0;
+        
+        window.addEventListener('touchstart', e => {
+            touchstartY = e.changedTouches[0].screenY;
+        }, {passive: true});
+
+        window.addEventListener('touchend', e => {
+            touchendY = e.changedTouches[0].screenY;
+            handlePullToRefresh();
+        }, {passive: true});
+
+        function handlePullToRefresh() {
+            // If scrolled to top and pulled down by more than 120px
+            if (window.scrollY === 0 && (touchendY - touchstartY) > 120) {
+                showToast("🔄 جاري تحديث الصفحة...", false);
+                setTimeout(() => {
+                    location.reload();
+                }, 600);
+            }
+        }
+
         window.addEventListener("load", () => {
             populateRegionSelects();
             // Copy region options to register select
