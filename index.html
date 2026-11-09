@@ -96,6 +96,10 @@
         .toast-msg { background: rgba(30, 30, 30, 0.95); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 12px; font-weight: bold; border: 1px solid var(--gold-color); box-shadow: 0 4px 15px rgba(0,0,0,0.5); pointer-events: auto; animation: fadeInOut 2.5s ease forwards; }
         @keyframes fadeInOut { 0% { opacity: 0; transform: translateY(-10px); } 15% { opacity: 1; transform: translateY(0); } 85% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-10px); } }
 
+    
+        .banner-ad-wrap { width: 100%; border-radius: 8px; overflow: hidden; border: 1px solid var(--gold-color); margin-bottom: 12px; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.3); background: var(--card-bg); position: relative; }
+        .banner-ad-img { width: 100%; max-height: 140px; object-fit: cover; display: block; }
+
     </style>
 </head>
 <body>
@@ -172,6 +176,7 @@
     </div>
 
     <div class="container" style="padding-bottom:85px;">
+        <div id="bannerAdsContainer"></div>
         <div id="multipleOffersContainer"></div>
         <div style="display:flex; gap:6px; margin-bottom:10px;">
             <input type="text" id="searchInput" class="search-box" style="margin-bottom:0; flex:1;" placeholder="🔍 ابحث عن أي منتج في متجر معاذ..." oninput="renderStore()">
@@ -581,6 +586,16 @@
                     <div class="form-group"><label>صورة العرض:</label><input type="file" id="offerImageInput" accept="image/*" class="form-control"></div>
                     <div style="display:flex; gap:6px; margin-bottom:10px;"><button onclick="saveMultipleOffer()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ العرض</button><button onclick="clearOfferForm()" class="btn btn-danger" style="width:auto;">إلغاء</button></div>
                     <div id="adminOffersList"></div>
+                </div>
+
+                <div class="adm-sec" style="margin-top:15px; border-color:#00b0ff;">
+                    <div class="adm-sec-title"><span style="color:#00b0ff;">🖼️ إدارة إعلانات البانر البسيطة ( Ads / AdMob / AdSense )</span></div>
+                    <input type="hidden" id="editBannerId">
+                    <div class="form-group"><label>عنوان الإعلان (توضيحي):</label><input type="text" id="bannerTitleInput" class="form-control" placeholder="مثال: إعلان شركة التوصيل أو AdSense"></div>
+                    <div class="form-group"><label>رابط الوجهة عند الضغط (URL أو رابط إعلان AdSense/AdMob):</label><input type="text" id="bannerLinkInput" class="form-control" placeholder="https://..."></div>
+                    <div class="form-group"><label>صورة البانر:</label><input type="file" id="bannerImageInput" accept="image/*" class="form-control"></div>
+                    <div style="display:flex; gap:6px; margin-bottom:10px;"><button onclick="saveBannerAd()" class="btn" style="background:#00b0ff; color:#fff;">💾 حفظ ونشر البانر</button><button onclick="clearBannerForm()" class="btn btn-danger" style="width:auto;">إلغاء</button></div>
+                    <div id="adminBannersList"></div>
                 </div>
             </div>
 
@@ -1518,6 +1533,70 @@
 
         const renderCategories = () => { if ($("categoriesContainer")) $("categoriesContainer").innerHTML = categories.map(c => `<button class="cat-btn ${c === selectedCategory ? 'active' : ''}" onclick="selectCategory('${c}')">${c}</button>`).join(""); };
         function selectCategory(c) { selectedCategory = c; renderCategories(); renderStore(); }
+
+        
+        let bannerAds = {};
+        db.ref("bannerAds").on("value", snap => {
+            bannerAds = snap.val() || {};
+            renderBannerAds();
+            renderAdminBannersList();
+        });
+
+        function renderBannerAds() {
+            const container = $("bannerAdsContainer");
+            if (!container) return;
+            const keys = Object.keys(bannerAds).filter(k => bannerAds[k]?.active !== false);
+            if (!keys.length) {
+                container.innerHTML = "";
+                return;
+            }
+            container.innerHTML = keys.map(id => {
+                const b = bannerAds[id];
+                return `<div class="banner-ad-wrap" onclick="window.open('${b.link || '#'}', '_blank')">
+                    <img src="${b.image || 'store-icon.png'}" class="banner-ad-img">
+                </div>`;
+            }).join("");
+        }
+
+        async function saveBannerAd() {
+            const editId = $("editBannerId").value, title = $("bannerTitleInput").value.trim(), link = $("bannerLinkInput").value.trim(), f = $("bannerImageInput");
+            if (!title) return alert("⚠️ أدخل عنوان الإعلان على الأقل.");
+            const id = editId || ("BANNER_" + Date.now());
+            let image = bannerAds[id]?.image || "";
+            try {
+                if (f.files?.[0]) {
+                    const uploaded = await uploadToImgBB(f.files[0]);
+                    image = uploaded.url;
+                }
+                await db.ref("bannerAds/" + id).set({ title, link, image, active: true });
+                clearBannerForm();
+                alert("✅ تم نشر إعلان البانر بنجاح!");
+            } catch(e) {
+                alert("❌ خطأ أثناء رفع وحفظ البانر: " + e.message);
+            }
+        }
+
+        function clearBannerForm() {
+            ["editBannerId", "bannerTitleInput", "bannerLinkInput", "bannerImageInput"].forEach(k => setVal(k, ""));
+        }
+
+        function editBanner(id) {
+            const b = bannerAds[id]; if (!b) return;
+            setVal("editBannerId", id);
+            setVal("bannerTitleInput", b.title || "");
+            setVal("bannerLinkInput", b.link || "");
+        }
+
+        function deleteBanner(id) {
+            if (confirm("حذف هذا الإعلان؟")) db.ref("bannerAds/" + id).remove();
+        }
+
+        function renderAdminBannersList() {
+            const container = $("adminBannersList"); if (!container) return;
+            const keys = Object.keys(bannerAds);
+            container.innerHTML = !keys.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد إعلانات بانر منشورة.</p>` :
+                keys.map(id => `<div class="review-box"><div><b>🖼️ ${bannerAds[id].title}</b><br><small style="color:#00b0ff;">${bannerAds[id].link || 'بدون رابط'}</small></div><div style="display:flex; gap:4px;"><button onclick="editBanner('${id}')" class="btn" style="width:auto; padding:4px 8px; font-size:11px;">✏️</button><button onclick="deleteBanner('${id}')" class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:11px;">🗑️</button></div></div>`).join("");
+        }
 
         function renderSpecialOffers() {
             const container = $("multipleOffersContainer");
