@@ -222,7 +222,10 @@
             <h3 style="color:var(--gold-color); margin:0 0 8px 0; text-align:center; font-size:15px;">🛒 سلة المشتريات وإتمام الطلب</h3>
             <div id="cartItemsList" style="max-height:145px; overflow-y:auto; margin-bottom:8px; padding-left:2px;"></div>
             <!-- Hidden or automatic region handling based on user profile -->
-            <input type="hidden" id="cartRegionSelect" value="">
+            <div class="form-group" style="display:none;">
+                <label>📍 منطقة التوصيل:</label>
+                <select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()" style="padding:6px;"></select>
+            </div>
             <div class="adm-card" style="margin-bottom:8px; font-size:11px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span>قيمة المواد:</span><strong><span id="modalCartSubtotal">0</span> ل.س</strong></div>
                 <div id="modalCreditMarkupRow" style="display:none; justify-content:space-between; margin-bottom:3px; color:#ff9800;"><span>نسبة البيع بالآجل (<span id="modalCreditPctVal">0</span>%):</span><strong>+<span id="modalCreditMarkupAmount">0</span> ل.س</strong></div>
