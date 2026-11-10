@@ -221,13 +221,10 @@
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin:0 0 8px 0; text-align:center; font-size:15px;">🛒 سلة المشتريات وإتمام الطلب</h3>
             <div id="cartItemsList" style="max-height:145px; overflow-y:auto; margin-bottom:8px; padding-left:2px;"></div>
-            
-            <!-- مخفية تماماً عن الزبون وتقرأ من الحساب في الخلفية تلقائياً -->
-            <div class="form-group" style="display:none;">
+            <div class="form-group" style="margin-bottom:8px;">
                 <label>📍 منطقة التوصيل:</label>
-                <select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()"></select>
+                <select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()" style="padding:6px;"></select>
             </div>
-
             <div class="adm-card" style="margin-bottom:8px; font-size:11px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span>قيمة المواد:</span><strong><span id="modalCartSubtotal">0</span> ل.س</strong></div>
                 <div id="modalCreditMarkupRow" style="display:none; justify-content:space-between; margin-bottom:3px; color:#ff9800;"><span>نسبة البيع بالآجل (<span id="modalCreditPctVal">0</span>%):</span><strong>+<span id="modalCreditMarkupAmount">0</span> ل.س</strong></div>
@@ -244,18 +241,11 @@
                 <label>💳 طريقة الدفع:</label>
                 <select id="cartPaymentMethod" class="form-control" onchange="renderCartModalItems()" style="padding:6px; font-weight:bold;"></select>
             </div>
-            
-            <!-- تم إخفاء صندوق شام كاش القديم وإضافته كزر مدمج بجانب زر الإرسال عند اختيار شام كاش -->
-            <div id="shamCashInfoBox" style="display:none;"></div>
-
-            <div class="form-group" style="margin-bottom:10px;"><input type="text" id="orderNotes" class="form-control" placeholder="📝 ملاحظات إضافية مع الطلب (اختياري)..."></div>
-            
-            <!-- زر إتمام الطلب وزر نسخ معرف الشام كاش مدمجان هنا -->
-            <div id="cartActionButtonsContainer" style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px;">
-                <button type="button" id="copyShamCashBtnInCart" onclick="copyWalletId()" class="btn" style="display:none; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; font-size:12px; padding:9px; font-weight:bold;">📋 نسخ كود محفظة شام كاش للدفع</button>
-                <button type="button" onclick="submitOrder()" class="btn" style="background:linear-gradient(45deg,#00e676,#00c853); color:#000; font-size:14px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.45); animation:pulse 2s infinite;">✅ إرسال وتأكيد الطلب الآن</button>
+            <div id="shamCashInfoBox" style="display:none; text-align:center;">
+                <button type="button" onclick="copyWalletId()" class="btn" style="margin-bottom:8px; padding:9px; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000;">📋 نسخ كود محفظة شام كاش للدفع</button>
             </div>
-
+            <div class="form-group" style="margin-bottom:10px;"><input type="text" id="orderNotes" class="form-control" placeholder="📝 ملاحظات إضافية مع الطلب (اختياري)..."></div>
+            <button type="button" onclick="submitOrder()" class="btn" style="background:linear-gradient(45deg,#00e676,#00c853); color:#000; margin-bottom:8px; font-size:14px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.45); animation:pulse 2s infinite;">✅ إرسال وتأكيد الطلب الآن</button>
             <button type="button" onclick="closeModal('cartModal')" class="btn btn-danger" style="padding:6px; font-size:11px;">إغلاق</button>
         </div>
     </div>
@@ -1563,7 +1553,15 @@
                 const src = p.image || getLockedHighResImage(id) || p.thumb || "store-icon.png";
                 const isHighRes = !!(p.image || highResImagesMemoryCache[id]);
                 
-                html += `<div class="product-card"><div><div class="product-img-wrap"><img id="prod_img_${id}" src="${src}" class="product-img ${isHighRes ? 'img-high-res' : 'img-low-res'}"></div><h3>${pName}</h3><p>${priceSYP.toLocaleString()} ل.س ${isW && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>${rKeys.length ? `<div style="font-size:11px; color:var(--gold-color);">⭐ ${avg} (${rKeys.length})</div>` : ''}</div><div style="margin-top:6px;">${btn}${revBtn}</div></div>`;
+                
+                let reviewsHtml = "";
+                if (rKeys.length) {
+                    const commentsSnippet = rKeys.slice(-2).map(k => `<div style="font-size:10px; color:var(--gray-text); text-align:right; margin-top:2px; background:rgba(255,255,255,0.03); padding:3px; border-radius:3px;">💬 <b>${revs[k].customerName}:</b> ${revs[k].comment}</div>`).join("");
+                    reviewsHtml = `<div style="margin:4px 0; text-align:right;"><div style="font-size:11px; color:var(--gold-color); font-weight:bold;">⭐ ${avg} (${rKeys.length} تقييم)</div>${commentsSnippet}</div>`;
+                }
+
+                html += `<div class="product-card"><div><div class="product-img-wrap"><img id="prod_img_${id}" src="${src}" class="product-img ${isHighRes ? 'img-high-res' : 'img-low-res'}"></div><h3>${pName}</h3><p>${priceSYP.toLocaleString()} ل.س ${isW && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>${reviewsHtml}</div><div style="margin-top:6px;">${btn}${revBtn}</div></div>`;
+
 
                 // 2. Package / Bulk Card (if enabled)
                 if (p.hasPackage && p.pkgCount > 0 && p.pkgPriceUSD > 0) {
@@ -1751,8 +1749,7 @@
             
             const selectedPay = paySelect ? paySelect.value : "شام كاش";
             const useCreditPricing = (selectedPay === "آجل (دفتر الدين)");
-            if ($("shamCashInfoBox")) $("shamCashInfoBox").style.display = "none";
-            if ($("copyShamCashBtnInCart")) $("copyShamCashBtnInCart").style.display = (selectedPay === "شام كاش") ? "block" : "none";
+            if ($("shamCashInfoBox")) $("shamCashInfoBox").style.display = (selectedPay === "شام كاش") ? "block" : "none";
 
             const markupPct = useCreditPricing ? getCurrentUserCreditMarkupPct() : 0;
             const markupAmt = markupPct > 0 ? Math.round((sub * markupPct) / 100) : 0;
@@ -3405,11 +3402,34 @@
         }
 
         function openReviewModal(id) { if (!products[id]) return; setVal("reviewProductId", id); setTxt("reviewProductName", products[id].name); setVal("reviewCommentInput", ""); $("reviewModal").style.display = "flex"; }
-        function submitProductReview() {
-            if (!currentUser?.phone || currentUser.banned) return;
+        async function submitProductReview() {
+            if (!currentUser?.phone || currentUser.banned) return showToast("⚠️ يرجى تسجيل الدخول أولاً.", true);
             const id = $("reviewProductId").value, rating = parseInt($("reviewRatingSelect").value) || 5, comment = $("reviewCommentInput").value.trim();
-            if (!comment) return alert("يرجى كتابة تعليق.");
-            db.ref(`products/${id}/reviews/REV_${Date.now()}`).set({ customerName: currentUser.name, customerPhone: currentUser.phone, rating, comment, timestamp: new Date().toLocaleDateString("ar-SY") }).then(() => { alert("✅ تم نشر تقييمك!"); closeModal('reviewModal'); });
+            if (!comment) return showToast("⚠️ يرجى كتابة تعليق.", true);
+
+            // Check if user already reviewed this product
+            const revRef = db.ref(`products/${id}/reviews`);
+            const snap = await revRef.once("value");
+            const revs = snap.val() || {};
+            const alreadyReviewed = Object.values(revs).some(r => r.customerPhone === currentUser.phone);
+
+            if (alreadyReviewed) {
+                closeModal('reviewModal');
+                return showToast("⚠️ لقد قمت بتقييم هذا المنتج مسبقاً (مسموح تقييم واحد لكل منتج).", true);
+            }
+
+            const revId = "REV_" + currentUser.phone.replace(/[^0-9]/g, "");
+            await revRef.child(revId).set({
+                customerName: currentUser.name,
+                customerPhone: currentUser.phone,
+                rating,
+                comment,
+                timestamp: new Date().toLocaleDateString("ar-SY")
+            });
+
+            closeModal('reviewModal');
+            showToast("⭐ شكراً لك! تم نشر تقييمك بنجاح", false);
+            renderStore();
         }
         function deleteProductReview(pId, rId) { if (confirm("حذف هذا التعليق؟")) db.ref(`products/${pId}/reviews/${rId}`).remove(); }
 
