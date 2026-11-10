@@ -3200,7 +3200,15 @@
         function cancelAllPendingOrders() {
             const cnt = Object.keys(pendingOrders || {}).length;
             if (!cnt) return alert("ℹ️ لا توجد طلبات معلقة.");
-            if (confirm(`⚠️ إلغاء جميع الطلبات المعلقة (${cnt} طلب)؟`)) db.ref("pendingOrders").remove();
+            if (confirm(`⚠️ إلغاء جميع الطلبات المعلقة (${cnt} طلب)؟`)) {
+                db.ref("pendingOrders").remove().then(() => {
+                    pendingOrders = {};
+                    renderPendingOrders();
+                    showToast("🗑️ تم إلغاء جميع الطلبات بنجاح");
+                }).catch(err => {
+                    alert("❌ حدث خطأ أثناء الحذف: " + err.message);
+                });
+            }
         }
 
         function saveSupplier() {
