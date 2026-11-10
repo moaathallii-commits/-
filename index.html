@@ -1694,8 +1694,8 @@
 
 
         function copyWalletId() {
-            if (navigator.clipboard?.writeText) navigator.clipboard.writeText(shamWalletIdGlobal).then(() => alert("✅ تم نسخ كود محفظة شام كاش بنجاح!"));
-            else { const t = document.createElement("textarea"); t.value = shamWalletIdGlobal; document.body.appendChild(t); t.select(); document.execCommand("copy"); document.body.removeChild(t); alert("✅ تم نسخ كود محفظة شام كاش بنجاح!"); }
+            if (navigator.clipboard?.writeText) navigator.clipboard.writeText(shamWalletIdGlobal).then(() => showToast("📋 تم نسخ معرف شام كاش وتحويلك للواتساب!", false));
+            else { const t = document.createElement("textarea"); t.value = shamWalletIdGlobal; document.body.appendChild(t); t.select(); document.execCommand("copy"); document.body.removeChild(t); showToast("📋 تم نسخ معرف شام كاش وتحويلك للواتساب!", false); }
         }
 
         function renderCartModalItems() {
