@@ -220,11 +220,27 @@
     <div id="cartModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin:0 0 8px 0; text-align:center; font-size:15px;">🛒 سلة المشتريات وإتمام الطلب</h3>
-            <div id="freeDeliveryProgressBarContainer" style="margin-bottom:8px;"></div>
             <div id="cartItemsList" style="max-height:145px; overflow-y:auto; margin-bottom:8px; padding-left:2px;"></div>
-            <input type="hidden" id="cartRegionSelect">
-            <div class="adm-card" style="margin-bottom:8px; font-size:11px; display:flex; justify-content:space-between; align-items:center;">
-                <span>📍 منطقة التوصيل الخاصة بك: <b id="cartRegionStaticLabel" style="color:var(--gold-color);">-</b></span>
+            <!-- Progress Bar for Delivery / Gift Incentive -->
+            <div id="deliveryProgressBarContainer" style="background:rgba(212,175,55,0.08); border:1px solid var(--gold-color); border-radius:6px; padding:8px; margin-bottom:10px; font-size:11px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-weight:bold;">
+                    <span id="progressText" style="color:var(--gold-color);">🎁 أضف المزيد للحصول على هدية التشجيع!</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div style="width:100%; background:var(--border-color); height:6px; border-radius:3px; overflow:hidden;">
+                    <div id="progressBarFill" style="width:0%; background:var(--success-color); height:100%; transition:width 0.3s;"></div>
+                </div>
+            </div>
+
+            <!-- Hidden region select for backend logic compatibility -->
+            <div class="form-group" style="display:none;">
+                <select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()"></select>
+            </div>
+            <div class="adm-card" style="margin-bottom:8px; font-size:11px; background:rgba(0,176,255,0.05); border-color:#00b0ff;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>📍 منطقة التوصيل المعتمدة لحسابك: <b id="cartModalRegionBadge" style="color:var(--gold-color);">-</b></span>
+                    <span style="color:var(--success-color); font-weight:bold;"><span id="cartModalRegionFeeBadge">0</span> ل.س</span>
+                </div>
             </div>
             <div class="adm-card" style="margin-bottom:8px; font-size:11px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span>قيمة المواد:</span><strong><span id="modalCartSubtotal">0</span> ل.س</strong></div>
@@ -241,9 +257,6 @@
             <div class="form-group" style="margin-bottom:8px;">
                 <label>💳 طريقة الدفع:</label>
                 <select id="cartPaymentMethod" class="form-control" onchange="renderCartModalItems()" style="padding:6px; font-weight:bold;"></select>
-            </div>
-            <div id="shamCashInfoBox" style="display:none; background:rgba(212,175,55,0.1); border:1px solid var(--gold-color); border-radius:6px; padding:8px; margin-bottom:8px; font-size:11px; text-align:center; color:var(--gold-color);">
-                💡 عند اختيار <b>شام كاش</b>، سيتم نسخ كود المحفظة تلقائياً عند الضغط على زر الإرسال.
             </div>
             <div class="form-group" style="margin-bottom:10px;"><input type="text" id="orderNotes" class="form-control" placeholder="📝 ملاحظات إضافية مع الطلب (اختياري)..."></div>
             <button type="button" onclick="submitOrder()" class="btn" style="background:linear-gradient(45deg,#00e676,#00c853); color:#000; margin-bottom:8px; font-size:14px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.45); animation:pulse 2s infinite;">✅ إرسال وتأكيد الطلب الآن</button>
@@ -1688,21 +1701,11 @@
             renderCartModalItems(); updateCartBar();
         }
 
-        
-        function copyWalletIdSilent() {
-            if (navigator.clipboard?.writeText) {
-                navigator.clipboard.writeText(shamWalletIdGlobal).catch(() => {});
-            } else {
-                const t = document.createElement("textarea"); t.value = shamWalletIdGlobal; document.body.appendChild(t); t.select(); document.execCommand("copy"); document.body.removeChild(t);
-            }
-        }
-
         function copyWalletId() {
             if (navigator.clipboard?.writeText) navigator.clipboard.writeText(shamWalletIdGlobal).then(() => alert("✅ تم نسخ كود محفظة شام كاش بنجاح!"));
             else { const t = document.createElement("textarea"); t.value = shamWalletIdGlobal; document.body.appendChild(t); t.select(); document.execCommand("copy"); document.body.removeChild(t); alert("✅ تم نسخ كود محفظة شام كاش بنجاح!"); }
         }
 
-        
         function renderCartModalItems() {
             const items = Object.values(cart);
             if (!items.length) return closeModal('cartModal');
@@ -1718,32 +1721,33 @@
             const isCreditUser = (u?.userType === "credit");
             const prepaidBalUSD = parseFloat(u?.prepaidBalanceUSD) || 0;
             
-            const defReg = Object.keys(deliveryFees)[0] || "العوينة";
-            const userReg = (currentUser?.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : defReg;
-            if ($("cartRegionSelect")) $("cartRegionSelect").value = userReg;
-            setTxt("cartRegionStaticLabel", userReg + ` (${getRegionFee(userReg).toLocaleString()} ل.س)`);
-
             const paySelect = $("cartPaymentMethod");
-            const currPay = paySelect ? paySelect.value : "";
+            const currPay = paySelect ? paySelect.value : ""; // Get current selection if any
             
-            const feeSYP_temp = getRegionFee(userReg);
+            // Calculate temp order USD to check if prepaid covers it
+            const feeSYP_temp = getRegionFee($("cartRegionSelect")?.value || u?.region || Object.keys(deliveryFees)[0] || "العوينة");
             const subUSD_temp = Object.values(cart).reduce((a,i) => a + (i.priceUSD * i.qty), 0);
             const totalUSD_temp = parseFloat((subUSD_temp + (feeSYP_temp / exchangeRate)).toFixed(2));
             
             let payOptionsHtml = "";
             let canUsePrepaid = (prepaidBalUSD > 0 && prepaidBalUSD >= totalUSD_temp);
             
+            // If prepaid is sufficient, make it the FIRST (default) option
             if (canUsePrepaid) {
                 payOptionsHtml += `<option value="محفظة مسبقة الدفع">محفظة الدفع المسبق (رصيدك: $${prepaidBalUSD.toFixed(2)})</option>`;
             }
+            
             payOptionsHtml += `<option value="شام كاش">شام كاش (الدفع الفوري)</option>`;
+            
             if (isCreditUser) payOptionsHtml += `<option value="آجل (دفتر الدين)">دفتر الدين (الدفع الآجل)</option>`;
+            
             if (prepaidBalUSD > 0 && !canUsePrepaid) {
                 payOptionsHtml += `<option value="disabled_prep" disabled>محفظة المسبق (رصيدك $${prepaidBalUSD.toFixed(2)} لا يكفي)</option>`;
             }
             
             if (paySelect) {
                 paySelect.innerHTML = payOptionsHtml;
+                // Preserve previous selection if it's still valid, otherwise it defaults to the first option
                 if (currPay && paySelect.querySelector(`option[value="${currPay}"]`) && !paySelect.querySelector(`option[value="${currPay}"]`).disabled) {
                     paySelect.value = currPay;
                 }
@@ -1760,49 +1764,113 @@
                 setTxt("modalCreditPctVal", markupPct);
                 setTxt("modalCreditMarkupAmount", markupAmt.toLocaleString());
             }
-            const fee = getRegionFee(userReg);
+            const defReg = Object.keys(deliveryFees)[0] || "العوينة";
+            const reg = (currentUser?.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : defReg;
+            if ($("cartRegionSelect")) $("cartRegionSelect").value = reg;
+            const fee = getRegionFee(reg);
+
             setTxt("modalCartSubtotal", sub.toLocaleString());
-            setTxt("modalDeliveryRegionName", userReg);
+            setTxt("modalDeliveryRegionName", reg);
             setTxt("modalDeliveryFee", fee.toLocaleString());
+            setTxt("cartModalRegionBadge", reg);
+            setTxt("cartModalRegionFeeBadge", fee.toLocaleString());
             setTxt("modalCartTotal", (sub + markupAmt + fee).toLocaleString());
             setTxt("modalCartPoints", pts);
 
-            // Render Free Delivery / Incentive Progress Bar
-            renderFreeDeliveryProgressBar(sub);
+            // Update Progress Bar (Goal: 100,000 SYP for free gift/bonus)
+            const goalSYP = 100000;
+            const progressRatio = Math.min(1, sub / goalSYP);
+            const progressPct = Math.round(progressRatio * 100);
+            if ($("progressPercent")) setTxt("progressPercent", progressPct + "%");
+            if ($("progressBarFill")) $("progressBarFill").style.width = progressPct + "%";
+            if ($("progressText")) {
+                if (sub >= goalSYP) {
+                    setTxt("progressText", "🎉 مبروك! لقد أهّلت سلتك للحصول على الهدية التشجيعية!");
+                } else {
+                    setTxt("progressText", `🎁 أضف ${(goalSYP - sub).toLocaleString()} ل.س إضافية للحصول على هدية المتجر!`);
+                }
+            }
 
+            // Check for Smart Cart Package Suggestion
             checkSmartCartPackageSuggestion();
         }
 
-        function renderFreeDeliveryProgressBar(currentSubtotalSYP) {
-            const container = $("freeDeliveryProgressBarContainer");
-            if (!container) return;
-            const goalSYP = 100000; // Goal: 100,000 SYP for free delivery or bonus reward
-            const progress = Math.min(100, Math.round((currentSubtotalSYP / goalSYP) * 100));
-            const remaining = Math.max(0, goalSYP - currentSubtotalSYP);
-
-            container.innerHTML = `<div style="background:var(--bg-color); border:1px solid var(--gold-color); border-radius:6px; padding:8px; font-size:11px;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-weight:bold;">
-                    <span style="color:var(--gold-color);">🎁 شريط هدية التوصيل والمشتريات</span>
-                    <span>${progress}%</span>
-                </div>
-                <div style="background:#333; height:8px; border-radius:4px; overflow:hidden; margin-bottom:4px;">
-                    <div style="background:linear-gradient(90deg,#D4AF37,#00e676); width:${progress}%; height:100%; transition:width 0.3s;"></div>
-                </div>
-                <div style="text-align:center; color:var(--gray-text); font-size:10px;">
-                    ${remaining > 0 ? `أضف بقيمة <b>${remaining.toLocaleString()} ل.س</b> إضافية للحصول على مكافأة الولاء والتوصيل المجاني! 🎉` : `<b>تهانينا! لقد حققت الحد الأعلى للمكافأة والتوصيل المجاني! 🚀</b>`}
-                </div>
-            </div>`;
+        function checkSmartCartPackageSuggestion() {
+            let bannerBox = $("smartPackageSuggestionBox");
+            if (!bannerBox) {
+                bannerBox = document.createElement("div");
+                bannerBox.id = "smartPackageSuggestionBox";
+                const targetList = $("cartItemsList");
+                if (targetList && targetList.parentNode) {
+                    targetList.parentNode.insertBefore(bannerBox, targetList.nextSibling);
+                }
+            }
+            let suggestionHtml = "";
+            Object.values(cart).forEach(item => {
+                if (!item.isPackage && products[item.id] && products[item.id].hasPackage) {
+                    const p = products[item.id];
+                    const pkgCount = parseInt(p.pkgCount) || 10;
+                    if (item.qty >= pkgCount) {
+                        const numPackages = Math.floor(item.qty / pkgCount);
+                        const remainder = item.qty % pkgCount;
+                        suggestionHtml += `<div style="background:rgba(212,175,55,0.15); border:1px solid var(--gold-color); border-radius:6px; padding:8px; margin-bottom:6px; font-size:11px; text-align:center;">
+                            💡 لديك <b>${item.qty}</b> من (${p.name}). هل تريد تحويل ${numPackages * pkgCount} منها إلى <b>${numPackages} طرد (${pkgCount} ${p.unitType || 'كيلو'})</b> للاستفادة من سعر الجملة؟<br>
+                            <button type="button" onclick="applySmartPackageConversion('${item.id}', ${pkgCount})" class="btn" style="margin-top:5px; width:auto; padding:4px 10px; font-size:10px; background:var(--gold-color); color:#000;">⚡ تحويل إلى طرد فوري</button>
+                        </div>`;
+                    }
+                }
+            });
+            bannerBox.innerHTML = suggestionHtml;
         }
 
+        function applySmartPackageConversion(origId, pkgCount) {
+            const singleItem = cart[origId];
+            if (!singleItem || singleItem.qty < pkgCount) return;
+            const numPkgs = Math.floor(singleItem.qty / pkgCount);
+            const rem = singleItem.qty % pkgCount;
+            const pkgId = origId + "_PKG";
+            const p = products[origId] || {};
+
+            // Update cart
+            if (rem > 0) {
+                singleItem.qty = rem;
+            } else {
+                delete cart[origId];
+            }
+
+            if (!cart[pkgId]) {
+                cart[pkgId] = {
+                    id: pkgId, name: `طرد ${p.name} (${pkgCount} ${p.unitType || 'كيلو'})`,
+                    category: p.category || "غير مصنف",
+                    priceUSD: parseFloat(p.pkgPriceUSD) || 0,
+                    costPrice: (parseFloat(p.costPrice) || 0) * pkgCount,
+                    stock: Math.floor((parseInt(p.stock) || 0) / pkgCount),
+                    pointsPct: parseFloat(p.pointsPct) || 2,
+                    isPackage: true, origId, pkgCount, qty: numPkgs
+                };
+            } else {
+                cart[pkgId].qty += numPkgs;
+            }
+
+            localStorage.setItem('moaath_cart', JSON.stringify(cart));
+            renderStore();
+            renderCartModalItems();
+            showToast("⚡ تم تحويل الكمية إلى طرد بنجاح!", false);
+        }
 
         function submitOrder() {
             if (!checkStoreWorkHours()) return;
+            if (!currentUser?.phone || !currentUser?.name || !currentUser?.address) { closeModal('cartModal'); return openEditProfile(); }
+            const defReg = Object.keys(deliveryFees)[0] || "العوينة";
+            const reg = (currentUser?.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : defReg;
+            
             const selectedPayMethod = $("cartPaymentMethod") ? $("cartPaymentMethod").value : "شام كاش";
             if (selectedPayMethod === "شام كاش") {
-                copyWalletIdSilent();
+                if (navigator.clipboard?.writeText) {
+                    navigator.clipboard.writeText(shamWalletIdGlobal).catch(() => {});
+                }
+                showToast("📋 تم نسخ معرف شام كاش تلقائياً للحافظة!", false);
             }
-            if (!currentUser?.phone || !currentUser?.name || !currentUser?.address) { closeModal('cartModal'); return openEditProfile(); }
-            const reg = $("cartRegionSelect")?.value || currentUser.region || Object.keys(deliveryFees)[0] || "العوينة";
             if (!isRegionOpenNow(reg)) return alert(`⚠️ أوقات التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
             if (users[currentUser.phone]?.banned) return alert("🚫 حسابك محظور.");
             const items = Object.values(cart); if (!items.length) return;
