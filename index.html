@@ -612,25 +612,40 @@
                     </div>
                     <div class="stats-grid" style="background:rgba(212,175,55,0.06); padding:8px; border-radius:6px; border:1px dashed var(--gold-color); margin-bottom:10px;">
                         <div class="form-group" style="margin-bottom:0;">
-                            <label>📦 وحدة الطلب من الموزع:</label>
+                            <label>📦 وحدة القياس الأساسية:</label>
                             <select id="prodUnitType" class="form-control">
-                                <option value="قطعة">قطعة</option>
-                                <option value="كرتونة">كرتونة</option>
-                                <option value="طرد">طرد</option>
-                                <option value="كيس">كيس</option>
                                 <option value="كيلو">كيلو</option>
+                                <option value="قطعة">قطعة</option>
                                 <option value="لتر">لتر</option>
                                 <option value="عبوة">عبوة</option>
-                                <option value="شرحة">شرحة</option>
+                                <option value="كيس">كيس</option>
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom:0;">
-                            <label>🔢 عدد القطع داخل الوحدة (الكرتونة/الطرد):</label>
-                            <input type="number" id="prodUnitsPerPack" class="form-control" value="1" min="1">
+                            <label>🎯 الكمية القياسية للنقص:</label>
+                            <input type="number" id="prodTargetOrderPacks" class="form-control" value="5" min="1">
                         </div>
-                        <div class="form-group" style="grid-column:span 2; margin-bottom:0;">
-                            <label>🎯 الكمية القياسية المطلوبة عند النقص (بوحدة الموزع):</label>
-                            <input type="number" id="prodTargetOrderPacks" class="form-control" value="5" min="1" placeholder="مثال: 5 كرتونة أو 15 كيس">
+                        <div class="form-group" style="grid-column:span 2; margin-top:6px; border-top:1px dashed var(--gold-color); padding-top:6px;">
+                            <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                                <input type="checkbox" id="prodHasPackage" style="width:18px; height:18px;" onchange="togglePackageFields(this.checked)">
+                                <label for="prodHasPackage" style="color:var(--gold-color); font-weight:bold; margin:0; cursor:pointer;">تفعيل عبوة جماعية / طرد لهذا المنتج (للبيع للزبائن)</label>
+                            </div>
+                            <div id="packageFieldsContainer" style="display:none; display:grid; grid-template-columns:repeat(2,1fr); gap:6px; margin-top:6px;">
+                                <div>
+                                    <label>عدد الوحدات في الطرد (مثال: 10 كغ):</label>
+                                    <input type="number" id="prodPkgCount" class="form-control" value="10" min="1">
+                                </div>
+                                <div>
+                                    <label>سعر الطرد الإجمالي (ل.س):</label>
+                                    <input type="number" id="prodPkgPriceSYP" class="form-control" oninput="updateLiveUSD('prodPkgPriceSYP', 'prodPkgPriceUSDPreview', 'prodPkgPriceUSD')">
+                                    <small id="prodPkgPriceUSDPreview" style="color:var(--success-color); font-size:10px; font-weight:bold;">≈ 0.00 $</small>
+                                    <input type="hidden" id="prodPkgPriceUSD">
+                                </div>
+                                <div style="grid-column:span 2;">
+                                    <label>صورة الطرد المستقلة (اختياري):</label>
+                                    <input type="file" id="prodPkgImageInput" accept="image/*" class="form-control">
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="stats-grid">
@@ -691,7 +706,10 @@
 
             <div id="admTab7Customers" class="admin-tab" style="display:none;">
                 <div class="adm-sec" style="border-color:var(--gold-color); background:rgba(212,175,55,0.05);">
-                    <div class="adm-sec-title"><span>📒 إدارة دفتر الديون لزبائن الآجل (ترحيل تلقائي للخزينة)</span></div>
+                    <div class="adm-sec-title">
+                        <span>📒 إدارة دفتر الديون لزبائن الآجل (ترحيل تلقائي للخزينة)</span>
+                        <button type="button" onclick="exportAllDebtsBackupPDF()" class="btn" style="width:auto; padding:5px 10px; font-size:11px; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000; font-weight:bold;">📄 إنشاء PDF احتياطي لجميع تفاصيل الديون</button>
+                    </div>
                     <div class="form-group">
                         <label>اختر زبون الآجل (بعد تحويل رتبته إلى "زبون آجل / دفتر" من القائمة أدناه):</label>
                         <select id="adminDebtCustomerSelect" class="form-control" onchange="loadAdminCustomerDebtLedger()"><option value="">-- اختر زبون آجل --</option></select>
@@ -707,7 +725,10 @@
                                 <input type="number" step="0.5" id="adminCustCreditMarkupPct" class="quick-inp" style="width:55px;" value="0">
                                 <button onclick="saveCustomerCreditMarkupPct()" class="btn" style="width:auto; padding:4px 8px; font-size:10px;">حفظ النسبة</button>
                             </div>
-                            <button onclick="exportCustomerDebtCSV()" class="btn" style="width:auto; padding:4px 8px; font-size:10px; background:#4CAF50; color:#fff;">📊 تحميل كشف حساب (Excel)</button>
+                            <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                                <button type="button" onclick="exportCustomerDebtCSV()" class="btn" style="width:auto; padding:4px 8px; font-size:10px; background:#4CAF50; color:#fff;">📊 كشف (Excel)</button>
+                                <button type="button" onclick="exportSingleCustomerDebtPDF()" class="btn" style="width:auto; padding:4px 8px; font-size:10px; background:#e53935; color:#fff;">📄 كشف الزبون (PDF)</button>
+                            </div>
                         </div>
                     </div>
                                         <div class="adm-card" style="border-color:#00e676; background:rgba(0,230,118,0.05); margin-bottom:10px;">
@@ -1526,14 +1547,35 @@
                 const p = products[id]; if (!p) return;
                 const pName = p.name || "";
                 if ((selectedCategory !== "الكل" && p.category !== selectedCategory) || (q && !pName.toLowerCase().includes(q))) return;
+                
+                // 1. Single Unit Card
                 const priceSYP = calcSYP((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0)), st = parseInt(p.stock) || 0, inC = cart[id] ? cart[id].qty : 0;
                 const btn = st <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (inC > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${id}',1)">+</button><span class="qty-text">${inC}</span><button class="qty-btn" onclick="changeQty('${id}',-1)">-</button></div>` : `<button class="btn" onclick="changeQty('${id}',1)">🛒 أضف للسلة</button>`);
                 const revs = p.reviews || {}, rKeys = Object.keys(revs), avg = rKeys.length ? (rKeys.reduce((a, k) => a + (revs[k].rating || 0), 0) / rKeys.length).toFixed(1) : 0;
+                const sortedRevs = Object.values(revs).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || "")).slice(0, 2);
+                const lastTwoRevsHtml = sortedRevs.map(r => `<div style="font-size:10px; color:var(--gray-text); background:var(--bg-color); padding:3px 6px; margin-top:3px; border-radius:4px; text-align:right;">⭐ ${r.rating} - <b>${r.customerName}:</b> ${r.comment}</div>`).join("");
+
+                const userAlreadyReviewed = Object.values(revs).some(r => r.customerPhone === currentUser?.phone);
                 const bought = currentUser?.phone && users[currentUser.phone]?.purchases?.[id];
-                const revBtn = (bought && !currentUser.banned) ? `<button onclick="openReviewModal('${id}')" class="btn" style="background:transparent; border:1px solid var(--gold-color); color:var(--gold-color); margin-top:5px; font-size:11px; padding:4px;">⭐ قيّم الصنف</button>` : "";
+                const revBtn = (bought && !currentUser.banned) ? (userAlreadyReviewed ? `<div style="color:var(--success-color); font-size:10px; margin-top:4px; font-weight:bold;">⭐ تم تقييمك بنجاح</div>` : `<button onclick="openReviewModal('${id}')" class="btn" style="background:transparent; border:1px solid var(--gold-color); color:var(--gold-color); margin-top:5px; font-size:11px; padding:4px;">⭐ قيّم الصنف</button>`) : "";
                 const src = p.image || getLockedHighResImage(id) || p.thumb || "store-icon.png";
                 const isHighRes = !!(p.image || highResImagesMemoryCache[id]);
-                html += `<div class="product-card"><div><div class="product-img-wrap"><img id="prod_img_${id}" src="${src}" class="product-img ${isHighRes ? 'img-high-res' : 'img-low-res'}"></div><h3>${pName}</h3><p>${priceSYP.toLocaleString()} ل.س ${isW && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>${rKeys.length ? `<div style="font-size:11px; color:var(--gold-color);">⭐ ${avg} (${rKeys.length})</div>` : ''}</div><div style="margin-top:6px;">${btn}${revBtn}</div></div>`;
+                
+                html += `<div class="product-card"><div><div class="product-img-wrap"><img id="prod_img_${id}" src="${src}" class="product-img ${isHighRes ? 'img-high-res' : 'img-low-res'}"></div><h3>${pName}</h3><p>${priceSYP.toLocaleString()} ل.س ${isW && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>${rKeys.length ? `<div style="font-size:11px; color:var(--gold-color);">⭐ ${avg} (${rKeys.length})</div>${lastTwoRevsHtml}` : ''}</div><div style="margin-top:6px;">${btn}${revBtn}</div></div>`;
+
+                // 2. Package / Bulk Card (if enabled)
+                if (p.hasPackage && p.pkgCount > 0 && p.pkgPriceUSD > 0) {
+                    const pkgId = id + "_PKG";
+                    const pkgName = `طرد ${p.name} (${p.pkgCount} ${p.unitType || 'كيلو'})`;
+                    const pkgPriceSYP = calcSYP(p.pkgPriceUSD);
+                    // Stock equivalent packages available
+                    const pkgMaxStock = Math.floor(st / p.pkgCount);
+                    const inCPkg = cart[pkgId] ? cart[pkgId].qty : 0;
+                    const btnPkg = pkgMaxStock <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (inCPkg > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${pkgId}',1)">+</button><span class="qty-text">${inCPkg}</span><button class="qty-btn" onclick="changeQty('${pkgId}',-1)">-</button></div>` : `<button class="btn" onclick="changeQty('${pkgId}',1)">📦 أضف الطرد</button>`);
+                    const srcPkg = p.pkgImage || p.pkgThumb || src;
+
+                    html += `<div class="product-card" style="border-color:var(--gold-color);"><div><div class="product-img-wrap"><img src="${srcPkg}" class="product-img img-high-res"></div><h3 style="color:var(--gold-color);">${pkgName}</h3><p>${pkgPriceSYP.toLocaleString()} ل.س <small style="color:var(--success-color);">(وفر)</small></p></div><div style="margin-top:6px;">${btnPkg}</div></div>`;
+                }
             });
             grid.innerHTML = html || `<p style="grid-column:span 2; text-align:center; color:var(--gray-text);">لا توجد مواد مطابقة للبحث.</p>`;
             updateCartBar();
@@ -1562,6 +1604,12 @@
 
         
         
+        
+        function togglePackageFields(show) {
+            const el = $("packageFieldsContainer");
+            if (el) el.style.display = show ? "grid" : "none";
+        }
+
         function updateLiveUSD(sypInputId, previewId, usdHiddenId) {
             const sypVal = parseFloat($(sypInputId)?.value) || 0;
             const usdVal = exchangeRate > 0 ? parseFloat((sypVal / exchangeRate).toFixed(2)) : 0;
@@ -1716,6 +1764,72 @@
             setTxt("modalDeliveryFee", fee.toLocaleString());
             setTxt("modalCartTotal", (sub + markupAmt + fee).toLocaleString());
             setTxt("modalCartPoints", pts);
+
+            // Check for Smart Cart Package Suggestion
+            checkSmartCartPackageSuggestion();
+        }
+
+        function checkSmartCartPackageSuggestion() {
+            let bannerBox = $("smartPackageSuggestionBox");
+            if (!bannerBox) {
+                bannerBox = document.createElement("div");
+                bannerBox.id = "smartPackageSuggestionBox";
+                const targetList = $("cartItemsList");
+                if (targetList && targetList.parentNode) {
+                    targetList.parentNode.insertBefore(bannerBox, targetList.nextSibling);
+                }
+            }
+            let suggestionHtml = "";
+            Object.values(cart).forEach(item => {
+                if (!item.isPackage && products[item.id] && products[item.id].hasPackage) {
+                    const p = products[item.id];
+                    const pkgCount = parseInt(p.pkgCount) || 10;
+                    if (item.qty >= pkgCount) {
+                        const numPackages = Math.floor(item.qty / pkgCount);
+                        const remainder = item.qty % pkgCount;
+                        suggestionHtml += `<div style="background:rgba(212,175,55,0.15); border:1px solid var(--gold-color); border-radius:6px; padding:8px; margin-bottom:6px; font-size:11px; text-align:center;">
+                            💡 لديك <b>${item.qty}</b> من (${p.name}). هل تريد تحويل ${numPackages * pkgCount} منها إلى <b>${numPackages} طرد (${pkgCount} ${p.unitType || 'كيلو'})</b> للاستفادة من سعر الجملة؟<br>
+                            <button type="button" onclick="applySmartPackageConversion('${item.id}', ${pkgCount})" class="btn" style="margin-top:5px; width:auto; padding:4px 10px; font-size:10px; background:var(--gold-color); color:#000;">⚡ تحويل إلى طرد فوري</button>
+                        </div>`;
+                    }
+                }
+            });
+            bannerBox.innerHTML = suggestionHtml;
+        }
+
+        function applySmartPackageConversion(origId, pkgCount) {
+            const singleItem = cart[origId];
+            if (!singleItem || singleItem.qty < pkgCount) return;
+            const numPkgs = Math.floor(singleItem.qty / pkgCount);
+            const rem = singleItem.qty % pkgCount;
+            const pkgId = origId + "_PKG";
+            const p = products[origId] || {};
+
+            // Update cart
+            if (rem > 0) {
+                singleItem.qty = rem;
+            } else {
+                delete cart[origId];
+            }
+
+            if (!cart[pkgId]) {
+                cart[pkgId] = {
+                    id: pkgId, name: `طرد ${p.name} (${pkgCount} ${p.unitType || 'كيلو'})`,
+                    category: p.category || "غير مصنف",
+                    priceUSD: parseFloat(p.pkgPriceUSD) || 0,
+                    costPrice: (parseFloat(p.costPrice) || 0) * pkgCount,
+                    stock: Math.floor((parseInt(p.stock) || 0) / pkgCount),
+                    pointsPct: parseFloat(p.pointsPct) || 2,
+                    isPackage: true, origId, pkgCount, qty: numPkgs
+                };
+            } else {
+                cart[pkgId].qty += numPkgs;
+            }
+
+            localStorage.setItem('moaath_cart', JSON.stringify(cart));
+            renderStore();
+            renderCartModalItems();
+            showToast("⚡ تم تحويل الكمية إلى طرد بنجاح!", false);
         }
 
         
@@ -1878,6 +1992,133 @@
         }
 
         
+        
+        function generateDebtsPrintablePDF(targetUsers, reportTitle) {
+            let totalAllUSD = 0;
+            let totalAllSYP = 0;
+            const nowStr = new Date().toLocaleString("ar-SY");
+
+            let customersHtml = "";
+            targetUsers.forEach((u, idx) => {
+                const balUSD = parseFloat(u.debtBalanceUSD) || 0;
+                const balSYP = calcSYP(balUSD);
+                totalAllUSD += balUSD;
+                totalAllSYP += balSYP;
+
+                const entries = Object.values(u.debtLedger || {}).sort((a, b) => (a.dateISO || "").localeCompare(b.dateISO || ""));
+                let rowsHtml = "";
+                if (entries.length === 0) {
+                    rowsHtml = `<tr><td colspan="5" style="text-align:center; color:#777;">لا توجد حركات تفصيلية مسجلة في السجل</td></tr>`;
+                } else {
+                    rowsHtml = entries.map((e, i) => {
+                        const isPay = e.type === "payment";
+                        const amtUSD = parseFloat(e.finalAmountUSD || e.amountUSD || 0).toFixed(2);
+                        const amtSYP = calcSYP(amtUSD).toLocaleString();
+                        return `<tr>
+                            <td>${i + 1}</td>
+                            <td>${e.dateStr || '-'}</td>
+                            <td style="color:${isPay ? '#1b5e20' : '#b71c1c'}; font-weight:bold;">${isPay ? '💵 تسديد دفعة' : '📌 تسجيل دين'}</td>
+                            <td style="text-align:right;">${e.note || '-'} ${e.feePct > 0 ? `<small>(+${e.feePct}%)</small>` : ''}</td>
+                            <td style="direction:ltr; font-weight:bold; color:${isPay ? '#1b5e20' : '#b71c1c'};">${isPay ? '-' : '+'}${amtUSD} $ (${amtSYP} ل.س)</td>
+                        </tr>`;
+                    }).join("");
+                }
+
+                customersHtml += `
+                <div class="cust-block">
+                    <div class="cust-header">
+                        <div><b>${idx + 1}. الزبون: ${u.name}</b> | 📱 الهاتف: ${u.phone} | 📍 المنطقة: ${u.region || 'العوينة'}</div>
+                        <div class="cust-bal">الرصيد المستحق: ${balUSD.toFixed(2)} $ (${balSYP.toLocaleString()} ل.س)</div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:35px;">#</th>
+                                <th style="width:130px;">التاريخ والوقت</th>
+                                <th style="width:95px;">نوع الحركة</th>
+                                <th>البيان والتفاصيل</th>
+                                <th style="width:160px;">المبلغ ($ / ل.س)</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                </div>`;
+            });
+
+            const printWin = window.open("", "_blank");
+            if (!printWin) return alert("⚠️ يرجى السماح بالنوافذ المنبثقة (Pop-ups) في المتصفح لإنشاء ملف الـ PDF.");
+
+            const htmlContent = `<!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <title>${reportTitle} - متجر معاذ</title>
+                <style>
+                    body { font-family: Tahoma, 'Segoe UI', sans-serif; margin: 15px; color: #111; background: #fff; font-size: 12px; }
+                    .top-bar { display: flex; justify-content: space-between; align-items: center; background: #1a252c; color: #fff; padding: 15px 20px; border-radius: 8px; border-bottom: 4px solid #D4AF37; margin-bottom: 15px; }
+                    .top-bar h1 { margin: 0; font-size: 18px; color: #D4AF37; }
+                    .summary-card { background: #f8f9fa; border: 2px solid #D4AF37; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+                    .cust-block { border: 1px solid #ccc; border-radius: 6px; margin-bottom: 18px; page-break-inside: avoid; overflow: hidden; }
+                    .cust-header { background: #eceff1; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ccc; font-size: 13px; }
+                    .cust-bal { color: #b71c1c; font-weight: bold; }
+                    table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; }
+                    th { background: #fafafa; color: #333; border-bottom: 1px solid #ccc; padding: 6px; }
+                    td { padding: 6px; border-bottom: 1px solid #eee; }
+                    .no-print-bar { text-align: center; margin-bottom: 15px; padding: 10px; background: #e8f5e9; border: 1px solid #2e7d32; border-radius: 8px; }
+                    .btn-print { background: #2e7d32; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; margin: 0 5px; }
+                    @media print { .no-print-bar { display: none !important; } body { margin: 0; } }
+                </style>
+            </head>
+            <body>
+                <div class="no-print-bar">
+                    <span style="font-weight:bold; color:#1b5e20;">💡 لحفظ التقرير كملف PDF على هاتفك أو حاسوبك: اضغط زر (حفظ كـ PDF / طباعة) واختر "Save as PDF"</span><br><br>
+                    <button class="btn-print" onclick="window.print()">🖨️ حفظ كـ PDF / طباعة التقرير</button>
+                    <button class="btn-print" style="background:#c62828;" onclick="window.close()">✖ إغلاق</button>
+                </div>
+                <div class="top-bar">
+                    <div>
+                        <h1>${reportTitle}</h1>
+                        <div style="font-size:11px; color:#ccc; margin-top:4px;">متجر معاذ - قرية العوينة | هاتف: ${adminWhatsAppNumber}</div>
+                    </div>
+                    <div style="text-align:left; font-size:11px;">
+                        <div>تاريخ التوثيق: <b>${nowStr}</b></div>
+                        <div>سعر الصرف المعتمد: <b>${exchangeRate.toLocaleString()} ل.س/$</b></div>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div>👥 عدد الحسابات في التقرير: <b>${targetUsers.length} زبون</b></div>
+                    <div style="font-size:15px; color:#b71c1c;">💰 إجمالي الديون المستحقة: <b>${totalAllUSD.toFixed(2)} $</b> (${totalAllSYP.toLocaleString()} ل.س)</div>
+                </div>
+                ${customersHtml}
+                <script>
+                    window.onload = function() { setTimeout(function() { window.print(); }, 500); };
+                <\/script>
+            </body>
+            </html>`;
+
+            printWin.document.open();
+            printWin.document.write(htmlContent);
+            printWin.document.close();
+        }
+
+        function exportAllDebtsBackupPDF() {
+            const debtUsers = Object.values(users).filter(u => {
+                const bal = parseFloat(u.debtBalanceUSD) || 0;
+                const hasHist = u.debtLedger && Object.keys(u.debtLedger).length > 0;
+                return bal > 0 || hasHist || u.userType === "credit";
+            }).sort((a, b) => (parseFloat(b.debtBalanceUSD) || 0) - (parseFloat(a.debtBalanceUSD) || 0));
+
+            if (!debtUsers.length) return showToast("ℹ️ لا توجد أي ديون أو حركات مسجلة حالياً لإنشاء التقرير.", true);
+            generateDebtsPrintablePDF(debtUsers, "📒 التقرير الاحتياطي الشامل لدفتر الديون");
+        }
+
+        function exportSingleCustomerDebtPDF() {
+            const phone = $("adminDebtCustomerSelect")?.value;
+            if (!phone || !users[phone]) return showToast("⚠️ اختر زبون الآجل أولاً.", true);
+            const u = users[phone];
+            generateDebtsPrintablePDF([u], `📒 كشف حساب دفتر الدين للزبون: ${u.name}`);
+        }
+
         function exportCustomerDebtCSV() {
             const phone = $("adminDebtCustomerSelect")?.value;
             if (!phone || !users[phone]) return alert("⚠️ اختر زبون الآجل أولاً.");
@@ -2110,6 +2351,13 @@
                 if (i.id.startsWith("OFFER_") && specialOffers[i.id]) {
                     const curStock = parseInt(specialOffers[i.id].stock) || 0;
                     updates[`specialOffers/${i.id}/stock`] = curStock + i.qty;
+                } else if (i.id.endsWith("_PKG")) {
+                    const origId = i.id.replace("_PKG", "");
+                    if (products[origId]) {
+                        const addQty = i.qty * (parseInt(i.pkgCount) || 10);
+                        const curStock = parseInt(products[origId].stock) || 0;
+                        updates[`products/${origId}/stock`] = curStock + addQty;
+                    }
                 } else if (products[i.id]) {
                     const curStock = parseInt(products[i.id].stock) || 0;
                     updates[`products/${i.id}/stock`] = curStock + i.qty;
@@ -2494,7 +2742,11 @@
             const editId = $("editProductId").value, name = $("prodName").value.trim(), costPrice = parseFloat($("prodCostUSD").value) || 0, priceUSD = parseFloat($("prodPriceUSD").value) || 0, wholesaleUSD = parseFloat($("prodWholesaleUSD").value) || 0, stock = parseInt($("prodStock").value) || 0, alertLimit = parseInt($("prodAlertLimit").value) || 2, pointsPct = parseFloat($("prodPointsPct").value) || 2, category = $("prodCategory").value, supplierId = $("prodSupplierSelect").value;
             const partnerPhone = $("prodPartnerSelect") ? $("prodPartnerSelect").value : "";
             const partnerPct = $("prodPartnerPctInput") && $("prodPartnerPctInput").value !== "" ? (parseFloat($("prodPartnerPctInput").value) || 0) : null;
-            const unitType = $("prodUnitType").value || "قطعة", unitsPerPack = parseInt($("prodUnitsPerPack").value) || 1, targetOrderPacks = parseInt($("prodTargetOrderPacks").value) || 5;
+            const unitType = $("prodUnitType").value || "كيلو", unitsPerPack = 1, targetOrderPacks = parseInt($("prodTargetOrderPacks").value) || 5;
+            const hasPackage = $("prodHasPackage") ? $("prodHasPackage").checked : false;
+            const pkgCount = parseInt($("prodPkgCount")?.value) || 10;
+            const pkgPriceUSD = parseFloat($("prodPkgPriceUSD")?.value) || 0;
+            const pkgImageInput = $("prodPkgImageInput");
             const f = $("prodImageInput");
             if (!name || priceUSD <= 0) return alert("يرجى إدخال اسم الصنف وسعر المبيع.");
             const id = editId || ("PROD_" + Date.now()); 
@@ -2502,14 +2754,21 @@
             let image = products[id]?.image || "";
             try {
                 if (f.files?.[0]) { 
-                    $("authErrorMsg") ? $("authErrorMsg").textContent = "⏳ جاري رفع الصورة..." : null;
                     const uploaded = await uploadToImgBB(f.files[0]); 
                     thumb = uploaded.thumb; 
                     image = uploaded.url; 
                 }
+                let pkgThumb = products[id]?.pkgThumb || "";
+                let pkgImage = products[id]?.pkgImage || "";
+                if (hasPackage && pkgImageInput?.files?.[0]) {
+                    const uploadedPkg = await uploadToImgBB(pkgImageInput.files[0]);
+                    pkgThumb = uploadedPkg.thumb;
+                    pkgImage = uploadedPkg.url;
+                }
                 await db.ref("products/" + id).set({
                     name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, supplierId,
                     partnerPhone, partnerPct,
+                    hasPackage, pkgCount, pkgPriceUSD, pkgThumb, pkgImage,
                     unitType, unitsPerPack, targetOrderPacks,
                     thumb, image, reviews: products[id]?.reviews || {}
                 });
@@ -2522,7 +2781,11 @@
         function resetProductForm() {
             ["editProductId", "prodName", "prodCostUSD", "prodCostSYP", "prodPriceUSD", "prodPriceSYP", "prodWholesaleUSD", "prodWorkflowSYP", "prodImageInput", "prodSupplierSelect", "prodPartnerSelect", "prodPartnerPctInput"].forEach(k => setVal(k, ""));
             ["prodCostUSDPreview", "prodPriceUSDPreview", "prodWholesaleUSDPreview"].forEach(k => setTxt(k, "≈ 0.00 $"));
-            setVal("prodStock", "10"); setVal("prodUnitsPerPack", "1"); setVal("prodTargetOrderPacks", "5"); setVal("prodUnitType", "قطعة");
+            if ($("prodHasPackage")) $("prodHasPackage").checked = false;
+            togglePackageFields(false);
+            ["prodPkgCount", "prodPkgPriceUSD", "prodPkgImageInput"].forEach(k => setVal(k, ""));
+            setTxt("prodPkgPriceUSDPreview", "≈ 0.00 $");
+            setVal("prodStock", "10"); setVal("prodTargetOrderPacks", "5"); setVal("prodUnitType", "كيلو");
         }
 
         function editProduct(id) {
@@ -2545,7 +2808,15 @@
             populateAdminPartnerSelect();
             setVal("prodPartnerSelect", p.partnerPhone || "");
             setVal("prodPartnerPctInput", (p.partnerPct !== undefined && p.partnerPct !== null) ? p.partnerPct : "");
-            setVal("prodUnitType", p.unitType || "قطعة"); setVal("prodUnitsPerPack", p.unitsPerPack || 1); setVal("prodTargetOrderPacks", p.targetOrderPacks || 5);
+            setVal("prodUnitType", p.unitType || "كيلو"); setVal("prodTargetOrderPacks", p.targetOrderPacks || 5);
+            if ($("prodHasPackage")) {
+                $("prodHasPackage").checked = !!p.hasPackage;
+                togglePackageFields(!!p.hasPackage);
+            }
+            setVal("prodPkgCount", p.pkgCount || 10);
+            setVal("prodPkgPriceUSD", p.pkgPriceUSD || 0);
+            setVal("prodPkgPriceSYP", Math.round((p.pkgPriceUSD || 0) * exchangeRate));
+            setTxt("prodPkgPriceUSDPreview", `≈ ${(parseFloat(p.pkgPriceUSD)||0).toFixed(2)} $`);
             $("productFormSection")?.scrollIntoView({ behavior: "smooth" });
         }
         function deleteProduct(id) { if (confirm("حذف هذا الصنف نهائياً؟")) { db.ref("products/" + id).remove(); db.ref("productImages/" + id).remove(); delete highResImagesMemoryCache[id]; } }
@@ -2847,6 +3118,9 @@
                     ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${o.notes}</div>` : ''}
                     <div style="border-top:1px dashed ${borderColor}; border-bottom:1px dashed ${borderColor}; padding:6px 0; margin:6px 0;">${itemsHtml}</div>
                     <div style="font-weight:bold; margin-bottom:6px;">المطلوب تحصيله: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س ${isCred || isPrep ? `<span style="color:${textCol};">(${(o.orderTotalUSD||0).toFixed(2)} $)</span>` : ''}</div>
+                    <div style="background:rgba(0,230,118,0.08); border:1px dashed var(--success-color); padding:6px 8px; border-radius:5px; font-size:11px; margin-bottom:6px; color:var(--text-color);">
+                        📊 <b>حساب الربح المقدر:</b> قيمة المنتجات (${(o.subtotalSaleSYP || 0).toLocaleString()} ل.س) - تكلفة المنتجات (${(o.totalCostSYP || 0).toLocaleString()} ل.س) = <strong style="color:var(--success-color); font-size:12px;">${((o.subtotalSaleSYP || 0) - (o.totalCostSYP || 0)).toLocaleString()} ل.س</strong>
+                    </div>
                     ${warningHtml}
                     <div style="margin-bottom:10px;"><button class="btn" style="width:100%; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-size:13px; padding:10px; font-weight:900; border-radius:6px; box-shadow:0 4px 12px rgba(0,176,255,0.25);" onclick="openOrderImagesModal('${id}')">🖼️ عرض صور وقطع الطلب لتجهيزها</button></div>
                     <div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000; font-size:11px;" onclick="confirmOrder('${id}')">${confirmBtnStr}</button><button class="btn btn-danger" style="font-size:11px;" onclick="cancelOrder('${id}')">❌ إلغاء</button></div>
@@ -2856,8 +3130,17 @@
         function confirmOrder(orderId) {
             const o = pendingOrders[orderId]; if (!o) return;
             (o.items || []).forEach(i => {
-                if (i.id.startsWith("OFFER_") && specialOffers[i.id]) db.ref(`specialOffers/${i.id}/stock`).set(Math.max(0, (parseInt(specialOffers[i.id].stock) || 0) - i.qty));
-                else if (products[i.id]) db.ref(`products/${i.id}/stock`).set(Math.max(0, (parseInt(products[i.id].stock) || 0) - i.qty));
+                if (i.id.startsWith("OFFER_") && specialOffers[i.id]) {
+                    db.ref(`specialOffers/${i.id}/stock`).set(Math.max(0, (parseInt(specialOffers[i.id].stock) || 0) - i.qty));
+                } else if (i.id.endsWith("_PKG")) {
+                    const origId = i.id.replace("_PKG", "");
+                    if (products[origId]) {
+                        const deductQty = i.qty * (parseInt(i.pkgCount) || 10);
+                        db.ref(`products/${origId}/stock`).set(Math.max(0, (parseInt(products[origId].stock) || 0) - deductQty));
+                    }
+                } else if (products[i.id]) {
+                    db.ref(`products/${i.id}/stock`).set(Math.max(0, (parseInt(products[i.id].stock) || 0) - i.qty));
+                }
             });
             const phone = o.customerPhone, purch = users[phone]?.purchases || {};
             (o.items || []).forEach(i => { if (!i.id.startsWith("OFFER_")) purch[i.id] = true; });
