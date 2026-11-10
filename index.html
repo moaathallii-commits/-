@@ -221,14 +221,13 @@
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin:0 0 8px 0; text-align:center; font-size:15px;">🛒 سلة المشتريات وإتمام الطلب</h3>
             <div id="cartItemsList" style="max-height:145px; overflow-y:auto; margin-bottom:8px; padding-left:2px;"></div>
-            <div class="form-group" style="margin-bottom:8px;">
-                <label>📍 منطقة التوصيل:</label>
-                <select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()" style="padding:6px;"></select>
-            </div>
+            <!-- Hidden region select so code references don't break -->
+            <select id="cartRegionSelect" style="display:none;"></select>
             <div class="adm-card" style="margin-bottom:8px; font-size:11px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span>منطقة التوصيل:</span><strong style="color:var(--gold-color);" id="modalDeliveryRegionName">-</strong></div>
                 <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span>قيمة المواد:</span><strong><span id="modalCartSubtotal">0</span> ل.س</strong></div>
                 <div id="modalCreditMarkupRow" style="display:none; justify-content:space-between; margin-bottom:3px; color:#ff9800;"><span>نسبة البيع بالآجل (<span id="modalCreditPctVal">0</span>%):</span><strong>+<span id="modalCreditMarkupAmount">0</span> ل.س</strong></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:3px; color:var(--gray-text);"><span>أجور التوصيل (<span id="modalDeliveryRegionName">-</span>):</span><strong><span id="modalDeliveryFee">0</span> ل.س</strong></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:3px; color:var(--gray-text);"><span>أجور التوصيل:</span><strong><span id="modalDeliveryFee">0</span> ل.س</strong></div>
                 <div style="display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding-top:4px; margin-top:3px; font-size:13px;">
                     <span>الإجمالي النهائي:</span><strong style="color:#00e676; font-size:15px; font-weight:900;"><span id="modalCartTotal">0</span> ل.س</strong>
                 </div>
@@ -241,11 +240,8 @@
                 <label>💳 طريقة الدفع:</label>
                 <select id="cartPaymentMethod" class="form-control" onchange="renderCartModalItems()" style="padding:6px; font-weight:bold;"></select>
             </div>
-            <div id="shamCashInfoBox" style="display:none; text-align:center;">
-                <button type="button" onclick="copyWalletId()" class="btn" style="margin-bottom:8px; padding:9px; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000;">📋 نسخ كود محفظة شام كاش للدفع</button>
-            </div>
             <div class="form-group" style="margin-bottom:10px;"><input type="text" id="orderNotes" class="form-control" placeholder="📝 ملاحظات إضافية مع الطلب (اختياري)..."></div>
-            <button type="button" onclick="submitOrder()" class="btn" style="background:linear-gradient(45deg,#00e676,#00c853); color:#000; margin-bottom:8px; font-size:14px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.45); animation:pulse 2s infinite;">✅ إرسال وتأكيد الطلب الآن</button>
+            <button type="button" onclick="submitOrder()" class="btn" id="submitOrderBtn" style="background:linear-gradient(45deg,#00e676,#00c853); color:#000; margin-bottom:8px; font-size:14px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.45); animation:pulse 2s infinite;">✅ إرسال وتأكيد الطلب الآن</button>
             <button type="button" onclick="closeModal('cartModal')" class="btn btn-danger" style="padding:6px; font-size:11px;">إغلاق</button>
         </div>
     </div>
@@ -1549,31 +1545,11 @@
                 const btn = st <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (inC > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${id}',1)">+</button><span class="qty-text">${inC}</span><button class="qty-btn" onclick="changeQty('${id}',-1)">-</button></div>` : `<button class="btn" onclick="changeQty('${id}',1)">🛒 أضف للسلة</button>`);
                 const revs = p.reviews || {}, rKeys = Object.keys(revs), avg = rKeys.length ? (rKeys.reduce((a, k) => a + (revs[k].rating || 0), 0) / rKeys.length).toFixed(1) : 0;
                 const bought = currentUser?.phone && users[currentUser.phone]?.purchases?.[id];
-                const alreadyReviewed = currentUser?.phone && Object.values(revs).some(r => r.customerPhone === currentUser.phone);
-                
-                let revBtn = "";
-                if (bought && !currentUser.banned) {
-                    if (alreadyReviewed) {
-                        revBtn = `<button class="btn" style="background:transparent; border:1px solid var(--gray-text); color:var(--gray-text); margin-top:5px; font-size:11px; padding:4px; cursor:default;" disabled>✅ تم التقييم مسبقاً</button>`;
-                    } else {
-                        revBtn = `<button onclick="openReviewModal('${id}')" class="btn" style="background:transparent; border:1px solid var(--gold-color); color:var(--gold-color); margin-top:5px; font-size:11px; padding:4px;">⭐ قيّم الصنف</button>`;
-                    }
-                }
-                
-                // Build reviews comments preview list
-                let reviewsHtml = "";
-                if (rKeys.length) {
-                    const commentsSnippet = Object.values(revs).slice(-2).map(r => `<div style="font-size:10px; color:var(--gray-text); text-align:right; margin-top:2px; background:rgba(255,255,255,0.03); padding:3px; border-radius:4px;"><b>${r.customerName}:</b> ${r.comment}</div>`).join("");
-                    reviewsHtml = `<div style="margin-top:4px; cursor:pointer;" onclick="openProductReviewsModal('${id}')">
-                        <div style="font-size:11px; color:var(--gold-color); font-weight:bold;">⭐ ${avg} (${rKeys.length} تقييم)</div>
-                        ${commentsSnippet}
-                    </div>`;
-                }
-
+                const revBtn = (bought && !currentUser.banned) ? `<button onclick="openReviewModal('${id}')" class="btn" style="background:transparent; border:1px solid var(--gold-color); color:var(--gold-color); margin-top:5px; font-size:11px; padding:4px;">⭐ قيّم الصنف</button>` : "";
                 const src = p.image || getLockedHighResImage(id) || p.thumb || "store-icon.png";
                 const isHighRes = !!(p.image || highResImagesMemoryCache[id]);
                 
-                html += `<div class="product-card"><div><div class="product-img-wrap"><img id="prod_img_${id}" src="${src}" class="product-img ${isHighRes ? 'img-high-res' : 'img-low-res'}"></div><h3>${pName}</h3><p>${priceSYP.toLocaleString()} ل.س ${isW && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>${reviewsHtml}</div><div style="margin-top:6px;">${btn}${revBtn}</div></div>`;
+                html += `<div class="product-card"><div><div class="product-img-wrap"><img id="prod_img_${id}" src="${src}" class="product-img ${isHighRes ? 'img-high-res' : 'img-low-res'}"></div><h3>${pName}</h3><p>${priceSYP.toLocaleString()} ل.س ${isW && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>${rKeys.length ? `<div style="font-size:11px; color:var(--gold-color);">⭐ ${avg} (${rKeys.length})</div>` : ''}</div><div style="margin-top:6px;">${btn}${revBtn}</div></div>`;
 
                 // 2. Package / Bulk Card (if enabled)
                 if (p.hasPackage && p.pkgCount > 0 && p.pkgPriceUSD > 0) {
@@ -1696,16 +1672,7 @@
             if ($("cartModal")) $("cartModal").style.display = "flex";
         }
 
-        function onCartRegionChange() {
-            const reg = $("cartRegionSelect").value;
-            if (!isRegionOpenNow(reg)) alert(`⚠️ تنبيه: منطقة (${reg}) مغلقة حالياً.`);
-            if (currentUser?.phone) {
-                currentUser.region = reg; localStorage.setItem("moaath_user", JSON.stringify(currentUser));
-                db.ref("users/" + currentUser.phone + "/region").set(reg);
-                setTxt("userRegionBadge", `(${reg})`);
-            }
-            renderCartModalItems(); updateCartBar();
-        }
+
 
         function copyWalletId() {
             if (navigator.clipboard?.writeText) navigator.clipboard.writeText(shamWalletIdGlobal).then(() => alert("✅ تم نسخ كود محفظة شام كاش بنجاح!"));
@@ -1731,7 +1698,8 @@
             const currPay = paySelect ? paySelect.value : ""; // Get current selection if any
             
             // Calculate temp order USD to check if prepaid covers it
-            const feeSYP_temp = getRegionFee($("cartRegionSelect")?.value || u?.region || Object.keys(deliveryFees)[0] || "العوينة");
+            const userReg = currentUser?.region || Object.keys(deliveryFees)[0] || "العوينة";
+            const feeSYP_temp = getRegionFee(userReg);
             const subUSD_temp = Object.values(cart).reduce((a,i) => a + (i.priceUSD * i.qty), 0);
             const totalUSD_temp = parseFloat((subUSD_temp + (feeSYP_temp / exchangeRate)).toFixed(2));
             
@@ -1761,7 +1729,14 @@
             
             const selectedPay = paySelect ? paySelect.value : "شام كاش";
             const useCreditPricing = (selectedPay === "آجل (دفتر الدين)");
-            if ($("shamCashInfoBox")) $("shamCashInfoBox").style.display = (selectedPay === "شام كاش") ? "block" : "none";
+            const btnEl = $("submitOrderBtn");
+            if (btnEl) {
+                if (selectedPay === "شام كاش") {
+                    btnEl.innerHTML = "📋 نسخ معرف شام كاش وإرسال الطلب";
+                } else {
+                    btnEl.innerHTML = "✅ إرسال وتأكيد الطلب الآن";
+                }
+            }
 
             const markupPct = useCreditPricing ? getCurrentUserCreditMarkupPct() : 0;
             const markupAmt = markupPct > 0 ? Math.round((sub * markupPct) / 100) : 0;
@@ -1847,7 +1822,12 @@
         function submitOrder() {
             if (!checkStoreWorkHours()) return;
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.address) { closeModal('cartModal'); return openEditProfile(); }
-            const reg = $("cartRegionSelect")?.value || currentUser.region || Object.keys(deliveryFees)[0] || "العوينة";
+            const reg = currentUser?.region || Object.keys(deliveryFees)[0] || "العوينة";
+
+            const selectedPayMethod = $("cartPaymentMethod") ? $("cartPaymentMethod").value : "شام كاش";
+            if (selectedPayMethod === "شام كاش") {
+                copyWalletId(); // Automatically copy Sham Cash ID to clipboard!
+            }
             if (!isRegionOpenNow(reg)) return alert(`⚠️ أوقات التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
             if (users[currentUser.phone]?.banned) return alert("🚫 حسابك محظور.");
             const items = Object.values(cart); if (!items.length) return;
@@ -3413,53 +3393,12 @@
                 entries.map(([id, r]) => `<div class="review-box"><div><b>${r.itemName}</b> <small>(${r.customerName} - ${r.customerPhone})</small></div><button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="db.ref('missingRequests/${id}').remove()">✖</button></div>`).join("");
         }
 
-        
-        function openProductReviewsModal(id) {
-            const p = products[id];
-            if (!p || !p.reviews) return showToast("لا توجد تعليقات لهذا الصنف بعد.", true);
-            const revs = Object.values(p.reviews);
-            let content = revs.map(r => `<div class="adm-card" style="margin-bottom:6px;"><div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--gold-color);"><span>${r.customerName}</span><span>⭐ ${r.rating}/5</span></div><div style="font-size:12px; margin:4px 0;">${r.comment}</div><small style="color:var(--gray-text);">${r.timestamp || ''}</small></div>`).join("");
-            
-            let modal = $("productReviewsModal");
-            if (!modal) {
-                modal = document.createElement("div");
-                modal.id = "productReviewsModal";
-                modal.className = "modal-overlay";
-                modal.innerHTML = `<div class="modal-content"><div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold-color); padding-bottom:6px; margin-bottom:10px;"><h3 style="color:var(--gold-color); margin:0; font-size:15px;" id="prodRevModalTitle">💬 تعليقات وتقييمات الصنف</h3><button onclick="closeModal('productReviewsModal')" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">✖</button></div><div id="prodRevModalList" style="max-height:60vh; overflow-y:auto;"></div><button onclick="closeModal('productReviewsModal')" class="btn" style="margin-top:10px;">إغلاق</button></div>`;
-                document.body.appendChild(modal);
-            }
-            setTxt("prodRevModalTitle", `💬 تعليقات وتقييمات: ${p.name}`);
-            $("prodRevModalList").innerHTML = content;
-            modal.style.display = "flex";
-        }
-
         function openReviewModal(id) { if (!products[id]) return; setVal("reviewProductId", id); setTxt("reviewProductName", products[id].name); setVal("reviewCommentInput", ""); $("reviewModal").style.display = "flex"; }
         function submitProductReview() {
             if (!currentUser?.phone || currentUser.banned) return;
             const id = $("reviewProductId").value, rating = parseInt($("reviewRatingSelect").value) || 5, comment = $("reviewCommentInput").value.trim();
-            if (!comment) return showToast("⚠️ يرجى كتابة تعليق.", true);
-            
-            // Check if user already reviewed this product
-            db.ref(`products/${id}/reviews`).once("value").then(snap => {
-                const revs = snap.val() || {};
-                const alreadyReviewed = Object.values(revs).some(r => r.customerPhone === currentUser.phone);
-                if (alreadyReviewed) {
-                    closeModal('reviewModal');
-                    return showToast("⚠️ لقد قمت بتقييم هذا المنتج مسبقاً ولا يمكنك تقييمه مرة أخرى.", true);
-                }
-                
-                db.ref(`products/${id}/reviews/REV_${Date.now()}`).set({ 
-                    customerName: currentUser.name, 
-                    customerPhone: currentUser.phone, 
-                    rating, 
-                    comment, 
-                    timestamp: new Date().toLocaleDateString("ar-SY") 
-                }).then(() => { 
-                    closeModal('reviewModal');
-                    showToast("⭐ تم نشر تقييمك بنجاح!", false);
-                    renderStore();
-                });
-            });
+            if (!comment) return alert("يرجى كتابة تعليق.");
+            db.ref(`products/${id}/reviews/REV_${Date.now()}`).set({ customerName: currentUser.name, customerPhone: currentUser.phone, rating, comment, timestamp: new Date().toLocaleDateString("ar-SY") }).then(() => { alert("✅ تم نشر تقييمك!"); closeModal('reviewModal'); });
         }
         function deleteProductReview(pId, rId) { if (confirm("حذف هذا التعليق؟")) db.ref(`products/${pId}/reviews/${rId}`).remove(); }
 
