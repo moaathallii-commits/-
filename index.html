@@ -221,9 +221,9 @@
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin:0 0 8px 0; text-align:center; font-size:15px;">🛒 سلة المشتريات وإتمام الطلب</h3>
             <div id="cartItemsList" style="max-height:145px; overflow-y:auto; margin-bottom:8px; padding-left:2px;"></div>
-            <div class="form-group" style="margin-bottom:8px;">
+            <div class="form-group" style="margin-bottom:8px; display:none;">
                 <label>📍 منطقة التوصيل:</label>
-                <select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()" style="padding:6px;"></select>
+                <select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()" style="display:none;"></select>
             </div>
             <div class="adm-card" style="margin-bottom:8px; font-size:11px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span>قيمة المواد:</span><strong><span id="modalCartSubtotal">0</span> ل.س</strong></div>
@@ -241,11 +241,9 @@
                 <label>💳 طريقة الدفع:</label>
                 <select id="cartPaymentMethod" class="form-control" onchange="renderCartModalItems()" style="padding:6px; font-weight:bold;"></select>
             </div>
-            <div id="shamCashInfoBox" style="display:none; text-align:center;">
-                <button type="button" onclick="copyWalletId()" class="btn" style="margin-bottom:8px; padding:9px; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000;">📋 نسخ كود محفظة شام كاش للدفع</button>
-            </div>
+            <div id="shamCashInfoBox" style="display:none; text-align:center;"></div>
             <div class="form-group" style="margin-bottom:10px;"><input type="text" id="orderNotes" class="form-control" placeholder="📝 ملاحظات إضافية مع الطلب (اختياري)..."></div>
-            <button type="button" onclick="submitOrder()" class="btn" style="background:linear-gradient(45deg,#00e676,#00c853); color:#000; margin-bottom:8px; font-size:14px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.45); animation:pulse 2s infinite;">✅ إرسال وتأكيد الطلب الآن</button>
+            <button type="button" onclick="submitOrderUnified()" class="btn" style="background:linear-gradient(45deg,#D4AF37,#00e676); color:#000; margin-bottom:8px; font-size:13px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.35); animation:pulse 2s infinite;">📋 نسخ كود شام كاش وإتمام الطلب عبر واتساب</button>
             <button type="button" onclick="closeModal('cartModal')" class="btn btn-danger" style="padding:6px; font-size:11px;">إغلاق</button>
         </div>
     </div>
@@ -614,40 +612,25 @@
                     </div>
                     <div class="stats-grid" style="background:rgba(212,175,55,0.06); padding:8px; border-radius:6px; border:1px dashed var(--gold-color); margin-bottom:10px;">
                         <div class="form-group" style="margin-bottom:0;">
-                            <label>📦 وحدة القياس الأساسية:</label>
+                            <label>📦 وحدة الطلب من الموزع:</label>
                             <select id="prodUnitType" class="form-control">
-                                <option value="كيلو">كيلو</option>
                                 <option value="قطعة">قطعة</option>
+                                <option value="كرتونة">كرتونة</option>
+                                <option value="طرد">طرد</option>
+                                <option value="كيس">كيس</option>
+                                <option value="كيلو">كيلو</option>
                                 <option value="لتر">لتر</option>
                                 <option value="عبوة">عبوة</option>
-                                <option value="كيس">كيس</option>
+                                <option value="شرحة">شرحة</option>
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom:0;">
-                            <label>🎯 الكمية القياسية للنقص:</label>
-                            <input type="number" id="prodTargetOrderPacks" class="form-control" value="5" min="1">
+                            <label>🔢 عدد القطع داخل الوحدة (الكرتونة/الطرد):</label>
+                            <input type="number" id="prodUnitsPerPack" class="form-control" value="1" min="1">
                         </div>
-                        <div class="form-group" style="grid-column:span 2; margin-top:6px; border-top:1px dashed var(--gold-color); padding-top:6px;">
-                            <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
-                                <input type="checkbox" id="prodHasPackage" style="width:18px; height:18px;" onchange="togglePackageFields(this.checked)">
-                                <label for="prodHasPackage" style="color:var(--gold-color); font-weight:bold; margin:0; cursor:pointer;">تفعيل عبوة جماعية / طرد لهذا المنتج (للبيع للزبائن)</label>
-                            </div>
-                            <div id="packageFieldsContainer" style="display:none; display:grid; grid-template-columns:repeat(2,1fr); gap:6px; margin-top:6px;">
-                                <div>
-                                    <label>عدد الوحدات في الطرد (مثال: 10 كغ):</label>
-                                    <input type="number" id="prodPkgCount" class="form-control" value="10" min="1">
-                                </div>
-                                <div>
-                                    <label>سعر الطرد الإجمالي (ل.س):</label>
-                                    <input type="number" id="prodPkgPriceSYP" class="form-control" oninput="updateLiveUSD('prodPkgPriceSYP', 'prodPkgPriceUSDPreview', 'prodPkgPriceUSD')">
-                                    <small id="prodPkgPriceUSDPreview" style="color:var(--success-color); font-size:10px; font-weight:bold;">≈ 0.00 $</small>
-                                    <input type="hidden" id="prodPkgPriceUSD">
-                                </div>
-                                <div style="grid-column:span 2;">
-                                    <label>صورة الطرد المستقلة (اختياري):</label>
-                                    <input type="file" id="prodPkgImageInput" accept="image/*" class="form-control">
-                                </div>
-                            </div>
+                        <div class="form-group" style="grid-column:span 2; margin-bottom:0;">
+                            <label>🎯 الكمية القياسية المطلوبة عند النقص (بوحدة الموزع):</label>
+                            <input type="number" id="prodTargetOrderPacks" class="form-control" value="5" min="1" placeholder="مثال: 5 كرتونة أو 15 كيس">
                         </div>
                     </div>
                     <div class="stats-grid">
@@ -1543,8 +1526,6 @@
                 const p = products[id]; if (!p) return;
                 const pName = p.name || "";
                 if ((selectedCategory !== "الكل" && p.category !== selectedCategory) || (q && !pName.toLowerCase().includes(q))) return;
-                
-                // 1. Single Unit Card
                 const priceSYP = calcSYP((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0)), st = parseInt(p.stock) || 0, inC = cart[id] ? cart[id].qty : 0;
                 const btn = st <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (inC > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${id}',1)">+</button><span class="qty-text">${inC}</span><button class="qty-btn" onclick="changeQty('${id}',-1)">-</button></div>` : `<button class="btn" onclick="changeQty('${id}',1)">🛒 أضف للسلة</button>`);
                 const revs = p.reviews || {}, rKeys = Object.keys(revs), avg = rKeys.length ? (rKeys.reduce((a, k) => a + (revs[k].rating || 0), 0) / rKeys.length).toFixed(1) : 0;
@@ -1552,22 +1533,7 @@
                 const revBtn = (bought && !currentUser.banned) ? `<button onclick="openReviewModal('${id}')" class="btn" style="background:transparent; border:1px solid var(--gold-color); color:var(--gold-color); margin-top:5px; font-size:11px; padding:4px;">⭐ قيّم الصنف</button>` : "";
                 const src = p.image || getLockedHighResImage(id) || p.thumb || "store-icon.png";
                 const isHighRes = !!(p.image || highResImagesMemoryCache[id]);
-                
                 html += `<div class="product-card"><div><div class="product-img-wrap"><img id="prod_img_${id}" src="${src}" class="product-img ${isHighRes ? 'img-high-res' : 'img-low-res'}"></div><h3>${pName}</h3><p>${priceSYP.toLocaleString()} ل.س ${isW && p.wholesaleUSD ? '<small style="color:var(--success-color);">(جملة)</small>' : ''}</p>${rKeys.length ? `<div style="font-size:11px; color:var(--gold-color);">⭐ ${avg} (${rKeys.length})</div>` : ''}</div><div style="margin-top:6px;">${btn}${revBtn}</div></div>`;
-
-                // 2. Package / Bulk Card (if enabled)
-                if (p.hasPackage && p.pkgCount > 0 && p.pkgPriceUSD > 0) {
-                    const pkgId = id + "_PKG";
-                    const pkgName = `طرد ${p.name} (${p.pkgCount} ${p.unitType || 'كيلو'})`;
-                    const pkgPriceSYP = calcSYP(p.pkgPriceUSD);
-                    // Stock equivalent packages available
-                    const pkgMaxStock = Math.floor(st / p.pkgCount);
-                    const inCPkg = cart[pkgId] ? cart[pkgId].qty : 0;
-                    const btnPkg = pkgMaxStock <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (inCPkg > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${pkgId}',1)">+</button><span class="qty-text">${inCPkg}</span><button class="qty-btn" onclick="changeQty('${pkgId}',-1)">-</button></div>` : `<button class="btn" onclick="changeQty('${pkgId}',1)">📦 أضف الطرد</button>`);
-                    const srcPkg = p.pkgImage || p.pkgThumb || src;
-
-                    html += `<div class="product-card" style="border-color:var(--gold-color);"><div><div class="product-img-wrap"><img src="${srcPkg}" class="product-img img-high-res"></div><h3 style="color:var(--gold-color);">${pkgName}</h3><p>${pkgPriceSYP.toLocaleString()} ل.س <small style="color:var(--success-color);">(وفر)</small></p></div><div style="margin-top:6px;">${btnPkg}</div></div>`;
-                }
             });
             grid.innerHTML = html || `<p style="grid-column:span 2; text-align:center; color:var(--gray-text);">لا توجد مواد مطابقة للبحث.</p>`;
             updateCartBar();
@@ -1596,12 +1562,6 @@
 
         
         
-        
-        function togglePackageFields(show) {
-            const el = $("packageFieldsContainer");
-            if (el) el.style.display = show ? "grid" : "none";
-        }
-
         function updateLiveUSD(sypInputId, previewId, usdHiddenId) {
             const sypVal = parseFloat($(sypInputId)?.value) || 0;
             const usdVal = exchangeRate > 0 ? parseFloat((sypVal / exchangeRate).toFixed(2)) : 0;
@@ -1756,78 +1716,26 @@
             setTxt("modalDeliveryFee", fee.toLocaleString());
             setTxt("modalCartTotal", (sub + markupAmt + fee).toLocaleString());
             setTxt("modalCartPoints", pts);
-
-            // Check for Smart Cart Package Suggestion
-            checkSmartCartPackageSuggestion();
         }
 
-        function checkSmartCartPackageSuggestion() {
-            let bannerBox = $("smartPackageSuggestionBox");
-            if (!bannerBox) {
-                bannerBox = document.createElement("div");
-                bannerBox.id = "smartPackageSuggestionBox";
-                const targetList = $("cartItemsList");
-                if (targetList && targetList.parentNode) {
-                    targetList.parentNode.insertBefore(bannerBox, targetList.nextSibling);
-                }
-            }
-            let suggestionHtml = "";
-            Object.values(cart).forEach(item => {
-                if (!item.isPackage && products[item.id] && products[item.id].hasPackage) {
-                    const p = products[item.id];
-                    const pkgCount = parseInt(p.pkgCount) || 10;
-                    if (item.qty >= pkgCount) {
-                        const numPackages = Math.floor(item.qty / pkgCount);
-                        const remainder = item.qty % pkgCount;
-                        suggestionHtml += `<div style="background:rgba(212,175,55,0.15); border:1px solid var(--gold-color); border-radius:6px; padding:8px; margin-bottom:6px; font-size:11px; text-align:center;">
-                            💡 لديك <b>${item.qty}</b> من (${p.name}). هل تريد تحويل ${numPackages * pkgCount} منها إلى <b>${numPackages} طرد (${pkgCount} ${p.unitType || 'كيلو'})</b> للاستفادة من سعر الجملة؟<br>
-                            <button type="button" onclick="applySmartPackageConversion('${item.id}', ${pkgCount})" class="btn" style="margin-top:5px; width:auto; padding:4px 10px; font-size:10px; background:var(--gold-color); color:#000;">⚡ تحويل إلى طرد فوري</button>
-                        </div>`;
-                    }
-                }
-            });
-            bannerBox.innerHTML = suggestionHtml;
-        }
-
-        function applySmartPackageConversion(origId, pkgCount) {
-            const singleItem = cart[origId];
-            if (!singleItem || singleItem.qty < pkgCount) return;
-            const numPkgs = Math.floor(singleItem.qty / pkgCount);
-            const rem = singleItem.qty % pkgCount;
-            const pkgId = origId + "_PKG";
-            const p = products[origId] || {};
-
-            // Update cart
-            if (rem > 0) {
-                singleItem.qty = rem;
+        
+        function submitOrderUnified() {
+            if (navigator.clipboard?.writeText) {
+                navigator.clipboard.writeText(shamWalletIdGlobal).catch(() => {});
             } else {
-                delete cart[origId];
+                const t = document.createElement("textarea"); t.value = shamWalletIdGlobal; document.body.appendChild(t); t.select(); document.execCommand("copy"); document.body.removeChild(t);
             }
-
-            if (!cart[pkgId]) {
-                cart[pkgId] = {
-                    id: pkgId, name: `طرد ${p.name} (${pkgCount} ${p.unitType || 'كيلو'})`,
-                    category: p.category || "غير مصنف",
-                    priceUSD: parseFloat(p.pkgPriceUSD) || 0,
-                    costPrice: (parseFloat(p.costPrice) || 0) * pkgCount,
-                    stock: Math.floor((parseInt(p.stock) || 0) / pkgCount),
-                    pointsPct: parseFloat(p.pointsPct) || 2,
-                    isPackage: true, origId, pkgCount, qty: numPkgs
-                };
-            } else {
-                cart[pkgId].qty += numPkgs;
-            }
-
-            localStorage.setItem('moaath_cart', JSON.stringify(cart));
-            renderStore();
-            renderCartModalItems();
-            showToast("⚡ تم تحويل الكمية إلى طرد بنجاح!", false);
+            showToast("📋 تم نسخ معرف الشام كاش، جاري إرسال الطلب...", false);
+            setTimeout(() => {
+                submitOrder();
+            }, 400);
         }
 
         function submitOrder() {
             if (!checkStoreWorkHours()) return;
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.address) { closeModal('cartModal'); return openEditProfile(); }
-            const reg = $("cartRegionSelect")?.value || currentUser.region || Object.keys(deliveryFees)[0] || "العوينة";
+            const defReg = Object.keys(deliveryFees)[0] || "العوينة";
+            const reg = (currentUser?.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : defReg;
             if (!isRegionOpenNow(reg)) return alert(`⚠️ أوقات التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
             if (users[currentUser.phone]?.banned) return alert("🚫 حسابك محظور.");
             const items = Object.values(cart); if (!items.length) return;
@@ -2202,13 +2110,6 @@
                 if (i.id.startsWith("OFFER_") && specialOffers[i.id]) {
                     const curStock = parseInt(specialOffers[i.id].stock) || 0;
                     updates[`specialOffers/${i.id}/stock`] = curStock + i.qty;
-                } else if (i.id.endsWith("_PKG")) {
-                    const origId = i.id.replace("_PKG", "");
-                    if (products[origId]) {
-                        const addQty = i.qty * (parseInt(i.pkgCount) || 10);
-                        const curStock = parseInt(products[origId].stock) || 0;
-                        updates[`products/${origId}/stock`] = curStock + addQty;
-                    }
                 } else if (products[i.id]) {
                     const curStock = parseInt(products[i.id].stock) || 0;
                     updates[`products/${i.id}/stock`] = curStock + i.qty;
@@ -2593,11 +2494,7 @@
             const editId = $("editProductId").value, name = $("prodName").value.trim(), costPrice = parseFloat($("prodCostUSD").value) || 0, priceUSD = parseFloat($("prodPriceUSD").value) || 0, wholesaleUSD = parseFloat($("prodWholesaleUSD").value) || 0, stock = parseInt($("prodStock").value) || 0, alertLimit = parseInt($("prodAlertLimit").value) || 2, pointsPct = parseFloat($("prodPointsPct").value) || 2, category = $("prodCategory").value, supplierId = $("prodSupplierSelect").value;
             const partnerPhone = $("prodPartnerSelect") ? $("prodPartnerSelect").value : "";
             const partnerPct = $("prodPartnerPctInput") && $("prodPartnerPctInput").value !== "" ? (parseFloat($("prodPartnerPctInput").value) || 0) : null;
-            const unitType = $("prodUnitType").value || "كيلو", unitsPerPack = 1, targetOrderPacks = parseInt($("prodTargetOrderPacks").value) || 5;
-            const hasPackage = $("prodHasPackage") ? $("prodHasPackage").checked : false;
-            const pkgCount = parseInt($("prodPkgCount")?.value) || 10;
-            const pkgPriceUSD = parseFloat($("prodPkgPriceUSD")?.value) || 0;
-            const pkgImageInput = $("prodPkgImageInput");
+            const unitType = $("prodUnitType").value || "قطعة", unitsPerPack = parseInt($("prodUnitsPerPack").value) || 1, targetOrderPacks = parseInt($("prodTargetOrderPacks").value) || 5;
             const f = $("prodImageInput");
             if (!name || priceUSD <= 0) return alert("يرجى إدخال اسم الصنف وسعر المبيع.");
             const id = editId || ("PROD_" + Date.now()); 
@@ -2605,21 +2502,14 @@
             let image = products[id]?.image || "";
             try {
                 if (f.files?.[0]) { 
+                    $("authErrorMsg") ? $("authErrorMsg").textContent = "⏳ جاري رفع الصورة..." : null;
                     const uploaded = await uploadToImgBB(f.files[0]); 
                     thumb = uploaded.thumb; 
                     image = uploaded.url; 
                 }
-                let pkgThumb = products[id]?.pkgThumb || "";
-                let pkgImage = products[id]?.pkgImage || "";
-                if (hasPackage && pkgImageInput?.files?.[0]) {
-                    const uploadedPkg = await uploadToImgBB(pkgImageInput.files[0]);
-                    pkgThumb = uploadedPkg.thumb;
-                    pkgImage = uploadedPkg.url;
-                }
                 await db.ref("products/" + id).set({
                     name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, supplierId,
                     partnerPhone, partnerPct,
-                    hasPackage, pkgCount, pkgPriceUSD, pkgThumb, pkgImage,
                     unitType, unitsPerPack, targetOrderPacks,
                     thumb, image, reviews: products[id]?.reviews || {}
                 });
@@ -2632,11 +2522,7 @@
         function resetProductForm() {
             ["editProductId", "prodName", "prodCostUSD", "prodCostSYP", "prodPriceUSD", "prodPriceSYP", "prodWholesaleUSD", "prodWorkflowSYP", "prodImageInput", "prodSupplierSelect", "prodPartnerSelect", "prodPartnerPctInput"].forEach(k => setVal(k, ""));
             ["prodCostUSDPreview", "prodPriceUSDPreview", "prodWholesaleUSDPreview"].forEach(k => setTxt(k, "≈ 0.00 $"));
-            if ($("prodHasPackage")) $("prodHasPackage").checked = false;
-            togglePackageFields(false);
-            ["prodPkgCount", "prodPkgPriceUSD", "prodPkgImageInput"].forEach(k => setVal(k, ""));
-            setTxt("prodPkgPriceUSDPreview", "≈ 0.00 $");
-            setVal("prodStock", "10"); setVal("prodTargetOrderPacks", "5"); setVal("prodUnitType", "كيلو");
+            setVal("prodStock", "10"); setVal("prodUnitsPerPack", "1"); setVal("prodTargetOrderPacks", "5"); setVal("prodUnitType", "قطعة");
         }
 
         function editProduct(id) {
@@ -2659,15 +2545,7 @@
             populateAdminPartnerSelect();
             setVal("prodPartnerSelect", p.partnerPhone || "");
             setVal("prodPartnerPctInput", (p.partnerPct !== undefined && p.partnerPct !== null) ? p.partnerPct : "");
-            setVal("prodUnitType", p.unitType || "كيلو"); setVal("prodTargetOrderPacks", p.targetOrderPacks || 5);
-            if ($("prodHasPackage")) {
-                $("prodHasPackage").checked = !!p.hasPackage;
-                togglePackageFields(!!p.hasPackage);
-            }
-            setVal("prodPkgCount", p.pkgCount || 10);
-            setVal("prodPkgPriceUSD", p.pkgPriceUSD || 0);
-            setVal("prodPkgPriceSYP", Math.round((p.pkgPriceUSD || 0) * exchangeRate));
-            setTxt("prodPkgPriceUSDPreview", `≈ ${(parseFloat(p.pkgPriceUSD)||0).toFixed(2)} $`);
+            setVal("prodUnitType", p.unitType || "قطعة"); setVal("prodUnitsPerPack", p.unitsPerPack || 1); setVal("prodTargetOrderPacks", p.targetOrderPacks || 5);
             $("productFormSection")?.scrollIntoView({ behavior: "smooth" });
         }
         function deleteProduct(id) { if (confirm("حذف هذا الصنف نهائياً؟")) { db.ref("products/" + id).remove(); db.ref("productImages/" + id).remove(); delete highResImagesMemoryCache[id]; } }
@@ -2978,17 +2856,8 @@
         function confirmOrder(orderId) {
             const o = pendingOrders[orderId]; if (!o) return;
             (o.items || []).forEach(i => {
-                if (i.id.startsWith("OFFER_") && specialOffers[i.id]) {
-                    db.ref(`specialOffers/${i.id}/stock`).set(Math.max(0, (parseInt(specialOffers[i.id].stock) || 0) - i.qty));
-                } else if (i.id.endsWith("_PKG")) {
-                    const origId = i.id.replace("_PKG", "");
-                    if (products[origId]) {
-                        const deductQty = i.qty * (parseInt(i.pkgCount) || 10);
-                        db.ref(`products/${origId}/stock`).set(Math.max(0, (parseInt(products[origId].stock) || 0) - deductQty));
-                    }
-                } else if (products[i.id]) {
-                    db.ref(`products/${i.id}/stock`).set(Math.max(0, (parseInt(products[i.id].stock) || 0) - i.qty));
-                }
+                if (i.id.startsWith("OFFER_") && specialOffers[i.id]) db.ref(`specialOffers/${i.id}/stock`).set(Math.max(0, (parseInt(specialOffers[i.id].stock) || 0) - i.qty));
+                else if (products[i.id]) db.ref(`products/${i.id}/stock`).set(Math.max(0, (parseInt(products[i.id].stock) || 0) - i.qty));
             });
             const phone = o.customerPhone, purch = users[phone]?.purchases || {};
             (o.items || []).forEach(i => { if (!i.id.startsWith("OFFER_")) purch[i.id] = true; });
@@ -3397,8 +3266,25 @@
         function submitProductReview() {
             if (!currentUser?.phone || currentUser.banned) return;
             const id = $("reviewProductId").value, rating = parseInt($("reviewRatingSelect").value) || 5, comment = $("reviewCommentInput").value.trim();
-            if (!comment) return alert("يرجى كتابة تعليق.");
-            db.ref(`products/${id}/reviews/REV_${Date.now()}`).set({ customerName: currentUser.name, customerPhone: currentUser.phone, rating, comment, timestamp: new Date().toLocaleDateString("ar-SY") }).then(() => { alert("✅ تم نشر تقييمك!"); closeModal('reviewModal'); });
+            if (!comment) return showToast("⚠️ يرجى كتابة تعليق.", true);
+
+            db.ref(`products/${id}/reviews`).once("value").then(snap => {
+                const revs = snap.val() || {};
+                const alreadyReviewed = Object.values(revs).some(r => r.customerPhone === currentUser.phone);
+                if (alreadyReviewed) {
+                    closeModal('reviewModal');
+                    return showToast("⚠️ لقد قمت بتقييم هذا المنتج مسبقاً ولا يمكنك تقييمه مرة أخرى!", true);
+                }
+
+                db.ref(`products/${id}/reviews/REV_${Date.now()}`).set({
+                    customerName: currentUser.name, customerPhone: currentUser.phone,
+                    rating, comment, timestamp: new Date().toLocaleDateString("ar-SY"), dateISO: new Date().toISOString()
+                }).then(() => {
+                    closeModal('reviewModal');
+                    showToast("⭐ شكراً لك، تم إرسال تقييمك بنجاح!");
+                    renderStore();
+                });
+            });
         }
         function deleteProductReview(pId, rId) { if (confirm("حذف هذا التعليق؟")) db.ref(`products/${pId}/reviews/${rId}`).remove(); }
 
