@@ -221,13 +221,14 @@
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin:0 0 8px 0; text-align:center; font-size:15px;">🛒 سلة المشتريات وإتمام الطلب</h3>
             <div id="cartItemsList" style="max-height:145px; overflow-y:auto; margin-bottom:8px; padding-left:2px;"></div>
-            <!-- Hidden region select so code references don't break -->
-            <select id="cartRegionSelect" style="display:none;"></select>
+            <div class="form-group" style="margin-bottom:8px;">
+                <label>📍 منطقة التوصيل:</label>
+                <select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()" style="padding:6px;"></select>
+            </div>
             <div class="adm-card" style="margin-bottom:8px; font-size:11px;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span>منطقة التوصيل:</span><strong style="color:var(--gold-color);" id="modalDeliveryRegionName">-</strong></div>
                 <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span>قيمة المواد:</span><strong><span id="modalCartSubtotal">0</span> ل.س</strong></div>
                 <div id="modalCreditMarkupRow" style="display:none; justify-content:space-between; margin-bottom:3px; color:#ff9800;"><span>نسبة البيع بالآجل (<span id="modalCreditPctVal">0</span>%):</span><strong>+<span id="modalCreditMarkupAmount">0</span> ل.س</strong></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:3px; color:var(--gray-text);"><span>أجور التوصيل:</span><strong><span id="modalDeliveryFee">0</span> ل.س</strong></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:3px; color:var(--gray-text);"><span>أجور التوصيل (<span id="modalDeliveryRegionName">-</span>):</span><strong><span id="modalDeliveryFee">0</span> ل.س</strong></div>
                 <div style="display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding-top:4px; margin-top:3px; font-size:13px;">
                     <span>الإجمالي النهائي:</span><strong style="color:#00e676; font-size:15px; font-weight:900;"><span id="modalCartTotal">0</span> ل.س</strong>
                 </div>
@@ -240,8 +241,11 @@
                 <label>💳 طريقة الدفع:</label>
                 <select id="cartPaymentMethod" class="form-control" onchange="renderCartModalItems()" style="padding:6px; font-weight:bold;"></select>
             </div>
+            <div id="shamCashInfoBox" style="display:none; text-align:center;">
+                <button type="button" onclick="copyWalletId()" class="btn" style="margin-bottom:8px; padding:9px; background:linear-gradient(45deg,#D4AF37,#FFD700); color:#000;">📋 نسخ كود محفظة شام كاش للدفع</button>
+            </div>
             <div class="form-group" style="margin-bottom:10px;"><input type="text" id="orderNotes" class="form-control" placeholder="📝 ملاحظات إضافية مع الطلب (اختياري)..."></div>
-            <button type="button" onclick="submitOrder()" class="btn" id="submitOrderBtn" style="background:linear-gradient(45deg,#00e676,#00c853); color:#000; margin-bottom:8px; font-size:14px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.45); animation:pulse 2s infinite;">✅ إرسال وتأكيد الطلب الآن</button>
+            <button type="button" onclick="submitOrder()" class="btn" style="background:linear-gradient(45deg,#00e676,#00c853); color:#000; margin-bottom:8px; font-size:14px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.45); animation:pulse 2s infinite;">✅ إرسال وتأكيد الطلب الآن</button>
             <button type="button" onclick="closeModal('cartModal')" class="btn btn-danger" style="padding:6px; font-size:11px;">إغلاق</button>
         </div>
     </div>
@@ -1672,7 +1676,16 @@
             if ($("cartModal")) $("cartModal").style.display = "flex";
         }
 
-
+        function onCartRegionChange() {
+            const reg = $("cartRegionSelect").value;
+            if (!isRegionOpenNow(reg)) alert(`⚠️ تنبيه: منطقة (${reg}) مغلقة حالياً.`);
+            if (currentUser?.phone) {
+                currentUser.region = reg; localStorage.setItem("moaath_user", JSON.stringify(currentUser));
+                db.ref("users/" + currentUser.phone + "/region").set(reg);
+                setTxt("userRegionBadge", `(${reg})`);
+            }
+            renderCartModalItems(); updateCartBar();
+        }
 
         function copyWalletId() {
             if (navigator.clipboard?.writeText) navigator.clipboard.writeText(shamWalletIdGlobal).then(() => alert("✅ تم نسخ كود محفظة شام كاش بنجاح!"));
@@ -1698,8 +1711,7 @@
             const currPay = paySelect ? paySelect.value : ""; // Get current selection if any
             
             // Calculate temp order USD to check if prepaid covers it
-            const userReg = currentUser?.region || Object.keys(deliveryFees)[0] || "العوينة";
-            const feeSYP_temp = getRegionFee(userReg);
+            const feeSYP_temp = getRegionFee($("cartRegionSelect")?.value || u?.region || Object.keys(deliveryFees)[0] || "العوينة");
             const subUSD_temp = Object.values(cart).reduce((a,i) => a + (i.priceUSD * i.qty), 0);
             const totalUSD_temp = parseFloat((subUSD_temp + (feeSYP_temp / exchangeRate)).toFixed(2));
             
@@ -1729,14 +1741,7 @@
             
             const selectedPay = paySelect ? paySelect.value : "شام كاش";
             const useCreditPricing = (selectedPay === "آجل (دفتر الدين)");
-            const btnEl = $("submitOrderBtn");
-            if (btnEl) {
-                if (selectedPay === "شام كاش") {
-                    btnEl.innerHTML = "📋 نسخ معرف شام كاش وإرسال الطلب";
-                } else {
-                    btnEl.innerHTML = "✅ إرسال وتأكيد الطلب الآن";
-                }
-            }
+            if ($("shamCashInfoBox")) $("shamCashInfoBox").style.display = (selectedPay === "شام كاش") ? "block" : "none";
 
             const markupPct = useCreditPricing ? getCurrentUserCreditMarkupPct() : 0;
             const markupAmt = markupPct > 0 ? Math.round((sub * markupPct) / 100) : 0;
@@ -1822,12 +1827,7 @@
         function submitOrder() {
             if (!checkStoreWorkHours()) return;
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.address) { closeModal('cartModal'); return openEditProfile(); }
-            const reg = currentUser?.region || Object.keys(deliveryFees)[0] || "العوينة";
-
-            const selectedPayMethod = $("cartPaymentMethod") ? $("cartPaymentMethod").value : "شام كاش";
-            if (selectedPayMethod === "شام كاش") {
-                copyWalletId(); // Automatically copy Sham Cash ID to clipboard!
-            }
+            const reg = $("cartRegionSelect")?.value || currentUser.region || Object.keys(deliveryFees)[0] || "العوينة";
             if (!isRegionOpenNow(reg)) return alert(`⚠️ أوقات التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
             if (users[currentUser.phone]?.banned) return alert("🚫 حسابك محظور.");
             const items = Object.values(cart); if (!items.length) return;
