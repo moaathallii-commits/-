@@ -2488,17 +2488,18 @@
             list.forEach((p, idx) => {
                 const stock = parseInt(p.stock) || 0;
                 const targetPacks = parseInt(p.targetOrderPacks) || 5;
+                const neededPacks = Math.max(0, targetPacks - stock);
                 const unitsPerPack = parseInt(p.unitsPerPack) || 1;
                 const unit = p.unitType || "قطعة";
                 const costPerPieceUSD = parseFloat(p.costPrice) || 0;
-                const lineTotalPieces = targetPacks * unitsPerPack;
+                const lineTotalPieces = neededPacks * unitsPerPack;
                 const lineCostUSD = parseFloat((lineTotalPieces * costPerPieceUSD).toFixed(2));
                 const lineCostSYP = calcSYP(lineCostUSD);
 
                 totalEstimatedUSD += lineCostUSD;
                 totalEstimatedSYP += lineCostSYP;
 
-                msg += `${idx + 1}. *${p.name}*\n   ⬅️ المطلوب: *${targetPacks} ${unit}* ${unitsPerPack > 1 ? `(تعبئة ${unitsPerPack} قطعة = ${lineTotalPieces} قطعة)` : ''}\n`;
+                msg += `${idx + 1}. *${p.name}*\n   ⬅️ المطلوب: *${neededPacks} ${unit}* ${unitsPerPack > 1 ? `(تعبئة ${unitsPerPack} قطعة = ${lineTotalPieces} قطعة)` : ''}\n`;
             });
             msg += `──────────────\n💰 *إجمالي تقدير الفاتورة:* ${totalEstimatedSYP.toLocaleString()} ل.س (ما يعادل: *${totalEstimatedUSD.toFixed(2)} $*)\n*(تم الحساب بناءً على: سعر تكلفة المنتج × إجمالي القطع المطلوبة)*\n──────────────\nيرجى تأكيد الطلب وتزويدنا بالأصناف المذكورة 🌸`;
             window.open(`https://wa.me/${formatWhatsAppPhone(supp.phone)}?text=${encodeURIComponent(msg)}`, "_blank");
@@ -2521,13 +2522,15 @@
                 const s = suppliers[sId];
                 let suppEstUSD = 0;
                 const rowsHtml = bySupp[sId].map(p => {
+                    const stock = parseInt(p.stock) || 0;
                     const targetPacks = parseInt(p.targetOrderPacks) || 5;
+                    const neededPacks = Math.max(0, targetPacks - stock);
                     const unitsPerPack = parseInt(p.unitsPerPack) || 1;
-                    const lineUSD = targetPacks * unitsPerPack * (parseFloat(p.costPrice) || 0);
+                    const lineUSD = neededPacks * unitsPerPack * (parseFloat(p.costPrice) || 0);
                     suppEstUSD += lineUSD;
                     return `<div style="font-size:11px; display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding:4px 0;">
-                        <span>• ${p.name} <small style="color:var(--gold-color);">(${targetPacks} ${p.unitType || 'قطعة'})</small></span>
-                        <span><b style="color:var(--success-color); margin-left:6px;">~${calcSYP(lineUSD).toLocaleString()} ل.س</b> <small style="color:var(--danger-color);">(متبقي: ${p.stock})</small></span>
+                        <span>• ${p.name} <small style="color:var(--gold-color);">(${neededPacks} ${p.unitType || 'قطعة'})</small></span>
+                        <span><b style="color:var(--success-color); margin-left:6px;">~${calcSYP(lineUSD).toLocaleString()} ل.س</b> <small style="color:var(--danger-color);">(متبقي: ${stock})</small></span>
                     </div>`;
                 }).join("");
 
