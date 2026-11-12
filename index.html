@@ -297,6 +297,7 @@
                     <button onclick="clearAllCompletedInvoices()" class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:10px;">🗑️ حذف السجل</button>
                 </div>
                 <div id="exportMgrInvoicesHistoryList"></div>
+            </div>
             <div class="comp-card" style="background:linear-gradient(45deg,rgba(255,152,0,0.15),var(--card-bg)); border-color:#ff9800; margin-top:10px;">
                 <h3 style="color:#ff9800; margin:0 0 6px 0; font-size:14px;">👔 أرباح ومستحقات مدير التصدير</h3>
                 <div style="font-size:16px; font-weight:bold; color:var(--success-color); margin-bottom:6px;" id="exportMgrDashboardProfit">0 ل.س</div>
@@ -305,10 +306,6 @@
             <div class="comp-card" style="border-color:#ff9800; margin-top:10px;">
                 <h3 style="color:#ff9800; margin:0 0 8px 0; font-size:14px;">🧾 سجل الدفعات والتسويات السابقة لمدير التصدير</h3>
                 <div id="exportMgrPayoutHistoryList"></div>
-            </div>
-
-            </div>
-
             </div>
         </div>
     </div>
@@ -1634,7 +1631,9 @@
                 
                 // 1. Single Unit Card
                 const priceSYP = calcSYP((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0)), st = parseInt(p.stock) || 0, inC = cart[id] ? cart[id].qty : 0;
-                const btn = st <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (inC > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${id}',1)">+</button><span class="qty-text">${inC}</span><button class="qty-btn" onclick="changeQty('${id}',-1)">-</button></div>` : `<button class="btn" onclick="changeQty('${id}',1)">🛒 أضف للسلة</button>`);
+                const reservedByPkg = getReservedUnitsInCart(id, id);
+                const availSingle = Math.max(0, st - reservedByPkg);
+                const btn = availSingle <= 0 && inC <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (inC > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${id}',1)">+</button><span class="qty-text">${inC}</span><button class="qty-btn" onclick="changeQty('${id}',-1)">-</button></div>` : `<button class="btn" onclick="changeQty('${id}',1)">🛒 أضف للسلة</button>`);
                 const revs = p.reviews || {}, rKeys = Object.keys(revs), avg = rKeys.length ? (rKeys.reduce((a, k) => a + (revs[k].rating || 0), 0) / rKeys.length).toFixed(1) : 0;
                 const sortedRevs = Object.values(revs).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || "")).slice(0, 2);
                 const lastTwoRevsHtml = sortedRevs.map(r => `<div style="font-size:10px; color:var(--gray-text); background:var(--bg-color); padding:3px 6px; margin-top:3px; border-radius:4px; text-align:right;">⭐ ${r.rating} - <b>${r.customerName}:</b> ${r.comment}</div>`).join("");
@@ -1650,12 +1649,13 @@
                 // 2. Package / Bulk Card (if enabled)
                 if (p.hasPackage && p.pkgCount > 0 && p.pkgPriceUSD > 0) {
                     const pkgId = id + "_PKG";
-                    const pkgName = `طرد ${p.name} (${p.pkgCount} ${p.unitType || 'كيلو'})`;
+                    const pkgCountVal = Math.max(1, parseInt(p.pkgCount) || 10);
+                    const pkgName = `طرد ${p.name} (${pkgCountVal} ${p.unitType || 'كيلو'})`;
                     const pkgPriceSYP = calcSYP(p.pkgPriceUSD);
-                    // Stock equivalent packages available
-                    const pkgMaxStock = Math.floor(st / p.pkgCount);
+                    const reservedBySingle = getReservedUnitsInCart(id, pkgId);
+                    const pkgMaxStock = Math.floor(Math.max(0, st - reservedBySingle) / pkgCountVal);
                     const inCPkg = cart[pkgId] ? cart[pkgId].qty : 0;
-                    const btnPkg = pkgMaxStock <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (inCPkg > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${pkgId}',1)">+</button><span class="qty-text">${inCPkg}</span><button class="qty-btn" onclick="changeQty('${pkgId}',-1)">-</button></div>` : `<button class="btn" onclick="changeQty('${pkgId}',1)">📦 أضف الطرد</button>`);
+                    const btnPkg = pkgMaxStock <= 0 && inCPkg <= 0 ? `<button class="btn btn-out" disabled>نفدت الكمية</button>` : (inCPkg > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${pkgId}',1)">+</button><span class="qty-text">${inCPkg}</span><button class="qty-btn" onclick="changeQty('${pkgId}',-1)">-</button></div>` : `<button class="btn" onclick="changeQty('${pkgId}',1)">📦 أضف الطرد</button>`);
                     const srcPkg = p.pkgImage || p.pkgThumb || src;
 
                     html += `<div class="product-card" style="border-color:var(--gold-color);"><div><div class="product-img-wrap"><img src="${srcPkg}" class="product-img img-high-res"></div><h3 style="color:var(--gold-color);">${pkgName}</h3><p>${pkgPriceSYP.toLocaleString()} ل.س <small style="color:var(--success-color);">(وفر)</small></p></div><div style="margin-top:6px;">${btnPkg}</div></div>`;
@@ -1938,15 +1938,21 @@
 
         function applySmartPackageConversion(origId, pkgCount) {
             const singleItem = cart[origId];
-            if (!singleItem || singleItem.qty < pkgCount) return;
+            const p = products[origId];
+            if (!singleItem || !p || singleItem.qty < pkgCount) return;
+            const totalBaseStock = parseInt(p.stock) || 0;
             const numPkgs = Math.floor(singleItem.qty / pkgCount);
             const rem = singleItem.qty % pkgCount;
             const pkgId = origId + "_PKG";
-            const p = products[origId] || {};
+            const existingPkgQty = cart[pkgId] ? (parseInt(cart[pkgId].qty) || 0) : 0;
 
-            // Update cart
+            if (((existingPkgQty + numPkgs) * pkgCount + rem) > totalBaseStock) {
+                return showToast("⚠️ المخزون الحالي للصنف لم يعد يكفي لتحويل هذه الكمية!", true);
+            }
+
             if (rem > 0) {
                 singleItem.qty = rem;
+                singleItem.stock = totalBaseStock;
             } else {
                 delete cart[origId];
             }
@@ -1957,12 +1963,15 @@
                     category: p.category || "غير مصنف",
                     priceUSD: parseFloat(p.pkgPriceUSD) || 0,
                     costPrice: (parseFloat(p.costPrice) || 0) * pkgCount,
-                    stock: Math.floor((parseInt(p.stock) || 0) / pkgCount),
+                    stock: Math.floor(totalBaseStock / pkgCount),
                     pointsPct: parseFloat(p.pointsPct) || 2,
                     isPackage: true, origId, pkgCount, qty: numPkgs
                 };
             } else {
                 cart[pkgId].qty += numPkgs;
+                cart[pkgId].priceUSD = parseFloat(p.pkgPriceUSD) || 0;
+                cart[pkgId].costPrice = (parseFloat(p.costPrice) || 0) * pkgCount;
+                cart[pkgId].stock = Math.floor(totalBaseStock / pkgCount);
             }
 
             localStorage.setItem('moaath_cart', JSON.stringify(cart));
@@ -2478,12 +2487,17 @@
 
         
         function clearAllCompletedInvoices() {
+            const keys = Object.keys(completedOrdersHistory || {});
+            if (!keys.length) return alert("ℹ️ سجل الفواتير فارغ بالفعل.");
             if (!confirm("⚠️ تحذير خطير جداً: هل أنت متأكد من حذف سجل الفواتير السابقة بالكامل؟ (لن يتم المساس بالمخزون أو أرصدة الديون الحالية، فقط السجل والأرشيف).")) return;
-            db.ref("completedOrdersHistory").remove().then(() => {
+            const updates = {};
+            keys.forEach(id => { updates[`completedOrdersHistory/${id}`] = null; });
+            db.ref().update(updates).then(() => {
+                completedOrdersHistory = {};
                 alert("✅ تم حذف سجل الفواتير السابقة بالكامل!");
                 renderAdminInvoicesHistory();
                 renderExportManagerInvoicesHistory();
-            });
+            }).catch(err => alert("❌ خطأ أثناء حذف السجل: " + err.message));
         }
 
         function revertCompletedOrder(orderId) {
@@ -2519,6 +2533,20 @@
                 const earned = parseFloat(o.earnedPoints) || 0;
                 updates[`users/${phone}/points`] = Math.max(0, curPts - earned);
 
+                // Re-verify purchases eligibility for items in this reverted invoice
+                const currentPurch = { ...(users[phone].purchases || {}) };
+                (o.items || []).forEach(revItem => {
+                    if (!revItem.id.startsWith("OFFER_")) {
+                        const revBaseId = revItem.origId || String(revItem.id || "").replace(/_PKG$/, "");
+                        const boughtInOtherOrder = Object.entries(completedOrdersHistory || {}).some(([otherId, otherOrd]) => {
+                            if (otherId === orderId || otherOrd.customerPhone !== phone) return false;
+                            return (otherOrd.items || []).some(it => (it.origId || String(it.id || "").replace(/_PKG$/, "")) === revBaseId);
+                        });
+                        if (!boughtInOtherOrder) delete currentPurch[revBaseId];
+                    }
+                });
+                updates[`users/${phone}/purchases`] = currentPurch;
+
                 const orderUSD = parseFloat(o.orderTotalUSD) || 0;
                 const payMethod = o.paymentMethod || (o.isCreditOrder ? "آجل (دفتر الدين)" : "شام كاش");
                 if ((o.isCreditOrder || payMethod === "آجل (دفتر الدين)") && orderUSD > 0) {
@@ -2536,26 +2564,27 @@
             updates[`readyForDelivery/${orderId}`] = null;
 
             db.ref().update(updates).then(() => {
+                delete completedOrdersHistory[orderId];
+                delete readyOrders[orderId];
                 alert(`✅ تم التراجع عن الفاتورة (${orderId}) بنجاح وإعادة كافة الحسابات والمخزون.`);
                 renderStatsDashboard(); renderAdminInvoicesHistory();
-                renderExportManagerInvoicesHistory();
-            });
+                renderExportManagerInvoicesHistory(); renderReadyOrders();
+            }).catch(err => alert("❌ خطأ أثناء التراجع عن الفاتورة: " + err.message));
         }
 
         
         function renderExportManagerEarningsView() {
+            renderStatsDashboard();
             const snapProfit = window.latestStatsSnapshot || {};
             const expProfit = snapProfit.exportManagerFinalSYP || 0;
             setTxt("exportMgrDashboardProfit", expProfit.toLocaleString() + " ل.س");
 
             const histBox = $("exportMgrPayoutHistoryList");
             if (!histBox) return;
-            // Get payout history for export manager from adminAccounting or a dedicated node
-            db.ref("adminAccounting/exportManagerPayoutHistory").once("value", snap => {
-                const hist = Object.values(snap.val() || {}).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
-                histBox.innerHTML = !hist.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد دفعات مسجلة سابقاً.</p>` :
-                    hist.map(h => `<div class="leader-row"><span>📅 ${h.dateStr}</span><span style="color:var(--success-color); font-weight:bold;">✅ تم استلام: ${(h.amountSYP || 0).toLocaleString()} ل.س</span></div>`).join("");
-            });
+            const histObj = adminAccounting.exportManagerPayoutHistory || {};
+            const hist = Object.values(histObj).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
+            histBox.innerHTML = !hist.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد دفعات مسجلة سابقاً.</p>` :
+                hist.map(h => `<div class="leader-row"><span>📅 ${h.dateStr}</span><span style="color:var(--success-color); font-weight:bold;">✅ تم استلام: ${(h.amountSYP || 0).toLocaleString()} ل.س</span></div>`).join("");
         }
 
         function openExportManagerModal() {
@@ -3380,14 +3409,29 @@
             // تنفيذ التحديث في فايربيز مع حذف الطلب محلياً فوراً لمنع عودته
             db.ref().update(updates).then(() => {
                 delete pendingOrders[orderId]; // إزالة مباشرة من الذاكرة المحلية
+                readyOrders[orderId] = o;
+                completedOrdersHistory[orderId] = o;
                 renderPendingOrders();         // إعادة رسم لوحة المعلقات لتختفي البطاقة فوراً
+                renderExportManagerOrders();   // تحديث فوري لواجهة مدير التصدير
+                renderReadyOrders();
+                renderCustomerTrackingBanner();
                 showToast("✅ تم تأكيد الطلب بنجاح ونقله لقائمة التوصيل!");
             }).catch(err => {
                 alert("❌ حدث خطأ أثناء تأكيد الطلب: " + err.message);
             });
         }
 
-        function cancelOrder(id) { if (confirm("إلغاء هذه الفاتورة؟")) db.ref("pendingOrders/" + id).remove(); }
+        function cancelOrder(id) {
+            if (confirm("إلغاء هذه الفاتورة؟")) {
+                db.ref("pendingOrders/" + id).set(null).then(() => {
+                    delete pendingOrders[id];
+                    renderPendingOrders();
+                    renderExportManagerOrders();
+                    renderCustomerTrackingBanner();
+                    showToast("🗑️ تم إلغاء الطلب بنجاح");
+                }).catch(err => alert("❌ خطأ أثناء الإلغاء: " + err.message));
+            }
+        }
         
         function renderReadyOrders() {
             const list1 = $("readyOrdersList");
@@ -3411,7 +3455,11 @@
 
         function removeReadyOrder(id) {
             if (confirm("إزالة هذا الطلب من قائمة التوصيل؟ (لن يحذف من الأرشيف المالي)")) {
-                db.ref(`readyForDelivery/${id}`).remove();
+                db.ref(`readyForDelivery/${id}`).set(null).then(() => {
+                    delete readyOrders[id];
+                    renderReadyOrders();
+                    renderCustomerTrackingBanner();
+                });
             }
         }
 
@@ -3442,7 +3490,14 @@
             window.open(`https://wa.me/${formatWhatsAppPhone(deliveryDriverPhone || adminWhatsAppNumber)}?text=${encodeURIComponent(msg)}`, "_blank");
             
             if (confirm("هل تم إرسال القائمة للسائق بنجاح؟ (سيتم إفراغ الشاشة من الطلبات الحالية)")) {
-                db.ref("readyForDelivery").remove();
+                const updates = {};
+                keys.forEach(id => { updates[`readyForDelivery/${id}`] = null; });
+                db.ref().update(updates).then(() => {
+                    readyOrders = {};
+                    renderReadyOrders();
+                    renderCustomerTrackingBanner();
+                    showToast("✅ تم تفريغ قائمة التوصيل بنجاح!");
+                }).catch(err => alert("❌ خطأ أثناء تفريغ القائمة: " + err.message));
             }
         }
 
@@ -3458,6 +3513,8 @@
                 db.ref().update(updates).then(() => {
                     pendingOrders = {};
                     renderPendingOrders();
+                    renderExportManagerOrders();
+                    renderCustomerTrackingBanner();
                     showToast("🗑️ تم إلغاء جميع الطلبات بنجاح");
                 }).catch(err => {
                     alert("❌ حدث خطأ أثناء الحذف: " + err.message);
