@@ -100,7 +100,7 @@
 </head>
 <body>
 
-    <div id="authModal" class="modal-overlay" style=" z-index: 999999; background:var(--bg-color);">
+    <div id="authModal" class="modal-overlay" style="display:none; z-index: 999999; background:var(--bg-color);">
         <div class="modal-content" style="border-color:var(--gold-color); text-align:center;">
             <div class="logo-circle" style="margin:0 auto 15px auto; width:80px; height:80px;"><img src="store-icon.png" onerror="this.src='https://via.placeholder.com/80?text=M'"></div>
             <h2 style="color:var(--gold-color); margin-top:0;">تسجيل الدخول لمتجر معاذ</h2>
@@ -1710,54 +1710,69 @@
             }
         }
 
+        function getReservedUnitsInCart(baseId, excludeId = null) {
+            let used = 0;
+            if (excludeId !== baseId && cart[baseId]) {
+                used += (parseInt(cart[baseId].qty) || 0);
+            }
+            const pkgKey = baseId + "_PKG";
+            if (excludeId !== pkgKey && cart[pkgKey]) {
+                const p = products[baseId] || {};
+                const pCount = parseInt(cart[pkgKey].pkgCount) || parseInt(p.pkgCount) || 10;
+                used += (parseInt(cart[pkgKey].qty) || 0) * pCount;
+            }
+            return used;
+        }
+
         function changeQty(id, delta) {
             const isW = currentUser?.userType === "wholesale";
             let item;
-            
-            // Fix 2: Shared Stock Validation across _PKG and single items
-            let origId = id;
-            let reqBaseQty = 0;
-            let maxBaseStock = 0;
-
             if (id.startsWith("OFFER_")) {
                 const so = specialOffers[id]; if (!so?.active) return;
-                item = { id, name: "🔥 عرض: " + so.name, category: "عروض خاصة", priceUSD: parseFloat((isW && so.wholesaleUSD > 0) ? so.wholesaleUSD : so.newPriceUSD) || 0, costPrice: parseFloat(so.costPrice) || 0, stock: parseInt(so.stock) || 0, pointsPct: parseFloat(so.pointsPct) || 2 };
-                reqBaseQty = ((cart[id] ? cart[id].qty : 0) + delta);
-                maxBaseStock = item.stock;
+                const maxStock = parseInt(so.stock) || 0;
+                const nQty = (cart[id] ? cart[id].qty : 0) + delta;
+                if (delta > 0 && nQty > maxStock) return showToast("⚠️ الكمية المطلوبة غير متوفرة بالكامل بالمخزون!", true);
+                item = { id, name: "🔥 عرض: " + so.name, category: "عروض خاصة", priceUSD: parseFloat((isW && so.wholesaleUSD > 0) ? so.wholesaleUSD : so.newPriceUSD) || 0, costPrice: parseFloat(so.costPrice) || 0, stock: maxStock, pointsPct: parseFloat(so.pointsPct) || 2 };
+                if (nQty <= 0) delete cart[id]; else cart[id] = { ...item, qty: nQty };
             } else if (id.endsWith("_PKG")) {
-                origId = id.replace("_PKG", "");
-                const p = products[origId]; if (!p) return;
-                const pkgCount = parseInt(p.pkgCount) || 10;
-                item = { 
-                    id, name: `طرد ${p.name} (${pkgCount} ${p.unitType || 'كيلو'})`, 
-                    category: p.category || "غير مصنف", 
-                    priceUSD: parseFloat(p.pkgPriceUSD) || 0, 
-                    costPrice: (parseFloat(p.costPrice) || 0) * pkgCount, 
-                    stock: Math.floor((parseInt(p.stock) || 0) / pkgCount), 
-                    pointsPct: parseFloat(p.pointsPct) || 2,
-                    isPackage: true, origId, pkgCount 
+                const origId = id.replace(/_PKG$/, "");
+                const p = products[origId]; if (!p || !p.hasPackage) return;
+                const pkgCount = Math.max(1, parseInt(p.pkgCount) || 10);
+                const totalBaseStock = parseInt(p.stock) || 0;
+                const nQty = (cart[id] ? cart[id].qty : 0) + delta;
+                const otherUnits = getReservedUnitsInCart(origId, id);
+                if (delta > 0 && (nQty * pkgCount + otherUnits) > totalBaseStock) {
+                    return showToast("⚠️ الكمية المطلوبة (مع ما في السلة) تتجاوز المتوفر بالمخزون!", true);
+                }
+                item = {
+                    id, origId, isPackage: true, pkgCount,
+                    name: `طرد ${p.name} (${pkgCount} ${p.unitType || 'كيلو'})`,
+                    category: p.category || "غير مصنف",
+                    priceUSD: parseFloat(p.pkgPriceUSD) || 0,
+                    costPrice: (parseFloat(p.costPrice) || 0) * pkgCount,
+                    stock: Math.floor(totalBaseStock / pkgCount),
+                    pointsPct: parseFloat(p.pointsPct) || 2
                 };
-                const currentSingleQty = cart[origId] ? cart[origId].qty : 0;
-                const newPkgQty = ((cart[id] ? cart[id].qty : 0) + delta);
-                reqBaseQty = (newPkgQty * pkgCount) + currentSingleQty;
-                maxBaseStock = parseInt(p.stock) || 0;
+                if (nQty <= 0) delete cart[id]; else cart[id] = { ...item, qty: nQty };
             } else {
                 const p = products[id]; if (!p) return;
-                item = { id, name: p.name || "", category: p.category || "غير مصنف", priceUSD: parseFloat((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD) || 0, costPrice: parseFloat(p.costPrice) || 0, stock: parseInt(p.stock) || 0, pointsPct: parseFloat(p.pointsPct) || 2 };
-                const currentPkgQty = cart[id + "_PKG"] ? cart[id + "_PKG"].qty : 0;
-                const pkgCount = parseInt(p.pkgCount) || 10;
-                const newSingleQty = ((cart[id] ? cart[id].qty : 0) + delta);
-                reqBaseQty = newSingleQty + (currentPkgQty * pkgCount);
-                maxBaseStock = item.stock;
+                const totalBaseStock = parseInt(p.stock) || 0;
+                const nQty = (cart[id] ? cart[id].qty : 0) + delta;
+                const otherUnits = getReservedUnitsInCart(id, id);
+                if (delta > 0 && (nQty + otherUnits) > totalBaseStock) {
+                    return showToast("⚠️ الكمية المطلوبة (مع الطرود بالسلة) تتجاوز المتوفر بالمخزون!", true);
+                }
+                item = {
+                    id, origId: id, isPackage: false, pkgCount: 1,
+                    name: p.name || "",
+                    category: p.category || "غير مصنف",
+                    priceUSD: parseFloat((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD) || 0,
+                    costPrice: parseFloat(p.costPrice) || 0,
+                    stock: totalBaseStock,
+                    pointsPct: parseFloat(p.pointsPct) || 2
+                };
+                if (nQty <= 0) delete cart[id]; else cart[id] = { ...item, qty: nQty };
             }
-
-            const nQty = (cart[id] ? cart[id].qty : 0) + delta;
-            
-            if (reqBaseQty > maxBaseStock && delta > 0) {
-                return showToast("⚠️ الكمية المطلوبة تتجاوز المتوفر الفعلي في المخزون المتبقي!", true);
-            }
-
-            if (nQty <= 0) delete cart[id]; else cart[id] = { ...item, qty: nQty };
             localStorage.setItem('moaath_cart', JSON.stringify(cart));
             renderStore();
             if ($("cartModal")?.style.display === "flex") renderCartModalItems();
@@ -1982,9 +1997,16 @@
             const ordItems = items.map(i => {
                 const uS = calcSYP(i.priceUSD), uC = calcSYP(i.costPrice || 0), sS = uS * i.qty, sC = uC * i.qty;
                 subSale += sS; totCost += sC; subUSD += (i.priceUSD * i.qty); totPts += Math.round((i.priceUSD * i.qty) * (i.pointsPct || 2));
-                const origId = i.id.endsWith("_PKG") ? i.id.replace("_PKG", "") : i.id;
-                const pObj = products[origId] || {};
-                return { id: i.id, origId, isPackage: !!i.isPackage, pkgCount: i.pkgCount || 1, name: i.name, category: i.category || "غير مصنف", partnerPhone: pObj.partnerPhone || "", partnerPct: (pObj.partnerPct !== undefined && pObj.partnerPct !== null) ? pObj.partnerPct : null, qty: i.qty, unitSaleSYP: uS, unitCostSYP: uC, subSaleSYP: sS, subCostSYP: sC, netProfitSYP: sS - sC };
+                const baseId = i.origId || String(i.id || "").replace(/_PKG$/, "");
+                const pObj = products[baseId] || products[i.id] || {};
+                const pkgCount = i.isPackage ? (parseInt(i.pkgCount) || parseInt(pObj.pkgCount) || 10) : 1;
+                return {
+                    id: i.id, origId: baseId, isPackage: !!i.isPackage, pkgCount,
+                    name: i.name, category: i.category || pObj.category || "غير مصنف",
+                    partnerPhone: pObj.partnerPhone || "",
+                    partnerPct: (pObj.partnerPct !== undefined && pObj.partnerPct !== null) ? pObj.partnerPct : null,
+                    qty: i.qty, unitSaleSYP: uS, unitCostSYP: uC, subSaleSYP: sS, subCostSYP: sC, netProfitSYP: sS - sC
+                };
             });
             
             const globalMin = window.globalMinOrderSYP || 0;
@@ -2170,6 +2192,9 @@
                 </div>`;
             });
 
+            const printWin = window.open("", "_blank");
+            if (!printWin) return alert("⚠️ يرجى السماح بالنوافذ المنبثقة (Pop-ups) في المتصفح لإنشاء ملف الـ PDF.");
+
             const htmlContent = `<!DOCTYPE html>
             <html lang="ar" dir="rtl">
             <head>
@@ -2186,15 +2211,16 @@
                     table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; }
                     th { background: #fafafa; color: #333; border-bottom: 1px solid #ccc; padding: 6px; }
                     td { padding: 6px; border-bottom: 1px solid #eee; }
-                    .no-print-bar { text-align: center; margin-bottom: 15px; padding: 12px; background: #e8f5e9; border: 1px solid #2e7d32; border-radius: 8px; }
-                    .btn-print { background: #2e7d32; color: #fff; border: none; padding: 10px 22px; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+                    .no-print-bar { text-align: center; margin-bottom: 15px; padding: 10px; background: #e8f5e9; border: 1px solid #2e7d32; border-radius: 8px; }
+                    .btn-print { background: #2e7d32; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; margin: 0 5px; }
                     @media print { .no-print-bar { display: none !important; } body { margin: 0; } }
                 </style>
             </head>
             <body>
                 <div class="no-print-bar">
-                    <span style="font-weight:bold; color:#1b5e20; font-size:13px;">📥 تم تجهيز التقرير المالي بنجاح، وتثبيته في ذاكرة جهازك! يمكنك أيضاً حفظه كملف PDF عبر زر الطباعة أدناه:</span><br><br>
+                    <span style="font-weight:bold; color:#1b5e20;">💡 لحفظ التقرير كملف PDF على هاتفك أو حاسوبك: اضغط زر (حفظ كـ PDF / طباعة) واختر "Save as PDF"</span><br><br>
                     <button class="btn-print" onclick="window.print()">🖨️ حفظ كـ PDF / طباعة التقرير</button>
+                    <button class="btn-print" style="background:#c62828;" onclick="window.close()">✖ إغلاق</button>
                 </div>
                 <div class="top-bar">
                     <div>
@@ -2211,28 +2237,15 @@
                     <div style="font-size:15px; color:#b71c1c;">💰 إجمالي الديون المستحقة: <b>${totalAllUSD.toFixed(2)} $</b> (${totalAllSYP.toLocaleString()} ل.س)</div>
                 </div>
                 ${customersHtml}
+                <script>
+                    window.onload = function() { setTimeout(function() { window.print(); }, 500); };
+                <\/script>
             </body>
             </html>`;
 
-            const blob = new Blob(["﻿" + htmlContent], { type: 'text/html;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `تقرير_الديون_${new Date().toISOString().slice(0,10)}.html`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            showToast("📥 تم تحميل النسخة الاحتياطية لدفتر الديون على جهازك بنجاح!");
-            
-            const printWin = window.open("", "_blank");
-            if (printWin) {
-                printWin.document.open();
-                printWin.document.write(htmlContent);
-                printWin.document.close();
-                setTimeout(() => { printWin.print(); }, 600);
-            }
+            printWin.document.open();
+            printWin.document.write(htmlContent);
+            printWin.document.close();
         }
 
         function exportAllDebtsBackupPDF() {
@@ -2478,17 +2491,18 @@
             if (!confirm(`⚠️ تحذير خطير: هل أنت متأكد تماماً من التراجع عن الفاتورة (${orderId})؟
 - سيتم إعادة الكميات إلى المخزون.
 - سيتم خصم النقاط المكتسبة من الزبون.
-- إعادة المبالغ للدين أو المحفظة إن وجدت.`)) return;
+- سيتم عكس حركة الدين أو استرجاع رصيد المحفظة المسبقة.`)) return;
 
             const updates = {};
             (o.items || []).forEach(i => {
                 if (i.id.startsWith("OFFER_") && specialOffers[i.id]) {
                     const curStock = parseInt(specialOffers[i.id].stock) || 0;
                     updates[`specialOffers/${i.id}/stock`] = curStock + i.qty;
-                } else if (i.isPackage || i.id.endsWith("_PKG")) {
-                    const origId = i.origId || i.id.replace("_PKG", "");
+                } else if (i.isPackage || String(i.id || "").endsWith("_PKG")) {
+                    const origId = i.origId || String(i.id || "").replace(/_PKG$/, "");
                     if (products[origId]) {
-                        const addQty = i.qty * (parseInt(i.pkgCount) || 10);
+                        const pkgUnits = parseInt(i.pkgCount) || parseInt(products[origId].pkgCount) || 10;
+                        const addQty = i.qty * pkgUnits;
                         const curStock = parseInt(products[origId].stock) || 0;
                         updates[`products/${origId}/stock`] = curStock + addQty;
                     }
@@ -2504,30 +2518,26 @@
                 const earned = parseFloat(o.earnedPoints) || 0;
                 updates[`users/${phone}/points`] = Math.max(0, curPts - earned);
 
-                if (o.isCreditOrder && o.orderTotalUSD) {
+                const orderUSD = parseFloat(o.orderTotalUSD) || 0;
+                const payMethod = o.paymentMethod || (o.isCreditOrder ? "آجل (دفتر الدين)" : "شام كاش");
+                if ((o.isCreditOrder || payMethod === "آجل (دفتر الدين)") && orderUSD > 0) {
                     const curDebt = parseFloat(users[phone].debtBalanceUSD) || 0;
-                    const orderUSD = parseFloat(o.orderTotalUSD) || 0;
                     updates[`users/${phone}/debtBalanceUSD`] = Math.max(0, parseFloat((curDebt - orderUSD).toFixed(2)));
-                }
-                
-                // Fix 9: Return prepaid balance if it was a prepaid order
-                if (o.paymentMethod === "محفظة مسبقة الدفع" && o.orderTotalUSD) {
+                    updates[`users/${phone}/debtLedger/DEBT_ORD_${orderId}`] = null;
+                } else if (payMethod === "محفظة مسبقة الدفع" && orderUSD > 0) {
                     const curPrep = parseFloat(users[phone].prepaidBalanceUSD) || 0;
-                    const orderUSD = parseFloat(o.orderTotalUSD) || 0;
                     updates[`users/${phone}/prepaidBalanceUSD`] = parseFloat((curPrep + orderUSD).toFixed(2));
+                    updates[`users/${phone}/prepaidLedger/PREP_ORD_${orderId}`] = null;
                 }
             }
 
             updates[`completedOrdersHistory/${orderId}`] = null;
-            // Also remove from readyForDelivery if it happens to still be there
             updates[`readyForDelivery/${orderId}`] = null;
 
             db.ref().update(updates).then(() => {
                 alert(`✅ تم التراجع عن الفاتورة (${orderId}) بنجاح وإعادة كافة الحسابات والمخزون.`);
-                renderStatsDashboard(); 
-                renderAdminInvoicesHistory();
+                renderStatsDashboard(); renderAdminInvoicesHistory();
                 renderExportManagerInvoicesHistory();
-                renderReadyOrders(); // Update ready list in case it was there
             });
         }
 
@@ -2575,18 +2585,12 @@
                 let realTotalSYP = 0;
                 (o.items || []).forEach(i => {
                     const isW = users[o.customerPhone]?.userType === "wholesale";
-                    let rPrice = 0;
-                    if (i.id.startsWith("OFFER_")) {
-                        const so = specialOffers[i.id] || {};
-                        rPrice = parseFloat((isW && so.wholesaleUSD > 0) ? so.wholesaleUSD : so.newPriceUSD) || 0;
-                    } else if (i.isPackage || i.id.endsWith("_PKG")) {
-                        const origId = i.origId || i.id.replace("_PKG", "");
-                        const p = products[origId] || {};
-                        rPrice = parseFloat(p.pkgPriceUSD) || 0;
-                    } else {
-                        const p = products[i.id] || {};
-                        rPrice = parseFloat((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD) || 0;
-                    }
+                    const isPkg = i.isPackage || String(i.id || "").endsWith("_PKG");
+                    const baseId = i.origId || String(i.id || "").replace(/_PKG$/, "");
+                    const pItem = products[baseId] || products[i.id] || specialOffers[i.id] || {};
+                    const rPrice = isPkg
+                        ? (parseFloat(pItem.pkgPriceUSD) || 0)
+                        : (parseFloat((isW && pItem.wholesaleUSD > 0) ? pItem.wholesaleUSD : (pItem.priceUSD || pItem.newPriceUSD)) || 0);
                     realTotalSYP += calcSYP(rPrice) * i.qty;
                 });
                 const fee = getRegionFee(o.customerRegion);
@@ -2643,18 +2647,17 @@
             list.forEach((p, idx) => {
                 const stock = parseInt(p.stock) || 0;
                 const targetPacks = parseInt(p.targetOrderPacks) || 5;
-                const neededPacks = Math.max(0, targetPacks - stock);
                 const unitsPerPack = parseInt(p.unitsPerPack) || 1;
                 const unit = p.unitType || "قطعة";
                 const costPerPieceUSD = parseFloat(p.costPrice) || 0;
-                const lineTotalPieces = neededPacks * unitsPerPack;
+                const lineTotalPieces = targetPacks * unitsPerPack;
                 const lineCostUSD = parseFloat((lineTotalPieces * costPerPieceUSD).toFixed(2));
                 const lineCostSYP = calcSYP(lineCostUSD);
 
                 totalEstimatedUSD += lineCostUSD;
                 totalEstimatedSYP += lineCostSYP;
 
-                msg += `${idx + 1}. *${p.name}*\n   ⬅️ المطلوب: *${neededPacks} ${unit}* ${unitsPerPack > 1 ? `(تعبئة ${unitsPerPack} قطعة = ${lineTotalPieces} قطعة)` : ''}\n`;
+                msg += `${idx + 1}. *${p.name}*\n   ⬅️ المطلوب: *${targetPacks} ${unit}* ${unitsPerPack > 1 ? `(تعبئة ${unitsPerPack} قطعة = ${lineTotalPieces} قطعة)` : ''}\n`;
             });
             msg += `──────────────\n💰 *إجمالي تقدير الفاتورة:* ${totalEstimatedSYP.toLocaleString()} ل.س (ما يعادل: *${totalEstimatedUSD.toFixed(2)} $*)\n*(تم الحساب بناءً على: سعر تكلفة المنتج × إجمالي القطع المطلوبة)*\n──────────────\nيرجى تأكيد الطلب وتزويدنا بالأصناف المذكورة 🌸`;
             window.open(`https://wa.me/${formatWhatsAppPhone(supp.phone)}?text=${encodeURIComponent(msg)}`, "_blank");
@@ -2677,15 +2680,13 @@
                 const s = suppliers[sId];
                 let suppEstUSD = 0;
                 const rowsHtml = bySupp[sId].map(p => {
-                    const stock = parseInt(p.stock) || 0;
                     const targetPacks = parseInt(p.targetOrderPacks) || 5;
-                    const neededPacks = Math.max(0, targetPacks - stock);
                     const unitsPerPack = parseInt(p.unitsPerPack) || 1;
-                    const lineUSD = neededPacks * unitsPerPack * (parseFloat(p.costPrice) || 0);
+                    const lineUSD = targetPacks * unitsPerPack * (parseFloat(p.costPrice) || 0);
                     suppEstUSD += lineUSD;
                     return `<div style="font-size:11px; display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding:4px 0;">
-                        <span>• ${p.name} <small style="color:var(--gold-color);">(${neededPacks} ${p.unitType || 'قطعة'})</small></span>
-                        <span><b style="color:var(--success-color); margin-left:6px;">~${calcSYP(lineUSD).toLocaleString()} ل.س</b> <small style="color:var(--danger-color);">(متبقي: ${stock})</small></span>
+                        <span>• ${p.name} <small style="color:var(--gold-color);">(${targetPacks} ${p.unitType || 'قطعة'})</small></span>
+                        <span><b style="color:var(--success-color); margin-left:6px;">~${calcSYP(lineUSD).toLocaleString()} ل.س</b> <small style="color:var(--danger-color);">(متبقي: ${p.stock})</small></span>
                     </div>`;
                 }).join("");
 
@@ -3208,10 +3209,10 @@
             if (!grid) return;
             
             grid.innerHTML = o.items.map(i => {
-                const origId = i.id.endsWith("_PKG") ? i.id.replace("_PKG", "") : i.id;
-                const p = products[origId] || specialOffers[i.id] || {};
-                const isPkg = i.isPackage || i.id.endsWith("_PKG");
-                const imgSrc = (isPkg && p.pkgImage) ? p.pkgImage : (isPkg && p.pkgThumb) ? p.pkgThumb : (p.image || getLockedHighResImage(origId) || p.thumb || 'store-icon.png');
+                const isPkg = i.isPackage || String(i.id || "").endsWith("_PKG");
+                const baseId = i.origId || String(i.id || "").replace(/_PKG$/, "");
+                const p = products[baseId] || products[i.id] || specialOffers[i.id] || {};
+                const imgSrc = (isPkg && (p.pkgImage || p.pkgThumb)) ? (p.pkgImage || p.pkgThumb) : (p.image || getLockedHighResImage(baseId) || p.thumb || 'store-icon.png');
                 return `<div class="adm-card" style="text-align:center; padding:8px; margin:0; background:var(--bg-color);">
                     <div style="width:100%; aspect-ratio:9/16; border-radius:6px; overflow:hidden; background:#111; margin-bottom:6px; border:1px solid var(--gold-color);">
                         <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;">
@@ -3236,18 +3237,12 @@
                 let realTotalSYP = 0;
                 (o.items || []).forEach(i => {
                     const isW = users[o.customerPhone]?.userType === "wholesale";
-                    let rPrice = 0;
-                    if (i.id.startsWith("OFFER_")) {
-                        const so = specialOffers[i.id] || {};
-                        rPrice = parseFloat((isW && so.wholesaleUSD > 0) ? so.wholesaleUSD : so.newPriceUSD) || 0;
-                    } else if (i.isPackage || i.id.endsWith("_PKG")) {
-                        const origId = i.origId || i.id.replace("_PKG", "");
-                        const p = products[origId] || {};
-                        rPrice = parseFloat(p.pkgPriceUSD) || 0;
-                    } else {
-                        const p = products[i.id] || {};
-                        rPrice = parseFloat((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD) || 0;
-                    }
+                    const isPkg = i.isPackage || String(i.id || "").endsWith("_PKG");
+                    const baseId = i.origId || String(i.id || "").replace(/_PKG$/, "");
+                    const pItem = products[baseId] || products[i.id] || specialOffers[i.id] || {};
+                    const rPrice = isPkg
+                        ? (parseFloat(pItem.pkgPriceUSD) || 0)
+                        : (parseFloat((isW && pItem.wholesaleUSD > 0) ? pItem.wholesaleUSD : (pItem.priceUSD || pItem.newPriceUSD)) || 0);
                     realTotalSYP += calcSYP(rPrice) * i.qty;
                 });
                 const fee = getRegionFee(o.customerRegion);
@@ -3313,7 +3308,12 @@
                 }
             });
             const phone = o.customerPhone, purch = users[phone]?.purchases || {};
-            (o.items || []).forEach(i => { if (!i.id.startsWith("OFFER_")) purch[i.id] = true; });
+            (o.items || []).forEach(i => {
+                if (!i.id.startsWith("OFFER_")) {
+                    const baseId = i.origId || String(i.id || "").replace(/_PKG$/, "");
+                    purch[baseId] = true;
+                }
+            });
             const upPts = (users[phone]?.points || 0) + (o.earnedPoints || 0);
             
             const updates = {};
@@ -3700,9 +3700,9 @@
             if (!phone || users[phone]?.userType !== "partner") return 0;
             const cfg = (window.partnersConfigData && window.partnersConfigData[phone]) || {};
             const defaultPartnerPct = parseFloat(cfg.profitPct) || 20;
-            const actualId = prodId.endsWith("_PKG") ? prodId.replace("_PKG", "") : prodId;
-            const p = products[actualId] || {};
-            const effPartnerPhone = (itemSnapshot && itemSnapshot.partnerPhone !== undefined) ? itemSnapshot.partnerPhone : p.partnerPhone;
+            const baseId = (itemSnapshot && itemSnapshot.origId) ? itemSnapshot.origId : String(prodId || "").replace(/_PKG$/, "");
+            const p = products[baseId] || products[prodId] || {};
+            const effPartnerPhone = (itemSnapshot && itemSnapshot.partnerPhone) ? itemSnapshot.partnerPhone : p.partnerPhone;
             const effPartnerPct = (itemSnapshot && itemSnapshot.partnerPct !== undefined && itemSnapshot.partnerPct !== null) ? itemSnapshot.partnerPct : p.partnerPct;
 
             // إذا كان هذا المنتج مخصصاً لشريك معين بذاته
@@ -3723,11 +3723,11 @@
         }
 
         function getItemTotalPartnerSharePct(item, catName) {
-            const actualId = item.id.endsWith("_PKG") ? item.id.replace("_PKG", "") : item.id;
-            const p = products[actualId] || {};
+            const baseId = item.origId || String(item.id || "").replace(/_PKG$/, "");
+            const p = products[baseId] || products[item.id] || {};
             const effPartnerPhone = item.partnerPhone || p.partnerPhone;
             if (effPartnerPhone && users[effPartnerPhone]?.userType === "partner") {
-                return Math.min(100, getPartnerPctForProduct(effPartnerPhone, item.id, catName, item));
+                return Math.min(100, getPartnerPctForProduct(effPartnerPhone, baseId, catName, item));
             }
             const cleanCat = (catName || item.category || p.category || "").trim().toLowerCase();
             let totalPartnerPct = 0;
