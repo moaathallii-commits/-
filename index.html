@@ -2192,9 +2192,6 @@
                 </div>`;
             });
 
-            const printWin = window.open("", "_blank");
-            if (!printWin) return alert("⚠️ يرجى السماح بالنوافذ المنبثقة (Pop-ups) في المتصفح لإنشاء ملف الـ PDF.");
-
             const htmlContent = `<!DOCTYPE html>
             <html lang="ar" dir="rtl">
             <head>
@@ -2218,9 +2215,8 @@
             </head>
             <body>
                 <div class="no-print-bar">
-                    <span style="font-weight:bold; color:#1b5e20;">💡 لحفظ التقرير كملف PDF على هاتفك أو حاسوبك: اضغط زر (حفظ كـ PDF / طباعة) واختر "Save as PDF"</span><br><br>
+                    <span style="font-weight:bold; color:#1b5e20;">✅ تم تحميل هذه النسخة الاحتياطية على جهازك! يمكنك أيضاً طباعتها أو حفظها كـ PDF عبر الزر أدناه:</span><br><br>
                     <button class="btn-print" onclick="window.print()">🖨️ حفظ كـ PDF / طباعة التقرير</button>
-                    <button class="btn-print" style="background:#c62828;" onclick="window.close()">✖ إغلاق</button>
                 </div>
                 <div class="top-bar">
                     <div>
@@ -2237,15 +2233,20 @@
                     <div style="font-size:15px; color:#b71c1c;">💰 إجمالي الديون المستحقة: <b>${totalAllUSD.toFixed(2)} $</b> (${totalAllSYP.toLocaleString()} ل.س)</div>
                 </div>
                 ${customersHtml}
-                <script>
-                    window.onload = function() { setTimeout(function() { window.print(); }, 500); };
-                <\/script>
             </body>
             </html>`;
 
-            printWin.document.open();
-            printWin.document.write(htmlContent);
-            printWin.document.close();
+            const blob = new Blob(["\uFEFF" + htmlContent], { type: 'text/html;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            const safeName = reportTitle.replace(/[^\u0600-\u06FFa-zA-Z0-9_]/g, "_");
+            a.download = `${safeName}_${new Date().toISOString().slice(0,10)}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+            showToast("📥 تم تحميل النسخة الاحتياطية لدفتر الديون على ذاكرة جهازك بنجاح!");
         }
 
         function exportAllDebtsBackupPDF() {
@@ -2645,21 +2646,22 @@
             let totalEstimatedUSD = 0, totalEstimatedSYP = 0;
 
             list.forEach((p, idx) => {
-                const stock = parseInt(p.stock) || 0;
+                const stock = Math.max(0, parseInt(p.stock) || 0);
                 const targetPacks = parseInt(p.targetOrderPacks) || 5;
+                const neededPacks = Math.max(1, targetPacks - stock);
                 const unitsPerPack = parseInt(p.unitsPerPack) || 1;
                 const unit = p.unitType || "قطعة";
                 const costPerPieceUSD = parseFloat(p.costPrice) || 0;
-                const lineTotalPieces = targetPacks * unitsPerPack;
+                const lineTotalPieces = neededPacks * unitsPerPack;
                 const lineCostUSD = parseFloat((lineTotalPieces * costPerPieceUSD).toFixed(2));
                 const lineCostSYP = calcSYP(lineCostUSD);
 
                 totalEstimatedUSD += lineCostUSD;
                 totalEstimatedSYP += lineCostSYP;
 
-                msg += `${idx + 1}. *${p.name}*\n   ⬅️ المطلوب: *${targetPacks} ${unit}* ${unitsPerPack > 1 ? `(تعبئة ${unitsPerPack} قطعة = ${lineTotalPieces} قطعة)` : ''}\n`;
+                msg += `${idx + 1}. *${p.name}*\n   ⬅️ المطلوب: *${neededPacks} ${unit}* (الكمية الأساسية ${targetPacks} - المتبقي ${stock}) ${unitsPerPack > 1 ? `[تعبئة ${unitsPerPack} = ${lineTotalPieces} قطعة]` : ''}\n`;
             });
-            msg += `──────────────\n💰 *إجمالي تقدير الفاتورة:* ${totalEstimatedSYP.toLocaleString()} ل.س (ما يعادل: *${totalEstimatedUSD.toFixed(2)} $*)\n*(تم الحساب بناءً على: سعر تكلفة المنتج × إجمالي القطع المطلوبة)*\n──────────────\nيرجى تأكيد الطلب وتزويدنا بالأصناف المذكورة 🌸`;
+            msg += `──────────────\n💰 *إجمالي تقدير الفاتورة:* ${totalEstimatedSYP.toLocaleString()} ل.س (ما يعادل: *${totalEstimatedUSD.toFixed(2)} $*)\n*(تم الحساب بناءً على: سعر تكلفة المنتج × النقص الفعلي المطلوب)*\n──────────────\nيرجى تأكيد الطلب وتزويدنا بالأصناف المذكورة 🌸`;
             window.open(`https://wa.me/${formatWhatsAppPhone(supp.phone)}?text=${encodeURIComponent(msg)}`, "_blank");
         }
 
@@ -2680,13 +2682,15 @@
                 const s = suppliers[sId];
                 let suppEstUSD = 0;
                 const rowsHtml = bySupp[sId].map(p => {
+                    const stock = Math.max(0, parseInt(p.stock) || 0);
                     const targetPacks = parseInt(p.targetOrderPacks) || 5;
+                    const neededPacks = Math.max(1, targetPacks - stock);
                     const unitsPerPack = parseInt(p.unitsPerPack) || 1;
-                    const lineUSD = targetPacks * unitsPerPack * (parseFloat(p.costPrice) || 0);
+                    const lineUSD = neededPacks * unitsPerPack * (parseFloat(p.costPrice) || 0);
                     suppEstUSD += lineUSD;
                     return `<div style="font-size:11px; display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding:4px 0;">
-                        <span>• ${p.name} <small style="color:var(--gold-color);">(${targetPacks} ${p.unitType || 'قطعة'})</small></span>
-                        <span><b style="color:var(--success-color); margin-left:6px;">~${calcSYP(lineUSD).toLocaleString()} ل.س</b> <small style="color:var(--danger-color);">(متبقي: ${p.stock})</small></span>
+                        <span>• ${p.name} <small style="color:var(--gold-color);">(المطلوب: ${neededPacks} ${p.unitType || 'قطعة'} من أصل ${targetPacks})</small></span>
+                        <span><b style="color:var(--success-color); margin-left:6px;">~${calcSYP(lineUSD).toLocaleString()} ل.س</b> <small style="color:var(--danger-color);">(متبقي: ${stock})</small></span>
                     </div>`;
                 }).join("");
 
@@ -2761,8 +2765,11 @@
                     if (inPeriod) {
                         if (!catMap[c]) catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 };
                         catMap[c].sales += sS; catMap[c].cost += sC; catMap[c].profit += sP; catMap[c].count += sQ;
-                        if (!prodMap[i.id]) prodMap[i.id] = { id: i.id, name: i.name || "صنف", category: c, stock: products[i.id] ? parseInt(products[i.id].stock) || 0 : 0, qtySold: 0, sales: 0, cost: 0, profit: 0 };
-                        prodMap[i.id].qtySold += sQ; prodMap[i.id].sales += sS; prodMap[i.id].cost += sC; prodMap[i.id].profit += sP;
+                        const baseId = i.origId || String(i.id || "").replace(/_PKG$/, "");
+                        const isPkg = i.isPackage || String(i.id || "").endsWith("_PKG");
+                        const effUnitsSold = isPkg ? sQ * (parseInt(i.pkgCount) || parseInt(products[baseId]?.pkgCount) || 10) : sQ;
+                        if (!prodMap[baseId]) prodMap[baseId] = { id: baseId, name: products[baseId]?.name || i.name || "صنف", category: c, stock: products[baseId] ? parseInt(products[baseId].stock) || 0 : 0, qtySold: 0, sales: 0, cost: 0, profit: 0 };
+                        prodMap[baseId].qtySold += effUnitsSold; prodMap[baseId].sales += sS; prodMap[baseId].cost += sC; prodMap[baseId].profit += sP;
                         if (selCat === "all" || selCat === c) { totS += sS; totC += sC; netP += sP; }
                     }
                 });
@@ -2888,7 +2895,7 @@
             const updates = {};
             Object.keys(completedOrdersHistory).forEach(id => {
                 const ord = completedOrdersHistory[id]; if (!ord?.items) return;
-                const rem = ord.items.filter(i => type === 'prod' ? i.id !== target : (i.category || "غير مصنف") !== target);
+                const rem = ord.items.filter(i => type === 'prod' ? ((i.origId || String(i.id || "").replace(/_PKG$/, "")) !== target) : (i.category || "غير مصنف") !== target);
                 if (rem.length !== ord.items.length) {
                     if (!rem.length) updates[id] = null;
                     else { let sS = 0, sC = 0; rem.forEach(i => { sS += (i.subSaleSYP || 0); sC += (i.subCostSYP || 0); }); updates[id] = { ...ord, items: rem, subtotalSaleSYP: sS, totalCostSYP: sC, netProfitSYP: sS - sC }; }
