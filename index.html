@@ -3300,20 +3300,29 @@
         }
 
         function confirmOrder(orderId) {
-            const o = pendingOrders[orderId]; if (!o) return;
+            const o = pendingOrders[orderId]; 
+            if (!o) return alert("⚠️ الطلب غير موجود أو تم تأكيده مسبقاً.");
+            
+            // 1. حساب الخصم من المخزون محلياً للتأكد
+            const updates = {};
             (o.items || []).forEach(i => {
                 if (i.id.startsWith("OFFER_") && specialOffers[i.id]) {
-                    db.ref(`specialOffers/${i.id}/stock`).set(Math.max(0, (parseInt(specialOffers[i.id].stock) || 0) - i.qty));
-                } else if (i.id.endsWith("_PKG")) {
-                    const origId = i.id.replace("_PKG", "");
+                    const curStock = parseInt(specialOffers[i.id].stock) || 0;
+                    updates[`specialOffers/${i.id}/stock`] = Math.max(0, curStock - i.qty);
+                } else if (i.isPackage || String(i.id || "").endsWith("_PKG")) {
+                    const origId = i.origId || String(i.id || "").replace(/_PKG$/, "");
                     if (products[origId]) {
-                        const deductQty = i.qty * (parseInt(i.pkgCount) || 10);
-                        db.ref(`products/${origId}/stock`).set(Math.max(0, (parseInt(products[origId].stock) || 0) - deductQty));
+                        const pkgUnits = parseInt(i.pkgCount) || parseInt(products[origId].pkgCount) || 10;
+                        const deductQty = i.qty * pkgUnits;
+                        const curStock = parseInt(products[origId].stock) || 0;
+                        updates[`products/${origId}/stock`] = Math.max(0, curStock - deductQty);
                     }
                 } else if (products[i.id]) {
-                    db.ref(`products/${i.id}/stock`).set(Math.max(0, (parseInt(products[i.id].stock) || 0) - i.qty));
+                    const curStock = parseInt(products[i.id].stock) || 0;
+                    updates[`products/${i.id}/stock`] = Math.max(0, curStock - i.qty);
                 }
             });
+
             const phone = o.customerPhone, purch = users[phone]?.purchases || {};
             (o.items || []).forEach(i => {
                 if (!i.id.startsWith("OFFER_")) {
@@ -3323,7 +3332,6 @@
             });
             const upPts = (users[phone]?.points || 0) + (o.earnedPoints || 0);
             
-            const updates = {};
             updates[`users/${phone}/name`] = o.customerName;
             updates[`users/${phone}/phone`] = phone;
             updates[`users/${phone}/region`] = o.customerRegion;
@@ -3352,8 +3360,8 @@
             } else if (payMethod === "محفظة مسبقة الدفع" && finalOrderUSD) {
                 const currentPrep = parseFloat(users[phone]?.prepaidBalanceUSD) || 0;
                 if (currentPrep < finalOrderUSD) {
-                    alert(`❌ خطأ أمني: رصيد محفظة الزبون المسبق حالياً ($${currentPrep}) لم يعد يكفي لتغطية هذا الطلب ($${finalOrderUSD})! ربما تم استهلاك الرصيد في طلب آخر. لا يمكن التأكيد.`);
-                    return; // Abort confirmation
+                    alert(`❌ خطأ أمني: رصيد محفظة الزبون المسبق حالياً ($${currentPrep}) لم يعد يكفي لتغطية هذا الطلب ($${finalOrderUSD})! لا يمكن التأكيد.`);
+                    return;
                 }
                 updates[`users/${phone}/prepaidBalanceUSD`] = Math.max(0, parseFloat((currentPrep - finalOrderUSD).toFixed(2)));
                 const txId = "PREP_ORD_" + orderId;
@@ -3365,14 +3373,18 @@
                 };
             }
             
-            updates[`completedOrdersHistory/${orderId}`] = o; // Keep for accounting
-            updates[`readyForDelivery/${orderId}`] = o; // NEW: Add to Ready queue for driver
-            updates[`pendingOrders/${orderId}`] = null;
+            updates[`completedOrdersHistory/${orderId}`] = o; 
+            updates[`readyForDelivery/${orderId}`] = o; 
+            updates[`pendingOrders/${orderId}`] = null; // حذف الطلب قطعي من المعلقات
             
+            // تنفيذ التحديث في فايربيز مع حذف الطلب محلياً فوراً لمنع عودته
             db.ref().update(updates).then(() => {
-                showToast("✅ تم تأكيد الطلب بنجاح ونقله إلى قائمة الجاهز للتوصيل!");
+                delete pendingOrders[orderId]; // إزالة مباشرة من الذاكرة المحلية
+                renderPendingOrders();         // إعادة رسم لوحة المعلقات لتختفي البطاقة فوراً
+                showToast("✅ تم تأكيد الطلب بنجاح ونقله لقائمة التوصيل!");
+            }).catch(err => {
+                alert("❌ حدث خطأ أثناء تأكيد الطلب: " + err.message);
             });
-            // We no longer open whatsapp automatically per order. The customer will track via the app, and the driver gets a bulk message.
         }
 
         function cancelOrder(id) { if (confirm("إلغاء هذه الفاتورة؟")) db.ref("pendingOrders/" + id).remove(); }
@@ -3435,10 +3447,15 @@
         }
 
         function cancelAllPendingOrders() {
-            const cnt = Object.keys(pendingOrders || {}).length;
+            const keys = Object.keys(pendingOrders || {});
+            const cnt = keys.length;
             if (!cnt) return alert("ℹ️ لا توجد طلبات معلقة.");
             if (confirm(`⚠️ إلغاء جميع الطلبات المعلقة (${cnt} طلب)؟`)) {
-                db.ref("pendingOrders").remove().then(() => {
+                const updates = {};
+                keys.forEach(id => {
+                    updates[`pendingOrders/${id}`] = null;
+                });
+                db.ref().update(updates).then(() => {
                     pendingOrders = {};
                     renderPendingOrders();
                     showToast("🗑️ تم إلغاء جميع الطلبات بنجاح");
