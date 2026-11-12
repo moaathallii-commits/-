@@ -100,7 +100,7 @@
 </head>
 <body>
 
-    <div id="authModal" class="modal-overlay" style="display:flex; z-index: 999999; background:var(--bg-color);">
+    <div id="authModal" class="modal-overlay" style=" z-index: 999999; background:var(--bg-color);">
         <div class="modal-content" style="border-color:var(--gold-color); text-align:center;">
             <div class="logo-circle" style="margin:0 auto 15px auto; width:80px; height:80px;"><img src="store-icon.png" onerror="this.src='https://via.placeholder.com/80?text=M'"></div>
             <h2 style="color:var(--gold-color); margin-top:0;">تسجيل الدخول لمتجر معاذ</h2>
@@ -112,14 +112,18 @@
 
             <div id="loginView">
                 <div class="form-group"><input type="tel" id="loginPhone" class="form-control" placeholder="رقم الهاتف (09XXXXXXXX)" maxlength="10"></div>
-                <div class="form-group"><input type="password" id="loginPin" class="form-control" placeholder="رمز المرور (PIN) السري"></div>
+                <div class="form-group" style="position:relative;">
+                    <input type="text" inputmode="numeric" id="loginPin" class="form-control" placeholder="رمز المرور (PIN) السري" style="-webkit-text-security:disc;">
+                </div>
                 <button onclick="handleLogin()" class="btn" style="padding:10px; font-size:14px; background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; animation:pulse 2s infinite;">🔐 دخول</button>
             </div>
 
             <div id="registerView" style="display:none;">
                 <div class="form-group"><input type="text" id="regNewName" class="form-control" placeholder="الاسم الثلاثي أو اللقب"></div>
                 <div class="form-group"><input type="tel" id="regNewPhone" class="form-control" placeholder="رقم الهاتف (09XXXXXXXX)" maxlength="10"></div>
-                <div class="form-group"><input type="password" id="regNewPin" class="form-control" placeholder="اختر رمز مرور سري (6 أرقام/أحرف على الأقل)"></div>
+                <div class="form-group" style="position:relative;">
+                    <input type="text" inputmode="numeric" id="regNewPin" class="form-control" placeholder="اختر رمز مرور سري (6 أرقام على الأقل)" style="-webkit-text-security:disc;">
+                </div>
                 <div class="form-group"><select id="regNewRegion" class="form-control"></select></div>
                 <div class="form-group"><input type="text" id="regNewAddress" class="form-control" placeholder="العنوان بالتفصيل"></div>
                 <button onclick="handleRegister()" class="btn" style="padding:10px; font-size:14px; margin-top:10px;">💾 إنشاء الحساب والدخول</button>
@@ -172,6 +176,7 @@
     </div>
 
     <div class="container" style="padding-bottom:85px;">
+        <div id="customerTrackingBannerBox"></div>
         <div id="multipleOffersContainer"></div>
         <div style="display:flex; gap:6px; margin-bottom:10px;">
             <input type="text" id="searchInput" class="search-box" style="margin-bottom:0; flex:1;" placeholder="🔍 ابحث عن أي منتج في متجر معاذ..." oninput="renderStore()">
@@ -278,6 +283,14 @@
             <div class="comp-card" style="border-color:#ff9800;">
                 <h3 style="color:#ff9800; margin:0 0 10px 0; font-size:14px;">🔔 الطلبات الواردة بانتظار التجهيز (<span id="exportMgrPendingCount">0</span>)</h3>
                 <div id="exportManagerOrdersList"></div>
+            </div>
+            <div class="comp-card" style="border-color:#00b0ff; margin-top:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3 style="color:#00b0ff; margin:0; font-size:14px;">🛵 الطلبات المجهزة بانتظار التوصيل</h3>
+                    <button onclick="sendBulkOrdersToDriver()" class="btn" style="width:auto; padding:5px 12px; font-size:11px; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-weight:bold;">📤 إرسال كل الجاهز للسائق</button>
+                </div>
+                <div id="exportManagerReadyOrdersList"></div>
+            </div>
             <div class="comp-card" style="border-color:#ff9800; margin-top:14px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <h3 style="color:#ff9800; margin:0; font-size:14px;">🧾 سجل الفواتير المكتملة وإلغاء/التراجع عن فاتورة</h3>
@@ -537,10 +550,17 @@
             <div id="admTab2Orders" class="admin-tab" style="display:none;">
                 <div class="adm-sec" style="border-color:var(--gold-color);">
                     <div class="adm-sec-title">
-                        <span>📦 الطلبات والفواتير المعلقة (تنبيه صوتي 🔔)</span>
+                        <span>📦 الطلبات المعلقة الواردة (🔔)</span>
                         <button onclick="cancelAllPendingOrders()" class="btn btn-danger" style="width:auto; padding:4px 10px; font-size:10px;">🗑️ إلغاء الكل</button>
                     </div>
                     <div id="pendingOrdersList"></div>
+                </div>
+                <div class="adm-sec" style="border-color:var(--info-color); margin-top:14px;">
+                    <div class="adm-sec-title">
+                        <span style="color:var(--info-color);">🛵 الطلبات المجهزة (جاهزة للتوصيل)</span>
+                        <button onclick="sendBulkOrdersToDriver()" class="btn" style="width:auto; padding:5px 12px; font-size:11px; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-weight:bold;">📤 إرسال للسائق (واتساب)</button>
+                    </div>
+                    <div id="readyOrdersList"></div>
                 </div>
             </div>
 
@@ -630,7 +650,7 @@
                                 <input type="checkbox" id="prodHasPackage" style="width:18px; height:18px;" onchange="togglePackageFields(this.checked)">
                                 <label for="prodHasPackage" style="color:var(--gold-color); font-weight:bold; margin:0; cursor:pointer;">تفعيل عبوة جماعية / طرد لهذا المنتج (للبيع للزبائن)</label>
                             </div>
-                            <div id="packageFieldsContainer" style="display:none; display:grid; grid-template-columns:repeat(2,1fr); gap:6px; margin-top:6px;">
+                            <div id="packageFieldsContainer" style="display:none; grid-template-columns:repeat(2,1fr); gap:6px; margin-top:6px;">
                                 <div>
                                     <label>عدد الوحدات في الطرد (مثال: 10 كغ):</label>
                                     <input type="number" id="prodPkgCount" class="form-control" value="10" min="1">
@@ -955,7 +975,7 @@
         let workHoursSettings = { enabled: false, open: "08:00", close: "23:00" };
         let categories = ["الكل"], selectedCategory = "الكل", products = {}, specialOffers = {}, suppliers = {};
         let highResImagesMemoryCache = {}, noHighResAvailableSet = {}, shuffledProductKeys = [];
-        let cart = JSON.parse(localStorage.getItem('moaath_cart')) || {}, users = {}, pendingOrders = {}, completedOrdersHistory = {}, missingRequests = {};
+        let cart = JSON.parse(localStorage.getItem('moaath_cart')) || {}, users = {}, pendingOrders = {}, readyOrders = {}, completedOrdersHistory = {}, missingRequests = {};
         let storeExpenses = {}, treasuryDebtCollections = {};
         let adminAccounting = {
             importManagerPct: 50,
@@ -1300,10 +1320,16 @@
             pendingOrders = newOrders;
             renderPendingOrders();
             renderExportManagerOrders(); renderExportManagerInvoicesHistory(); renderExportManagerEarningsView();
+            renderCustomerTrackingBanner();
         });
 
         db.ref("completedOrdersHistory").on("value", snap => { completedOrdersHistory = snap.val() || {}; renderStatsDashboard(); renderAdminInvoicesHistory(); renderAdminProducts(); renderAdminCustomers(); });
         db.ref("missingRequests").on("value", snap => { missingRequests = snap.val() || {}; renderCustomerMissingRequests(); });
+        db.ref("readyForDelivery").on("value", snap => {
+            readyOrders = snap.val() || {};
+            renderReadyOrders();
+            renderCustomerTrackingBanner();
+        });
 
         const validatePhoneSyrian = p => /^09[0-9]{8}$/.test(String(p || "").trim().replace(/\s+/g, ""));
 
@@ -1406,11 +1432,12 @@
                         syncCurrentUser();
                         updateCartBar();
                     }
-                    // If snap doesn't exist, it means handleRegister hasn't finished writing DB yet.
-                    // We safely ignore it here; handleRegister's .then() will update the UI correctly.
                 });
             } else {
-                $("authModal").style.display = "flex";
+                // Allow guest browsing. Do not force login immediately.
+                currentUser = null;
+                $("authModal").style.display = "none";
+                syncCurrentUser();
             }
         });
 
@@ -1447,7 +1474,13 @@
         });
 
 
-        function openEditProfile() { fillProfileInputs(); $("closeProfileBtn").style.display = "block"; $("profileModal").style.display = "flex"; }
+        function openEditProfile() { 
+            if (!currentUser) {
+                $("authModal").style.display = "flex";
+                return;
+            }
+            fillProfileInputs(); $("closeProfileBtn").style.display = "block"; $("profileModal").style.display = "flex"; 
+        }
 
         function saveUserProfile() {
             const name = $("regName").value.trim(), region = $("regRegion").value, address = $("regAddress").value.trim();
@@ -1477,7 +1510,20 @@
         }
 
         function syncCurrentUser() {
-            if (!currentUser?.phone) return;
+            if (!currentUser?.phone) {
+                setTxt("userNameDisplay", "زائر (تصفح فقط)");
+                setTxt("userRegionBadge", "");
+                setTxt("userTypeBadge", "");
+                setTxt("userPoints", "0");
+                setTxt("compUserPoints", "0");
+                if ($("userPrepaidBadge")) $("userPrepaidBadge").remove();
+                if ($("userRankBadge")) $("userRankBadge").style.display = "none";
+                if ($("redeemPointsBtn")) $("redeemPointsBtn").style.display = "none";
+                if ($("partnerDashboardBtn")) $("partnerDashboardBtn").style.display = "none";
+                if ($("customerDebtBtn")) $("customerDebtBtn").style.display = "none";
+                if ($("exportManagerBtn")) $("exportManagerBtn").style.display = "none";
+                return;
+            }
             if (users[currentUser.phone]) { currentUser = { ...currentUser, ...users[currentUser.phone] }; localStorage.setItem("moaath_user", JSON.stringify(currentUser)); }
             const pts = Math.round(currentUser.points || 0), rank = calculateUserRank(currentUser.phone);
             setTxt("userNameDisplay", currentUser.name);
@@ -1522,6 +1568,44 @@
 
         const renderCategories = () => { if ($("categoriesContainer")) $("categoriesContainer").innerHTML = categories.map(c => `<button class="cat-btn ${c === selectedCategory ? 'active' : ''}" onclick="selectCategory('${c}')">${c}</button>`).join(""); };
         function selectCategory(c) { selectedCategory = c; renderCategories(); renderStore(); }
+
+        
+        function renderCustomerTrackingBanner() {
+            const box = $("customerTrackingBannerBox");
+            if (!box) return;
+            if (!currentUser || !currentUser.phone) {
+                box.innerHTML = "";
+                return;
+            }
+
+            const phone = currentUser.phone;
+            let myPending = null;
+            let myReady = null;
+
+            // Find user's latest pending order
+            Object.values(pendingOrders || {}).forEach(o => {
+                if (o.customerPhone === phone) myPending = o;
+            });
+            
+            // Find user's latest ready order
+            Object.values(readyOrders || {}).forEach(o => {
+                if (o.customerPhone === phone) myReady = o;
+            });
+
+            if (myReady) {
+                box.innerHTML = `<div style="background:linear-gradient(45deg,#00a152,#00e676); color:#000; border:2px solid #00e676; border-radius:8px; padding:12px; margin-bottom:12px; text-align:center; box-shadow:0 4px 15px rgba(0,230,118,0.3); animation: fadeInOut 2s infinite alternate;">
+                    <div style="font-size:18px; font-weight:900; margin-bottom:4px;">✅ تم الموافقة، طلبك قيد التجهيز!</div>
+                    <div style="font-size:12px; font-weight:bold;">سيتم إرساله مع السائق قريباً 🛵</div>
+                </div>`;
+            } else if (myPending) {
+                box.innerHTML = `<div style="background:linear-gradient(45deg,#ff9800,#ff5722); color:#fff; border:2px solid #ff9800; border-radius:8px; padding:12px; margin-bottom:12px; text-align:center; box-shadow:0 4px 15px rgba(255,152,0,0.3);">
+                    <div style="font-size:16px; font-weight:900; margin-bottom:4px;">⏳ طلبك قيد المراجعة والإدارة</div>
+                    <div style="font-size:12px;">نعمل على التأكد منه حالياً ليتم تجهيزه 📦</div>
+                </div>`;
+            } else {
+                box.innerHTML = "";
+            }
+        }
 
         function renderSpecialOffers() {
             const container = $("multipleOffersContainer");
@@ -1629,15 +1713,50 @@
         function changeQty(id, delta) {
             const isW = currentUser?.userType === "wholesale";
             let item;
+            
+            // Fix 2: Shared Stock Validation across _PKG and single items
+            let origId = id;
+            let reqBaseQty = 0;
+            let maxBaseStock = 0;
+
             if (id.startsWith("OFFER_")) {
                 const so = specialOffers[id]; if (!so?.active) return;
                 item = { id, name: "🔥 عرض: " + so.name, category: "عروض خاصة", priceUSD: parseFloat((isW && so.wholesaleUSD > 0) ? so.wholesaleUSD : so.newPriceUSD) || 0, costPrice: parseFloat(so.costPrice) || 0, stock: parseInt(so.stock) || 0, pointsPct: parseFloat(so.pointsPct) || 2 };
+                reqBaseQty = ((cart[id] ? cart[id].qty : 0) + delta);
+                maxBaseStock = item.stock;
+            } else if (id.endsWith("_PKG")) {
+                origId = id.replace("_PKG", "");
+                const p = products[origId]; if (!p) return;
+                const pkgCount = parseInt(p.pkgCount) || 10;
+                item = { 
+                    id, name: `طرد ${p.name} (${pkgCount} ${p.unitType || 'كيلو'})`, 
+                    category: p.category || "غير مصنف", 
+                    priceUSD: parseFloat(p.pkgPriceUSD) || 0, 
+                    costPrice: (parseFloat(p.costPrice) || 0) * pkgCount, 
+                    stock: Math.floor((parseInt(p.stock) || 0) / pkgCount), 
+                    pointsPct: parseFloat(p.pointsPct) || 2,
+                    isPackage: true, origId, pkgCount 
+                };
+                const currentSingleQty = cart[origId] ? cart[origId].qty : 0;
+                const newPkgQty = ((cart[id] ? cart[id].qty : 0) + delta);
+                reqBaseQty = (newPkgQty * pkgCount) + currentSingleQty;
+                maxBaseStock = parseInt(p.stock) || 0;
             } else {
                 const p = products[id]; if (!p) return;
                 item = { id, name: p.name || "", category: p.category || "غير مصنف", priceUSD: parseFloat((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD) || 0, costPrice: parseFloat(p.costPrice) || 0, stock: parseInt(p.stock) || 0, pointsPct: parseFloat(p.pointsPct) || 2 };
+                const currentPkgQty = cart[id + "_PKG"] ? cart[id + "_PKG"].qty : 0;
+                const pkgCount = parseInt(p.pkgCount) || 10;
+                const newSingleQty = ((cart[id] ? cart[id].qty : 0) + delta);
+                reqBaseQty = newSingleQty + (currentPkgQty * pkgCount);
+                maxBaseStock = item.stock;
             }
+
             const nQty = (cart[id] ? cart[id].qty : 0) + delta;
-            if (nQty > item.stock) return showToast("⚠️ الكمية المطلوبة غير متوفرة بالكامل بالمخزون!", true);
+            
+            if (reqBaseQty > maxBaseStock && delta > 0) {
+                return showToast("⚠️ الكمية المطلوبة تتجاوز المتوفر الفعلي في المخزون المتبقي!", true);
+            }
+
             if (nQty <= 0) delete cart[id]; else cart[id] = { ...item, qty: nQty };
             localStorage.setItem('moaath_cart', JSON.stringify(cart));
             renderStore();
@@ -1675,6 +1794,11 @@
 
         function openCartModal() {
             if (!checkStoreWorkHours()) return;
+            if (!currentUser) {
+                showToast("⚠️ يرجى تسجيل الدخول أو إنشاء حساب لإتمام طلبك.", true);
+                $("authModal").style.display = "flex";
+                return;
+            }
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.region || !validatePhoneSyrian(currentUser.phone)) return openEditProfile();
             const def = Object.keys(deliveryFees)[0] || "العوينة", reg = (currentUser.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : def;
             if (!isRegionOpenNow(reg)) return alert(`⚠️ خدمة التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
@@ -1858,8 +1982,9 @@
             const ordItems = items.map(i => {
                 const uS = calcSYP(i.priceUSD), uC = calcSYP(i.costPrice || 0), sS = uS * i.qty, sC = uC * i.qty;
                 subSale += sS; totCost += sC; subUSD += (i.priceUSD * i.qty); totPts += Math.round((i.priceUSD * i.qty) * (i.pointsPct || 2));
-                const pObj = products[i.id] || {};
-                return { id: i.id, name: i.name, category: i.category || "غير مصنف", partnerPhone: pObj.partnerPhone || "", partnerPct: (pObj.partnerPct !== undefined && pObj.partnerPct !== null) ? pObj.partnerPct : null, qty: i.qty, unitSaleSYP: uS, unitCostSYP: uC, subSaleSYP: sS, subCostSYP: sC, netProfitSYP: sS - sC };
+                const origId = i.id.endsWith("_PKG") ? i.id.replace("_PKG", "") : i.id;
+                const pObj = products[origId] || {};
+                return { id: i.id, origId, isPackage: !!i.isPackage, pkgCount: i.pkgCount || 1, name: i.name, category: i.category || "غير مصنف", partnerPhone: pObj.partnerPhone || "", partnerPct: (pObj.partnerPct !== undefined && pObj.partnerPct !== null) ? pObj.partnerPct : null, qty: i.qty, unitSaleSYP: uS, unitCostSYP: uC, subSaleSYP: sS, subCostSYP: sC, netProfitSYP: sS - sC };
             });
             
             const globalMin = window.globalMinOrderSYP || 0;
@@ -2045,9 +2170,6 @@
                 </div>`;
             });
 
-            const printWin = window.open("", "_blank");
-            if (!printWin) return alert("⚠️ يرجى السماح بالنوافذ المنبثقة (Pop-ups) في المتصفح لإنشاء ملف الـ PDF.");
-
             const htmlContent = `<!DOCTYPE html>
             <html lang="ar" dir="rtl">
             <head>
@@ -2064,16 +2186,15 @@
                     table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; }
                     th { background: #fafafa; color: #333; border-bottom: 1px solid #ccc; padding: 6px; }
                     td { padding: 6px; border-bottom: 1px solid #eee; }
-                    .no-print-bar { text-align: center; margin-bottom: 15px; padding: 10px; background: #e8f5e9; border: 1px solid #2e7d32; border-radius: 8px; }
-                    .btn-print { background: #2e7d32; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; margin: 0 5px; }
+                    .no-print-bar { text-align: center; margin-bottom: 15px; padding: 12px; background: #e8f5e9; border: 1px solid #2e7d32; border-radius: 8px; }
+                    .btn-print { background: #2e7d32; color: #fff; border: none; padding: 10px 22px; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
                     @media print { .no-print-bar { display: none !important; } body { margin: 0; } }
                 </style>
             </head>
             <body>
                 <div class="no-print-bar">
-                    <span style="font-weight:bold; color:#1b5e20;">💡 لحفظ التقرير كملف PDF على هاتفك أو حاسوبك: اضغط زر (حفظ كـ PDF / طباعة) واختر "Save as PDF"</span><br><br>
+                    <span style="font-weight:bold; color:#1b5e20; font-size:13px;">📥 تم تجهيز التقرير المالي بنجاح، وتثبيته في ذاكرة جهازك! يمكنك أيضاً حفظه كملف PDF عبر زر الطباعة أدناه:</span><br><br>
                     <button class="btn-print" onclick="window.print()">🖨️ حفظ كـ PDF / طباعة التقرير</button>
-                    <button class="btn-print" style="background:#c62828;" onclick="window.close()">✖ إغلاق</button>
                 </div>
                 <div class="top-bar">
                     <div>
@@ -2090,15 +2211,28 @@
                     <div style="font-size:15px; color:#b71c1c;">💰 إجمالي الديون المستحقة: <b>${totalAllUSD.toFixed(2)} $</b> (${totalAllSYP.toLocaleString()} ل.س)</div>
                 </div>
                 ${customersHtml}
-                <script>
-                    window.onload = function() { setTimeout(function() { window.print(); }, 500); };
-                <\/script>
             </body>
             </html>`;
 
-            printWin.document.open();
-            printWin.document.write(htmlContent);
-            printWin.document.close();
+            const blob = new Blob(["﻿" + htmlContent], { type: 'text/html;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `تقرير_الديون_${new Date().toISOString().slice(0,10)}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast("📥 تم تحميل النسخة الاحتياطية لدفتر الديون على جهازك بنجاح!");
+            
+            const printWin = window.open("", "_blank");
+            if (printWin) {
+                printWin.document.open();
+                printWin.document.write(htmlContent);
+                printWin.document.close();
+                setTimeout(() => { printWin.print(); }, 600);
+            }
         }
 
         function exportAllDebtsBackupPDF() {
@@ -2344,15 +2478,15 @@
             if (!confirm(`⚠️ تحذير خطير: هل أنت متأكد تماماً من التراجع عن الفاتورة (${orderId})؟
 - سيتم إعادة الكميات إلى المخزون.
 - سيتم خصم النقاط المكتسبة من الزبون.
-- إذا كانت فاتورة آجل سيتم خصم المبلغ من دينه.`)) return;
+- إعادة المبالغ للدين أو المحفظة إن وجدت.`)) return;
 
             const updates = {};
             (o.items || []).forEach(i => {
                 if (i.id.startsWith("OFFER_") && specialOffers[i.id]) {
                     const curStock = parseInt(specialOffers[i.id].stock) || 0;
                     updates[`specialOffers/${i.id}/stock`] = curStock + i.qty;
-                } else if (i.id.endsWith("_PKG")) {
-                    const origId = i.id.replace("_PKG", "");
+                } else if (i.isPackage || i.id.endsWith("_PKG")) {
+                    const origId = i.origId || i.id.replace("_PKG", "");
                     if (products[origId]) {
                         const addQty = i.qty * (parseInt(i.pkgCount) || 10);
                         const curStock = parseInt(products[origId].stock) || 0;
@@ -2375,15 +2509,25 @@
                     const orderUSD = parseFloat(o.orderTotalUSD) || 0;
                     updates[`users/${phone}/debtBalanceUSD`] = Math.max(0, parseFloat((curDebt - orderUSD).toFixed(2)));
                 }
+                
+                // Fix 9: Return prepaid balance if it was a prepaid order
+                if (o.paymentMethod === "محفظة مسبقة الدفع" && o.orderTotalUSD) {
+                    const curPrep = parseFloat(users[phone].prepaidBalanceUSD) || 0;
+                    const orderUSD = parseFloat(o.orderTotalUSD) || 0;
+                    updates[`users/${phone}/prepaidBalanceUSD`] = parseFloat((curPrep + orderUSD).toFixed(2));
+                }
             }
 
             updates[`completedOrdersHistory/${orderId}`] = null;
+            // Also remove from readyForDelivery if it happens to still be there
+            updates[`readyForDelivery/${orderId}`] = null;
 
             db.ref().update(updates).then(() => {
                 alert(`✅ تم التراجع عن الفاتورة (${orderId}) بنجاح وإعادة كافة الحسابات والمخزون.`);
-                renderStatsDashboard(); renderAdminInvoicesHistory();
-                renderExportManagerInvoicesHistory();
+                renderStatsDashboard(); 
                 renderAdminInvoicesHistory();
+                renderExportManagerInvoicesHistory();
+                renderReadyOrders(); // Update ready list in case it was there
             });
         }
 
@@ -2408,6 +2552,7 @@
                 return alert("🚫 هذه اللوحة مخصصة لمدير التصدير المعتمد فقط.");
             }
             renderExportManagerOrders(); renderExportManagerInvoicesHistory(); renderExportManagerEarningsView();
+            renderCustomerTrackingBanner();
             if ($("exportManagerModal")) $("exportManagerModal").style.display = "block";
         }
 
@@ -2430,8 +2575,18 @@
                 let realTotalSYP = 0;
                 (o.items || []).forEach(i => {
                     const isW = users[o.customerPhone]?.userType === "wholesale";
-                    const pItem = products[i.id] || specialOffers[i.id] || {};
-                    const rPrice = parseFloat((isW && pItem.wholesaleUSD > 0) ? pItem.wholesaleUSD : (pItem.priceUSD || pItem.newPriceUSD)) || 0;
+                    let rPrice = 0;
+                    if (i.id.startsWith("OFFER_")) {
+                        const so = specialOffers[i.id] || {};
+                        rPrice = parseFloat((isW && so.wholesaleUSD > 0) ? so.wholesaleUSD : so.newPriceUSD) || 0;
+                    } else if (i.isPackage || i.id.endsWith("_PKG")) {
+                        const origId = i.origId || i.id.replace("_PKG", "");
+                        const p = products[origId] || {};
+                        rPrice = parseFloat(p.pkgPriceUSD) || 0;
+                    } else {
+                        const p = products[i.id] || {};
+                        rPrice = parseFloat((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD) || 0;
+                    }
                     realTotalSYP += calcSYP(rPrice) * i.qty;
                 });
                 const fee = getRegionFee(o.customerRegion);
@@ -3053,8 +3208,10 @@
             if (!grid) return;
             
             grid.innerHTML = o.items.map(i => {
-                const p = products[i.id] || specialOffers[i.id] || {};
-                const imgSrc = p.image || getLockedHighResImage(i.id) || p.thumb || 'store-icon.png';
+                const origId = i.id.endsWith("_PKG") ? i.id.replace("_PKG", "") : i.id;
+                const p = products[origId] || specialOffers[i.id] || {};
+                const isPkg = i.isPackage || i.id.endsWith("_PKG");
+                const imgSrc = (isPkg && p.pkgImage) ? p.pkgImage : (isPkg && p.pkgThumb) ? p.pkgThumb : (p.image || getLockedHighResImage(origId) || p.thumb || 'store-icon.png');
                 return `<div class="adm-card" style="text-align:center; padding:8px; margin:0; background:var(--bg-color);">
                     <div style="width:100%; aspect-ratio:9/16; border-radius:6px; overflow:hidden; background:#111; margin-bottom:6px; border:1px solid var(--gold-color);">
                         <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;">
@@ -3079,8 +3236,18 @@
                 let realTotalSYP = 0;
                 (o.items || []).forEach(i => {
                     const isW = users[o.customerPhone]?.userType === "wholesale";
-                    const pItem = products[i.id] || specialOffers[i.id] || {};
-                    const rPrice = parseFloat((isW && pItem.wholesaleUSD > 0) ? pItem.wholesaleUSD : (pItem.priceUSD || pItem.newPriceUSD)) || 0;
+                    let rPrice = 0;
+                    if (i.id.startsWith("OFFER_")) {
+                        const so = specialOffers[i.id] || {};
+                        rPrice = parseFloat((isW && so.wholesaleUSD > 0) ? so.wholesaleUSD : so.newPriceUSD) || 0;
+                    } else if (i.isPackage || i.id.endsWith("_PKG")) {
+                        const origId = i.origId || i.id.replace("_PKG", "");
+                        const p = products[origId] || {};
+                        rPrice = parseFloat(p.pkgPriceUSD) || 0;
+                    } else {
+                        const p = products[i.id] || {};
+                        rPrice = parseFloat((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD) || 0;
+                    }
                     realTotalSYP += calcSYP(rPrice) * i.qty;
                 });
                 const fee = getRegionFee(o.customerRegion);
@@ -3191,15 +3358,75 @@
                 };
             }
             
-            updates[`completedOrdersHistory/${orderId}`] = o;
+            updates[`completedOrdersHistory/${orderId}`] = o; // Keep for accounting
+            updates[`readyForDelivery/${orderId}`] = o; // NEW: Add to Ready queue for driver
             updates[`pendingOrders/${orderId}`] = null;
             
-            db.ref().update(updates);
-            window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(`مرحباً ${o.customerName} 🌸\nتم تأكيد طلبك في *متجر معاذ* وجاري توصيله إلى (${o.customerRegion})!\n💰 الإجمالي: ${o.totalSaleSYP.toLocaleString()} ل.س\n🛵 رقم عامل التوصيل: ${deliveryDriverPhone || adminWhatsAppNumber}\n🎁 نقاطك الحالية: ${upPts}`)}`, "_blank");
-            if (deliveryDriverPhone) setTimeout(() => window.open(`https://wa.me/${formatWhatsAppPhone(deliveryDriverPhone)}?text=${encodeURIComponent(`🛵 *طلب توصيل - متجر معاذ*\n👤 الزبون: ${o.customerName}\n📱 الهاتف: ${o.customerPhone}\n🏘️ المنطقة: ${o.customerRegion}\n📍 العنوان: ${o.customerAddress}\n💵 *المطلوب تحصيله:* ${o.totalSaleSYP.toLocaleString()} ل.س`)}`, "_blank"), 700);
+            db.ref().update(updates).then(() => {
+                showToast("✅ تم تأكيد الطلب بنجاح ونقله إلى قائمة الجاهز للتوصيل!");
+            });
+            // We no longer open whatsapp automatically per order. The customer will track via the app, and the driver gets a bulk message.
         }
 
         function cancelOrder(id) { if (confirm("إلغاء هذه الفاتورة؟")) db.ref("pendingOrders/" + id).remove(); }
+        
+        function renderReadyOrders() {
+            const list1 = $("readyOrdersList");
+            const list2 = $("exportManagerReadyOrdersList");
+            const keys = Object.keys(readyOrders).sort((a, b) => (readyOrders[b].dateISO || "").localeCompare(readyOrders[a].dateISO || ""));
+            
+            const html = !keys.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد طلبات مجهزة حالياً.</p>` : keys.map(id => {
+                const o = readyOrders[id];
+                return `<div class="adm-card" style="border-color:#00b0ff; background:rgba(0,176,255,0.05);">
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; color:#00b0ff;">
+                        <span>👤 ${o.customerName} (${o.customerPhone})</span>
+                        <button onclick="removeReadyOrder('${id}')" class="btn btn-danger" style="width:auto; padding:2px 6px; font-size:10px;">✖ حذف</button>
+                    </div>
+                    <div style="font-size:11px; margin:4px 0;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress}</div>
+                </div>`;
+            }).join("");
+
+            if (list1) list1.innerHTML = html;
+            if (list2) list2.innerHTML = html;
+        }
+
+        function removeReadyOrder(id) {
+            if (confirm("إزالة هذا الطلب من قائمة التوصيل؟ (لن يحذف من الأرشيف المالي)")) {
+                db.ref(`readyForDelivery/${id}`).remove();
+            }
+        }
+
+        function sendBulkOrdersToDriver() {
+            const keys = Object.keys(readyOrders);
+            if (!keys.length) return alert("ℹ️ لا توجد طلبات مجهزة لإرسالها.");
+            
+            // Group by region
+            const grouped = {};
+            keys.forEach(k => {
+                const o = readyOrders[k];
+                if (!grouped[o.customerRegion]) grouped[o.customerRegion] = [];
+                grouped[o.customerRegion].push(o);
+            });
+
+            let msg = `🛵 *قائمة التوصيل الجديدة - متجر معاذ* 🛵\nالتاريخ: ${new Date().toLocaleString("ar-SY")}\n\n`;
+            
+            Object.keys(grouped).forEach(region => {
+                msg += `📍 *${region}:*\n`;
+                grouped[region].forEach((o, i) => {
+                    msg += `  ${i+1}. ${o.customerName} (${o.customerPhone})\n     العنوان: ${o.customerAddress}\n`;
+                });
+                msg += `──────────────\n`;
+            });
+            
+            msg += `\n*ملاحظة للسائق:* الزبائن قاموا بالدفع مسبقاً (عبر شام كاش أو بالآجل). الرجاء التسليم فقط دون تحصيل نقدي. 🌸`;
+
+            window.open(`https://wa.me/${formatWhatsAppPhone(deliveryDriverPhone || adminWhatsAppNumber)}?text=${encodeURIComponent(msg)}`, "_blank");
+            
+            if (confirm("هل تم إرسال القائمة للسائق بنجاح؟ (سيتم إفراغ الشاشة من الطلبات الحالية)")) {
+                db.ref("readyForDelivery").remove();
+            }
+        }
+
         function cancelAllPendingOrders() {
             const cnt = Object.keys(pendingOrders || {}).length;
             if (!cnt) return alert("ℹ️ لا توجد طلبات معلقة.");
@@ -3473,7 +3700,8 @@
             if (!phone || users[phone]?.userType !== "partner") return 0;
             const cfg = (window.partnersConfigData && window.partnersConfigData[phone]) || {};
             const defaultPartnerPct = parseFloat(cfg.profitPct) || 20;
-            const p = products[prodId] || {};
+            const actualId = prodId.endsWith("_PKG") ? prodId.replace("_PKG", "") : prodId;
+            const p = products[actualId] || {};
             const effPartnerPhone = (itemSnapshot && itemSnapshot.partnerPhone !== undefined) ? itemSnapshot.partnerPhone : p.partnerPhone;
             const effPartnerPct = (itemSnapshot && itemSnapshot.partnerPct !== undefined && itemSnapshot.partnerPct !== null) ? itemSnapshot.partnerPct : p.partnerPct;
 
@@ -3495,7 +3723,8 @@
         }
 
         function getItemTotalPartnerSharePct(item, catName) {
-            const p = products[item.id] || {};
+            const actualId = item.id.endsWith("_PKG") ? item.id.replace("_PKG", "") : item.id;
+            const p = products[actualId] || {};
             const effPartnerPhone = item.partnerPhone || p.partnerPhone;
             if (effPartnerPhone && users[effPartnerPhone]?.userType === "partner") {
                 return Math.min(100, getPartnerPctForProduct(effPartnerPhone, item.id, catName, item));
@@ -3556,7 +3785,10 @@
                 entries.map(([id, r]) => `<div class="review-box"><div><b>${r.itemName}</b> <small>(${r.customerName} - ${r.customerPhone})</small></div><button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="db.ref('missingRequests/${id}').remove()">✖</button></div>`).join("");
         }
 
-        function openReviewModal(id) { if (!products[id]) return; setVal("reviewProductId", id); setTxt("reviewProductName", products[id].name); setVal("reviewCommentInput", ""); $("reviewModal").style.display = "flex"; }
+        function openReviewModal(id) { 
+            if (!currentUser) return $("authModal").style.display = "flex";
+            if (!products[id]) return; setVal("reviewProductId", id); setTxt("reviewProductName", products[id].name); setVal("reviewCommentInput", ""); $("reviewModal").style.display = "flex"; 
+        }
         function submitProductReview() {
             if (!currentUser?.phone || currentUser.banned) return;
             const id = $("reviewProductId").value, rating = parseInt($("reviewRatingSelect").value) || 5, comment = $("reviewCommentInput").value.trim();
