@@ -248,7 +248,7 @@
             </div>
             <div id="shamCashInfoBox" style="display:none; text-align:center;"></div>
             <div class="form-group" style="margin-bottom:10px;"><input type="text" id="orderNotes" class="form-control" placeholder="📝 ملاحظات إضافية مع الطلب (اختياري)..."></div>
-            <button type="button" onclick="submitOrderUnified()" class="btn" style="background:linear-gradient(45deg,#D4AF37,#00e676); color:#000; margin-bottom:8px; font-size:13px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.35); animation:pulse 2s infinite;">📋 نسخ كود شام كاش وإتمام الطلب عبر واتساب</button>
+            <button type="button" id="submitOrderUnifiedBtn" onclick="submitOrderUnified()" class="btn" style="background:linear-gradient(45deg,#D4AF37,#00e676); color:#000; margin-bottom:8px; font-size:13px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.35); animation:pulse 2s infinite;">📋 نسخ كود شام كاش وإتمام الطلب عبر واتساب</button>
             <button type="button" onclick="closeModal('cartModal')" class="btn btn-danger" style="padding:6px; font-size:11px;">إغلاق</button>
         </div>
     </div>
@@ -926,6 +926,7 @@
 
     <script>
         const $ = id => document.getElementById(id);
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
         function showToast(message, isError = false) {
             let container = document.getElementById("toastContainer");
@@ -1653,7 +1654,7 @@
                 const btn = availSingle <= 0 && inC <= 0 ? outBtnHtml : (inC > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${id}',1)">+</button><span class="qty-text">${inC}</span><button class="qty-btn" onclick="changeQty('${id}',-1)">-</button></div>` : `<button class="btn" onclick="changeQty('${id}',1)">🛒 أضف للسلة</button>`);
                 const revs = p.reviews || {}, rKeys = Object.keys(revs), avg = rKeys.length ? (rKeys.reduce((a, k) => a + (revs[k].rating || 0), 0) / rKeys.length).toFixed(1) : 0;
                 const sortedRevs = Object.values(revs).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || "")).slice(0, 2);
-                const lastTwoRevsHtml = sortedRevs.map(r => `<div style="font-size:10px; color:var(--gray-text); background:var(--bg-color); padding:3px 6px; margin-top:3px; border-radius:4px; text-align:right;">⭐ ${r.rating} - <b>${r.customerName}:</b> ${r.comment}</div>`).join("");
+                const lastTwoRevsHtml = sortedRevs.map(r => `<div style="font-size:10px; color:var(--gray-text); background:var(--bg-color); padding:3px 6px; margin-top:3px; border-radius:4px; text-align:right;">⭐ ${r.rating} - <b>${esc(r.customerName)}:</b> ${esc(r.comment)}</div>`).join("");
 
                 const userAlreadyReviewed = Object.values(revs).some(r => r.customerPhone === currentUser?.phone);
                 const bought = currentUser?.phone && users[currentUser.phone]?.purchases?.[id];
@@ -1672,10 +1673,11 @@
                     const reservedBySingle = getReservedUnitsInCart(id, pkgId);
                     const pkgMaxStock = Math.floor(Math.max(0, st - reservedBySingle) / pkgCountVal);
                     const inCPkg = cart[pkgId] ? cart[pkgId].qty : 0;
+                    const isWaitingPkg = !!(waitMap[pkgId] || waitMap[id]);
                     const outPkgHtml = Math.floor(st / pkgCountVal) <= 0
-                        ? (isWaitingProd
-                            ? `<button class="btn btn-out" disabled>⏳ سيتم إعلامك عند التوفر</button>`
-                            : `<button class="btn" style="background:linear-gradient(45deg,#00b0ff,#7c4dff); color:#fff;" onclick="addToWaitingList('${id}')">🔔 أعلمني عند التوفر</button>`)
+                        ? (isWaitingPkg
+                            ? `<button class="btn btn-out" disabled>⏳ سيتم إعلامك عند توفر الطرد</button>`
+                            : `<button class="btn" style="background:linear-gradient(45deg,#00b0ff,#7c4dff); color:#fff;" onclick="addToWaitingList('${pkgId}')">🔔 أعلمني عند توفر الطرد</button>`)
                         : `<button class="btn btn-out" disabled>نفدت الكمية (بالسلة)</button>`;
                     const btnPkg = pkgMaxStock <= 0 && inCPkg <= 0 ? outPkgHtml : (inCPkg > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${pkgId}',1)">+</button><span class="qty-text">${inCPkg}</span><button class="qty-btn" onclick="changeQty('${pkgId}',-1)">-</button></div>` : `<button class="btn" onclick="changeQty('${pkgId}',1)">📦 أضف الطرد</button>`);
                     const srcPkg = p.pkgImage || p.pkgThumb || src;
@@ -1713,26 +1715,34 @@
         
         
         function addToWaitingList(prodId) {
+            const isPkg = String(prodId || "").endsWith("_PKG");
             const baseId = String(prodId || "").replace(/_PKG$/, "");
+            const pObj = products[baseId] || specialOffers[baseId] || {};
+            const reqStock = isPkg ? Math.max(1, parseInt(pObj.pkgCount) || 10) : 1;
+            const displayName = isPkg ? `طرد ${pObj.name || 'منتج'} (${reqStock} ${pObj.unitType || 'كيلو'})` : (pObj.name || "منتج");
+
             const visitorId = (currentUser && currentUser.phone) ? currentUser.phone : ("GUEST_" + (localStorage.getItem("moaath_guest_id") || (() => { const gid = Math.random().toString(36).substring(2, 10); localStorage.setItem("moaath_guest_id", gid); return gid; })()));
             const visitorName = (currentUser && currentUser.name) ? currentUser.name : "زائر";
 
             let waitList = JSON.parse(localStorage.getItem('moaath_waiting') || '{}');
-            waitList[baseId] = {
+            waitList[prodId] = {
                 addedAt: Date.now(),
                 visitorId: visitorId,
-                name: products[baseId]?.name || specialOffers[baseId]?.name || "منتج"
+                baseId: baseId,
+                isPackage: isPkg,
+                reqStock: reqStock,
+                name: displayName
             };
             localStorage.setItem('moaath_waiting', JSON.stringify(waitList));
 
             db.ref(`waitingLists/${baseId}/${visitorId}`).set({
-                name: visitorName,
+                name: visitorName + (isPkg ? " [طرد]" : ""),
                 phone: (currentUser && currentUser.phone) ? currentUser.phone : "زائر",
                 dateISO: new Date().toISOString()
             }).catch(() => {});
 
             renderStore();
-            showToast("🔔 تم تسجيل طلبك! سنعلمك بنافذة فورية فور توفر المادة.");
+            showToast("🔔 تم تسجيل طلبك! سنعلمك بنافذة فورية فور توفر الكمية المطلوبة.");
         }
 
         function checkWaitingListAvailability() {
@@ -1744,20 +1754,26 @@
             let updatesToFirebase = {};
             const currentVisitorId = (currentUser && currentUser.phone) ? currentUser.phone : ("GUEST_" + (localStorage.getItem("moaath_guest_id") || ""));
 
-            waitKeys.forEach(prodId => {
-                const p = products[prodId] || specialOffers[prodId];
-                if (p && (parseInt(p.stock) || 0) > 0) {
-                    const savedEntry = waitList[prodId];
+            waitKeys.forEach(waitKey => {
+                const savedEntry = waitList[waitKey];
+                const isPkg = String(waitKey || "").endsWith("_PKG") || !!(savedEntry && savedEntry.isPackage);
+                const baseId = (savedEntry && savedEntry.baseId) ? savedEntry.baseId : String(waitKey || "").replace(/_PKG$/, "");
+                const p = products[baseId] || specialOffers[baseId];
+                if (!p) return;
+                const reqStock = isPkg ? Math.max(1, parseInt(p.pkgCount) || parseInt(savedEntry?.reqStock) || 10) : 1;
+                if ((parseInt(p.stock) || 0) >= reqStock) {
                     const savedVisitorId = (typeof savedEntry === "object" && savedEntry?.visitorId) ? savedEntry.visitorId : currentVisitorId;
+                    const unitPriceUSD = isPkg ? (parseFloat(p.pkgPriceUSD) || 0) : ((currentUser?.userType === "wholesale" && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || p.newPriceUSD || 0));
+                    const itemImg = (isPkg && (p.pkgImage || p.pkgThumb)) ? (p.pkgImage || p.pkgThumb) : (p.image || getLockedHighResImage(baseId) || p.thumb || "store-icon.png");
                     newlyAvailable.push({
-                        id: prodId,
-                        name: p.name || savedEntry?.name || "صنف",
-                        priceSYP: calcSYP((currentUser?.userType === "wholesale" && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || p.newPriceUSD || 0)),
-                        image: p.image || getLockedHighResImage(prodId) || p.thumb || "store-icon.png"
+                        id: isPkg ? (baseId + "_PKG") : baseId,
+                        name: isPkg ? `طرد ${p.name} (${reqStock} ${p.unitType || 'كيلو'})` : (p.name || savedEntry?.name || "صنف"),
+                        priceSYP: calcSYP(unitPriceUSD),
+                        image: itemImg
                     });
-                    delete waitList[prodId];
-                    if (savedVisitorId) updatesToFirebase[`waitingLists/${prodId}/${savedVisitorId}`] = null;
-                    if (currentVisitorId && currentVisitorId !== savedVisitorId) updatesToFirebase[`waitingLists/${prodId}/${currentVisitorId}`] = null;
+                    delete waitList[waitKey];
+                    if (savedVisitorId) updatesToFirebase[`waitingLists/${baseId}/${savedVisitorId}`] = null;
+                    if (currentVisitorId && currentVisitorId !== savedVisitorId) updatesToFirebase[`waitingLists/${baseId}/${currentVisitorId}`] = null;
                 }
             });
 
@@ -1990,6 +2006,11 @@
             const selectedPay = paySelect ? paySelect.value : "شام كاش";
             const useCreditPricing = (selectedPay === "آجل (دفتر الدين)");
             if ($("shamCashInfoBox")) $("shamCashInfoBox").style.display = (selectedPay === "شام كاش") ? "block" : "none";
+            if ($("submitOrderUnifiedBtn")) {
+                $("submitOrderUnifiedBtn").textContent = (selectedPay === "شام كاش")
+                    ? "📋 نسخ كود شام كاش وإتمام الطلب عبر واتساب"
+                    : "✅ إتمام الطلب مباشرة عبر واتساب";
+            }
 
             const markupPct = useCreditPricing ? getCurrentUserCreditMarkupPct() : 0;
             const markupAmt = markupPct > 0 ? Math.round((sub * markupPct) / 100) : 0;
@@ -2083,15 +2104,20 @@
 
         
         function submitOrderUnified() {
-            if (navigator.clipboard?.writeText) {
-                navigator.clipboard.writeText(shamWalletIdGlobal).catch(() => {});
+            const selectedPay = $("cartPaymentMethod") ? $("cartPaymentMethod").value : "شام كاش";
+            if (selectedPay === "شام كاش") {
+                if (navigator.clipboard?.writeText) {
+                    navigator.clipboard.writeText(shamWalletIdGlobal).catch(() => {});
+                } else {
+                    const t = document.createElement("textarea"); t.value = shamWalletIdGlobal; document.body.appendChild(t); t.select(); document.execCommand("copy"); document.body.removeChild(t);
+                }
+                showToast("📋 تم نسخ معرف الشام كاش، جاري إرسال الطلب...", false);
             } else {
-                const t = document.createElement("textarea"); t.value = shamWalletIdGlobal; document.body.appendChild(t); t.select(); document.execCommand("copy"); document.body.removeChild(t);
+                showToast("⏳ جاري تجهيز وإرسال طلبك...", false);
             }
-            showToast("📋 تم نسخ معرف الشام كاش، جاري إرسال الطلب...", false);
             setTimeout(() => {
                 submitOrder();
-            }, 400);
+            }, 350);
         }
 
         function submitOrder() {
@@ -2102,6 +2128,32 @@
             if (!isRegionOpenNow(reg)) return alert(`⚠️ أوقات التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
             if (users[currentUser.phone]?.banned) return alert("🚫 حسابك محظور.");
             const items = Object.values(cart); if (!items.length) return;
+
+            // فحص لحظي للمخزون الفعلي قبل إرسال الطلب لمنع طلب مواد نفدت أثناء وجودها في السلة
+            const stockReqByBase = {};
+            for (const i of items) {
+                if (String(i.id || "").startsWith("OFFER_")) {
+                    const so = specialOffers[i.id];
+                    if (!so || !so.active || (parseInt(so.stock) || 0) < i.qty) {
+                        alert(`⚠️ عذراً، العرض (${i.name}) لم يعد متوفراً بالكمية المطلوبة في المخزون حالياً. يرجى تحديث السلة.`);
+                        return;
+                    }
+                } else {
+                    const isPkg = i.isPackage || String(i.id || "").endsWith("_PKG");
+                    const baseId = i.origId || String(i.id || "").replace(/_PKG$/, "");
+                    const pLive = products[baseId];
+                    if (!pLive) {
+                        alert(`⚠️ عذراً، الصنف (${i.name}) لم يعد موجوداً في المتجر. يرجى حذفه من السلة.`);
+                        return;
+                    }
+                    const unitsPerItem = isPkg ? Math.max(1, parseInt(i.pkgCount) || parseInt(pLive.pkgCount) || 10) : 1;
+                    stockReqByBase[baseId] = (stockReqByBase[baseId] || 0) + (i.qty * unitsPerItem);
+                    if (stockReqByBase[baseId] > (parseInt(pLive.stock) || 0)) {
+                        alert(`⚠️ عذراً، الكمية المطلوبة من (${pLive.name}) تتجاوز الرصيد المتبقي حالياً في المتجر (${pLive.stock}). يرجى تعديل الكمية في السلة.`);
+                        return;
+                    }
+                }
+            }
             const fee = getRegionFee(reg);
             let subSale = 0, totCost = 0, totPts = 0, subUSD = 0;
             const ordItems = items.map(i => {
@@ -2759,7 +2811,7 @@
                     ${bannerHtml}
                     <div style="display:flex; justify-content:space-between; color:${textCol}; font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span></div>
                     <div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress} | 💳 ${payMethod}</div>
-                    ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${o.notes}</div>` : ''}
+                    ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${esc(o.notes)}</div>` : ''}
                     <div style="border-top:1px dashed ${borderColor}; border-bottom:1px dashed ${borderColor}; padding:6px 0; margin:6px 0;">${itemsHtml}</div>
                     <div style="font-weight:bold; margin-bottom:6px;">المطلوب تحصيله: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س ${isCred || isPrep ? `<span style="color:${textCol};">(${(o.orderTotalUSD||0).toFixed(2)} $)</span>` : ''}</div>
                     ${warningHtml}
@@ -3146,7 +3198,7 @@
             setTxt("prodPkgPriceUSDPreview", `≈ ${(parseFloat(p.pkgPriceUSD)||0).toFixed(2)} $`);
             $("productFormSection")?.scrollIntoView({ behavior: "smooth" });
         }
-        function deleteProduct(id) { if (confirm("حذف هذا الصنف نهائياً؟")) { db.ref("products/" + id).remove(); db.ref("productImages/" + id).remove(); delete highResImagesMemoryCache[id]; } }
+        function deleteProduct(id) { if (confirm("حذف هذا الصنف نهائياً؟")) { db.ref("products/" + id).set(null); db.ref("productImages/" + id).set(null); delete highResImagesMemoryCache[id]; } }
 
         function quickUpdateStock(id, delta) {
             if (!products[id]) return;
@@ -3164,7 +3216,7 @@
             const keys = Object.keys(products).filter(id => products[id] && (!q || products[id].name?.toLowerCase().includes(q) || products[id].category?.toLowerCase().includes(q)));
             if (!keys.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف مطابقة.</p>`);
             container.innerHTML = keys.map(id => {
-                const p = products[id], supp = p.supplierId && suppliers[p.supplierId] ? ` | ${suppliers[p.supplierId].name}` : "", partBadge = (p.partnerPhone && users[p.partnerPhone]) ? ` | <span style="color:#00b0ff; font-weight:bold;">🤝 شريك الصنف: ${users[p.partnerPhone].name} (${p.partnerPct || window.partnersConfigData?.[p.partnerPhone]?.profitPct || 20}%)</span>` : "", revs = p.reviews || {}, revHtml = Object.keys(revs).map(rId => `<div style="display:flex; justify-content:space-between; font-size:10px; background:var(--card-bg); padding:3px 6px; margin-top:3px; border-radius:4px;"><span>⭐ ${revs[rId].rating} - <b>${revs[rId].customerName}:</b> ${revs[rId].comment}</span><b onclick="deleteProductReview('${id}','${rId}')" style="color:var(--danger-color); cursor:pointer;">🗑️</b></div>`).join("");
+                const p = products[id], supp = p.supplierId && suppliers[p.supplierId] ? ` | ${suppliers[p.supplierId].name}` : "", partBadge = (p.partnerPhone && users[p.partnerPhone]) ? ` | <span style="color:#00b0ff; font-weight:bold;">🤝 شريك الصنف: ${users[p.partnerPhone].name} (${p.partnerPct || window.partnersConfigData?.[p.partnerPhone]?.profitPct || 20}%)</span>` : "", revs = p.reviews || {}, revHtml = Object.keys(revs).map(rId => `<div style="display:flex; justify-content:space-between; font-size:10px; background:var(--card-bg); padding:3px 6px; margin-top:3px; border-radius:4px;"><span>⭐ ${revs[rId].rating} - <b>${esc(revs[rId].customerName)}:</b> ${esc(revs[rId].comment)}</span><b onclick="deleteProductReview('${id}','${rId}')" style="color:var(--danger-color); cursor:pointer;">🗑️</b></div>`).join("");
                 return `<div class="adm-card">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                         <div><b>${p.name}</b>${getWaitingInfoBadge(id)} <small style="color:var(--gray-text);">(${p.category}${supp}${partBadge})</small></div>
@@ -3211,7 +3263,7 @@
 
             setVal("offerStockInput", so.stock || 0); setVal("offerPointsPctInput", so.pointsPct || 2); 
         }
-        function deleteOffer(id) { if (confirm("حذف هذا العرض؟")) db.ref("specialOffers/" + id).remove(); }
+        function deleteOffer(id) { if (confirm("حذف هذا العرض؟")) db.ref("specialOffers/" + id).set(null); }
         function renderAdminOffersList() {
             const container = $("adminOffersList"); if (!container) return;
             container.innerHTML = Object.keys(specialOffers).map(id => `<div class="review-box"><div><b>🔥 ${specialOffers[id].name}</b><br><small style="color:var(--gold-color);">${calcSYP(specialOffers[id].newPriceUSD).toLocaleString()} ل.س | الكمية: ${specialOffers[id].stock}</small></div><div style="display:flex; gap:4px;"><button onclick="editOffer('${id}')" class="btn" style="width:auto; padding:4px 8px; font-size:11px;">✏️</button><button onclick="deleteOffer('${id}')" class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:11px;">🗑️</button></div></div>`).join("");
@@ -3263,7 +3315,7 @@
 
         function deleteCustomerAccount(phone) {
             if (!confirm(`⚠️ تحذير: هل أنت متأكد من حذف الحساب الوهمي أو المكرر (هاتف: ${phone}) نهائياً من قاعدة البيانات؟`)) return;
-            db.ref("users/" + phone).remove().then(() => alert("✅ تم حذف حساب الزبون نهائياً!"));
+            db.ref("users/" + phone).set(null).then(() => alert("✅ تم حذف حساب الزبون نهائياً!"));
         }
 
         function openAdminEditCustomerModal(p) {
@@ -3488,7 +3540,7 @@
                     ${bannerHtml}
                     <div style="display:flex; justify-content:space-between; color:${textCol}; font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span></div>
                     <div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress} | 💳 ${payMethod}</div>
-                    ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${o.notes}</div>` : ''}
+                    ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${esc(o.notes)}</div>` : ''}
                     <div style="border-top:1px dashed ${borderColor}; border-bottom:1px dashed ${borderColor}; padding:6px 0; margin:6px 0;">${itemsHtml}</div>
                     <div style="font-weight:bold; margin-bottom:6px;">المطلوب تحصيله: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س ${isCred || isPrep ? `<span style="color:${textCol};">(${(o.orderTotalUSD||0).toFixed(2)} $)</span>` : ''}</div>
                     <div style="background:rgba(0,230,118,0.08); border:1px dashed var(--success-color); padding:6px 8px; border-radius:5px; font-size:11px; margin-bottom:6px; color:var(--text-color);">
@@ -3701,7 +3753,7 @@
         }
         function resetSupplierForm() { ["editSupplierId", "suppName", "suppAddress", "suppPhone"].forEach(k => setVal(k, "")); }
         function editSupplier(id) { const s = suppliers[id]; if (!s) return; setVal("editSupplierId", id); setVal("suppName", s.name || ""); setVal("suppAddress", s.address || ""); setVal("suppPhone", s.phone || ""); }
-        function deleteSupplier(id) { if (confirm("حذف هذا الموزع؟")) db.ref("suppliers/" + id).remove(); }
+        function deleteSupplier(id) { if (confirm("حذف هذا الموزع؟")) db.ref("suppliers/" + id).set(null); }
 
         function renderAdminSuppliers() {
             const container = $("adminSuppliersList"); if (!container) return;
@@ -3938,7 +3990,7 @@
                 setVal("expTitleInput", ""); setVal("expAmountInput", "");
             });
         }
-        function deleteStoreExpense(id) { if (confirm("حذف هذا المصروف؟")) db.ref("storeExpenses/" + id).remove(); }
+        function deleteStoreExpense(id) { if (confirm("حذف هذا المصروف؟")) db.ref("storeExpenses/" + id).set(null); }
         function renderStoreExpenses() {
             const box = $("storeExpensesList"); if (!box) return;
             const list = Object.values(storeExpenses).sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
@@ -4035,7 +4087,7 @@
             const container = $("customerMissingRequestsList"); if (!container) return;
             const entries = Object.entries(missingRequests || {});
             container.innerHTML = !entries.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد طلبات معلقة من الزبائن.</p>` :
-                entries.map(([id, r]) => `<div class="review-box"><div><b>${r.itemName}</b> <small>(${r.customerName} - ${r.customerPhone})</small></div><button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="db.ref('missingRequests/${id}').remove()">✖</button></div>`).join("");
+                entries.map(([id, r]) => `<div class="review-box"><div><b>${esc(r.itemName)}</b> <small>(${esc(r.customerName)} - ${esc(r.customerPhone)})</small></div><button class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;" onclick="db.ref('missingRequests/${id}').set(null)">✖</button></div>`).join("");
         }
 
         function openReviewModal(id) { 
@@ -4065,7 +4117,7 @@
                 });
             });
         }
-        function deleteProductReview(pId, rId) { if (confirm("حذف هذا التعليق؟")) db.ref(`products/${pId}/reviews/${rId}`).remove(); }
+        function deleteProductReview(pId, rId) { if (confirm("حذف هذا التعليق؟")) db.ref(`products/${pId}/reviews/${rId}`).set(null); }
 
         function openCompetitionsPage() { syncCurrentUser(); renderCompetitionDetails(); renderLeaderboard(); $("competitionsPage").style.display = "block"; }
     </script>
