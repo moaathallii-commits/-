@@ -1529,6 +1529,30 @@
                 if ($("exportManagerBtn")) $("exportManagerBtn").style.display = "none";
                 return;
             }
+            // Migrate guest waiting items to logged-in user phone in Firebase
+            const guestId = localStorage.getItem("moaath_guest_id");
+            if (guestId) {
+                db.ref("waitingLists").once("value", snap => {
+                    const allW = snap.val() || {};
+                    const updates = {};
+                    let migrated = false;
+                    Object.keys(allW).forEach(pid => {
+                        if (allW[pid][`GUEST_${guestId}`]) {
+                            updates[`waitingLists/${pid}/GUEST_${guestId}`] = null;
+                            updates[`waitingLists/${pid}/${currentUser.phone}`] = {
+                                name: currentUser.name,
+                                phone: currentUser.phone,
+                                dateISO: new Date().toISOString()
+                            };
+                            migrated = true;
+                        }
+                    });
+                    if (migrated) {
+                        db.ref().update(updates);
+                    }
+                });
+                localStorage.removeItem("moaath_guest_id");
+            }
             if (users[currentUser.phone]) { currentUser = { ...currentUser, ...users[currentUser.phone] }; localStorage.setItem("moaath_user", JSON.stringify(currentUser)); }
             const pts = Math.round(currentUser.points || 0), rank = calculateUserRank(currentUser.phone);
             setTxt("userNameDisplay", currentUser.name);
@@ -2349,17 +2373,7 @@
                     <div style="font-size:15px; color:#b71c1c;">💰 إجمالي الديون المستحقة: <b>${totalAllUSD.toFixed(2)} $</b> (${totalAllSYP.toLocaleString()} ل.س)</div>
                 </div>
                 ${customersHtml}
-            
-    <div id="availableNotificationModal" class="modal-overlay" style="z-index: 10060 !important;">
-        <div class="modal-content" style="max-width:420px; border:2px solid var(--success-color); text-align:center; box-shadow:0 0 25px rgba(0,230,118,0.35);">
-            <div style="font-size:42px; margin-bottom:6px;">🎉</div>
-            <h3 style="color:var(--success-color); margin:0 0 6px 0; font-size:16px;">خبر سار! توفرت المواد التي طلبتها</h3>
-            <p style="font-size:12px; color:var(--gray-text); margin:0 0 12px 0;">المواد التالية التي قمت بتفعيل جرس التنبيه لها أصبحت متوفرة الآن في متجر معاذ:</p>
-            <div id="availableItemsListContainer" style="max-height:50vh; overflow-y:auto; margin-bottom:12px;"></div>
-            <button onclick="closeModal('availableNotificationModal')" class="btn" style="background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; font-weight:900;">✨ رائع، تصفح المتجر</button>
-        </div>
-    </div>
-</body>
+            </body>
             </html>`;
 
             const blob = new Blob(["\uFEFF" + htmlContent], { type: 'text/html;charset=utf-8;' });
@@ -2829,14 +2843,18 @@
             const waitingProdIds = Object.keys(waitingStats).filter(pid => (products[pid] || specialOffers[pid]) && Object.keys(waitingStats[pid] || {}).length > 0);
             if (waitingProdIds.length > 0) {
                 waitingSummaryHtml = `<div class="adm-card" style="border-color:#00b0ff; background:rgba(0,176,255,0.08); margin-bottom:10px;">
-                    <div style="color:#00b0ff; font-weight:bold; font-size:12px; margin-bottom:6px;">🔔 إحصائية الزبائن المنتظرين لتوفر المواد (${waitingProdIds.length} مادة):</div>` +
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span style="color:#00b0ff; font-weight:bold; font-size:12px;">🔔 إحصائية الزبائن المنتظرين لتوفر المواد (${waitingProdIds.length} مادة):</span>
+                        <button onclick="if(confirm('تصفير كافة قوائم الانتظار للمواد المتوفرة؟')) db.ref('waitingLists').set(null);" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">🗑️ تصفير كل الانتظار</button>
+                    </div>` +
                     waitingProdIds.map(pid => {
                         const itemObj = products[pid] || specialOffers[pid] || {};
                         const wMap = waitingStats[pid] || {};
                         const cnt = Object.keys(wMap).length;
+                        const stockNow = parseInt(itemObj.stock) || 0;
                         const namesList = Object.values(wMap).map(w => typeof w === "object" ? `${w.name}` : w).join("، ");
                         return `<div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; border-top:1px dashed var(--border-color); padding:4px 0;">
-                            <span>• <b>${itemObj.name || 'صنف'}</b> <small style="color:var(--gray-text);">(${namesList})</small></span>
+                            <span>• <b>${itemObj.name || 'صنف'}</b> ${stockNow > 0 ? '<span style="color:var(--success-color); font-weight:bold;">(متوفر حالياً المخزون: '+stockNow+')</span>' : ''} <small style="color:var(--gray-text);">(${namesList})</small></span>
                             <div style="display:flex; align-items:center; gap:6px;">
                                 <span style="background:#00b0ff; color:#000; font-weight:bold; padding:1px 7px; border-radius:10px; font-size:10px;">👥 ${cnt} ينتظرون</span>
                                 <button onclick="db.ref('waitingLists/${pid}').set(null)" class="btn btn-danger" style="width:auto; padding:2px 6px; font-size:9px;" title="تصفير عداد المنتظرين">✖</button>
@@ -3337,21 +3355,49 @@
             }).then(() => alert("✅ تم حفظ كافة إعدادات النظام ومناطق التوصيل ومدير التصدير بنجاح!"));
         }
 
-        function exportBackupJSON() {
-            db.ref("/").once("value").then(snap => {
+        async function exportBackupJSON() {
+            showToast("⏳ جاري تجهيز النسخة الاحتياطية...", false);
+            try {
+                const nodes = [
+                    "settings", "categories", "suppliers", "products", "productImages",
+                    "specialOffers", "users", "partnersConfig", "competition",
+                    "pendingOrders", "readyForDelivery", "completedOrdersHistory",
+                    "adminAccounting", "storeExpenses", "treasuryDebtCollections",
+                    "waitingLists", "missingRequests"
+                ];
+                const backupData = {};
+                await Promise.all(nodes.map(async n => {
+                    try {
+                        const s = await db.ref(n).once("value");
+                        if (s.exists()) backupData[n] = s.val();
+                    } catch (e) {}
+                }));
+                const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json;charset=utf-8;" });
+                const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
-                a.href = URL.createObjectURL(new Blob([JSON.stringify(snap.val() || {}, null, 2)], { type: "application/json" }));
-                a.download = `moaath_store_backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
-            });
+                a.href = url;
+                a.download = `moaath_store_backup_${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
+                showToast("✅ تم تحميل النسخة الاحتياطية (.json) بنجاح!");
+            } catch (err) {
+                alert("❌ حدث خطأ أثناء إنشاء النسخة الاحتياطية: " + err.message);
+            }
         }
         function importBackupJSON(e) {
             const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
-            reader.onload = ev => {
+            reader.onload = async ev => {
                 try {
                     const json = JSON.parse(ev.target.result);
-                    if (confirm("⚠️ استعادة النسخة الاحتياطية واستبدال البيانات الحالية؟")) db.ref("/").set(json).then(() => alert("✅ تمت الاستعادة بنجاح!"));
-                } catch (err) { alert("❌ الملف غير صالح!"); }
+                    if (!confirm("⚠️ استعادة النسخة الاحتياطية واستبدال البيانات الحالية؟")) return;
+                    const updates = {};
+                    Object.keys(json).forEach(k => { updates[k] = json[k]; });
+                    await db.ref().update(updates);
+                    alert("✅ تمت استعادة النسخة الاحتياطية بنجاح!");
+                } catch (err) { alert("❌ خطأ أثناء الاستعادة: " + err.message); }
             };
             reader.readAsText(file);
         }
@@ -4052,6 +4098,16 @@
             </div>
             <div id="orderImagesGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; max-height:60vh; overflow-y:auto;"></div>
             <button onclick="closeModal('orderImagesModal')" class="btn" style="margin-top:12px;">إغلاق</button>
+        </div>
+    </div>
+
+    <div id="availableNotificationModal" class="modal-overlay" style="z-index: 10060 !important;">
+        <div class="modal-content" style="max-width:420px; border:2px solid var(--success-color); text-align:center; box-shadow:0 0 25px rgba(0,230,118,0.35);">
+            <div style="font-size:42px; margin-bottom:6px;">🎉</div>
+            <h3 style="color:var(--success-color); margin:0 0 6px 0; font-size:16px;">خبر سار! توفرت المواد التي طلبتها</h3>
+            <p style="font-size:12px; color:var(--gray-text); margin:0 0 12px 0;">المواد التالية التي قمت بتفعيل جرس التنبيه لها أصبحت متوفرة الآن في متجر معاذ:</p>
+            <div id="availableItemsListContainer" style="max-height:50vh; overflow-y:auto; margin-bottom:12px;"></div>
+            <button onclick="closeModal('availableNotificationModal')" class="btn" style="background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; font-weight:900;">✨ رائع، تصفح المتجر</button>
         </div>
     </div>
 
