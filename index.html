@@ -2349,7 +2349,17 @@
                     <div style="font-size:15px; color:#b71c1c;">💰 إجمالي الديون المستحقة: <b>${totalAllUSD.toFixed(2)} $</b> (${totalAllSYP.toLocaleString()} ل.س)</div>
                 </div>
                 ${customersHtml}
-            </body>
+            
+    <div id="availableNotificationModal" class="modal-overlay" style="z-index: 10060 !important;">
+        <div class="modal-content" style="max-width:420px; border:2px solid var(--success-color); text-align:center; box-shadow:0 0 25px rgba(0,230,118,0.35);">
+            <div style="font-size:42px; margin-bottom:6px;">🎉</div>
+            <h3 style="color:var(--success-color); margin:0 0 6px 0; font-size:16px;">خبر سار! توفرت المواد التي طلبتها</h3>
+            <p style="font-size:12px; color:var(--gray-text); margin:0 0 12px 0;">المواد التالية التي قمت بتفعيل جرس التنبيه لها أصبحت متوفرة الآن في متجر معاذ:</p>
+            <div id="availableItemsListContainer" style="max-height:50vh; overflow-y:auto; margin-bottom:12px;"></div>
+            <button onclick="closeModal('availableNotificationModal')" class="btn" style="background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; font-weight:900;">✨ رائع، تصفح المتجر</button>
+        </div>
+    </div>
+</body>
             </html>`;
 
             const blob = new Blob(["\uFEFF" + htmlContent], { type: 'text/html;charset=utf-8;' });
@@ -4045,14 +4055,5 @@
         </div>
     </div>
 
-
-    <div id="availableNotificationModal" class="modal-overlay" style="z-index: 10060 !important;">
-        <div class="modal-content" style="max-width:420px; border:2px solid var(--success-color); text-align:center; box-shadow:0 0 25px rgba(0,230,118,0.35);">
-            <div style="font-size:42px; margin-bottom:6px;">🎉</div>
-            <h3 style="color:var(--success-color); margin:0 0 6px 0; font-size:16px;">خبر سار! توفرت المواد التي طلبتها</h3>
-            <p style="font-size:12px; color:var(--gray-text); margin:0 0 12px 0;">المواد التالية التي قمت بتفعيل جرس التنبيه لها أصبحت متوفرة الآن في متجر معاذ:</p>
-            <div id="availableItemsListContainer" style="max-height:50vh; overflow-y:auto; margin-bottom:12px;"></div>
-            <button onclick="closeModal('availableNotificationModal')" class="btn" style="background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; font-weight:900;">✨ رائع، تصفح المتجر</button>
-        </div>
-    </div>
 </body>
+</html>
