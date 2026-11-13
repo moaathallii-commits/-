@@ -1529,30 +1529,6 @@
                 if ($("exportManagerBtn")) $("exportManagerBtn").style.display = "none";
                 return;
             }
-            // Migrate guest waiting items to logged-in user phone in Firebase
-            const guestId = localStorage.getItem("moaath_guest_id");
-            if (guestId) {
-                db.ref("waitingLists").once("value", snap => {
-                    const allW = snap.val() || {};
-                    const updates = {};
-                    let migrated = false;
-                    Object.keys(allW).forEach(pid => {
-                        if (allW[pid][`GUEST_${guestId}`]) {
-                            updates[`waitingLists/${pid}/GUEST_${guestId}`] = null;
-                            updates[`waitingLists/${pid}/${currentUser.phone}`] = {
-                                name: currentUser.name,
-                                phone: currentUser.phone,
-                                dateISO: new Date().toISOString()
-                            };
-                            migrated = true;
-                        }
-                    });
-                    if (migrated) {
-                        db.ref().update(updates);
-                    }
-                });
-                localStorage.removeItem("moaath_guest_id");
-            }
             if (users[currentUser.phone]) { currentUser = { ...currentUser, ...users[currentUser.phone] }; localStorage.setItem("moaath_user", JSON.stringify(currentUser)); }
             const pts = Math.round(currentUser.points || 0), rank = calculateUserRank(currentUser.phone);
             setTxt("userNameDisplay", currentUser.name);
@@ -1738,29 +1714,22 @@
         
         function addToWaitingList(prodId) {
             const baseId = String(prodId || "").replace(/_PKG$/, "");
+            const visitorId = (currentUser && currentUser.phone) ? currentUser.phone : ("GUEST_" + (localStorage.getItem("moaath_guest_id") || (() => { const gid = Math.random().toString(36).substring(2, 10); localStorage.setItem("moaath_guest_id", gid); return gid; })()));
+            const visitorName = (currentUser && currentUser.name) ? currentUser.name : "زائر";
+
             let waitList = JSON.parse(localStorage.getItem('moaath_waiting') || '{}');
             waitList[baseId] = {
                 addedAt: Date.now(),
+                visitorId: visitorId,
                 name: products[baseId]?.name || specialOffers[baseId]?.name || "منتج"
             };
             localStorage.setItem('moaath_waiting', JSON.stringify(waitList));
 
-            const visitorId = (currentUser && currentUser.phone) ? currentUser.phone : ("GUEST_" + (localStorage.getItem("moaath_guest_id") || (() => { const gid = Math.random().toString(36).substring(2, 10); localStorage.setItem("moaath_guest_id", gid); return gid; })()));
-            const visitorName = (currentUser && currentUser.name) ? currentUser.name : "زائر";
-
-            if (currentUser && currentUser.phone) {
-                db.ref(`waitingLists/${baseId}/${visitorId}`).set({
-                    name: visitorName,
-                    phone: currentUser.phone,
-                    dateISO: new Date().toISOString()
-                }).catch(() => {});
-            } else {
-                db.ref(`waitingLists/${baseId}/${visitorId}`).set({
-                    name: visitorName,
-                    phone: "زائر",
-                    dateISO: new Date().toISOString()
-                }).catch(() => {});
-            }
+            db.ref(`waitingLists/${baseId}/${visitorId}`).set({
+                name: visitorName,
+                phone: (currentUser && currentUser.phone) ? currentUser.phone : "زائر",
+                dateISO: new Date().toISOString()
+            }).catch(() => {});
 
             renderStore();
             showToast("🔔 تم تسجيل طلبك! سنعلمك بنافذة فورية فور توفر المادة.");
@@ -1773,21 +1742,22 @@
 
             let newlyAvailable = [];
             let updatesToFirebase = {};
-            const visitorId = (currentUser && currentUser.phone) ? currentUser.phone : ("GUEST_" + (localStorage.getItem("moaath_guest_id") || ""));
+            const currentVisitorId = (currentUser && currentUser.phone) ? currentUser.phone : ("GUEST_" + (localStorage.getItem("moaath_guest_id") || ""));
 
             waitKeys.forEach(prodId => {
                 const p = products[prodId] || specialOffers[prodId];
                 if (p && (parseInt(p.stock) || 0) > 0) {
+                    const savedEntry = waitList[prodId];
+                    const savedVisitorId = (typeof savedEntry === "object" && savedEntry?.visitorId) ? savedEntry.visitorId : currentVisitorId;
                     newlyAvailable.push({
                         id: prodId,
-                        name: p.name || waitList[prodId]?.name || "صنف",
+                        name: p.name || savedEntry?.name || "صنف",
                         priceSYP: calcSYP((currentUser?.userType === "wholesale" && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || p.newPriceUSD || 0)),
                         image: p.image || getLockedHighResImage(prodId) || p.thumb || "store-icon.png"
                     });
                     delete waitList[prodId];
-                    if (visitorId) {
-                        updatesToFirebase[`waitingLists/${prodId}/${visitorId}`] = null;
-                    }
+                    if (savedVisitorId) updatesToFirebase[`waitingLists/${prodId}/${savedVisitorId}`] = null;
+                    if (currentVisitorId && currentVisitorId !== savedVisitorId) updatesToFirebase[`waitingLists/${prodId}/${currentVisitorId}`] = null;
                 }
             });
 
@@ -1814,7 +1784,7 @@
                             <div style="color:var(--success-color); font-size:12px; font-weight:bold;">${item.priceSYP.toLocaleString()} ل.س</div>
                         </div>
                     </div>
-                    <button class="btn" style="width:auto; padding:6px 12px; font-size:11px; background:var(--success-color); color:#000;" onclick="changeQty('${item.id}', 1); closeModal('availableNotificationModal');">🛒 أضف للسلة</button>
+                    <button class="btn" style="width:auto; padding:6px 12px; font-size:11px; background:var(--success-color); color:#000;" onclick="changeQty('${item.id}', 1); this.textContent='✅ أُضيفت للسلة'; this.disabled=true; this.style.opacity='0.75';">🛒 أضف للسلة</button>
                 </div>
             `).join("");
             modal.style.display = "flex";
@@ -2699,7 +2669,7 @@
                 delete readyOrders[orderId];
                 alert(`✅ تم التراجع عن الفاتورة (${orderId}) بنجاح وإعادة كافة الحسابات والمخزون.`);
                 renderStatsDashboard(); renderAdminInvoicesHistory();
-                renderExportManagerInvoicesHistory(); renderReadyOrders();
+                renderExportManagerInvoicesHistory(); renderExportManagerEarningsView(); renderReadyOrders();
             }).catch(err => alert("❌ خطأ أثناء التراجع عن الفاتورة: " + err.message));
         }
 
@@ -2835,26 +2805,24 @@
 
         function renderShortages() {
             const suppContainer = $("shortagesBySupplierContainer"); if (!suppContainer) return;
-            const list = Object.keys(products).filter(id => products[id] && ((parseInt(products[id].stock) || 0) <= (parseInt(products[id].alertLimit) || 2) || (waitingStats[id] && Object.keys(waitingStats[id]).length > 0)));
-            if (!list.length) return (suppContainer.innerHTML = `<p style="text-align:center; color:var(--success-color); font-size:12px;">✅ جميع الأصناف متوفرة بالمخزون بشكل جيد ولا توجد قوائم انتظار.</p>`);
+            const shortageIds = Object.keys(products).filter(id => products[id] && (parseInt(products[id].stock) || 0) <= (parseInt(products[id].alertLimit) || 2));
+            const waitingProdIds = Object.keys(waitingStats).filter(pid => (products[pid] || specialOffers[pid]) && Object.keys(waitingStats[pid] || {}).length > 0);
+            if (!shortageIds.length && !waitingProdIds.length) return (suppContainer.innerHTML = `<p style="text-align:center; color:var(--success-color); font-size:12px;">✅ جميع الأصناف متوفرة بالمخزون بشكل جيد ولا توجد قوائم انتظار.</p>`);
 
             // إحصائية سريعة في أعلى النواقص لأكثر الأصناف طلباً بالانتظار
             let waitingSummaryHtml = "";
-            const waitingProdIds = Object.keys(waitingStats).filter(pid => (products[pid] || specialOffers[pid]) && Object.keys(waitingStats[pid] || {}).length > 0);
             if (waitingProdIds.length > 0) {
                 waitingSummaryHtml = `<div class="adm-card" style="border-color:#00b0ff; background:rgba(0,176,255,0.08); margin-bottom:10px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                        <span style="color:#00b0ff; font-weight:bold; font-size:12px;">🔔 إحصائية الزبائن المنتظرين لتوفر المواد (${waitingProdIds.length} مادة):</span>
-                        <button onclick="if(confirm('تصفير كافة قوائم الانتظار للمواد المتوفرة؟')) db.ref('waitingLists').set(null);" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">🗑️ تصفير كل الانتظار</button>
-                    </div>` +
+                    <div style="color:#00b0ff; font-weight:bold; font-size:12px; margin-bottom:6px;">🔔 إحصائية الزبائن المنتظرين لتوفر المواد (${waitingProdIds.length} مادة):</div>` +
                     waitingProdIds.map(pid => {
                         const itemObj = products[pid] || specialOffers[pid] || {};
+                        const curSt = parseInt(itemObj.stock) || 0;
+                        const statusTag = curSt > 0 ? `<small style="color:var(--success-color); font-weight:bold;">[متوفر الآن (${curSt}) - بانتظار فتح الزبون للتطبيق]</small>` : `<small style="color:var(--danger-color); font-weight:bold;">[نافد حالياً]</small>`;
                         const wMap = waitingStats[pid] || {};
                         const cnt = Object.keys(wMap).length;
-                        const stockNow = parseInt(itemObj.stock) || 0;
                         const namesList = Object.values(wMap).map(w => typeof w === "object" ? `${w.name}` : w).join("، ");
-                        return `<div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; border-top:1px dashed var(--border-color); padding:4px 0;">
-                            <span>• <b>${itemObj.name || 'صنف'}</b> ${stockNow > 0 ? '<span style="color:var(--success-color); font-weight:bold;">(متوفر حالياً المخزون: '+stockNow+')</span>' : ''} <small style="color:var(--gray-text);">(${namesList})</small></span>
+                        return `<div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; border-top:1px dashed var(--border-color); padding:4px 0; flex-wrap:wrap; gap:4px;">
+                            <span>• <b>${itemObj.name || 'صنف'}</b> ${statusTag} <small style="color:var(--gray-text);">(${namesList})</small></span>
                             <div style="display:flex; align-items:center; gap:6px;">
                                 <span style="background:#00b0ff; color:#000; font-weight:bold; padding:1px 7px; border-radius:10px; font-size:10px;">👥 ${cnt} ينتظرون</span>
                                 <button onclick="db.ref('waitingLists/${pid}').set(null)" class="btn btn-danger" style="width:auto; padding:2px 6px; font-size:9px;" title="تصفير عداد المنتظرين">✖</button>
@@ -2864,7 +2832,7 @@
             }
 
             let bySupp = {}, unassigned = [];
-            list.forEach(id => {
+            shortageIds.forEach(id => {
                 const p = { ...products[id], _id: id };
                 if (p.supplierId && suppliers[p.supplierId]) { (bySupp[p.supplierId] = bySupp[p.supplierId] || []).push(p); }
                 else unassigned.push(p);
@@ -3392,9 +3360,21 @@
             reader.onload = async ev => {
                 try {
                     const json = JSON.parse(ev.target.result);
-                    if (!confirm("⚠️ استعادة النسخة الاحتياطية واستبدال البيانات الحالية؟")) return;
+                    if (!confirm("⚠️ استعادة النسخة الاحتياطية واستبدال البيانات الحالية بالكامل؟")) return;
+                    const nodes = [
+                        "settings", "categories", "suppliers", "products", "productImages",
+                        "specialOffers", "users", "partnersConfig", "competition",
+                        "pendingOrders", "readyForDelivery", "completedOrdersHistory",
+                        "adminAccounting", "storeExpenses", "treasuryDebtCollections",
+                        "waitingLists", "missingRequests"
+                    ];
                     const updates = {};
-                    Object.keys(json).forEach(k => { updates[k] = json[k]; });
+                    nodes.forEach(n => {
+                        updates[n] = json.hasOwnProperty(n) ? json[n] : null;
+                    });
+                    Object.keys(json).forEach(k => {
+                        if (!nodes.includes(k)) updates[k] = json[k];
+                    });
                     await db.ref().update(updates);
                     alert("✅ تمت استعادة النسخة الاحتياطية بنجاح!");
                 } catch (err) { alert("❌ خطأ أثناء الاستعادة: " + err.message); }
@@ -3407,7 +3387,7 @@
             adminClickCount++; clearTimeout(adminClickTimer);
             if (adminClickCount >= 5) {
                 adminClickCount = 0;
-                const adminLocalPhone = adminWhatsAppNumber.replace(/^963/, "0");
+                const adminLocalPhone = String(adminWhatsAppNumber || "").replace(/[^0-9]/g, "").replace(/^(00)?963/, "0");
                 if (currentUser && currentUser.phone === adminLocalPhone) {
                     $("adminModal").style.display = "flex";
                     renderStatsDashboard(); renderAdminInvoicesHistory(); populateAdminPartnerSelect(); populateExpenseTargetSelect(); populateAdminDebtCustomerSelect(); populatePartnerSelectOptions();
