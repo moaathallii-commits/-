@@ -2285,7 +2285,7 @@
                         <span style="color:var(--gray-text); font-size:11px;">${e.dateStr || ''}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:12px;">${e.note || '-'} ${e.feePct > 0 ? `<small style="color:#ff9800;">(شامل +${e.feePct}%)</small>` : ''}</span>
+                        <span style="font-size:12px;">${esc(e.note || '-')} ${e.feePct > 0 ? `<small style="color:#ff9800;">(شامل +${e.feePct}%)</small>` : ''}</span>
                         <strong style="font-size:13px; color:${isPayment ? 'var(--success-color)' : '#fff'};">${isPayment ? '-' : '+'}${amtUSD} $ <small style="color:var(--gold-color);">(${amtSYP} ل.س)</small></strong>
                     </div>
                 </div>`;
@@ -2470,7 +2470,7 @@
             const prepBox = $("adminCustomerPrepaidHistoryBox");
             if (prepBox) {
                 const prepEntries = Object.values(u.prepaidLedger || {}).sort((a,b) => (b.dateISO||"").localeCompare(a.dateISO||""));
-                prepBox.innerHTML = prepEntries.map(e => `<div style="display:flex; justify-content:space-between; font-size:10px; border-bottom:1px dashed var(--border-color); padding:3px 0;"><span>${e.type==='deposit'?'➕ إيداع':'➖ خصم'}: <b>${e.note}</b></span><b style="color:${e.type==='deposit'?'#00e676':'#ff4444'}">${e.type==='deposit'?'+':'-'}$${parseFloat(e.amountUSD||0).toFixed(2)}</b></div>`).join("");
+                prepBox.innerHTML = prepEntries.map(e => `<div style="display:flex; justify-content:space-between; font-size:10px; border-bottom:1px dashed var(--border-color); padding:3px 0;"><span>${e.type==='deposit'?'➕ إيداع':'➖ خصم'}: <b>${esc(e.note)}</b></span><b style="color:${e.type==='deposit'?'#00e676':'#ff4444'}">${e.type==='deposit'?'+':'-'}$${parseFloat(e.amountUSD||0).toFixed(2)}</b></div>`).join("");
             }
 
             if (histBox) {
@@ -2481,7 +2481,7 @@
                         const isPay = e.type === "payment";
                         const amt = parseFloat(e.finalAmountUSD || e.amountUSD || 0).toFixed(2);
                         return `<div class="leader-row" style="border-color:${isPay ? 'var(--success-color)' : 'var(--border-color)'};">
-                            <span>${isPay ? '💵 تسديد' : '📌 دين'}: <b>${e.note || '-'}</b> <small style="color:var(--gray-text);">(${e.dateStr})</small></span>
+                            <span>${isPay ? '💵 تسديد' : '📌 دين'}: <b>${esc(e.note || '-')}</b> <small style="color:var(--gray-text);">(${e.dateStr})</small></span>
                             <span style="color:${isPay ? 'var(--success-color)' : 'var(--danger-color)'}; font-weight:bold;">${isPay ? '-' : '+'}${amt} $</span>
                         </div>`;
                     }).join("");
@@ -2526,7 +2526,8 @@
                 dateISO: now.toISOString(), dateStr: now.toLocaleString("ar-SY")
             };
             db.ref().update(updates).then(() => {
-                setVal("newPrepaidAmountUSD", ""); setVal("newPrepaidNote", "");
+                setVal("newPrepaidAmountSYP", ""); setVal("newPrepaidAmountUSD", ""); setVal("newPrepaidNote", "");
+                setTxt("newPrepaidUSDPreview", "≈ 0.00 $");
                 alert(`✅ تم شحن محفظة ${u.name} بقيمة ($${amt.toFixed(2)}) بنجاح!`);
             });
         }
@@ -2597,10 +2598,10 @@
                 const itemsStr = (o.items || []).map(i => `${i.name} (×${i.qty})`).join("، ");
                 return `<div class="adm-card" style="border-color:var(--gold-color);">
                     <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--gold-color); margin-bottom:4px;">
-                        <span>🧾 فاتورة #${id.slice(-6)} (${o.customerName})</span>
+                        <span>🧾 فاتورة #${id.slice(-6)} (${esc(o.customerName)})</span>
                         <span>${o.timestamp || ''}</span>
                     </div>
-                    <div style="font-size:11px; margin-bottom:4px; color:var(--gray-text);">المنطقة: ${o.customerRegion} | المواد: ${itemsStr}</div>
+                    <div style="font-size:11px; margin-bottom:4px; color:var(--gray-text);">المنطقة: ${esc(o.customerRegion)} | المواد: ${esc(itemsStr)}</div>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
                         <strong style="color:var(--success-color); font-size:13px;">الإجمالي: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</strong>
                         <button onclick="revertCompletedOrder('${id}')" class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:10px;">↩️ التراجع عن الفاتورة</button>
@@ -2626,10 +2627,10 @@
                 const itemsStr = (o.items || []).map(i => `${i.name} (×${i.qty})`).join("، ");
                 return `<div class="adm-card" style="border-color:#ff9800;">
                     <div style="display:flex; justify-content:space-between; font-weight:bold; color:#ff9800; margin-bottom:4px;">
-                        <span>🧾 فاتورة #${id.slice(-6)} (${o.customerName})</span>
+                        <span>🧾 فاتورة #${id.slice(-6)} (${esc(o.customerName)})</span>
                         <span>${o.timestamp || ''}</span>
                     </div>
-                    <div style="font-size:11px; margin-bottom:4px; color:var(--gray-text);">المنطقة: ${o.customerRegion} | المواد: ${itemsStr}</div>
+                    <div style="font-size:11px; margin-bottom:4px; color:var(--gray-text);">المنطقة: ${esc(o.customerRegion)} | المواد: ${esc(itemsStr)}</div>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
                         <strong style="color:var(--success-color); font-size:13px;">الإجمالي: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س</strong>
                         <button onclick="revertCompletedOrder('${id}')" class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:10px;">↩️ التراجع عن الفاتورة</button>
@@ -2809,8 +2810,8 @@
                 return `<div class="adm-card" style="margin-bottom: 24px; border:3px solid ${isTampered ? 'var(--danger-color)' : borderColor}; background:${bgColor}; color:${isCred ? '#ff4444' : 'inherit'};">
                     ${tamperAlert}
                     ${bannerHtml}
-                    <div style="display:flex; justify-content:space-between; color:${textCol}; font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span></div>
-                    <div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress} | 💳 ${payMethod}</div>
+                    <div style="display:flex; justify-content:space-between; color:${textCol}; font-weight:bold; margin-bottom:4px;"><span>👤 ${esc(o.customerName)} (${esc(o.customerPhone)})</span><span>${o.timestamp}</span></div>
+                    <div style="margin-bottom:4px;">🏘️ ${esc(o.customerRegion)} | 📍 ${esc(o.customerAddress)} | 💳 ${esc(payMethod)}</div>
                     ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${esc(o.notes)}</div>` : ''}
                     <div style="border-top:1px dashed ${borderColor}; border-bottom:1px dashed ${borderColor}; padding:6px 0; margin:6px 0;">${itemsHtml}</div>
                     <div style="font-weight:bold; margin-bottom:6px;">المطلوب تحصيله: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س ${isCred || isPrep ? `<span style="color:${textCol};">(${(o.orderTotalUSD||0).toFixed(2)} $)</span>` : ''}</div>
@@ -3290,16 +3291,16 @@
                 const isB = !!u.banned, ut = u.userType || "retail";
                 const badge = ut === "wholesale" ? ["var(--gold-color)", "جملة"] : ut === "neighbors" ? ["#ff9800", "جيران"] : ut === "credit" ? ["#D4AF37", "آجل / دفتر"] : ut === "partner" ? ["#00b0ff", "شريك"] : ["#00e676", "مفرق"];
                 
-                let successOrders = 0, cancelledOrders = 0;
+                let successOrders = 0, cancelledOrders = parseInt(u.cancelledOrdersCount) || 0;
                 Object.values(completedOrdersHistory || {}).forEach(ord => { if (ord.customerPhone === u.phone) successOrders++; });
                 
                 return `<div class="adm-card" style="border-color:${isB ? 'var(--danger-color)' : 'var(--border-color)'};">
                     <div style="display:flex; justify-content:space-between; font-weight:bold;">
-                        <span>👤 ${u.name} (${u.phone}) <b style="color:${badge[0]};">[${badge[1]}]</b></span>
+                        <span>👤 ${esc(u.name)} (${esc(u.phone)}) <b style="color:${badge[0]};">[${badge[1]}]</b></span>
                         <span style="color:var(--gold-color);">${Math.round(u.points || 0)} نقطة</span>
                     </div>
                     <div style="font-size:11px; color:var(--gray-text); margin:4px 0;">
-                        ✅ طلبات ناجحة: <b style="color:var(--success-color);">${successOrders}</b> | ❌ طلبات ملغاة: <b>${cancelledOrders}</b>
+                        ✅ طلبات ناجحة: <b style="color:var(--success-color);">${successOrders}</b> | ❌ طلبات ملغاة: <b style="color:var(--danger-color);">${cancelledOrders}</b>
                         ${ut === 'credit' ? ` | 📒 دين: <b style="color:var(--danger-color);">${(parseFloat(u.debtBalanceUSD) || 0).toFixed(2)} $</b>` : ''}
                     </div>
                     <div style="display:flex; gap:4px; margin-top:6px; flex-wrap:wrap;">
@@ -3538,8 +3539,8 @@
                 return `<div class="adm-card" style="margin-bottom: 24px; border:3px solid ${isTampered ? 'var(--danger-color)' : borderColor}; background:${bgColor}; color:${isCred ? '#ff4444' : 'inherit'};">
                     ${tamperAlert}
                     ${bannerHtml}
-                    <div style="display:flex; justify-content:space-between; color:${textCol}; font-weight:bold; margin-bottom:4px;"><span>👤 ${o.customerName} (${o.customerPhone})</span><span>${o.timestamp}</span></div>
-                    <div style="margin-bottom:4px;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress} | 💳 ${payMethod}</div>
+                    <div style="display:flex; justify-content:space-between; color:${textCol}; font-weight:bold; margin-bottom:4px;"><span>👤 ${esc(o.customerName)} (${esc(o.customerPhone)})</span><span>${o.timestamp}</span></div>
+                    <div style="margin-bottom:4px;">🏘️ ${esc(o.customerRegion)} | 📍 ${esc(o.customerAddress)} | 💳 ${esc(payMethod)}</div>
                     ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${esc(o.notes)}</div>` : ''}
                     <div style="border-top:1px dashed ${borderColor}; border-bottom:1px dashed ${borderColor}; padding:6px 0; margin:6px 0;">${itemsHtml}</div>
                     <div style="font-weight:bold; margin-bottom:6px;">المطلوب تحصيله: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س ${isCred || isPrep ? `<span style="color:${textCol};">(${(o.orderTotalUSD||0).toFixed(2)} $)</span>` : ''}</div>
@@ -3646,11 +3647,22 @@
         }
 
         function cancelOrder(id) {
+            const ord = pendingOrders[id];
+            if (!ord) return;
             if (confirm("إلغاء هذه الفاتورة؟")) {
-                db.ref("pendingOrders/" + id).set(null).then(() => {
+                const updates = {};
+                updates[`pendingOrders/${id}`] = null;
+                const phone = ord.customerPhone;
+                if (phone && users[phone]) {
+                    const curCanc = parseInt(users[phone].cancelledOrdersCount) || 0;
+                    updates[`users/${phone}/cancelledOrdersCount`] = curCanc + 1;
+                }
+                db.ref().update(updates).then(() => {
                     delete pendingOrders[id];
+                    if (phone && users[phone]) users[phone].cancelledOrdersCount = (parseInt(users[phone].cancelledOrdersCount) || 0) + 1;
                     renderPendingOrders();
                     renderExportManagerOrders();
+                    renderAdminCustomers();
                     renderCustomerTrackingBanner();
                     showToast("🗑️ تم إلغاء الطلب بنجاح");
                 }).catch(err => alert("❌ خطأ أثناء الإلغاء: " + err.message));
@@ -3666,10 +3678,10 @@
                 const o = readyOrders[id];
                 return `<div class="adm-card" style="border-color:#00b0ff; background:rgba(0,176,255,0.05);">
                     <div style="display:flex; justify-content:space-between; font-weight:bold; color:#00b0ff;">
-                        <span>👤 ${o.customerName} (${o.customerPhone})</span>
+                        <span>👤 ${esc(o.customerName)} (${esc(o.customerPhone)})</span>
                         <button onclick="removeReadyOrder('${id}')" class="btn btn-danger" style="width:auto; padding:2px 6px; font-size:10px;">✖ حذف</button>
                     </div>
-                    <div style="font-size:11px; margin:4px 0;">🏘️ ${o.customerRegion} | 📍 ${o.customerAddress}</div>
+                    <div style="font-size:11px; margin:4px 0;">🏘️ ${esc(o.customerRegion)} | 📍 ${esc(o.customerAddress)}</div>
                 </div>`;
             }).join("");
 
@@ -3731,13 +3743,26 @@
             if (!cnt) return alert("ℹ️ لا توجد طلبات معلقة.");
             if (confirm(`⚠️ إلغاء جميع الطلبات المعلقة (${cnt} طلب)؟`)) {
                 const updates = {};
+                const phoneCancelCounts = {};
                 keys.forEach(id => {
+                    const o = pendingOrders[id];
+                    if (o && o.customerPhone && users[o.customerPhone]) {
+                        phoneCancelCounts[o.customerPhone] = (phoneCancelCounts[o.customerPhone] || 0) + 1;
+                    }
                     updates[`pendingOrders/${id}`] = null;
                 });
+                Object.keys(phoneCancelCounts).forEach(ph => {
+                    const cur = parseInt(users[ph].cancelledOrdersCount) || 0;
+                    updates[`users/${ph}/cancelledOrdersCount`] = cur + phoneCancelCounts[ph];
+                });
                 db.ref().update(updates).then(() => {
+                    Object.keys(phoneCancelCounts).forEach(ph => {
+                        if (users[ph]) users[ph].cancelledOrdersCount = (parseInt(users[ph].cancelledOrdersCount) || 0) + phoneCancelCounts[ph];
+                    });
                     pendingOrders = {};
                     renderPendingOrders();
                     renderExportManagerOrders();
+                    renderAdminCustomers();
                     renderCustomerTrackingBanner();
                     showToast("🗑️ تم إلغاء جميع الطلبات بنجاح");
                 }).catch(err => {
@@ -3997,7 +4022,7 @@
             if (!list.length) return (box.innerHTML = `<div style="font-size:10px; color:var(--gray-text); text-align:center;">لا توجد مصاريف أو توالف مسجلة.</div>`);
             box.innerHTML = list.map(e => {
                 const targetName = e.target && e.target !== 'admin' && users[e.target] ? users[e.target].name : 'الإدارة';
-                return `<div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; border-bottom:1px dashed var(--border-color); padding:3px 0;"><span>• <b>${e.title}</b> <small style="color:var(--gold-color);">[${targetName}]</small> <small style="color:var(--gray-text);">(${e.dateStr})</small></span><div><b style="color:var(--danger-color); margin-left:6px;">-${(e.amountSYP || 0).toLocaleString()} ل.س</b><span onclick="deleteStoreExpense('${e.id}')" style="cursor:pointer; color:var(--danger-color);">🗑️</span></div></div>`;
+                return `<div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; border-bottom:1px dashed var(--border-color); padding:3px 0;"><span>• <b>${esc(e.title)}</b> <small style="color:var(--gold-color);">[${esc(targetName)}]</small> <small style="color:var(--gray-text);">(${e.dateStr})</small></span><div><b style="color:var(--danger-color); margin-left:6px;">-${(e.amountSYP || 0).toLocaleString()} ل.س</b><span onclick="deleteStoreExpense('${e.id}')" style="cursor:pointer; color:var(--danger-color);">🗑️</span></div></div>`;
             }).join("");
         }
 
@@ -4065,7 +4090,7 @@
             list.innerHTML = sorted.map((u, idx) => {
                 const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
                 const pts = u.pointsVisibility === "masked" ? ((currentUser?.phone === u.phone) ? `🔒 مشفرة (${Math.round(u.points || 0)} نقطة)` : `🔒 مشفرة (***)`) : `${Math.round(u.points || 0)} نقطة`;
-                return `<div class="leader-row"><span><b>${medal}</b> ${u.name} <small>(${u.region || "العوينة"})</small></span><span style="color:var(--gold-color); font-weight:bold;">${pts}</span></div>`;
+                return `<div class="leader-row"><span><b>${medal}</b> ${esc(u.name)} <small>(${esc(u.region || "العوينة")})</small></span><span style="color:var(--gold-color); font-weight:bold;">${pts}</span></div>`;
             }).join("");
         }
 
