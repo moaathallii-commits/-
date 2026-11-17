@@ -855,7 +855,7 @@
                 </div>
 
                 <div class="adm-sec" style="border-color:var(--info-color);">
-                    <div class="adm-sec-title"><span style="color:var(--info-color);">🛵 إعدادات نظام الـ GPS وحساب المسافات</span></div>
+                    <div class="adm-sec-title"><span style="color:var(--info-color);">🛵 إعدادات نظام الـ GPS، داخل المخزن، ونقاط التوزيع</span></div>
                     <div class="form-group" style="display:flex; align-items:center; gap:8px;">
                         <input type="checkbox" id="gpsEnabledCheck" style="width:18px; height:18px;">
                         <label for="gpsEnabledCheck" style="margin:0; cursor:pointer; color:var(--text-color);">تفعيل حساب الأجرة آلياً حسب موقع الزبون</label>
@@ -865,6 +865,15 @@
                         <div class="form-group"><label>خط طول المتجر (Lng):</label><input type="number" step="any" id="gpsStoreLng" class="form-control"></div>
                     </div>
                     <button type="button" onclick="captureAdminCurrentStoreLocation()" class="btn" style="margin-bottom:8px; padding:6px; font-size:11px; background:rgba(0,176,255,0.18); color:#00b0ff; border:1px solid #00b0ff;">📍 التقاط موقعي الحالي كمركز للمتجر</button>
+
+                    <div class="adm-card" style="border-color:#00e676; background:rgba(0,230,118,0.06);">
+                        <strong style="color:#00e676; font-size:11px;">🏬 طبقة (من داخل المخزن - مجاناً 0 ل.س)</strong>
+                        <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+                            <span style="font-size:10px; color:var(--gray-text);">النطاق المسموح حول مركز المخزن (بالمتر):</span>
+                            <input type="number" id="gpsInStoreDist" class="form-control" style="flex:1;" value="15" placeholder="مثال: 15 متر">
+                        </div>
+                    </div>
+
                     <div class="adm-card" style="border-color:var(--success-color);">
                         <strong style="color:var(--success-color); font-size:11px;">الطبقة 1 (الجار الملاصق)</strong>
                         <div style="display:flex; gap:6px; margin-top:4px;">
@@ -880,12 +889,30 @@
                         </div>
                     </div>
                     <div class="adm-card" style="border-color:var(--danger-color);">
-                        <strong style="color:var(--danger-color); font-size:11px;">الطبقة 3 (التوسع الإضافي) والحد الأقصى للتوصيل</strong>
+                        <strong style="color:var(--danger-color); font-size:11px;">الطبقة 3 (التوسع الإضافي خارج القرية) والحد الأقصى</strong>
                         <div style="display:flex; gap:6px; margin-top:4px;">
                             <div style="flex:1"><label style="font-size:10px; color:var(--gray-text);">كل X متر زيادة:</label><input type="number" id="gpsExtraUnit" class="form-control"></div>
                             <div style="flex:1"><label style="font-size:10px; color:var(--gray-text);">أجرة إضافية:</label><input type="number" id="gpsExtraFee" class="form-control"></div>
                             <div style="flex:1"><label style="font-size:10px; color:var(--danger-color);">الحد الأقصى للتوصيل:</label><input type="number" id="gpsMaxDist" class="form-control"></div>
                         </div>
+                    </div>
+
+                    <div class="adm-card" style="border-color:#00b0ff; background:rgba(0,176,255,0.05); margin-top:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:4px;">
+                            <strong style="color:#00b0ff; font-size:12px;">🧭 نقاط التوزيع وضبط المسافات الحقيقية (خارج القرية المحلية)</strong>
+                            <small style="color:var(--gray-text); font-size:10px;">تُعتمد لحساب: مسافة الطريق للنقطة الأقرب + المسافة المتبقية للزبون</small>
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:6px; margin-bottom:6px;">
+                            <input type="text" id="newDistPtName" class="form-control" placeholder="اسم النقطة (مثال: مفرق المزرعة)">
+                            <input type="number" id="newDistPtRealMeters" class="form-control" placeholder="المسافة الحقيقية من المخزن (متر)">
+                            <input type="number" step="any" id="newDistPtLat" class="form-control" placeholder="خط العرض (Lat)">
+                            <input type="number" step="any" id="newDistPtLng" class="form-control" placeholder="خط الطول (Lng)">
+                        </div>
+                        <div style="display:flex; gap:6px; margin-bottom:8px;">
+                            <button type="button" onclick="captureNewDistPointGPS()" class="btn" style="flex:1; padding:6px; font-size:10px; background:rgba(0,176,255,0.2); color:#00b0ff; border:1px solid #00b0ff;">📍 التقاط موقعي للنقطة</button>
+                            <button type="button" onclick="addDistributionPoint()" class="btn" style="flex:1; padding:6px; font-size:10px; background:var(--success-color); color:#000;">➕ إضافة نقطة توزيع</button>
+                        </div>
+                        <div id="adminDistributionPointsList" style="max-height:220px; overflow-y:auto;"></div>
                     </div>
                 </div>
 
@@ -1014,10 +1041,12 @@
             enabled: false,
             storeLat: 35.1234,
             storeLng: 36.5678,
+            inStoreDist: 15,
             tier1Dist: 50, tier1Fee: 0,
             tier2Dist: 2000, tier2Fee: 2000,
             extraDistUnit: 50, extraFee: 100,
-            maxDist: 5000
+            maxDist: 5000,
+            distributionPoints: []
         };
         let userLocation = null;
         let categories = ["الكل"], selectedCategory = "الكل", products = {}, specialOffers = {}, suppliers = {};
@@ -1307,10 +1336,18 @@
             if (d.workHours) workHoursSettings = { enabled: !!d.workHours.enabled, open: d.workHours.open || "08:00", close: d.workHours.close || "23:00" };
             if ($("workHoursEnabled")) $("workHoursEnabled").checked = workHoursSettings.enabled;
             if (d.gpsConfig) {
-                gpsConfig = d.gpsConfig;
+                gpsConfig = {
+                    ...gpsConfig,
+                    ...d.gpsConfig,
+                    inStoreDist: !isNaN(parseFloat(d.gpsConfig.inStoreDist)) ? parseFloat(d.gpsConfig.inStoreDist) : 15,
+                    distributionPoints: Array.isArray(d.gpsConfig.distributionPoints)
+                        ? d.gpsConfig.distributionPoints
+                        : Object.values(d.gpsConfig.distributionPoints || {})
+                };
                 if ($("gpsEnabledCheck")) $("gpsEnabledCheck").checked = gpsConfig.enabled;
                 setVal("gpsStoreLat", gpsConfig.storeLat);
                 setVal("gpsStoreLng", gpsConfig.storeLng);
+                setVal("gpsInStoreDist", gpsConfig.inStoreDist);
                 setVal("gpsT1Dist", gpsConfig.tier1Dist);
                 setVal("gpsT1Fee", gpsConfig.tier1Fee);
                 setVal("gpsT2Dist", gpsConfig.tier2Dist);
@@ -1318,6 +1355,7 @@
                 setVal("gpsExtraUnit", gpsConfig.extraDistUnit);
                 setVal("gpsExtraFee", gpsConfig.extraFee);
                 setVal("gpsMaxDist", gpsConfig.maxDist);
+                renderAdminDistributionPoints();
                 startLocationWatch();
             }
             setVal("workHourOpen", workHoursSettings.open);
@@ -1440,18 +1478,158 @@
 
         function getGPSFee(distanceMeters) {
             const dist = Math.max(0, parseFloat(distanceMeters) || 0);
+            const inStoreD = !isNaN(parseFloat(gpsConfig.inStoreDist)) ? parseFloat(gpsConfig.inStoreDist) : 15;
             const t1D = !isNaN(parseFloat(gpsConfig.tier1Dist)) ? parseFloat(gpsConfig.tier1Dist) : 50;
             const t1F = !isNaN(parseInt(gpsConfig.tier1Fee)) ? parseInt(gpsConfig.tier1Fee) : 0;
             const t2D = !isNaN(parseFloat(gpsConfig.tier2Dist)) ? parseFloat(gpsConfig.tier2Dist) : 2000;
             const t2F = !isNaN(parseInt(gpsConfig.tier2Fee)) ? parseInt(gpsConfig.tier2Fee) : 2000;
             const maxD = !isNaN(parseFloat(gpsConfig.maxDist)) ? parseFloat(gpsConfig.maxDist) : 5000;
             const extF = !isNaN(parseInt(gpsConfig.extraFee)) ? parseInt(gpsConfig.extraFee) : 100;
+            if (dist <= inStoreD) return 0;
             if (dist <= t1D) return t1F;
             if (dist <= t2D) return t2F;
             if (dist > maxD) return -1;
             const extraDist = dist - t2D;
             const chunks = Math.ceil(extraDist / Math.max(1, parseFloat(gpsConfig.extraDistUnit) || 50));
             return t2F + (chunks * extF);
+        }
+
+        function evaluateSmartGPSDelivery(uLat, uLng) {
+            const airDist = calculateDistance(gpsConfig.storeLat, gpsConfig.storeLng, uLat, uLng);
+            const inStoreD = !isNaN(parseFloat(gpsConfig.inStoreDist)) ? parseFloat(gpsConfig.inStoreDist) : 15;
+            const t1D = !isNaN(parseFloat(gpsConfig.tier1Dist)) ? parseFloat(gpsConfig.tier1Dist) : 50;
+            const t2D = !isNaN(parseFloat(gpsConfig.tier2Dist)) ? parseFloat(gpsConfig.tier2Dist) : 2000;
+
+            // 1. طبقة من داخل المخزن (مجاناً)
+            if (airDist <= inStoreD) {
+                return {
+                    effectiveDist: Math.round(airDist),
+                    airDist: Math.round(airDist),
+                    fee: 0,
+                    tierType: "in_store",
+                    tierLabel: "من داخل المخزن (مجاناً)",
+                    viaPointName: null
+                };
+            }
+
+            // 2. داخل نطاق الجار الملاصق أو القرية المحلية (يعتمد المسافة المباشرة)
+            if (airDist <= t2D) {
+                const fee = getGPSFee(airDist);
+                return {
+                    effectiveDist: Math.round(airDist),
+                    airDist: Math.round(airDist),
+                    fee,
+                    tierType: airDist <= t1D ? "tier1" : "tier2",
+                    tierLabel: airDist <= t1D ? `الجار الملاصق (${Math.round(airDist)}م)` : `القرية المحلية (${Math.round(airDist)}م)`,
+                    viaPointName: null
+                };
+            }
+
+            // 3. خارج طبقة القرية المحلية: فحص أقرب نقطة توزيع (إن وجدت) وحساب (المسافة الحقيقية للنقطة + المسافة من النقطة للزبون)
+            let finalDist = airDist;
+            let viaPointName = null;
+            const pts = Array.isArray(gpsConfig.distributionPoints)
+                ? gpsConfig.distributionPoints
+                : Object.values(gpsConfig.distributionPoints || {});
+
+            if (pts.length > 0) {
+                let nearestPt = null;
+                let minDistToPt = Infinity;
+                pts.forEach(pt => {
+                    const pLat = parseFloat(pt.lat), pLng = parseFloat(pt.lng), pReal = parseFloat(pt.realDistMeters);
+                    if (!isNaN(pLat) && !isNaN(pLng) && !isNaN(pReal)) {
+                        const dToUser = calculateDistance(pLat, pLng, uLat, uLng);
+                        if (dToUser < minDistToPt) {
+                            minDistToPt = dToUser;
+                            nearestPt = { ...pt, dToUser, totalRouteDist: pReal + dToUser };
+                        }
+                    }
+                });
+                if (nearestPt) {
+                    finalDist = nearestPt.totalRouteDist;
+                    viaPointName = nearestPt.name || "نقطة توزيع";
+                }
+            }
+
+            const fee = getGPSFee(finalDist);
+            return {
+                effectiveDist: Math.round(finalDist),
+                airDist: Math.round(airDist),
+                fee,
+                tierType: fee < 0 ? "out_of_range" : "tier3",
+                tierLabel: viaPointName ? `عبر ${viaPointName} (${Math.round(finalDist)}م)` : `GPS (${Math.round(finalDist)}م)`,
+                viaPointName
+            };
+        }
+
+        function renderAdminDistributionPoints() {
+            const box = $("adminDistributionPointsList");
+            if (!box) return;
+            const pts = Array.isArray(gpsConfig.distributionPoints)
+                ? gpsConfig.distributionPoints
+                : Object.values(gpsConfig.distributionPoints || {});
+            gpsConfig.distributionPoints = pts;
+            if (!pts.length) {
+                box.innerHTML = `<div style="font-size:11px; color:var(--gray-text); text-align:center; padding:6px;">لا توجد نقاط توزيع مضافة حالياً.</div>`;
+                return;
+            }
+            box.innerHTML = pts.map((pt, idx) => `
+                <div class="adm-card" style="display:flex; justify-content:space-between; align-items:center; gap:6px; padding:6px 8px; margin-bottom:5px;">
+                    <div style="font-size:11px;">
+                        <b style="color:var(--gold-color);">📍 ${ idx + 1 }. ${esc(pt.name)}</b>
+                        <span style="color:var(--success-color); font-weight:bold; margin-right:6px;">(مسافة الطريق: ${parseInt(pt.realDistMeters) || 0} متر)</span><br>
+                        <small style="color:var(--gray-text);">${parseFloat(pt.lat).toFixed(5)}, ${parseFloat(pt.lng).toFixed(5)}</small>
+                    </div>
+                    <button type="button" onclick="removeDistributionPoint(${idx})" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">🗑️</button>
+                </div>
+            `).join("");
+        }
+
+        function captureNewDistPointGPS() {
+            if (!navigator.geolocation) return alert("⚠️ المتصفح لا يدعم الـ GPS.");
+            showToast("⏳ جاري التقاط إحداثيات نقطة التوزيع...", false);
+            navigator.geolocation.getCurrentPosition(pos => {
+                setVal("newDistPtLat", parseFloat(pos.coords.latitude.toFixed(6)));
+                setVal("newDistPtLng", parseFloat(pos.coords.longitude.toFixed(6)));
+                showToast("✅ تم التقاط موقع النقطة بنجاح!");
+            }, () => alert("❌ تعذر التقاط الموقع. تأكد من تشغيل الـ GPS."), { enableHighAccuracy: true, timeout: 10000 });
+        }
+
+        function addDistributionPoint() {
+            const name = ($("newDistPtName")?.value || "").trim();
+            const realDistMeters = parseInt($("newDistPtRealMeters")?.value);
+            const lat = parseFloat($("newDistPtLat")?.value);
+            const lng = parseFloat($("newDistPtLng")?.value);
+            if (!name || isNaN(realDistMeters) || realDistMeters < 0 || isNaN(lat) || isNaN(lng)) {
+                return alert("⚠️ يرجى إدخال اسم النقطة، المسافة الحقيقية من المخزن بالمتر، وإحداثيات الموقع (Lat / Lng).");
+            }
+            if (!Array.isArray(gpsConfig.distributionPoints)) {
+                gpsConfig.distributionPoints = Object.values(gpsConfig.distributionPoints || {});
+            }
+            gpsConfig.distributionPoints.push({
+                id: "DPT_" + Date.now(),
+                name,
+                realDistMeters,
+                lat: parseFloat(lat.toFixed(6)),
+                lng: parseFloat(lng.toFixed(6))
+            });
+            setVal("newDistPtName", "");
+            setVal("newDistPtRealMeters", "");
+            setVal("newDistPtLat", "");
+            setVal("newDistPtLng", "");
+            renderAdminDistributionPoints();
+            db.ref("settings/gpsConfig/distributionPoints").set(gpsConfig.distributionPoints).then(() => {
+                showToast(`✅ تمت إضافة نقطة التوزيع (${name}) بنجاح!`);
+            });
+        }
+
+        function removeDistributionPoint(idx) {
+            if (!Array.isArray(gpsConfig.distributionPoints)) return;
+            const pt = gpsConfig.distributionPoints[idx];
+            if (!pt || !confirm(`حذف نقطة التوزيع (${pt.name})؟`)) return;
+            gpsConfig.distributionPoints.splice(idx, 1);
+            renderAdminDistributionPoints();
+            db.ref("settings/gpsConfig/distributionPoints").set(gpsConfig.distributionPoints);
         }
 
         let geoWatchId = null;
@@ -2086,11 +2264,10 @@
                 let fee = 0;
                 let locName = "";
                 if (gpsConfig.enabled && userLocation) {
-                    const dist = calculateDistance(gpsConfig.storeLat, gpsConfig.storeLng, userLocation.lat, userLocation.lng);
-                    const calcFee = getGPSFee(dist);
-                    if (calcFee >= 0) {
-                        fee = calcFee;
-                        locName = `GPS (${Math.round(dist)}م)`;
+                    const gpsEval = evaluateSmartGPSDelivery(userLocation.lat, userLocation.lng);
+                    if (gpsEval.fee >= 0) {
+                        fee = gpsEval.fee;
+                        locName = gpsEval.tierLabel;
                     } else {
                         fee = 0;
                         locName = "خارج نطاق التغطية ⚠️";
@@ -2125,10 +2302,10 @@
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.region || !validatePhoneSyrian(currentUser.phone)) return openEditProfile();
             
             if (gpsConfig.enabled && userLocation) {
-                const dist = calculateDistance(gpsConfig.storeLat, gpsConfig.storeLng, userLocation.lat, userLocation.lng);
-                if (getGPSFee(dist) < 0) {
+                const gpsEval = evaluateSmartGPSDelivery(userLocation.lat, userLocation.lng);
+                if (gpsEval.fee < 0) {
                     showToast("🌸 عذراً لا تغطي خدمتنا منطقتك في الوقت الحالي، نعمل على التوسع أكثر!", true);
-                    alert("🌸 عذراً، لا يمكننا التوصيل لمنطقتك في الوقت الحالي (المسافة " + Math.round(dist) + " متر تتجاوز حد التغطية المعتمد).\nنعمل على التوسع أكثر قريباً لخدمتكم!");
+                    alert("🌸 عذراً، لتغطية منطقتك في الوقت الحالي (المسافة الفعلية " + gpsEval.effectiveDist + " متر تتجاوز حد التغطية المعتمد).\nنعمل على التوسع أكثر قريباً لخدمتكم!");
                     return;
                 }
                 const cur = new Date().getHours() * 60 + new Date().getMinutes();
@@ -2185,19 +2362,24 @@
             
             let isOutOfGpsRange = false;
             if (gpsConfig.enabled && userLocation) {
-                const dist = calculateDistance(gpsConfig.storeLat, gpsConfig.storeLng, userLocation.lat, userLocation.lng);
-                const calcFee = getGPSFee(dist);
+                const gpsEval = evaluateSmartGPSDelivery(userLocation.lat, userLocation.lng);
                 if ($("manualRegionGroup")) $("manualRegionGroup").style.display = "none";
                 if ($("gpsStatusBox")) $("gpsStatusBox").style.display = "block";
-                if (calcFee >= 0) {
-                    fee = calcFee;
-                    deliveryTextDisplay = `GPS (${Math.round(dist)} متر)`;
-                    setTxt("gpsDistanceText", `تبعد عن المتجر: ${Math.round(dist)} متر | الأجرة: ${fee.toLocaleString()} ل.س`);
+                if (gpsEval.fee >= 0) {
+                    fee = gpsEval.fee;
+                    deliveryTextDisplay = gpsEval.tierLabel;
+                    if (gpsEval.tierType === "in_store") {
+                        setTxt("gpsDistanceText", `🏬 أنت الآن من داخل المخزن (${gpsEval.effectiveDist} متر) | التوصيل: مجاناً (0 ل.س)`);
+                    } else if (gpsEval.viaPointName) {
+                        setTxt("gpsDistanceText", `🧭 عبر نقطة (${gpsEval.viaPointName}) - المسافة المعتمدة: ${gpsEval.effectiveDist} متر | الأجرة: ${fee.toLocaleString()} ل.س`);
+                    } else {
+                        setTxt("gpsDistanceText", `تبعد عن المتجر: ${gpsEval.effectiveDist} متر | الأجرة: ${fee.toLocaleString()} ل.س`);
+                    }
                 } else {
                     isOutOfGpsRange = true;
                     fee = 0;
                     deliveryTextDisplay = "خارج التغطية ⚠️";
-                    setTxt("gpsDistanceText", `⚠️ موقعك يبعد (${Math.round(dist)} متر) وهو خارج نطاق التغطية الحالي (${gpsConfig.maxDist} متر). نعمل على التوسع أكثر!`);
+                    setTxt("gpsDistanceText", `⚠️ عذراً لتغطية منطقتك في الوقت الحالي (${gpsEval.effectiveDist} متر تتجاوز حد ${gpsConfig.maxDist} متر). نعمل على التوسع أكثر!`);
                 }
             } else {
                 fee = getRegionFee(reg);
@@ -2405,16 +2587,19 @@
                 const latVal = parseFloat(userLocation.lat);
                 const lngVal = parseFloat(userLocation.lng);
                 if (!isNaN(latVal) && !isNaN(lngVal)) {
-                    const dist = calculateDistance(gpsConfig.storeLat, gpsConfig.storeLng, latVal, lngVal);
-                    const calcFee = getGPSFee(dist);
-                    if (calcFee < 0) {
-                        alert("🌸 عذراً، لا يمكننا التوصيل لمنطقتك في الوقت الحالي. نعمل على التوسع أكثر قريباً!");
+                    const gpsEval = evaluateSmartGPSDelivery(latVal, lngVal);
+                    if (gpsEval.fee < 0) {
+                        alert("🌸 عذراً، لتغطية منطقتك في الوقت الحالي. نعمل على التوسع أكثر قريباً!");
                         return;
                     }
-                    fee = calcFee;
+                    fee = gpsEval.fee;
                     isGpsOrder = true;
-                    gpsDistanceMeters = Math.round(dist);
-                    finalDeliveryRegionName = `${reg} - GPS (${gpsDistanceMeters} متر)`;
+                    gpsDistanceMeters = gpsEval.effectiveDist;
+                    finalDeliveryRegionName = gpsEval.tierType === "in_store"
+                        ? `${reg} - من داخل المخزن (${gpsDistanceMeters}م)`
+                        : (gpsEval.viaPointName
+                            ? `${reg} - عبر ${gpsEval.viaPointName} (${gpsDistanceMeters}م)`
+                            : `${reg} - GPS (${gpsDistanceMeters} متر)`);
                     mapsUrl = `https://maps.google.com/?q=${latVal.toFixed(6)},${lngVal.toFixed(6)}`;
                 } else {
                     fee = getRegionFee(reg);
@@ -3650,13 +3835,15 @@
                     enabled: $("gpsEnabledCheck")?.checked || false,
                     storeLat: !isNaN(parseFloat($("gpsStoreLat")?.value)) ? parseFloat($("gpsStoreLat")?.value) : 35.1234,
                     storeLng: !isNaN(parseFloat($("gpsStoreLng")?.value)) ? parseFloat($("gpsStoreLng")?.value) : 36.5678,
+                    inStoreDist: !isNaN(parseInt($("gpsInStoreDist")?.value)) ? Math.max(0, parseInt($("gpsInStoreDist")?.value)) : 15,
                     tier1Dist: !isNaN(parseInt($("gpsT1Dist")?.value)) ? parseInt($("gpsT1Dist")?.value) : 50,
                     tier1Fee: !isNaN(parseInt($("gpsT1Fee")?.value)) ? parseInt($("gpsT1Fee")?.value) : 0,
                     tier2Dist: !isNaN(parseInt($("gpsT2Dist")?.value)) ? parseInt($("gpsT2Dist")?.value) : 2000,
                     tier2Fee: !isNaN(parseInt($("gpsT2Fee")?.value)) ? parseInt($("gpsT2Fee")?.value) : 2000,
                     extraDistUnit: Math.max(1, parseInt($("gpsExtraUnit")?.value) || 50),
                     extraFee: !isNaN(parseInt($("gpsExtraFee")?.value)) ? parseInt($("gpsExtraFee")?.value) : 100,
-                    maxDist: Math.max(1, parseInt($("gpsMaxDist")?.value) || 5000)
+                    maxDist: Math.max(1, parseInt($("gpsMaxDist")?.value) || 5000),
+                    distributionPoints: Array.isArray(gpsConfig.distributionPoints) ? gpsConfig.distributionPoints : []
                 }
             }).then(() => alert("✅ تم حفظ كافة إعدادات النظام ومناطق التوصيل ومدير التصدير بنجاح!"));
         }
