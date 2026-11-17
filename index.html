@@ -1132,9 +1132,27 @@
             return !workHoursSettings.enabled ? true : checkRange(workHoursSettings.open, workHoursSettings.close);
         }
 
+        function isGlobalStoreOpenNow() {
+            if (!workHoursSettings.enabled) return true;
+            const now = new Date(), cur = now.getHours() * 60 + now.getMinutes();
+            const [oH, oM] = (workHoursSettings.open || "08:00").split(":").map(Number);
+            const [cH, cM] = (workHoursSettings.close || "23:00").split(":").map(Number);
+            const oMin = oH * 60 + oM, cMin = cH * 60 + cM;
+            return oMin <= cMin ? (cur >= oMin && cur < cMin) : (cur >= oMin || cur < cMin);
+        }
+
         function checkStoreWorkHours() {
             const overlay = $("storeClosedOverlay");
             if (!overlay) return true;
+            if (gpsConfig.enabled && userLocation) {
+                if (!isGlobalStoreOpenNow()) {
+                    if ($("closedMessageText")) $("closedMessageText").innerHTML = `نعتذر منكم، المتجر مغلق حالياً.<br>ساعات الدوام المعتمدة: من <b>${workHoursSettings.open}</b> إلى <b>${workHoursSettings.close}</b>.`;
+                    overlay.style.display = "flex";
+                    return false;
+                }
+                overlay.style.display = "none";
+                return true;
+            }
             const defReg = Object.keys(deliveryFees)[0] || "العوينة";
             const uReg = (currentUser?.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : defReg;
             if (!isRegionOpenNow(uReg)) {
@@ -1422,17 +1440,18 @@
 
         function getGPSFee(distanceMeters) {
             const dist = Math.max(0, parseFloat(distanceMeters) || 0);
-            const t1D = parseFloat(gpsConfig.tier1Dist) || 50;
-            const t1F = parseInt(gpsConfig.tier1Fee) || 0;
-            const t2D = parseFloat(gpsConfig.tier2Dist) || 2000;
-            const t2F = parseInt(gpsConfig.tier2Fee) || 2000;
-            const maxD = parseFloat(gpsConfig.maxDist) || 5000;
+            const t1D = !isNaN(parseFloat(gpsConfig.tier1Dist)) ? parseFloat(gpsConfig.tier1Dist) : 50;
+            const t1F = !isNaN(parseInt(gpsConfig.tier1Fee)) ? parseInt(gpsConfig.tier1Fee) : 0;
+            const t2D = !isNaN(parseFloat(gpsConfig.tier2Dist)) ? parseFloat(gpsConfig.tier2Dist) : 2000;
+            const t2F = !isNaN(parseInt(gpsConfig.tier2Fee)) ? parseInt(gpsConfig.tier2Fee) : 2000;
+            const maxD = !isNaN(parseFloat(gpsConfig.maxDist)) ? parseFloat(gpsConfig.maxDist) : 5000;
+            const extF = !isNaN(parseInt(gpsConfig.extraFee)) ? parseInt(gpsConfig.extraFee) : 100;
             if (dist <= t1D) return t1F;
             if (dist <= t2D) return t2F;
             if (dist > maxD) return -1;
             const extraDist = dist - t2D;
             const chunks = Math.ceil(extraDist / Math.max(1, parseFloat(gpsConfig.extraDistUnit) || 50));
-            return t2F + (chunks * (parseInt(gpsConfig.extraFee) || 100));
+            return t2F + (chunks * extF);
         }
 
         let geoWatchId = null;
@@ -2109,8 +2128,7 @@
                 const dist = calculateDistance(gpsConfig.storeLat, gpsConfig.storeLng, userLocation.lat, userLocation.lng);
                 if (getGPSFee(dist) < 0) {
                     showToast("🌸 عذراً لا تغطي خدمتنا منطقتك في الوقت الحالي، نعمل على التوسع أكثر!", true);
-                    alert("🌸 عذراً، لا يمكننا التوصيل لمنطقتك في الوقت الحالي (المسافة " + Math.round(dist) + " متر تتجاوز حد التغطية المعتمد).
-نعمل على التوسع أكثر قريباً لخدمتكم!");
+                    alert("🌸 عذراً، لا يمكننا التوصيل لمنطقتك في الوقت الحالي (المسافة " + Math.round(dist) + " متر تتجاوز حد التغطية المعتمد).\nنعمل على التوسع أكثر قريباً لخدمتكم!");
                     return;
                 }
                 const cur = new Date().getHours() * 60 + new Date().getMinutes();
@@ -3215,7 +3233,7 @@
             Object.values(completedOrdersHistory).forEach(ord => {
                 const ordISO = ord.dateISO || new Date().toISOString();
                 const d = new Date(ordISO);
-                const fee = parseInt(ord.deliveryFeeSYP) || 0, dShare = Math.round((fee * getRegionDriverPct(ord.customerRegion)) / 100);
+                const fee = parseInt(ord.deliveryFeeSYP) || 0, dShare = Math.round((fee * getRegionDriverPct(ord.customerBaseRegion || String(ord.customerRegion || "").split(" - GPS")[0])) / 100);
                 if (ordISO > drvReset) drvNetSYP += dShare;
                 if (ordISO > mntReset) maintFundSYP += (fee - dShare);
 
@@ -3630,15 +3648,15 @@
                 workHours: { enabled: $("workHoursEnabled").checked, open: $("workHourOpen").value || "08:00", close: $("workHourClose").value || "23:00" },
                 gpsConfig: {
                     enabled: $("gpsEnabledCheck")?.checked || false,
-                    storeLat: parseFloat($("gpsStoreLat")?.value) || 35.1234,
-                    storeLng: parseFloat($("gpsStoreLng")?.value) || 36.5678,
-                    tier1Dist: parseInt($("gpsT1Dist")?.value) || 50,
-                    tier1Fee: parseInt($("gpsT1Fee")?.value) || 0,
-                    tier2Dist: parseInt($("gpsT2Dist")?.value) || 2000,
-                    tier2Fee: parseInt($("gpsT2Fee")?.value) || 2000,
-                    extraDistUnit: parseInt($("gpsExtraUnit")?.value) || 50,
-                    extraFee: parseInt($("gpsExtraFee")?.value) || 100,
-                    maxDist: parseInt($("gpsMaxDist")?.value) || 5000
+                    storeLat: !isNaN(parseFloat($("gpsStoreLat")?.value)) ? parseFloat($("gpsStoreLat")?.value) : 35.1234,
+                    storeLng: !isNaN(parseFloat($("gpsStoreLng")?.value)) ? parseFloat($("gpsStoreLng")?.value) : 36.5678,
+                    tier1Dist: !isNaN(parseInt($("gpsT1Dist")?.value)) ? parseInt($("gpsT1Dist")?.value) : 50,
+                    tier1Fee: !isNaN(parseInt($("gpsT1Fee")?.value)) ? parseInt($("gpsT1Fee")?.value) : 0,
+                    tier2Dist: !isNaN(parseInt($("gpsT2Dist")?.value)) ? parseInt($("gpsT2Dist")?.value) : 2000,
+                    tier2Fee: !isNaN(parseInt($("gpsT2Fee")?.value)) ? parseInt($("gpsT2Fee")?.value) : 2000,
+                    extraDistUnit: Math.max(1, parseInt($("gpsExtraUnit")?.value) || 50),
+                    extraFee: !isNaN(parseInt($("gpsExtraFee")?.value)) ? parseInt($("gpsExtraFee")?.value) : 100,
+                    maxDist: Math.max(1, parseInt($("gpsMaxDist")?.value) || 5000)
                 }
             }).then(() => alert("✅ تم حفظ كافة إعدادات النظام ومناطق التوصيل ومدير التصدير بنجاح!"));
         }
