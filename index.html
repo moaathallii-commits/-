@@ -864,6 +864,7 @@
                         <div class="form-group"><label>خط عرض المتجر (Lat):</label><input type="number" step="any" id="gpsStoreLat" class="form-control"></div>
                         <div class="form-group"><label>خط طول المتجر (Lng):</label><input type="number" step="any" id="gpsStoreLng" class="form-control"></div>
                     </div>
+                    <button type="button" onclick="captureAdminCurrentStoreLocation()" class="btn" style="margin-bottom:8px; padding:6px; font-size:11px; background:rgba(0,176,255,0.18); color:#00b0ff; border:1px solid #00b0ff;">📍 التقاط موقعي الحالي كمركز للمتجر</button>
                     <div class="adm-card" style="border-color:var(--success-color);">
                         <strong style="color:var(--success-color); font-size:11px;">الطبقة 1 (الجار الملاصق)</strong>
                         <div style="display:flex; gap:6px; margin-top:4px;">
@@ -1044,6 +1045,7 @@
                     exchangeRate = d.exchangeRate || 15000;
                     deliveryFees = d.deliveryFees || deliveryFees;
                     adminWhatsAppNumber = d.adminWhatsApp || "963965461504";
+                    if (d.gpsConfig) gpsConfig = { ...gpsConfig, ...d.gpsConfig };
                 }
                 if (localStorage.getItem("cache_categories")) {
                     categories = ["الكل", ...JSON.parse(localStorage.getItem("cache_categories"))];
@@ -1057,11 +1059,12 @@
                     specialOffers = JSON.parse(localStorage.getItem("cache_specialOffers"));
                     renderSpecialOffers();
                 }
-                if (d.gpsConfig) gpsConfig = d.gpsConfig;
                 const loc = localStorage.getItem('moaath_user_location');
                 if (loc) {
                     const parsed = JSON.parse(loc);
-                    if (Date.now() - parsed.time < 3600000) userLocation = parsed;
+                    if (parsed && !isNaN(parseFloat(parsed.lat)) && !isNaN(parseFloat(parsed.lng)) && (Date.now() - (parsed.time || 0) < 3600000)) {
+                        userLocation = { lat: parseFloat(parsed.lat), lng: parseFloat(parsed.lng), time: parsed.time };
+                    }
                 }
             } catch (e) { console.log("Error loading cache", e); }
         }
@@ -1418,26 +1421,75 @@
         }
 
         function getGPSFee(distanceMeters) {
-            if (distanceMeters <= gpsConfig.tier1Dist) return gpsConfig.tier1Fee;
-            if (distanceMeters <= gpsConfig.tier2Dist) return gpsConfig.tier2Fee;
-            if (distanceMeters > gpsConfig.maxDist) return -1;
-            const extraDist = distanceMeters - gpsConfig.tier2Dist;
-            const chunks = Math.ceil(extraDist / (gpsConfig.extraDistUnit || 50));
-            return gpsConfig.tier2Fee + (chunks * (gpsConfig.extraFee || 100));
+            const dist = Math.max(0, parseFloat(distanceMeters) || 0);
+            const t1D = parseFloat(gpsConfig.tier1Dist) || 50;
+            const t1F = parseInt(gpsConfig.tier1Fee) || 0;
+            const t2D = parseFloat(gpsConfig.tier2Dist) || 2000;
+            const t2F = parseInt(gpsConfig.tier2Fee) || 2000;
+            const maxD = parseFloat(gpsConfig.maxDist) || 5000;
+            if (dist <= t1D) return t1F;
+            if (dist <= t2D) return t2F;
+            if (dist > maxD) return -1;
+            const extraDist = dist - t2D;
+            const chunks = Math.ceil(extraDist / Math.max(1, parseFloat(gpsConfig.extraDistUnit) || 50));
+            return t2F + (chunks * (parseInt(gpsConfig.extraFee) || 100));
+        }
+
+        let geoWatchId = null;
+        let geoIntervalId = null;
+
+        function updateUserPositionState(pos) {
+            const lat = parseFloat(pos?.coords?.latitude);
+            const lng = parseFloat(pos?.coords?.longitude);
+            if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
+            userLocation = { lat: parseFloat(lat.toFixed(6)), lng: parseFloat(lng.toFixed(6)), time: Date.now() };
+            localStorage.setItem('moaath_user_location', JSON.stringify(userLocation));
+            updateCartBar();
+            if ($("cartModal")?.style.display === "flex") renderCartModalItems();
         }
 
         function startLocationWatch() {
-            if (navigator.geolocation && gpsConfig.enabled) {
-                navigator.geolocation.watchPosition(pos => {
-                    userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, time: Date.now() };
-                    localStorage.setItem('moaath_user_location', JSON.stringify(userLocation));
-                    if ($("cartModal")?.style.display === "flex") renderCartModalItems();
-                }, err => {
-                    console.warn("GPS Denied/Error:", err);
-                    userLocation = null;
-                    if ($("cartModal")?.style.display === "flex") renderCartModalItems();
-                }, { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 });
+            if (!navigator.geolocation) return;
+            if (geoWatchId !== null) {
+                try { navigator.geolocation.clearWatch(geoWatchId); } catch (e) {}
+                geoWatchId = null;
             }
+            if (geoIntervalId !== null) {
+                clearInterval(geoIntervalId);
+                geoIntervalId = null;
+            }
+            if (!gpsConfig.enabled) return;
+
+            navigator.geolocation.getCurrentPosition(updateUserPositionState, () => {}, { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 });
+
+            geoWatchId = navigator.geolocation.watchPosition(updateUserPositionState, err => {
+                console.warn("GPS Denied/Error:", err);
+                if (err && err.code === 1) {
+                    userLocation = null;
+                    updateCartBar();
+                    if ($("cartModal")?.style.display === "flex") renderCartModalItems();
+                }
+            }, { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 });
+
+            geoIntervalId = setInterval(() => {
+                if (gpsConfig.enabled && document.visibilityState === "visible") {
+                    navigator.geolocation.getCurrentPosition(updateUserPositionState, () => {}, { enableHighAccuracy: true, maximumAge: 10000, timeout: 8000 });
+                }
+            }, 15000);
+        }
+
+        function captureAdminCurrentStoreLocation() {
+            if (!navigator.geolocation) return alert("⚠️ المتصفح لا يدعم تحديد الموقع الجغرافي.");
+            showToast("⏳ جاري التقاط إحداثيات موقعك الحالي...", false);
+            navigator.geolocation.getCurrentPosition(pos => {
+                const lat = parseFloat(pos.coords.latitude.toFixed(6));
+                const lng = parseFloat(pos.coords.longitude.toFixed(6));
+                setVal("gpsStoreLat", lat);
+                setVal("gpsStoreLng", lng);
+                showToast("✅ تم التقاط إحداثيات المتجر بنجاح! اضغط حفظ الإعدادات لاعتمادها.");
+            }, err => {
+                alert("❌ تعذر التقاط الموقع. تأكد من تفعيل الـ GPS ومنح الإذن للمتصفح.");
+            }, { enableHighAccuracy: true, timeout: 10000 });
         }
 
         const validatePhoneSyrian = p => /^09[0-9]{8}$/.test(String(p || "").trim().replace(/\s+/g, ""));
@@ -2019,11 +2071,10 @@
                     const calcFee = getGPSFee(dist);
                     if (calcFee >= 0) {
                         fee = calcFee;
-                        locName = "حسب الـ GPS";
+                        locName = `GPS (${Math.round(dist)}م)`;
                     } else {
-                        const def = Object.keys(deliveryFees)[0] || "العوينة", reg = (currentUser?.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : def;
-                        fee = getRegionFee(reg);
-                        locName = reg;
+                        fee = 0;
+                        locName = "خارج نطاق التغطية ⚠️";
                     }
                 } else {
                     const def = Object.keys(deliveryFees)[0] || "العوينة", reg = (currentUser?.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : def;
@@ -2057,7 +2108,9 @@
             if (gpsConfig.enabled && userLocation) {
                 const dist = calculateDistance(gpsConfig.storeLat, gpsConfig.storeLng, userLocation.lat, userLocation.lng);
                 if (getGPSFee(dist) < 0) {
-                    alert("عذراً، لا يمكننا التوصيل لمنطقتك في الوقت الحالي. المسافة تتجاوز حد التغطية، نعمل على التوسع قريباً 🌸");
+                    showToast("🌸 عذراً لا تغطي خدمتنا منطقتك في الوقت الحالي، نعمل على التوسع أكثر!", true);
+                    alert("🌸 عذراً، لا يمكننا التوصيل لمنطقتك في الوقت الحالي (المسافة " + Math.round(dist) + " متر تتجاوز حد التغطية المعتمد).
+نعمل على التوسع أكثر قريباً لخدمتكم!");
                     return;
                 }
                 const cur = new Date().getHours() * 60 + new Date().getMinutes();
@@ -2112,21 +2165,21 @@
             let reg = $("cartRegionSelect")?.value || currentUser?.region || Object.keys(deliveryFees)[0] || "العوينة";
             let deliveryTextDisplay = reg;
             
+            let isOutOfGpsRange = false;
             if (gpsConfig.enabled && userLocation) {
                 const dist = calculateDistance(gpsConfig.storeLat, gpsConfig.storeLng, userLocation.lat, userLocation.lng);
                 const calcFee = getGPSFee(dist);
+                if ($("manualRegionGroup")) $("manualRegionGroup").style.display = "none";
+                if ($("gpsStatusBox")) $("gpsStatusBox").style.display = "block";
                 if (calcFee >= 0) {
                     fee = calcFee;
-                    deliveryTextDisplay = "التوصيل بالـ GPS";
-                    if ($("manualRegionGroup")) $("manualRegionGroup").style.display = "none";
-                    if ($("gpsStatusBox")) {
-                        $("gpsStatusBox").style.display = "block";
-                        setTxt("gpsDistanceText", `تبعد عن المتجر: ${Math.round(dist)} متر`);
-                    }
+                    deliveryTextDisplay = `GPS (${Math.round(dist)} متر)`;
+                    setTxt("gpsDistanceText", `تبعد عن المتجر: ${Math.round(dist)} متر | الأجرة: ${fee.toLocaleString()} ل.س`);
                 } else {
-                    fee = getRegionFee(reg);
-                    if ($("manualRegionGroup")) $("manualRegionGroup").style.display = "block";
-                    if ($("gpsStatusBox")) $("gpsStatusBox").style.display = "none";
+                    isOutOfGpsRange = true;
+                    fee = 0;
+                    deliveryTextDisplay = "خارج التغطية ⚠️";
+                    setTxt("gpsDistanceText", `⚠️ موقعك يبعد (${Math.round(dist)} متر) وهو خارج نطاق التغطية الحالي (${gpsConfig.maxDist} متر). نعمل على التوسع أكثر!`);
                 }
             } else {
                 fee = getRegionFee(reg);
@@ -2170,9 +2223,17 @@
             const useCreditPricing = (selectedPay === "آجل (دفتر الدين)");
             if ($("shamCashInfoBox")) $("shamCashInfoBox").style.display = (selectedPay === "شام كاش") ? "block" : "none";
             if ($("submitOrderUnifiedBtn")) {
-                $("submitOrderUnifiedBtn").textContent = (selectedPay === "شام كاش")
-                    ? "📋 نسخ كود شام كاش وإتمام الطلب عبر واتساب"
-                    : "✅ إتمام الطلب مباشرة عبر واتساب";
+                if (isOutOfGpsRange) {
+                    $("submitOrderUnifiedBtn").disabled = true;
+                    $("submitOrderUnifiedBtn").style.opacity = "0.5";
+                    $("submitOrderUnifiedBtn").textContent = "🚫 عذراً، منطقتك خارج نطاق التغطية حالياً";
+                } else {
+                    $("submitOrderUnifiedBtn").disabled = false;
+                    $("submitOrderUnifiedBtn").style.opacity = "1";
+                    $("submitOrderUnifiedBtn").textContent = (selectedPay === "شام كاش")
+                        ? "📋 نسخ كود شام كاش وإتمام الطلب عبر واتساب"
+                        : "✅ إتمام الطلب مباشرة عبر واتساب";
+                }
             }
 
             const markupPct = useCreditPricing ? getCurrentUserCreditMarkupPct() : 0;
@@ -2287,7 +2348,7 @@
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.address) { closeModal('cartModal'); return openEditProfile(); }
             const defReg = Object.keys(deliveryFees)[0] || "العوينة";
             const reg = (currentUser?.region && deliveryFees.hasOwnProperty(currentUser.region)) ? currentUser.region : defReg;
-            if (!isRegionOpenNow(reg)) return alert(`⚠️ أوقات التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
+            if (!(gpsConfig.enabled && userLocation) && !isRegionOpenNow(reg)) return alert(`⚠️ أوقات التوصيل لمنطقة (${reg}) مغلقة حالياً.`);
             if (users[currentUser.phone]?.banned) return alert("🚫 حسابك محظور.");
             const items = Object.values(cart); if (!items.length) return;
 
@@ -2320,13 +2381,23 @@
             let fee = 0;
             let finalDeliveryRegionName = reg;
             let mapsUrl = "";
+            let isGpsOrder = false;
+            let gpsDistanceMeters = 0;
             if (gpsConfig.enabled && userLocation) {
-                const dist = calculateDistance(gpsConfig.storeLat, gpsConfig.storeLng, userLocation.lat, userLocation.lng);
-                const calcFee = getGPSFee(dist);
-                if (calcFee >= 0) {
+                const latVal = parseFloat(userLocation.lat);
+                const lngVal = parseFloat(userLocation.lng);
+                if (!isNaN(latVal) && !isNaN(lngVal)) {
+                    const dist = calculateDistance(gpsConfig.storeLat, gpsConfig.storeLng, latVal, lngVal);
+                    const calcFee = getGPSFee(dist);
+                    if (calcFee < 0) {
+                        alert("🌸 عذراً، لا يمكننا التوصيل لمنطقتك في الوقت الحالي. نعمل على التوسع أكثر قريباً!");
+                        return;
+                    }
                     fee = calcFee;
-                    finalDeliveryRegionName = `توصيل GPS (${Math.round(dist)} متر)`;
-                    mapsUrl = `https://maps.google.com/?q=${userLocation.lat},${userLocation.lng}`;
+                    isGpsOrder = true;
+                    gpsDistanceMeters = Math.round(dist);
+                    finalDeliveryRegionName = `${reg} - GPS (${gpsDistanceMeters} متر)`;
+                    mapsUrl = `https://maps.google.com/?q=${latVal.toFixed(6)},${lngVal.toFixed(6)}`;
                 } else {
                     fee = getRegionFee(reg);
                 }
@@ -2367,8 +2438,8 @@
 
             const orderPayload = {
                 orderId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
-                customerName: currentUser.name, customerPhone: currentUser.phone, customerRegion: finalDeliveryRegionName, customerAddress: currentUser.address,
-                mapsUrl,
+                customerName: currentUser.name, customerPhone: currentUser.phone, customerRegion: finalDeliveryRegionName, customerBaseRegion: reg, customerAddress: currentUser.address,
+                mapsUrl, isGpsOrder, gpsDistanceMeters,
                 isCreditOrder: isCreditUser, creditMarkupPct: markupPct, creditMarkupSYP: markupSYP, orderTotalUSD: finalOrderUSD,
                 paymentMethod: selectedPayMethod,
                 notes: ($("orderNotes")?.value || "").trim(), items: ordItems,
@@ -2959,7 +3030,9 @@
                         : (parseFloat((isW && pItem.wholesaleUSD > 0) ? pItem.wholesaleUSD : (pItem.priceUSD || pItem.newPriceUSD)) || 0);
                     realTotalSYP += calcSYP(rPrice) * i.qty;
                 });
-                const fee = getRegionFee(o.customerRegion);
+                const fee = (o.isGpsOrder || o.mapsUrl || String(o.customerRegion || "").includes("GPS"))
+                    ? (parseInt(o.deliveryFeeSYP) || 0)
+                    : getRegionFee(o.customerBaseRegion || o.customerRegion);
                 const rMarkupAmt = o.creditMarkupPct > 0 ? Math.round((realTotalSYP * o.creditMarkupPct) / 100) : 0;
                 const expectedTotal = realTotalSYP + rMarkupAmt + fee;
                 if (Math.abs(expectedTotal - o.totalSaleSYP) > 50) isTampered = true;
@@ -2993,7 +3066,7 @@
                     ${tamperAlert}
                     ${bannerHtml}
                     <div style="display:flex; justify-content:space-between; color:${textCol}; font-weight:bold; margin-bottom:4px;"><span>👤 ${esc(o.customerName)} (${esc(o.customerPhone)})</span><span>${o.timestamp}</span></div>
-                    <div style="margin-bottom:4px;">🏘️ ${esc(o.customerRegion)} | 📍 ${esc(o.customerAddress)} | 💳 ${esc(payMethod)}</div>
+                    <div style="margin-bottom:4px;">🏘️ ${esc(o.customerRegion)} | 📍 ${esc(o.customerAddress)} | 💳 ${esc(payMethod)} ${o.mapsUrl ? `<a href="${esc(o.mapsUrl)}" target="_blank" rel="noopener" style="color:#00e676; font-weight:bold; text-decoration:underline; margin-right:6px;">🗺️ فتح الموقع على الخريطة</a>` : ''}</div>
                     ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${esc(o.notes)}</div>` : ''}
                     <div style="border-top:1px dashed ${borderColor}; border-bottom:1px dashed ${borderColor}; padding:6px 0; margin:6px 0;">${itemsHtml}</div>
                     <div style="font-weight:bold; margin-bottom:6px;">المطلوب تحصيله: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س ${isCred || isPrep ? `<span style="color:${textCol};">(${(o.orderTotalUSD||0).toFixed(2)} $)</span>` : ''}</div>
@@ -3700,7 +3773,9 @@
                         : (parseFloat((isW && pItem.wholesaleUSD > 0) ? pItem.wholesaleUSD : (pItem.priceUSD || pItem.newPriceUSD)) || 0);
                     realTotalSYP += calcSYP(rPrice) * i.qty;
                 });
-                const fee = getRegionFee(o.customerRegion);
+                const fee = (o.isGpsOrder || o.mapsUrl || String(o.customerRegion || "").includes("GPS"))
+                    ? (parseInt(o.deliveryFeeSYP) || 0)
+                    : getRegionFee(o.customerBaseRegion || o.customerRegion);
                 const rMarkupAmt = o.creditMarkupPct > 0 ? Math.round((realTotalSYP * o.creditMarkupPct) / 100) : 0;
                 const expectedTotal = realTotalSYP + rMarkupAmt + fee;
                 if (Math.abs(expectedTotal - o.totalSaleSYP) > 50) isTampered = true;
@@ -3734,7 +3809,7 @@
                     ${tamperAlert}
                     ${bannerHtml}
                     <div style="display:flex; justify-content:space-between; color:${textCol}; font-weight:bold; margin-bottom:4px;"><span>👤 ${esc(o.customerName)} (${esc(o.customerPhone)})</span><span>${o.timestamp}</span></div>
-                    <div style="margin-bottom:4px;">🏘️ ${esc(o.customerRegion)} | 📍 ${esc(o.customerAddress)} | 💳 ${esc(payMethod)}</div>
+                    <div style="margin-bottom:4px;">🏘️ ${esc(o.customerRegion)} | 📍 ${esc(o.customerAddress)} | 💳 ${esc(payMethod)} ${o.mapsUrl ? `<a href="${esc(o.mapsUrl)}" target="_blank" rel="noopener" style="color:#00e676; font-weight:bold; text-decoration:underline; margin-right:6px;">🗺️ فتح الموقع على الخريطة</a>` : ''}</div>
                     ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${esc(o.notes)}</div>` : ''}
                     <div style="border-top:1px dashed ${borderColor}; border-bottom:1px dashed ${borderColor}; padding:6px 0; margin:6px 0;">${itemsHtml}</div>
                     <div style="font-weight:bold; margin-bottom:6px;">المطلوب تحصيله: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س ${isCred || isPrep ? `<span style="color:${textCol};">(${(o.orderTotalUSD||0).toFixed(2)} $)</span>` : ''}</div>
@@ -3782,7 +3857,7 @@
             
             updates[`users/${phone}/name`] = o.customerName;
             updates[`users/${phone}/phone`] = phone;
-            updates[`users/${phone}/region`] = o.customerRegion;
+            updates[`users/${phone}/region`] = o.customerBaseRegion || (deliveryFees.hasOwnProperty(o.customerRegion) ? o.customerRegion : (users[phone]?.region || Object.keys(deliveryFees)[0] || "العوينة"));
             updates[`users/${phone}/address`] = o.customerAddress;
             updates[`users/${phone}/points`] = upPts;
             updates[`users/${phone}/purchases`] = purch;
@@ -3875,7 +3950,7 @@
                         <span>👤 ${esc(o.customerName)} (${esc(o.customerPhone)})</span>
                         <button onclick="removeReadyOrder('${id}')" class="btn btn-danger" style="width:auto; padding:2px 6px; font-size:10px;">✖ حذف</button>
                     </div>
-                    <div style="font-size:11px; margin:4px 0;">🏘️ ${esc(o.customerRegion)} | 📍 ${esc(o.customerAddress)}</div>
+                    <div style="font-size:11px; margin:4px 0;">🏘️ ${esc(o.customerRegion)} | 📍 ${esc(o.customerAddress)} ${o.mapsUrl ? `<a href="${esc(o.mapsUrl)}" target="_blank" rel="noopener" style="color:#00e676; font-weight:bold; margin-right:6px;">🗺️ الخريطة</a>` : ''}</div>
                 </div>`;
             }).join("");
 
@@ -3897,12 +3972,13 @@
             const keys = Object.keys(readyOrders);
             if (!keys.length) return alert("ℹ️ لا توجد طلبات مجهزة لإرسالها.");
             
-            // Group by region
+            // Group by base region so GPS orders don't fragment the driver list
             const grouped = {};
             keys.forEach(k => {
                 const o = readyOrders[k];
-                if (!grouped[o.customerRegion]) grouped[o.customerRegion] = [];
-                grouped[o.customerRegion].push(o);
+                const grpName = o.customerBaseRegion || String(o.customerRegion || "العوينة").split(" - GPS")[0];
+                if (!grouped[grpName]) grouped[grpName] = [];
+                grouped[grpName].push(o);
             });
 
             let msg = `🛵 *قائمة التوصيل الجديدة - متجر معاذ* 🛵\nالتاريخ: ${new Date().toLocaleString("ar-SY")}\n\n`;
