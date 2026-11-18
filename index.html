@@ -232,7 +232,10 @@
                 <button type="button" onclick="forceRefreshCartGPSLocation()" class="btn" style="margin-top:6px; width:auto; padding:3px 8px; font-size:10px; background:#00b0ff; color:#000;">🔄 تحديث موقعي الآن</button>
             </div>
             <div class="form-group" id="manualRegionGroup" style="margin-bottom:8px;">
-                <label>📍 اختر منطقة التوصيل (نظام يدوي):</label>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <label style="margin:0;">📍 اختر منطقة التوصيل:</label>
+                    <button type="button" id="manualGpsRetryBtn" onclick="forceRefreshCartGPSLocation()" class="btn" style="display:none; width:auto; padding:3px 8px; font-size:10px; background:rgba(0,176,255,0.18); color:#00b0ff; border:1px solid #00b0ff;">📍 تفعيل وتحديث موقعي بالـ GPS</button>
+                </div>
                 <select id="cartRegionSelect" class="form-control" onchange="onCartRegionChange()"></select>
             </div>
             <div class="adm-card" style="margin-bottom:8px; font-size:11px;">
@@ -1138,7 +1141,7 @@
             history.pushState({ page: 'store_home' }, '');
             window.addEventListener('popstate', () => {
                 if (isExitingApp) return;
-                for (let id of ['availableNotificationModal', 'cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal', 'competitionsPage', 'customerDebtModal', 'exportManagerModal']) {
+                for (let id of ['editPendingOrderModal', 'orderImagesModal', 'availableNotificationModal', 'cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal', 'competitionsPage', 'customerDebtModal', 'exportManagerModal']) {
                     const el = $(id);
                     if (el && (el.style.display === 'flex' || el.style.display === 'block')) {
                         el.style.display = 'none';
@@ -2329,10 +2332,10 @@
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.region || !validatePhoneSyrian(currentUser.phone)) return openEditProfile();
             
             if (gpsConfig.enabled && userLocation) {
-                const dist = calculateDistance(gpsConfig.storeLat, gpsConfig.storeLng, userLocation.lat, userLocation.lng);
-                if (getGPSFee(dist) < 0) {
+                const gpsEval = evaluateSmartGPSDelivery(userLocation.lat, userLocation.lng);
+                if (gpsEval.fee < 0) {
                     showToast("🌸 عذراً لا تغطي خدمتنا منطقتك في الوقت الحالي، نعمل على التوسع أكثر!", true);
-                    alert("🌸 عذراً، لا يمكننا التوصيل لمنطقتك في الوقت الحالي (المسافة " + Math.round(dist) + " متر تتجاوز حد التغطية المعتمد).\nنعمل على التوسع أكثر قريباً لخدمتكم!");
+                    alert("🌸 عذراً، لا تغطي خدمتنا منطقتك في الوقت الحالي (المسافة المعتمدة " + gpsEval.effectiveDist + " متر تتجاوز حد التغطية " + gpsConfig.maxDist + " متر).\nنعمل على التوسع أكثر قريباً لخدمتكم!");
                     return;
                 }
                 const cur = new Date().getHours() * 60 + new Date().getMinutes();
@@ -2411,6 +2414,7 @@
             } else {
                 fee = getRegionFee(reg);
                 if ($("manualRegionGroup")) $("manualRegionGroup").style.display = "block";
+                if ($("manualGpsRetryBtn")) $("manualGpsRetryBtn").style.display = gpsConfig.enabled ? "inline-block" : "none";
                 if ($("gpsStatusBox")) $("gpsStatusBox").style.display = "none";
             }
 
@@ -2878,20 +2882,7 @@
                     <div style="font-size:15px; color:#b71c1c;">💰 إجمالي الديون المستحقة: <b>${totalAllUSD.toFixed(2)} $</b> (${totalAllSYP.toLocaleString()} ل.س)</div>
                 </div>
                 ${customersHtml}
-            
-    <div id="editPendingOrderModal" class="modal-overlay" style="z-index: 10070 !important;">
-        <div class="modal-content" style="max-width:450px;">
-            <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">✏️ تعديل الطلب المعلق</h3>
-            <input type="hidden" id="editOrdId">
-            <div id="editOrdItemsContainer" style="max-height:50vh; overflow-y:auto; margin-bottom:12px;"></div>
-            <div style="display:flex; gap:8px;">
-                <button type="button" onclick="saveEditedPendingOrder()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ التعديلات</button>
-                <button type="button" onclick="closeModal('editPendingOrderModal')" class="btn btn-danger" style="width:35%;">إلغاء</button>
-            </div>
-        </div>
-    </div>
-
-</body>
+            </body>
             </html>`;
 
             const blob = new Blob(["\uFEFF" + htmlContent], { type: 'text/html;charset=utf-8;' });
@@ -3880,13 +3871,17 @@
                     enabled: $("gpsEnabledCheck")?.checked || false,
                     storeLat: !isNaN(parseFloat($("gpsStoreLat")?.value)) ? parseFloat($("gpsStoreLat")?.value) : 35.1234,
                     storeLng: !isNaN(parseFloat($("gpsStoreLng")?.value)) ? parseFloat($("gpsStoreLng")?.value) : 36.5678,
+                    inStoreDist: !isNaN(parseInt($("gpsInStoreDist")?.value)) ? Math.max(0, parseInt($("gpsInStoreDist")?.value)) : 15,
                     tier1Dist: !isNaN(parseInt($("gpsT1Dist")?.value)) ? parseInt($("gpsT1Dist")?.value) : 50,
                     tier1Fee: !isNaN(parseInt($("gpsT1Fee")?.value)) ? parseInt($("gpsT1Fee")?.value) : 0,
                     tier2Dist: !isNaN(parseInt($("gpsT2Dist")?.value)) ? parseInt($("gpsT2Dist")?.value) : 2000,
                     tier2Fee: !isNaN(parseInt($("gpsT2Fee")?.value)) ? parseInt($("gpsT2Fee")?.value) : 2000,
                     extraDistUnit: Math.max(1, parseInt($("gpsExtraUnit")?.value) || 50),
                     extraFee: !isNaN(parseInt($("gpsExtraFee")?.value)) ? parseInt($("gpsExtraFee")?.value) : 100,
-                    maxDist: Math.max(1, parseInt($("gpsMaxDist")?.value) || 5000)
+                    maxDist: Math.max(1, parseInt($("gpsMaxDist")?.value) || 5000),
+                    distributionPoints: Array.isArray(gpsConfig.distributionPoints)
+                        ? gpsConfig.distributionPoints
+                        : Object.values(gpsConfig.distributionPoints || {})
                 }
             }).then(() => alert("✅ تم حفظ كافة إعدادات النظام ومناطق التوصيل ومدير التصدير بنجاح!"));
         }
@@ -4025,10 +4020,15 @@
                 i.qty = nQ;
                 i.subSaleSYP = (i.unitSaleSYP || 0) * nQ;
                 i.subCostSYP = (i.unitCostSYP || 0) * nQ;
+                i.netProfitSYP = i.subSaleSYP - i.subCostSYP;
                 newSubSale += i.subSaleSYP;
                 newTotCost += i.subCostSYP;
-                newSubUSD += ((i.unitSaleSYP || 0) / exchangeRate) * nQ;
-                newTotPts += Math.round((((i.unitSaleSYP || 0) / exchangeRate) * nQ) * 2);
+                const itemBaseId = i.origId || String(i.id || "").replace(/_PKG$/, "");
+                const pSource = products[itemBaseId] || specialOffers[i.id] || {};
+                const itemPtsPct = parseFloat(pSource.pointsPct) || 2;
+                const lineUSD = ((i.unitSaleSYP || 0) / exchangeRate) * nQ;
+                newSubUSD += lineUSD;
+                newTotPts += Math.round(lineUSD * itemPtsPct);
             });
             o.items = o.items.filter(i => i.qty > 0);
             if (!o.items.length) {
