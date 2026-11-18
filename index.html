@@ -229,6 +229,7 @@
             <div id="gpsStatusBox" style="display:none; background:rgba(0,176,255,0.1); border:1px solid #00b0ff; border-radius:6px; padding:8px; margin-bottom:8px; font-size:11px; text-align:center;">
                 <span style="color:#00b0ff; font-weight:bold;">📍 تم تحديد موقعك آلياً بالـ GPS</span>
                 <div id="gpsDistanceText" style="color:var(--text-color); margin-top:4px;"></div>
+                <button type="button" onclick="forceRefreshCartGPSLocation()" class="btn" style="margin-top:6px; width:auto; padding:3px 8px; font-size:10px; background:#00b0ff; color:#000;">🔄 تحديث موقعي الآن</button>
             </div>
             <div class="form-group" id="manualRegionGroup" style="margin-bottom:8px;">
                 <label>📍 اختر منطقة التوصيل (نظام يدوي):</label>
@@ -1500,7 +1501,6 @@
             const t1D = !isNaN(parseFloat(gpsConfig.tier1Dist)) ? parseFloat(gpsConfig.tier1Dist) : 50;
             const t2D = !isNaN(parseFloat(gpsConfig.tier2Dist)) ? parseFloat(gpsConfig.tier2Dist) : 2000;
 
-            // 1. طبقة من داخل المخزن (مجاناً)
             if (airDist <= inStoreD) {
                 return {
                     effectiveDist: Math.round(airDist),
@@ -1512,7 +1512,6 @@
                 };
             }
 
-            // 2. داخل نطاق الجار الملاصق أو القرية المحلية (يعتمد المسافة المباشرة)
             if (airDist <= t2D) {
                 const fee = getGPSFee(airDist);
                 return {
@@ -1525,7 +1524,6 @@
                 };
             }
 
-            // 3. خارج طبقة القرية المحلية: فحص أقرب نقطة توزيع (إن وجدت) وحساب (المسافة الحقيقية للنقطة + المسافة من النقطة للزبون)
             let finalDist = airDist;
             let viaPointName = null;
             const pts = Array.isArray(gpsConfig.distributionPoints)
@@ -1580,9 +1578,26 @@
                         <span style="color:var(--success-color); font-weight:bold; margin-right:6px;">(مسافة الطريق: ${parseInt(pt.realDistMeters) || 0} متر)</span><br>
                         <small style="color:var(--gray-text);">${parseFloat(pt.lat).toFixed(5)}, ${parseFloat(pt.lng).toFixed(5)}</small>
                     </div>
-                    <button type="button" onclick="removeDistributionPoint(${idx})" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">🗑️</button>
+                    <div style="display:flex; gap:4px;">
+                        <button type="button" onclick="editDistributionPoint(${idx})" class="btn" style="width:auto; padding:3px 8px; font-size:10px; background:#ff9800; color:#000;">✏️</button>
+                        <button type="button" onclick="removeDistributionPoint(${idx})" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">🗑️</button>
+                    </div>
                 </div>
             `).join("");
+        }
+
+        function editDistributionPoint(idx) {
+            const pts = gpsConfig.distributionPoints || [];
+            const pt = pts[idx];
+            if (!pt) return;
+            setVal("newDistPtName", pt.name || "");
+            setVal("newDistPtRealMeters", pt.realDistMeters || "");
+            setVal("newDistPtLat", pt.lat || "");
+            setVal("newDistPtLng", pt.lng || "");
+            pts.splice(idx, 1);
+            renderAdminDistributionPoints();
+            db.ref("settings/gpsConfig/distributionPoints").set(pts);
+            showToast("✏️ تم جلب بيانات النقطة للتعديل، اضغط إضافة بعد التعديل للحفظ.");
         }
 
         function captureNewDistPointGPS() {
@@ -1643,6 +1658,18 @@
             localStorage.setItem('moaath_user_location', JSON.stringify(userLocation));
             updateCartBar();
             if ($("cartModal")?.style.display === "flex") renderCartModalItems();
+        }
+
+        
+        function forceRefreshCartGPSLocation() {
+            if (!navigator.geolocation) return alert("⚠️ المتصفح لا يدعم تحديد الموقع.");
+            showToast("⏳ جاري إعادة تحديد موقعك بدقة...", false);
+            navigator.geolocation.getCurrentPosition(pos => {
+                updateUserPositionState(pos);
+                showToast("✅ تم تحديث موقعك والحساب بنجاح!");
+            }, err => {
+                alert("❌ تعذر تحديث الموقع. تأكد من إذن الموقع في متصفحك.");
+            }, { enableHighAccuracy: true, timeout: 8000 });
         }
 
         function startLocationWatch() {
@@ -2302,10 +2329,10 @@
             if (!currentUser?.phone || !currentUser?.name || !currentUser?.region || !validatePhoneSyrian(currentUser.phone)) return openEditProfile();
             
             if (gpsConfig.enabled && userLocation) {
-                const gpsEval = evaluateSmartGPSDelivery(userLocation.lat, userLocation.lng);
-                if (gpsEval.fee < 0) {
+                const dist = calculateDistance(gpsConfig.storeLat, gpsConfig.storeLng, userLocation.lat, userLocation.lng);
+                if (getGPSFee(dist) < 0) {
                     showToast("🌸 عذراً لا تغطي خدمتنا منطقتك في الوقت الحالي، نعمل على التوسع أكثر!", true);
-                    alert("🌸 عذراً، لتغطية منطقتك في الوقت الحالي (المسافة الفعلية " + gpsEval.effectiveDist + " متر تتجاوز حد التغطية المعتمد).\nنعمل على التوسع أكثر قريباً لخدمتكم!");
+                    alert("🌸 عذراً، لا يمكننا التوصيل لمنطقتك في الوقت الحالي (المسافة " + Math.round(dist) + " متر تتجاوز حد التغطية المعتمد).\nنعمل على التوسع أكثر قريباً لخدمتكم!");
                     return;
                 }
                 const cur = new Date().getHours() * 60 + new Date().getMinutes();
@@ -2851,7 +2878,20 @@
                     <div style="font-size:15px; color:#b71c1c;">💰 إجمالي الديون المستحقة: <b>${totalAllUSD.toFixed(2)} $</b> (${totalAllSYP.toLocaleString()} ل.س)</div>
                 </div>
                 ${customersHtml}
-            </body>
+            
+    <div id="editPendingOrderModal" class="modal-overlay" style="z-index: 10070 !important;">
+        <div class="modal-content" style="max-width:450px;">
+            <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">✏️ تعديل الطلب المعلق</h3>
+            <input type="hidden" id="editOrdId">
+            <div id="editOrdItemsContainer" style="max-height:50vh; overflow-y:auto; margin-bottom:12px;"></div>
+            <div style="display:flex; gap:8px;">
+                <button type="button" onclick="saveEditedPendingOrder()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ التعديلات</button>
+                <button type="button" onclick="closeModal('editPendingOrderModal')" class="btn btn-danger" style="width:35%;">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+</body>
             </html>`;
 
             const blob = new Blob(["\uFEFF" + htmlContent], { type: 'text/html;charset=utf-8;' });
@@ -3274,7 +3314,12 @@
                     <div style="border-top:1px dashed ${borderColor}; border-bottom:1px dashed ${borderColor}; padding:6px 0; margin:6px 0;">${itemsHtml}</div>
                     <div style="font-weight:bold; margin-bottom:6px;">المطلوب تحصيله: ${(o.totalSaleSYP || 0).toLocaleString()} ل.س ${isCred || isPrep ? `<span style="color:${textCol};">(${(o.orderTotalUSD||0).toFixed(2)} $)</span>` : ''}</div>
                     ${warningHtml}
-                    <div style="margin-bottom:10px;"><button class="btn" style="width:100%; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-size:13px; padding:10px; font-weight:900; border-radius:6px; box-shadow:0 4px 12px rgba(0,176,255,0.25);" onclick="openOrderImagesModal('${id}')">🖼️ عرض صور وقطع الطلب لتجهيزها</button></div>
+                    <div style="display:flex; gap:6px; margin-bottom:8px;">
+                        <a href="https://wa.me/${formatWhatsAppPhone(o.customerPhone)}" target="_blank" rel="noopener" class="btn" style="flex:1; background:#25D366; color:#fff; text-decoration:none; padding:7px; font-size:11px; text-align:center;">💬 واتساب الزبون</a>
+                        <a href="tel:${esc(o.customerPhone)}" class="btn" style="flex:1; background:#00b0ff; color:#fff; text-decoration:none; padding:7px; font-size:11px; text-align:center;">📞 اتصال مباشر</a>
+                    </div>
+                    <div style="margin-bottom:8px;"><button class="btn" style="width:100%; background:linear-gradient(45deg,#ff9800,#ff5722); color:#fff; font-size:11px; padding:8px; border-radius:6px;" onclick="openEditPendingOrderModal('${id}')">✏️ تعديل الطلب المعلق (تعديل كميات)</button></div>
+                    <div style="margin-bottom:10px;"><button class="btn" style="width:100%; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-size:13px; padding:10px; font-weight:900; border-radius:6px; box-shadow:0 4px 12px rgba(0,176,255,0.25);" onclick="openOrderImagesModal('${id}')">🖼️ قائمة التحضير باللمس (Checklist) وصور المواد</button></div>
                     <div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000; font-size:11px;" onclick="confirmOrder('${id}')">${confirmBtnStr}</button><button class="btn btn-danger" style="font-size:11px;" onclick="cancelOrder('${id}')">❌ إلغاء</button></div>
                 </div>`;}).join("");
         }
@@ -3835,15 +3880,13 @@
                     enabled: $("gpsEnabledCheck")?.checked || false,
                     storeLat: !isNaN(parseFloat($("gpsStoreLat")?.value)) ? parseFloat($("gpsStoreLat")?.value) : 35.1234,
                     storeLng: !isNaN(parseFloat($("gpsStoreLng")?.value)) ? parseFloat($("gpsStoreLng")?.value) : 36.5678,
-                    inStoreDist: !isNaN(parseInt($("gpsInStoreDist")?.value)) ? Math.max(0, parseInt($("gpsInStoreDist")?.value)) : 15,
                     tier1Dist: !isNaN(parseInt($("gpsT1Dist")?.value)) ? parseInt($("gpsT1Dist")?.value) : 50,
                     tier1Fee: !isNaN(parseInt($("gpsT1Fee")?.value)) ? parseInt($("gpsT1Fee")?.value) : 0,
                     tier2Dist: !isNaN(parseInt($("gpsT2Dist")?.value)) ? parseInt($("gpsT2Dist")?.value) : 2000,
                     tier2Fee: !isNaN(parseInt($("gpsT2Fee")?.value)) ? parseInt($("gpsT2Fee")?.value) : 2000,
                     extraDistUnit: Math.max(1, parseInt($("gpsExtraUnit")?.value) || 50),
                     extraFee: !isNaN(parseInt($("gpsExtraFee")?.value)) ? parseInt($("gpsExtraFee")?.value) : 100,
-                    maxDist: Math.max(1, parseInt($("gpsMaxDist")?.value) || 5000),
-                    distributionPoints: Array.isArray(gpsConfig.distributionPoints) ? gpsConfig.distributionPoints : []
+                    maxDist: Math.max(1, parseInt($("gpsMaxDist")?.value) || 5000)
                 }
             }).then(() => alert("✅ تم حفظ كافة إعدادات النظام ومناطق التوصيل ومدير التصدير بنجاح!"));
         }
@@ -3934,6 +3977,82 @@
         }
 
         
+        
+        function openEditPendingOrderModal(orderId) {
+            const o = pendingOrders[orderId];
+            if (!o || !o.items) return alert("⚠️ الطلب غير موجود.");
+            setVal("editOrdId", orderId);
+            const container = $("editOrdItemsContainer");
+            if (!container) return;
+            container.innerHTML = o.items.map((i, idx) => `
+                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-color); border:1px solid var(--border-color); padding:8px; border-radius:6px; margin-bottom:6px; font-size:11px;">
+                    <div><b>${esc(i.name)}</b><br><span style="color:var(--gold-color);">${(i.unitSaleSYP || 0).toLocaleString()} ل.س للقطعة</span></div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <label>الكمية:</label>
+                        <input type="number" id="edit_ord_qty_${idx}" class="quick-inp" value="${i.qty}" min="0" style="width:55px;">
+                        <button type="button" onclick="removeOrdItemRow(${idx})" class="btn btn-danger" style="width:auto; padding:3px 6px; font-size:10px;">🗑️</button>
+                    </div>
+                </div>
+            `).join("");
+            $("editPendingOrderModal").style.display = "flex";
+        }
+
+        function removeOrdItemRow(idx) {
+            const orderId = $("editOrdId").value;
+            const o = pendingOrders[orderId];
+            if (!o || !o.items) return;
+            o.items.splice(idx, 1);
+            if (!o.items.length) {
+                if (confirm("⚠️ أصبحت السلة فارغة لهذا الطلب، هل تريد إلغاء الطلب بالكامل؟")) {
+                    cancelOrder(orderId);
+                    closeModal('editPendingOrderModal');
+                    return;
+                } else {
+                    o.items.push({ id: "DUMMY", name: "صنف", qty: 1, subSaleSYP: 0, subCostSYP: 0 });
+                }
+            }
+            openEditPendingOrderModal(orderId);
+        }
+
+        function saveEditedPendingOrder() {
+            const orderId = $("editOrdId").value;
+            const o = pendingOrders[orderId];
+            if (!o || !o.items) return;
+            let newSubSale = 0, newTotCost = 0, newTotPts = 0, newSubUSD = 0;
+            o.items.forEach((i, idx) => {
+                const qInp = $(`edit_ord_qty_${idx}`);
+                const nQ = qInp ? Math.max(0, parseInt(qInp.value) || 0) : i.qty;
+                i.qty = nQ;
+                i.subSaleSYP = (i.unitSaleSYP || 0) * nQ;
+                i.subCostSYP = (i.unitCostSYP || 0) * nQ;
+                newSubSale += i.subSaleSYP;
+                newTotCost += i.subCostSYP;
+                newSubUSD += ((i.unitSaleSYP || 0) / exchangeRate) * nQ;
+                newTotPts += Math.round((((i.unitSaleSYP || 0) / exchangeRate) * nQ) * 2);
+            });
+            o.items = o.items.filter(i => i.qty > 0);
+            if (!o.items.length) {
+                cancelOrder(orderId);
+                closeModal('editPendingOrderModal');
+                return;
+            }
+            const markupAmt = o.creditMarkupPct > 0 ? Math.round((newSubSale * o.creditMarkupPct) / 100) : 0;
+            const fee = parseInt(o.deliveryFeeSYP) || 0;
+            o.subtotalSaleSYP = newSubSale + markupAmt;
+            o.totalSaleSYP = newSubSale + markupAmt + fee;
+            o.totalCostSYP = newTotCost;
+            o.netProfitSYP = (newSubSale + markupAmt) - newTotCost;
+            o.earnedPoints = newTotPts;
+            o.orderTotalUSD = parseFloat(((newSubUSD * (1 + (o.creditMarkupPct||0)/100)) + (fee / exchangeRate)).toFixed(2));
+
+            db.ref(`pendingOrders/${orderId}`).set(o).then(() => {
+                closeModal('editPendingOrderModal');
+                renderPendingOrders();
+                renderExportManagerOrders();
+                showToast("✅ تم تعديل الطلب المعلق وإعادة احتساب المجاميع بنجاح!");
+            }).catch(err => alert("❌ خطأ أثناء الحفظ: " + err.message));
+        }
+
         function openOrderImagesModal(orderId) {
             const o = pendingOrders[orderId];
             if (!o || !o.items) return alert("⚠️ الطلب غير موجود.");
@@ -3941,7 +4060,7 @@
             const grid = $("orderImagesGrid");
             if (!grid) return;
             
-            grid.innerHTML = o.items.map(i => {
+            grid.innerHTML = o.items.map((i, idx) => {
                 const isPkg = i.isPackage || String(i.id || "").endsWith("_PKG");
                 const baseId = i.origId || String(i.id || "").replace(/_PKG$/, "");
                 const p = products[baseId] || products[i.id] || specialOffers[i.id] || {};
@@ -3951,7 +4070,10 @@
                         <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;">
                     </div>
                     <div style="font-size:11px; font-weight:bold; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${i.name}</div>
-                    <div style="font-size:12px; color:var(--success-color); font-weight:bold; background:rgba(0,230,118,0.1); padding:3px; border-radius:4px;">الكمية المطلوبة: ${i.qty} قطعة</div>
+                    <div style="font-size:12px; color:var(--success-color); font-weight:bold; background:rgba(0,230,118,0.1); padding:3px; border-radius:4px; margin-bottom:6px;">الكمية: ${i.qty} قطعة</div>
+                    <label style="display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--gold-color); cursor:pointer; background:rgba(212,175,55,0.1); padding:4px 8px; border-radius:4px;">
+                        <input type="checkbox" style="width:16px; height:16px;" onchange="this.parentElement.style.opacity = this.checked ? '0.5' : '1';"> ☑️ تم وضعها بالكيس
+                    </label>
                 </div>`;
             }).join("");
             
@@ -4022,7 +4144,12 @@
                         📊 <b>حساب الربح المقدر:</b> قيمة المنتجات (${(o.subtotalSaleSYP || 0).toLocaleString()} ل.س) - تكلفة المنتجات (${(o.totalCostSYP || 0).toLocaleString()} ل.س) = <strong style="color:var(--success-color); font-size:12px;">${((o.subtotalSaleSYP || 0) - (o.totalCostSYP || 0)).toLocaleString()} ل.س</strong>
                     </div>
                     ${warningHtml}
-                    <div style="margin-bottom:10px;"><button class="btn" style="width:100%; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-size:13px; padding:10px; font-weight:900; border-radius:6px; box-shadow:0 4px 12px rgba(0,176,255,0.25);" onclick="openOrderImagesModal('${id}')">🖼️ عرض صور وقطع الطلب لتجهيزها</button></div>
+                    <div style="display:flex; gap:6px; margin-bottom:8px;">
+                        <a href="https://wa.me/${formatWhatsAppPhone(o.customerPhone)}" target="_blank" rel="noopener" class="btn" style="flex:1; background:#25D366; color:#fff; text-decoration:none; padding:7px; font-size:11px; text-align:center;">💬 واتساب الزبون</a>
+                        <a href="tel:${esc(o.customerPhone)}" class="btn" style="flex:1; background:#00b0ff; color:#fff; text-decoration:none; padding:7px; font-size:11px; text-align:center;">📞 اتصال مباشر</a>
+                    </div>
+                    <div style="margin-bottom:8px;"><button class="btn" style="width:100%; background:linear-gradient(45deg,#ff9800,#ff5722); color:#fff; font-size:11px; padding:8px; border-radius:6px;" onclick="openEditPendingOrderModal('${id}')">✏️ تعديل الطلب المعلق (تعديل كميات)</button></div>
+                    <div style="margin-bottom:10px;"><button class="btn" style="width:100%; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-size:13px; padding:10px; font-weight:900; border-radius:6px; box-shadow:0 4px 12px rgba(0,176,255,0.25);" onclick="openOrderImagesModal('${id}')">🖼️ قائمة التحضير باللمس (Checklist) وصور المواد</button></div>
                     <div style="display:flex; gap:6px;"><button class="btn" style="background:var(--success-color); color:#000; font-size:11px;" onclick="confirmOrder('${id}')">${confirmBtnStr}</button><button class="btn btn-danger" style="font-size:11px;" onclick="cancelOrder('${id}')">❌ إلغاء</button></div>
                 </div>`;}).join("");
         }
@@ -4641,6 +4768,19 @@
             <p style="font-size:12px; color:var(--gray-text); margin:0 0 12px 0;">المواد التالية التي قمت بتفعيل جرس التنبيه لها أصبحت متوفرة الآن في متجر معاذ:</p>
             <div id="availableItemsListContainer" style="max-height:50vh; overflow-y:auto; margin-bottom:12px;"></div>
             <button onclick="closeModal('availableNotificationModal')" class="btn" style="background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; font-weight:900;">✨ رائع، تصفح المتجر</button>
+        </div>
+    </div>
+
+
+    <div id="editPendingOrderModal" class="modal-overlay" style="z-index: 10070 !important;">
+        <div class="modal-content" style="max-width:450px;">
+            <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">✏️ تعديل الطلب المعلق</h3>
+            <input type="hidden" id="editOrdId">
+            <div id="editOrdItemsContainer" style="max-height:50vh; overflow-y:auto; margin-bottom:12px;"></div>
+            <div style="display:flex; gap:8px;">
+                <button type="button" onclick="saveEditedPendingOrder()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ التعديلات</button>
+                <button type="button" onclick="closeModal('editPendingOrderModal')" class="btn btn-danger" style="width:35%;">إلغاء</button>
+            </div>
         </div>
     </div>
 
