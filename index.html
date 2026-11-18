@@ -46,7 +46,7 @@
         .cat-btn.active { background:var(--gold-color); color:#000; font-weight:bold; border-color:var(--gold-color); }
         .products-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
         .product-card { background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; padding:10px; text-align:center; display:flex; flex-direction:column; justify-content:space-between; }
-        .product-img-wrap { width:100%; aspect-ratio:9/16; border-radius:6px; background:var(--bg-color); margin-bottom:6px; overflow:hidden; position:relative; }
+        .product-img-wrap { width:100%; aspect-ratio:1/1; border-radius:6px; background:var(--bg-color); margin-bottom:6px; overflow:hidden; position:relative; border:1px solid rgba(255,255,255,0.05); }
         .product-img { width:100%; height:100%; object-fit:cover; transition:filter 0.3s ease; }
         .img-low-res { filter:blur(5px); }
         .img-high-res { filter:blur(0); }
@@ -96,9 +96,11 @@
         .toast-msg { background: rgba(30, 30, 30, 0.95); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 12px; font-weight: bold; border: 1px solid var(--gold-color); box-shadow: 0 4px 15px rgba(0,0,0,0.5); pointer-events: auto; animation: fadeInOut 2.5s ease forwards; }
         @keyframes fadeInOut { 0% { opacity: 0; transform: translateY(-10px); } 15% { opacity: 1; transform: translateY(0); } 85% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-10px); } }
 
+            #offlineIndicator { display:none; background:var(--danger-color); color:#fff; text-align:center; font-size:11px; font-weight:bold; padding:4px; position:fixed; top:0; width:100%; z-index:999999; }
     </style>
 </head>
 <body>
+    <div id="offlineIndicator">⚠️ أنت تتصفح بدون اتصال بالإنترنت حالياً (الوضع غير المتصل)</div>
 
     <div id="authModal" class="modal-overlay" style="display:none; z-index: 999999; background:var(--bg-color);">
         <div class="modal-content" style="border-color:var(--gold-color); text-align:center;">
@@ -159,6 +161,7 @@
             👤 <b id="userNameDisplay">زائر</b>
             <small id="userRegionBadge" style="color:var(--gray-text); font-size:10px;"></small>
             <small id="userTypeBadge" style="color:var(--gold-color); font-size:10px; font-weight:bold;"></small>
+            <button onclick="openMyOrdersModal()" style="background:transparent; border:none; color:#00b0ff; font-size:12px; cursor:pointer; padding:0; margin-right:4px;" title="طلباتي السابقة">(📋)</button>
             <button onclick="openEditProfile()" style="background:transparent; border:none; color:var(--gold-color); font-size:12px; cursor:pointer; padding:0;">(⚙️)</button>
             <button onclick="logoutUser()" style="background:transparent; border:none; color:var(--danger-color); font-size:12px; cursor:pointer; padding:0;" title="تسجيل الخروج">(🚪)</button>
             <span id="userRankBadge" onclick="openCompetitionsPage()" style="display:none; cursor:pointer; background:rgba(0,230,118,0.15); color:var(--success-color); border:1px solid var(--success-color); padding:2px 7px; border-radius:12px; font-size:11px; font-weight:bold;">🏅 ترتيبي: -</span>
@@ -998,6 +1001,18 @@
         const $ = id => document.getElementById(id);
         const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+        
+        function normalizeArabic(text) {
+            if (!text) return "";
+            return text.replace(/[أإآا]/g, 'ا')
+                       .replace(/ة/g, 'ه')
+                       .replace(/ى/g, 'ي')
+                       .replace(/ؤ/g, 'و')
+                       .replace(/ئ/g, 'ي')
+                       .replace(/\s+/g, ' ')
+                       .trim();
+        }
+
         function showToast(message, isError = false) {
             let container = document.getElementById("toastContainer");
             if (!container) {
@@ -1141,7 +1156,7 @@
             history.pushState({ page: 'store_home' }, '');
             window.addEventListener('popstate', () => {
                 if (isExitingApp) return;
-                for (let id of ['editPendingOrderModal', 'orderImagesModal', 'availableNotificationModal', 'cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal', 'competitionsPage', 'customerDebtModal', 'exportManagerModal']) {
+                for (let id of ['myOrdersModal', 'editPendingOrderModal', 'orderImagesModal', 'availableNotificationModal', 'cartModal', 'profileModal', 'adminModal', 'reviewModal', 'missingModal', 'adminEditCustomerModal', 'partnerModal', 'competitionsPage', 'customerDebtModal', 'exportManagerModal']) {
                     const el = $(id);
                     if (el && (el.style.display === 'flex' || el.style.display === 'block')) {
                         el.style.display = 'none';
@@ -1853,6 +1868,11 @@
             }
         }
 
+        
+        window.addEventListener('online', () => { $("offlineIndicator").style.display = 'none'; });
+        window.addEventListener('offline', () => { $("offlineIndicator").style.display = 'block'; });
+        if (!navigator.onLine) $("offlineIndicator").style.display = 'block';
+
         window.addEventListener("load", () => {
             populateRegionSelects();
             // Copy region options to register select
@@ -2015,13 +2035,15 @@
             renderSpecialOffers();
             const grid = $("productsGrid");
             if (!grid) return;
-            const q = ($("searchInput")?.value || "").trim().toLowerCase(), isW = currentUser?.userType === "wholesale";
+            const q = normalizeArabic($("searchInput")?.value || "").toLowerCase();
+            const isW = currentUser?.userType === "wholesale";
             const keys = shuffledProductKeys.length ? shuffledProductKeys : Object.keys(products);
             let html = "";
             keys.forEach(id => {
                 const p = products[id]; if (!p) return;
                 const pName = p.name || "";
-                if ((selectedCategory !== "الكل" && p.category !== selectedCategory) || (q && !pName.toLowerCase().includes(q))) return;
+                const normName = normalizeArabic(pName).toLowerCase();
+                if ((selectedCategory !== "الكل" && p.category !== selectedCategory) || (q && !normName.includes(q))) return;
                 
                 // 1. Single Unit Card
                 const waitMap = JSON.parse(localStorage.getItem('moaath_waiting') || '{}');
@@ -2320,6 +2342,58 @@
                 setTxt("cartTotal", (sub + markupAmt + fee).toLocaleString() + " ل.س");
                 setTxt("cartBarDeliveryNote", deliveryNoteStr);
             } else bar.style.display = "none";
+        }
+
+        
+        function openMyOrdersModal() {
+            if (!currentUser || !currentUser.phone) return alert("⚠️ يرجى تسجيل الدخول أولاً.");
+            const list = $("myOrdersListContainer");
+            if (!list) return;
+            const phone = currentUser.phone;
+            const myOrds = Object.values(completedOrdersHistory || {}).filter(o => o.customerPhone === phone).sort((a,b) => (b.dateISO || "").localeCompare(a.dateISO || ""));
+            
+            if (!myOrds.length) {
+                list.innerHTML = `<div style="text-align:center; padding:20px; color:var(--gray-text);">لا توجد طلبات سابقة مكتملة في سجلك.</div>`;
+            } else {
+                list.innerHTML = myOrds.map(o => {
+                    const itemsList = (o.items || []).map(i => `• ${i.name} (×${i.qty})`).join("<br>");
+                    const reorderPayload = escape(JSON.stringify(o.items || []));
+                    return `<div class="comp-card" style="border-color:var(--gold-color); margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--gold-color); margin-bottom:6px;">
+                            <span>🧾 فاتورة (${o.timestamp.split(' ')[0]})</span>
+                            <span>${(o.totalSaleSYP || 0).toLocaleString()} ل.س</span>
+                        </div>
+                        <div style="font-size:11px; color:var(--text-color); margin-bottom:10px; line-height:1.6;">${itemsList}</div>
+                        <button class="btn" style="width:100%; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-size:11px; font-weight:bold;" onclick="reOrderItems('${reorderPayload}')">🔄 إعادة طلب هذه الفاتورة (إضافة للسلة)</button>
+                    </div>`;
+                }).join("");
+            }
+            $("myOrdersModal").style.display = "block";
+        }
+
+        function reOrderItems(payloadStr) {
+            try {
+                const items = JSON.parse(unescape(payloadStr));
+                let addedCount = 0;
+                items.forEach(item => {
+                    const baseId = item.origId || String(item.id || "").replace(/_PKG$/, "");
+                    const pObj = products[baseId] || specialOffers[item.id];
+                    if (pObj && (parseInt(pObj.stock) || 0) > 0) {
+                        const currentQty = cart[item.id] ? cart[item.id].qty : 0;
+                        changeQty(item.id, item.qty - currentQty); // Set qty to match previous order
+                        addedCount++;
+                    }
+                });
+                if (addedCount > 0) {
+                    closeModal('myOrdersModal');
+                    openCartModal();
+                    showToast("✅ تم إضافة المواد المتوفرة إلى سلتك بنجاح!");
+                } else {
+                    alert("⚠️ عذراً، جميع مواد هذه الفاتورة نفدت من المخزن حالياً.");
+                }
+            } catch (e) {
+                console.error("Reorder failed", e);
+            }
         }
 
         function openCartModal() {
@@ -2860,9 +2934,11 @@
                     .no-print-bar { text-align: center; margin-bottom: 15px; padding: 10px; background: #e8f5e9; border: 1px solid #2e7d32; border-radius: 8px; }
                     .btn-print { background: #2e7d32; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; margin: 0 5px; }
                     @media print { .no-print-bar { display: none !important; } body { margin: 0; } }
-                </style>
+                        #offlineIndicator { display:none; background:var(--danger-color); color:#fff; text-align:center; font-size:11px; font-weight:bold; padding:4px; position:fixed; top:0; width:100%; z-index:999999; }
+    </style>
             </head>
             <body>
+    <div id="offlineIndicator">⚠️ أنت تتصفح بدون اتصال بالإنترنت حالياً (الوضع غير المتصل)</div>
                 <div class="no-print-bar">
                     <span style="font-weight:bold; color:#1b5e20;">✅ تم تحميل هذه النسخة الاحتياطية على جهازك! يمكنك أيضاً طباعتها أو حفظها كـ PDF عبر الزر أدناه:</span><br><br>
                     <button class="btn-print" onclick="window.print()">🖨️ حفظ كـ PDF / طباعة التقرير</button>
@@ -2882,7 +2958,16 @@
                     <div style="font-size:15px; color:#b71c1c;">💰 إجمالي الديون المستحقة: <b>${totalAllUSD.toFixed(2)} $</b> (${totalAllSYP.toLocaleString()} ل.س)</div>
                 </div>
                 ${customersHtml}
-            </body>
+            
+    <div id="myOrdersModal" class="page-overlay">
+        <header style="position:sticky; top:0; z-index:10;">
+            <div class="store-info"><h1>📋 طلباتي السابقة</h1><p>سجل مشترياتك وإعادة الطلب السريع</p></div>
+            <button onclick="closeModal('myOrdersModal')" class="btn btn-danger" style="width:auto; padding:6px 12px;">🔙 رجوع</button>
+        </header>
+        <div class="container" id="myOrdersListContainer"></div>
+    </div>
+
+</body>
             </html>`;
 
             const blob = new Blob(["\uFEFF" + htmlContent], { type: 'text/html;charset=utf-8;' });
@@ -3543,9 +3628,17 @@
 
         function renderGoldenInsights(prodMap) {
             const box = $("goldenAndStagnantInsights"); if (!box) return;
-            const golden = Object.values(prodMap).filter(p => p.profit > 0).sort((a, b) => b.profit - a.profit).slice(0, 3);
+            const vals = Object.values(prodMap);
+            const golden = vals.filter(p => p.profit > 0).sort((a, b) => b.profit - a.profit).slice(0, 3);
             const goldHtml = golden.length ? golden.map(g => `<span style="color:var(--success-color); font-weight:bold;">★ ${g.name} (${g.profit.toLocaleString()} ل.س)</span>`).join(" ، ") : "لا توجد مبيعات كافية بعد";
-            box.innerHTML = `<div>🥇 <b>الأعلى ربحاً:</b> ${goldHtml}</div>`;
+            
+            const stagnant = vals.filter(p => p.qtySold === 0 && p.stock > 0).sort((a,b) => b.stock - a.stock).slice(0, 3);
+            const stagHtml = stagnant.length ? stagnant.map(s => `<span style="color:var(--danger-color); font-weight:bold;">📉 ${s.name} (${s.stock} متوفر)</span>`).join(" ، ") : "لا توجد بضاعة مكدسة وراكدة";
+
+            box.innerHTML = `
+                <div style="margin-bottom:6px;">🥇 <b>الأعلى ربحاً (الذهبية):</b><br> ${goldHtml}</div>
+                <div style="border-top:1px dashed var(--gold-color); padding-top:6px;">⚠️ <b>الأكثر ركوداً (لم تُبع في الجرد):</b><br> ${stagHtml}</div>
+            `;
         }
 
         function sendDailyAccountingReportWhatsApp() {
@@ -3707,8 +3800,15 @@
 
         function renderAdminProducts() {
             const container = $("adminProductsList"); if (!container) return;
-            const q = ($("adminSearchProd")?.value || "").trim().toLowerCase();
-            const keys = Object.keys(products).filter(id => products[id] && (!q || products[id].name?.toLowerCase().includes(q) || products[id].category?.toLowerCase().includes(q)));
+            const q = normalizeArabic($("adminSearchProd")?.value || "").toLowerCase();
+            const keys = Object.keys(products).filter(id => {
+                const p = products[id];
+                if (!p) return false;
+                if (!q) return true;
+                const normName = normalizeArabic(p.name || "").toLowerCase();
+                const normCat = normalizeArabic(p.category || "").toLowerCase();
+                return normName.includes(q) || normCat.includes(q);
+            });
             if (!keys.length) return (container.innerHTML = `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد أصناف مطابقة.</p>`);
             container.innerHTML = keys.map(id => {
                 const p = products[id], supp = p.supplierId && suppliers[p.supplierId] ? ` | ${suppliers[p.supplierId].name}` : "", partBadge = (p.partnerPhone && users[p.partnerPhone]) ? ` | <span style="color:#00b0ff; font-weight:bold;">🤝 شريك الصنف: ${users[p.partnerPhone].name} (${p.partnerPct || window.partnersConfigData?.[p.partnerPhone]?.profitPct || 20}%)</span>` : "", revs = p.reviews || {}, revHtml = Object.keys(revs).map(rId => `<div style="display:flex; justify-content:space-between; font-size:10px; background:var(--card-bg); padding:3px 6px; margin-top:3px; border-radius:4px;"><span>⭐ ${revs[rId].rating} - <b>${esc(revs[rId].customerName)}:</b> ${esc(revs[rId].comment)}</span><b onclick="deleteProductReview('${id}','${rId}')" style="color:var(--danger-color); cursor:pointer;">🗑️</b></div>`).join("");
@@ -3979,6 +4079,29 @@
             setVal("editOrdId", orderId);
             const container = $("editOrdItemsContainer");
             if (!container) return;
+            
+            // Populate select dropdown
+            const sel = $("addNewItemToOrdSelect");
+            if (sel) {
+                let opts = '<option value="">-- ➕ إضافة صنف جديد للفاتورة --</option>';
+                Object.keys(products).forEach(id => {
+                    const p = products[id];
+                    if(p && (parseInt(p.stock)||0) > 0) {
+                        opts += `<option value="${id}">${p.name} (${p.stock} متوفر)</option>`;
+                        if (p.hasPackage && p.pkgCount > 0 && p.pkgPriceUSD > 0 && Math.floor((parseInt(p.stock)||0) / p.pkgCount) > 0) {
+                            opts += `<option value="${id}_PKG">📦 طرد ${p.name} (${Math.floor((parseInt(p.stock)||0) / p.pkgCount)} متوفر)</option>`;
+                        }
+                    }
+                });
+                Object.keys(specialOffers).forEach(id => {
+                    const so = specialOffers[id];
+                    if (so && so.active && (parseInt(so.stock)||0) > 0) {
+                        opts += `<option value="${id}">🔥 ${so.name} (${so.stock} متوفر)</option>`;
+                    }
+                });
+                sel.innerHTML = opts;
+            }
+
             container.innerHTML = o.items.map((i, idx) => `
                 <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-color); border:1px solid var(--border-color); padding:8px; border-radius:6px; margin-bottom:6px; font-size:11px;">
                     <div><b>${esc(i.name)}</b><br><span style="color:var(--gold-color);">${(i.unitSaleSYP || 0).toLocaleString()} ل.س للقطعة</span></div>
@@ -3992,20 +4115,81 @@
             $("editPendingOrderModal").style.display = "flex";
         }
 
+        
+        function addNewItemToPendingOrder() {
+            const orderId = $("editOrdId").value;
+            const o = pendingOrders[orderId];
+            const selId = $("addNewItemToOrdSelect").value;
+            const qty = parseInt($("addNewItemToOrdQty").value) || 1;
+            if (!o || !o.items || !selId || qty < 1) return;
+
+            // Check if item already in order
+            const existingIdx = o.items.findIndex(i => i.id === selId);
+            if (existingIdx !== -1) {
+                const curQ = parseInt($(`edit_ord_qty_${existingIdx}`)?.value) || o.items[existingIdx].qty;
+                if ($(`edit_ord_qty_${existingIdx}`)) $(`edit_ord_qty_${existingIdx}`).value = curQ + qty;
+            } else {
+                let p = products[selId];
+                let isPkg = false, baseId = selId, pkgCount = 1, priceUSD = 0, costUSD = 0, name = "", cat = "";
+                let ptsPct = 2;
+                if (selId.endsWith("_PKG")) {
+                    baseId = selId.replace(/_PKG$/, "");
+                    p = products[baseId];
+                    if (p) {
+                        isPkg = true;
+                        pkgCount = Math.max(1, parseInt(p.pkgCount) || 10);
+                        name = `طرد ${p.name} (${pkgCount} ${p.unitType || 'كيلو'})`;
+                        priceUSD = parseFloat(p.pkgPriceUSD) || 0;
+                        costUSD = (parseFloat(p.costPrice) || 0) * pkgCount;
+                        cat = p.category || "غير مصنف";
+                        ptsPct = parseFloat(p.pointsPct) || 2;
+                    }
+                } else if (selId.startsWith("OFFER_")) {
+                    p = specialOffers[selId];
+                    if (p) {
+                        const isW = users[o.customerPhone]?.userType === "wholesale";
+                        name = "🔥 عرض: " + p.name;
+                        priceUSD = parseFloat((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.newPriceUSD) || 0;
+                        costUSD = parseFloat(p.costPrice) || 0;
+                        cat = "عروض خاصة";
+                        ptsPct = parseFloat(p.pointsPct) || 2;
+                    }
+                } else if (p) {
+                    const isW = users[o.customerPhone]?.userType === "wholesale";
+                    name = p.name || "";
+                    priceUSD = parseFloat((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : p.priceUSD) || 0;
+                    costUSD = parseFloat(p.costPrice) || 0;
+                    cat = p.category || "غير مصنف";
+                    ptsPct = parseFloat(p.pointsPct) || 2;
+                }
+
+                if (name) {
+                    const uS = calcSYP(priceUSD), uC = calcSYP(costUSD);
+                    o.items.push({
+                        id: selId, origId: baseId, isPackage: isPkg, pkgCount, name, category: cat,
+                        partnerPhone: p.partnerPhone || "", partnerPct: (p.partnerPct !== undefined && p.partnerPct !== null) ? p.partnerPct : null,
+                        qty, unitSaleSYP: uS, unitCostSYP: uC, subSaleSYP: uS * qty, subCostSYP: uC * qty, netProfitSYP: (uS - uC) * qty
+                    });
+                }
+            }
+            // Re-render modal
+            openEditPendingOrderModal(orderId);
+            setVal("addNewItemToOrdSelect", "");
+            setVal("addNewItemToOrdQty", "1");
+        }
+
         function removeOrdItemRow(idx) {
             const orderId = $("editOrdId").value;
             const o = pendingOrders[orderId];
             if (!o || !o.items) return;
-            o.items.splice(idx, 1);
-            if (!o.items.length) {
-                if (confirm("⚠️ أصبحت السلة فارغة لهذا الطلب، هل تريد إلغاء الطلب بالكامل؟")) {
+            if (o.items.length <= 1) {
+                if (confirm("⚠️ هذا هو الصنف الوحيد المتبقي في الفاتورة، هل تريد إلغاء الطلب بالكامل؟")) {
                     cancelOrder(orderId);
                     closeModal('editPendingOrderModal');
-                    return;
-                } else {
-                    o.items.push({ id: "DUMMY", name: "صنف", qty: 1, subSaleSYP: 0, subCostSYP: 0 });
                 }
+                return;
             }
+            o.items.splice(idx, 1);
             openEditPendingOrderModal(orderId);
         }
 
@@ -4013,6 +4197,33 @@
             const orderId = $("editOrdId").value;
             const o = pendingOrders[orderId];
             if (!o || !o.items) return;
+
+            // 1. التحقق من توفر المخزون للكميات المعدلة قبل الحفظ
+            const reqStockByBase = {};
+            for (let idx = 0; idx < o.items.length; idx++) {
+                const i = o.items[idx];
+                const qInp = $(`edit_ord_qty_${idx}`);
+                const nQ = qInp ? Math.max(0, parseInt(qInp.value) || 0) : i.qty;
+                if (nQ <= 0) continue;
+                if (String(i.id || "").startsWith("OFFER_")) {
+                    const so = specialOffers[i.id];
+                    if (so && nQ > (parseInt(so.stock) || 0)) {
+                        return alert(`⚠️ الكمية المعدلة للعرض (${i.name}) تتجاوز المتوفر بالمخزون (${so.stock})!`);
+                    }
+                } else {
+                    const isPkg = i.isPackage || String(i.id || "").endsWith("_PKG");
+                    const baseId = i.origId || String(i.id || "").replace(/_PKG$/, "");
+                    const pLive = products[baseId];
+                    if (pLive) {
+                        const unitsPerItem = isPkg ? Math.max(1, parseInt(i.pkgCount) || parseInt(pLive.pkgCount) || 10) : 1;
+                        reqStockByBase[baseId] = (reqStockByBase[baseId] || 0) + (nQ * unitsPerItem);
+                        if (reqStockByBase[baseId] > (parseInt(pLive.stock) || 0)) {
+                            return alert(`⚠️ إجمالي الكمية المعدلة من (${pLive.name}) يتجاوز المتوفر بالمخزون حالياً (${pLive.stock})!`);
+                        }
+                    }
+                }
+            }
+
             let newSubSale = 0, newTotCost = 0, newTotPts = 0, newSubUSD = 0;
             o.items.forEach((i, idx) => {
                 const qInp = $(`edit_ord_qty_${idx}`);
@@ -4030,20 +4241,45 @@
                 newSubUSD += lineUSD;
                 newTotPts += Math.round(lineUSD * itemPtsPct);
             });
-            o.items = o.items.filter(i => i.qty > 0);
-            if (!o.items.length) {
-                cancelOrder(orderId);
-                closeModal('editPendingOrderModal');
+
+            const filteredItems = o.items.filter(i => i.qty > 0);
+            if (!filteredItems.length) {
+                if (confirm("⚠️ أصبحت جميع الكميات صفراً، هل تريد إلغاء الطلب بالكامل؟")) {
+                    cancelOrder(orderId);
+                    closeModal('editPendingOrderModal');
+                }
                 return;
             }
+
             const markupAmt = o.creditMarkupPct > 0 ? Math.round((newSubSale * o.creditMarkupPct) / 100) : 0;
             const fee = parseInt(o.deliveryFeeSYP) || 0;
+            const newOrderTotalUSD = parseFloat(((newSubUSD * (1 + (o.creditMarkupPct||0)/100)) + (fee / exchangeRate)).toFixed(2));
+
+            // 2. فحص رصيد المحفظة المسبقة أو سقف الدين إذا زادت قيمة الفاتورة
+            const cust = users[o.customerPhone] || {};
+            const payMethod = o.paymentMethod || (o.isCreditOrder ? "آجل (دفتر الدين)" : "شام كاش");
+            if (payMethod === "محفظة مسبقة الدفع") {
+                const prepBal = parseFloat(cust.prepaidBalanceUSD) || 0;
+                if (newOrderTotalUSD > prepBal) {
+                    return alert(`⚠️ لا يمكن حفظ التعديل: إجمالي الطلب الجديد ($${newOrderTotalUSD}) يتجاوز رصيد محفظة الزبون المسبق ($${prepBal.toFixed(2)})!`);
+                }
+            } else if (payMethod === "آجل (دفتر الدين)" || o.isCreditOrder) {
+                const curDebt = parseFloat(cust.debtBalanceUSD) || 0;
+                const debtLimit = parseFloat(cust.debtLimitUSD) || 100;
+                if ((curDebt + newOrderTotalUSD) > debtLimit) {
+                    if (!confirm(`⚠️ تنبيه: إجمالي الطلب المعدل ($${newOrderTotalUSD}) مع دين الزبون الحالي ($${curDebt}) سيتجاوز سقف الدين المسموح ($${debtLimit}). هل تريد حفظ التعديل رغم ذلك؟`)) {
+                        return;
+                    }
+                }
+            }
+
+            o.items = filteredItems;
             o.subtotalSaleSYP = newSubSale + markupAmt;
             o.totalSaleSYP = newSubSale + markupAmt + fee;
             o.totalCostSYP = newTotCost;
             o.netProfitSYP = (newSubSale + markupAmt) - newTotCost;
             o.earnedPoints = newTotPts;
-            o.orderTotalUSD = parseFloat(((newSubUSD * (1 + (o.creditMarkupPct||0)/100)) + (fee / exchangeRate)).toFixed(2));
+            o.orderTotalUSD = newOrderTotalUSD;
 
             db.ref(`pendingOrders/${orderId}`).set(o).then(() => {
                 closeModal('editPendingOrderModal');
@@ -4776,12 +5012,26 @@
         <div class="modal-content" style="max-width:450px;">
             <h3 style="color:var(--gold-color); margin-top:0; text-align:center;">✏️ تعديل الطلب المعلق</h3>
             <input type="hidden" id="editOrdId">
-            <div id="editOrdItemsContainer" style="max-height:50vh; overflow-y:auto; margin-bottom:12px;"></div>
+            <div id="editOrdItemsContainer" style="max-height:50vh; overflow-y:auto; margin-bottom:8px;"></div>
+            <div style="display:flex; gap:6px; margin-bottom:12px; align-items:center; background:rgba(0,176,255,0.08); padding:8px; border-radius:6px; border:1px dashed #00b0ff;">
+                <select id="addNewItemToOrdSelect" class="form-control" style="flex:1;"><option value="">-- ➕ إضافة صنف جديد للفاتورة --</option></select>
+                <input type="number" id="addNewItemToOrdQty" class="quick-inp" placeholder="الكمية" value="1" min="1" style="width:45px;">
+                <button type="button" onclick="addNewItemToPendingOrder()" class="btn" style="width:auto; padding:5px 8px; font-size:10px; background:#00b0ff; color:#fff;">إضافة</button>
+            </div>
             <div style="display:flex; gap:8px;">
                 <button type="button" onclick="saveEditedPendingOrder()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ التعديلات</button>
                 <button type="button" onclick="closeModal('editPendingOrderModal')" class="btn btn-danger" style="width:35%;">إلغاء</button>
             </div>
         </div>
+    </div>
+
+
+    <div id="myOrdersModal" class="page-overlay">
+        <header style="position:sticky; top:0; z-index:10;">
+            <div class="store-info"><h1>📋 طلباتي السابقة</h1><p>سجل مشترياتك وإعادة الطلب السريع</p></div>
+            <button onclick="closeModal('myOrdersModal')" class="btn btn-danger" style="width:auto; padding:6px 12px;">🔙 رجوع</button>
+        </header>
+        <div class="container" id="myOrdersListContainer"></div>
     </div>
 
 </body>
