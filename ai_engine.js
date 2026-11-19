@@ -398,5 +398,123 @@
     document.addEventListener("DOMContentLoaded", injectAIEnhancementsUI);
   } else {
     injectAIEnhancementsUI();
+      // --- تبسيط وتوجيه مراحل دفع شام كاش (3 خطوات واضحة للزبون) ---
+  function upgradeShamCashUI() {
+    const box = $("shamCashInfoBox");
+    if (!box || $("scGuidedFlow")) return;
+
+    box.innerHTML = `
+      <div id="scGuidedFlow" style="text-align:right; font-size:11px;">
+        <div style="color:var(--gold-color); font-weight:bold; text-align:center; margin-bottom:8px;">
+          💳 خطوات الدفع السريع عبر شام كاش
+        </div>
+
+        <!-- الخطوة 1: النسخ والتحويل -->
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:7px; margin-bottom:6px;">
+          <div style="font-weight:bold; margin-bottom:5px;">① حوّل المبلغ عبر تطبيق شام كاش:</div>
+          <div style="display:flex; gap:5px;">
+            <button type="button" onclick="copyWalletId()" class="btn" style="flex:1; padding:6px; font-size:10px; background:var(--gold-color); color:#000;">📋 نسخ معرّف المحفظة</button>
+            <button type="button" onclick="copyExpectedShamAmount()" class="btn" style="flex:1; padding:6px; font-size:10px; background:rgba(0,230,118,0.18); color:#00e676; border:1px solid #00e676;">💰 نسخ المبلغ (<span id="scQuickAmtLabel">0</span> ل.س)</button>
+          </div>
+        </div>
+
+        <!-- الخطوة 2: رفع الإشعار والفحص الذكي -->
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:7px; margin-bottom:6px;">
+          <div style="font-weight:bold; margin-bottom:5px;">② ارفع صورة إشعار التحويل للتحقق السريع:</div>
+          <label for="shamCashReceiptFile" class="btn" style="display:block; text-align:center; padding:7px; font-size:11px; background:rgba(0,176,255,0.16); color:#00b0ff; border:1px dashed #00b0ff; cursor:pointer;">
+            📸 اضغط هنا لاختيار صورة الإشعار
+          </label>
+          <input type="file" id="shamCashReceiptFile" accept="image/*" style="display:none;" onchange="runGuidedShamCashCheck()">
+          <div id="shamCashOcrResult" style="margin-top:6px; font-size:10px;"></div>
+        </div>
+
+        <!-- الخطوة 3: التوجيه للإرسال -->
+        <div style="font-size:10px; color:var(--gray-text); text-align:center;">
+          ③ اضغط الزر الأخضر بالأسفل لإرسال الطلب وتأكيده عبر واتساب
+        </div>
+      </div>
+    `;
+  }
+
+  window.copyExpectedShamAmount = function () {
+    const amt = ($("modalCartTotal")?.textContent || "0").replace(/[^0-9]/g, "");
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(amt).then(() => showToast(`✅ تم نسخ المبلغ (${Number(amt).toLocaleString()} ل.س)`));
+    }
+  };
+
+  window.runGuidedShamCashCheck = async function () {
+    const outBox = $("shamCashOcrResult");
+    const file = $("shamCashReceiptFile")?.files?.[0];
+    if (!file || !outBox) return;
+
+    const expectedSYP = parseInt(($("modalCartTotal")?.textContent || "0").replace(/[^0-9]/g, "")) || 0;
+    const workerUrl = getEffectiveAIWorkerUrl();
+    if (!workerUrl) {
+      outBox.innerHTML = `<span style="color:#ff9800;">⚠️ تم اختيار الصورة، أرسلها مع الطلب على واتساب.</span>`;
+      return;
+    }
+
+    outBox.innerHTML = `<span style="color:#00b0ff;">⏳ جاري التحقق الذكي من الإشعار...</span>`;
+    try {
+      const b64 = await fileToBase64Clean(file);
+      const res = await fetch(workerUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "shamcash_ocr",
+          expectedTotalSYP: expectedSYP,
+          imageBase64: b64,
+          imageMimeType: file.type || "image/jpeg"
+        })
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.ok) throw new Error(json?.error || "تعذر قراءة الصورة");
+
+      const d = json.data || {};
+      const txRef = d.txRef ? String(d.txRef).trim() : "";
+      const amt = d.amount !== null && d.amount !== undefined ? Number(d.amount) : null;
+      window.latestShamCashOcrMeta = { txRef, amountVal: amt };
+
+      // فحص التكرار في جميع الطلبات
+      const matchRef = o => txRef && (String(o?.shamCashTxRef || "").includes(txRef) || String(o?.notes || "").includes(txRef));
+      const isDup =
+        Object.values(pendingOrders || {}).some(matchRef) ||
+        Object.values(readyOrders || {}).some(matchRef) ||
+        Object.values(dispatchedOrders || {}).some(matchRef) ||
+        Object.values(completedOrdersHistory || {}).some(matchRef);
+
+      if (isDup) {
+        outBox.innerHTML = `<div style="background:rgba(255,68,68,0.15); border:1px solid #ff4444; color:#ff4444; padding:6px; border-radius:6px; font-weight:bold;">🔴 هذا الإشعار (رقم ${esc(txRef)}) مستخدم مسبقاً! يرجى رفع إشعار التحويل الجديد.</div>`;
+      } else if (amt !== null && Math.abs(amt - expectedSYP) <= 50) {
+        outBox.innerHTML = `<div style="background:rgba(0,230,118,0.15); border:1px solid #00e676; color:#00e676; padding:6px; border-radius:6px; font-weight:bold;">🟢 ممتاز! المبلغ مطابق (${amt.toLocaleString()} ل.س)${txRef ? ` | رقم العملية: ${esc(txRef)}` : ""}. يمكنك إتمام الطلب الآن.</div>`;
+        // إلحاق رقم العملية تلقائياً في الملاحظات لتسهيل التدقيق على واتساب
+        const notesEl = $("orderNotes");
+        if (notesEl && txRef && !notesEl.value.includes(txRef)) {
+          notesEl.value = (notesEl.value ? notesEl.value + " | " : "") + `شام كاش #${txRef}`;
+        }
+      } else if (amt !== null) {
+        outBox.innerHTML = `<div style="background:rgba(255,152,0,0.15); border:1px solid #ff9800; color:#ff9800; padding:6px; border-radius:6px; font-weight:bold;">🟡 تنبيه: المبلغ الظاهر في الإشعار (${amt.toLocaleString()} ل.س) يختلف عن المطلوب (${expectedSYP.toLocaleString()} ل.س).</div>`;
+      } else {
+        outBox.innerHTML = `<div style="background:rgba(255,152,0,0.15); border:1px solid #ff9800; color:#ff9800; padding:6px; border-radius:6px;">🟡 لم يظهر المبلغ بوضوح في الصورة، تأكد من وضوح الإشعار أو أرسله مباشرة على واتساب.</div>`;
+      }
+    } catch (err) {
+      outBox.innerHTML = `<span style="color:var(--danger-color);">❌ تعذر الفحص التلقائي، يمكنك المتابعة وإرسال الإشعار على واتساب.</span>`;
+    }
+  };
+
+  // تحديث المبلغ المعروض في زر النسخ كلما تغيرت السلة
+  const _origRenderCartModalItems = window.renderCartModalItems;
+  window.renderCartModalItems = function () {
+    if (typeof _origRenderCartModalItems === "function") _origRenderCartModalItems();
+    upgradeShamCashUI();
+    const totalTxt = $("modalCartTotal")?.textContent || "0";
+    setTxt("scQuickAmtLabel", totalTxt);
+    const submitBtn = $("submitOrderUnifiedBtn");
+    if (submitBtn && $("cartPaymentMethod")?.value === "شام كاش" && !submitBtn.disabled) {
+      submitBtn.textContent = "✅ إرسال الطلب وتأكيده عبر واتساب";
+    }
+  };
+    
   }
 })();
