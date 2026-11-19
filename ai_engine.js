@@ -1,64 +1,66 @@
 // ============================================================================
-// محرك المرافق المتحدث بانفعال مدمج ومكتبة وصفات الطبخ والحلويات (v38)
-// - تحدث وحالات انفعالية مدمجة عبر Web Audio API بدون الاعتماد على المتصفح
-// - قائمة طويلة لوصفات الطبخ والحلويات ومطابقة المتوفر فعلياً في الفرع واقتراحه
+// محرك المرافق المتحدث + إدارة الوصفات في لوحة الإدارة (v39)
+// - تبويب "🍲 الوصفات" في الإدارة لإضافة/تعديل/حذف الوصفات واحتياجاتها في Firebase
+// - تفعيل التحدث الصوتي العربي الحقيقي للمساعد مع فك قفل الصوت على الهاتف
 // - الكمية الافتراضية في نافذة الاقتراحات = 0
 // - بدون أي تدخل للذكاء الاصطناعي في الدفع أو فحص الإشعارات
 // ============================================================================
 
 (function () {
-  const PREFS_KEY = "moaath_pet_v38_prefs";
-  const POS_KEY = "moaath_pet_v38_pos";
-  const LEARN_KEY = "moaath_pet_v38_learned";
+  const PREFS_KEY = "moaath_pet_v39_prefs";
+  const POS_KEY = "moaath_pet_v39_pos";
+  const LEARN_KEY = "moaath_pet_v39_learned";
 
   const PERSONAS = {
-    buddy: { id: "buddy", name: "بندق الودود", icon: "🐱", accent: "#00b0ff", pitchMul: 1.05, tempoMul: 1.0, greet: "وعليكم السلام يا هلا! نورت المتجر، شو نجهزلك اليوم؟" },
-    pro: { id: "pro", name: "صقر السريع", icon: "🦅", accent: "#00e676", pitchMul: 0.94, tempoMul: 1.18, greet: "أهلاً بك! جاهز فوراً، اطلب وصفتك أو صنفك." },
-    saver: { id: "saver", name: "ثعلب التوفير", icon: "🦊", accent: "#D4AF37", pitchMul: 1.0, tempoMul: 0.96, greet: "يا مرحبا! نجهزلك المتوفر بأفضل قيمة وتوفير." },
-    lulu: { id: "lulu", name: "لولو اللطيفة", icon: "🐰", accent: "#ff7eb6", pitchMul: 1.24, tempoMul: 0.95, greet: "أهلاً فيكِ! شو حابة تطبخي أو تحضّري حلى اليوم؟" },
-    sara: { id: "sara", name: "سارة المنظمة", icon: "🦋", accent: "#7c4dff", pitchMul: 1.15, tempoMul: 1.04, greet: "مرحباً بكِ! نرتب مكونات الوصفة حسب المتوفر بكل دقة." },
-    noor: { id: "noor", name: "نور الذكية", icon: "✨", accent: "#ff9800", pitchMul: 1.18, tempoMul: 1.08, greet: "أهلاً وسهلاً! اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر." }
+    buddy: { id: "buddy", name: "بندق الودود", icon: "🐱", accent: "#00b0ff", rate: 1.0, pitch: 1.05, greet: "وعليكم السلام يا هلا! نورت متجر معاذ، شو نجهزلك اليوم؟" },
+    pro: { id: "pro", name: "صقر السريع", icon: "🦅", accent: "#00e676", rate: 1.12, pitch: 0.96, greet: "أهلاً بك! جاهز لخدمتك بسرعة، اذكر الصنف أو الوصفة." },
+    saver: { id: "saver", name: "ثعلب التوفير", icon: "🦊", accent: "#D4AF37", rate: 0.98, pitch: 1.0, greet: "يا مرحبا! نجهزلك المتوفر بأفضل قيمة وتوفير." },
+    lulu: { id: "lulu", name: "لولو اللطيفة", icon: "🐰", accent: "#ff7eb6", rate: 0.96, pitch: 1.18, greet: "أهلاً فيكِ ونورتي المتجر! شو حابة تطبخي أو تحضّري حلى اليوم؟" },
+    sara: { id: "sara", name: "سارة المنظمة", icon: "🦋", accent: "#7c4dff", rate: 1.02, pitch: 1.12, greet: "مرحباً بكِ! نرتب مكونات الوصفة حسب المتوفر بكل دقة." },
+    noor: { id: "noor", name: "نور الذكية", icon: "✨", accent: "#ff9800", rate: 1.05, pitch: 1.14, greet: "أهلاً وسهلاً! اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر." }
   };
 
-  // قائمة طويلة لوصفات الطبخ والحلويات (مع كلمات مفتاحية ومكونات أساسية)
-  const RECIPES_AND_SWEETS = [
-    // وصفات طبخ رئيسية وشعبية
-    { key: "مقلوبة", title: "وصفة المقلوبة", type: "طبخ", keywords: ["مقلوبه", "مقلوبة"], ingredients: ["رز", "ارز", "زيت", "سمن", "سمنه", "باذنجان", "بطاطا", "بندوره", "طماطم", "بصل", "بهار", "ملح"] },
-    { key: "كبسة", title: "وصفة الكبسة", type: "طبخ", keywords: ["كبسه", "كبسة"], ingredients: ["رز", "ارز", "زيت", "سمن", "بصل", "بندوره", "معجون طماطم", "بهار", "ملح"] },
-    { key: "مجدرة", title: "وصفة المجدرة", type: "طبخ", keywords: ["مجدره", "مجدرة", "برغل", "عدس"], ingredients: ["برغل", "عدس", "زيت", "زيتون", "بصل", "ملح", "كمون"] },
-    { key: "منسف", title: "وصفة المنسف / الأرز باللبن", type: "طبخ", keywords: ["منسف", "ارز باللبن", "رز باللبن"], ingredients: ["رز", "ارز", "لبن", "جميد", "سمن", "مكسرات", "لوز", "ملح"] },
-    { key: "معكرونة بالبشاميل", title: "وصفة المعكرونة بالبشاميل", type: "طبخ", keywords: ["معكرونه", "مكرونه", "بشاميل"], ingredients: ["معكرونه", "مكرونه", "حليب", "طحين", "دقيق", "زيت", "سمن", "جبن", "ملح"] },
-    { key: "شوربة عدس", title: "وصفة شوربة العدس", type: "طبخ", keywords: ["شوربه", "شوربة", "عدس"], ingredients: ["عدس", "بطاطا", "جزر", "بصل", "زيت", "كمون", "ملح"] },
-    { key: "فريكة", title: "وصفة الفريكة", type: "طبخ", keywords: ["فريكه", "فريكة"], ingredients: ["فريكه", "فريكة", "سمن", "زيت", "بصل", "بهار", "ملح"] },
-    { key: "محشي كوسا وورق عنب", title: "وصفة المحشي والورق", type: "طبخ", keywords: ["محشي", "كوسا", "ورق عنب", "يبرق"], ingredients: ["رز", "ارز", "ورق عنب", "كوسا", "بندوره", "بصل", "زيت", "نعناع", "ملح"] },
-    { key: "شيش برك", title: "وصفة الشيش برك", type: "طبخ", keywords: ["شيش برك", "شيشبرك"], ingredients: ["عجين", "طحين", "لبن", "ثوم", "كزبره", "سمن", "ملح"] },
-    { key: "فطور صباحي", title: "سلة الفطور الصباحي", type: "طبخ", keywords: ["فطور", "فطور صباحي", "ترويقه"], ingredients: ["بيض", "جبن", "لبنه", "زيتون", "زيت", "زعتر", "مربى", "عسل", "شاي", "خبز"] },
-    { key: "سهرة ومتة", title: "سلة السهرة والمتة", type: "طبخ", keywords: ["سهره", "سهرة", "مته", "متة", "تسالي"], ingredients: ["مته", "متة", "بزر", "موالح", "نقارش", "شيبس", "بسكوت", "شاي", "سكر"] },
-    { key: "تنظيف المطبخ", title: "مهمة تنظيف المطبخ", type: "تنظيف", keywords: ["تنظيف المطبخ", "منظفات المطبخ", "جلي"], ingredients: ["سائل جلي", "جلي", "صابون", "ليف", "اسفنج", "كلور", "منظف", "معقم"] },
-
-    // وصفات حلويات ومشروبات حلوة
-    { key: "كيك", title: "وصفة الكيك المنزلي", type: "حلويات", keywords: ["كيك", "كاتو"], ingredients: ["طحين", "دقيق", "سكر", "بيض", "حليب", "زيت", "بيكنج باودر", "فانيليا", "كاكاو"] },
-    { key: "بسكويت منزلي", title: "وصفة البسكويت", type: "حلويات", keywords: ["بسكويت", "بسكوت"], ingredients: ["طحين", "دقيق", "سكر", "زيت", "سمن", "زبده", "فانيليا", "حليب"] },
-    { key: "مهلبية", title: "وصفة المهلبية / الكاسترد", type: "حلويات", keywords: ["مهلبيه", "مهلبية", "كاسترد"], ingredients: ["حليب", "نشا", "سكر", "ماء ورد", "فستق", "جوز الهند"] },
-    { key: "حلاوة السميد", title: "وصفة حلاوة السميد", type: "حلويات", keywords: ["حلاوه", "حلاوة", "سميد"], ingredients: ["سميد", "سكر", "سمن", "زيت", "ماء", "مكسرات", "قرفه"] },
-    { key: "قطايف", title: "وصفة القطايف", type: "حلويات", keywords: ["قطايف", "قطاائف"], ingredients: ["قطايف", "طحين", "سميد", "سكر", "جوز", "قشطه", "قشطة", "زيت للقلي"] },
-    { key: "بسبوسة", title: "وصفة البسبوسة / النمورة", type: "حلويات", keywords: ["بسبوسه", "بسبوسة", "نموره", "نمورة"], ingredients: ["سميد", "سكر", "لبن", "جوز الهند", "بيكنج باودر", "سمن", "قطر"] },
-    { key: "حلى الشوكولاتة البارد", title: "وصفة حلى الشوكولاتة البارد", type: "حلويات", keywords: ["حلى بارد", "شوكولاته", "شوكولا", "بسكوت شاي"], ingredients: ["بسكوت", "كاكاو", "شوكولاته", "حليب", "سكر", "نشا", "كريمه"] },
-    { key: "عوامة ولقيمات", title: "وصفة العوامة / اللقيمات", type: "حلويات", keywords: ["عوامه", "عوامة", "لقيمات", "زلابيه"], ingredients: ["طحين", "دقيق", "نشا", "خميره", "سكر", "زيت", "قطر"] }
+  // وصفات افتراضية أساسية تُدمج مع الوصفات التي تضيفها من لوحة الإدارة
+  const DEFAULT_RECIPES = [
+    { id: "DEF_1", title: "مقلوبة", category: "طبخ", keywords: ["مقلوبه", "مقلوبة"], ingredients: ["رز", "ارز", "زيت", "سمن", "باذنجان", "بطاطا", "بندوره", "بصل", "بهار", "ملح"] },
+    { id: "DEF_2", title: "كبسة", category: "طبخ", keywords: ["كبسه", "كبسة"], ingredients: ["رز", "ارز", "زيت", "سمن", "بصل", "معجون طماطم", "بهار", "ملح"] },
+    { id: "DEF_3", title: "مجدرة", category: "طبخ", keywords: ["مجدره", "مجدرة", "برغل"], ingredients: ["برغل", "عدس", "زيت", "زيتون", "بصل", "ملح", "كمون"] },
+    { id: "DEF_4", title: "معكرونة بالبشاميل", category: "طبخ", keywords: ["معكرونه", "مكرونه", "بشاميل"], ingredients: ["معكرونه", "مكرونه", "حليب", "طحين", "زيت", "سمن", "جبن", "ملح"] },
+    { id: "DEF_5", title: "شوربة عدس", category: "طبخ", keywords: ["شوربه", "شوربة", "عدس"], ingredients: ["عدس", "بطاطا", "جزر", "بصل", "زيت", "كمون", "ملح"] },
+    { id: "DEF_6", title: "فريكة", category: "طبخ", keywords: ["فريكه", "فريكة"], ingredients: ["فريكه", "فريكة", "سمن", "زيت", "بصل", "بهار", "ملح"] },
+    { id: "DEF_7", title: "كيك منزلي", category: "حلويات", keywords: ["كيك", "كاتو"], ingredients: ["طحين", "دقيق", "سكر", "بيض", "حليب", "زيت", "بيكنج باودر", "فانيليا", "كاكاو"] },
+    { id: "DEF_8", title: "مهلبية وكاسترد", category: "حلويات", keywords: ["مهلبيه", "مهلبية", "كاسترد"], ingredients: ["حليب", "نشا", "سكر", "ماء ورد", "جوز الهند"] },
+    { id: "DEF_9", title: "بسبوسة / نمورة", category: "حلويات", keywords: ["بسبوسه", "بسبوسة", "نموره", "نمورة"], ingredients: ["سميد", "سكر", "لبن", "جوز الهند", "بيكنج باودر", "سمن"] },
+    { id: "DEF_10", title: "حلى بارد بالبسكويت", category: "حلويات", keywords: ["حلى بارد", "شوكولاته", "بسكوت شاي"], ingredients: ["بسكوت", "كاكاو", "شوكولاته", "حليب", "سكر", "نشا"] },
+    { id: "DEF_11", title: "سهرة ومتة", category: "مشروبات وتسالي", keywords: ["سهره", "سهرة", "مته", "متة", "تسالي"], ingredients: ["مته", "متة", "بزر", "موالح", "نقارش", "شيبس", "بسكوت", "شاي", "سكر"] },
+    { id: "DEF_12", title: "تنظيف المطبخ", category: "تنظيف", keywords: ["تنظيف المطبخ", "منظفات المطبخ", "جلي"], ingredients: ["سائل جلي", "جلي", "صابون", "ليف", "اسفنج", "كلور", "منظف", "معقم"] }
   ];
 
+  let customRecipesDB = {};
   let activeRecognizer = null;
   let isHoldingSpeak = false;
   let bubbleTimer = null;
   let scrollTimer = null;
   let modalItemsState = [];
   let audioCtx = null;
+  let speechUnlocked = false;
+  let lastSpokenSentence = "";
 
   // إبقاء الدفع خارج نطاق الذكاء الاصطناعي تماماً
   window.analyzeShamCashReceiptOCR = function () {
     const outBox = $("shamCashOcrResult");
     if (outBox) outBox.innerHTML = "";
   };
+
+  // الاستماع للوصفات المضافة من الإدارة في Firebase
+  if (typeof db !== "undefined" && db.ref) {
+    db.ref("recipes").on("value", snap => {
+      customRecipesDB = snap.val() || {};
+      if (typeof window.renderAdminRecipesList === "function") {
+        window.renderAdminRecipesList();
+      }
+    });
+  }
 
   function haptic(pattern = 15) {
     try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (_) {}
@@ -70,10 +72,10 @@
       return {
         persona: PERSONAS[d.persona] ? d.persona : "buddy",
         hidden: !!d.hidden,
-        voiceFx: d.voiceFx === undefined ? true : !!d.voiceFx
+        voiceEnabled: d.voiceEnabled === undefined ? true : !!d.voiceEnabled
       };
     } catch (_) {
-      return { persona: "buddy", hidden: false, voiceFx: true };
+      return { persona: "buddy", hidden: false, voiceEnabled: true };
     }
   }
 
@@ -114,86 +116,99 @@
     localStorage.setItem(LEARN_KEY, JSON.stringify(map));
   }
 
-  // [تحدث وحالات انفعالية مدمجة بدون الاعتماد على المتصفح]
-  // يولّد خطاباً صوتياً إيقاعياً بنبرات متعددة تحاكي نبرة التحدث والانفعال لكل حالة وشخصية
-  function speakEmbeddedEmotion(emotion = "happy", syllablesCount = 3) {
-    const prefs = getPrefs();
-    if (!prefs.voiceFx) return;
+  // فك قفل الصوت على متصفحات الهواتف عند أول لمسة
+  function unlockMobileAudio() {
+    if (speechUnlocked) return;
+    speechUnlocked = true;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx) {
+        if (!audioCtx) audioCtx = new Ctx();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+      }
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.getVoices();
+        const silent = new SpeechSynthesisUtterance("");
+        silent.volume = 0;
+        window.speechSynthesis.speak(silent);
+      }
+    } catch (_) {}
+  }
+  document.addEventListener("touchstart", unlockMobileAudio, { once: true, passive: true });
+  document.addEventListener("click", unlockMobileAudio, { once: true });
+
+  // نغمة انفعالية خفيفة مرافقة للنطق
+  function playToneCue(type = "happy") {
     try {
       const Ctx = window.AudioContext || window.webkitAudioContext;
       if (!Ctx) return;
       if (!audioCtx) audioCtx = new Ctx();
       if (audioCtx.state === "suspended") audioCtx.resume();
-
-      const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
-      const base = 240 * (persona.pitchMul || 1.0);
-      const tempo = persona.tempoMul || 1.0;
-
-      const profiles = {
-        greet: { contour: [1.0, 1.25, 1.15, 1.35], step: 0.13, dur: 0.12, wave: "triangle" },
-        happy: { contour: [1.05, 1.3, 1.45, 1.25], step: 0.11, dur: 0.11, wave: "sine" },
-        thinking: { contour: [0.95, 1.08, 0.92, 1.12], step: 0.17, dur: 0.14, wave: "sine" },
-        listen: { contour: [0.9, 1.2, 1.35], step: 0.1, dur: 0.1, wave: "sine" },
-        choice: { contour: [1.0, 1.18, 1.05, 1.28], step: 0.12, dur: 0.11, wave: "triangle" },
-        gentle: { contour: [0.92, 0.84, 0.95], step: 0.15, dur: 0.13, wave: "sine" }
-      };
-
-      const prof = profiles[emotion] || profiles.happy;
-      const steps = Math.max(2, Math.min(6, syllablesCount || prof.contour.length));
+      const prefs = getPrefs();
+      const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
+      const base = 460 * (p.pitch || 1);
+      const seq = type === "listen" ? [base * 0.9, base * 1.25] : [base, base * 1.3];
       const now = audioCtx.currentTime;
-
-      for (let i = 0; i < steps; i++) {
-        const ratio = prof.contour[i % prof.contour.length];
-        const freq = base * ratio;
-        const startT = now + (i * prof.step) / tempo;
-        const durT = prof.dur / tempo;
-
-        // صوت أساسي + توافقي ناعم لإعطاء طابع صوتي بشري أنعم من النغمة البسيطة
+      seq.forEach((f, idx) => {
         const osc = audioCtx.createOscillator();
-        const overtone = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        const overGain = audioCtx.createGain();
-
-        osc.type = prof.wave;
-        overtone.type = "sine";
-
-        // انزلاق خفيف في التردد (formant glide) يشبه مقاطع الكلام
-        osc.frequency.setValueAtTime(freq * 0.94, startT);
-        osc.frequency.exponentialRampToValueAtTime(freq * 1.05, startT + durT * 0.65);
-        osc.frequency.exponentialRampToValueAtTime(freq * 0.96, startT + durT);
-
-        overtone.frequency.setValueAtTime(freq * 2, startT);
-
-        gain.gain.setValueAtTime(0.0001, startT);
-        gain.gain.linearRampToValueAtTime(0.11, startT + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, startT + durT);
-
-        overGain.gain.setValueAtTime(0.0001, startT);
-        overGain.gain.linearRampToValueAtTime(0.03, startT + 0.02);
-        overGain.gain.exponentialRampToValueAtTime(0.0001, startT + durT);
-
-        osc.connect(gain);
-        overtone.connect(overGain);
-        gain.connect(audioCtx.destination);
-        overGain.connect(audioCtx.destination);
-
-        osc.start(startT);
-        overtone.start(startT);
-        osc.stop(startT + durT + 0.02);
-        overtone.stop(startT + durT + 0.02);
-      }
+        const g = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(f, now + idx * 0.08);
+        g.gain.setValueAtTime(0.001, now + idx * 0.08);
+        g.gain.exponentialRampToValueAtTime(0.08, now + idx * 0.08 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.12);
+        osc.connect(g);
+        g.connect(audioCtx.destination);
+        osc.start(now + idx * 0.08);
+        osc.stop(now + idx * 0.08 + 0.13);
+      });
     } catch (_) {}
   }
 
-  window.toggleEmbeddedVoiceFx = function () {
+  // [التحدث الصوتي العربي الفعلي للمساعد لزيادة تفاعل الزبون]
+  function speakOutLoud(rawText, force = false) {
+    const prefs = getPrefs();
+    if (!prefs.voiceEnabled && !force) return;
+
+    const clean = String(rawText || "")
+      .replace(/[\u{1F300}-\u{1FAFF}🐾✨🎤🎧🎙️🤔🤩💡📌📍🔊🔇🗣️🍲🌸]/gu, "")
+      .replace(/[•\-_*#|]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!clean) return;
+    lastSpokenSentence = clean;
+
+    playToneCue("happy");
+
+    try {
+      if (!("speechSynthesis" in window)) return;
+      window.speechSynthesis.cancel();
+      const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
+      const utter = new SpeechSynthesisUtterance(clean);
+      const voices = window.speechSynthesis.getVoices?.() || [];
+      const arVoice = voices.find(v => /^ar/i.test(v.lang)) || voices.find(v => /arabic/i.test(v.name));
+      if (arVoice) utter.voice = arVoice;
+      utter.lang = arVoice?.lang || "ar-SA";
+      utter.rate = persona.rate || 1.0;
+      utter.pitch = persona.pitch || 1.05;
+      utter.volume = 1.0;
+
+      // بعض متصفحات أندرويد تحتاج تأخيراً صغيراً بعد cancel() لتنطق بوضوح
+      setTimeout(() => {
+        try { window.speechSynthesis.speak(utter); } catch (_) {}
+      }, 60);
+    } catch (_) {}
+  }
+
+  window.toggleCompanionVoice = function () {
     haptic(12);
     const prefs = getPrefs();
-    const next = !prefs.voiceFx;
-    setPrefs({ voiceFx: next });
-    if (next) speakEmbeddedEmotion("greet", 3);
-    const msg = next ? "🗣️ التحدث الانفعالي المدمج مفعّل" : "🔇 التحدث الانفعالي مكتوم";
-    showBubble(msg, 2600);
-    showToast(msg);
+    const next = !prefs.voiceEnabled;
+    setPrefs({ voiceEnabled: next });
+    const msg = next ? "تم تفعيل صوت المساعد، أهلاً بك!" : "تم كتم صوت المساعد.";
+    showBubble(next ? "🗣️ الصوت مفعّل" : "🔇 الصوت مكتوم", 2800);
+    showToast(next ? "🗣️ صوت المساعد مفعّل" : "🔇 صوت المساعد مكتوم");
+    if (next) speakOutLoud(msg, true);
   };
 
   function getThumb(id) {
@@ -223,7 +238,9 @@
     setPrefs({ persona: key });
     syncVisuals();
     const p = PERSONAS[key];
-    setOrbEmotion("greet", `${p.icon} ${p.name} — اضغط مطوّلاً وتحدث`, "greet", 3);
+    const msg = `أهلاً بك مع ${p.name}! اضغط مطوّلاً وتحدّث معي.`;
+    showBubble(`${p.icon} ${msg}`, 3400);
+    speakOutLoud(msg);
   };
 
   window.setPetHidden = function (hide) {
@@ -232,7 +249,7 @@
     syncVisuals();
   };
 
-  function showBubble(txt, ms = 4800) {
+  function showBubble(txt, ms = 5000) {
     const b = $("petMiniBubble");
     if (!b || !txt) return;
     b.textContent = txt;
@@ -241,7 +258,7 @@
     if (ms > 0) bubbleTimer = setTimeout(() => { b.style.display = "none"; }, ms);
   }
 
-  function setOrbEmotion(state = "idle", bubbleTxt = "", emotionFx = null, syllables = 3) {
+  function setOrbEmotion(state = "idle", bubbleTxt = "", shouldSpeak = false) {
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const orb = $("petCharOrb");
@@ -252,8 +269,10 @@
     orb.textContent = faces[state] || p.icon;
     orb.style.borderColor = state === "listening" ? "#00e676" : p.accent;
     if (ring) ring.style.display = state === "listening" ? "block" : "none";
-    if (emotionFx) speakEmbeddedEmotion(emotionFx, syllables);
-    if (bubbleTxt) showBubble(bubbleTxt, state === "listening" ? 0 : 5200);
+    if (bubbleTxt) {
+      showBubble(bubbleTxt, state === "listening" ? 0 : 5400);
+      if (shouldSpeak) speakOutLoud(bubbleTxt);
+    }
   }
 
   function syncVisuals() {
@@ -287,17 +306,60 @@
     }
   }
 
-  // [تجهيز الوصفات والحلويات وتصفية المتوفر فعلياً في الفرع]
+  // دمج الوصفات المضافة من الإدارة مع الوصفات الافتراضية
+  function getAllMergedRecipes() {
+    const adminList = Object.keys(customRecipesDB || {}).map(k => {
+      const r = customRecipesDB[k];
+      if (!r || !r.title) return null;
+      const kws = Array.isArray(r.keywords) && r.keywords.length ? r.keywords : [r.title];
+      return {
+        id: k,
+        title: r.title,
+        category: r.category || "طبخ",
+        keywords: kws,
+        productIds: Array.isArray(r.productIds) ? r.productIds : [],
+        ingredients: Array.isArray(r.ingredients) ? r.ingredients : []
+      };
+    }).filter(Boolean);
+
+    return [...adminList, ...DEFAULT_RECIPES];
+  }
+
   function matchRecipeOrSweet(normText) {
-    const matched = RECIPES_AND_SWEETS.find(r =>
-      r.keywords.some(kw => {
+    const allRecipes = getAllMergedRecipes();
+    const matched = allRecipes.find(r => {
+      const tNorm = (typeof normalizeArabic === "function" ? normalizeArabic(r.title) : r.title).toLowerCase();
+      if (normText.includes(tNorm) || tNorm.includes(normText)) return true;
+      return (r.keywords || []).some(kw => {
         const kNorm = (typeof normalizeArabic === "function" ? normalizeArabic(kw) : kw).toLowerCase();
-        return normText.includes(kNorm);
-      })
-    );
+        return kNorm.length >= 2 && normText.includes(kNorm);
+      });
+    });
+
     if (!matched) return null;
 
-    const learned = getLearnedMap()[`recipe_${matched.key}`] || {};
+    const learned = getLearnedMap()[`recipe_${matched.title}`] || {};
+    const availableItems = [];
+    const missingIngredients = [];
+
+    // 1. إذا ربط المدير أصنافاً محددة بالـ ID لهذه الوصفة
+    (matched.productIds || []).forEach(pid => {
+      const p = products?.[pid];
+      if (!p) return;
+      const st = typeof getProductStockForBranch === "function" ? getProductStockForBranch(p, activeBranchId) : (parseInt(p.stock) || 0);
+      if (st > 0) {
+        availableItems.push({
+          id: pid,
+          name: p.name,
+          reason: `من احتياجات (${matched.title})`,
+          score: (learned[pid] || 0) + 15
+        });
+      } else {
+        missingIngredients.push(p.name);
+      }
+    });
+
+    // 2. مطابقة أسماء الاحتياجات النصية مع المخزون المتوفر
     const prodEntries = Object.keys(products || {}).map(pid => {
       const p = products[pid];
       if (!p) return null;
@@ -306,41 +368,36 @@
       return { pid, p, st, pNorm };
     }).filter(Boolean);
 
-    const availableItems = [];
-    const missingIngredients = [];
-
-    matched.ingredients.forEach(ing => {
+    (matched.ingredients || []).forEach(ing => {
       const iNorm = (typeof normalizeArabic === "function" ? normalizeArabic(ing) : ing).toLowerCase();
+      if (!iNorm) return;
       const found = prodEntries.find(x => x.pNorm.includes(iNorm) && x.st > 0);
-      if (found && !availableItems.some(a => a.id === found.pid)) {
-        availableItems.push({
-          id: found.pid,
-          name: found.p.name,
-          reason: `متوفر للوصفة (${ing})`,
-          score: learned[found.pid] || 0
-        });
+      if (found) {
+        if (!availableItems.some(a => a.id === found.pid)) {
+          availableItems.push({
+            id: found.pid,
+            name: found.p.name,
+            reason: `متوفر للوصفة (${ing})`,
+            score: learned[found.pid] || 0
+          });
+        }
       } else {
         missingIngredients.push(ing);
       }
     });
 
     availableItems.sort((a, b) => b.score - a.score);
-    return {
-      recipe: matched,
-      availableItems,
-      missingIngredients
-    };
+    return { recipe: matched, availableItems, missingIngredients };
   }
 
   function matchCasualChat(normText, persona) {
     if (/^(ال)?سلام\s*عليكم|السلام/.test(normText)) return persona.greet;
     if (/^(مرحبا|اهلا|هلا|هاي|صباح\s*الخير|مساء\s*الخير)/.test(normText)) return persona.greet;
-    if (/كيف\s*حالك|شلونك|كيفك|شو\s*اخبارك|اخبارك/.test(normText)) return "الحمد لله بألف خير! شو نطبخ أو نجهزلك اليوم؟";
-    if (/شكرا|مشكور|يعطيك\s*العافيه|يسلمو/.test(normText)) return "العفو ولو، بالخدمة دائماً! 🌸";
+    if (/كيف\s*حالك|شلونك|كيفك|شو\s*اخبارك|اخبارك/.test(normText)) return "الحمد لله بألف خير! خبرني شو نطبخ أو نجهزلك اليوم؟";
+    if (/شكرا|مشكور|يعطيك\s*العافيه|يسلمو/.test(normText)) return "العفو ولو، بالخدمة دائماً!";
     return null;
   }
 
-  // [النافذة المنبثقة للاقتراحات بكمية افتراضية = 0]
   function openZeroDefaultModal(title, items, intentKey = "general", subtitleNote = "") {
     modalItemsState = items.map(it => ({
       id: it.id,
@@ -457,14 +514,13 @@
 
     if (addedTotal > 0) {
       haptic([15, 35, 15]);
-      const msg = `تمت إضافة ${addedTotal} مواد إلى سلتك.`;
-      setOrbEmotion("happy", msg, "happy", 4);
+      const msg = `تمت إضافة ${addedTotal} مواد إلى سلتك بنجاح.`;
+      setOrbEmotion("happy", msg, true);
       setTxt("aiShoppingStatusText", `✅ ${msg}`);
       showToast(`✅ ${msg}`);
     }
   };
 
-  // مطابقة التصنيفات والأصناف
   function matchCategoriesAndProducts(normText) {
     const storeCats = (Array.isArray(categories) ? categories : []).filter(c => c && c !== "الكل");
     const words = normText
@@ -511,21 +567,21 @@
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
 
     if (!promptTxt) {
-      setOrbEmotion("idle", "اضغط مطوّلاً وتحدّث بطلبك أو وصفتك.", "gentle", 2);
+      setOrbEmotion("idle", "اضغط مطوّلاً وتحدّث بطلبك أو وصفتك.", true);
       return;
     }
 
     const norm = (typeof normalizeArabic === "function" ? normalizeArabic(promptTxt) : promptTxt).toLowerCase();
 
-    // 1. حوار عادي وتحيات
+    // 1. الحوار العادي والتحيات
     const chatReply = matchCasualChat(norm, persona);
     if (chatReply) {
-      setOrbEmotion("greet", chatReply, "greet", 3);
+      setOrbEmotion("greet", chatReply, true);
       setTxt("aiShoppingStatusText", `${persona.icon} ${chatReply}`);
       return;
     }
 
-    // 2. وصفات الطبخ والحلويات ومطابقة المتوفر فعلياً في الفرع
+    // 2. وصفات الطبخ والحلويات (تشمل وصفات الإدارة + الافتراضية)
     const recipeRes = matchRecipeOrSweet(norm);
     if (recipeRes) {
       if (recipeRes.availableItems.length > 0) {
@@ -533,18 +589,18 @@
           ? ` | غير متوفر حالياً: ${recipeRes.missingIngredients.slice(0, 4).join("، ")}`
           : " | جميع المكونات الأساسية متوفرة";
         openZeroDefaultModal(
-          `🍽️ ${recipeRes.recipe.title} — المتوفر في الفرع:`,
+          `🍲 ${recipeRes.recipe.title} — المتوفر في الفرع:`,
           recipeRes.availableItems,
-          `recipe_${recipeRes.recipe.key}`,
+          `recipe_${recipeRes.recipe.title}`,
           `الكمية الافتراضية 0 — اضغط (+) لاختيار ما تحتاجه${missingNote}`
         );
-        const msg = `جهزتلك المواد المتوفرة لوصفة ${recipeRes.recipe.key}، حدد الكمية بالضغط على +.`.trim();
-        setOrbEmotion("choice", msg, "choice", 4);
+        const msg = `جهزتلك المواد المتوفرة لوصفة ${recipeRes.recipe.title}، حدد الكمية بالضغط على زائد.`;
+        setOrbEmotion("choice", msg, true);
         setTxt("aiShoppingStatusText", `✅ ${msg}`);
         return;
       } else {
-        const noStockMsg = `وصفة ${recipeRes.recipe.key} موجودة بالقائمة، لكن مكوناتها غير متوفرة حالياً في الفرع.`;
-        setOrbEmotion("idle", noStockMsg, "gentle", 3);
+        const noStockMsg = `وصفة ${recipeRes.recipe.title} مسجلة لدينا، لكن مكوناتها غير متوفرة حالياً في الفرع.`;
+        setOrbEmotion("idle", noStockMsg, true);
         setTxt("aiShoppingStatusText", `⚠️ ${noStockMsg}`);
         return;
       }
@@ -557,18 +613,21 @@
         ? `🛍️ أصناف قسم (${matchedCategories.join("، ")}) — حدد الكمية:`
         : "🛍️ الأصناف المتوفرة المطابقة — حدد الكمية:";
       openZeroDefaultModal(title, items, matchedCategories[0] || `q_${norm.slice(0, 18)}`);
-      const msg = "فتحتلك الأصناف المتوفرة، اضغط (+) لتحديد الكمية.";
-      setOrbEmotion("choice", msg, "choice", 3);
+      const msg = matchedCategories.length
+        ? `فتحتلك أصناف قسم ${matchedCategories.join(" و")}، حدد الكمية المناسبة.`
+        : "فتحتلك الأصناف المتوفرة، اضغط على زائد لتحديد الكمية.";
+      setOrbEmotion("choice", msg, true);
       setTxt("aiShoppingStatusText", `💡 ${msg}`);
       return;
     }
 
     const fallbackMsg = "لم أجد وصفة أو صنفاً مطابقاً متوفراً الآن، جرّب اسم وصفة أو قسم آخر.";
-    setOrbEmotion("idle", fallbackMsg, "gentle", 3);
+    setOrbEmotion("idle", fallbackMsg, true);
     setTxt("aiShoppingStatusText", `⚠️ ${fallbackMsg}`);
   };
 
   function beginLongPressVoice() {
+    unlockMobileAudio();
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
       showBubble("المتصفح لا يدعم الميكروفون، اكتب طلبك أو وصفتك في الخانة.", 3600);
@@ -581,7 +640,8 @@
 
     isHoldingSpeak = true;
     haptic(25);
-    setOrbEmotion("listening", "تحدّث الآن... اترك إصبعك عند الانتهاء", "listen", 2);
+    playToneCue("listen");
+    setOrbEmotion("listening", "تحدّث الآن... اترك إصبعك عند الانتهاء", false);
 
     const rec = new SR();
     activeRecognizer = rec;
@@ -592,14 +652,14 @@
     rec.onresult = ev => {
       const heard = String(ev?.results?.[0]?.[0]?.transcript || "").trim();
       if (!heard) {
-        setOrbEmotion("idle", "لم أسمع صوتاً واضحاً، جرّب النقر المطوّل مرة أخرى.", "gentle", 2);
+        setOrbEmotion("idle", "لم أسمع صوتاً واضحاً، جرّب النقر المطوّل مرة أخرى.", true);
         return;
       }
       setVal("aiShoppingPromptInput", heard);
       window.runAIShoppingAssistant(heard);
     };
 
-    rec.onerror = () => setOrbEmotion("idle", "تعذر التقاط الصوت، تأكد من إذن الميكروفون.", "gentle", 2);
+    rec.onerror = () => setOrbEmotion("idle", "تعذر التقاط الصوت، تأكد من إذن الميكروفون.", true);
     rec.onend = () => {
       isHoldingSpeak = false;
       activeRecognizer = null;
@@ -624,13 +684,14 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v38Bound) return;
-    orb.dataset.v38Bound = "1";
+    if (!orb || !root || orb.dataset.v39Bound) return;
+    orb.dataset.v39Bound = "1";
 
     let down = false, dragging = false, holdFired = false, holdTimer = null;
     let sx = 0, sy = 0, r0 = 14, b0 = 88;
 
     const onDown = e => {
+      unlockMobileAudio();
       const pt = e.touches ? e.touches[0] : e;
       down = true; dragging = false; holdFired = false;
       sx = pt.clientX; sy = pt.clientY;
@@ -690,7 +751,12 @@
         return;
       }
 
-      window.toggleEmbeddedVoiceFx();
+      // نقرة سريعة على الشخصية: تتحدث بالترحيب أو تعيد آخر جملة منطوقة
+      const prefs = getPrefs();
+      const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
+      const phrase = lastSpokenSentence || persona.greet;
+      showBubble(`${persona.icon} ${phrase}`, 4000);
+      speakOutLoud(phrase, true);
     };
 
     orb.addEventListener("contextmenu", e => e.preventDefault());
@@ -709,7 +775,180 @@
     }, { passive: true });
   }
 
-  function mountV38() {
+  // ==========================================================================
+  // إدارة الوصفات داخل لوحة الإدارة (إضافة وصفة واحتياجاتها في Firebase)
+  // ==========================================================================
+  let selectedRecipeProductIds = new Set();
+
+  window.toggleRecipeProductTag = function (pid) {
+    if (!pid) return;
+    if (selectedRecipeProductIds.has(pid)) selectedRecipeProductIds.delete(pid);
+    else selectedRecipeProductIds.add(pid);
+    renderRecipeProductPicker();
+  };
+
+  function renderRecipeProductPicker() {
+    const box = $("admRecipeProductsPicker");
+    if (!box) return;
+    const q = (typeof normalizeArabic === "function" ? normalizeArabic($("admRecipeProdSearch")?.value || "") : ($("admRecipeProdSearch")?.value || "")).toLowerCase();
+    const keys = Object.keys(products || {}).filter(pid => {
+      const p = products[pid];
+      if (!p) return false;
+      if (!q) return true;
+      const n = (typeof normalizeArabic === "function" ? normalizeArabic(p.name || "") : (p.name || "")).toLowerCase();
+      return n.includes(q);
+    }).slice(0, 30);
+
+    box.innerHTML = keys.map(pid => {
+      const p = products[pid];
+      const active = selectedRecipeProductIds.has(pid);
+      return `<button type="button" onclick="toggleRecipeProductTag('${pid}')" style="padding:4px 8px; border-radius:12px; font-size:10px; cursor:pointer; border:1px solid ${active ? "#00e676" : "var(--border-color)"}; background:${active ? "rgba(0,230,118,0.2)" : "var(--bg-color)"}; color:${active ? "#00e676" : "var(--text-color)"}; font-weight:${active ? "bold" : "normal"};">${active ? "✓ " : "+ "}${esc(p.name)}</button>`;
+    }).join("");
+  }
+
+  window.saveAdminRecipe = function () {
+    const editId = ($("admRecipeEditId")?.value || "").trim();
+    const title = ($("admRecipeTitle")?.value || "").trim();
+    const category = $("admRecipeCategory")?.value || "طبخ";
+    const kwRaw = ($("admRecipeKeywords")?.value || "").trim();
+    const ingRaw = ($("admRecipeIngredients")?.value || "").trim();
+
+    if (!title) return alert("⚠️ يرجى إدخال اسم الوصفة أولاً.");
+    const keywords = kwRaw ? kwRaw.split(/[،,]/).map(s => s.trim()).filter(Boolean) : [title];
+    if (!keywords.includes(title)) keywords.unshift(title);
+    const ingredients = ingRaw ? ingRaw.split(/[،,]/).map(s => s.trim()).filter(Boolean) : [];
+    const productIds = Array.from(selectedRecipeProductIds);
+
+    if (!ingredients.length && !productIds.length) {
+      return alert("⚠️ يرجى تحديد احتياجات الوصفة من منتجات المتجر أو كتابة أسماء المكونات.");
+    }
+
+    const rId = editId || ("REC_" + Date.now());
+    db.ref(`recipes/${rId}`).set({
+      id: rId,
+      title,
+      category,
+      keywords,
+      ingredients,
+      productIds,
+      updatedAt: new Date().toISOString()
+    }).then(() => {
+      resetAdminRecipeForm();
+      showToast(`✅ تم حفظ وصفة (${title}) بنجاح!`);
+    }).catch(err => alert("❌ خطأ أثناء الحفظ: " + err.message));
+  };
+
+  window.editAdminRecipe = function (rId) {
+    const r = customRecipesDB?.[rId];
+    if (!r) return;
+    setVal("admRecipeEditId", rId);
+    setVal("admRecipeTitle", r.title || "");
+    setVal("admRecipeCategory", r.category || "طبخ");
+    setVal("admRecipeKeywords", (r.keywords || []).join("، "));
+    setVal("admRecipeIngredients", (r.ingredients || []).join("، "));
+    selectedRecipeProductIds = new Set(Array.isArray(r.productIds) ? r.productIds : []);
+    renderRecipeProductPicker();
+    showToast(`✏️ تم جلب وصفة (${r.title}) للتعديل`);
+  };
+
+  window.deleteAdminRecipe = function (rId) {
+    const r = customRecipesDB?.[rId];
+    if (!r || !confirm(`هل تريد حذف وصفة (${r.title})؟`)) return;
+    db.ref(`recipes/${rId}`).set(null).then(() => showToast("🗑️ تم حذف الوصفة"));
+  };
+
+  window.resetAdminRecipeForm = function () {
+    ["admRecipeEditId", "admRecipeTitle", "admRecipeKeywords", "admRecipeIngredients", "admRecipeProdSearch"].forEach(k => setVal(k, ""));
+    setVal("admRecipeCategory", "طبخ");
+    selectedRecipeProductIds = new Set();
+    renderRecipeProductPicker();
+  };
+
+  window.renderAdminRecipesList = function () {
+    const box = $("admRecipesSavedList");
+    if (!box) return;
+    const list = Object.values(customRecipesDB || {});
+    if (!list.length) {
+      box.innerHTML = `<div style="font-size:11px; color:var(--gray-text); text-align:center; padding:8px;">لا توجد وصفات مضافة يدوياً بعد (الوصفات الافتراضية تعمل تلقائياً).</div>`;
+      return;
+    }
+    box.innerHTML = list.map(r => {
+      const linkedNames = (r.productIds || []).map(pid => products?.[pid]?.name).filter(Boolean);
+      const allNeeds = [...linkedNames, ...(r.ingredients || [])].join("، ");
+      return `<div class="adm-card" style="border-color:var(--gold-color);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <b style="color:var(--gold-color);">🍲 ${esc(r.title)} <small style="color:#00e676;">[${esc(r.category || "طبخ")}]</small></b>
+          <div style="display:flex; gap:4px;">
+            <button type="button" onclick="editAdminRecipe('${r.id}')" class="btn" style="width:auto; padding:3px 8px; font-size:10px;">✏️</button>
+            <button type="button" onclick="deleteAdminRecipe('${r.id}')" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">🗑️</button>
+          </div>
+        </div>
+        <div style="font-size:11px; color:var(--text-color);">الاحتياجات: ${esc(allNeeds || "-")}</div>
+      </div>`;
+    }).join("");
+  };
+
+  function injectAdminRecipesTab() {
+    const adminContent = document.querySelector("#adminModal .modal-content");
+    const tabsBar = adminContent?.querySelector(".categories");
+    if (!adminContent || !tabsBar || $("admTab12Recipes")) return;
+
+    // 1. إضافة زر التبويب في شريط تبويبات الإدارة
+    const tabBtn = document.createElement("button");
+    tabBtn.className = "cat-btn";
+    tabBtn.textContent = "🍲 الوصفات";
+    tabBtn.onclick = function () { switchAdminTab("admTab12Recipes", this); renderRecipeProductPicker(); renderAdminRecipesList(); };
+    tabsBar.appendChild(tabBtn);
+
+    // 2. إنشاء محتوى تبويب الوصفات
+    const tabDiv = document.createElement("div");
+    tabDiv.id = "admTab12Recipes";
+    tabDiv.className = "admin-tab";
+    tabDiv.style.display = "none";
+    tabDiv.innerHTML = `
+      <div class="adm-sec" style="border-color:var(--gold-color);">
+        <div class="adm-sec-title">
+          <span>🍲 إضافة / تعديل وصفة واحتياجاتها للمساعد الذكي</span>
+          <button type="button" onclick="resetAdminRecipeForm()" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">تفريغ</button>
+        </div>
+        <input type="hidden" id="admRecipeEditId">
+        <div class="stats-grid">
+          <div class="form-group"><label>اسم الوصفة أو الحلى:</label><input type="text" id="admRecipeTitle" class="form-control" placeholder="مثال: شيش برك / كنافة"></div>
+          <div class="form-group"><label>نوع الوصفة:</label>
+            <select id="admRecipeCategory" class="form-control">
+              <option value="طبخ">طبخ</option>
+              <option value="حلويات">حلويات</option>
+              <option value="مشروبات وتسالي">مشروبات وتسالي</option>
+              <option value="تنظيف">تنظيف ومهام</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>كلمات مفتاحية بديلة للبحث الصوتي (افصل بينها بفاصلة):</label>
+          <input type="text" id="admRecipeKeywords" class="form-control" placeholder="مثال: كنافة، كنافه نابلسية، حلى جبن">
+        </div>
+        <div class="form-group">
+          <label>اختر احتياجات الوصفة مباشرة من أصناف المتجر:</label>
+          <input type="text" id="admRecipeProdSearch" class="form-control" placeholder="🔍 ابحث عن صنف لربطه بالوصفة..." oninput="renderRecipeProductPicker()" style="margin-bottom:6px; padding:6px;">
+          <div id="admRecipeProductsPicker" style="display:flex; flex-wrap:wrap; gap:5px; max-height:130px; overflow-y:auto; background:var(--bg-color); padding:7px; border-radius:6px; border:1px solid var(--border-color);"></div>
+        </div>
+        <div class="form-group">
+          <label>أو اكتب أسماء المكونات نصياً لمطابقتها تلقائياً (افصل بينها بفاصلة):</label>
+          <input type="text" id="admRecipeIngredients" class="form-control" placeholder="مثال: سميد، سكر، سمن، جبن، قطر">
+        </div>
+        <button type="button" onclick="saveAdminRecipe()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ الوصفة واحتياجاتها</button>
+      </div>
+      <div class="adm-sec">
+        <div class="adm-sec-title"><span>📋 الوصفات المضافة من الإدارة</span></div>
+        <div id="admRecipesSavedList"></div>
+      </div>
+    `;
+    adminContent.appendChild(tabDiv);
+    renderRecipeProductPicker();
+    renderAdminRecipesList();
+  }
+
+  function mountV39() {
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const assistBox = $("aiSmartAssistantBox");
@@ -727,7 +966,7 @@
           <select id="petPersonaSelect" class="form-control" onchange="selectPetPersona(this.value)" style="padding:3px 6px; font-size:10px; flex:1;">${opts}</select>
         </div>
         <div style="display:flex; gap:4px;">
-          <button type="button" onclick="toggleEmbeddedVoiceFx()" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:rgba(0,176,255,0.16); color:#00b0ff;">🗣️ صوت</button>
+          <button type="button" onclick="toggleCompanionVoice()" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:rgba(0,176,255,0.16); color:#00b0ff;">🗣️ صوت</button>
           <button id="petShowCharBtn" type="button" onclick="setPetHidden(false)" style="display:none; align-items:center; gap:3px; background:var(--gold-color); color:#000; border:none; border-radius:6px; padding:3px 8px; font-size:10px; font-weight:bold; cursor:pointer;">إظهار</button>
         </div>`;
       assistBox.insertBefore(bar, assistBox.firstChild);
@@ -735,19 +974,19 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV38";
+      styleTag.id = "petCharStyleV39";
       styleTag.textContent = `
-        @keyframes petFloatV38 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
-        @keyframes petRingV38 { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.36); opacity: 0; } }
+        @keyframes petFloatV39 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
+        @keyframes petRingV39 { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.36); opacity: 0; } }
         #petCharOrb {
           width: 56px; height: 56px; border-radius: 50%; border: 2.5px solid ${p.accent};
           font-size: 27px; display: flex; align-items: center; justify-content: center;
           cursor: grab; -webkit-touch-callout: none; user-select: none;
-          animation: petFloatV38 2.7s ease-in-out infinite;
+          animation: petFloatV39 2.7s ease-in-out infinite;
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: petRingV38 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: petRingV39 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 66px; right: 0; max-width: 225px; width: max-content;
@@ -760,20 +999,25 @@
       const root = document.createElement("div");
       root.id = "petCharRoot";
       root.style.cssText = "position:fixed; bottom:88px; right:14px; z-index:98; transition:opacity 0.2s ease;";
-      root.innerHTML = `<div id="petMiniBubble"></div><div style="position:relative;"><div id="petListenRing"></div><div id="petCharOrb" role="button" aria-label="المرافق">${p.icon}</div></div>`;
+      root.innerHTML = `<div id="petMiniBubble"></div><div style="position:relative;"><div id="petListenRing"></div><div id="petCharOrb" role="button" aria-label="المرافق المتحدث">${p.icon}</div></div>`;
       document.body.appendChild(root);
       bindOrbInteractions($("petCharOrb"), root);
     }
 
+    injectAdminRecipesTab();
     syncVisuals();
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV38(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV39(); };
 
   const _origToggleTheme = window.toggleTheme;
   window.toggleTheme = function () { if (typeof _origToggleTheme === "function") _origToggleTheme(); setTimeout(syncVisuals, 60); };
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV38);
-  else mountV38();
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV39);
+  else mountV39();
 })();
