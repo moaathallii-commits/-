@@ -1,18 +1,17 @@
 // ============================================================================
-// محرك المرافق المتحدث لمتجر معاذ (v40 - All 15 Architect, PWA & QA Upgrades)
+// محرك المرافق المتحدث + صقل السلة وإتمام الطلب + تنظيم الإدارة والتصدير (v41)
 // - بدون أي تدخل للذكاء الاصطناعي في الدفع أو فحص الإشعارات
-// - شجرة أولويات صارمة + ذاكرة جلسة + حماية دورة الحياة (Idempotent Mount)
-// - نافذة اقتراحات تفاعلية بكمية افتراضية 0 + زر تصفير + بدائل ذكية للمنفذ
-// - تبويب إدارة الوصفات محسّن مع بحث فوري وعداد مكونات + فحص QA صامت
+// - صقل السلة: شريط خطوات واضح + بطاقة ملخص فاتورة نظيفة قبل الإرسال
+// - تنظيم الإدارة والتصدير: فلترة تبويبات الإدارة + لوحة التصدير والتقارير الموحدة
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V40_LOADED__) return;
-  window.__MOAATH_AI_V40_LOADED__ = true;
+  if (window.__MOAATH_AI_V41_LOADED__) return;
+  window.__MOAATH_AI_V41_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v40_prefs";
-  const POS_KEY = "moaath_pet_v40_pos";
-  const LEARN_KEY = "moaath_pet_v40_learned";
+  const PREFS_KEY = "moaath_pet_v41_prefs";
+  const POS_KEY = "moaath_pet_v41_pos";
+  const LEARN_KEY = "moaath_pet_v41_learned";
 
   const PERSONAS = {
     buddy: { id: "buddy", name: "بندق الودود", icon: "🐱", accent: "#00b0ff", rate: 1.0, pitch: 1.05, greet: "وعليكم السلام يا هلا! نورت متجر معاذ، شو نجهزلك اليوم؟" },
@@ -38,7 +37,6 @@
     { id: "DEF_12", title: "تنظيف المطبخ", category: "تنظيف", keywords: ["تنظيف المطبخ", "منظفات المطبخ", "جلي"], ingredients: ["سائل جلي", "جلي", "صابون", "ليف", "اسفنج", "كلور", "منظف", "معقم"] }
   ];
 
-  // [3] ذاكرة سياقية للجلسة
   let sessionCtx = {
     lastModalTitle: "",
     lastModalItems: [],
@@ -77,7 +75,6 @@
     try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (_) {}
   }
 
-  // [8] تطبيع لغوي محسّن للهجات والأخطاء الشائعة
   function cleanArabicNorm(str) {
     const base = typeof normalizeArabic === "function" ? normalizeArabic(str) : String(str || "");
     return base
@@ -125,7 +122,6 @@
     localStorage.setItem(POS_KEY, JSON.stringify({ right, bottom }));
   }
 
-  // [7] التعلّم بالممارسة بأوزان منضبطة
   function getLearnedMap() {
     try { return JSON.parse(localStorage.getItem(LEARN_KEY) || "{}"); } catch (_) { return {}; }
   }
@@ -189,7 +185,6 @@
     } catch (_) {}
   }
 
-  // [9] إدارة نظيفة لقائمة انتظار النطق
   function speakOutLoud(rawText, force = false) {
     const prefs = getPrefs();
     if (!prefs.voiceEnabled && !force) return;
@@ -288,7 +283,6 @@
     if (ms > 0) bubbleTimer = setTimeout(() => { b.style.display = "none"; }, ms);
   }
 
-  // [10] مزامنة التعابير والحركة الانفعالية مع كل حالة
   function setOrbEmotion(state = "idle", bubbleTxt = "", shouldSpeak = false) {
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
@@ -306,7 +300,6 @@
     }
   }
 
-  // [12] مؤشر حالة الاتصال (PWA Online / Local)
   function syncConnectivityBadge() {
     const badge = $("petConnStatusBadge");
     if (!badge) return;
@@ -347,7 +340,253 @@
     syncConnectivityBadge();
   }
 
-  // [11] إجابات فورية من بيانات المتجر الحية
+  // ==========================================================================
+  // [A] صقل تجربة الزبون في السلة وإتمام الطلب (Checkout UX)
+  // ==========================================================================
+  function enhanceCustomerCartCheckoutUX() {
+    const modalContent = document.querySelector("#cartModal .modal-content");
+    if (!modalContent) return;
+
+    // 1. شريط خطوات مرئي واضح في أعلى السلة
+    if (!$("cartCheckoutStepper")) {
+      const stepper = document.createElement("div");
+      stepper.id = "cartCheckoutStepper";
+      stepper.style.cssText = "display:flex; justify-content:space-between; align-items:center; gap:4px; background:var(--bg-color); border:1px solid var(--border-color); border-radius:8px; padding:6px 8px; margin-bottom:10px; font-size:10px; font-weight:bold;";
+      stepper.innerHTML = `
+        <span style="color:#00e676;">① مراجعة السلة</span>
+        <span style="color:var(--gray-text);">←</span>
+        <span style="color:var(--gold-color);">② التوصيل والدفع</span>
+        <span style="color:var(--gray-text);">←</span>
+        <span style="color:#00b0ff;">③ تأكيد الطلب</span>
+      `;
+      const header = modalContent.firstElementChild;
+      if (header && header.nextSibling) modalContent.insertBefore(stepper, header.nextSibling);
+      else modalContent.insertBefore(stepper, modalContent.firstChild);
+    }
+
+    // 2. بطاقة ملخص فاتورة نظيفة وواضحة قبل زر الإرسال
+    const submitBtn = $("submitOrderUnifiedBtn");
+    if (submitBtn && submitBtn.parentNode) {
+      let card = $("cleanCheckoutSummaryCard");
+      if (!card) {
+        card = document.createElement("div");
+        card.id = "cleanCheckoutSummaryCard";
+        card.style.cssText = "background:var(--bg-color); border:1px solid var(--gold-color); border-radius:8px; padding:8px 10px; margin-bottom:8px; font-size:11px; line-height:1.55;";
+        submitBtn.parentNode.insertBefore(card, submitBtn);
+      }
+
+      const itemsCount = Object.values(cart || {}).reduce((acc, it) => acc + (parseInt(it.qty) || 0), 0);
+      const feeTxt = $("modalDeliveryFee")?.textContent || "0";
+      const ptsTxt = $("modalCartPoints")?.textContent || "0";
+      const totalTxt = $("modalCartTotal")?.textContent || "0";
+      const payMethod = $("cartPaymentMethod")?.value || "نقداً / حسب المتاح";
+      const regionName = $("cartRegionSelect")?.value || "غير محدد";
+
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--border-color); padding-bottom:4px; margin-bottom:5px;">
+          <b style="color:var(--gold-color);">🧾 ملخص طلبك قبل الإرسال</b>
+          <span style="color:#00e676; font-weight:bold;">+${esc(ptsTxt)} نقطة</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;"><span>عدد القطع:</span><b>${itemsCount}</b></div>
+        <div style="display:flex; justify-content:space-between;"><span>المنطقة والتوصيل:</span><b>${esc(regionName)} (${esc(feeTxt)} ل.س)</b></div>
+        <div style="display:flex; justify-content:space-between;"><span>طريقة الدفع:</span><b>${esc(payMethod)}</b></div>
+        <div style="display:flex; justify-content:space-between; border-top:1px solid var(--border-color); margin-top:4px; padding-top:4px; font-size:12px;">
+          <span>الإجمالي النهائي:</span>
+          <strong style="color:var(--gold-color);">${esc(totalTxt)} ل.س</strong>
+        </div>
+      `;
+    }
+  }
+
+  // ==========================================================================
+  // [B] تنظيم وتبسيط واجهات الإدارة والتصدير (Admin & Export UX)
+  // ==========================================================================
+  window.copyTextToClipboardClean = function (txt, successMsg) {
+    if (!txt) return;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(txt).then(() => showToast(successMsg));
+    } else {
+      const ta = document.createElement("textarea");
+      ta.value = txt;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      showToast(successMsg);
+    }
+  };
+
+  window.exportTodayOrdersBrief = function () {
+    const allOrds = [
+      ...Object.values(pendingOrders || {}).map(o => ({ ...o, _st: "قيد الانتظار" })),
+      ...Object.values(readyOrders || {}).map(o => ({ ...o, _st: "جاهز" })),
+      ...Object.values(dispatchedOrders || {}).map(o => ({ ...o, _st: "قيد التوصيل" }))
+    ];
+    const lines = [
+      `📦 تقرير تجهيز وتصدير الطلبات — متجر معاذ (${new Date().toLocaleDateString("ar-SY")})`,
+      `إجمالي الطلبات النشطة: ${allOrds.length}`,
+      "----------------------------------------"
+    ];
+    if (!allOrds.length) {
+      lines.push("لا توجد طلبات نشطة حالياً.");
+    } else {
+      allOrds.forEach((o, i) => {
+        const itemsStr = (o.items || []).map(it => `${it.name}×${it.qty}`).join("، ");
+        lines.push(`${i + 1}) [${o._st}] ${o.customerName || "زبون"} (${o.region || "-"}) | ${itemsStr}`);
+      });
+    }
+    const out = lines.join("\n");
+    setVal("admExportPreviewArea", out);
+    window.copyTextToClipboardClean(out, "✅ تم تجهيز ونسخ تقرير الطلبات النشطة!");
+  };
+
+  window.exportLowStockShortageList = function () {
+    const low = Object.values(products || {}).filter(p => {
+      const st = getBranchAvail(p.id);
+      const lim = parseInt(p.alertLimit) || 2;
+      return st <= lim;
+    });
+    const lines = [
+      `⚠️ قائمة نواقص المخزون للطلب من الموردين (${new Date().toLocaleDateString("ar-SY")})`,
+      `عدد الأصناف الناقصة: ${low.length}`,
+      "----------------------------------------"
+    ];
+    low.forEach((p, i) => {
+      lines.push(`${i + 1}) ${p.name} — المتوفر: ${getBranchAvail(p.id)} (الحد الأدنى: ${parseInt(p.alertLimit) || 2})`);
+    });
+    const out = lines.join("\n");
+    setVal("admExportPreviewArea", out);
+    window.copyTextToClipboardClean(out, "✅ تم تجهيز ونسخ قائمة النواقص!");
+  };
+
+  window.downloadStoreBackupJSON = function () {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      store: "متجر معاذ",
+      products: products || {},
+      categories: categories || [],
+      recipes: customRecipesDB || {}
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `moaath-store-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("✅ تم تنزيل ملف النسخة الاحتياطية بنجاح!");
+  };
+
+  function organizeAdminAndExportUI() {
+    const adminContent = document.querySelector("#adminModal .modal-content");
+    const tabsBar = adminContent?.querySelector(".categories");
+    if (!adminContent || !tabsBar) return;
+
+    // 1. شريط بحث سريع لتبويبات الإدارة لتسهيل التنقل على الهاتف
+    if (!$("admTabsQuickSearch")) {
+      const searchWrap = document.createElement("div");
+      searchWrap.style.cssText = "margin-bottom:6px;";
+      searchWrap.innerHTML = `<input type="text" id="admTabsQuickSearch" class="form-control" placeholder="🔍 ابحث عن تبويب إداري (وصفات، ديون، تصدير، منتجات...)" style="padding:6px 9px; font-size:11px;">`;
+      tabsBar.parentNode.insertBefore(searchWrap, tabsBar);
+
+      $("admTabsQuickSearch").addEventListener("input", function () {
+        const q = cleanArabicNorm(this.value);
+        tabsBar.querySelectorAll(".cat-btn").forEach(btn => {
+          const match = !q || cleanArabicNorm(btn.textContent || "").includes(q);
+          btn.style.display = match ? "inline-block" : "none";
+        });
+      });
+    }
+
+    // 2. تبويب الوصفات (🍲 الوصفات)
+    if (!$("admTab12Recipes")) {
+      const tabBtn = document.createElement("button");
+      tabBtn.className = "cat-btn";
+      tabBtn.textContent = "🍲 الوصفات";
+      tabBtn.onclick = function () { switchAdminTab("admTab12Recipes", this); renderRecipeProductPicker(); renderAdminRecipesList(); };
+      tabsBar.appendChild(tabBtn);
+
+      const tabDiv = document.createElement("div");
+      tabDiv.id = "admTab12Recipes";
+      tabDiv.className = "admin-tab";
+      tabDiv.style.display = "none";
+      tabDiv.innerHTML = `
+        <div class="adm-sec" style="border-color:var(--gold-color);">
+          <div class="adm-sec-title">
+            <span>🍲 إضافة / تعديل وصفة واحتياجاتها</span>
+            <button type="button" onclick="resetAdminRecipeForm()" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">تفريغ</button>
+          </div>
+          <input type="hidden" id="admRecipeEditId">
+          <div class="stats-grid">
+            <div class="form-group"><label>اسم الوصفة:</label><input type="text" id="admRecipeTitle" class="form-control" placeholder="مثال: كنافة / شيش برك"></div>
+            <div class="form-group"><label>النوع:</label>
+              <select id="admRecipeCategory" class="form-control">
+                <option value="طبخ">طبخ</option>
+                <option value="حلويات">حلويات</option>
+                <option value="مشروبات وتسالي">مشروبات وتسالي</option>
+                <option value="تنظيف">تنظيف ومهام</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>كلمات مفتاحية بديلة (افصل بفاصلة):</label>
+            <input type="text" id="admRecipeKeywords" class="form-control" placeholder="مثال: كنافة، حلى جبن">
+          </div>
+          <div class="form-group">
+            <label>اختر احتياجات الوصفة من أصناف المتجر:</label>
+            <input type="text" id="admRecipeProdSearch" class="form-control" placeholder="🔍 ابحث عن صنف..." oninput="renderRecipeProductPicker()" style="margin-bottom:6px; padding:6px;">
+            <div id="admRecipeProductsPicker" style="display:flex; flex-wrap:wrap; gap:5px; max-height:125px; overflow-y:auto; background:var(--bg-color); padding:7px; border-radius:6px; border:1px solid var(--border-color);"></div>
+          </div>
+          <div class="form-group">
+            <label>أو اكتب المكونات نصياً (افصل بفاصلة):</label>
+            <input type="text" id="admRecipeIngredients" class="form-control" placeholder="سميد، سكر، سمن، جبن">
+          </div>
+          <button type="button" onclick="saveAdminRecipe()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ الوصفة</button>
+        </div>
+        <div class="adm-sec">
+          <div class="adm-sec-title"><span>📋 الوصفات المحفوظة</span></div>
+          <input type="text" id="admRecipeListFilter" class="form-control" placeholder="🔍 ابحث في الوصفات..." oninput="renderAdminRecipesList()" style="margin-bottom:8px; padding:6px;">
+          <div id="admRecipesSavedList"></div>
+        </div>
+      `;
+      adminContent.appendChild(tabDiv);
+      renderRecipeProductPicker();
+      renderAdminRecipesList();
+    }
+
+    // 3. تبويب التصدير والتقارير الموحد (📤 التصدير)
+    if (!$("admTab13Export")) {
+      const expBtn = document.createElement("button");
+      expBtn.className = "cat-btn";
+      expBtn.textContent = "📤 التصدير";
+      expBtn.onclick = function () { switchAdminTab("admTab13Export", this); };
+      tabsBar.appendChild(expBtn);
+
+      const expDiv = document.createElement("div");
+      expDiv.id = "admTab13Export";
+      expDiv.className = "admin-tab";
+      expDiv.style.display = "none";
+      expDiv.innerHTML = `
+        <div class="adm-sec" style="border-color:#00b0ff;">
+          <div class="adm-sec-title"><span style="color:#00b0ff;">📤 مركز التصدير والتجهيز السريع</span></div>
+          <div style="display:flex; flex-direction:column; gap:7px; margin-bottom:10px;">
+            <button type="button" onclick="exportTodayOrdersBrief()" class="btn" style="background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; font-size:11px;">📦 تصدير ونسخ ملخص الطلبات النشطة للتجهيز</button>
+            <button type="button" onclick="exportLowStockShortageList()" class="btn" style="background:rgba(212,175,55,0.2); color:var(--gold-color); border:1px solid var(--gold-color); font-size:11px;">⚠️ تصدير ونسخ قائمة نواقص المخزون للموردين</button>
+            <button type="button" onclick="downloadStoreBackupJSON()" class="btn" style="background:var(--bg-color); color:var(--text-color); border:1px solid var(--border-color); font-size:11px;">💾 تنزيل نسخة احتياطية كاملة (JSON)</button>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>معاينة النص المصدّر (جاهز للنسخ أو المشاركة):</label>
+            <textarea id="admExportPreviewArea" class="form-control" rows="6" readonly placeholder="اضغط أحد أزرار التصدير بالأعلى لمعاينة التقرير ونسخه تلقائياً..."></textarea>
+          </div>
+        </div>
+      `;
+      adminContent.appendChild(expDiv);
+    }
+  }
+
+  // ==========================================================================
+  // بقية منطق المساعد الذكي والوصفات والمرافق المتحدث
+  // ==========================================================================
   function answerLiveStoreQueries(normText) {
     if (/مفتوح|دوام|اوقات|ساعات|مسكر|يفتح/.test(normText)) {
       const openNow = typeof isGlobalStoreOpenNow === "function" ? isGlobalStoreOpenNow() : true;
@@ -361,7 +600,6 @@
     return null;
   }
 
-  // [3] معالجة أوامر المتابعة داخل الجلسة
   function handleSessionFollowUp(normText) {
     if (/^(اعد|كرر|افتح)\s*(اخر)?\s*(اقتراح|قائمه|نافذه)/.test(normText) && sessionCtx.lastModalItems.length > 0) {
       openZeroDefaultModal(sessionCtx.lastModalTitle, sessionCtx.lastModalItems, sessionCtx.lastModalIntent, sessionCtx.lastModalSubtitle);
@@ -398,7 +636,6 @@
     return [...adminList, ...DEFAULT_RECIPES];
   }
 
-  // [4] مطابقة الوصفات مع مخزون الفرع النشط + بدائل
   function matchRecipeOrSweet(normText) {
     const allRecipes = getAllMergedRecipes();
     const matched = allRecipes.find(r => {
@@ -420,12 +657,7 @@
       const p = products?.[pid];
       if (!p) return;
       if (getBranchAvail(pid) > 0) {
-        availableItems.push({
-          id: pid,
-          name: p.name,
-          reason: `من احتياجات (${matched.title})`,
-          score: (learned[pid] || 0) + 15
-        });
+        availableItems.push({ id: pid, name: p.name, reason: `من احتياجات (${matched.title})`, score: (learned[pid] || 0) + 15 });
       } else {
         missingIngredients.push(p.name);
       }
@@ -443,12 +675,7 @@
       const found = prodEntries.find(x => x.pNorm.includes(iNorm) && x.st > 0);
       if (found) {
         if (!availableItems.some(a => a.id === found.pid)) {
-          availableItems.push({
-            id: found.pid,
-            name: found.p.name,
-            reason: `متوفر للوصفة (${ing})`,
-            score: learned[found.pid] || 0
-          });
+          availableItems.push({ id: found.pid, name: found.p.name, reason: `متوفر للوصفة (${ing})`, score: learned[found.pid] || 0 });
         }
       } else {
         missingIngredients.push(ing);
@@ -467,7 +694,6 @@
     return null;
   }
 
-  // [5, 14] نافذة الاقتراحات بكمية افتراضية 0 مع زر تصفير وحد أقصى متوازن
   function openZeroDefaultModal(title, items, intentKey = "general", subtitleNote = "") {
     const cappedItems = items.slice(0, 8);
     sessionCtx.lastModalTitle = title;
@@ -603,7 +829,6 @@
     }
   };
 
-  // [5, 6] مطابقة التصنيفات والأصناف والميزانية واقتراح بدائل للمنفذ
   function matchCategoriesAndProducts(normText) {
     const storeCats = (Array.isArray(categories) ? categories : []).filter(c => c && c !== "الكل");
     const budgetMatch = normText.match(/(\d{2,7})/);
@@ -648,7 +873,6 @@
       }
     });
 
-    // إذا نفد الصنف المطلوب، نبحث عن بديل متوفر من نفس القسم
     if (!availableResults.length && outOfStockCategory) {
       Object.keys(products || {}).forEach(pid => {
         const p = products[pid];
@@ -666,7 +890,6 @@
     return { matchedCategories, items: availableResults.slice(0, 8), usedAlternative: !!outOfStockCategory };
   }
 
-  // [1] شجرة الأولويات الصارمة للمساعد الذكي
   window.runAIShoppingAssistant = async function (overridePrompt = null) {
     const promptTxt = String(overridePrompt ?? ($("aiShoppingPromptInput")?.value || "")).trim();
     const prefs = getPrefs();
@@ -679,7 +902,6 @@
 
     const norm = cleanArabicNorm(promptTxt);
 
-    // 1) التحيات والحوار العادي
     const chatReply = matchCasualChat(norm, persona);
     if (chatReply) {
       setOrbEmotion("greet", chatReply, true);
@@ -687,7 +909,6 @@
       return;
     }
 
-    // 2) أوامر المتابعة السياقية داخل الجلسة
     const followUpReply = handleSessionFollowUp(norm);
     if (followUpReply) {
       setOrbEmotion("happy", followUpReply, true);
@@ -695,7 +916,6 @@
       return;
     }
 
-    // 3) الاستفسارات الحية عن الدوام والفرع
     const liveReply = answerLiveStoreQueries(norm);
     if (liveReply) {
       setOrbEmotion("greet", liveReply, true);
@@ -703,7 +923,6 @@
       return;
     }
 
-    // 4) وصفات الطبخ والحلويات والمهام
     const recipeRes = matchRecipeOrSweet(norm);
     if (recipeRes) {
       if (recipeRes.availableItems.length > 0) {
@@ -728,7 +947,6 @@
       }
     }
 
-    // 5) التصنيفات والأصناف والميزانية والبدائل
     const { matchedCategories, items, usedAlternative } = matchCategoriesAndProducts(norm);
     if (items.length > 0) {
       const title = usedAlternative
@@ -810,8 +1028,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v40Bound) return;
-    orb.dataset.v40Bound = "1";
+    if (!orb || !root || orb.dataset.v41Bound) return;
+    orb.dataset.v41Bound = "1";
 
     let down = false, dragging = false, holdFired = false, holdTimer = null;
     let sx = 0, sy = 0, r0 = 14, b0 = 88;
@@ -900,7 +1118,6 @@
     }, { passive: true });
   }
 
-  // [13] تبويب الوصفات في الإدارة مع بحث فوري وعداد مكونات
   window.toggleRecipeProductTag = function (pid) {
     if (!pid) return;
     if (selectedRecipeProductIds.has(pid)) selectedRecipeProductIds.delete(pid);
@@ -1015,81 +1232,7 @@
     }).join("");
   };
 
-  function injectAdminRecipesTab() {
-    const adminContent = document.querySelector("#adminModal .modal-content");
-    const tabsBar = adminContent?.querySelector(".categories");
-    if (!adminContent || !tabsBar || $("admTab12Recipes")) return;
-
-    const tabBtn = document.createElement("button");
-    tabBtn.className = "cat-btn";
-    tabBtn.textContent = "🍲 الوصفات";
-    tabBtn.onclick = function () { switchAdminTab("admTab12Recipes", this); renderRecipeProductPicker(); renderAdminRecipesList(); };
-    tabsBar.appendChild(tabBtn);
-
-    const tabDiv = document.createElement("div");
-    tabDiv.id = "admTab12Recipes";
-    tabDiv.className = "admin-tab";
-    tabDiv.style.display = "none";
-    tabDiv.innerHTML = `
-      <div class="adm-sec" style="border-color:var(--gold-color);">
-        <div class="adm-sec-title">
-          <span>🍲 إضافة / تعديل وصفة واحتياجاتها للمساعد الذكي</span>
-          <button type="button" onclick="resetAdminRecipeForm()" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">تفريغ</button>
-        </div>
-        <input type="hidden" id="admRecipeEditId">
-        <div class="stats-grid">
-          <div class="form-group"><label>اسم الوصفة أو الحلى:</label><input type="text" id="admRecipeTitle" class="form-control" placeholder="مثال: شيش برك / كنافة"></div>
-          <div class="form-group"><label>نوع الوصفة:</label>
-            <select id="admRecipeCategory" class="form-control">
-              <option value="طبخ">طبخ</option>
-              <option value="حلويات">حلويات</option>
-              <option value="مشروبات وتسالي">مشروبات وتسالي</option>
-              <option value="تنظيف">تنظيف ومهام</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>كلمات مفتاحية بديلة للبحث الصوتي (افصل بينها بفاصلة):</label>
-          <input type="text" id="admRecipeKeywords" class="form-control" placeholder="مثال: كنافة، كنافه نابلسية، حلى جبن">
-        </div>
-        <div class="form-group">
-          <label>اختر احتياجات الوصفة مباشرة من أصناف المتجر:</label>
-          <input type="text" id="admRecipeProdSearch" class="form-control" placeholder="🔍 ابحث عن صنف لربطه بالوصفة..." oninput="renderRecipeProductPicker()" style="margin-bottom:6px; padding:6px;">
-          <div id="admRecipeProductsPicker" style="display:flex; flex-wrap:wrap; gap:5px; max-height:130px; overflow-y:auto; background:var(--bg-color); padding:7px; border-radius:6px; border:1px solid var(--border-color);"></div>
-        </div>
-        <div class="form-group">
-          <label>أو اكتب أسماء المكونات نصياً لمطابقتها تلقائياً (افصل بينها بفاصلة):</label>
-          <input type="text" id="admRecipeIngredients" class="form-control" placeholder="مثال: سميد، سكر، سمن، جبن، قطر">
-        </div>
-        <button type="button" onclick="saveAdminRecipe()" class="btn" style="background:var(--success-color); color:#000;">💾 حفظ الوصفة واحتياجاتها</button>
-      </div>
-      <div class="adm-sec">
-        <div class="adm-sec-title"><span>📋 الوصفات المضافة من الإدارة</span></div>
-        <input type="text" id="admRecipeListFilter" class="form-control" placeholder="🔍 ابحث في الوصفات المحفوظة..." oninput="renderAdminRecipesList()" style="margin-bottom:8px; padding:6px;">
-        <div id="admRecipesSavedList"></div>
-      </div>
-    `;
-    adminContent.appendChild(tabDiv);
-    renderRecipeProductPicker();
-    renderAdminRecipesList();
-  }
-
-  // [15] فحص تشخيصي صامت للمطور والإدارة (QA Self-Check)
-  window.runAssistantQACheck = function () {
-    const report = {
-      productsLoaded: Object.keys(products || {}).length,
-      categoriesLoaded: Array.isArray(categories) ? categories.length : 0,
-      recipesAvailable: getAllMergedRecipes().length,
-      speechSynthesisSupported: "speechSynthesis" in window,
-      speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
-      online: navigator.onLine !== false
-    };
-    console.info("[QA Assistant Diagnostic]", report);
-    return report;
-  };
-
-  // [2] حماية دورة الحياة (Idempotent Mount)
-  function mountV40() {
+  function mountV41() {
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const assistBox = $("aiSmartAssistantBox");
@@ -1116,19 +1259,19 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV40";
+      styleTag.id = "petCharStyleV41";
       styleTag.textContent = `
-        @keyframes petFloatV40 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
-        @keyframes petRingV40 { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.36); opacity: 0; } }
+        @keyframes petFloatV41 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
+        @keyframes petRingV41 { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.36); opacity: 0; } }
         #petCharOrb {
           width: 56px; height: 56px; border-radius: 50%; border: 2.5px solid ${p.accent};
           font-size: 27px; display: flex; align-items: center; justify-content: center;
           cursor: grab; -webkit-touch-callout: none; user-select: none;
-          animation: petFloatV40 2.7s ease-in-out infinite;
+          animation: petFloatV41 2.7s ease-in-out infinite;
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: petRingV40 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: petRingV41 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 66px; right: 0; max-width: 225px; width: max-content;
@@ -1146,12 +1289,19 @@
       bindOrbInteractions($("petCharOrb"), root);
     }
 
-    injectAdminRecipesTab();
+    organizeAdminAndExportUI();
+    enhanceCustomerCartCheckoutUX();
     syncVisuals();
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV40(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV41(); };
+
+  const _origRenderCart = window.renderCartModalItems;
+  window.renderCartModalItems = function () {
+    if (typeof _origRenderCart === "function") _origRenderCart();
+    enhanceCustomerCartCheckoutUX();
+  };
 
   const _origToggleTheme = window.toggleTheme;
   window.toggleTheme = function () { if (typeof _origToggleTheme === "function") _origToggleTheme(); setTimeout(syncVisuals, 60); };
@@ -1163,6 +1313,6 @@
     window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV40);
-  else mountV40();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV41);
+  else mountV41();
 })();
