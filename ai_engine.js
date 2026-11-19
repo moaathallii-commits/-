@@ -1,27 +1,72 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v46 - Anime Fairies & 3D Roam)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v47 - Embedded SVG Fairies)
 // - استبعاد صارم وكامل للذكاء الاصطناعي من عمليات الدفع وطرق الدفع والإشعارات المالية
-// - تصاميم جنيات أنمي مخصصة لكل شخصية (بندق، صقر، ثعلب، لولو، سارة، نور)
+// - تضمين رسوم جنيات مدمجة مباشرة (Data URI SVG) لكل شخصية لتظهر فوراً بلا أي صور خارجية مفقودة
 // - حركة ثلاثية الأبعاد + ظل أرضي + تجوال حر يتوقف تلقائياً عند لمس/سحب/تحدث الزبون
 // - صوت عربي بشري طبيعي عبر Cloudflare Worker (mode: "tts") بدون صوت المتصفح
 // - نافذة اقتراحات 0 افتراضي + وصفات الإدارة + التصدير + صقل السلة
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V46_LOADED__) return;
-  window.__MOAATH_AI_V46_LOADED__ = true;
+  if (window.__MOAATH_AI_V47_LOADED__) return;
+  window.__MOAATH_AI_V47_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v46_prefs";
-  const POS_KEY = "moaath_pet_v46_pos";
-  const LEARN_KEY = "moaath_pet_v46_learned";
+  const PREFS_KEY = "moaath_pet_v47_prefs";
+  const POS_KEY = "moaath_pet_v47_pos";
+  const LEARN_KEY = "moaath_pet_v47_learned";
+
+  function makeFairySvgDataUrl(bgDark, wingColor, wingInner, hairColor, outfitColor, accentColor, eyeColor, styleType) {
+    const extraOrnament = styleType === "pro"
+      ? `<path d="M26 23 L32 15 L38 23 Z" fill="${accentColor}"/>`
+      : styleType === "saver"
+      ? `<circle cx="32" cy="14" r="4" fill="${accentColor}"/><path d="M29 14 L35 14 M32 11 L32 17" stroke="#111" stroke-width="1.3"/>`
+      : styleType === "lulu"
+      ? `<circle cx="21" cy="18" r="3" fill="#ff9ec7"/><circle cx="43" cy="18" r="3" fill="#ff9ec7"/><path d="M32 11 L34 15 L30 15 Z" fill="#ffd166"/>`
+      : styleType === "sara"
+      ? `<polygon points="32,10 35,16 29,16" fill="#d8b4fe"/><circle cx="20" cy="24" r="2.2" fill="#e9d5ff"/>`
+      : styleType === "noor"
+      ? `<polygon points="32,9 34,14 39,14 35,17 36,22 32,19 28,22 29,17 25,14 30,14" fill="#fde047"/>`
+      : `<circle cx="32" cy="13" r="3.2" fill="#7dd3fc"/>`;
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+      <defs>
+        <radialGradient id="gbg" cx="35%" cy="30%" r="70%">
+          <stop offset="0%" stop-color="${accentColor}" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="${bgDark}"/>
+        </radialGradient>
+      </defs>
+      <circle cx="32" cy="32" r="31" fill="url(#gbg)"/>
+      <!-- الأجنحة ثلاثية الطبقات -->
+      <path d="M26 33 C10 16, 4 28, 15 39 C19 42, 24 39, 26 36 Z" fill="${wingColor}" fill-opacity="0.88" stroke="${accentColor}" stroke-width="1.4"/>
+      <path d="M38 33 C54 16, 60 28, 49 39 C45 42, 40 39, 38 36 Z" fill="${wingColor}" fill-opacity="0.88" stroke="${accentColor}" stroke-width="1.4"/>
+      <path d="M26 37 C13 38, 11 49, 21 50 C24 50, 26 45, 27 40 Z" fill="${wingInner}" fill-opacity="0.82"/>
+      <path d="M38 37 C51 38, 53 49, 43 50 C40 50, 38 45, 37 40 Z" fill="${wingInner}" fill-opacity="0.82"/>
+      <!-- الجسد والرداء -->
+      <path d="M25 40 L39 40 L42 54 L22 54 Z" fill="${outfitColor}" stroke="${accentColor}" stroke-width="1.2"/>
+      <path d="M28 40 L32 46 L36 40" fill="none" stroke="${accentColor}" stroke-width="1.5"/>
+      <!-- الرأس والشعر -->
+      <circle cx="32" cy="29" r="11" fill="#ffe0bd" stroke="#d4a373" stroke-width="1"/>
+      <path d="M21 28 C21 17, 43 17, 43 28 C41 23, 36 21, 32 21 C28 21, 23 23, 21 28 Z" fill="${hairColor}"/>
+      <!-- أذنا الجنية -->
+      <polygon points="21,28 14,26 21,32" fill="#ffe0bd" stroke="#d4a373" stroke-width="0.9"/>
+      <polygon points="43,28 50,26 43,32" fill="#ffe0bd" stroke="#d4a373" stroke-width="0.9"/>
+      <!-- العينان والابتسامة -->
+      <circle cx="28" cy="30" r="2.2" fill="${eyeColor}"/>
+      <circle cx="36" cy="30" r="2.2" fill="${eyeColor}"/>
+      <circle cx="28.7" cy="29.2" r="0.8" fill="#ffffff"/>
+      <circle cx="36.7" cy="29.2" r="0.8" fill="#ffffff"/>
+      <path d="M29.5 34.5 Q32 37 34.5 34.5" fill="none" stroke="#9e4747" stroke-width="1.4" stroke-linecap="round"/>
+      ${extraOrnament}
+    </svg>`;
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  }
 
   const PERSONAS = {
     buddy: {
       id: "buddy",
       name: "بندق الودود",
       roleBadge: "جنية مرحة ودودة",
-      avatarUrl: "fairies/buddy.jpg",
-      fallbackUrl: "image_generation_content/8925614795600754675",
+      avatarUrl: makeFairySvgDataUrl("#0b1e3a", "#38bdf8", "#7dd3fc", "#78350f", "#1d4ed8", "#00b0ff", "#0284c7", "buddy"),
       accent: "#00b0ff",
       voiceName: "Puck",
       speed: 1.0,
@@ -31,8 +76,7 @@
       id: "pro",
       name: "صقر السريع",
       roleBadge: "جنية عملية سريعة",
-      avatarUrl: "fairies/pro.jpg",
-      fallbackUrl: "image_generation_content/2939152068369174048",
+      avatarUrl: makeFairySvgDataUrl("#09261b", "#34d399", "#6ee7b7", "#1f2937", "#047857", "#00e676", "#059669", "pro"),
       accent: "#00e676",
       voiceName: "Charon",
       speed: 1.14,
@@ -42,8 +86,7 @@
       id: "saver",
       name: "ثعلب التوفير",
       roleBadge: "جنية ذكية للميزانية",
-      avatarUrl: "fairies/saver.jpg",
-      fallbackUrl: "image_generation_content/8978966884573139907",
+      avatarUrl: makeFairySvgDataUrl("#291d07", "#fbbf24", "#fde68a", "#92400e", "#b45309", "#D4AF37", "#b45309", "saver"),
       accent: "#D4AF37",
       voiceName: "Fenrir",
       speed: 0.98,
@@ -53,8 +96,7 @@
       id: "lulu",
       name: "لولو اللطيفة",
       roleBadge: "جنية وردية لطيفة",
-      avatarUrl: "fairies/lulu.jpg",
-      fallbackUrl: "image_generation_content/16458470604382325854",
+      avatarUrl: makeFairySvgDataUrl("#2d1024", "#f9a8d4", "#fbcfe8", "#ec4899", "#db2777", "#ff7eb6", "#be185d", "lulu"),
       accent: "#ff7eb6",
       voiceName: "Aoede",
       speed: 0.96,
@@ -64,8 +106,7 @@
       id: "sara",
       name: "سارة المنظمة",
       roleBadge: "جنية منظمة للوصفات",
-      avatarUrl: "fairies/sara.jpg",
-      fallbackUrl: "image_generation_content/11046149226620010275",
+      avatarUrl: makeFairySvgDataUrl("#1b1038", "#c4b5fd", "#ddd6fe", "#5b21b6", "#6d28d9", "#7c4dff", "#4c1d95", "sara"),
       accent: "#7c4dff",
       voiceName: "Kore",
       speed: 1.02,
@@ -75,8 +116,7 @@
       id: "noor",
       name: "نور الذكية",
       roleBadge: "جنية مشرقة للخيارات",
-      avatarUrl: "fairies/noor.jpg",
-      fallbackUrl: "image_generation_content/13701790742975363569",
+      avatarUrl: makeFairySvgDataUrl("#2b1705", "#fdba74", "#fed7aa", "#d97706", "#ea580c", "#ff9800", "#c2410c", "noor"),
       accent: "#ff9800",
       voiceName: "Leda",
       speed: 1.06,
@@ -417,13 +457,9 @@
     imgEl.alt = persona.name;
     imgEl.onerror = function () {
       this.onerror = null;
-      if (persona.fallbackUrl && this.src !== persona.fallbackUrl) {
-        this.src = persona.fallbackUrl;
-      } else {
-        this.src = "store-icon.png";
-      }
+      this.src = "store-icon.png";
     };
-    imgEl.src = persona.avatarUrl || persona.fallbackUrl || "store-icon.png";
+    imgEl.src = persona.avatarUrl;
   }
 
   window.selectPetPersona = function (key) {
@@ -504,6 +540,7 @@
     const root = $("petCharRoot");
     const orb = $("petCharOrb");
     const img = $("fairyCharImg");
+    const barThumb = $("fairyBarThumb");
     const showBtn = $("petShowCharBtn");
     const sel = $("petPersonaSelect");
 
@@ -525,12 +562,13 @@
         : `0 14px 28px rgba(0,0,0,0.6), 0 0 18px ${p.accent}77, inset 0 2px 6px rgba(255,255,255,0.35)`;
     }
     if (img) renderFairyAvatarImage(img, p);
+    if (barThumb) {
+      barThumb.style.borderColor = p.accent;
+      renderFairyAvatarImage(barThumb, p);
+    }
     syncConnectivityBadge();
   }
 
-  // ==========================================================================
-  // [تجوال ثلاثي الأبعاد حر وكائن حي على الجوال]
-  // ==========================================================================
   function ensureGroundShadow(root) {
     if (!root || $("pet3DGroundShadow")) return;
     const orbWrap = root.querySelector("div[style*='position:relative']");
@@ -582,9 +620,6 @@
     roamTimer = setInterval(stepFreeRoam, 4300);
   }
 
-  // ==========================================================================
-  // [A] صقل تجربة الزبون في السلة وإتمام الطلب (دون تدخل الذكاء الاصطناعي في الدفع)
-  // ==========================================================================
   function enhanceCustomerCartCheckoutUX() {
     const modalContent = document.querySelector("#cartModal .modal-content");
     if (!modalContent) return;
@@ -638,9 +673,6 @@
     }
   }
 
-  // ==========================================================================
-  // [B] تنظيم وتبسيط واجهات الإدارة والتصدير
-  // ==========================================================================
   window.copyTextToClipboardClean = function (txt, successMsg) {
     if (!txt) return;
     if (navigator.clipboard?.writeText) {
@@ -821,9 +853,6 @@
     }
   }
 
-  // ==========================================================================
-  // [C] التوصيات الذكية المصورة داخل السلة + نافذة الاقتراحات التفاعلية
-  // ==========================================================================
   window.renderSmartCartRecommendations = function () {
     const box = $("aiCartRecommendationsBox");
     if (!box) return;
@@ -1197,7 +1226,6 @@
       return;
     }
 
-    // منع تدخل الذكاء الاصطناعي في أي طلب يخص الدفع أو التحويلات
     if (guardAgainstPaymentAI(promptTxt)) {
       const guardMsg = "عمليات الدفع وتأكيد التحويلات تتم يدوياً بالكامل خارج المساعد الذكي.";
       setOrbEmotion("idle", guardMsg, false);
@@ -1334,8 +1362,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v46Bound) return;
-    orb.dataset.v46Bound = "1";
+    if (!orb || !root || orb.dataset.v47Bound) return;
+    orb.dataset.v47Bound = "1";
 
     ensureGroundShadow(root);
 
@@ -1549,7 +1577,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v46",
+      version: "v47",
       paymentAIExcluded: true,
       fairiesCount: Object.keys(PERSONAS).length,
       productsLoaded: Object.keys(products || {}).length,
@@ -1559,11 +1587,11 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v46]", report);
+    console.info("[QA Assistant Diagnostic v47]", report);
     return report;
   };
 
-  function mountV46() {
+  function mountV47() {
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const assistBox = $("aiSmartAssistantBox");
@@ -1573,10 +1601,11 @@
       bar.id = "petPersonaBar";
       bar.style.cssText = "display:flex; align-items:center; justify-content:space-between; gap:5px; flex-wrap:wrap; margin-bottom:6px; font-size:10px;";
       const opts = Object.values(PERSONAS).map(per =>
-        `<option value="${per.id}">🧚 ${per.name} — ${per.roleBadge}</option>`
+        `<option value="${per.id}">${per.name} — ${per.roleBadge}</option>`
       ).join("");
       bar.innerHTML = `
         <div style="display:flex; align-items:center; gap:4px; flex:1; min-width:170px;">
+          <img id="fairyBarThumb" alt="${p.name}" style="width:22px; height:22px; border-radius:50%; object-fit:cover; border:1.5px solid ${p.accent}; flex-shrink:0;">
           <span style="color:var(--gold-color); font-weight:bold;">الجنية:</span>
           <select id="petPersonaSelect" class="form-control" onchange="selectPetPersona(this.value)" style="padding:3px 6px; font-size:10px; flex:1;">${opts}</select>
         </div>
@@ -1590,7 +1619,7 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV46";
+      styleTag.id = "petCharStyleV47";
       styleTag.textContent = `
         @keyframes fairyHover3D {
           0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
@@ -1600,7 +1629,7 @@
           0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.42; }
           50% { transform: translateX(-50%) scale(0.75); opacity: 0.22; }
         }
-        @keyframes fairyRingV46 {
+        @keyframes fairyRingV47 {
           0% { transform: scale(1); opacity: 0.9; }
           100% { transform: scale(1.38); opacity: 0; }
         }
@@ -1636,7 +1665,7 @@
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV46 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV47 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 72px; right: 0; max-width: 235px; width: max-content;
@@ -1669,7 +1698,7 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV46(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV47(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
@@ -1684,6 +1713,6 @@
   window.addEventListener("online", syncConnectivityBadge);
   window.addEventListener("offline", syncConnectivityBadge);
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV46);
-  else mountV46();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV47);
+  else mountV47();
 })();
