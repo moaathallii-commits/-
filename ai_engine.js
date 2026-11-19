@@ -1,25 +1,51 @@
 // ============================================================================
-// محرك المرافق التفاعلي ثلاثي الأبعاد لمتجر معاذ (v37 - Zero-Default & Sound FX)
-// - الكمية الافتراضية في نافذة الاقتراحات = 0 (يزيد الزبون ما يريده بـ +)
-// - الكلمات المفتاحية الأساسية هي أسماء تصنيفات المتجر (categories) والأصناف نفسها
-// - ردود ودّية مختصرة على التحيات والحوار العادي (السلام عليكم، كيف حالك...)
-// - أصوات وحالات انفعالية مدمجة عبر Web Audio API دون الاعتماد على صوت المتصفح
+// محرك المرافق المتحدث بانفعال مدمج ومكتبة وصفات الطبخ والحلويات (v38)
+// - تحدث وحالات انفعالية مدمجة عبر Web Audio API بدون الاعتماد على المتصفح
+// - قائمة طويلة لوصفات الطبخ والحلويات ومطابقة المتوفر فعلياً في الفرع واقتراحه
+// - الكمية الافتراضية في نافذة الاقتراحات = 0
 // - بدون أي تدخل للذكاء الاصطناعي في الدفع أو فحص الإشعارات
 // ============================================================================
 
 (function () {
-  const PREFS_KEY = "moaath_pet_v37_prefs";
-  const POS_KEY = "moaath_pet_v37_pos";
-  const LEARN_KEY = "moaath_pet_v37_learned";
+  const PREFS_KEY = "moaath_pet_v38_prefs";
+  const POS_KEY = "moaath_pet_v38_pos";
+  const LEARN_KEY = "moaath_pet_v38_learned";
 
   const PERSONAS = {
-    buddy: { id: "buddy", name: "بندق الودود", icon: "🐱", accent: "#00b0ff", baseFreq: 520, greetReply: "وعليكم السلام يا هلا! الحمد لله بأفضل حال، كيف أساعدك بتسوقك اليوم؟" },
-    pro: { id: "pro", name: "صقر السريع", icon: "🦅", accent: "#00e676", baseFreq: 440, greetReply: "أهلاً بك! جاهز لخدمتك بسرعة، اذكر الصنف أو القسم المطلوب." },
-    saver: { id: "saver", name: "ثعلب التوفير", icon: "🦊", accent: "#D4AF37", baseFreq: 480, greetReply: "يا مرحبا! جاهز أرتبلك أوفر الخيارات والعروض المتوفرة." },
-    lulu: { id: "lulu", name: "لولو اللطيفة", icon: "🐰", accent: "#ff7eb6", baseFreq: 620, greetReply: "أهلاً فيكِ ونورتي المتجر! أنا بخير، شو بتحبي نجهزلك اليوم؟" },
-    sara: { id: "sara", name: "سارة المنظمة", icon: "🦋", accent: "#7c4dff", baseFreq: 580, greetReply: "مرحباً! يسعدني مساعدتك بترتيب طلباتك بكل وضوح." },
-    noor: { id: "noor", name: "نور الذكية", icon: "✨", accent: "#ff9800", baseFreq: 600, greetReply: "أهلاً وسهلاً! حاضرين لأي طلب أو استفسار عن أصناف المتجر." }
+    buddy: { id: "buddy", name: "بندق الودود", icon: "🐱", accent: "#00b0ff", pitchMul: 1.05, tempoMul: 1.0, greet: "وعليكم السلام يا هلا! نورت المتجر، شو نجهزلك اليوم؟" },
+    pro: { id: "pro", name: "صقر السريع", icon: "🦅", accent: "#00e676", pitchMul: 0.94, tempoMul: 1.18, greet: "أهلاً بك! جاهز فوراً، اطلب وصفتك أو صنفك." },
+    saver: { id: "saver", name: "ثعلب التوفير", icon: "🦊", accent: "#D4AF37", pitchMul: 1.0, tempoMul: 0.96, greet: "يا مرحبا! نجهزلك المتوفر بأفضل قيمة وتوفير." },
+    lulu: { id: "lulu", name: "لولو اللطيفة", icon: "🐰", accent: "#ff7eb6", pitchMul: 1.24, tempoMul: 0.95, greet: "أهلاً فيكِ! شو حابة تطبخي أو تحضّري حلى اليوم؟" },
+    sara: { id: "sara", name: "سارة المنظمة", icon: "🦋", accent: "#7c4dff", pitchMul: 1.15, tempoMul: 1.04, greet: "مرحباً بكِ! نرتب مكونات الوصفة حسب المتوفر بكل دقة." },
+    noor: { id: "noor", name: "نور الذكية", icon: "✨", accent: "#ff9800", pitchMul: 1.18, tempoMul: 1.08, greet: "أهلاً وسهلاً! اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر." }
   };
+
+  // قائمة طويلة لوصفات الطبخ والحلويات (مع كلمات مفتاحية ومكونات أساسية)
+  const RECIPES_AND_SWEETS = [
+    // وصفات طبخ رئيسية وشعبية
+    { key: "مقلوبة", title: "وصفة المقلوبة", type: "طبخ", keywords: ["مقلوبه", "مقلوبة"], ingredients: ["رز", "ارز", "زيت", "سمن", "سمنه", "باذنجان", "بطاطا", "بندوره", "طماطم", "بصل", "بهار", "ملح"] },
+    { key: "كبسة", title: "وصفة الكبسة", type: "طبخ", keywords: ["كبسه", "كبسة"], ingredients: ["رز", "ارز", "زيت", "سمن", "بصل", "بندوره", "معجون طماطم", "بهار", "ملح"] },
+    { key: "مجدرة", title: "وصفة المجدرة", type: "طبخ", keywords: ["مجدره", "مجدرة", "برغل", "عدس"], ingredients: ["برغل", "عدس", "زيت", "زيتون", "بصل", "ملح", "كمون"] },
+    { key: "منسف", title: "وصفة المنسف / الأرز باللبن", type: "طبخ", keywords: ["منسف", "ارز باللبن", "رز باللبن"], ingredients: ["رز", "ارز", "لبن", "جميد", "سمن", "مكسرات", "لوز", "ملح"] },
+    { key: "معكرونة بالبشاميل", title: "وصفة المعكرونة بالبشاميل", type: "طبخ", keywords: ["معكرونه", "مكرونه", "بشاميل"], ingredients: ["معكرونه", "مكرونه", "حليب", "طحين", "دقيق", "زيت", "سمن", "جبن", "ملح"] },
+    { key: "شوربة عدس", title: "وصفة شوربة العدس", type: "طبخ", keywords: ["شوربه", "شوربة", "عدس"], ingredients: ["عدس", "بطاطا", "جزر", "بصل", "زيت", "كمون", "ملح"] },
+    { key: "فريكة", title: "وصفة الفريكة", type: "طبخ", keywords: ["فريكه", "فريكة"], ingredients: ["فريكه", "فريكة", "سمن", "زيت", "بصل", "بهار", "ملح"] },
+    { key: "محشي كوسا وورق عنب", title: "وصفة المحشي والورق", type: "طبخ", keywords: ["محشي", "كوسا", "ورق عنب", "يبرق"], ingredients: ["رز", "ارز", "ورق عنب", "كوسا", "بندوره", "بصل", "زيت", "نعناع", "ملح"] },
+    { key: "شيش برك", title: "وصفة الشيش برك", type: "طبخ", keywords: ["شيش برك", "شيشبرك"], ingredients: ["عجين", "طحين", "لبن", "ثوم", "كزبره", "سمن", "ملح"] },
+    { key: "فطور صباحي", title: "سلة الفطور الصباحي", type: "طبخ", keywords: ["فطور", "فطور صباحي", "ترويقه"], ingredients: ["بيض", "جبن", "لبنه", "زيتون", "زيت", "زعتر", "مربى", "عسل", "شاي", "خبز"] },
+    { key: "سهرة ومتة", title: "سلة السهرة والمتة", type: "طبخ", keywords: ["سهره", "سهرة", "مته", "متة", "تسالي"], ingredients: ["مته", "متة", "بزر", "موالح", "نقارش", "شيبس", "بسكوت", "شاي", "سكر"] },
+    { key: "تنظيف المطبخ", title: "مهمة تنظيف المطبخ", type: "تنظيف", keywords: ["تنظيف المطبخ", "منظفات المطبخ", "جلي"], ingredients: ["سائل جلي", "جلي", "صابون", "ليف", "اسفنج", "كلور", "منظف", "معقم"] },
+
+    // وصفات حلويات ومشروبات حلوة
+    { key: "كيك", title: "وصفة الكيك المنزلي", type: "حلويات", keywords: ["كيك", "كاتو"], ingredients: ["طحين", "دقيق", "سكر", "بيض", "حليب", "زيت", "بيكنج باودر", "فانيليا", "كاكاو"] },
+    { key: "بسكويت منزلي", title: "وصفة البسكويت", type: "حلويات", keywords: ["بسكويت", "بسكوت"], ingredients: ["طحين", "دقيق", "سكر", "زيت", "سمن", "زبده", "فانيليا", "حليب"] },
+    { key: "مهلبية", title: "وصفة المهلبية / الكاسترد", type: "حلويات", keywords: ["مهلبيه", "مهلبية", "كاسترد"], ingredients: ["حليب", "نشا", "سكر", "ماء ورد", "فستق", "جوز الهند"] },
+    { key: "حلاوة السميد", title: "وصفة حلاوة السميد", type: "حلويات", keywords: ["حلاوه", "حلاوة", "سميد"], ingredients: ["سميد", "سكر", "سمن", "زيت", "ماء", "مكسرات", "قرفه"] },
+    { key: "قطايف", title: "وصفة القطايف", type: "حلويات", keywords: ["قطايف", "قطاائف"], ingredients: ["قطايف", "طحين", "سميد", "سكر", "جوز", "قشطه", "قشطة", "زيت للقلي"] },
+    { key: "بسبوسة", title: "وصفة البسبوسة / النمورة", type: "حلويات", keywords: ["بسبوسه", "بسبوسة", "نموره", "نمورة"], ingredients: ["سميد", "سكر", "لبن", "جوز الهند", "بيكنج باودر", "سمن", "قطر"] },
+    { key: "حلى الشوكولاتة البارد", title: "وصفة حلى الشوكولاتة البارد", type: "حلويات", keywords: ["حلى بارد", "شوكولاته", "شوكولا", "بسكوت شاي"], ingredients: ["بسكوت", "كاكاو", "شوكولاته", "حليب", "سكر", "نشا", "كريمه"] },
+    { key: "عوامة ولقيمات", title: "وصفة العوامة / اللقيمات", type: "حلويات", keywords: ["عوامه", "عوامة", "لقيمات", "زلابيه"], ingredients: ["طحين", "دقيق", "نشا", "خميره", "سكر", "زيت", "قطر"] }
+  ];
 
   let activeRecognizer = null;
   let isHoldingSpeak = false;
@@ -44,10 +70,10 @@
       return {
         persona: PERSONAS[d.persona] ? d.persona : "buddy",
         hidden: !!d.hidden,
-        soundFx: d.soundFx === undefined ? true : !!d.soundFx
+        voiceFx: d.voiceFx === undefined ? true : !!d.voiceFx
       };
     } catch (_) {
-      return { persona: "buddy", hidden: false, soundFx: true };
+      return { persona: "buddy", hidden: false, voiceFx: true };
     }
   }
 
@@ -73,56 +99,6 @@
     localStorage.setItem(POS_KEY, JSON.stringify({ right, bottom }));
   }
 
-  // [أصوات وحالات انفعالية مدمجة تعمل بدون الاعتماد على المتصفح]
-  function playEmotionSound(emotion = "happy") {
-    const prefs = getPrefs();
-    if (!prefs.soundFx) return;
-    try {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return;
-      if (!audioCtx) audioCtx = new Ctx();
-      if (audioCtx.state === "suspended") audioCtx.resume();
-
-      const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
-      const base = persona.baseFreq || 520;
-      const sequences = {
-        greet: [base, base * 1.25, base * 1.5],
-        listen: [base * 0.9, base * 1.2],
-        happy: [base, base * 1.33, base * 1.6],
-        choice: [base * 1.1, base * 1.35],
-        gentle: [base * 0.85, base * 0.75]
-      };
-      const notes = sequences[emotion] || sequences.happy;
-      const now = audioCtx.currentTime;
-
-      notes.forEach((freq, idx) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = persona.id === "pro" ? "triangle" : "sine";
-        osc.frequency.setValueAtTime(freq, now + idx * 0.09);
-        gain.gain.setValueAtTime(0.001, now + idx * 0.09);
-        gain.gain.exponentialRampToValueAtTime(0.11, now + idx * 0.09 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.14);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(now + idx * 0.09);
-        osc.stop(now + idx * 0.09 + 0.15);
-      });
-    } catch (_) {}
-  }
-
-  window.toggleCompanionSoundFx = function () {
-    haptic(12);
-    const prefs = getPrefs();
-    const next = !prefs.soundFx;
-    setPrefs({ soundFx: next });
-    if (next) playEmotionSound("greet");
-    const msg = next ? "🔔 الأصوات الانفعالية مفعّلة" : "🔇 الأصوات الانفعالية مكتومة";
-    showBubble(msg, 2500);
-    showToast(msg);
-  };
-
-  // [التعلم بالممارسة]
   function getLearnedMap() {
     try { return JSON.parse(localStorage.getItem(LEARN_KEY) || "{}"); } catch (_) { return {}; }
   }
@@ -137,6 +113,88 @@
     });
     localStorage.setItem(LEARN_KEY, JSON.stringify(map));
   }
+
+  // [تحدث وحالات انفعالية مدمجة بدون الاعتماد على المتصفح]
+  // يولّد خطاباً صوتياً إيقاعياً بنبرات متعددة تحاكي نبرة التحدث والانفعال لكل حالة وشخصية
+  function speakEmbeddedEmotion(emotion = "happy", syllablesCount = 3) {
+    const prefs = getPrefs();
+    if (!prefs.voiceFx) return;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      if (!audioCtx) audioCtx = new Ctx();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+
+      const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
+      const base = 240 * (persona.pitchMul || 1.0);
+      const tempo = persona.tempoMul || 1.0;
+
+      const profiles = {
+        greet: { contour: [1.0, 1.25, 1.15, 1.35], step: 0.13, dur: 0.12, wave: "triangle" },
+        happy: { contour: [1.05, 1.3, 1.45, 1.25], step: 0.11, dur: 0.11, wave: "sine" },
+        thinking: { contour: [0.95, 1.08, 0.92, 1.12], step: 0.17, dur: 0.14, wave: "sine" },
+        listen: { contour: [0.9, 1.2, 1.35], step: 0.1, dur: 0.1, wave: "sine" },
+        choice: { contour: [1.0, 1.18, 1.05, 1.28], step: 0.12, dur: 0.11, wave: "triangle" },
+        gentle: { contour: [0.92, 0.84, 0.95], step: 0.15, dur: 0.13, wave: "sine" }
+      };
+
+      const prof = profiles[emotion] || profiles.happy;
+      const steps = Math.max(2, Math.min(6, syllablesCount || prof.contour.length));
+      const now = audioCtx.currentTime;
+
+      for (let i = 0; i < steps; i++) {
+        const ratio = prof.contour[i % prof.contour.length];
+        const freq = base * ratio;
+        const startT = now + (i * prof.step) / tempo;
+        const durT = prof.dur / tempo;
+
+        // صوت أساسي + توافقي ناعم لإعطاء طابع صوتي بشري أنعم من النغمة البسيطة
+        const osc = audioCtx.createOscillator();
+        const overtone = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const overGain = audioCtx.createGain();
+
+        osc.type = prof.wave;
+        overtone.type = "sine";
+
+        // انزلاق خفيف في التردد (formant glide) يشبه مقاطع الكلام
+        osc.frequency.setValueAtTime(freq * 0.94, startT);
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.05, startT + durT * 0.65);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.96, startT + durT);
+
+        overtone.frequency.setValueAtTime(freq * 2, startT);
+
+        gain.gain.setValueAtTime(0.0001, startT);
+        gain.gain.linearRampToValueAtTime(0.11, startT + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startT + durT);
+
+        overGain.gain.setValueAtTime(0.0001, startT);
+        overGain.gain.linearRampToValueAtTime(0.03, startT + 0.02);
+        overGain.gain.exponentialRampToValueAtTime(0.0001, startT + durT);
+
+        osc.connect(gain);
+        overtone.connect(overGain);
+        gain.connect(audioCtx.destination);
+        overGain.connect(audioCtx.destination);
+
+        osc.start(startT);
+        overtone.start(startT);
+        osc.stop(startT + durT + 0.02);
+        overtone.stop(startT + durT + 0.02);
+      }
+    } catch (_) {}
+  }
+
+  window.toggleEmbeddedVoiceFx = function () {
+    haptic(12);
+    const prefs = getPrefs();
+    const next = !prefs.voiceFx;
+    setPrefs({ voiceFx: next });
+    if (next) speakEmbeddedEmotion("greet", 3);
+    const msg = next ? "🗣️ التحدث الانفعالي المدمج مفعّل" : "🔇 التحدث الانفعالي مكتوم";
+    showBubble(msg, 2600);
+    showToast(msg);
+  };
 
   function getThumb(id) {
     const baseId = String(id || "").replace(/_PKG$/, "");
@@ -164,9 +222,8 @@
     haptic(15);
     setPrefs({ persona: key });
     syncVisuals();
-    playEmotionSound("greet");
     const p = PERSONAS[key];
-    showBubble(`${p.icon} ${p.name} — اضغط مطوّلاً وتحدث`, 3200);
+    setOrbEmotion("greet", `${p.icon} ${p.name} — اضغط مطوّلاً وتحدث`, "greet", 3);
   };
 
   window.setPetHidden = function (hide) {
@@ -184,25 +241,18 @@
     if (ms > 0) bubbleTimer = setTimeout(() => { b.style.display = "none"; }, ms);
   }
 
-  function setOrbEmotion(state = "idle", bubbleTxt = "", soundEmotion = null) {
+  function setOrbEmotion(state = "idle", bubbleTxt = "", emotionFx = null, syllables = 3) {
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const orb = $("petCharOrb");
     const ring = $("petListenRing");
     if (!orb) return;
 
-    const faces = {
-      idle: p.icon,
-      listening: "🎙️",
-      thinking: "🤔",
-      happy: "🤩",
-      greet: "😊",
-      choice: "🔀"
-    };
+    const faces = { idle: p.icon, listening: "🎙️", thinking: "🤔", happy: "🤩", greet: "😊", choice: "🔀" };
     orb.textContent = faces[state] || p.icon;
     orb.style.borderColor = state === "listening" ? "#00e676" : p.accent;
     if (ring) ring.style.display = state === "listening" ? "block" : "none";
-    if (soundEmotion) playEmotionSound(soundEmotion);
+    if (emotionFx) speakEmbeddedEmotion(emotionFx, syllables);
     if (bubbleTxt) showBubble(bubbleTxt, state === "listening" ? 0 : 5200);
   }
 
@@ -237,34 +287,70 @@
     }
   }
 
-  // [الرد الودّي المختصر على التحيات والحوار العادي]
-  function matchCasualConversation(normText, persona) {
-    if (/^(ال)?سلام\s*عليكم|السلام/.test(normText)) {
-      return persona.greetReply;
-    }
-    if (/^(مرحبا|اهلا|هلا|هاي|صباح\s*الخير|مساء\s*الخير)/.test(normText)) {
-      return persona.greetReply;
-    }
-    if (/كيف\s*حالك|شلونك|كيفك|شو\s*اخبارك|اخبارك/.test(normText)) {
-      return "الحمد لله بألف خير بوجودك! خبرني شو بتحب نطلب أو نسأل اليوم؟";
-    }
-    if (/شكرا|مشكور|يعطيك\s*العافيه|يسلمو/.test(normText)) {
-      return "العفو ولو، بالخدمة دائماً! 🌸";
-    }
+  // [تجهيز الوصفات والحلويات وتصفية المتوفر فعلياً في الفرع]
+  function matchRecipeOrSweet(normText) {
+    const matched = RECIPES_AND_SWEETS.find(r =>
+      r.keywords.some(kw => {
+        const kNorm = (typeof normalizeArabic === "function" ? normalizeArabic(kw) : kw).toLowerCase();
+        return normText.includes(kNorm);
+      })
+    );
+    if (!matched) return null;
+
+    const learned = getLearnedMap()[`recipe_${matched.key}`] || {};
+    const prodEntries = Object.keys(products || {}).map(pid => {
+      const p = products[pid];
+      if (!p) return null;
+      const st = typeof getProductStockForBranch === "function" ? getProductStockForBranch(p, activeBranchId) : (parseInt(p.stock) || 0);
+      const pNorm = (typeof normalizeArabic === "function" ? normalizeArabic(p.name || "") : (p.name || "")).toLowerCase();
+      return { pid, p, st, pNorm };
+    }).filter(Boolean);
+
+    const availableItems = [];
+    const missingIngredients = [];
+
+    matched.ingredients.forEach(ing => {
+      const iNorm = (typeof normalizeArabic === "function" ? normalizeArabic(ing) : ing).toLowerCase();
+      const found = prodEntries.find(x => x.pNorm.includes(iNorm) && x.st > 0);
+      if (found && !availableItems.some(a => a.id === found.pid)) {
+        availableItems.push({
+          id: found.pid,
+          name: found.p.name,
+          reason: `متوفر للوصفة (${ing})`,
+          score: learned[found.pid] || 0
+        });
+      } else {
+        missingIngredients.push(ing);
+      }
+    });
+
+    availableItems.sort((a, b) => b.score - a.score);
+    return {
+      recipe: matched,
+      availableItems,
+      missingIngredients
+    };
+  }
+
+  function matchCasualChat(normText, persona) {
+    if (/^(ال)?سلام\s*عليكم|السلام/.test(normText)) return persona.greet;
+    if (/^(مرحبا|اهلا|هلا|هاي|صباح\s*الخير|مساء\s*الخير)/.test(normText)) return persona.greet;
+    if (/كيف\s*حالك|شلونك|كيفك|شو\s*اخبارك|اخبارك/.test(normText)) return "الحمد لله بألف خير! شو نطبخ أو نجهزلك اليوم؟";
+    if (/شكرا|مشكور|يعطيك\s*العافيه|يسلمو/.test(normText)) return "العفو ولو، بالخدمة دائماً! 🌸";
     return null;
   }
 
-  // [النافذة المنبثقة للاقتراحات بكمية افتراضية = 0 لكل مادة]
-  function openZeroDefaultSuggestionsModal(title, items, intentKey = "general") {
+  // [النافذة المنبثقة للاقتراحات بكمية افتراضية = 0]
+  function openZeroDefaultModal(title, items, intentKey = "general", subtitleNote = "") {
     modalItemsState = items.map(it => ({
       id: it.id,
       name: it.name,
-      qty: 0, // الكمية الافتراضية 0 ليزيد الزبون ما يريده فقط
+      qty: 0,
       unitPrice: getUnitSYP(it.id),
       thumb: getThumb(it.id),
       reason: it.reason || ""
     }));
-    window._currentSuggestionIntent = intentKey;
+    window._currentIntentKey = intentKey;
 
     let modal = $("petSuggestionsFloatingModal");
     if (!modal) {
@@ -274,12 +360,12 @@
       modal.style.cssText = "display:flex; z-index:10030; background:rgba(0,0,0,0.78);";
       modal.innerHTML = `
         <div class="modal-content" style="max-width:440px; border-color:var(--gold-color);">
-          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px; margin-bottom:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px; margin-bottom:6px;">
             <b id="petSugModalTitle" style="color:var(--gold-color); font-size:13px;"></b>
             <button type="button" onclick="closePetSuggestionsModal()" class="btn btn-danger" style="width:auto; padding:3px 9px; font-size:11px;">✕</button>
           </div>
-          <div style="font-size:10px; color:var(--gray-text); margin-bottom:8px;">اضغط على (+) لتحديد الكمية المطلوبة من الأصناف التي تناسبك:</div>
-          <div id="petSugModalList" style="max-height:54vh; overflow-y:auto; margin-bottom:10px;"></div>
+          <div id="petSugModalSubtitle" style="font-size:10px; color:var(--gray-text); margin-bottom:8px;"></div>
+          <div id="petSugModalList" style="max-height:52vh; overflow-y:auto; margin-bottom:10px;"></div>
           <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; margin-bottom:10px; padding:6px 8px; background:var(--bg-color); border-radius:6px;">
             <span>إجمالي ما اخترته:</span>
             <strong id="petSugModalTotal" style="color:#00e676; font-size:14px;">0 ل.س</strong>
@@ -295,6 +381,7 @@
     }
 
     setTxt("petSugModalTitle", title);
+    setTxt("petSugModalSubtitle", subtitleNote || "الكمية الافتراضية 0 — اضغط (+) لزيادة الكمية المطلوبة من الأصناف المتوفرة:");
     renderZeroDefaultList();
   }
 
@@ -313,7 +400,7 @@
           <div style="flex:1; min-width:0; text-align:right;">
             <div style="font-size:12px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(it.name)}</div>
             <div style="font-size:10px; color:var(--gold-color);">${it.unitPrice.toLocaleString()} ل.س ${isSelected ? `× ${it.qty} = <b>${lineTotal.toLocaleString()} ل.س</b>` : ""}</div>
-            ${it.reason ? `<div style="font-size:9px; color:var(--gray-text);">${esc(it.reason)}</div>` : ""}
+            ${it.reason ? `<div style="font-size:9px; color:#00e676;">${esc(it.reason)}</div>` : ""}
           </div>
           <div style="display:flex; align-items:center; gap:5px;">
             <button type="button" onclick="adjustSuggestionQty(${idx}, -1)" class="mini-btn" style="background:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color);">-</button>
@@ -344,8 +431,7 @@
 
   window.confirmFloatingSuggestions = function () {
     const chosen = modalItemsState.filter(x => x.qty > 0);
-    const intentKey = window._currentSuggestionIntent || "general";
-
+    const intentKey = window._currentIntentKey || "general";
     if (!chosen.length) {
       showToast("⚠️ حدد كمية 1 على الأقل بالضغط على (+)", true);
       return;
@@ -372,21 +458,20 @@
     if (addedTotal > 0) {
       haptic([15, 35, 15]);
       const msg = `تمت إضافة ${addedTotal} مواد إلى سلتك.`;
-      setOrbEmotion("happy", msg, "happy");
+      setOrbEmotion("happy", msg, "happy", 4);
       setTxt("aiShoppingStatusText", `✅ ${msg}`);
       showToast(`✅ ${msg}`);
     }
   };
 
-  // [اعتماد أسماء تصنيفات المتجر (categories) وأسماء الأصناف ككلمات مفتاحية أساسية]
-  function matchByStoreCategoriesAndProducts(normText) {
+  // مطابقة التصنيفات والأصناف
+  function matchCategoriesAndProducts(normText) {
     const storeCats = (Array.isArray(categories) ? categories : []).filter(c => c && c !== "الكل");
     const words = normText
-      .replace(/\b(تجهيز|فاتوره|طلب|اريد|بدي|ابغى|ابي|مواد|اغراض|بـ|ب)\b/g, " ")
+      .replace(/\b(تجهيز|فاتوره|طلب|اريد|بدي|ابغى|ابي|مواد|اغراض|وصفه|وصفة|حلى|حلويات|طبخ|بـ|ب)\b/g, " ")
       .split(/[^a-z0-9\u0600-\u06FF]+/)
       .filter(w => w.length >= 2);
 
-    // 1. البحث أولاً عن تطابق مع أسماء تصنيفات المتجر الفعلية (مثل: موالح ونقرشات، منظفات، مواد غذائية...)
     const matchedCategories = storeCats.filter(catName => {
       const cNorm = (typeof normalizeArabic === "function" ? normalizeArabic(catName) : catName).toLowerCase();
       return words.some(w => cNorm.includes(w) || w.includes(cNorm));
@@ -403,17 +488,15 @@
 
       const pNameNorm = (typeof normalizeArabic === "function" ? normalizeArabic(p.name || "") : (p.name || "")).toLowerCase();
       const pCat = p.category || "";
-      const inMatchedCat = matchedCategories.includes(pCat);
-      const nameHit = words.some(w => pNameNorm.includes(w));
+      const inCat = matchedCategories.includes(pCat);
+      const hitName = words.some(w => pNameNorm.includes(w));
 
-      if (inMatchedCat || nameHit) {
-        const lScore = (learned[pCat]?.[pid] || 0);
+      if (inCat || hitName) {
         results.push({
           id: pid,
           name: p.name,
-          category: pCat,
-          reason: inMatchedCat ? `قسم: ${pCat}` : "مطابق لاسم الصنف",
-          score: (nameHit ? 20 : 0) + (inMatchedCat ? 10 : 0) + lScore
+          reason: inCat ? `قسم: ${pCat}` : "متوفر في المخزون",
+          score: (hitName ? 20 : 0) + (inCat ? 10 : 0) + (learned[pCat]?.[pid] || 0)
         });
       }
     });
@@ -428,47 +511,67 @@
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
 
     if (!promptTxt) {
-      setOrbEmotion("idle", "اضغط مطوّلاً وتحدّث بطلبك أو تحيّتك.", "gentle");
+      setOrbEmotion("idle", "اضغط مطوّلاً وتحدّث بطلبك أو وصفتك.", "gentle", 2);
       return;
     }
 
     const norm = (typeof normalizeArabic === "function" ? normalizeArabic(promptTxt) : promptTxt).toLowerCase();
 
-    // 1. التحقق من الحوار العادي والتحيات (السلام عليكم، كيف حالك...)
-    const casualReply = matchCasualConversation(norm, persona);
-    if (casualReply) {
-      setOrbEmotion("greet", casualReply, "greet");
-      setTxt("aiShoppingStatusText", `${persona.icon} ${casualReply}`);
+    // 1. حوار عادي وتحيات
+    const chatReply = matchCasualChat(norm, persona);
+    if (chatReply) {
+      setOrbEmotion("greet", chatReply, "greet", 3);
+      setTxt("aiShoppingStatusText", `${persona.icon} ${chatReply}`);
       return;
     }
 
-    // 2. المطابقة المباشرة بناءً على أسماء تصنيفات المتجر (categories) وأسماء الأصناف
-    const { matchedCategories, items } = matchByStoreCategoriesAndProducts(norm);
+    // 2. وصفات الطبخ والحلويات ومطابقة المتوفر فعلياً في الفرع
+    const recipeRes = matchRecipeOrSweet(norm);
+    if (recipeRes) {
+      if (recipeRes.availableItems.length > 0) {
+        const missingNote = recipeRes.missingIngredients.length
+          ? ` | غير متوفر حالياً: ${recipeRes.missingIngredients.slice(0, 4).join("، ")}`
+          : " | جميع المكونات الأساسية متوفرة";
+        openZeroDefaultModal(
+          `🍽️ ${recipeRes.recipe.title} — المتوفر في الفرع:`,
+          recipeRes.availableItems,
+          `recipe_${recipeRes.recipe.key}`,
+          `الكمية الافتراضية 0 — اضغط (+) لاختيار ما تحتاجه${missingNote}`
+        );
+        const msg = `جهزتلك المواد المتوفرة لوصفة ${recipeRes.recipe.key}، حدد الكمية بالضغط على +.`.trim();
+        setOrbEmotion("choice", msg, "choice", 4);
+        setTxt("aiShoppingStatusText", `✅ ${msg}`);
+        return;
+      } else {
+        const noStockMsg = `وصفة ${recipeRes.recipe.key} موجودة بالقائمة، لكن مكوناتها غير متوفرة حالياً في الفرع.`;
+        setOrbEmotion("idle", noStockMsg, "gentle", 3);
+        setTxt("aiShoppingStatusText", `⚠️ ${noStockMsg}`);
+        return;
+      }
+    }
 
+    // 3. مطابقة الأقسام والأصناف المباشرة
+    const { matchedCategories, items } = matchCategoriesAndProducts(norm);
     if (items.length > 0) {
       const title = matchedCategories.length
         ? `🛍️ أصناف قسم (${matchedCategories.join("، ")}) — حدد الكمية:`
         : "🛍️ الأصناف المتوفرة المطابقة — حدد الكمية:";
-      const intentKey = matchedCategories[0] || `q_${norm.slice(0, 18)}`;
-      openZeroDefaultSuggestionsModal(title, items, intentKey);
-      const msg = matchedCategories.length
-        ? `فتحتلك أصناف قسم ${matchedCategories.join(" و")}، حدد الكمية المناسبة.`
-        : "فتحتلك الأصناف المتوفرة، اضغط (+) لتحديد الكمية.";
-      setOrbEmotion("choice", msg, "choice");
+      openZeroDefaultModal(title, items, matchedCategories[0] || `q_${norm.slice(0, 18)}`);
+      const msg = "فتحتلك الأصناف المتوفرة، اضغط (+) لتحديد الكمية.";
+      setOrbEmotion("choice", msg, "choice", 3);
       setTxt("aiShoppingStatusText", `💡 ${msg}`);
       return;
     }
 
-    const notFoundMsg = "لم أجد قسماً أو صنفاً مطابقاً متوفراً حالياً، جرّب ذكر اسم القسم أو الصنف.";
-    setOrbEmotion("idle", notFoundMsg, "gentle");
-    setTxt("aiShoppingStatusText", `⚠️ ${notFoundMsg}`);
+    const fallbackMsg = "لم أجد وصفة أو صنفاً مطابقاً متوفراً الآن، جرّب اسم وصفة أو قسم آخر.";
+    setOrbEmotion("idle", fallbackMsg, "gentle", 3);
+    setTxt("aiShoppingStatusText", `⚠️ ${fallbackMsg}`);
   };
 
-  // بدء الاستماع عند النقر المطوّل على الشخصية
   function beginLongPressVoice() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
-      showBubble("المتصفح لا يدعم الميكروفون، اكتب طلبك في الخانة.", 3500);
+      showBubble("المتصفح لا يدعم الميكروفون، اكتب طلبك أو وصفتك في الخانة.", 3600);
       return;
     }
     if (activeRecognizer) {
@@ -478,7 +581,7 @@
 
     isHoldingSpeak = true;
     haptic(25);
-    setOrbEmotion("listening", "تحدّث الآن... اترك إصبعك عند الانتهاء", "listen");
+    setOrbEmotion("listening", "تحدّث الآن... اترك إصبعك عند الانتهاء", "listen", 2);
 
     const rec = new SR();
     activeRecognizer = rec;
@@ -489,14 +592,14 @@
     rec.onresult = ev => {
       const heard = String(ev?.results?.[0]?.[0]?.transcript || "").trim();
       if (!heard) {
-        setOrbEmotion("idle", "لم أسمع صوتاً واضحاً، جرّب النقر المطوّل مرة أخرى.", "gentle");
+        setOrbEmotion("idle", "لم أسمع صوتاً واضحاً، جرّب النقر المطوّل مرة أخرى.", "gentle", 2);
         return;
       }
       setVal("aiShoppingPromptInput", heard);
       window.runAIShoppingAssistant(heard);
     };
 
-    rec.onerror = () => setOrbEmotion("idle", "تعذر التقاط الصوت، تأكد من إذن الميكروفون.", "gentle");
+    rec.onerror = () => setOrbEmotion("idle", "تعذر التقاط الصوت، تأكد من إذن الميكروفون.", "gentle", 2);
     rec.onend = () => {
       isHoldingSpeak = false;
       activeRecognizer = null;
@@ -520,10 +623,9 @@
     setTimeout(endLongPressVoice, 4500);
   };
 
-  // سحب الشخصية + نقر مطوّل للتحدث + نقرة سريعة لتبديل الصوت الانفعالي
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v37Bound) return;
-    orb.dataset.v37Bound = "1";
+    if (!orb || !root || orb.dataset.v38Bound) return;
+    orb.dataset.v38Bound = "1";
 
     let down = false, dragging = false, holdFired = false, holdTimer = null;
     let sx = 0, sy = 0, r0 = 14, b0 = 88;
@@ -588,7 +690,7 @@
         return;
       }
 
-      window.toggleCompanionSoundFx();
+      window.toggleEmbeddedVoiceFx();
     };
 
     orb.addEventListener("contextmenu", e => e.preventDefault());
@@ -607,7 +709,7 @@
     }, { passive: true });
   }
 
-  function mountV37() {
+  function mountV38() {
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const assistBox = $("aiSmartAssistantBox");
@@ -625,7 +727,7 @@
           <select id="petPersonaSelect" class="form-control" onchange="selectPetPersona(this.value)" style="padding:3px 6px; font-size:10px; flex:1;">${opts}</select>
         </div>
         <div style="display:flex; gap:4px;">
-          <button type="button" onclick="toggleCompanionSoundFx()" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:rgba(0,176,255,0.16); color:#00b0ff;">🔔 الصوت</button>
+          <button type="button" onclick="toggleEmbeddedVoiceFx()" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:rgba(0,176,255,0.16); color:#00b0ff;">🗣️ صوت</button>
           <button id="petShowCharBtn" type="button" onclick="setPetHidden(false)" style="display:none; align-items:center; gap:3px; background:var(--gold-color); color:#000; border:none; border-radius:6px; padding:3px 8px; font-size:10px; font-weight:bold; cursor:pointer;">إظهار</button>
         </div>`;
       assistBox.insertBefore(bar, assistBox.firstChild);
@@ -633,19 +735,19 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV37";
+      styleTag.id = "petCharStyleV38";
       styleTag.textContent = `
-        @keyframes petFloatV37 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
-        @keyframes petRingV37 { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.36); opacity: 0; } }
+        @keyframes petFloatV38 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
+        @keyframes petRingV38 { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.36); opacity: 0; } }
         #petCharOrb {
           width: 56px; height: 56px; border-radius: 50%; border: 2.5px solid ${p.accent};
           font-size: 27px; display: flex; align-items: center; justify-content: center;
           cursor: grab; -webkit-touch-callout: none; user-select: none;
-          animation: petFloatV37 2.7s ease-in-out infinite;
+          animation: petFloatV38 2.7s ease-in-out infinite;
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: petRingV37 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: petRingV38 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 66px; right: 0; max-width: 225px; width: max-content;
@@ -667,11 +769,11 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV37(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV38(); };
 
   const _origToggleTheme = window.toggleTheme;
   window.toggleTheme = function () { if (typeof _origToggleTheme === "function") _origToggleTheme(); setTimeout(syncVisuals, 60); };
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV37);
-  else mountV37();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV38);
+  else mountV38();
 })();
