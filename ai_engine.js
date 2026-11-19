@@ -1,18 +1,55 @@
 // ============================================================================
-// محرك الذكاء الاصطناعي المستقل لمتجر معاذ (v29 AI Cloud)
-// يغطي التحسينات الـ 10 بالكامل دون تعديل الكود الأساسي في index.html
+// محرك تجربة الزبون بالذكاء الاصطناعي لمتجر معاذ (v30 - Companion & UX)
+// - إلغاء الذكاء الاصطناعي من الدفع وفحص شام كاش بالكامل
+// - مرافق أليف ناطق (صديق للزبون ومسوق للمتجر مع إمكانية الإخفاء والنطق)
+// - صور مصغرة للمنتجات في التوصيات والمعاينات والبدائل
 // ============================================================================
 
 (function () {
-  const AI_CACHE_KEY = "moaath_ai_cache_v29";
-  const AI_CACHE_TTL_MS = 2 * 60 * 60 * 1000; // ساعتان للطلبات المتكررة
+  const AI_CACHE_KEY = "moaath_ux_cache_v30";
+  const AI_CACHE_TTL_MS = 2 * 60 * 60 * 1000;
+  let petHidden = localStorage.getItem("moaath_pet_hidden") === "1";
+  let pendingVoiceDraft = null;
 
-  // --- [تحسين 9] الذاكرة المؤقتة للطلبات المتكررة ---
+  // إلغاء أي فحص ذكاء اصطناعي لإشعارات شام كاش
+  window.analyzeShamCashReceiptOCR = function () {
+    const outBox = $("shamCashOcrResult");
+    if (outBox) outBox.innerHTML = "";
+  };
+
+  function getProductThumb(id) {
+    const baseId = String(id || "").replace(/_PKG$/, "");
+    const p = products?.[baseId] || specialOffers?.[id] || {};
+    if (String(id || "").endsWith("_PKG") && (p.pkgThumb || p.pkgImage)) {
+      return p.pkgThumb || p.pkgImage;
+    }
+    return (typeof getLockedHighResImage === "function" && getLockedHighResImage(baseId)) || p.thumb || p.image || "store-icon.png";
+  }
+
+  function getEffectiveUnitPriceSYP(id) {
+    const isW = currentUser?.userType === "wholesale";
+    if (String(id || "").startsWith("OFFER_")) {
+      const so = specialOffers?.[id];
+      if (!so) return 0;
+      const usd = (isW && so.wholesaleUSD > 0) ? so.wholesaleUSD : (so.newPriceUSD || 0);
+      return calcSYP(usd);
+    }
+    if (String(id || "").endsWith("_PKG")) {
+      const baseId = String(id).replace(/_PKG$/, "");
+      const p = products?.[baseId];
+      return p ? calcSYP(p.pkgPriceUSD || 0) : 0;
+    }
+    const p = products?.[id];
+    if (!p) return 0;
+    const usd = (isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0);
+    return calcSYP(usd);
+  }
+
   function getAICache(key) {
     try {
       const store = JSON.parse(localStorage.getItem(AI_CACHE_KEY) || "{}");
-      const entry = store[key];
-      if (entry && Date.now() - entry.time < AI_CACHE_TTL_MS) return entry.data;
+      const item = store[key];
+      if (item && Date.now() - item.time < AI_CACHE_TTL_MS) return item.data;
     } catch (_) {}
     return null;
   }
@@ -21,201 +58,471 @@
     try {
       const store = JSON.parse(localStorage.getItem(AI_CACHE_KEY) || "{}");
       const keys = Object.keys(store);
-      if (keys.length > 40) delete store[keys[0]];
+      if (keys.length > 35) delete store[keys[0]];
       store[key] = { time: Date.now(), data };
       localStorage.setItem(AI_CACHE_KEY, JSON.stringify(store));
     } catch (_) {}
   }
 
-  // --- [تحسين 1] فلترة الكتالوج ذكياً لتجاوز قيد الـ 120 صنفاً ---
-  function buildSmartFilteredCatalog(promptTxt) {
+  // [1] فلترة ذكية للكتالوج وتصحيح الأخطاء واللهجات محلياً
+  function buildSmartCatalogForPrompt(promptTxt) {
     const normPrompt = (typeof normalizeArabic === "function" ? normalizeArabic(promptTxt) : promptTxt).toLowerCase();
-    const tokens = normPrompt.split(/\s+/).filter(w => w.length >= 2);
-    const allIds = Object.keys(window.products || {});
-
-    const scored = allIds.map(pid => {
+    const words = normPrompt.split(/[^a-z0-9\u0600-\u06FF]+/).filter(w => w.length >= 2);
+    const list = Object.keys(products || {}).map(pid => {
       const p = products[pid];
       if (!p) return null;
       const st = typeof getProductStockForBranch === "function" ? getProductStockForBranch(p, activeBranchId) : (parseInt(p.stock) || 0);
-      const normName = (typeof normalizeArabic === "function" ? normalizeArabic(p.name || "") : (p.name || "")).toLowerCase();
-      const normCat = (typeof normalizeArabic === "function" ? normalizeArabic(p.category || "") : (p.category || "")).toLowerCase();
+      const normN = (typeof normalizeArabic === "function" ? normalizeArabic(p.name || "") : (p.name || "")).toLowerCase();
+      const normC = (typeof normalizeArabic === "function" ? normalizeArabic(p.category || "") : (p.category || "")).toLowerCase();
 
       let score = 0;
-      tokens.forEach(t => {
-        if (normName.includes(t)) score += 10;
-        else if (normCat.includes(t)) score += 4;
+      words.forEach(w => {
+        if (normN.includes(w)) score += 12;
+        else if (normC.includes(w)) score += 5;
       });
-      if (st > 0) score += 1;
+      if (st > 0) score += 2;
 
       return {
         id: pid,
         name: p.name || "",
         category: p.category || "",
         stock: st,
-        priceSYP: typeof calcSYP === "function" ? calcSYP(p.priceUSD || 0) : 0,
+        priceSYP: getEffectiveUnitPriceSYP(pid),
         unit: p.unitType || "قطعة",
+        hasPkg: !!p.hasPackage,
+        pkgCount: p.pkgCount || 0,
+        pkgPriceSYP: p.hasPackage ? calcSYP(p.pkgPriceUSD || 0) : 0,
         _score: score
       };
     }).filter(Boolean);
 
-    // نأخذ أعلى 60 صنفاً صلة بالطلب (بما فيها غير المتوفرة لاقتراح البدائل)
-    scored.sort((a, b) => b._score - a._score);
-    return scored.slice(0, 60).map(({ _score, ...item }) => item);
+    list.sort((a, b) => b._score - a._score);
+    return list.slice(0, 65).map(({ _score, ...rest }) => rest);
   }
 
-  // --- [تحسين 4 و 5 و 7 و 9] ترقية مساعد التسوق الذكي (إضافة/تعديل/حذف + بدائل + وصفات + كاش) ---
-  window.runAIShoppingAssistant = async function () {
-    const promptTxt = ($("aiShoppingPromptInput")?.value || "").trim();
-    if (!promptTxt) return alert("⚠️ اكتب أو تحدّث بما تريد إضافته أو تعديله في السلة.");
-    if (navigator.onLine === false) return alert("⚠️ المساعد الذكي يتطلب اتصالاً بالإنترنت.");
+  // [10] صور مصغرة في التوصيات الذكية داخل السلة
+  window.renderSmartCartRecommendations = function () {
+    const box = $("aiCartRecommendationsBox");
+    if (!box) return;
+    const cartKeys = Object.keys(cart || {});
+    if (!cartKeys.length) {
+      box.style.display = "none";
+      box.innerHTML = "";
+      return;
+    }
+
+    const cartBaseIds = new Set(cartKeys.map(k => cart[k]?.origId || String(k).replace(/_PKG$/, "")));
+    const cartCats = new Set(cartKeys.map(k => cart[k]?.category).filter(Boolean));
+    const coScores = {};
+    const freq = {};
+
+    Object.values(completedOrdersHistory || {}).forEach(ord => {
+      const ids = Array.from(new Set(
+        (ord?.items || [])
+          .filter(it => !String(it.id || "").startsWith("OFFER_"))
+          .map(it => it.origId || String(it.id || "").replace(/_PKG$/, ""))
+      ));
+      ids.forEach(id => { freq[id] = (freq[id] || 0) + 1; });
+      if (ids.some(id => cartBaseIds.has(id))) {
+        ids.forEach(id => {
+          if (!cartBaseIds.has(id)) coScores[id] = (coScores[id] || 0) + 3;
+        });
+      }
+    });
+
+    const picks = Object.keys(products || {})
+      .filter(pid => !cartBaseIds.has(pid) && getProductStockForBranch(products[pid], activeBranchId) > 0)
+      .map(pid => {
+        const p = products[pid];
+        let score = (coScores[pid] || 0) * 10 + (freq[pid] || 0);
+        if (cartCats.has(p.category)) score += 2;
+        return { pid, p, score, isCo: (coScores[pid] || 0) > 0 };
+      })
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 4);
+
+    if (!picks.length) {
+      box.style.display = "none";
+      box.innerHTML = "";
+      return;
+    }
+
+    const cards = picks.map(({ pid, p, isCo }) => {
+      const img = getProductThumb(pid);
+      const price = getEffectiveUnitPriceSYP(pid).toLocaleString();
+      return `<div style="min-width:118px; max-width:128px; flex-shrink:0; background:var(--bg-color); border:1px solid var(--gold-color); border-radius:8px; padding:6px; text-align:center; display:flex; flex-direction:column; justify-content:space-between; gap:4px;">
+        <img src="${esc(img)}" onerror="this.src='store-icon.png'" style="width:52px; height:52px; object-fit:cover; border-radius:6px; margin:0 auto; border:1px solid var(--border-color);">
+        <div style="font-size:9px; color:#00b0ff; font-weight:bold;">${isCo ? "يناسب سلتك" : "الأكثر طلباً"}</div>
+        <div style="font-size:10px; font-weight:bold; color:var(--text-color); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${esc(p.name)}">${esc(p.name)}</div>
+        <div style="font-size:10px; color:var(--success-color); font-weight:bold;">${price} ل.س</div>
+        <button type="button" onclick="changeQty('${pid}', 1)" class="btn" style="padding:3px 6px; font-size:10px; background:linear-gradient(45deg,#D4AF37,#00e676); color:#000;">➕ أضف</button>
+      </div>`;
+    }).join("");
+
+    box.style.display = "block";
+    box.innerHTML = `<div style="background:rgba(0,176,255,0.06); border:1px dashed #00b0ff; border-radius:8px; padding:7px;">
+      <div style="font-size:11px; font-weight:bold; color:#00b0ff; margin-bottom:6px;">🐾 اقتراحات بندق المصورة لسلتك:</div>
+      <div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:2px;">${cards}</div>
+    </div>`;
+  };
+
+  // [11] نطق الردود بلطف عند الطلب أو عند الإدخال الصوتي
+  function speakCompanionText(txt) {
+    try {
+      if (!("speechSynthesis" in window) || !txt) return;
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(txt);
+      utter.lang = "ar-SA";
+      utter.rate = 1.02;
+      window.speechSynthesis.speak(utter);
+    } catch (_) {}
+  }
+
+  function updatePetCompanionUI(mood = "happy", message = "", extraHtml = "") {
+    const moodEmoji = { happy: "🐱", excited: "😺", helpful: "🐾", curious: "😸" }[mood] || "🐱";
+    setTxt("petAvatarEmoji", moodEmoji);
+    if (message) setTxt("petSpeechBubble", message);
+    const extraEl = $("petCompanionExtra");
+    if (extraEl) extraEl.innerHTML = extraHtml;
+  }
+
+  // [2, 3, 4, 8, 9] معالجة طلب الزبون أو سؤاله أو ميزانيته أو وصفته مع معاينة واضحة
+  window.runAIShoppingAssistant = async function (customPrompt = null, autoSpeak = false) {
+    const promptTxt = String(customPrompt ?? ($("aiShoppingPromptInput")?.value || "")).trim();
+    if (!promptTxt) {
+      updatePetCompanionUI("curious", "أنا بندق! اكتب شو بدك أو اسألني عن الأسعار والدوام أو حدد ميزانيتك.");
+      return;
+    }
+    if (navigator.onLine === false) {
+      updatePetCompanionUI("curious", "يبدو أن الاتصال بالإنترنت مقطوع حالياً، جرّب تصفح الأصناف مباشرة.");
+      return;
+    }
 
     const workerUrl = typeof getEffectiveAIWorkerUrl === "function" ? getEffectiveAIWorkerUrl() : "";
-    if (!workerUrl) return alert("⚠️ يرجى ضبط رابط وسيط الذكاء الاصطناعي في تبويب الإعدادات والنظام.");
+    if (!workerUrl) {
+      return alert("⚠️ يرجى ضبط رابط وسيط الذكاء الاصطناعي في تبويب الإعدادات والنظام.");
+    }
 
     const sendBtn = $("aiShoppingSendBtn");
     if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = "⏳..."; }
-    setTxt("aiShoppingStatusText", "🤖 جاري تحليل طلبك ومطابقته مع المخزون...");
+    updatePetCompanionUI("curious", "لحظة... عم فتش الرفوف وأحسبلك الأنسب 🐾");
+    setTxt("aiShoppingStatusText", "🤖 جاري التحليل...");
 
-    const currentCartArr = Object.values(cart || {}).map(c => ({ id: c.id, name: c.name, qty: c.qty }));
-    const cacheKey = `${activeBranchId}::${normalizeArabic(promptTxt).toLowerCase()}`;
+    const storeMeta = {
+      isStoreOpen: typeof isGlobalStoreOpenNow === "function" ? isGlobalStoreOpenNow() : true,
+      hours: workHoursSettings,
+      branchName: typeof getBranchName === "function" ? getBranchName(activeBranchId) : "الرئيسي",
+      userType: currentUser?.userType || "retail"
+    };
+
+    const cacheKey = `${activeBranchId}::${currentUser?.userType || "retail"}::${normalizeArabic(promptTxt).toLowerCase()}`;
+    let data = getAICache(cacheKey);
 
     try {
-      let data = null;
-      const isSimpleAdd = currentCartArr.length === 0 && !/احذف|شيل|بدل|غير|عدل|وصفه|طبخه|ميزانيه/i.test(normalizeArabic(promptTxt));
-
-      if (isSimpleAdd) {
-        data = getAICache(cacheKey);
-      }
-
       if (!data) {
-        const smartCatalog = buildSmartFilteredCatalog(promptTxt);
+        const smartCatalog = buildSmartCatalogForPrompt(promptTxt);
+        const currentCartArr = Object.values(cart || {}).map(c => ({ id: c.id, name: c.name, qty: c.qty }));
         const res = await fetch(workerUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            mode: "cart_assistant",
+            mode: "companion_shop",
             prompt: promptTxt,
             catalog: smartCatalog,
-            currentCart: currentCartArr
+            currentCart: currentCartArr,
+            storeMeta
           })
         });
         const json = await res.json();
-        if (!res.ok || !json?.ok) throw new Error(json?.error || "فشل استجابة المساعد الذكي");
+        if (!res.ok || !json?.ok) throw new Error(json?.error || "تعذر الحصول على رد");
         data = json.data || {};
-        if (isSimpleAdd && (data.items?.length || data.actions?.length)) {
-          setAICache(cacheKey, data);
-        }
+        setAICache(cacheKey, data);
       }
 
-      let changesCount = 0;
-      const actions = Array.isArray(data.actions) && data.actions.length
-        ? data.actions
-        : (Array.isArray(data.items) ? data.items.map(i => ({ type: "add", id: i.id, qty: i.qty })) : []);
+      const rawItems = Array.isArray(data.items) ? data.items : [];
+      const validSuggestions = rawItems
+        .map(it => {
+          const pid = String(it?.id || "").trim();
+          const baseId = pid.replace(/_PKG$/, "");
+          const pObj = products?.[baseId] || specialOffers?.[pid];
+          if (!pObj) return null;
+          const avail = typeof getProductStockForBranch === "function" ? getProductStockForBranch(pObj, activeBranchId) : (parseInt(pObj.stock) || 0);
+          if (avail <= 0) return null;
+          const qty = Math.min(Math.max(1, parseInt(it?.qty) || 1), avail);
+          const unitPrice = getEffectiveUnitPriceSYP(pid);
+          return {
+            id: pid,
+            name: pid.endsWith("_PKG") ? `طرد ${pObj.name}` : pObj.name,
+            qty,
+            unitPrice,
+            lineTotal: unitPrice * qty,
+            thumb: getProductThumb(pid)
+          };
+        })
+        .filter(Boolean);
 
-      actions.forEach(act => {
-        const pid = String(act?.id || "").trim();
-        const qty = Math.max(1, parseInt(act?.qty) || 1);
-        if (!pid || !products[pid]) return;
+      // إذا كان الطلب إضافة مباشرة قصيرة نضيفه فوراً، وإذا كان ميزانية أو وصفة أو صوتاً نعرض بطاقة تأكيد قابلة للتعديل
+      const isBudgetOrRecipe = /ميزاني|فلوس|معي|وصف|طبخه|سهره|مته|فطور/i.test(normalizeArabic(promptTxt));
 
-        const avail = getProductStockForBranch(products[pid], activeBranchId);
-        const curQty = cart[pid] ? (parseInt(cart[pid].qty) || 0) : 0;
+      if (validSuggestions.length > 0 && !isBudgetOrRecipe && !pendingVoiceDraft) {
+        let addedCount = 0;
+        validSuggestions.forEach(s => {
+          const cur = cart[s.id] ? (parseInt(cart[s.id].qty) || 0) : 0;
+          const maxSt = typeof getProductStockForBranch === "function"
+            ? getProductStockForBranch(products[s.id.replace(/_PKG$/, "")] || specialOffers[s.id] || {}, activeBranchId)
+            : 99;
+          const canAdd = Math.max(0, maxSt - cur);
+          const toAdd = Math.min(s.qty, canAdd);
+          if (toAdd > 0) { changeQty(s.id, toAdd); addedCount += toAdd; }
+        });
+        if (addedCount > 0) showToast(`🐾 أضاف بندق ${addedCount} مواد إلى سلتك!`);
+      }
 
-        if (act.type === "remove") {
-          if (curQty > 0) { changeQty(pid, -curQty); changesCount++; }
-        } else if (act.type === "set") {
-          const target = Math.min(qty, avail);
-          if (target !== curQty) { changeQty(pid, target - curQty); changesCount++; }
-        } else {
-          const maxAdd = Math.max(0, avail - curQty);
-          const actualAdd = Math.min(qty, maxAdd);
-          if (actualAdd > 0) { changeQty(pid, actualAdd); changesCount++; }
-        }
-      });
+      const replyText = data.reply || data.answerNote || "تفضّل، شو بتحب نضيف أو نرتب اليوم؟";
+      const noteText = data.answerNote && data.answerNote !== replyText ? `<div style="color:#00e676; font-weight:bold; margin-bottom:4px;">💡 ${esc(data.answerNote)}</div>` : "";
 
-      const statusEl = $("aiShoppingStatusText");
-      const replyMsg = data.reply || (changesCount > 0 ? `تم تحديث السلة بنجاح (${changesCount} عمليات).` : "لم يتم العثور على أصناف مطابقة متوفرة حالياً.");
-      let html = `<div>✅ ${esc(replyMsg)}</div>`;
+      let previewHtml = noteText;
+      if (validSuggestions.length > 0 && (isBudgetOrRecipe || pendingVoiceDraft)) {
+        const sumSYP = validSuggestions.reduce((a, b) => a + b.lineTotal, 0);
+        const rows = validSuggestions.map((s, idx) => `
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; background:var(--card-bg); border:1px solid var(--border-color); border-radius:6px; padding:5px 7px; margin-bottom:4px;">
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; flex:1; margin:0;">
+              <input type="checkbox" class="ai-draft-cb" data-idx="${idx}" checked style="width:15px; height:15px;">
+              <img src="${esc(s.thumb)}" onerror="this.src='store-icon.png'" style="width:32px; height:32px; border-radius:5px; object-fit:cover;">
+              <div>
+                <div style="font-size:11px; font-weight:bold;">${esc(s.name)}</div>
+                <div style="font-size:10px; color:var(--gray-text);">${s.qty} × ${s.unitPrice.toLocaleString()} = <b style="color:var(--gold-color);">${s.lineTotal.toLocaleString()} ل.س</b></div>
+              </div>
+            </label>
+          </div>
+        `).join("");
 
-      // عرض البدائل المقترحة عند نفاد الصنف
+        window._latestAIProposal = validSuggestions;
+        previewHtml += `
+          <div style="background:rgba(212,175,55,0.08); border:1px solid var(--gold-color); border-radius:8px; padding:7px; margin-top:6px;">
+            <div style="font-size:11px; font-weight:bold; color:var(--gold-color); margin-bottom:5px;">🛒 القائمة المقترحة (المجموع: ${sumSYP.toLocaleString()} ل.س) — اختر ما يناسبك:</div>
+            ${rows}
+            <button type="button" onclick="confirmAIProposalToCart()" class="btn" style="margin-top:5px; padding:6px; font-size:11px; background:linear-gradient(45deg,#00e676,#00b0ff); color:#000;">✅ إضافة المحدد إلى السلة</button>
+          </div>`;
+      }
+
+      // [4] بدائل مصورة عند نفاد الصنف
       if (Array.isArray(data.alternatives) && data.alternatives.length > 0) {
-        const altBtns = data.alternatives.map(alt => {
-          const p = products[alt.suggestedId];
+        const altCards = data.alternatives.map(alt => {
+          const p = products?.[alt.suggestedId];
           if (!p) return "";
-          const price = calcSYP(p.priceUSD || 0).toLocaleString();
-          return `<button type="button" onclick="changeQty('${esc(alt.suggestedId)}', 1); showToast('✅ تمت إضافة البديل للسلة');" class="btn" style="width:auto; padding:3px 8px; font-size:10px; margin:3px 2px 0 0; background:#ff9800; color:#000;">➕ بديل: ${esc(p.name)} (${price} ل.س)</button>`;
+          const img = getProductThumb(alt.suggestedId);
+          const price = getEffectiveUnitPriceSYP(alt.suggestedId).toLocaleString();
+          return `<div style="display:inline-flex; align-items:center; gap:6px; background:var(--card-bg); border:1px solid #ff9800; border-radius:8px; padding:5px 8px; margin:4px 4px 0 0;">
+            <img src="${esc(img)}" onerror="this.src='store-icon.png'" style="width:32px; height:32px; border-radius:5px; object-fit:cover;">
+            <div style="font-size:10px; text-align:right;">
+              <div><b>${esc(p.name)}</b> (${price} ل.س)</div>
+              <small style="color:var(--gray-text);">${esc(alt.reason || "بديل متوفر")}</small>
+            </div>
+            <button type="button" onclick="changeQty('${esc(alt.suggestedId)}', 1); showToast('✅ تمت إضافة البديل');" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:#ff9800; color:#000;">➕</button>
+          </div>`;
         }).filter(Boolean).join("");
-        if (altBtns) html += `<div style="margin-top:4px;">${altBtns}</div>`;
+        if (altCards) previewHtml += `<div style="margin-top:6px;">${altCards}</div>`;
       }
 
-      if (statusEl) statusEl.innerHTML = html;
-      if (changesCount > 0) showToast("🤖 تم تحديث سلتك عبر المساعد الذكي!");
+      pendingVoiceDraft = null;
+      updatePetCompanionUI(data.petMood || "happy", replyText, previewHtml);
+      setTxt("aiShoppingStatusText", `🐾 بندق: ${replyText}`);
+      if (autoSpeak) speakCompanionText(replyText);
     } catch (err) {
-      setTxt("aiShoppingStatusText", `❌ خطأ: ${err.message}`);
+      pendingVoiceDraft = null;
+      updatePetCompanionUI("curious", "صار عندي خربطة بسيطة بالاتصال، جرّب مرة ثانية بعد شوي 🐾");
+      setTxt("aiShoppingStatusText", `❌ ${err.message}`);
     } finally {
       if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = "✨ تعبئة"; }
     }
   };
 
-  // --- [تحسين 6] زر "سلة العادة" (آخر 5 طلبات للزبون) ---
+  window.confirmAIProposalToCart = function () {
+    const list = window._latestAIProposal || [];
+    const cbs = document.querySelectorAll(".ai-draft-cb");
+    let added = 0;
+    cbs.forEach(cb => {
+      if (!cb.checked) return;
+      const idx = parseInt(cb.getAttribute("data-idx"));
+      const item = list[idx];
+      if (!item) return;
+      changeQty(item.id, item.qty);
+      added++;
+    });
+    if (added > 0) {
+      showToast(`✅ تمت إضافة ${added} أصناف إلى سلتك!`);
+      updatePetCompanionUI("excited", "يا سلام! صارت السلة أحلى، بدك شي تاني قبل ما نكمل؟ 🐾");
+    }
+  };
+
+  // [9] تحسين الإدخال الصوتي مع تأكيد بصري ونطق
+  window.startVoiceShoppingInput = function () {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) return alert("⚠️ التعرف الصوتي غير مدعوم في هذا المتصفح، اكتب طلبك مباشرة.");
+    const rec = new SpeechRec();
+    rec.lang = "ar-SY";
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    updatePetCompanionUI("curious", "عم أسمعك... احكي شو بدك 🎤");
+    setTxt("aiShoppingStatusText", "🎤 جاري الاستماع...");
+    rec.onresult = ev => {
+      const spoken = ev?.results?.[0]?.[0]?.transcript || "";
+      if (spoken) {
+        pendingVoiceDraft = spoken;
+        setVal("aiShoppingPromptInput", spoken);
+        runAIShoppingAssistant(spoken, true);
+      }
+    };
+    rec.onerror = () => {
+      updatePetCompanionUI("curious", "ما سمعتك واضح، جرّب تكتب طلبك أو تحكي مرة تانية.");
+      setTxt("aiShoppingStatusText", "⚠️ تعذر التقاط الصوت.");
+    };
+    rec.start();
+  };
+
+  // [5] سلة العادة الذكية حسب تكرار الشراء مع صور مصغرة
   window.fillHabitCartAI = function () {
-    if (!currentUser?.phone) return alert("⚠️ يرجى تسجيل الدخول أولاً لاستخدام سلة العادة.");
+    if (!currentUser?.phone) return alert("⚠️ يرجى تسجيل الدخول أولاً لعرض سلة العادة.");
     const myOrds = Object.values(completedOrdersHistory || {})
       .filter(o => o.customerPhone === currentUser.phone)
       .sort((a, b) => (b.dateISO || "").localeCompare(a.dateISO || ""))
-      .slice(0, 5);
+      .slice(0, 8);
 
-    if (!myOrds.length) return showToast("ℹ️ لا توجد طلبات سابقة كافية لحساب سلتك المعتادة بعد.", true);
+    if (!myOrds.length) {
+      updatePetCompanionUI("helpful", "لسا ما عندك طلبات سابقة كافية، بس رح أتعلم عاداتك من أول طلباتك!");
+      return;
+    }
 
-    const freq = {};
+    const counts = {};
     myOrds.forEach(o => {
       (o.items || []).forEach(it => {
         if (String(it.id || "").startsWith("OFFER_")) return;
         const baseId = it.origId || String(it.id || "").replace(/_PKG$/, "");
-        freq[baseId] = (freq[baseId] || 0) + 1;
+        counts[baseId] = (counts[baseId] || 0) + 1;
       });
     });
 
-    const topIds = Object.keys(freq)
-      .filter(pid => products[pid] && getProductStockForBranch(products[pid], activeBranchId) > 0)
-      .sort((a, b) => freq[b] - freq[a])
-      .slice(0, 6);
+    const regularIds = Object.keys(counts)
+      .filter(pid => products?.[pid] && getProductStockForBranch(products[pid], activeBranchId) > 0)
+      .sort((a, b) => counts[b] - counts[a])
+      .slice(0, 5);
 
-    if (!topIds.length) return showToast("⚠️ الأصناف المعتادة غير متوفرة حالياً في هذا الفرع.", true);
+    if (!regularIds.length) {
+      updatePetCompanionUI("curious", "الأصناف اللي بتطلبها عادةً غير متوفرة حالياً بهذا الفرع.");
+      return;
+    }
 
     let added = 0;
-    topIds.forEach(pid => {
+    regularIds.forEach(pid => {
       if (!cart[pid]) { changeQty(pid, 1); added++; }
     });
-    showToast(added > 0 ? `🔄 تمت إضافة ${added} أصناف من مشترياتك المعتادة للسلة!` : "✅ أصنافك المعتادة موجودة بالفعل في السلة.");
+    const msg = added > 0 ? `رتبتلك ${added} أصناف من مشترياتك المعتادة بالسلة 🐾` : "أغراضك المعتادة موجودة بالسلة مسبقاً!";
+    updatePetCompanionUI("happy", msg);
+    showToast(`🔄 ${msg}`);
   };
 
-  // --- [تحسين 2] تعزيز كشف تكرار إشعارات شام كاش عبر جميع الجداول ---
-  const origShamCashOCR = window.analyzeShamCashReceiptOCR;
-  window.analyzeShamCashReceiptOCR = async function () {
-    if (typeof origShamCashOCR === "function") {
-      await origShamCashOCR();
+  // [6] مقارن سريع بين المفرد والطرد / العرض الخاص
+  function renderPackVsSingleHint() {
+    const assistBox = $("aiSmartAssistantBox");
+    if (!assistBox) return;
+    let hintBox = $("aiPackCompareHint");
+    if (!hintBox) {
+      hintBox = document.createElement("div");
+      hintBox.id = "aiPackCompareHint";
+      hintBox.style.cssText = "margin-top:6px; font-size:10px;";
+      assistBox.appendChild(hintBox);
     }
-    const txRef = window.latestShamCashOcrMeta?.txRef;
-    if (!txRef) return;
-    const matchRef = o => String(o?.shamCashTxRef || "").includes(txRef) || String(o?.notes || "").includes(txRef);
-    const dupInReadyOrDispatched =
-      Object.values(window.readyOrders || {}).some(matchRef) ||
-      Object.values(window.dispatchedOrders || {}).some(matchRef);
 
-    if (dupInReadyOrDispatched && $("shamCashOcrResult")) {
-      $("shamCashOcrResult").innerHTML = `<div style="background:rgba(255,68,68,0.18); border:1px solid #ff4444; color:#ff4444; padding:6px; border-radius:6px; font-weight:bold;">🚨 تحذير أمني: رقم العملية (${esc(txRef)}) مستخدم مسبقاً في فاتورة قيد التجهيز أو التوصيل!</div>` + $("shamCashOcrResult").innerHTML;
+    const hints = [];
+    Object.keys(products || {}).forEach(pid => {
+      const p = products[pid];
+      if (!p || !p.hasPackage || !p.pkgCount || !p.pkgPriceUSD) return;
+      const singleSYP = calcSYP(p.priceUSD || 0);
+      const pkgTotalSYP = calcSYP(p.pkgPriceUSD || 0);
+      const singlesCostForPkg = singleSYP * parseInt(p.pkgCount);
+      const diff = singlesCostForPkg - pkgTotalSYP;
+      if (diff > 0) {
+        hints.push({ pid, name: p.name, pkgCount: p.pkgCount, pkgTotalSYP, diff, thumb: getProductThumb(pid) });
+      }
+    });
+
+    if (!hints.length) { hintBox.innerHTML = ""; return; }
+    const h = hints[0];
+    hintBox.innerHTML = `<div style="display:flex; align-items:center; justify-content:space-between; gap:6px; background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.35); border-radius:6px; padding:5px 8px;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <img src="${esc(h.thumb)}" onerror="this.src='store-icon.png'" style="width:28px; height:28px; border-radius:4px; object-fit:cover;">
+        <span>💡 <b>وفر مع بندق:</b> طرد (${esc(h.name)}) بـ <b>${h.pkgTotalSYP.toLocaleString()} ل.س</b> يوفر عليك <b>${h.diff.toLocaleString()} ل.س</b> مقارنة بالمفرد.</span>
+      </div>
+      <button type="button" onclick="changeQty('${h.pid}_PKG', 1)" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:var(--gold-color); color:#000;">أضف الطرد</button>
+    </div>`;
+  }
+
+  // [7] ملخص فاتورة ودّي ومفهوم قبل الإرسال النهائي داخل السلة
+  function renderFriendlyOrderSummary() {
+    const cartModalContent = document.querySelector("#cartModal .modal-content");
+    if (!cartModalContent) return;
+    let sumCard = $("aiFriendlyOrderSummaryCard");
+    if (!sumCard) {
+      sumCard = document.createElement("div");
+      sumCard.id = "aiFriendlyOrderSummaryCard";
+      sumCard.style.cssText = "background:rgba(0,230,118,0.07); border:1px solid rgba(0,230,118,0.4); border-radius:8px; padding:7px 9px; margin-bottom:8px; font-size:11px;";
+      const submitBtn = $("submitOrderUnifiedBtn");
+      if (submitBtn && submitBtn.parentNode) submitBtn.parentNode.insertBefore(sumCard, submitBtn);
+    }
+
+    const totalTxt = $("modalCartTotal")?.textContent || "0";
+    const feeTxt = $("modalDeliveryFee")?.textContent || "0";
+    const ptsTxt = $("modalCartPoints")?.textContent || "0";
+    const itemsCount = Object.values(cart || {}).reduce((a, b) => a + (parseInt(b.qty) || 0), 0);
+
+    sumCard.innerHTML = `
+      <div style="font-weight:bold; color:#00e676; margin-bottom:3px;">🐾 ملخص بندق الودّي قبل الإرسال:</div>
+      <div style="color:var(--text-color); line-height:1.5;">
+        معك <b>${itemsCount}</b> مواد، التوصيل <b>${esc(feeTxt)} ل.س</b>، وربحك <b>+${esc(ptsTxt)} نقطة</b>. الإجمالي النهائي: <b style="color:var(--gold-color);">${esc(totalTxt)} ل.س</b>.
+      </div>`;
+  }
+
+  // [4 إضافي] مساعدة ذكية للعنوان ونقطة التسليم في نافذة الملف الشخصي
+  window.assistAddressWithAI = async function () {
+    const rawAddr = ($("regAddress")?.value || "").trim();
+    if (!rawAddr) return alert("⚠️ اكتب وصفاً مبدئياً لمكانك أولاً (مثلاً: قرب الجامع أو الحي الشمالي).");
+    const workerUrl = typeof getEffectiveAIWorkerUrl === "function" ? getEffectiveAIWorkerUrl() : "";
+    if (!workerUrl) return alert("⚠️ اضبط رابط Cloudflare Worker في الإعدادات أولاً.");
+
+    showToast("⏳ جاري تنسيق العنوان للسائق...");
+    try {
+      const res = await fetch(workerUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "address_helper",
+          prompt: rawAddr,
+          storeMeta: { regions: Object.keys(deliveryFees || {}) }
+        })
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.ok) throw new Error(json?.error || "تعذر تنسيق العنوان");
+      const d = json.data || {};
+      if (d.formattedAddress) setVal("regAddress", d.formattedAddress);
+      if (d.suggestedRegion && deliveryFees?.[d.suggestedRegion] && $("regRegion")) {
+        setVal("regRegion", d.suggestedRegion);
+      }
+      showToast("✅ تم تنسيق العنوان بوضوح للسائق!");
+    } catch (err) {
+      alert("❌ " + err.message);
     }
   };
 
-  // --- [تحسين 3] قارئ فواتير الموردين الورقية بالكاميرا (OCR) ---
+  // أدوات الإدارة (فواتير الموردين، تذكير الديون، الملخص اليومي)
   window.runSupplierInvoiceOCR = async function () {
     const file = $("aiSupplierInvoiceFile")?.files?.[0];
     const outBox = $("aiSupplierInvoiceResult");
     if (!file || !outBox) return;
     const workerUrl = getEffectiveAIWorkerUrl();
     if (!workerUrl) return alert("⚠️ اضبط رابط Cloudflare Worker في الإعدادات أولاً.");
-
-    outBox.innerHTML = `<div style="color:#00b0ff; font-size:11px;">⏳ جاري قراءة الفاتورة واستخراج الأصناف والأسعار...</div>`;
+    outBox.innerHTML = `<div style="color:#00b0ff; font-size:11px;">⏳ جاري قراءة الفاتورة...</div>`;
     try {
       const b64 = await fileToBase64Clean(file);
       const res = await fetch(workerUrl, {
@@ -225,28 +532,14 @@
       });
       const json = await res.json();
       if (!res.ok || !json?.ok) throw new Error(json?.error || "فشل قراءة الفاتورة");
-
-      const d = json.data || {};
-      const items = Array.isArray(d.items) ? d.items : [];
-      if (!items.length) {
-        outBox.innerHTML = `<div style="color:#ff9800; font-size:11px;">⚠️ لم يتم استخراج أصناف واضحة من الصورة، جرّب تصويرها بإضاءة أوضح.</div>`;
-        return;
-      }
-
+      const items = Array.isArray(json.data?.items) ? json.data.items : [];
       window._lastParsedSupplierItems = items;
-      const rows = items.map((it, idx) => `
-        <tr>
-          <td style="text-align:right;">${esc(it.name)}</td>
-          <td>${parseInt(it.qty) || 1}</td>
-          <td>${(Number(it.unitCost) || 0).toLocaleString()}</td>
-          <td><button type="button" onclick="applyParsedInvoiceItemToForm(${idx})" class="btn" style="padding:2px 6px; font-size:10px; width:auto;">⬇️ تعبئة</button></td>
-        </tr>`).join("");
-
-      outBox.innerHTML = `
-        <div style="font-size:11px; color:var(--success-color); margin-bottom:5px;">✅ المورد: <b>${esc(d.supplierName || "غير محدد")}</b> | الإجمالي: <b>${(Number(d.totalAmount) || 0).toLocaleString()}</b></div>
-        <div style="overflow-x:auto;"><table class="tbl-clean"><thead><tr><th style="text-align:right;">الصنف</th><th>الكمية</th><th>التكلفة</th><th>إجراء</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+      if (!items.length) { outBox.innerHTML = `<div style="color:#ff9800; font-size:11px;">⚠️ لم تظهر أصناف واضحة.</div>`; return; }
+      outBox.innerHTML = `<table class="tbl-clean"><thead><tr><th style="text-align:right;">الصنف</th><th>الكمية</th><th>التكلفة</th><th>إضافة</th></tr></thead><tbody>` +
+        items.map((it, idx) => `<tr><td style="text-align:right;">${esc(it.name)}</td><td>${parseInt(it.qty) || 1}</td><td>${(Number(it.unitCost) || 0).toLocaleString()}</td><td><button type="button" onclick="applyParsedInvoiceItemToForm(${idx})" class="btn" style="padding:2px 6px; font-size:10px; width:auto;">⬇️</button></td></tr>`).join("") +
+        `</tbody></table>`;
     } catch (err) {
-      outBox.innerHTML = `<div style="color:var(--danger-color); font-size:11px;">❌ خطأ: ${esc(err.message)}</div>`;
+      outBox.innerHTML = `<div style="color:var(--danger-color); font-size:11px;">❌ ${esc(err.message)}</div>`;
     }
   };
 
@@ -259,33 +552,24 @@
       setVal("prodCostSYP", Math.round(it.unitCost));
       if (typeof updateLiveUSD === "function") updateLiveUSD("prodCostSYP", "prodCostUSDPreview", "prodCostUSD");
     }
-    showToast(`✅ تم تعبئة (${it.name}) في نموذج الإضافة بنجاح!`);
+    showToast(`✅ تمت تعبئة (${it.name})`);
   };
 
-  // --- [تحسين 8] مولد رسالة تذكير الديون عبر واتساب ---
   window.generateSmartDebtReminderWhatsApp = async function () {
     const phone = $("adminDebtCustomerSelect")?.value;
-    if (!phone || !users[phone]) return alert("⚠️ اختر زبون الآجل أولاً.");
+    if (!phone || !users?.[phone]) return alert("⚠️ اختر زبون الآجل أولاً.");
     const u = users[phone];
     const balUSD = parseFloat(u.debtBalanceUSD) || 0;
     if (balUSD <= 0) return alert("✅ لا يوجد رصيد مستحق على هذا الزبون.");
-
     const workerUrl = getEffectiveAIWorkerUrl();
     if (!workerUrl) return alert("⚠️ اضبط رابط Cloudflare Worker في الإعدادات أولاً.");
-
-    showToast("⏳ جاري صياغة رسالة تذكير مهذبة بالذكاء الاصطناعي...");
     try {
       const res = await fetch(workerUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode: "debt_reminder",
-          debtInfo: {
-            customerName: u.name,
-            amount: `${balUSD.toFixed(2)} $ (ما يعادل ${calcSYP(balUSD).toLocaleString()} ل.س)`,
-            currency: "",
-            daysOverdue: 7
-          }
+          debtInfo: { customerName: u.name, amount: `${balUSD.toFixed(2)} $ (${calcSYP(balUSD).toLocaleString()} ل.س)`, daysOverdue: 7 }
         })
       });
       const json = await res.json();
@@ -293,81 +577,104 @@
       const msg = json.data?.message || `مرحباً ${u.name}، تذكير ودي من متجر معاذ برصيدكم المستحق (${balUSD.toFixed(2)} $).`;
       window.open(`https://wa.me/${formatWhatsAppPhone(phone)}?text=${encodeURIComponent(msg)}`, "_blank");
     } catch (err) {
-      alert("❌ تعذر توليد الرسالة: " + err.message);
+      alert("❌ " + err.message);
     }
   };
 
-  // --- [تحسين 10] الملخص اليومي الذكي لصاحب المتجر ---
   window.runDailyBriefAI = async function () {
     const box = $("aiDailyBriefOutput");
     const workerUrl = getEffectiveAIWorkerUrl();
     if (!workerUrl) return alert("⚠️ اضبط رابط Cloudflare Worker في الإعدادات أولاً.");
-    if (box) box.innerHTML = `<div style="color:#00b0ff; font-size:11px; margin-top:6px;">⏳ جاري تحليل أرقام اليوم وتجهيز التوصيات...</div>`;
-
+    if (box) box.innerHTML = `<div style="color:#00b0ff; font-size:11px; margin-top:6px;">⏳ جاري التحليل...</div>`;
     const snap = window.latestStatsSnapshot || {};
-    const outOfStockNames = Object.values(products || {}).filter(p => (parseInt(p.stock) || 0) <= (parseInt(p.alertLimit) || 2)).slice(0, 10).map(p => p.name);
-
+    const lowItems = Object.values(products || {}).filter(p => (parseInt(p.stock) || 0) <= (parseInt(p.alertLimit) || 2)).slice(0, 10).map(p => p.name);
     try {
       const res = await fetch(workerUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "daily_brief",
-          stats: {
-            totalSalesSYP: snap.totS || 0,
-            netProfitSYP: snap.netP || 0,
-            debtCollectionsUSD: snap.debtCollectionsUSD || 0,
-            lowStockItems: outOfStockNames
-          }
-        })
+        body: JSON.stringify({ mode: "daily_brief", stats: { totalSalesSYP: snap.totS || 0, netProfitSYP: snap.netP || 0, lowStockItems: lowItems } })
       });
       const json = await res.json();
-      if (!res.ok || !json?.ok) throw new Error(json?.error || "فشل تحليل التقرير");
+      if (!res.ok || !json?.ok) throw new Error(json?.error || "فشل التحليل");
       const d = json.data || {};
-      const acts = (d.actions || []).map(a => `<li style="margin-bottom:3px;">${esc(a)}</li>`).join("");
-      if (box) {
-        box.innerHTML = `<div class="adm-card" style="border-color:#00e676; background:rgba(0,230,118,0.06); margin-top:8px; font-size:11px;">
-          <b style="color:#00e676;">🤖 خلاصة اليوم الذكية:</b>
-          <p style="margin:4px 0 6px 0;">${esc(d.summary || "")}</p>
-          <ul style="margin:0; padding-right:16px;">${acts}</ul>
-        </div>`;
-      }
+      const acts = (d.actions || []).map(a => `<li>${esc(a)}</li>`).join("");
+      if (box) box.innerHTML = `<div class="adm-card" style="border-color:#00e676; margin-top:8px; font-size:11px;"><b style="color:#00e676;">🤖 ملخص اليوم:</b><p style="margin:4px 0;">${esc(d.summary || "")}</p><ul style="margin:0; padding-right:16px;">${acts}</ul></div>`;
     } catch (err) {
-      if (box) box.innerHTML = `<div style="color:var(--danger-color); font-size:11px; margin-top:6px;">❌ خطأ: ${esc(err.message)}</div>`;
+      if (box) box.innerHTML = `<div style="color:var(--danger-color); font-size:11px; margin-top:6px;">❌ ${esc(err.message)}</div>`;
     }
   };
 
-  // --- حقن الأزرار والواجهات الجديدة تلقائياً عند تحميل الصفحة ---
-  function injectAIEnhancementsUI() {
-    // 1. أزرار سريعة داخل صندوق مساعد التسوق (سلة العادة + وصفة/ميزانية)
+  window.togglePetCompanionVisibility = function () {
+    petHidden = !petHidden;
+    localStorage.setItem("moaath_pet_hidden", petHidden ? "1" : "0");
+    const card = $("petCompanionCard");
+    const showBtn = $("petShowMiniBtn");
+    if (card) card.style.display = petHidden ? "none" : "block";
+    if (showBtn) showBtn.style.display = petHidden ? "inline-flex" : "none";
+  };
+
+  function injectUXCompanionUI() {
     const assistBox = $("aiSmartAssistantBox");
+    if (assistBox && !$("petCompanionCard")) {
+      const wrap = document.createElement("div");
+      wrap.innerHTML = `
+        <button id="petShowMiniBtn" type="button" onclick="togglePetCompanionVisibility()" style="display:${petHidden ? "inline-flex" : "none"}; align-items:center; gap:5px; background:var(--card-bg); color:var(--gold-color); border:1px solid var(--gold-color); border-radius:14px; padding:4px 10px; font-size:10px; font-weight:bold; cursor:pointer; margin-bottom:6px;">
+          🐱 إظهار صديق المتجر (بندق)
+        </button>
+        <div id="petCompanionCard" style="display:${petHidden ? "none" : "block"}; background:linear-gradient(135deg,rgba(212,175,55,0.12),rgba(0,176,255,0.08)); border:1px solid var(--gold-color); border-radius:10px; padding:8px 10px; margin-bottom:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span id="petAvatarEmoji" style="font-size:24px; line-height:1;">🐱</span>
+              <div>
+                <div style="font-size:11px; font-weight:bold; color:var(--gold-color);">بندق — صديقك في متجر معاذ</div>
+                <div id="petSpeechBubble" style="font-size:11px; color:var(--text-color);">أهلاً بك! اسألني عن الأسعار، قولي ميزانيتك، أو اطلب أغراض وصفتك 🐾</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:4px;">
+              <button type="button" onclick="speakCompanionText($('petSpeechBubble')?.textContent || '')" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:rgba(0,176,255,0.2); color:#00b0ff;" title="استمع لرد بندق">🔊</button>
+              <button type="button" onclick="togglePetCompanionVisibility()" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:transparent; color:var(--gray-text); border:1px solid var(--border-color);" title="إخفاء">✕</button>
+            </div>
+          </div>
+          <div id="petCompanionExtra" style="margin-top:4px; font-size:10px;"></div>
+        </div>`;
+      assistBox.insertBefore(wrap, assistBox.firstChild);
+    }
+
     if (assistBox && !$("aiQuickChipsBar")) {
       const chips = document.createElement("div");
       chips.id = "aiQuickChipsBar";
       chips.style.cssText = "display:flex; gap:5px; flex-wrap:wrap; margin-top:6px;";
       chips.innerHTML = `
         <button type="button" onclick="fillHabitCartAI()" class="btn" style="width:auto; padding:3px 8px; font-size:10px; background:rgba(212,175,55,0.18); color:var(--gold-color); border:1px solid var(--gold-color);">🔄 سلة العادة</button>
-        <button type="button" onclick="setVal('aiShoppingPromptInput','جهز لي سلة فطور متوفرة بميزانية 500 ل.س'); runAIShoppingAssistant();" class="btn" style="width:auto; padding:3px 8px; font-size:10px; background:rgba(0,230,118,0.14); color:#00e676; border:1px solid #00e676;">🍳 سلة فطور بـ 500 ل.س</button>
+        <button type="button" onclick="runAIShoppingAssistant('معي 500 ل.س، اقترح لي سلة أساسيات متوفرة', false)" class="btn" style="width:auto; padding:3px 8px; font-size:10px; background:rgba(0,230,118,0.15); color:#00e676; border:1px solid #00e676;">💰 ميزانية 500 ل.س</button>
+        <button type="button" onclick="runAIShoppingAssistant('جهز لي أغراض متة وسهرة متوفرة', false)" class="btn" style="width:auto; padding:3px 8px; font-size:10px; background:rgba(0,176,255,0.15); color:#00b0ff; border:1px solid #00b0ff;">🧉 أغراض متة وسهرة</button>
+        <button type="button" onclick="runAIShoppingAssistant('هل المتجر مفتوح الآن وما هي مواعيد الدوام؟', false)" class="btn" style="width:auto; padding:3px 8px; font-size:10px; background:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color);">⏰ الدوام الآن؟</button>
       `;
       assistBox.appendChild(chips);
     }
 
-    // 2. بطاقة تصوير فاتورة المورد بالكاميرا في تبويب البضائع
+    const addrInput = $("regAddress");
+    if (addrInput && addrInput.parentNode && !$("aiAddressHelperBtn")) {
+      const btn = document.createElement("button");
+      btn.id = "aiAddressHelperBtn";
+      btn.type = "button";
+      btn.className = "btn";
+      btn.style.cssText = "margin-top:5px; width:auto; padding:4px 9px; font-size:10px; background:rgba(0,176,255,0.16); color:#00b0ff; border:1px solid #00b0ff;";
+      btn.textContent = "📍 تنسيق العنوان بوضوح للسائق";
+      btn.onclick = window.assistAddressWithAI;
+      addrInput.parentNode.appendChild(btn);
+    }
+
     const prodTab = $("admTab4Products");
     if (prodTab && !$("aiSupplierInvoiceCard")) {
       const card = document.createElement("div");
       card.id = "aiSupplierInvoiceCard";
       card.className = "adm-sec";
       card.style.borderColor = "#00b0ff";
-      card.innerHTML = `
-        <div class="adm-sec-title"><span style="color:#00b0ff;">📸 قراءة فاتورة مورد ورقية بالكاميرا (AI OCR)</span></div>
-        <input type="file" id="aiSupplierInvoiceFile" accept="image/*" class="form-control" style="margin-bottom:6px;" onchange="runSupplierInvoiceOCR()">
-        <div id="aiSupplierInvoiceResult"></div>
-      `;
+      card.innerHTML = `<div class="adm-sec-title"><span style="color:#00b0ff;">📸 قراءة فاتورة مورد بالكاميرا</span></div><input type="file" id="aiSupplierInvoiceFile" accept="image/*" class="form-control" style="margin-bottom:6px;" onchange="runSupplierInvoiceOCR()"><div id="aiSupplierInvoiceResult"></div>`;
       prodTab.insertBefore(card, prodTab.firstChild);
     }
 
-    // 3. زر توليد رسالة تذكير الديون في تبويب الزبائن والديون
     const debtSum = $("adminDebtCustomerSummary");
     if (debtSum && !$("aiDebtReminderBtn")) {
       const btn = document.createElement("button");
@@ -380,141 +687,33 @@
       debtSum.appendChild(btn);
     }
 
-    // 4. زر الملخص اليومي الذكي في تبويب الجرد
     const statsTab = $("admTab1Stats");
     if (statsTab && !$("aiDailyBriefBtn")) {
       const wrap = document.createElement("div");
       wrap.className = "adm-sec";
       wrap.style.borderColor = "#00e676";
-      wrap.innerHTML = `
-        <button id="aiDailyBriefBtn" type="button" onclick="runDailyBriefAI()" class="btn" style="background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-size:12px; font-weight:bold;">🤖 تحليل نهاية اليوم الذكي (توصيات المشتريات والركود)</button>
-        <div id="aiDailyBriefOutput"></div>
-      `;
+      wrap.innerHTML = `<button id="aiDailyBriefBtn" type="button" onclick="runDailyBriefAI()" class="btn" style="background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-size:12px; font-weight:bold;">🤖 تحليل نهاية اليوم الذكي</button><div id="aiDailyBriefOutput"></div>`;
       statsTab.insertBefore(wrap, statsTab.firstChild);
     }
+
+    renderPackVsSingleHint();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", injectAIEnhancementsUI);
-  } else {
-    injectAIEnhancementsUI();
-      // --- تبسيط وتوجيه مراحل دفع شام كاش (3 خطوات واضحة للزبون) ---
-  function upgradeShamCashUI() {
-    const box = $("shamCashInfoBox");
-    if (!box || $("scGuidedFlow")) return;
-
-    box.innerHTML = `
-      <div id="scGuidedFlow" style="text-align:right; font-size:11px;">
-        <div style="color:var(--gold-color); font-weight:bold; text-align:center; margin-bottom:8px;">
-          💳 خطوات الدفع السريع عبر شام كاش
-        </div>
-
-        <!-- الخطوة 1: النسخ والتحويل -->
-        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:7px; margin-bottom:6px;">
-          <div style="font-weight:bold; margin-bottom:5px;">① حوّل المبلغ عبر تطبيق شام كاش:</div>
-          <div style="display:flex; gap:5px;">
-            <button type="button" onclick="copyWalletId()" class="btn" style="flex:1; padding:6px; font-size:10px; background:var(--gold-color); color:#000;">📋 نسخ معرّف المحفظة</button>
-            <button type="button" onclick="copyExpectedShamAmount()" class="btn" style="flex:1; padding:6px; font-size:10px; background:rgba(0,230,118,0.18); color:#00e676; border:1px solid #00e676;">💰 نسخ المبلغ (<span id="scQuickAmtLabel">0</span> ل.س)</button>
-          </div>
-        </div>
-
-        <!-- الخطوة 2: رفع الإشعار والفحص الذكي -->
-        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:7px; margin-bottom:6px;">
-          <div style="font-weight:bold; margin-bottom:5px;">② ارفع صورة إشعار التحويل للتحقق السريع:</div>
-          <label for="shamCashReceiptFile" class="btn" style="display:block; text-align:center; padding:7px; font-size:11px; background:rgba(0,176,255,0.16); color:#00b0ff; border:1px dashed #00b0ff; cursor:pointer;">
-            📸 اضغط هنا لاختيار صورة الإشعار
-          </label>
-          <input type="file" id="shamCashReceiptFile" accept="image/*" style="display:none;" onchange="runGuidedShamCashCheck()">
-          <div id="shamCashOcrResult" style="margin-top:6px; font-size:10px;"></div>
-        </div>
-
-        <!-- الخطوة 3: التوجيه للإرسال -->
-        <div style="font-size:10px; color:var(--gray-text); text-align:center;">
-          ③ اضغط الزر الأخضر بالأسفل لإرسال الطلب وتأكيده عبر واتساب
-        </div>
-      </div>
-    `;
-  }
-
-  window.copyExpectedShamAmount = function () {
-    const amt = ($("modalCartTotal")?.textContent || "0").replace(/[^0-9]/g, "");
-    if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(amt).then(() => showToast(`✅ تم نسخ المبلغ (${Number(amt).toLocaleString()} ل.س)`));
-    }
-  };
-
-  window.runGuidedShamCashCheck = async function () {
-    const outBox = $("shamCashOcrResult");
-    const file = $("shamCashReceiptFile")?.files?.[0];
-    if (!file || !outBox) return;
-
-    const expectedSYP = parseInt(($("modalCartTotal")?.textContent || "0").replace(/[^0-9]/g, "")) || 0;
-    const workerUrl = getEffectiveAIWorkerUrl();
-    if (!workerUrl) {
-      outBox.innerHTML = `<span style="color:#ff9800;">⚠️ تم اختيار الصورة، أرسلها مع الطلب على واتساب.</span>`;
-      return;
-    }
-
-    outBox.innerHTML = `<span style="color:#00b0ff;">⏳ جاري التحقق الذكي من الإشعار...</span>`;
-    try {
-      const b64 = await fileToBase64Clean(file);
-      const res = await fetch(workerUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "shamcash_ocr",
-          expectedTotalSYP: expectedSYP,
-          imageBase64: b64,
-          imageMimeType: file.type || "image/jpeg"
-        })
-      });
-      const json = await res.json();
-      if (!res.ok || !json?.ok) throw new Error(json?.error || "تعذر قراءة الصورة");
-
-      const d = json.data || {};
-      const txRef = d.txRef ? String(d.txRef).trim() : "";
-      const amt = d.amount !== null && d.amount !== undefined ? Number(d.amount) : null;
-      window.latestShamCashOcrMeta = { txRef, amountVal: amt };
-
-      // فحص التكرار في جميع الطلبات
-      const matchRef = o => txRef && (String(o?.shamCashTxRef || "").includes(txRef) || String(o?.notes || "").includes(txRef));
-      const isDup =
-        Object.values(pendingOrders || {}).some(matchRef) ||
-        Object.values(readyOrders || {}).some(matchRef) ||
-        Object.values(dispatchedOrders || {}).some(matchRef) ||
-        Object.values(completedOrdersHistory || {}).some(matchRef);
-
-      if (isDup) {
-        outBox.innerHTML = `<div style="background:rgba(255,68,68,0.15); border:1px solid #ff4444; color:#ff4444; padding:6px; border-radius:6px; font-weight:bold;">🔴 هذا الإشعار (رقم ${esc(txRef)}) مستخدم مسبقاً! يرجى رفع إشعار التحويل الجديد.</div>`;
-      } else if (amt !== null && Math.abs(amt - expectedSYP) <= 50) {
-        outBox.innerHTML = `<div style="background:rgba(0,230,118,0.15); border:1px solid #00e676; color:#00e676; padding:6px; border-radius:6px; font-weight:bold;">🟢 ممتاز! المبلغ مطابق (${amt.toLocaleString()} ل.س)${txRef ? ` | رقم العملية: ${esc(txRef)}` : ""}. يمكنك إتمام الطلب الآن.</div>`;
-        // إلحاق رقم العملية تلقائياً في الملاحظات لتسهيل التدقيق على واتساب
-        const notesEl = $("orderNotes");
-        if (notesEl && txRef && !notesEl.value.includes(txRef)) {
-          notesEl.value = (notesEl.value ? notesEl.value + " | " : "") + `شام كاش #${txRef}`;
-        }
-      } else if (amt !== null) {
-        outBox.innerHTML = `<div style="background:rgba(255,152,0,0.15); border:1px solid #ff9800; color:#ff9800; padding:6px; border-radius:6px; font-weight:bold;">🟡 تنبيه: المبلغ الظاهر في الإشعار (${amt.toLocaleString()} ل.س) يختلف عن المطلوب (${expectedSYP.toLocaleString()} ل.س).</div>`;
-      } else {
-        outBox.innerHTML = `<div style="background:rgba(255,152,0,0.15); border:1px solid #ff9800; color:#ff9800; padding:6px; border-radius:6px;">🟡 لم يظهر المبلغ بوضوح في الصورة، تأكد من وضوح الإشعار أو أرسله مباشرة على واتساب.</div>`;
-      }
-    } catch (err) {
-      outBox.innerHTML = `<span style="color:var(--danger-color);">❌ تعذر الفحص التلقائي، يمكنك المتابعة وإرسال الإشعار على واتساب.</span>`;
-    }
-  };
-
-  // تحديث المبلغ المعروض في زر النسخ كلما تغيرت السلة
   const _origRenderCartModalItems = window.renderCartModalItems;
   window.renderCartModalItems = function () {
     if (typeof _origRenderCartModalItems === "function") _origRenderCartModalItems();
-    upgradeShamCashUI();
-    const totalTxt = $("modalCartTotal")?.textContent || "0";
-    setTxt("scQuickAmtLabel", totalTxt);
-    const submitBtn = $("submitOrderUnifiedBtn");
-    if (submitBtn && $("cartPaymentMethod")?.value === "شام كاش" && !submitBtn.disabled) {
-      submitBtn.textContent = "✅ إرسال الطلب وتأكيده عبر واتساب";
-    }
+    renderFriendlyOrderSummary();
   };
-    
+
+  const _origRenderStore = window.renderStore;
+  window.renderStore = function () {
+    if (typeof _origRenderStore === "function") _origRenderStore();
+    injectUXCompanionUI();
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", injectUXCompanionUI);
+  } else {
+    injectUXCompanionUI();
   }
 })();
