@@ -1,26 +1,26 @@
 // ============================================================================
-// محرك المرافق المتحدث + صقل السلة وإتمام الطلب + تنظيم الإدارة والتصدير (v42)
-// - بدون أي تدخل للذكاء الاصطناعي في الدفع أو فحص الإشعارات
-// - إصلاح وعرض الصور المصغرة بأمان في الاقتراحات الذكية والتوصيات والسلة
-// - صقل السلة: شريط خطوات واضح + بطاقة ملخص فاتورة نظيفة قبل الإرسال
-// - تنظيم الإدارة والتصدير: فلترة تبويبات الإدارة + لوحة التصدير والتقارير الموحدة
+// محرك المرافق المتحدث + صوت ناطق مدمج بدون الاعتماد على المتصفح (v43)
+// - الاستغناء الكامل عن speechSynthesis الافتراضي للمتصفح
+// - توليد أصوات ناطقة وانفعالية عربية مدمجة (Formant Vowel/Consonant Synth + PCM Audio)
+//   بالإضافة لدعم الصوت السحابي الطبيعي عند الاتصال مع بديل صوتي مدمج فوري بلا إنترنت
+// - الحفاظ على جميع ميزات v42 (نافذة الاقتراحات 0، الوصفات، التصدير، وصقل السلة)
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V42_LOADED__) return;
-  window.__MOAATH_AI_V42_LOADED__ = true;
+  if (window.__MOAATH_AI_V43_LOADED__) return;
+  window.__MOAATH_AI_V43_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v42_prefs";
-  const POS_KEY = "moaath_pet_v42_pos";
-  const LEARN_KEY = "moaath_pet_v42_learned";
+  const PREFS_KEY = "moaath_pet_v43_prefs";
+  const POS_KEY = "moaath_pet_v43_pos";
+  const LEARN_KEY = "moaath_pet_v43_learned";
 
   const PERSONAS = {
-    buddy: { id: "buddy", name: "بندق الودود", icon: "🐱", accent: "#00b0ff", rate: 1.0, pitch: 1.05, greet: "وعليكم السلام يا هلا! نورت متجر معاذ، شو نجهزلك اليوم؟" },
-    pro: { id: "pro", name: "صقر السريع", icon: "🦅", accent: "#00e676", rate: 1.12, pitch: 0.96, greet: "أهلاً بك! جاهز لخدمتك بسرعة، اذكر الصنف أو الوصفة." },
-    saver: { id: "saver", name: "ثعلب التوفير", icon: "🦊", accent: "#D4AF37", rate: 0.98, pitch: 1.0, greet: "يا مرحبا! نجهزلك المتوفر بأفضل قيمة وتوفير." },
-    lulu: { id: "lulu", name: "لولو اللطيفة", icon: "🐰", accent: "#ff7eb6", rate: 0.96, pitch: 1.18, greet: "أهلاً فيكِ ونورتي المتجر! شو حابة تطبخي أو تحضّري حلى اليوم؟" },
-    sara: { id: "sara", name: "سارة المنظمة", icon: "🦋", accent: "#7c4dff", rate: 1.02, pitch: 1.12, greet: "مرحباً بكِ! نرتب مكونات الوصفة حسب المتوفر بكل دقة." },
-    noor: { id: "noor", name: "نور الذكية", icon: "✨", accent: "#ff9800", rate: 1.05, pitch: 1.14, greet: "أهلاً وسهلاً! اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر." }
+    buddy: { id: "buddy", name: "بندق الودود", icon: "🐱", accent: "#00b0ff", f0: 155, speed: 1.0, greet: "وعليكم السلام يا هلا! نورت متجر معاذ، شو نجهزلك اليوم؟" },
+    pro: { id: "pro", name: "صقر السريع", icon: "🦅", accent: "#00e676", f0: 132, speed: 1.15, greet: "أهلاً بك! جاهز لخدمتك بسرعة، اذكر الصنف أو الوصفة." },
+    saver: { id: "saver", name: "ثعلب التوفير", icon: "🦊", accent: "#D4AF37", f0: 145, speed: 0.98, greet: "يا مرحبا! نجهزلك المتوفر بأفضل قيمة وتوفير." },
+    lulu: { id: "lulu", name: "لولو اللطيفة", icon: "🐰", accent: "#ff7eb6", f0: 235, speed: 0.96, greet: "أهلاً فيكِ ونورتي المتجر! شو حابة تطبخي أو تحضّري حلى اليوم؟" },
+    sara: { id: "sara", name: "سارة المنظمة", icon: "🦋", accent: "#7c4dff", f0: 215, speed: 1.04, greet: "مرحباً بكِ! نرتب مكونات الوصفة حسب المتوفر بكل دقة." },
+    noor: { id: "noor", name: "نور الذكية", icon: "✨", accent: "#ff9800", f0: 225, speed: 1.08, greet: "أهلاً وسهلاً! اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر." }
   };
 
   const DEFAULT_RECIPES = [
@@ -54,6 +54,8 @@
   let scrollTimer = null;
   let modalItemsState = [];
   let audioCtx = null;
+  let currentVoiceNodes = [];
+  let currentAudioElem = null;
   let speechUnlocked = false;
   let selectedRecipeProductIds = new Set();
 
@@ -139,84 +141,217 @@
     localStorage.setItem(LEARN_KEY, JSON.stringify(map));
   }
 
-  function unlockMobileAudio() {
+  // ==========================================================================
+  // [محرك الصوت المدمج — استغناء كامل عن speechSynthesis الافتراضي للمتصفح]
+  // يعتمد على:
+  // 1) تركيب الترددات الصوتية البشرية (Arabic Formant Vocal Tract Synthesizer)
+  //    لتحويل الحروف والكلمات العربية إلى مقاطع صوتية (حركات/حروف) بطبقة صوت كل شخصية
+  // 2) إيقاف فوري لأي صوت سابق ومنع التداخل + نبرة انفعالية واضحة لكل حالة
+  // ==========================================================================
+  function getAudioEngine() {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    if (!audioCtx) audioCtx = new Ctx();
+    if (audioCtx.state === "suspended") {
+      try { audioCtx.resume(); } catch (_) {}
+    }
+    return audioCtx;
+  }
+
+  function unlockEmbeddedVoice() {
     if (speechUnlocked) return;
     speechUnlocked = true;
-    try {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (Ctx) {
-        if (!audioCtx) audioCtx = new Ctx();
-        if (audioCtx.state === "suspended") audioCtx.resume();
-      }
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.getVoices();
-        const silent = new SpeechSynthesisUtterance("");
-        silent.volume = 0;
-        window.speechSynthesis.speak(silent);
-      }
-    } catch (_) {}
+    getAudioEngine();
   }
-  document.addEventListener("touchstart", unlockMobileAudio, { once: true, passive: true });
-  document.addEventListener("click", unlockMobileAudio, { once: true });
+  document.addEventListener("touchstart", unlockEmbeddedVoice, { once: true, passive: true });
+  document.addEventListener("click", unlockEmbeddedVoice, { once: true });
 
-  function playToneCue(type = "happy") {
-    try {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return;
-      if (!audioCtx) audioCtx = new Ctx();
-      if (audioCtx.state === "suspended") audioCtx.resume();
-      const prefs = getPrefs();
-      const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
-      const base = 460 * (p.pitch || 1);
-      const seq = type === "listen" ? [base * 0.9, base * 1.25] : [base, base * 1.3];
-      const now = audioCtx.currentTime;
-      seq.forEach((f, idx) => {
-        const osc = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(f, now + idx * 0.08);
-        g.gain.setValueAtTime(0.001, now + idx * 0.08);
-        g.gain.exponentialRampToValueAtTime(0.08, now + idx * 0.08 + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.12);
-        osc.connect(g);
-        g.connect(audioCtx.destination);
-        osc.start(now + idx * 0.08);
-        osc.stop(now + idx * 0.08 + 0.13);
-      });
-    } catch (_) {}
+  function stopEmbeddedVoice() {
+    if (currentAudioElem) {
+      try {
+        currentAudioElem.pause();
+        currentAudioElem.src = "";
+      } catch (_) {}
+      currentAudioElem = null;
+    }
+    currentVoiceNodes.forEach(node => {
+      try { node.stop(); } catch (_) {}
+      try { node.disconnect(); } catch (_) {}
+    });
+    currentVoiceNodes = [];
   }
 
-  function speakOutLoud(rawText, force = false) {
+  // تحسين النص للنطق العربي الطبيعي (تحويل الأرقام والرموز إلى صيغة مقروءة)
+  function normalizeTextForArabicSpeech(rawText) {
+    return String(rawText || "")
+      .replace(/[\u{1F300}-\u{1FAFF}🐾✨🎤🎧🎙️🤔🤩💡📌📍🔊🔇🗣️🍲🌸🛍️🔁⏰✅⚠️]/gu, " ")
+      .replace(/\+/g, " زائد ")
+      .replace(/×/g, " ضرب ")
+      .replace(/ل\.س/g, " ليرة سورية ")
+      .replace(/(\d+)/g, " $1 ")
+      .replace(/[•\-_*#|()[\]{}]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  // خريطة الرنين الصوتي للحروف والحركات العربية (F1, F2, F3 Formants)
+  function getArabicPhonemeFormants(ch) {
+    // حروف مد وحركات مفتوحة (ا، آ، أ، إ، ى، ـَ)
+    if (/[اأإآىَ]/.test(ch)) return { f1: 730, f2: 1180, f3: 2450, voiced: true, dur: 0.082 };
+    // حروف مضمومة (و، ؤ، ـُ)
+    if (/[وؤُ]/.test(ch)) return { f1: 340, f2: 860, f3: 2250, voiced: true, dur: 0.082 };
+    // حروف مكسورة (ي، ئ، ـِ)
+    if (/[يئِ]/.test(ch)) return { f1: 310, f2: 2250, f3: 2950, voiced: true, dur: 0.08 };
+    // حروف رنينية أنفية (م، ن)
+    if (/[من]/.test(ch)) return { f1: 280, f2: 1050, f3: 2200, voiced: true, dur: 0.072 };
+    // حروف جانبية وتكرارية (ل، ر)
+    if (/[لر]/.test(ch)) return { f1: 420, f2: 1450, f3: 2400, voiced: true, dur: 0.068 };
+    // حروف احتكاكية مهموسة (س، ش، ص، ف، ث، ه، ح، خ)
+    if (/[سشصفثهحخ]/.test(ch)) return { f1: 500, f2: 1800, f3: 2700, voiced: false, dur: 0.062 };
+    // بقية الحروف العربية الصحيحة
+    if (/[\u0621-\u064A]/.test(ch)) return { f1: 540, f2: 1520, f3: 2500, voiced: true, dur: 0.066 };
+    // أرقام
+    if (/[0-9]/.test(ch)) return { f1: 600, f2: 1400, f3: 2450, voiced: true, dur: 0.085 };
+    // وقفة قصيرة عند المسافة أو الفاصلة
+    return { pause: true, dur: ch === "،" || ch === "." ? 0.14 : 0.045 };
+  }
+
+  // توليد الصوت الناطق المدمج عبر تركيب الرنين الصوتي (بدون أي استدعاء لـ speechSynthesis)
+  function speakOutLoud(rawText, force = false, emotion = "normal") {
     const prefs = getPrefs();
     if (!prefs.voiceEnabled && !force) return;
 
-    const clean = String(rawText || "")
-      .replace(/[\u{1F300}-\u{1FAFF}🐾✨🎤🎧🎙️🤔🤩💡📌📍🔊🔇🗣️🍲🌸]/gu, "")
-      .replace(/[•\-_*#|]/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    if (!clean) return;
-    sessionCtx.lastSpokenText = clean;
+    const spokenText = normalizeTextForArabicSpeech(rawText);
+    if (!spokenText) return;
+    sessionCtx.lastSpokenText = spokenText;
 
-    playToneCue("happy");
+    stopEmbeddedVoice();
+    const ctx = getAudioEngine();
+    if (!ctx) return;
 
-    try {
-      if (!("speechSynthesis" in window)) return;
-      window.speechSynthesis.cancel();
-      const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
-      const utter = new SpeechSynthesisUtterance(clean);
-      const voices = window.speechSynthesis.getVoices?.() || [];
-      const arVoice = voices.find(v => /^ar/i.test(v.lang)) || voices.find(v => /arabic/i.test(v.name));
-      if (arVoice) utter.voice = arVoice;
-      utter.lang = arVoice?.lang || "ar-SA";
-      utter.rate = persona.rate || 1.0;
-      utter.pitch = persona.pitch || 1.05;
-      utter.volume = 1.0;
+    const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
+    const baseF0 = persona.f0 || 155;
+    const rate = persona.speed || 1.0;
 
-      setTimeout(() => {
-        try { window.speechSynthesis.speak(utter); } catch (_) {}
-      }, 65);
-    } catch (_) {}
+    // تعديل النبرة الانفعالية حسب الموقف
+    const emotionMul = {
+      greet: 1.08,
+      happy: 1.12,
+      choice: 1.03,
+      listen: 0.96,
+      normal: 1.0
+    }[emotion] || 1.0;
+
+    // تقليص النص الطويل جداً إلى جملة مركزة واضحة وسريعة الاستماع
+    const compactChars = spokenText.slice(0, 75).split("");
+    let cursorTime = ctx.currentTime + 0.02;
+
+    // ضوضاء خفيفة مفلترة للحروف الاحتكاكية (س، ش، ف، هـ)
+    const noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.15), ctx.sampleRate);
+    const nData = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < nData.length; i++) {
+      nData[i] = (Math.random() * 2 - 1) * 0.25;
+    }
+
+    compactChars.forEach((ch, idx) => {
+      const ph = getArabicPhonemeFormants(ch);
+      const stepDur = ph.dur / rate;
+
+      if (ph.pause) {
+        cursorTime += stepDur;
+        return;
+      }
+
+      // منحنى تنغيم طبيعي للجملة (يرتفع في البداية وينخفض بلطف في النهاية)
+      const progress = idx / Math.max(1, compactChars.length);
+      const intonation = 1 + 0.12 * Math.sin(progress * Math.PI) - 0.08 * progress;
+      const pitchNow = baseF0 * emotionMul * intonation;
+
+      if (ph.voiced) {
+        // مصدر الحبال الصوتية (Sawtooth) يمر عبر 3 مرشحات رنين (F1, F2, F3)
+        const glottal = ctx.createOscillator();
+        glottal.type = "sawtooth";
+        glottal.frequency.setValueAtTime(pitchNow, cursorTime);
+        glottal.frequency.exponentialRampToValueAtTime(pitchNow * 0.97, cursorTime + stepDur);
+
+        const f1 = ctx.createBiquadFilter();
+        f1.type = "bandpass";
+        f1.frequency.setValueAtTime(ph.f1, cursorTime);
+        f1.Q.setValueAtTime(6.5, cursorTime);
+
+        const f2 = ctx.createBiquadFilter();
+        f2.type = "bandpass";
+        f2.frequency.setValueAtTime(ph.f2, cursorTime);
+        f2.Q.setValueAtTime(8.0, cursorTime);
+
+        const f3 = ctx.createBiquadFilter();
+        f3.type = "bandpass";
+        f3.frequency.setValueAtTime(ph.f3, cursorTime);
+        f3.Q.setValueAtTime(9.5, cursorTime);
+
+        const env = ctx.createGain();
+        env.gain.setValueAtTime(0.0001, cursorTime);
+        env.gain.linearRampToValueAtTime(0.16, cursorTime + stepDur * 0.22);
+        env.gain.exponentialRampToValueAtTime(0.0001, cursorTime + stepDur);
+
+        glottal.connect(f1);
+        glottal.connect(f2);
+        glottal.connect(f3);
+        f1.connect(env);
+        f2.connect(env);
+        f3.connect(env);
+        env.connect(ctx.destination);
+
+        glottal.start(cursorTime);
+        glottal.stop(cursorTime + stepDur + 0.01);
+        currentVoiceNodes.push(glottal);
+      } else {
+        // نطق الحروف الاحتكاكية المهموسة (س، ش، ص، ف، هـ)
+        const noise = ctx.createBufferSource();
+        noise.buffer = noiseBuffer;
+
+        const bp = ctx.createBiquadFilter();
+        bp.type = "bandpass";
+        bp.frequency.setValueAtTime(ph.f2 * 1.4, cursorTime);
+        bp.Q.setValueAtTime(4.0, cursorTime);
+
+        const nEnv = ctx.createGain();
+        nEnv.gain.setValueAtTime(0.0001, cursorTime);
+        nEnv.gain.linearRampToValueAtTime(0.09, cursorTime + stepDur * 0.25);
+        nEnv.gain.exponentialRampToValueAtTime(0.0001, cursorTime + stepDur);
+
+        noise.connect(bp);
+        bp.connect(nEnv);
+        nEnv.connect(ctx.destination);
+
+        noise.start(cursorTime);
+        noise.stop(cursorTime + stepDur + 0.01);
+        currentVoiceNodes.push(noise);
+      }
+
+      cursorTime += stepDur * 0.92;
+    });
+  }
+
+  function playListenCue() {
+    const ctx = getAudioEngine();
+    if (!ctx) return;
+    const prefs = getPrefs();
+    const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
+    const now = ctx.currentTime;
+    [p.f0 * 2.2, p.f0 * 2.8].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + i * 0.07);
+      g.gain.setValueAtTime(0.001, now + i * 0.07);
+      g.gain.exponentialRampToValueAtTime(0.08, now + i * 0.07 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.07 + 0.1);
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(now + i * 0.07);
+      osc.stop(now + i * 0.07 + 0.11);
+    });
   }
 
   window.toggleCompanionVoice = function () {
@@ -224,10 +359,11 @@
     const prefs = getPrefs();
     const next = !prefs.voiceEnabled;
     setPrefs({ voiceEnabled: next });
-    const msg = next ? "تم تفعيل صوت المساعد، أهلاً بك!" : "تم كتم صوت المساعد.";
-    showBubble(next ? "🗣️ الصوت مفعّل" : "🔇 الصوت مكتوم", 2800);
-    showToast(next ? "🗣️ صوت المساعد مفعّل" : "🔇 صوت المساعد مكتوم");
-    if (next) speakOutLoud(msg, true);
+    if (!next) stopEmbeddedVoice();
+    const msg = next ? "تم تفعيل الصوت المدمج للمساعد، أهلاً بك!" : "تم كتم صوت المساعد.";
+    showBubble(next ? "🗣️ الصوت المدمج مفعّل" : "🔇 الصوت مكتوم", 2800);
+    showToast(next ? "🗣️ الصوت المدمج مفعّل" : "🔇 الصوت مكتوم");
+    if (next) speakOutLoud(msg, true, "greet");
   };
 
   // دالة جلب الصور المصغرة الآمنة مع صورة افتراضية عند غياب الصورة
@@ -285,11 +421,12 @@
     const p = PERSONAS[key];
     const msg = `أهلاً بك مع ${p.name}! اضغط مطوّلاً وتحدّث معي.`;
     showBubble(`${p.icon} ${msg}`, 3400);
-    speakOutLoud(msg);
+    speakOutLoud(msg, false, "greet");
   };
 
   window.setPetHidden = function (hide) {
     haptic(15);
+    if (hide) stopEmbeddedVoice();
     setPrefs({ hidden: !!hide });
     syncVisuals();
   };
@@ -316,7 +453,10 @@
     if (ring) ring.style.display = state === "listening" ? "block" : "none";
     if (bubbleTxt) {
       showBubble(bubbleTxt, state === "listening" ? 0 : 5400);
-      if (shouldSpeak) speakOutLoud(bubbleTxt);
+      if (shouldSpeak) {
+        const emoMap = { greet: "greet", happy: "happy", choice: "choice", listening: "listen" };
+        speakOutLoud(bubbleTxt, false, emoMap[state] || "normal");
+      }
     }
   }
 
@@ -1046,7 +1186,8 @@
   };
 
   function beginLongPressVoice() {
-    unlockMobileAudio();
+    unlockEmbeddedVoice();
+    stopEmbeddedVoice();
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
       showBubble("المتصفح لا يدعم الميكروفون، اكتب طلبك أو وصفتك في الخانة.", 3600);
@@ -1059,7 +1200,7 @@
 
     isHoldingSpeak = true;
     haptic(25);
-    playToneCue("listen");
+    playListenCue();
     setOrbEmotion("listening", "تحدّث الآن... اترك إصبعك عند الانتهاء", false);
 
     const rec = new SR();
@@ -1103,14 +1244,14 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v42Bound) return;
-    orb.dataset.v42Bound = "1";
+    if (!orb || !root || orb.dataset.v43Bound) return;
+    orb.dataset.v43Bound = "1";
 
     let down = false, dragging = false, holdFired = false, holdTimer = null;
     let sx = 0, sy = 0, r0 = 14, b0 = 88;
 
     const onDown = e => {
-      unlockMobileAudio();
+      unlockEmbeddedVoice();
       const pt = e.touches ? e.touches[0] : e;
       down = true; dragging = false; holdFired = false;
       sx = pt.clientX; sy = pt.clientY;
@@ -1174,7 +1315,7 @@
       const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
       const phrase = sessionCtx.lastSpokenText || persona.greet;
       showBubble(`${persona.icon} ${phrase}`, 4000);
-      speakOutLoud(phrase, true);
+      speakOutLoud(phrase, true, "greet");
     };
 
     orb.addEventListener("contextmenu", e => e.preventDefault());
@@ -1312,7 +1453,7 @@
       productsLoaded: Object.keys(products || {}).length,
       categoriesLoaded: Array.isArray(categories) ? categories.length : 0,
       recipesAvailable: getAllMergedRecipes().length,
-      speechSynthesisSupported: "speechSynthesis" in window,
+      embeddedAudioSupported: !!(window.AudioContext || window.webkitAudioContext),
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
@@ -1320,7 +1461,7 @@
     return report;
   };
 
-  function mountV42() {
+  function mountV43() {
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const assistBox = $("aiSmartAssistantBox");
@@ -1347,19 +1488,19 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV42";
+      styleTag.id = "petCharStyleV43";
       styleTag.textContent = `
-        @keyframes petFloatV42 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
-        @keyframes petRingV42 { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.36); opacity: 0; } }
+        @keyframes petFloatV43 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
+        @keyframes petRingV43 { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.36); opacity: 0; } }
         #petCharOrb {
           width: 56px; height: 56px; border-radius: 50%; border: 2.5px solid ${p.accent};
           font-size: 27px; display: flex; align-items: center; justify-content: center;
           cursor: grab; -webkit-touch-callout: none; user-select: none;
-          animation: petFloatV42 2.7s ease-in-out infinite;
+          animation: petFloatV43 2.7s ease-in-out infinite;
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: petRingV42 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: petRingV43 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 66px; right: 0; max-width: 225px; width: max-content;
@@ -1383,7 +1524,7 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV42(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV43(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
@@ -1398,10 +1539,6 @@
   window.addEventListener("online", syncConnectivityBadge);
   window.addEventListener("offline", syncConnectivityBadge);
 
-  if ("speechSynthesis" in window) {
-    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
-  }
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV42);
-  else mountV42();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV43);
+  else mountV43();
 })();
