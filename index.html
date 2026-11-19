@@ -184,6 +184,17 @@
             <input type="text" id="searchInput" class="search-box" style="margin-bottom:0; flex:1;" placeholder="🔍 ابحث عن أي منتج في متجر معاذ..." oninput="renderStore()">
             <button class="btn" style="width:auto; white-space:nowrap; background:var(--card-bg); border:1px solid var(--gold-color); color:var(--gold-color);" onclick="openMissingRequestModal()">📝 طلب صنف</button>
         </div>
+        <div id="aiSmartAssistantBox" style="background:rgba(0,176,255,0.06); border:1px dashed #00b0ff; border-radius:8px; padding:8px; margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:6px;">
+                <span style="font-size:11px; font-weight:bold; color:#00b0ff;">🤖 مساعد التسوق الذكي (اكتب أو تحدّث لتعبئة السلة)</span>
+                <button type="button" id="aiVoiceBtn" onclick="startVoiceShoppingInput()" class="btn" style="width:auto; padding:3px 9px; font-size:10px; background:#00b0ff; color:#000;">🎤 صوت</button>
+            </div>
+            <div style="display:flex; gap:6px;">
+                <input type="text" id="aiShoppingPromptInput" class="form-control" style="flex:1; padding:7px; font-size:11px;" placeholder="مثال: أضف كيلو سكر وعلبتين متة...">
+                <button type="button" id="aiShoppingSendBtn" onclick="runAIShoppingAssistant()" class="btn" style="width:auto; padding:6px 12px; font-size:11px; background:linear-gradient(45deg,#D4AF37,#00e676); color:#000;">✨ تعبئة</button>
+            </div>
+            <div id="aiShoppingStatusText" style="font-size:10px; color:var(--gray-text); margin-top:5px;"></div>
+        </div>
         <div class="categories" id="categoriesContainer"></div>
         <div class="products-grid" id="productsGrid"></div>
     </div>
@@ -228,6 +239,7 @@
         <div class="modal-content">
             <h3 style="color:var(--gold-color); margin:0 0 8px 0; text-align:center; font-size:15px;">🛒 سلة المشتريات وإتمام الطلب</h3>
             <div id="cartItemsList" style="max-height:145px; overflow-y:auto; margin-bottom:8px; padding-left:2px;"></div>
+            <div id="aiCartRecommendationsBox" style="display:none; margin-bottom:8px;"></div>
             <div id="gpsStatusBox" style="display:none; background:rgba(0,176,255,0.1); border:1px solid #00b0ff; border-radius:6px; padding:8px; margin-bottom:8px; font-size:11px; text-align:center;">
                 <span style="color:#00b0ff; font-weight:bold;">📍 تم تحديد موقعك آلياً بالـ GPS</span>
                 <div id="gpsDistanceText" style="color:var(--text-color); margin-top:4px;"></div>
@@ -256,7 +268,11 @@
                 <label>💳 طريقة الدفع:</label>
                 <select id="cartPaymentMethod" class="form-control" onchange="renderCartModalItems()" style="padding:6px; font-weight:bold;"></select>
             </div>
-            <div id="shamCashInfoBox" style="display:none; text-align:center;"></div>
+            <div id="shamCashInfoBox" style="display:none; text-align:center; background:rgba(212,175,55,0.08); border:1px dashed var(--gold-color); border-radius:6px; padding:7px; margin-bottom:8px;">
+                <div style="font-size:10px; color:var(--gold-color); font-weight:bold; margin-bottom:4px;">🔍 فحص مبدئي لإشعار شام كاش (يتطلب تأكيدك اليدوي للرصيد)</div>
+                <input type="file" id="shamCashReceiptFile" accept="image/*" class="form-control" style="padding:5px; font-size:10px; margin-bottom:5px;" onchange="analyzeShamCashReceiptOCR()">
+                <div id="shamCashOcrResult" style="font-size:10px; color:var(--text-color); text-align:right;"></div>
+            </div>
             <div class="form-group" style="margin-bottom:10px;"><input type="text" id="orderNotes" class="form-control" placeholder="📝 ملاحظات إضافية مع الطلب (اختياري)..."></div>
             <button type="button" id="submitOrderUnifiedBtn" onclick="submitOrderUnified()" class="btn" style="background:linear-gradient(45deg,#D4AF37,#00e676); color:#000; margin-bottom:8px; font-size:13px; padding:11px; font-weight:900; box-shadow:0 3px 15px rgba(0,230,118,0.35); animation:pulse 2s infinite;">📋 نسخ كود شام كاش وإتمام الطلب عبر واتساب</button>
             <button type="button" onclick="closeModal('cartModal')" class="btn btn-danger" style="padding:6px; font-size:11px;">إغلاق</button>
@@ -744,6 +760,7 @@
                             <option value="main">🏬 مخزن العوينة (الرئيسي - للموزعين)</option>
                         </select>
                     </div>
+                    <div id="aiPredictiveShortagesBox" style="margin-bottom:10px;"></div>
                     <div id="shortagesBySupplierContainer"></div>
                 </div>
                 <div class="adm-sec">
@@ -908,6 +925,7 @@
                         <div class="form-group"><label>الحد الأدنى للطلب (ل.س):</label><input type="number" id="globalMinOrderInput" class="form-control" value="0"></div>
                         <div class="form-group"><label>سعر الصرف ($):</label><input type="number" id="exchangeRateInput" class="form-control"></div>
                         <div class="form-group"><label>واتساب الإدارة:</label><input type="text" id="adminWhatsAppInput" class="form-control"></div>
+                        <div class="form-group"><label>رابط وسيط الذكاء الاصطناعي (Cloudflare Worker URL):</label><input type="url" id="aiWorkerUrlInput" class="form-control" placeholder="https://moaath-ai-proxy.xxx.workers.dev"></div>
                         <div class="form-group"><label>معرف شام كاش المتجر:</label><input type="text" id="adminShamWalletInput" class="form-control"></div>
                         <div class="form-group"><label>واتساب سائق التوصيل:</label><input type="text" id="deliveryPhoneInput" class="form-control"></div>
                     </div>
@@ -1097,7 +1115,7 @@
         const closeModal = id => { if ($(id)) $(id).style.display = "none"; };
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
-        let adminWhatsAppNumber = "963965461504", shamWalletIdGlobal = "da3e13cd8a2ef2af282445e148df9599", exportManagerPhoneGlobal = "";
+        let adminWhatsAppNumber = "963965461504", shamWalletIdGlobal = "da3e13cd8a2ef2af282445e148df9599", exportManagerPhoneGlobal = "", aiWorkerUrlGlobal = localStorage.getItem("moaath_ai_worker_url") || "";
         
 
         const firebaseConfig = {
@@ -1458,6 +1476,8 @@
             setVal("deliveryPhoneInput", deliveryDriverPhone);
             setVal("adminWhatsAppInput", adminWhatsAppNumber);
             setVal("adminShamWalletInput", shamWalletIdGlobal);
+            if (d.aiWorkerUrl !== undefined) { aiWorkerUrlGlobal = String(d.aiWorkerUrl || "").trim(); localStorage.setItem("moaath_ai_worker_url", aiWorkerUrlGlobal); }
+            setVal("aiWorkerUrlInput", aiWorkerUrlGlobal);
             setVal("exportManagerPhoneInput", exportManagerPhoneGlobal);
             syncCurrentUser();
             localStorage.setItem("cache_settings", JSON.stringify(d));
@@ -2883,9 +2903,368 @@
             setTxt("modalCartTotal", (sub + markupAmt + fee).toLocaleString());
             setTxt("modalCartPoints", pts);
 
-            // Check for Smart Cart Package Suggestion
+            // Check for Smart Cart Package Suggestion & Local AI Recommendations
             checkSmartCartPackageSuggestion();
+            renderSmartCartRecommendations();
         }
+
+        
+        // ================= LOCAL AI ENGINE (OFFLINE-CAPABLE, ZERO-COST) =================
+        function renderSmartCartRecommendations() {
+            const box = $("aiCartRecommendationsBox");
+            if (!box) return;
+            const cartKeys = Object.keys(cart || {});
+            if (!cartKeys.length) {
+                box.style.display = "none";
+                box.innerHTML = "";
+                return;
+            }
+
+            const cartBaseIds = new Set(cartKeys.map(k => (cart[k]?.origId || String(k).replace(/_PKG$/, ""))));
+            const cartCats = new Set(cartKeys.map(k => cart[k]?.category).filter(Boolean));
+            const coScores = {};
+            const globalSales = {};
+
+            Object.values(completedOrdersHistory || {}).forEach(ord => {
+                const ordItems = ord?.items || [];
+                const ordBaseIds = ordItems
+                    .filter(it => !String(it.id || "").startsWith("OFFER_"))
+                    .map(it => it.origId || String(it.id || "").replace(/_PKG$/, ""));
+                const uniqueOrdIds = Array.from(new Set(ordBaseIds));
+
+                uniqueOrdIds.forEach(bid => {
+                    globalSales[bid] = (globalSales[bid] || 0) + 1;
+                });
+
+                const hasMatch = uniqueOrdIds.some(bid => cartBaseIds.has(bid));
+                if (hasMatch) {
+                    uniqueOrdIds.forEach(bid => {
+                        if (!cartBaseIds.has(bid)) {
+                            coScores[bid] = (coScores[bid] || 0) + 3;
+                        }
+                    });
+                }
+            });
+
+            const candidates = Object.keys(products || {}).filter(pid => {
+                if (cartBaseIds.has(pid)) return false;
+                const p = products[pid];
+                if (!p) return false;
+                return getProductStockForBranch(p, activeBranchId) > 0;
+            }).map(pid => {
+                const p = products[pid];
+                let score = (coScores[pid] || 0) * 10 + (globalSales[pid] || 0);
+                if (cartCats.has(p.category)) score += 2;
+                return { pid, p, score, isCoBought: (coScores[pid] || 0) > 0 };
+            }).filter(x => x.score > 0)
+              .sort((a, b) => b.score - a.score)
+              .slice(0, 3);
+
+            if (!candidates.length) {
+                box.style.display = "none";
+                box.innerHTML = "";
+                return;
+            }
+
+            const isW = currentUser?.userType === "wholesale";
+            const cardsHtml = candidates.map(({ pid, p, isCoBought }) => {
+                const effUSD = (isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0);
+                const priceSYP = calcSYP(effUSD);
+                const tag = isCoBought ? "غالباً يُشترى معه" : "الأكثر طلباً";
+                return `<div style="min-width:128px; max-width:140px; flex-shrink:0; background:var(--bg-color); border:1px solid var(--gold-color); border-radius:6px; padding:6px; text-align:center; display:flex; flex-direction:column; justify-content:space-between; gap:4px;">
+                    <div style="font-size:9px; color:#00b0ff; font-weight:bold;">✨ ${tag}</div>
+                    <div style="font-size:10px; font-weight:bold; color:var(--text-color); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${esc(p.name)}">${esc(p.name)}</div>
+                    <div style="font-size:10px; color:var(--success-color); font-weight:bold;">${priceSYP.toLocaleString()} ل.س</div>
+                    <button type="button" onclick="changeQty('${pid}', 1)" class="btn" style="padding:3px 6px; font-size:10px; background:linear-gradient(45deg,#D4AF37,#00e676); color:#000;">➕ أضف</button>
+                </div>`;
+            }).join("");
+
+            box.style.display = "block";
+            box.innerHTML = `<div style="background:rgba(0,176,255,0.07); border:1px dashed #00b0ff; border-radius:6px; padding:7px;">
+                <div style="font-size:11px; font-weight:bold; color:#00b0ff; margin-bottom:6px;">🤖 قد تحتاج أيضاً مع سلتك (توصيات ذكية):</div>
+                <div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:2px;">${cardsHtml}</div>
+            </div>`;
+        }
+
+        function renderPredictiveShortagesAI(selBranch = "main") {
+            const box = $("aiPredictiveShortagesBox");
+            if (!box) return;
+            const nowMs = Date.now();
+            const windowDays = 14;
+            const cutoffMs = nowMs - (windowDays * 86400000);
+            const soldUnits14d = {};
+
+            Object.values(completedOrdersHistory || {}).forEach(ord => {
+                const ordBranch = ord.branchId || "main";
+                if (ordBranch !== selBranch) return;
+                const ordTime = Date.parse(ord.dateISO || "");
+                if (isNaN(ordTime) || ordTime < cutoffMs) return;
+
+                (ord.items || []).forEach(it => {
+                    if (String(it.id || "").startsWith("OFFER_")) return;
+                    const baseId = it.origId || String(it.id || "").replace(/_PKG$/, "");
+                    const isPkg = it.isPackage || String(it.id || "").endsWith("_PKG");
+                    const pkgUnits = isPkg ? Math.max(1, parseInt(it.pkgCount) || parseInt(products[baseId]?.pkgCount) || 10) : 1;
+                    soldUnits14d[baseId] = (soldUnits14d[baseId] || 0) + ((parseInt(it.qty) || 1) * pkgUnits);
+                });
+            });
+
+            const predictions = [];
+            Object.keys(products || {}).forEach(pid => {
+                const p = products[pid];
+                if (!p) return;
+                const curSt = getProductStockForBranch(p, selBranch);
+                const sold14 = soldUnits14d[pid] || 0;
+                if (sold14 <= 0 || curSt <= 0) return;
+
+                const dailyRate = sold14 / windowDays;
+                const daysLeft = curSt / dailyRate;
+                if (daysLeft <= 5) {
+                    const suggested7dQty = Math.max(1, Math.ceil(dailyRate * 7) - curSt);
+                    predictions.push({
+                        pid,
+                        name: p.name || "صنف",
+                        unit: p.unitType || "قطعة",
+                        curSt,
+                        dailyRate: dailyRate.toFixed(1),
+                        daysLeft: Math.max(0.5, daysLeft),
+                        suggested7dQty
+                    });
+                }
+            });
+
+            predictions.sort((a, b) => a.daysLeft - b.daysLeft);
+            const bName = getBranchName(selBranch);
+
+            if (!predictions.length) {
+                box.innerHTML = `<div class="adm-card" style="border-color:#00b0ff; background:rgba(0,176,255,0.06); font-size:11px; text-align:center; color:#00b0ff;">🤖 <b>التنبؤ الاستباقي (${esc(bName)}):</b> لا توجد أصناف مهددة بالنفاد خلال الـ 5 أيام القادمة بناءً على سرعة البيع الحالية.</div>`;
+                return;
+            }
+
+            const rowsHtml = predictions.slice(0, 8).map(pr => {
+                const isUrgent = pr.daysLeft <= 2;
+                const col = isUrgent ? "var(--danger-color)" : "#ff9800";
+                const daysStr = pr.daysLeft < 1 ? "أقل من يوم!" : `${Math.round(pr.daysLeft)} أيام`;
+                return `<div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; border-top:1px dashed var(--border-color); padding:5px 0; flex-wrap:wrap; gap:4px;">
+                    <span>• <b>${esc(pr.name)}</b> <small style="color:var(--gray-text);">(متبقي: ${pr.curSt} | السحب: ${pr.dailyRate}/يوم)</small></span>
+                    <span><b style="color:${col};">⏳ ينفد خلال ${daysStr}</b> | <small style="color:var(--success-color); font-weight:bold;">مقترح التوريد: +${pr.suggested7dQty} ${esc(pr.unit)}</small></span>
+                </div>`;
+            }).join("");
+
+            box.innerHTML = `<div class="adm-card" style="border-color:#00b0ff; background:rgba(0,176,255,0.07);">
+                <div style="color:#00b0ff; font-weight:bold; font-size:12px; margin-bottom:4px;">🤖 تنبؤات الذكاء الاصطناعي للنواقص القادمة — ${esc(bName)} (آخر 14 يوماً)</div>
+                <div style="font-size:10px; color:var(--gray-text); margin-bottom:6px;">أصناف لم تصل للحد الأدنى بعد لكنها ستنفد قريباً بناءً على وتيرة السحب الفعلية:</div>
+                ${rowsHtml}
+            </div>`;
+        }
+
+        function getCustomerCreditRiskProfile(u, successOrdersCount = 0) {
+            if (!u) return { label: "غير محدد", color: "var(--gray-text)", bg: "rgba(255,255,255,0.05)", score: 50 };
+            const debt = Math.max(0, parseFloat(u.debtBalanceUSD) || 0);
+            const limit = Math.max(1, parseFloat(u.debtLimitUSD) || 100);
+            const utilPct = (debt / limit) * 100;
+            const cancels = parseInt(u.cancelledOrdersCount) || 0;
+            const totalOrds = successOrdersCount + cancels;
+            const cancelRate = totalOrds > 0 ? (cancels / totalOrds) * 100 : 0;
+
+            const ledgerVals = Object.values(u.debtLedger || {});
+            const paymentsCount = ledgerVals.filter(e => e && e.type === "payment").length;
+            const debtsCount = ledgerVals.filter(e => e && e.type === "debt").length;
+
+            let riskPoints = 0;
+            if (utilPct >= 90) riskPoints += 50;
+            else if (utilPct >= 70) riskPoints += 30;
+            else if (utilPct >= 40) riskPoints += 12;
+
+            if (cancelRate >= 35 && cancels >= 2) riskPoints += 30;
+            else if (cancelRate >= 20 && cancels >= 1) riskPoints += 15;
+
+            if (debtsCount >= 3 && paymentsCount === 0 && debt > 0) riskPoints += 25;
+            else if (paymentsCount > 0) riskPoints = Math.max(0, riskPoints - 15);
+
+            if (riskPoints >= 55) {
+                return { label: "🔴 مخاطر مرتفعة", color: "#ff4444", bg: "rgba(255,68,68,0.14)", score: riskPoints };
+            }
+            if (riskPoints >= 28) {
+                return { label: "🟡 مخاطر متوسطة", color: "#ff9800", bg: "rgba(255,152,0,0.14)", score: riskPoints };
+            }
+            return { label: "🟢 موثوقية عالية", color: "#00e676", bg: "rgba(0,230,118,0.14)", score: riskPoints };
+        }
+        // ================= END LOCAL AI ENGINE =================
+
+        // ================= CLOUD AI ENGINE (VIA CLOUDFLARE WORKER PROXY) =================
+        function getEffectiveAIWorkerUrl() {
+            const fromInput = ($("aiWorkerUrlInput")?.value || "").trim();
+            const url = (fromInput || aiWorkerUrlGlobal || localStorage.getItem("moaath_ai_worker_url") || "").trim();
+            return url.replace(/\/+$/, "");
+        }
+
+        function startVoiceShoppingInput() {
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRec) {
+                return alert("⚠️ التعرف الصوتي غير مدعوم في هذا المتصفح، يمكنك كتابة طلبك مباشرة في الخانة.");
+            }
+            const rec = new SpeechRec();
+            rec.lang = "ar-SY";
+            rec.interimResults = false;
+            rec.maxAlternatives = 1;
+            setTxt("aiShoppingStatusText", "🎤 جاري الاستماع لطلبك...");
+            rec.onresult = event => {
+                const spoken = event?.results?.[0]?.[0]?.transcript || "";
+                if (spoken) {
+                    setVal("aiShoppingPromptInput", spoken);
+                    setTxt("aiShoppingStatusText", `🗣️ تم سماع: "${spoken}" — جاري التحليل...`);
+                    runAIShoppingAssistant();
+                }
+            };
+            rec.onerror = () => {
+                setTxt("aiShoppingStatusText", "⚠️ تعذر التقاط الصوت، تأكد من إذن الميكروفون.");
+            };
+            rec.start();
+        }
+
+        async function runAIShoppingAssistant() {
+            const promptTxt = ($("aiShoppingPromptInput")?.value || "").trim();
+            if (!promptTxt) return alert("⚠️ اكتب أو تحدّث بما تريد إضافته إلى السلة أولاً.");
+            if (navigator.onLine === false) return alert("⚠️ المساعد الذكي السحابي يتطلب اتصالاً بالإنترنت.");
+
+            const workerUrl = getEffectiveAIWorkerUrl();
+            if (!workerUrl) {
+                return alert("⚠️ يرجى ضبط رابط وسيط الذكاء الاصطناعي (Cloudflare Worker URL) في تبويب الإعدادات والنظام.");
+            }
+
+            const sendBtn = $("aiShoppingSendBtn");
+            if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = "⏳..."; }
+            setTxt("aiShoppingStatusText", "🤖 جاري مطابقة طلبك مع مخزون الفرع الحالي...");
+
+            const compactCatalog = Object.keys(products || {}).map(pid => {
+                const p = products[pid];
+                if (!p) return null;
+                const st = getProductStockForBranch(p, activeBranchId);
+                if (st <= 0) return null;
+                return { id: pid, name: p.name, category: p.category || "", stock: st, unit: p.unitType || "قطعة" };
+            }).filter(Boolean);
+
+            try {
+                const res = await fetch(workerUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        mode: "cart_assistant",
+                        prompt: promptTxt,
+                        catalog: compactCatalog
+                    })
+                });
+                const json = await res.json();
+                if (!res.ok || !json?.ok) {
+                    throw new Error(json?.error || "فشل استجابة المساعد الذكي");
+                }
+
+                const suggestedItems = Array.isArray(json?.data?.items) ? json.data.items : [];
+                let addedTotal = 0;
+                suggestedItems.forEach(item => {
+                    const pid = String(item?.id || "").trim();
+                    const qty = Math.max(1, parseInt(item?.qty) || 1);
+                    if (pid && products[pid]) {
+                        const avail = getProductStockForBranch(products[pid], activeBranchId);
+                        const curInCart = cart[pid] ? (parseInt(cart[pid].qty) || 0) : 0;
+                        const maxAdd = Math.max(0, avail - curInCart);
+                        const actualAdd = Math.min(qty, maxAdd);
+                        if (actualAdd > 0) {
+                            changeQty(pid, actualAdd);
+                            addedTotal += actualAdd;
+                        }
+                    }
+                });
+
+                const replyMsg = json?.data?.reply || (addedTotal > 0 ? `تمت إضافة ${addedTotal} عناصر إلى سلتك.` : "لم يتم العثور على عناصر مطابقة متوفرة.");
+                setTxt("aiShoppingStatusText", `✅ ${replyMsg}`);
+                if (addedTotal > 0) showToast(`🤖 تمت إضافة ${addedTotal} مواد إلى سلتك!`);
+            } catch (err) {
+                setTxt("aiShoppingStatusText", `❌ خطأ: ${err.message}`);
+            } finally {
+                if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = "✨ تعبئة"; }
+            }
+        }
+
+        function fileToBase64Clean(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const resStr = String(reader.result || "");
+                    const parts = resStr.split(",");
+                    resolve(parts.length > 1 ? parts[1] : resStr);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function analyzeShamCashReceiptOCR() {
+            const fileInput = $("shamCashReceiptFile");
+            const outBox = $("shamCashOcrResult");
+            if (!outBox) return;
+            const file = fileInput?.files?.[0];
+            if (!file) { outBox.innerHTML = ""; return; }
+
+            if (navigator.onLine === false) {
+                outBox.innerHTML = `<span style="color:var(--danger-color);">⚠️ يتطلب فحص الإشعار اتصالاً بالإنترنت.</span>`;
+                return;
+            }
+            const workerUrl = getEffectiveAIWorkerUrl();
+            if (!workerUrl) {
+                outBox.innerHTML = `<span style="color:#ff9800;">⚠️ اضبط رابط Cloudflare Worker في الإعدادات لتفعيل الفحص المبدئي.</span>`;
+                return;
+            }
+
+            const totalText = ($("modalCartTotal")?.textContent || "0").replace(/[^0-9]/g, "");
+            const expectedSYP = parseInt(totalText) || 0;
+            outBox.innerHTML = `<span style="color:#00b0ff;">⏳ جاري قراءة بيانات الإشعار مبدئياً...</span>`;
+
+            try {
+                const b64 = await fileToBase64Clean(file);
+                const res = await fetch(workerUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        mode: "shamcash_ocr",
+                        expectedTotalSYP: expectedSYP,
+                        imageBase64: b64,
+                        imageMimeType: file.type || "image/jpeg"
+                    })
+                });
+                const json = await res.json();
+                if (!res.ok || !json?.ok) throw new Error(json?.error || "فشل قراءة الإشعار");
+
+                const d = json.data || {};
+                const txRef = d.txRef ? String(d.txRef).trim() : "";
+                const amountVal = d.amount !== null && d.amount !== undefined ? Number(d.amount) : null;
+
+                let isDuplicateRef = false;
+                if (txRef) {
+                    const checkRef = str => String(str || "").includes(txRef);
+                    isDuplicateRef =
+                        Object.values(pendingOrders || {}).some(o => checkRef(o?.shamCashTxRef) || checkRef(o?.notes)) ||
+                        Object.values(completedOrdersHistory || {}).some(o => checkRef(o?.shamCashTxRef) || checkRef(o?.notes));
+                }
+
+                window.latestShamCashOcrMeta = { txRef, amountVal };
+                const refBadge = txRef
+                    ? (isDuplicateRef
+                        ? `<b style="color:var(--danger-color);">⚠️ رقم العملية (${esc(txRef)}) ظاهر في طلب سابق!</b>`
+                        : `<b style="color:var(--success-color);">رقم العملية: ${esc(txRef)}</b>`)
+                    : `<span style="color:#ff9800;">لم يظهر رقم عملية واضح</span>`;
+                const amtBadge = amountVal !== null
+                    ? ` | المبلغ المقروء: <b>${amountVal.toLocaleString()}</b> (المطلوب: <b>${expectedSYP.toLocaleString()}</b>)`
+                    : "";
+
+                outBox.innerHTML = `<div>${refBadge}${amtBadge}</div><div style="color:var(--gray-text); font-size:9px; margin-top:2px;">🔒 الفحص مبدئي فقط؛ يعتمد قبول الطلب على تأكيد الإدارة لوصول المبلغ فعلياً في محفظة شام كاش.</div>`;
+            } catch (err) {
+                outBox.innerHTML = `<span style="color:var(--danger-color);">❌ تعذر الفحص المبدئي: ${esc(err.message)}</span>`;
+            }
+        }
+        // ================= END CLOUD AI ENGINE =================
+
 
         function checkSmartCartPackageSuggestion() {
             let bannerBox = $("smartPackageSuggestionBox");
@@ -3089,7 +3468,7 @@
                 mapsUrl, isGpsOrder, gpsDistanceMeters, viaPointName, viaPointVillage,
                 isCreditOrder: isCreditUser, creditMarkupPct: markupPct, creditMarkupSYP: markupSYP, orderTotalUSD: finalOrderUSD,
                 paymentMethod: selectedPayMethod,
-                notes: ($("orderNotes")?.value || "").trim(), items: ordItems,
+                notes: ($("orderNotes")?.value || "").trim(), shamCashTxRef: (window.latestShamCashOcrMeta?.txRef || ""), items: ordItems,
                 subtotalSaleSYP: subSale + markupSYP, deliveryFeeSYP: fee, totalSaleSYP: finalTotalSYP, totalCostSYP: totCost, netProfitSYP: (subSale + markupSYP) - totCost, earnedPoints: totPts
             };
             let msg = isCreditUser 
@@ -3732,7 +4111,11 @@
                     const curDebt = parseFloat(users[o.customerPhone]?.debtBalanceUSD) || 0;
                     const limit = parseFloat(users[o.customerPhone]?.debtLimitUSD) || 100;
                     bannerHtml = `<div style="background:linear-gradient(45deg,#ff0000,#cc0000); color:#fff; padding:6px 8px; border-radius:5px; font-weight:bold; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; text-shadow:1px 1px 2px rgba(0,0,0,0.5);"><span>🚨 طلب زبون آجل (دفتر الدين)</span><span>⏳ دين متوقع: $${(curDebt + (o.orderTotalUSD||0)).toFixed(2)} / السقف: $${limit}</span></div>`;
-                    warningHtml = `<div style="color:#ff4444; font-size:11px; font-weight:bold; margin-bottom:6px;">📌 طلب معتمد على الدفتر (لا يتطلب تحويل). سيتم القيد تلقائياً عند التأكيد.</div>`;
+                    const custObjForRisk = users[o.customerPhone] || {};
+                    let custSuccCnt = 0;
+                    Object.values(completedOrdersHistory || {}).forEach(co => { if (co.customerPhone === o.customerPhone) custSuccCnt++; });
+                    const riskProf = getCustomerCreditRiskProfile(custObjForRisk, custSuccCnt);
+                    warningHtml = `<div style="color:#ff4444; font-size:11px; font-weight:bold; margin-bottom:6px;">📌 طلب معتمد على الدفتر (لا يتطلب تحويل). سيتم القيد تلقائياً عند التأكيد. <span style="background:${riskProf.bg}; color:${riskProf.color}; border:1px solid ${riskProf.color}; padding:1px 6px; border-radius:8px; font-size:10px; margin-right:4px;">🤖 تقييم الآجل: ${riskProf.label}</span></div>`;
                     confirmBtnStr = "✅ تأكيد الطلب وترحيل الدين فوراً";
                 } else if (isPrep) {
                     borderColor = '#00e676'; bgColor = 'rgba(0,230,118,0.05)'; textCol = '#00e676';
@@ -3862,6 +4245,7 @@
         function renderShortages() {
             const suppContainer = $("shortagesBySupplierContainer"); if (!suppContainer) return;
             const selBranch = $("shortagesBranchSelect")?.value || "main";
+            renderPredictiveShortagesAI(selBranch);
             const shortageIds = Object.keys(products).filter(id => products[id] && getProductStockForBranch(products[id], selBranch) <= (parseInt(products[id].alertLimit) || 2));
             if (selBranch !== "main") {
                 const bName = getBranchName(selBranch);
@@ -4383,7 +4767,7 @@
                     </div>
                     <div style="font-size:11px; color:var(--gray-text); margin:4px 0;">
                         ✅ طلبات ناجحة: <b style="color:var(--success-color);">${successOrders}</b> | ❌ طلبات ملغاة: <b style="color:var(--danger-color);">${cancelledOrders}</b>
-                        ${ut === 'credit' ? ` | 📒 دين: <b style="color:var(--danger-color);">${(parseFloat(u.debtBalanceUSD) || 0).toFixed(2)} $</b>` : ''}
+                        ${ut === 'credit' ? (() => { const rp = getCustomerCreditRiskProfile(u, successOrders); return ` | 📒 دين: <b style="color:var(--danger-color);">${(parseFloat(u.debtBalanceUSD) || 0).toFixed(2)} $</b> <span style="background:${rp.bg}; color:${rp.color}; border:1px solid ${rp.color}; padding:1px 6px; border-radius:10px; font-size:9px; font-weight:bold;">${rp.label}</span>`; })() : ''}
                     </div>
                     <div style="display:flex; gap:4px; margin-top:6px; flex-wrap:wrap;">
                         <button onclick="openAdminEditCustomerModal('${u.phone}')" class="btn" style="padding:3px 8px; font-size:10px; width:auto;">✏️ تعديل الهواتف والرتب</button>
@@ -4453,6 +4837,7 @@
                 adminWhatsApp: $("adminWhatsAppInput").value.trim() || "963965461504",
                 shamWalletId: $("adminShamWalletInput").value.trim() || "da3e13cd8a2ef2af282445e148df9599",
                 exportManagerPhone: $("exportManagerPhoneInput").value.trim().replace(/\s+/g, ""),
+                aiWorkerUrl: ($("aiWorkerUrlInput")?.value || "").trim(),
                 deliveryFees,
                 workHours: { enabled: $("workHoursEnabled").checked, open: $("workHourOpen").value || "08:00", close: $("workHourClose").value || "23:00" },
                 gpsConfig: {
@@ -4852,7 +5237,11 @@
                     const curDebt = parseFloat(users[o.customerPhone]?.debtBalanceUSD) || 0;
                     const limit = parseFloat(users[o.customerPhone]?.debtLimitUSD) || 100;
                     bannerHtml = `<div style="background:linear-gradient(45deg,#ff0000,#cc0000); color:#fff; padding:6px 8px; border-radius:5px; font-weight:bold; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; text-shadow:1px 1px 2px rgba(0,0,0,0.5);"><span>🚨 طلب زبون آجل (دفتر الدين)</span><span>⏳ دين متوقع: $${(curDebt + (o.orderTotalUSD||0)).toFixed(2)} / السقف: $${limit}</span></div>`;
-                    warningHtml = `<div style="color:#ff4444; font-size:11px; font-weight:bold; margin-bottom:6px;">📌 طلب معتمد على الدفتر (لا يتطلب تحويل). سيتم القيد تلقائياً عند التأكيد.</div>`;
+                    const custObjForRisk = users[o.customerPhone] || {};
+                    let custSuccCnt = 0;
+                    Object.values(completedOrdersHistory || {}).forEach(co => { if (co.customerPhone === o.customerPhone) custSuccCnt++; });
+                    const riskProf = getCustomerCreditRiskProfile(custObjForRisk, custSuccCnt);
+                    warningHtml = `<div style="color:#ff4444; font-size:11px; font-weight:bold; margin-bottom:6px;">📌 طلب معتمد على الدفتر (لا يتطلب تحويل). سيتم القيد تلقائياً عند التأكيد. <span style="background:${riskProf.bg}; color:${riskProf.color}; border:1px solid ${riskProf.color}; padding:1px 6px; border-radius:8px; font-size:10px; margin-right:4px;">🤖 تقييم الآجل: ${riskProf.label}</span></div>`;
                     confirmBtnStr = "✅ تأكيد الطلب وترحيل الدين فوراً";
                 } else if (isPrep) {
                     borderColor = '#00e676'; bgColor = 'rgba(0,230,118,0.05)'; textCol = '#00e676';
