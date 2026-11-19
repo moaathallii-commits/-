@@ -1481,3 +1481,163 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV44);
   else mountV44();
 })();
+// ============================================================================
+// حركة الكائن الحي ثلاثي الأبعاد والتجوال الحر على الجوال (v45 Patch)
+// - يحافظ على عدم تدخل الذكاء الاصطناعي في الدفع أو الإشعارات
+// - يضيف عمقاً ثلاثي الأبعاد + ظل أرضي + تجوالاً حراً يتوقف تلقائياً عند التفاعل
+// ============================================================================
+(function () {
+  if (window.__MOAATH_3D_ROAM_V45__) return;
+  window.__MOAATH_3D_ROAM_V45__ = true;
+
+  let roamTimer = null;
+  let userPausedUntil = 0;
+
+  function pauseRoaming(ms = 7000) {
+    userPausedUntil = Date.now() + ms;
+  }
+
+  function inject3DLivingStyles() {
+    if ($("pet3DRoamStyleV45")) return;
+    const st = document.createElement("style");
+    st.id = "pet3DRoamStyleV45";
+    st.textContent = `
+      @keyframes petBreathe3D {
+        0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
+        50% { transform: translateY(-7px) rotateX(-5deg) rotateY(6deg) scale(1.04); }
+      }
+      @keyframes petShadowPulse {
+        0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.42; }
+        50% { transform: translateX(-50%) scale(0.76); opacity: 0.22; }
+      }
+      #petCharRoot {
+        perspective: 750px !important;
+        transform-style: preserve-3d !important;
+        transition: right 1.15s cubic-bezier(0.22, 1, 0.36, 1), bottom 1.15s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease !important;
+      }
+      #petCharOrb.is-roaming {
+        animation: petBreathe3D 1.8s ease-in-out infinite !important;
+      }
+      #pet3DGroundShadow {
+        position: absolute;
+        left: 50%;
+        bottom: -7px;
+        width: 38px;
+        height: 9px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.45);
+        filter: blur(2px);
+        pointer-events: none;
+        animation: petShadowPulse 1.8s ease-in-out infinite;
+      }
+    `;
+    document.head.appendChild(st);
+  }
+
+  function ensureGroundShadow(root) {
+    if (!root || $("pet3DGroundShadow")) return;
+    const orbWrap = root.querySelector("div[style*='position:relative']");
+    if (orbWrap) {
+      const sh = document.createElement("div");
+      sh.id = "pet3DGroundShadow";
+      orbWrap.appendChild(sh);
+    }
+  }
+
+  function stepFreeRoam() {
+    const root = $("petCharRoot");
+    const orb = $("petCharOrb");
+    if (!root || !orb || root.style.display === "none") return;
+    if (Date.now() < userPausedUntil) return;
+
+    const modalOpen = Array.from(document.querySelectorAll(".modal-overlay")).some(
+      m => m.style.display === "flex" || m.style.display === "block"
+    );
+    if (modalOpen) return;
+
+    const maxR = Math.max(14, window.innerWidth - 76);
+    const minB = 92;
+    const maxB = Math.max(minB + 40, window.innerHeight - 170);
+
+    const curR = parseInt(root.style.right || "14", 10);
+    const curB = parseInt(root.style.bottom || "88", 10);
+
+    const deltaR = (Math.random() - 0.5) * 140;
+    const deltaB = (Math.random() - 0.5) * 150;
+
+    const nextR = Math.round(Math.max(14, Math.min(maxR, curR + deltaR)));
+    const nextB = Math.round(Math.max(minB, Math.min(maxB, curB + deltaB)));
+
+    const tiltY = nextR < curR ? 14 : -14;
+    const tiltX = nextB > curB ? -10 : 10;
+
+    orb.classList.add("is-roaming");
+    orb.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateZ(14px)`;
+    root.style.right = nextR + "px";
+    root.style.bottom = nextB + "px";
+
+    setTimeout(() => {
+      if (Date.now() >= userPausedUntil && orb) {
+        orb.style.transform = "";
+      }
+    }, 900);
+  }
+
+  function bindRoamGuards() {
+    const root = $("petCharRoot");
+    const orb = $("petCharOrb");
+    if (!root || !orb || orb.dataset.v45GuardBound) return;
+    orb.dataset.v45GuardBound = "1";
+
+    ensureGroundShadow(root);
+
+    ["touchstart", "mousedown", "pointerdown"].forEach(evName => {
+      orb.addEventListener(evName, () => {
+        pauseRoaming(9000);
+        orb.classList.remove("is-roaming");
+      }, { passive: true });
+    });
+
+    ["touchend", "mouseup", "pointerup"].forEach(evName => {
+      window.addEventListener(evName, () => {
+        setTimeout(() => {
+          if (orb && Date.now() >= userPausedUntil) {
+            orb.classList.add("is-roaming");
+          }
+        }, 2500);
+      }, { passive: true });
+    });
+
+    window.addEventListener("scroll", () => pauseRoaming(4500), { passive: true });
+  }
+
+  function init3DRoaming() {
+    inject3DLivingStyles();
+    const root = $("petCharRoot");
+    if (root) ensureGroundShadow(root);
+    bindRoamGuards();
+
+    if (!roamTimer) {
+      roamTimer = setInterval(stepFreeRoam, 4200);
+    }
+  }
+
+  const _prevMount = window.mountV44;
+  if (typeof _prevMount === "function") {
+    window.mountV44 = function () {
+      _prevMount.apply(this, arguments);
+      init3DRoaming();
+    };
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => setTimeout(init3DRoaming, 250));
+  } else {
+    setTimeout(init3DRoaming, 250);
+  }
+})();
+
+
+
+
+
