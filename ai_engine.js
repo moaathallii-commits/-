@@ -1,30 +1,43 @@
 // ============================================================================
-// محرك الشخصية القابلة للسحب والنقر المطوّل للصوت والإجابة الصوتية (v34)
-// - بدون لوحة عائمة مزعجة وبدون أي تدخل للذكاء الاصطناعي في الدفع
-// - نقر مطوّل: بدء الاستماع للطلب أو الاستفسار ثم الإجابة الصوتية
-// - سحب: تحريك الشخصية لأي مكان وحفظ موقعها
-// - نقرة سريعة: تبديل الشخصية (ودود / سريع / توفير) أو وضع الصوت
+// محرك المرافق التفاعلي ثلاثي الأبعاد لمتجر معاذ (v35 - 25 UX & Voice Upgrades)
+// - بدون أي تدخل للذكاء الاصطناعي في الدفع أو فحص الإشعارات
+// - يجمع: منع حشو السلة عند تعدد الأحجام/الأنواع + التخيير الفوري + ميزانية الفئة
+//   + أقرب 5 مواد للمهام والطبخات + ذاكرة جلسة + 6 شخصيات (3 منها للفتيات)
+//   + حيوية ثلاثية الأبعاد + نطق عربي محسن وتحكم كامل بالصوت + بديل محلي فوري
 // ============================================================================
 
 (function () {
-  const PREFS_KEY = "moaath_pet_v34_prefs";
-  const POS_KEY = "moaath_pet_v34_pos";
-  const CACHE_KEY = "moaath_pet_v34_cache";
+  const PREFS_KEY = "moaath_pet_v35_prefs";
+  const POS_KEY = "moaath_pet_v35_pos";
+  const CACHE_KEY = "moaath_pet_v35_cache";
   const CACHE_TTL = 2 * 60 * 60 * 1000;
 
   const PERSONAS = {
-    buddy: { id: "buddy", name: "بندق الودود", icon: "🐱", accent: "#00b0ff", styleHint: "لهجة محلية ودودة ومرحّة وقصيرة جداً." },
-    pro: { id: "pro", name: "صقر السريع", icon: "🦅", accent: "#00e676", styleHint: "أسلوب عملي ومباشر وسريع في الكميات والأسعار." },
-    saver: { id: "saver", name: "ثعلب التوفير", icon: "🦊", accent: "#D4AF37", styleHint: "يركّز على التوفير والطرود والميزانية." }
+    // 3 شخصيات أساسية
+    buddy: { id: "buddy", name: "بندق الودود", icon: "🐱", accent: "#00b0ff", gender: "general", styleHint: "لهجة محلية ودودة ومرحّة وقصيرة جداً." },
+    pro: { id: "pro", name: "صقر السريع", icon: "🦅", accent: "#00e676", gender: "general", styleHint: "أسلوب عملي ومباشر وسريع في الأرقام والكميات والأسعار." },
+    saver: { id: "saver", name: "ثعلب التوفير", icon: "🦊", accent: "#D4AF37", gender: "general", styleHint: "يركّز على التوفير والطرود والميزانية." },
+    // 3 شخصيات جديدة مناسبة للفتيات
+    lulu: { id: "lulu", name: "لولو اللطيفة", icon: "🐰", accent: "#ff7eb6", gender: "female", styleHint: "أسلوب لطيف، مشرق، ودود، ومختصر يناسب الفتيات." },
+    sara: { id: "sara", name: "سارة المنظمة", icon: "🦋", accent: "#7c4dff", gender: "female", styleHint: "أسلوب مرتب ومنظم وواضح للوصفات والمهام المنزلية والطلبات." },
+    noor: { id: "noor", name: "نور الذكية", icon: "✨", accent: "#ff9800", gender: "female", styleHint: "أسلوب ذكي ومشجع ومفيد للخيارات السريعة والتنسيق." }
   };
 
-  let sessionContext = { lastItems: [] };
-  let activeRecognizer = null;
-  let isListeningHold = false;
-  let toastBubbleTimer = null;
-  let scrollDimTimer = null;
+  let sessionMemory = {
+    lastPrompt: "",
+    lastChoices: [],
+    lastTaskItems: [],
+    lastAddedIds: [],
+    lastSpokenText: ""
+  };
 
-  // إبقاء الدفع خارج نطاق الذكاء الاصطناعي بالكامل
+  let activeRecognizer = null;
+  let isHoldingToSpeak = false;
+  let bubbleHideTimer = null;
+  let scrollFadeTimer = null;
+  let lastActionBadge = 0;
+
+  // استبعاد الذكاء الاصطناعي من الدفع وفحص الإشعارات بالكامل
   window.analyzeShamCashReceiptOCR = function () {
     const outBox = $("shamCashOcrResult");
     if (outBox) outBox.innerHTML = "";
@@ -40,10 +53,10 @@
       return {
         persona: PERSONAS[d.persona] ? d.persona : "buddy",
         hidden: !!d.hidden,
-        voiceEnabled: d.voiceEnabled === undefined ? true : !!d.voiceEnabled
+        voiceMode: ["natural", "brief", "muted"].includes(d.voiceMode) ? d.voiceMode : "natural"
       };
     } catch (_) {
-      return { persona: "buddy", hidden: false, voiceEnabled: true };
+      return { persona: "buddy", hidden: false, voiceMode: "natural" };
     }
   }
 
@@ -105,60 +118,126 @@
     try {
       const c = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}");
       const ks = Object.keys(c);
-      if (ks.length > 35) delete c[ks[0]];
+      if (ks.length > 40) delete c[ks[0]];
       c[key] = { t: Date.now(), v };
       localStorage.setItem(CACHE_KEY, JSON.stringify(c));
     } catch (_) {}
   }
 
-  function speakAnswer(text) {
-    const prefs = getPrefs();
-    if (!prefs.voiceEnabled || !text) return;
-    try {
-      if (!("speechSynthesis" in window)) return;
-      window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(String(text));
-      utter.lang = "ar-SA";
-      utter.rate = 1.03;
-      window.speechSynthesis.speak(utter);
-    } catch (_) {}
+  // [22, 23, 24, 25] تحسين النطق بشكل عام + اختيار صوت عربي مناسب + إيجاز + إعادة النطق
+  function cleanSpeechText(raw, briefOnly = false) {
+    let s = String(raw || "")
+      .replace(/[\u{1F300}-\u{1FAFF}🐾✨🎤🎧🎙️🤔🤩💡📌📍🔊🔇🗣️]/gu, "")
+      .replace(/[*_`#<>|]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (briefOnly && s.length > 110) {
+      s = s.slice(0, 110).replace(/\s+\S*$/, "") + ".";
+    }
+    return s;
   }
 
-  function showMiniBubble(text, durationMs = 4500) {
-    const bubble = $("petMiniBubble");
-    if (!bubble || !text) return;
-    bubble.textContent = text;
-    bubble.style.display = "block";
-    clearTimeout(toastBubbleTimer);
-    if (durationMs > 0) {
-      toastBubbleTimer = setTimeout(() => {
-        bubble.style.display = "none";
-      }, durationMs);
+  function pickArabicVoice() {
+    try {
+      const voices = window.speechSynthesis?.getVoices?.() || [];
+      return voices.find(v => /ar(-|_|$)/i.test(v.lang)) || voices.find(v => /arabic/i.test(v.name)) || null;
+    } catch (_) {
+      return null;
     }
   }
 
-  function setCharacterState(state = "idle", bubbleText = "") {
+  function speakOutput(text, forceSpeak = false) {
+    const prefs = getPrefs();
+    if (prefs.voiceMode === "muted" && !forceSpeak) return;
+    const cleaned = cleanSpeechText(text, prefs.voiceMode === "brief" && !forceSpeak);
+    if (!cleaned) return;
+    sessionMemory.lastSpokenText = cleaned;
+    try {
+      if (!("speechSynthesis" in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(cleaned);
+      const arVoice = pickArabicVoice();
+      if (arVoice) u.voice = arVoice;
+      u.lang = arVoice?.lang || "ar-SA";
+      u.rate = 1.0;
+      u.pitch = 1.04;
+      window.speechSynthesis.speak(u);
+    } catch (_) {}
+  }
+
+  window.replayLastCompanionSpeech = function () {
+    if (sessionMemory.lastSpokenText) speakOutput(sessionMemory.lastSpokenText, true);
+  };
+
+  window.cycleCompanionVoiceMode = function () {
+    haptic(12);
+    const prefs = getPrefs();
+    const order = ["natural", "brief", "muted"];
+    const next = order[(order.indexOf(prefs.voiceMode) + 1) % order.length];
+    setPrefs({ voiceMode: next });
+    const labels = { natural: "🗣️ نطق طبيعي واضح", brief: "⚡ نطق موجز سريع", muted: "🔇 الصوت مكتوم" };
+    showBubble(labels[next], 2600);
+    showToast(labels[next]);
+  };
+
+  // [20, 21] تبديل الشخصية (بما فيها 3 شخصيات للفتيات) وحفظها تلقائياً
+  window.selectCompanionPersona = function (personaKey) {
+    if (!PERSONAS[personaKey]) return;
+    haptic(15);
+    setPrefs({ persona: personaKey });
+    syncOrbVisuals();
+    const p = PERSONAS[personaKey];
+    const msg = `أهلاً بك مع ${p.name}! اضغط مطوّلاً وتحدّث.`;
+    showBubble(msg, 3200);
+    speakOutput(msg);
+  };
+
+  window.setCompanionHidden = function (hide) {
+    haptic(15);
+    setPrefs({ hidden: !!hide });
+    syncOrbVisuals();
+  };
+
+  function showBubble(text, ms = 5500) {
+    const b = $("petMiniBubble");
+    if (!b || !text) return;
+    b.textContent = text;
+    b.style.display = "block";
+    clearTimeout(bubbleHideTimer);
+    if (ms > 0) bubbleHideTimer = setTimeout(() => { b.style.display = "none"; }, ms);
+  }
+
+  function updateOrbMood(mood = "idle", bubbleText = "") {
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const orb = $("petCharOrb");
     const ring = $("petListenRing");
     if (!orb) return;
 
-    const faces = { idle: p.icon, listening: "🎙️", thinking: "🤔", speaking: "🗣️", happy: "🤩" };
-    orb.textContent = faces[state] || p.icon;
-    orb.style.borderColor = state === "listening" ? "#00e676" : p.accent;
-    if (ring) ring.style.display = state === "listening" ? "block" : "none";
-    if (bubbleText) showMiniBubble(bubbleText, state === "listening" ? 0 : 4800);
+    const moodFaces = {
+      idle: p.icon,
+      listening: "🎙️",
+      thinking: "🤔",
+      speaking: "🗣️",
+      happy: "🤩",
+      choice: "🔀"
+    };
+    orb.textContent = moodFaces[mood] || p.icon;
+    orb.style.borderColor = mood === "listening" ? "#00e676" : p.accent;
+    if (ring) ring.style.display = mood === "listening" ? "block" : "none";
+    if (bubbleText) showBubble(bubbleText, mood === "listening" ? 0 : 6000);
   }
 
-  function syncCharacterVisuals() {
+  function syncOrbVisuals() {
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const pos = getPos();
     const isLight = document.body.classList.contains("light-mode");
+
     const root = $("petCharRoot");
     const orb = $("petCharOrb");
     const showBtn = $("petShowCharBtn");
+    const sel = $("petPersonaSelect");
 
     if (root) {
       root.style.display = prefs.hidden ? "none" : "block";
@@ -166,70 +245,25 @@
       root.style.bottom = pos.bottom + "px";
     }
     if (showBtn) showBtn.style.display = prefs.hidden ? "inline-flex" : "none";
+    if (sel && sel.value !== prefs.persona) sel.value = prefs.persona;
+
     if (orb) {
       orb.textContent = p.icon;
       orb.style.borderColor = p.accent;
       orb.style.background = isLight
-        ? "radial-gradient(circle at 30% 25%, #ffffff, #e6ebf2 72%)"
-        : "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.32), var(--card-bg) 65%)";
+        ? "radial-gradient(circle at 28% 25%, #ffffff, #e8edf5 72%)"
+        : "radial-gradient(circle at 28% 25%, rgba(255,255,255,0.38), var(--card-bg) 66%)";
       orb.style.boxShadow = isLight
-        ? `0 8px 18px rgba(0,0,0,0.18), 0 0 12px ${p.accent}44`
-        : `0 10px 22px rgba(0,0,0,0.45), 0 0 14px ${p.accent}55`;
+        ? `0 10px 22px rgba(0,0,0,0.2), 0 0 14px ${p.accent}55`
+        : `0 12px 26px rgba(0,0,0,0.55), 0 0 16px ${p.accent}66, inset 0 2px 6px rgba(255,255,255,0.4)`;
     }
   }
 
-  window.setPetHiddenState = function (hide) {
-    setPrefs({ hidden: !!hide });
-    syncCharacterVisuals();
-  };
+  // [1, 2, 3, 4, 5] كشف تعدد الأحجام أو الأنواع لتجنب حشو السلة وإتاحة التخيير الفوري
+  function findMatchingProducts(normText) {
+    const tokens = normText.split(/[^a-z0-9\u0600-\u06FF]+/).filter(w => w.length >= 2);
+    if (!tokens.length) return [];
 
-  function cyclePersonaOnQuickTap() {
-    haptic(12);
-    const prefs = getPrefs();
-    const order = ["buddy", "pro", "saver"];
-    const nextKey = order[(order.indexOf(prefs.persona) + 1) % order.length];
-    const nextVoice = nextKey === "buddy" ? !prefs.voiceEnabled : prefs.voiceEnabled;
-    setPrefs({ persona: nextKey, voiceEnabled: nextVoice });
-    syncCharacterVisuals();
-    const p = PERSONAS[nextKey];
-    const vStatus = nextVoice ? "الصوت مفعّل" : "الصوت مكتوم";
-    showMiniBubble(`${p.icon} ${p.name} (${vStatus}) — اضغط مطوّلاً وتحدث`, 3500);
-  }
-
-  function answerLiveStoreQuery(normText) {
-    if (/مفتوح|دوام|اوقات|ساعات|مسكر|يفتح/.test(normText)) {
-      const openNow = typeof isGlobalStoreOpenNow === "function" ? isGlobalStoreOpenNow() : true;
-      const wh = workHoursSettings || {};
-      const hours = wh.enabled ? `من ${wh.open || "08:00"} إلى ${wh.close || "23:00"}` : "متاح للطلب حالياً";
-      return openNow
-        ? `نعم، المتجر مفتوح الآن في ${getBranchName(activeBranchId)}، الدوام ${hours}.`
-        : `المتجر مغلق حالياً، مواعيد الدوام ${hours}.`;
-    }
-    return null;
-  }
-
-  function localMatchFallback(promptTxt) {
-    const norm = (typeof normalizeArabic === "function" ? normalizeArabic(promptTxt) : promptTxt).toLowerCase();
-    const tokens = norm.split(/[^a-z0-9\u0600-\u06FF]+/).filter(w => w.length >= 2);
-    const found = [];
-    Object.keys(products || {}).forEach(pid => {
-      const p = products[pid];
-      if (!p) return;
-      const st = typeof getProductStockForBranch === "function" ? getProductStockForBranch(p, activeBranchId) : (parseInt(p.stock) || 0);
-      if (st <= 0) return;
-      const pNorm = (typeof normalizeArabic === "function" ? normalizeArabic(p.name || "") : (p.name || "")).toLowerCase();
-      if (tokens.some(t => pNorm.includes(t))) {
-        let qty = 1;
-        if (/كيلوين|2\s*كيلو|اثنين/.test(norm)) qty = Math.min(2, st);
-        found.push({ id: pid, name: p.name, qty });
-      }
-    });
-    return found.slice(0, 5);
-  }
-
-  function buildRelevantCatalog(promptTxt) {
-    const norm = (typeof normalizeArabic === "function" ? normalizeArabic(promptTxt) : promptTxt).toLowerCase();
-    const words = norm.split(/[^a-z0-9\u0600-\u06FF]+/).filter(w => w.length >= 2);
     return Object.keys(products || {})
       .map(pid => {
         const p = products[pid];
@@ -237,59 +271,257 @@
         const st = typeof getProductStockForBranch === "function" ? getProductStockForBranch(p, activeBranchId) : (parseInt(p.stock) || 0);
         const pNorm = (typeof normalizeArabic === "function" ? normalizeArabic(p.name || "") : (p.name || "")).toLowerCase();
         const cNorm = (typeof normalizeArabic === "function" ? normalizeArabic(p.category || "") : (p.category || "")).toLowerCase();
-        let score = st > 0 ? 2 : 0;
-        words.forEach(w => { if (pNorm.includes(w)) score += 12; else if (cNorm.includes(w)) score += 5; });
-        return { id: pid, name: p.name || "", category: p.category || "", stock: st, priceSYP: getUnitSYP(pid), unit: p.unitType || "قطعة", _score: score };
+        let score = 0;
+        tokens.forEach(t => {
+          if (pNorm.includes(t)) score += 10;
+          else if (cNorm.includes(t)) score += 3;
+        });
+        return { pid, p, st, pNorm, score };
       })
-      .filter(Boolean).sort((a, b) => b._score - a._score).slice(0, 60).map(({ _score, ...x }) => x);
+      .filter(x => x && x.score >= 10)
+      .sort((a, b) => (b.st > 0 ? 1 : 0) - (a.st > 0 ? 1 : 0) || b.score - a.score);
   }
 
-  // معالجة الطلب أو الاستفسار مع إجابة صوتية فورية
-  window.runAIShoppingAssistant = async function (overridePrompt = null, speakOut = false) {
-    const promptTxt = String(overridePrompt ?? ($("aiShoppingPromptInput")?.value || "")).trim();
-    if (!promptTxt) {
-      const msg = "اضغط مطوّلاً على الشخصية وتحدّث بطلبك أو سؤالك.";
-      setCharacterState("idle", msg);
-      if (speakOut) speakAnswer(msg);
+  // [6, 7] تجهيز سلة نقرشات/ميزانية لفئة معينة (مثال: نقارشات بـ 500)
+  function buildCategoryBudgetBasket(normText, budgetNum) {
+    const isSnacks = /نقارش|موالح|بسكوت|حلو|شيبس|تسالي/.test(normText);
+    const candidates = Object.keys(products || {})
+      .map(pid => {
+        const p = products[pid];
+        if (!p) return null;
+        const st = typeof getProductStockForBranch === "function" ? getProductStockForBranch(p, activeBranchId) : (parseInt(p.stock) || 0);
+        const price = getUnitSYP(pid);
+        if (st <= 0 || price <= 0 || price > budgetNum) return null;
+        const textBlob = ((p.name || "") + " " + (p.category || "")).toLowerCase();
+        const normBlob = typeof normalizeArabic === "function" ? normalizeArabic(textBlob) : textBlob;
+        const matchesCat = isSnacks ? /نقارش|موالح|بسكوت|حلو|شيبس|تسالي|مقرمش/.test(normBlob) : true;
+        return { pid, name: p.name, price, st, matchesCat };
+      })
+      .filter(Boolean)
+      .sort((a, b) => (b.matchesCat ? 1 : 0) - (a.matchesCat ? 1 : 0) || a.price - b.price);
+
+    let spent = 0;
+    const picked = [];
+    for (const c of candidates) {
+      if (picked.length >= 5) break;
+      if (spent + c.price <= budgetNum) {
+        picked.push({ id: c.pid, name: c.name, qty: 1, reason: c.matchesCat ? "من فئة النقارشات والحلويات" : "ضمن الميزانية" });
+        spent += c.price;
+      }
+    }
+    return picked;
+  }
+
+  // [8, 9, 10, 11] ترشيح أقرب 5 مواد متوفرة للمهام والطبخات (مثال: مواد صنع الأرز / تنظيف المطبخ)
+  function buildTaskOrRecipeTop5(normText) {
+    const isRice = /رز|ارز|كبسه|مقلوبه|طبخ/.test(normText);
+    const isKitchenClean = /تنظيف|مطبخ|جلي|صابون|منظف|سائل|ليف/.test(normText);
+    if (!isRice && !isKitchenClean) return null;
+
+    const keywords = isRice
+      ? ["رز", "ارز", "زيت", "سمن", "سمنه", "شعيريه", "ملح", "بهار", "مرق"]
+      : ["جلي", "صابون", "منظف", "مطبخ", "ليف", "اسفنج", "كلور", "معقم", "سائل"];
+
+    const scored = Object.keys(products || {})
+      .map(pid => {
+        const p = products[pid];
+        if (!p) return null;
+        const st = typeof getProductStockForBranch === "function" ? getProductStockForBranch(p, activeBranchId) : (parseInt(p.stock) || 0);
+        const raw = ((p.name || "") + " " + (p.category || "")).toLowerCase();
+        const n = typeof normalizeArabic === "function" ? normalizeArabic(raw) : raw;
+        let hit = 0;
+        keywords.forEach(k => { if (n.includes(k)) hit += 10; });
+        if (hit <= 0) return null;
+        return {
+          id: pid,
+          name: p.name,
+          qty: 1,
+          st,
+          reason: st > 0 ? "متوفر في الفرع ومناسب للمهمة" : "غير متوفر حالياً"
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => (b.st > 0 ? 1 : 0) - (a.st > 0 ? 1 : 0))
+      .slice(0, 5);
+
+    return scored;
+  }
+
+  function addItemSafelyToCart(pid, qty = 1) {
+    const baseId = String(pid || "").replace(/_PKG$/, "");
+    const pObj = products?.[baseId] || specialOffers?.[pid];
+    if (!pObj) return 0;
+    const avail = typeof getProductStockForBranch === "function" ? getProductStockForBranch(pObj, activeBranchId) : (parseInt(pObj.stock) || 0);
+    if (avail <= 0) return 0;
+    const cur = cart[pid] ? (parseInt(cart[pid].qty) || 0) : 0;
+    const toAdd = Math.min(Math.max(1, parseInt(qty) || 1), Math.max(0, avail - cur));
+    if (toAdd > 0) {
+      changeQty(pid, toAdd);
+      if (!sessionMemory.lastAddedIds.includes(pid)) sessionMemory.lastAddedIds.push(pid);
+    }
+    return toAdd;
+  }
+
+  function renderChoiceStrip(choices, titleText = "اختر النوع أو الحجم المناسب:") {
+    const assistBox = $("aiSmartAssistantBox");
+    if (!assistBox) return;
+    let box = $("petChoiceStripBox");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "petChoiceStripBox";
+      box.style.cssText = "margin-top:6px;";
+      assistBox.appendChild(box);
+    }
+    if (!choices || !choices.length) {
+      box.innerHTML = "";
       return;
     }
 
+    sessionMemory.lastChoices = choices.slice(0, 5);
+    box.innerHTML = `
+      <div style="background:rgba(212,175,55,0.09); border:1px solid var(--gold-color); border-radius:8px; padding:7px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+          <span style="font-size:11px; font-weight:bold; color:var(--gold-color);">${esc(titleText)}</span>
+          <button type="button" onclick="$('petChoiceStripBox').innerHTML=''" style="background:transparent; border:none; color:var(--gray-text); font-size:11px; cursor:pointer;">✕</button>
+        </div>
+        <div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:2px;">
+          ${choices.slice(0, 5).map(ch => {
+            const thumb = getThumb(ch.id);
+            const price = getUnitSYP(ch.id).toLocaleString();
+            return `<div style="min-width:118px; background:var(--card-bg); border:1px solid var(--border-color); border-radius:7px; padding:6px; text-align:center; flex-shrink:0;">
+              <img src="${esc(thumb)}" onerror="this.src='store-icon.png'" style="width:44px; height:44px; border-radius:6px; object-fit:cover; margin:0 auto 4px auto; display:block;">
+              <div style="font-size:10px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${esc(ch.label || ch.name || '')}">${esc(ch.label || ch.name || '')}</div>
+              <div style="font-size:10px; color:var(--success-color); font-weight:bold; margin:2px 0;">${price} ل.س</div>
+              <div style="font-size:9px; color:var(--gray-text); margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(ch.reason || "")}</div>
+              <button type="button" onclick="pickCompanionChoice('${esc(ch.id)}')" class="btn" style="padding:3px 6px; font-size:10px; background:var(--gold-color); color:#000;">➕ اختيار هذا</button>
+            </div>`;
+          }).join("")}
+        </div>
+      </div>`;
+  }
+
+  window.pickCompanionChoice = function (pid) {
+    const added = addItemSafelyToCart(pid, 1);
+    if (added > 0) {
+      haptic([15, 30, 15]);
+      const baseId = String(pid).replace(/_PKG$/, "");
+      const name = products?.[baseId]?.name || specialOffers?.[pid]?.name || "الصنف";
+      const msg = `أضفت ${name} إلى سلتك.`;
+      updateOrbMood("happy", msg);
+      setTxt("aiShoppingStatusText", `✅ ${msg}`);
+      speakOutput(msg);
+      const box = $("petChoiceStripBox");
+      if (box) box.innerHTML = "";
+    } else {
+      showToast("⚠️ الكمية غير متوفرة حالياً", true);
+    }
+  };
+
+  window.runAIShoppingAssistant = async function (overridePrompt = null, speakResponse = false) {
+    const promptTxt = String(overridePrompt ?? ($("aiShoppingPromptInput")?.value || "")).trim();
+    if (!promptTxt) {
+      updateOrbMood("idle", "اضغط مطوّلاً وتحدّث بطلبك أو سؤالك.");
+      return;
+    }
+
+    sessionMemory.lastPrompt = promptTxt;
     const prefs = getPrefs();
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const norm = (typeof normalizeArabic === "function" ? normalizeArabic(promptTxt) : promptTxt).toLowerCase();
 
-    const liveAns = answerLiveStoreQuery(norm);
-    if (liveAns) {
-      setCharacterState("speaking", liveAns);
-      setTxt("aiShoppingStatusText", `💡 ${liveAns}`);
-      if (speakOut) speakAnswer(liveAns);
+    // [13, 14] ذاكرة سياقية سريعة للرد على التخيير أو تعديل الكمية
+    if (sessionMemory.lastChoices.length > 0 && /^(الاولى|الاول|1|الثانيه|الثاني|2|الثالثه|الثالث|3|الوسط|ارخص|الافضل)$/.test(norm)) {
+      let picked = sessionMemory.lastChoices[0];
+      if (/الثانيه|الثاني|2|الوسط/.test(norm) && sessionMemory.lastChoices[1]) picked = sessionMemory.lastChoices[1];
+      if (/الثالثه|الثالث|3/.test(norm) && sessionMemory.lastChoices[2]) picked = sessionMemory.lastChoices[2];
+      if (/ارخص/.test(norm)) {
+        picked = [...sessionMemory.lastChoices].sort((a, b) => getUnitSYP(a.id) - getUnitSYP(b.id))[0] || picked;
+      }
+      window.pickCompanionChoice(picked.id);
+      return;
+    }
+
+    if (/زود|اكثر|حبتين|2/.test(norm) && sessionMemory.lastAddedIds.length > 0) {
+      const targetId = sessionMemory.lastAddedIds[sessionMemory.lastAddedIds.length - 1];
+      const added = addItemSafelyToCart(targetId, 1);
+      if (added > 0) {
+        const msg = "زدت حبة إضافية في السلة.";
+        updateOrbMood("happy", msg);
+        setTxt("aiShoppingStatusText", `✅ ${msg}`);
+        if (speakResponse) speakOutput(msg, true);
+        return;
+      }
+    }
+
+    // [6, 7] فحص طلب ميزانية لفئة محددة محلياً (مثل نقارشات بـ 500)
+    const numMatch = norm.match(/(\d{2,7})/);
+    if (numMatch && /نقارش|موالح|بسكوت|حلو|شيبس|تسالي|ميزاني|معي/.test(norm)) {
+      const bAmt = parseInt(numMatch[1]);
+      const basket = buildCategoryBudgetBasket(norm, bAmt);
+      if (basket.length > 0) {
+        let added = 0;
+        basket.forEach(b => { added += addItemSafelyToCart(b.id, b.qty); });
+        renderChoiceStrip(basket.map(b => ({ id: b.id, label: b.name, reason: b.reason })), `سلة ضمن ${bAmt.toLocaleString()} ل.س:`);
+        const msg = `جهزتلك ${added} أصناف ضمن ${bAmt.toLocaleString()} ل.س.`;
+        updateOrbMood("happy", msg);
+        setTxt("aiShoppingStatusText", `✅ ${msg}`);
+        if (speakResponse) speakOutput(msg, true);
+        return;
+      }
+    }
+
+    // [8, 9, 10, 11] فحص المهام والطبخات (أقرب 5 مواد متوفرة)
+    const taskList = buildTaskOrRecipeTop5(norm);
+    if (taskList && taskList.length > 0) {
+      const availableTask = taskList.filter(t => t.st > 0).slice(0, 5);
+      sessionMemory.lastTaskItems = availableTask;
+      renderChoiceStrip(
+        availableTask.map(t => ({ id: t.id, label: t.name, reason: t.reason })),
+        "أقرب 5 مواد متوفرة للمهمة أو الطبخة (اختر ما تحتاجه):"
+      );
+      const names = availableTask.map(t => t.name).join(" و");
+      const msg = `أقرب المواد المتوفرة: ${names}.`;
+      updateOrbMood("choice", msg);
+      setTxt("aiShoppingStatusText", `💡 ${msg}`);
+      if (speakResponse) speakOutput(msg, true);
       return;
     }
 
     const sendBtn = $("aiShoppingSendBtn");
     if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = "⏳..."; }
-    setCharacterState("thinking", "جاري التجهيز...");
-    setTxt("aiShoppingStatusText", "🤖 جاري مطابقة طلبك...");
+    updateOrbMood("thinking", "جاري التحليل...");
+    setTxt("aiShoppingStatusText", "🤖 جاري مطابقة الطلب...");
 
     const workerUrl = typeof getEffectiveAIWorkerUrl === "function" ? getEffectiveAIWorkerUrl() : "";
 
     try {
       if (navigator.onLine === false || !workerUrl) throw new Error("FALLBACK");
+
       const cacheKey = `${prefs.persona}::${activeBranchId}::${norm}`;
       let data = getCache(cacheKey);
 
       if (!data) {
+        const subset = findMatchingProducts(norm).slice(0, 45).map(x => ({
+          id: x.pid,
+          name: x.p.name || "",
+          category: x.p.category || "",
+          stock: x.st,
+          priceSYP: getUnitSYP(x.pid)
+        }));
+
         const res = await fetch(workerUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             mode: "companion_shop",
             prompt: promptTxt,
-            catalog: buildRelevantCatalog(promptTxt),
+            catalog: subset,
             currentCart: Object.values(cart || {}).map(c => ({ id: c.id, name: c.name, qty: c.qty })),
             storeMeta: {
+              personaName: persona.name,
               personaStyle: persona.styleHint,
-              sessionLastItems: sessionContext.lastItems.slice(0, 5),
+              lastChoices: sessionMemory.lastChoices.slice(0, 5),
+              lastAddedIds: sessionMemory.lastAddedIds.slice(-4),
               branchName: typeof getBranchName === "function" ? getBranchName(activeBranchId) : "الرئيسي"
             }
           })
@@ -300,71 +532,80 @@
         setCache(cacheKey, data);
       }
 
-      const items = Array.isArray(data.items) ? data.items : [];
-      let addedUnits = 0;
-      const addedNames = [];
+      const choices = Array.isArray(data.choices) ? data.choices.slice(0, 5) : [];
+      const taskSugs = Array.isArray(data.taskSuggestions) ? data.taskSuggestions.slice(0, 5) : [];
+      const combinedChoices = choices.length ? choices : taskSugs.map(t => ({ id: t.id, label: t.name || products?.[t.id]?.name || "", reason: t.reason || "" }));
 
-      items.forEach(it => {
-        const pid = String(it?.id || "").trim();
-        const baseId = pid.replace(/_PKG$/, "");
-        const pObj = products?.[baseId] || specialOffers?.[pid];
-        if (!pObj) return;
-        const avail = typeof getProductStockForBranch === "function" ? getProductStockForBranch(pObj, activeBranchId) : (parseInt(pObj.stock) || 0);
-        if (avail <= 0) return;
-        const qty = Math.min(Math.max(1, parseInt(it?.qty) || 1), avail);
-        const cur = cart[pid] ? (parseInt(cart[pid].qty) || 0) : 0;
-        const canAdd = Math.max(0, avail - cur);
-        const addNow = Math.min(qty, canAdd);
-        if (addNow > 0) {
-          changeQty(pid, addNow);
-          addedUnits += addNow;
-          addedNames.push(pObj.name);
+      if (combinedChoices.length > 0) {
+        renderChoiceStrip(combinedChoices, choices.length ? "تعددت الأنواع أو الأحجام — اختر المناسب لك:" : "أقرب المواد المتوفرة لطلبك:");
+      }
+
+      // إضافة حد أقصى صنف واحد عند تعدد الخيارات لتجنب حشو السلة
+      const rawItems = Array.isArray(data.items) ? data.items : [];
+      const itemsToAdd = combinedChoices.length > 1 ? rawItems.slice(0, 1) : rawItems.slice(0, 3);
+      let addedCount = 0;
+      const addedLabels = [];
+
+      itemsToAdd.forEach(it => {
+        const added = addItemSafelyToCart(String(it?.id || "").trim(), parseInt(it?.qty) || 1);
+        if (added > 0) {
+          addedCount += added;
+          const baseId = String(it.id).replace(/_PKG$/, "");
+          addedLabels.push(products?.[baseId]?.name || specialOffers?.[it.id]?.name || "صنف");
         }
       });
 
-      if (addedNames.length) sessionContext.lastItems = addedNames.map(n => ({ name: n }));
-      if (addedUnits > 0) haptic([15, 35, 15]);
+      if (addedCount > 0) haptic([15, 30, 15]);
 
-      const spokenReply = data.reply || data.answerNote || (addedUnits > 0 ? `تمت إضافة ${addedNames.join(" و")} إلى سلتك.` : "تفضّل، كيف أقدر أساعدك؟");
-      setCharacterState(addedUnits > 0 ? "happy" : "speaking", spokenReply);
-      setTxt("aiShoppingStatusText", `🐾 ${spokenReply}`);
-      if (speakOut) speakAnswer(spokenReply);
+      const replyTxt = data.reply || (addedLabels.length ? `أضفت ${addedLabels.join(" و")} إلى السلة.` : "تفضّل، كيف أساعدك؟");
+      const speechTxt = data.spokenText || replyTxt;
+      updateOrbMood(combinedChoices.length > 1 ? "choice" : (addedCount > 0 ? "happy" : "speaking"), replyTxt);
+      setTxt("aiShoppingStatusText", `🐾 ${replyTxt}`);
+      if (speakResponse) speakOutput(speechTxt, true);
     } catch (_) {
-      const fb = localMatchFallback(promptTxt);
-      let addedFb = 0;
-      const fbNames = [];
-      fb.forEach(f => {
-        const cur = cart[f.id] ? (parseInt(cart[f.id].qty) || 0) : 0;
-        const maxSt = typeof getProductStockForBranch === "function" ? getProductStockForBranch(products[f.id], activeBranchId) : 99;
-        const addN = Math.min(f.qty, Math.max(0, maxSt - cur));
-        if (addN > 0) { changeQty(f.id, addN); addedFb += addN; fbNames.push(f.name); }
-      });
-      const fbMsg = addedFb > 0 ? `أضفت ${fbNames.join(" و")} إلى سلتك.` : "لم أجد صنفاً مطابقاً متوفراً الآن.";
-      setCharacterState("speaking", fbMsg);
-      setTxt("aiShoppingStatusText", `🐾 ${fbMsg}`);
-      if (speakOut) speakAnswer(fbMsg);
+      // [13] خطة بديلة محلية فورية دون إزعاج الزبون
+      const matches = findMatchingProducts(norm).filter(m => m.st > 0);
+      if (matches.length > 1) {
+        renderChoiceStrip(
+          matches.slice(0, 5).map(m => ({ id: m.pid, label: m.p.name, reason: "متوفر في الفرع" })),
+          "توجد عدة أنواع أو أحجام متوفرة — اختر واحداً:"
+        );
+        const msg = "وجدت عدة خيارات متوفرة، اختر النوع أو الحجم المناسب.";
+        updateOrbMood("choice", msg);
+        setTxt("aiShoppingStatusText", `💡 ${msg}`);
+        if (speakResponse) speakOutput(msg, true);
+      } else if (matches.length === 1) {
+        const added = addItemSafelyToCart(matches[0].pid, 1);
+        const msg = added > 0 ? `أضفت ${matches[0].p.name} إلى سلتك.` : "الصنف غير متوفر حالياً.";
+        updateOrbMood("happy", msg);
+        setTxt("aiShoppingStatusText", `✅ ${msg}`);
+        if (speakResponse) speakOutput(msg, true);
+      } else {
+        const msg = "لم أجد تطابقاً مباشراً الآن، جرّب البحث بالاسم أو أعد المحاولة.";
+        updateOrbMood("speaking", msg);
+        setTxt("aiShoppingStatusText", `🐾 ${msg}`);
+        if (speakResponse) speakOutput(msg, true);
+      }
     } finally {
       if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = "✨ تعبئة"; }
     }
   };
 
-  // بدء الاستماع عند النقر المطوّل على الشخصية
-  function beginLongPressVoiceListen() {
+  // بدء الاستماع عند النقر المطوّل على الشخصية ثلاثية الأبعاد
+  function beginLongPressListen() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
-      const msg = "المتصفح لا يدعم الاستماع الصوتي، اكتب طلبك في الخانة.";
-      showMiniBubble(msg, 4000);
+      showBubble("المتصفح لا يدعم الصوت، اكتب طلبك في الخانة.", 3800);
       return;
     }
-
     if (activeRecognizer) {
       try { activeRecognizer.stop(); } catch (_) {}
       activeRecognizer = null;
     }
 
-    isListeningHold = true;
+    isHoldingToSpeak = true;
     haptic(25);
-    setCharacterState("listening", "تحدّث الآن... اترك إصبعك عند الانتهاء");
+    updateOrbMood("listening", "تحدّث الآن... اترك إصبعك عند الانتهاء");
 
     const rec = new SR();
     activeRecognizer = rec;
@@ -375,7 +616,7 @@
     rec.onresult = ev => {
       const heard = String(ev?.results?.[0]?.[0]?.transcript || "").trim();
       if (!heard) {
-        setCharacterState("idle", "لم أسمع كلاماً واضحاً، جرّب النقر المطوّل مرة أخرى.");
+        updateOrbMood("idle", "لم أسمع بوضوح، جرّب النقر المطوّل مرة أخرى.");
         return;
       }
       setVal("aiShoppingPromptInput", heard);
@@ -383,11 +624,11 @@
     };
 
     rec.onerror = () => {
-      setCharacterState("idle", "تعذر التقاط الصوت، تأكد من إذن الميكروفون.");
+      updateOrbMood("idle", "تعذر التقاط الصوت، تأكد من إذن الميكروفون.");
     };
 
     rec.onend = () => {
-      isListeningHold = false;
+      isHoldingToSpeak = false;
       activeRecognizer = null;
       const ring = $("petListenRing");
       if (ring) ring.style.display = "none";
@@ -396,9 +637,9 @@
     rec.start();
   }
 
-  function finishLongPressVoiceListen() {
-    if (!isListeningHold) return;
-    isListeningHold = false;
+  function endLongPressListen() {
+    if (!isHoldingToSpeak) return;
+    isHoldingToSpeak = false;
     if (activeRecognizer) {
       setTimeout(() => {
         try { activeRecognizer && activeRecognizer.stop(); } catch (_) {}
@@ -407,138 +648,105 @@
   }
 
   window.startVoiceShoppingInput = function () {
-    beginLongPressVoiceListen();
-    setTimeout(finishLongPressVoiceListen, 4500);
+    beginLongPressListen();
+    setTimeout(endLongPressListen, 4500);
   };
 
-  // ربط السحب الحر + النقر المطوّل للتحدث + النقرة السريعة
-  function bindCharacterGestures(orb, root) {
-    if (!orb || !root || orb.dataset.v34Bound) return;
-    orb.dataset.v34Bound = "1";
+  // [18, 19] حيوية ثلاثية الأبعاد + سحب + نقر مطوّل + نقرة سريعة
+  function bindCharacterOrb(orb, root) {
+    if (!orb || !root || orb.dataset.v35Bound) return;
+    orb.dataset.v35Bound = "1";
 
-    let pointerDown = false;
-    let isDragging = false;
-    let longPressTriggered = false;
-    let longPressTimer = null;
-    let startX = 0, startY = 0;
-    let initRight = 14, initBottom = 88;
+    let down = false, dragging = false, holdFired = false, holdTimer = null;
+    let sx = 0, sy = 0, r0 = 14, b0 = 88;
 
-    const down = e => {
-      if (e.cancelable && e.type === "touchstart") {
-        // نترك التمرير أو السحب يعمل دون قائمة المتصفح
-      }
+    const onDown = e => {
       const pt = e.touches ? e.touches[0] : e;
-      pointerDown = true;
-      isDragging = false;
-      longPressTriggered = false;
-      startX = pt.clientX;
-      startY = pt.clientY;
-      initRight = parseInt(root.style.right || "14", 10);
-      initBottom = parseInt(root.style.bottom || "88", 10);
-      orb.style.transform = "scale(1.06)";
+      down = true; dragging = false; holdFired = false;
+      sx = pt.clientX; sy = pt.clientY;
+      r0 = parseInt(root.style.right || "14", 10);
+      b0 = parseInt(root.style.bottom || "88", 10);
+      orb.style.transform = "scale(1.08) rotateX(10deg) rotateY(-8deg)";
 
-      clearTimeout(longPressTimer);
-      longPressTimer = setTimeout(() => {
-        if (pointerDown && !isDragging) {
-          longPressTriggered = true;
-          beginLongPressVoiceListen();
+      clearTimeout(holdTimer);
+      holdTimer = setTimeout(() => {
+        if (down && !dragging) {
+          holdFired = true;
+          beginLongPressListen();
         }
-      }, 400);
+      }, 380);
     };
 
-    const move = e => {
-      if (!pointerDown) return;
+    const onMove = e => {
+      if (!down) return;
       const pt = e.touches ? e.touches[0] : e;
-      const dx = pt.clientX - startX;
-      const dy = pt.clientY - startY;
+      const dx = pt.clientX - sx, dy = pt.clientY - sy;
 
-      if (!isDragging && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
-        isDragging = true;
-        clearTimeout(longPressTimer);
-        if (longPressTriggered) finishLongPressVoiceListen();
+      if (!dragging && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+        dragging = true;
+        clearTimeout(holdTimer);
+        if (holdFired) endLongPressListen();
       }
 
-      if (isDragging) {
-        const maxR = Math.max(8, window.innerWidth - 68);
-        const maxB = Math.max(84, window.innerHeight - 96);
-        const nr = Math.max(8, Math.min(maxR, initRight - dx));
-        const nb = Math.max(84, Math.min(maxB, initBottom - dy));
+      if (dragging) {
+        const nr = Math.max(8, Math.min(Math.max(8, window.innerWidth - 68), r0 - dx));
+        const nb = Math.max(84, Math.min(Math.max(84, window.innerHeight - 96), b0 - dy));
         root.style.right = nr + "px";
         root.style.bottom = nb + "px";
+        orb.style.transform = `scale(1.06) rotateX(${Math.max(-14, Math.min(14, -dy * 0.25))}deg) rotateY(${Math.max(-14, Math.min(14, dx * 0.25))}deg)`;
       }
     };
 
-    const up = () => {
-      if (!pointerDown) return;
-      pointerDown = false;
-      clearTimeout(longPressTimer);
+    const onUp = () => {
+      if (!down) return;
+      down = false;
+      clearTimeout(holdTimer);
       orb.style.transform = "";
 
-      if (longPressTriggered) {
-        finishLongPressVoiceListen();
+      if (holdFired) {
+        endLongPressListen();
         return;
       }
 
-      if (isDragging) {
-        isDragging = false;
+      if (dragging) {
+        dragging = false;
         const curR = parseInt(root.style.right || "14", 10);
         const curB = parseInt(root.style.bottom || "88", 10);
-        const centerFromLeft = window.innerWidth - curR - 27;
+        const centerFromLeft = window.innerWidth - curR - 28;
         const snapR = centerFromLeft >= window.innerWidth / 2 ? 12 : Math.max(12, window.innerWidth - 68);
         root.style.transition = "right 0.2s ease, bottom 0.2s ease";
         root.style.right = snapR + "px";
         setTimeout(() => { root.style.transition = ""; }, 220);
         savePos(snapR, curB);
-        haptic(10);
+        haptic(12);
         return;
       }
 
-      // نقرة سريعة واحدة
-      cyclePersonaOnQuickTap();
+      // نقرة سريعة: إعادة نطق آخر رد إذا وُجد، وإلا تلميح خفيف
+      haptic(10);
+      if (sessionMemory.lastSpokenText) {
+        speakOutput(sessionMemory.lastSpokenText, true);
+        showBubble("🔊 " + sessionMemory.lastSpokenText, 3800);
+      } else {
+        showBubble("اضغط مطوّلاً وتحدّث 🎤 (أو غيّر الشخصية بالأعلى)", 3600);
+      }
     };
 
     orb.addEventListener("contextmenu", e => e.preventDefault());
-    orb.addEventListener("touchstart", down, { passive: true });
-    window.addEventListener("touchmove", move, { passive: true });
-    window.addEventListener("touchend", up);
-    orb.addEventListener("mousedown", down);
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
+    orb.addEventListener("touchstart", onDown, { passive: true });
+    window.addEventListener("touchmove", onMove, { passive: true });
+    window.addEventListener("touchend", onUp);
+    orb.addEventListener("mousedown", onDown);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
 
     window.addEventListener("scroll", () => {
-      if (isListeningHold) return;
-      root.style.opacity = "0.42";
-      clearTimeout(scrollDimTimer);
-      scrollDimTimer = setTimeout(() => { root.style.opacity = "1"; }, 550);
+      if (isHoldingToSpeak) return;
+      root.style.opacity = "0.45";
+      clearTimeout(scrollFadeTimer);
+      scrollFadeTimer = setTimeout(() => { root.style.opacity = "1"; }, 550);
     }, { passive: true });
   }
-
-  // توصيات مصورة داخل السلة
-  window.renderSmartCartRecommendations = function () {
-    const box = $("aiCartRecommendationsBox");
-    if (!box) return;
-    const keys = Object.keys(cart || {});
-    if (!keys.length) { box.style.display = "none"; box.innerHTML = ""; return; }
-
-    const inCart = new Set(keys.map(k => cart[k]?.origId || String(k).replace(/_PKG$/, "")));
-    const cats = new Set(keys.map(k => cart[k]?.category).filter(Boolean));
-    const co = {};
-    Object.values(completedOrdersHistory || {}).forEach(ord => {
-      const ids = Array.from(new Set((ord?.items || []).filter(i => !String(i.id || "").startsWith("OFFER_")).map(i => i.origId || String(i.id || "").replace(/_PKG$/, ""))));
-      if (ids.some(id => inCart.has(id))) ids.forEach(id => { if (!inCart.has(id)) co[id] = (co[id] || 0) + 1; });
-    });
-
-    const picks = Object.keys(products || {})
-      .filter(pid => !inCart.has(pid) && getProductStockForBranch(products[pid], activeBranchId) > 0)
-      .map(pid => ({ pid, p: products[pid], s: (co[pid] || 0) * 5 + (cats.has(products[pid].category) ? 2 : 0) }))
-      .filter(x => x.s > 0).sort((a, b) => b.s - a.s).slice(0, 4);
-
-    if (!picks.length) { box.style.display = "none"; box.innerHTML = ""; return; }
-    box.style.display = "block";
-    box.innerHTML = `<div style="background:rgba(0,176,255,0.06); border:1px dashed #00b0ff; border-radius:8px; padding:7px;"><div style="font-size:11px; font-weight:bold; color:#00b0ff; margin-bottom:6px;">مقترحات مصورة تكمل سلتك:</div><div style="display:flex; gap:6px; overflow-x:auto;">` +
-      picks.map(({ pid, p }) => `<div style="min-width:112px; background:var(--bg-color); border:1px solid var(--gold-color); border-radius:7px; padding:6px; text-align:center;"><img src="${esc(getThumb(pid))}" onerror="this.src='store-icon.png'" style="width:46px; height:46px; border-radius:6px; object-fit:cover; margin:0 auto 4px auto; display:block;"><div style="font-size:10px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(p.name)}</div><div style="font-size:10px; color:var(--success-color); font-weight:bold; margin:2px 0;">${getUnitSYP(pid).toLocaleString()} ل.س</div><button type="button" onclick="changeQty('${pid}', 1)" class="btn" style="padding:3px 6px; font-size:10px;">➕ أضف</button></div>`).join("") +
-      `</div></div>`;
-  };
 
   // أدوات الإدارة
   window.runSupplierInvoiceOCR = async function () {
@@ -597,68 +805,78 @@
     } catch (err) { if (box) box.innerHTML = `<div style="color:var(--danger-color); font-size:11px; margin-top:6px;">❌ ${esc(err.message)}</div>`; }
   };
 
-  function mountCharacterOnly() {
+  function mountV35() {
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
-
-    // زر صغير لإعادة إظهار الشخصية إذا تم إخفاؤها
     const assistBox = $("aiSmartAssistantBox");
-    if (assistBox && !$("petShowCharBtn")) {
-      const btn = document.createElement("button");
-      btn.id = "petShowCharBtn";
-      btn.type = "button";
-      btn.onclick = () => window.setPetHiddenState(false);
-      btn.style.cssText = "display:none; align-items:center; gap:4px; margin-top:6px; background:var(--card-bg); color:var(--gold-color); border:1px solid var(--gold-color); border-radius:12px; padding:3px 9px; font-size:10px; font-weight:bold; cursor:pointer;";
-      btn.textContent = `${p.icon} إظهار المرافق`;
-      assistBox.appendChild(btn);
+
+    // شريط اختيار الشخصية (يتضمن 3 شخصيات للفتيات) + وضع النطق + إظهار المرافق عند الإخفاء
+    if (assistBox && !$("petPersonaBar")) {
+      const bar = document.createElement("div");
+      bar.id = "petPersonaBar";
+      bar.style.cssText = "display:flex; align-items:center; justify-content:space-between; gap:5px; flex-wrap:wrap; margin-bottom:6px; font-size:10px;";
+      const opts = Object.values(PERSONAS).map(per =>
+        `<option value="${per.id}">${per.icon} ${per.name}${per.gender === "female" ? " (للبنات)" : ""}</option>`
+      ).join("");
+      bar.innerHTML = `
+        <div style="display:flex; align-items:center; gap:4px; flex:1; min-width:170px;">
+          <span style="color:var(--gold-color); font-weight:bold;">المرافق:</span>
+          <select id="petPersonaSelect" class="form-control" onchange="selectCompanionPersona(this.value)" style="padding:3px 6px; font-size:10px; flex:1;">${opts}</select>
+        </div>
+        <div style="display:flex; gap:4px;">
+          <button type="button" onclick="cycleCompanionVoiceMode()" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:rgba(0,176,255,0.16); color:#00b0ff;">🔊 النطق</button>
+          <button id="petShowCharBtn" type="button" onclick="setCompanionHidden(false)" style="display:none; align-items:center; gap:3px; background:var(--gold-color); color:#000; border:none; border-radius:6px; padding:3px 8px; font-size:10px; font-weight:bold; cursor:pointer;">إظهار 3D</button>
+        </div>`;
+      assistBox.insertBefore(bar, assistBox.firstChild);
     }
 
-    // الشخصية القابلة للسحب فقط بدون أي لوحة عائمة
+    // الشخصية ثلاثية الأبعاد فقط (بدون لوحة عائمة مزعجة)
     if (!$("petCharRoot")) {
-      const styleEl = document.createElement("style");
-      styleEl.id = "petCharStyleV34";
-      styleEl.textContent = `
-        @keyframes petCharIdle { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
-        @keyframes petRingPulse { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.35); opacity: 0; } }
+      const styleTag = document.createElement("style");
+      styleTag.id = "pet3DStyleV35";
+      styleTag.textContent = `
+        @keyframes petAlive3D {
+          0%, 100% { transform: translateY(0px) scale(1); }
+          50% { transform: translateY(-5px) scale(1.03); }
+        }
+        @keyframes petRingWave {
+          0% { transform: scale(1); opacity: 0.9; }
+          100% { transform: scale(1.38); opacity: 0; }
+        }
         #petCharOrb {
-          width: 54px; height: 54px; border-radius: 50%;
-          border: 2px solid ${p.accent};
-          font-size: 26px; display: flex; align-items: center; justify-content: center;
+          width: 56px; height: 56px; border-radius: 50%;
+          border: 2.5px solid ${p.accent};
+          font-size: 27px; display: flex; align-items: center; justify-content: center;
           cursor: grab; -webkit-touch-callout: none; user-select: none;
-          animation: petCharIdle 2.8s ease-in-out infinite;
+          animation: petAlive3D 2.6s ease-in-out infinite;
+          transform-style: preserve-3d;
         }
         #petListenRing {
-          display: none; position: absolute; inset: -5px; border-radius: 50%;
-          border: 2px solid #00e676; pointer-events: none;
-          animation: petRingPulse 1.1s infinite;
+          display: none; position: absolute; inset: -6px; border-radius: 50%;
+          border: 2.5px solid #00e676; pointer-events: none;
+          animation: petRingWave 1.1s infinite;
         }
         #petMiniBubble {
-          display: none; position: absolute; bottom: 64px; right: 0;
-          max-width: 220px; width: max-content;
+          display: none; position: absolute; bottom: 66px; right: 0;
+          max-width: 225px; width: max-content;
           background: var(--card-bg); color: var(--text-color);
           border: 1px solid var(--gold-color); border-radius: 10px;
           padding: 6px 9px; font-size: 11px; line-height: 1.4;
           box-shadow: 0 8px 20px rgba(0,0,0,0.45); pointer-events: none;
-        }
-      `;
-      document.head.appendChild(styleEl);
+        }`;
+      document.head.appendChild(styleTag);
 
       const root = document.createElement("div");
       root.id = "petCharRoot";
-      root.style.cssText = "position:fixed; bottom:88px; right:14px; z-index:98; transition:opacity 0.2s ease;";
+      root.style.cssText = "position:fixed; bottom:88px; right:14px; z-index:98; perspective:600px; transition:opacity 0.2s ease;";
       root.innerHTML = `
         <div id="petMiniBubble"></div>
         <div style="position:relative;">
           <div id="petListenRing"></div>
-          <div id="petCharOrb" role="button" aria-label="المرافق الصوتي">${p.icon}</div>
+          <div id="petCharOrb" role="button" aria-label="المرافق ثلاثي الأبعاد">${p.icon}</div>
         </div>`;
       document.body.appendChild(root);
-      bindCharacterGestures($("petCharOrb"), root);
-
-      if (!localStorage.getItem("moaath_pet_v34_hint_shown")) {
-        localStorage.setItem("moaath_pet_v34_hint_shown", "1");
-        showMiniBubble("اضغط مطوّلاً وتحدث 🎤", 4000);
-      }
+      bindCharacterOrb($("petCharOrb"), root);
     }
 
     // أدوات الإدارة
@@ -684,15 +902,19 @@
       statsTab.insertBefore(wrap, statsTab.firstChild);
     }
 
-    syncCharacterVisuals();
+    syncOrbVisuals();
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountCharacterOnly(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV35(); };
 
   const _origToggleTheme = window.toggleTheme;
-  window.toggleTheme = function () { if (typeof _origToggleTheme === "function") _origToggleTheme(); setTimeout(syncCharacterVisuals, 60); };
+  window.toggleTheme = function () { if (typeof _origToggleTheme === "function") _origToggleTheme(); setTimeout(syncOrbVisuals, 60); };
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountCharacterOnly);
-  else mountCharacterOnly();
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.onvoiceschanged = () => { pickArabicVoice(); };
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV35);
+  else mountV35();
 })();
