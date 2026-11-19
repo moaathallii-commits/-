@@ -96,11 +96,10 @@
         .toast-msg { background: rgba(30, 30, 30, 0.95); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 12px; font-weight: bold; border: 1px solid var(--gold-color); box-shadow: 0 4px 15px rgba(0,0,0,0.5); pointer-events: auto; animation: fadeInOut 2.5s ease forwards; }
         @keyframes fadeInOut { 0% { opacity: 0; transform: translateY(-10px); } 15% { opacity: 1; transform: translateY(0); } 85% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-10px); } }
 
-            #offlineIndicator { display:none; background:var(--danger-color); color:#fff; text-align:center; font-size:11px; font-weight:bold; padding:4px; position:fixed; top:0; width:100%; z-index:999999; }
     </style>
 </head>
 <body>
-    <div id="offlineIndicator">⚠️ أنت تتصفح بدون اتصال بالإنترنت حالياً (الوضع غير المتصل)</div>
+    <div id="offlineIndicator" style="display:none; background:var(--danger-color); color:#fff; text-align:center; font-size:11px; font-weight:bold; padding:5px; position:fixed; top:0; left:0; width:100%; z-index:999999;">⚠️ أنت تتصفح بدون اتصال بالإنترنت حالياً (الوضع غير المتصل)</div>
 
     <div id="authModal" class="modal-overlay" style="display:none; z-index: 999999; background:var(--bg-color);">
         <div class="modal-content" style="border-color:var(--gold-color); text-align:center;">
@@ -147,7 +146,7 @@
 
     <header>
         <div class="store-info" onclick="window.open('https://wa.me/' + adminWhatsAppNumber, '_blank')">
-            <h1>متجر معاذ</h1>
+            <h1>متجر معاذ <small id="activeBranchHeaderBadge" style="font-size:11px; color:#00e676; background:rgba(0,230,118,0.12); padding:2px 7px; border-radius:10px; border:1px solid #00e676;">فرع العوينة (الرئيسي)</small></h1>
             <p>قرية العوينة | <span id="headerPhoneText">0965461504</span> 📱</p>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
@@ -297,10 +296,24 @@
             </div>
             <div class="comp-card" style="border-color:#00b0ff; margin-top:14px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <h3 style="color:#00b0ff; margin:0; font-size:14px;">🛵 الطلبات المجهزة بانتظار التوصيل</h3>
-                    <button onclick="sendBulkOrdersToDriver()" class="btn" style="width:auto; padding:5px 12px; font-size:11px; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-weight:bold;">📤 إرسال كل الجاهز للسائق</button>
+                    <h3 style="color:#00b0ff; margin:0; font-size:14px;">📦 الطلبات المجهزة بانتظار الإرسال للسائق</h3>
+                    <button onclick="sendBulkOrdersToDriver()" class="btn" style="width:auto; padding:5px 12px; font-size:11px; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-weight:bold;">📤 إرسال وعزل للسائق</button>
                 </div>
                 <div id="exportManagerReadyOrdersList"></div>
+            </div>
+            <div class="comp-card" style="border-color:#00e676; margin-top:14px; background:rgba(0,230,118,0.04);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3 style="color:#00e676; margin:0; font-size:14px;">🚚 طلبات بعهدة السائق (تم إرسالها ومعزولة)</h3>
+                    <button onclick="clearAllDispatchedOrders()" class="btn" style="width:auto; padding:4px 10px; font-size:10px; background:var(--success-color); color:#000;">✅ تأكيد تسليم الكل</button>
+                </div>
+                <div id="exportManagerDispatchedOrdersList"></div>
+            </div>
+            <div class="comp-card" style="border-color:var(--danger-color); margin-top:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+                    <h3 style="color:var(--danger-color); margin:0; font-size:14px;">⚠️ نواقص مخزن الفرع وطلب التوريد</h3>
+                    <button onclick="requestBranchReplenishmentFromMain()" class="btn" style="width:auto; padding:5px 10px; font-size:10px; background:#25D366; color:#fff;">📥 طلب توريد النواقص من مخزن العوينة الرئيسي</button>
+                </div>
+                <div id="exportManagerBranchShortagesList"></div>
             </div>
             <div class="comp-card" style="border-color:#ff9800; margin-top:14px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -429,6 +442,7 @@
                         <button onclick="sendDailyAccountingReportWhatsApp()" class="btn" style="width:auto; padding:4px 10px; font-size:10px; background:#25D366; color:#fff;">📲 إرسال ملخص الجرد واتساب</button>
                     </div>
                     <div class="stats-grid">
+                        <div class="form-group" style="grid-column:span 2;"><label>🏢 تصفية الجرد والمخزون حسب المخزن / الفرع:</label><select id="reportBranchSelect" class="form-control" onchange="renderStatsDashboard()"><option value="all">🏢 جميع المخازن والفروع (الإجمالي العام)</option><option value="main">🏬 مخزن العوينة (الرئيسي)</option></select></div>
                         <div class="form-group"><label>📅 فترة الجرد العام:</label><select id="reportPeriodSelect" class="form-control" onchange="renderStatsDashboard()"><option value="total">📊 الإجمالي الكلي</option><option value="daily">📅 جرد اليوم</option><option value="weekly">📆 جرد الأسبوع</option><option value="monthly">🗓️ جرد الشهر</option></select></div>
                         <div class="form-group"><label>📂 تصفية حسب التصنيف:</label><select id="reportCategorySelect" class="form-control" onchange="renderStatsDashboard()"><option value="all">🌟 جميع التصنيفات</option></select></div>
                     </div>
@@ -565,10 +579,20 @@
                 </div>
                 <div class="adm-sec" style="border-color:var(--info-color); margin-top:14px;">
                     <div class="adm-sec-title">
-                        <span style="color:var(--info-color);">🛵 الطلبات المجهزة (جاهزة للتوصيل)</span>
-                        <button onclick="sendBulkOrdersToDriver()" class="btn" style="width:auto; padding:5px 12px; font-size:11px; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-weight:bold;">📤 إرسال للسائق (واتساب)</button>
+                        <span style="color:var(--info-color);">📦 الطلبات المجهزة (بانتظار الإرسال للسائق)</span>
+                        <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                            <button onclick="sendBulkOrdersToDriver()" class="btn" style="width:auto; padding:5px 10px; font-size:10px; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-weight:bold;">📤 إرسال الكل للسائق</button>
+                            <button onclick="sendBranchOrdersPrompt()" class="btn" style="width:auto; padding:5px 10px; font-size:10px; background:#ff9800; color:#000; font-weight:bold;">🏬 إرسال حسب الفرع</button>
+                        </div>
                     </div>
                     <div id="readyOrdersList"></div>
+                </div>
+                <div class="adm-sec" style="border-color:#00e676; margin-top:14px; background:rgba(0,230,118,0.03);">
+                    <div class="adm-sec-title">
+                        <span style="color:#00e676;">🚚 طلبات تم إرسالها للسائق (معزولة لمنع التكرار)</span>
+                        <button onclick="clearAllDispatchedOrders()" class="btn" style="width:auto; padding:4px 10px; font-size:10px; background:var(--success-color); color:#000;">✅ تأكيد تسليم الكل وإفراغ</button>
+                    </div>
+                    <div id="dispatchedOrdersList"></div>
                 </div>
             </div>
 
@@ -695,7 +719,12 @@
                 </div>
 
                 <div class="adm-sec">
-                    <div class="adm-sec-title"><span>⚡ قائمة المخزون والتعديل الفوري (السعر والكمية)</span></div>
+                    <div class="adm-sec-title">
+                        <span>⚡ قائمة المخزون والتعديل الفوري (السعر والكمية لكل مخزن)</span>
+                        <select id="adminProdBranchSelect" class="form-control" style="width:auto; padding:4px 8px; font-size:11px; border-color:var(--gold-color);" onchange="onAdminProdBranchChange()">
+                            <option value="main">🏬 مخزن العوينة (الرئيسي)</option>
+                        </select>
+                    </div>
                     <input type="text" id="adminSearchProd" class="search-box" placeholder="🔍 ابحث عن صنف لتعديل سعره أو مخزونه فوراً..." oninput="renderAdminProducts()" style="margin-bottom:8px;">
                     <div id="adminProductsList" style="max-height:340px; overflow-y:auto;"></div>
                 </div>
@@ -709,7 +738,12 @@
 
             <div id="admTab5Shortages" class="admin-tab" style="display:none;">
                 <div class="adm-sec" style="border-color:var(--danger-color);">
-                    <div class="adm-sec-title"><span style="color:var(--danger-color);">⚠️ النواقص مفرزة حسب الموزع المعتمد (بوحدات القياس الدقيقة)</span></div>
+                    <div class="adm-sec-title">
+                        <span style="color:var(--danger-color);">⚠️ إدارة النواقص وطلبات التوريد للمخازن</span>
+                        <select id="shortagesBranchSelect" class="form-control" style="width:auto; padding:4px 8px; font-size:11px; border-color:var(--gold-color);" onchange="renderShortages()">
+                            <option value="main">🏬 مخزن العوينة (الرئيسي - للموزعين)</option>
+                        </select>
+                    </div>
                     <div id="shortagesBySupplierContainer"></div>
                 </div>
                 <div class="adm-sec">
@@ -843,10 +877,28 @@
 
             <div id="admTab10System" class="admin-tab" style="display:none;">
                 <div class="adm-sec" style="border-color:#ff9800;">
-                    <div class="adm-sec-title"><span style="color:#ff9800;">📦 صلاحية "مدير التصدير" المستقلة والآمنة</span></div>
+                    <div class="adm-sec-title"><span style="color:#ff9800;">🏢 إدارة المخازن، الفروع، مدراء التصدير، والسائقين</span></div>
                     <div class="form-group">
-                        <label>رقم هاتف مدير التصدير المعتمد (تظهر له لوحة استلام وتجهيز الطلبات فقط دون أي بيانات مالية):</label>
+                        <label>📱 رقم مدير التصدير للمخزن الرئيسي (العوينة):</label>
                         <input type="tel" id="exportManagerPhoneInput" class="form-control" placeholder="09XXXXXXXX" maxlength="10">
+                    </div>
+                    <div class="adm-card" style="border-color:#00e676; background:rgba(0,230,118,0.04); margin-top:8px;">
+                        <strong style="color:#00e676; font-size:12px;">➕ إضافة / تعديل مخزن فرعي جديد (للتوسع الجغرافي والتوجيه التلقائي)</strong>
+                        <input type="hidden" id="editBranchId">
+                        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:6px; margin-top:6px;">
+                            <input type="text" id="newBranchName" class="form-control" placeholder="اسم المخزن (مثال: فرع المزرعة)">
+                            <input type="tel" id="newBranchExportMgrPhone" class="form-control" placeholder="هاتف مدير تصدير الفرع (09...)" maxlength="10">
+                            <input type="tel" id="newBranchDriverPhone" class="form-control" placeholder="هاتف سائق توصيل الفرع (09...)" maxlength="10">
+                            <div style="display:flex; gap:4px;">
+                                <input type="number" step="any" id="newBranchLat" class="form-control" placeholder="خط العرض Lat">
+                                <input type="number" step="any" id="newBranchLng" class="form-control" placeholder="خط الطول Lng">
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:6px; margin-top:6px;">
+                            <button type="button" onclick="captureNewBranchGPS()" class="btn" style="flex:1; padding:6px; font-size:10px; background:rgba(0,176,255,0.2); color:#00b0ff; border:1px solid #00b0ff;">📍 التقاط موقعي للمخزن</button>
+                            <button type="button" onclick="saveStoreBranch()" class="btn" style="flex:1; padding:6px; font-size:10px; background:var(--success-color); color:#000;">💾 حفظ المخزن الفرعي</button>
+                        </div>
+                        <div id="adminBranchesList" style="margin-top:8px; max-height:220px; overflow-y:auto;"></div>
                     </div>
                 </div>
 
@@ -910,8 +962,10 @@
                             <small style="color:var(--gray-text); font-size:10px;">تُعتمد لحساب: مسافة الطريق للنقطة الأقرب + المسافة المتبقية للزبون</small>
                         </div>
                         <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:6px; margin-bottom:6px;">
-                            <input type="text" id="newDistPtName" class="form-control" placeholder="اسم النقطة (مثال: مفرق المزرعة)">
-                            <input type="number" id="newDistPtRealMeters" class="form-control" placeholder="المسافة الحقيقية من المخزن (متر)">
+                            <select id="newDistPtBranchSelect" class="form-control" style="border-color:#00b0ff;"><option value="main">🏬 تابعة لـ: مخزن العوينة (الرئيسي)</option></select>
+                            <input type="text" id="newDistPtVillage" class="form-control" placeholder="🏘️ القرية التابعة لها (مثال: المزرعة الشرقية)" style="border-color:var(--gold-color);">
+                            <input type="text" id="newDistPtName" class="form-control" placeholder="🧭 اسم النقطة (مثال: مفرق المزرعة)">
+                            <input type="number" id="newDistPtRealMeters" class="form-control" placeholder="📏 المسافة الحقيقية من المخزن (متر)">
                             <input type="number" step="any" id="newDistPtLat" class="form-control" placeholder="خط العرض (Lat)">
                             <input type="number" step="any" id="newDistPtLng" class="form-control" placeholder="خط الطول (Lng)">
                         </div>
@@ -1013,6 +1067,16 @@
                        .trim();
         }
 
+        
+        function syncOfflineBanner() {
+            const el = $("offlineIndicator");
+            if (!el) return;
+            el.style.display = navigator.onLine === false ? "block" : "none";
+        }
+        window.addEventListener("online", syncOfflineBanner);
+        window.addEventListener("offline", syncOfflineBanner);
+        document.addEventListener("DOMContentLoaded", syncOfflineBanner);
+
         function showToast(message, isError = false) {
             let container = document.getElementById("toastContainer");
             if (!container) {
@@ -1070,7 +1134,8 @@
         let userLocation = null;
         let categories = ["الكل"], selectedCategory = "الكل", products = {}, specialOffers = {}, suppliers = {};
         let highResImagesMemoryCache = {}, noHighResAvailableSet = {}, shuffledProductKeys = [];
-        let cart = JSON.parse(localStorage.getItem('moaath_cart')) || {}, users = {}, pendingOrders = {}, readyOrders = {}, completedOrdersHistory = {}, missingRequests = {};
+        let cart = JSON.parse(localStorage.getItem('moaath_cart')) || {}, users = {}, pendingOrders = {}, readyOrders = {}, dispatchedOrders = {}, completedOrdersHistory = {}, missingRequests = {};
+        let storeBranches = {}, activeBranchId = localStorage.getItem('moaath_active_branch') || "main";
         let storeExpenses = {}, treasuryDebtCollections = {};
         let adminAccounting = {
             importManagerPct: 50,
@@ -1483,6 +1548,25 @@
             renderCustomerTrackingBanner();
         });
 
+        db.ref("outForDelivery").on("value", snap => {
+            dispatchedOrders = snap.val() || {};
+            renderDispatchedOrders();
+            renderCustomerTrackingBanner();
+        });
+
+        db.ref("branches").on("value", snap => {
+            storeBranches = snap.val() || {};
+            localStorage.setItem("cache_branches", JSON.stringify(storeBranches));
+            populateBranchSelectDropdowns();
+            renderAdminBranchesList();
+            detectNearestBranchForCustomer();
+            syncCurrentUser();
+            renderStore();
+            renderAdminProducts();
+            renderShortages();
+            renderStatsDashboard();
+        });
+
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371e3;
@@ -1513,8 +1597,219 @@
             return t2F + (chunks * extF);
         }
 
-        function evaluateSmartGPSDelivery(uLat, uLng) {
-            const airDist = calculateDistance(gpsConfig.storeLat, gpsConfig.storeLng, uLat, uLng);
+
+        function getAllBranchesMap() {
+            const map = {
+                main: {
+                    id: "main",
+                    name: "مخزن العوينة (الرئيسي)",
+                    lat: parseFloat(gpsConfig.storeLat) || 35.1234,
+                    lng: parseFloat(gpsConfig.storeLng) || 36.5678,
+                    exportManagerPhone: exportManagerPhoneGlobal || "",
+                    driverPhone: deliveryDriverPhone || "",
+                    isMain: true
+                }
+            };
+            Object.entries(storeBranches || {}).forEach(([bId, b]) => {
+                if (b && bId !== "main") {
+                    map[bId] = {
+                        id: bId,
+                        name: b.name || "فرع توزيع",
+                        lat: parseFloat(b.lat) || parseFloat(gpsConfig.storeLat) || 35.1234,
+                        lng: parseFloat(b.lng) || parseFloat(gpsConfig.storeLng) || 36.5678,
+                        exportManagerPhone: (b.exportManagerPhone || "").trim(),
+                        driverPhone: (b.driverPhone || "").trim(),
+                        isMain: false
+                    };
+                }
+            });
+            return map;
+        }
+
+        function getBranchName(branchId) {
+            const map = getAllBranchesMap();
+            return map[branchId]?.name || "مخزن العوينة (الرئيسي)";
+        }
+
+        function getUserAssignedExportBranchId(phone) {
+            if (!phone) return null;
+            const clean = String(phone).trim();
+            if (exportManagerPhoneGlobal && clean === exportManagerPhoneGlobal) return "main";
+            for (const [bId, b] of Object.entries(storeBranches || {})) {
+                if (b && b.exportManagerPhone && String(b.exportManagerPhone).trim() === clean) {
+                    return bId;
+                }
+            }
+            return null;
+        }
+
+        function getProductStockForBranch(prodOrOffer, branchId = activeBranchId) {
+            if (!prodOrOffer) return 0;
+            const bId = branchId || "main";
+            if (bId === "main") {
+                if (prodOrOffer.branchStock && prodOrOffer.branchStock.main !== undefined) {
+                    return Math.max(0, parseInt(prodOrOffer.branchStock.main) || 0);
+                }
+                return Math.max(0, parseInt(prodOrOffer.stock) || 0);
+            } else {
+                if (prodOrOffer.branchStock && prodOrOffer.branchStock[bId] !== undefined) {
+                    return Math.max(0, parseInt(prodOrOffer.branchStock[bId]) || 0);
+                }
+                // Fallback for special offers or items that don't have branchStock explicitly initialized yet: default to general stock or 0
+                return Math.max(0, parseInt(prodOrOffer.stock) || 0);
+            }
+        }
+
+        function detectNearestBranchForCustomer() {
+            const map = getAllBranchesMap();
+            if (!userLocation || isNaN(parseFloat(userLocation.lat)) || isNaN(parseFloat(userLocation.lng))) {
+                if (!map[activeBranchId]) activeBranchId = "main";
+                updateActiveBranchHeaderUI();
+                return activeBranchId;
+            }
+            const uLat = parseFloat(userLocation.lat), uLng = parseFloat(userLocation.lng);
+            let bestId = "main";
+            let minDist = Infinity;
+            Object.values(map).forEach(b => {
+                const d = calculateDistance(b.lat, b.lng, uLat, uLng);
+                if (d < minDist) {
+                    minDist = d;
+                    bestId = b.id;
+                }
+            });
+            const prevBranch = activeBranchId;
+            activeBranchId = bestId;
+            localStorage.setItem('moaath_active_branch', activeBranchId);
+            updateActiveBranchHeaderUI();
+            if (prevBranch !== activeBranchId) {
+                renderStore();
+                updateCartBar();
+            }
+            return activeBranchId;
+        }
+
+        function updateActiveBranchHeaderUI() {
+            const badge = $("activeBranchHeaderBadge");
+            if (badge) {
+                badge.textContent = getBranchName(activeBranchId);
+            }
+        }
+
+        function populateBranchSelectDropdowns() {
+            const map = getAllBranchesMap();
+            const branchEntries = Object.values(map);
+
+            const repSel = $("reportBranchSelect");
+            if (repSel) {
+                const cur = repSel.value || "all";
+                repSel.innerHTML = `<option value="all">🏢 جميع المخازن والفروع (الإجمالي العام)</option>` +
+                    branchEntries.map(b => `<option value="${b.id}">🏬 ${esc(b.name)}</option>`).join("");
+                repSel.value = (cur === "all" || map[cur]) ? cur : "all";
+            }
+
+            const prodSel = $("adminProdBranchSelect");
+            if (prodSel) {
+                const cur = prodSel.value || "main";
+                prodSel.innerHTML = branchEntries.map(b => `<option value="${b.id}">🏬 ${esc(b.name)}</option>`).join("");
+                prodSel.value = map[cur] ? cur : "main";
+            }
+
+            const shortSel = $("shortagesBranchSelect");
+            if (shortSel) {
+                const cur = shortSel.value || "main";
+                shortSel.innerHTML = branchEntries.map(b => `<option value="${b.id}">🏬 ${esc(b.name)}</option>`).join("");
+                shortSel.value = map[cur] ? cur : "main";
+            }
+
+            const dptSel = $("newDistPtBranchSelect");
+            if (dptSel) {
+                const cur = dptSel.value || "main";
+                dptSel.innerHTML = branchEntries.map(b => `<option value="${b.id}">🏬 تابعة لـ: ${esc(b.name)}</option>`).join("");
+                dptSel.value = map[cur] ? cur : "main";
+            }
+        }
+
+        function captureNewBranchGPS() {
+            if (!navigator.geolocation) return alert("⚠️ المتصفح لا يدعم الـ GPS.");
+            showToast("⏳ جاري التقاط موقع المخزن الفرعي...", false);
+            navigator.geolocation.getCurrentPosition(pos => {
+                setVal("newBranchLat", parseFloat(pos.coords.latitude.toFixed(6)));
+                setVal("newBranchLng", parseFloat(pos.coords.longitude.toFixed(6)));
+                showToast("✅ تم التقاط إحداثيات المخزن بنجاح!");
+            }, () => alert("❌ تعذر التقاط الموقع. تأكد من تشغيل الـ GPS."), { enableHighAccuracy: true, timeout: 10000 });
+        }
+
+        function saveStoreBranch() {
+            const editId = ($("editBranchId")?.value || "").trim();
+            const name = ($("newBranchName")?.value || "").trim();
+            const exportManagerPhone = ($("newBranchExportMgrPhone")?.value || "").trim().replace(/\s+/g, "");
+            const driverPhone = ($("newBranchDriverPhone")?.value || "").trim().replace(/\s+/g, "");
+            const lat = parseFloat($("newBranchLat")?.value);
+            const lng = parseFloat($("newBranchLng")?.value);
+
+            if (!name || isNaN(lat) || isNaN(lng)) {
+                return alert("⚠️ يرجى إدخال اسم المخزن الفرعي وإحداثيات موقعه (Lat / Lng).");
+            }
+            const bId = editId || ("BR_" + Date.now());
+            db.ref(`branches/${bId}`).set({
+                id: bId,
+                name,
+                exportManagerPhone,
+                driverPhone,
+                lat: parseFloat(lat.toFixed(6)),
+                lng: parseFloat(lng.toFixed(6))
+            }).then(() => {
+                ["editBranchId", "newBranchName", "newBranchExportMgrPhone", "newBranchDriverPhone", "newBranchLat", "newBranchLng"].forEach(k => setVal(k, ""));
+                showToast(`✅ تم حفظ (${name}) بنجاح!`);
+            });
+        }
+
+        function editStoreBranch(bId) {
+            const b = storeBranches[bId];
+            if (!b) return;
+            setVal("editBranchId", bId);
+            setVal("newBranchName", b.name || "");
+            setVal("newBranchExportMgrPhone", b.exportManagerPhone || "");
+            setVal("newBranchDriverPhone", b.driverPhone || "");
+            setVal("newBranchLat", b.lat || "");
+            setVal("newBranchLng", b.lng || "");
+            showToast("✏️ تم جلب بيانات المخزن للتعديل.");
+        }
+
+        function deleteStoreBranch(bId) {
+            const b = storeBranches[bId];
+            if (!b || !confirm(`⚠️ هل أنت متأكد من حذف (${b.name})؟`)) return;
+            db.ref(`branches/${bId}`).set(null);
+        }
+
+        function renderAdminBranchesList() {
+            const box = $("adminBranchesList");
+            if (!box) return;
+            const entries = Object.values(storeBranches || {});
+            if (!entries.length) {
+                box.innerHTML = `<div style="font-size:11px; color:var(--gray-text); text-align:center; padding:6px;">لا توجد مخازن فرعية مضافة حالياً (يعمل مخزن العوينة الرئيسي فقط).</div>`;
+                return;
+            }
+            box.innerHTML = entries.map(b => `
+                <div class="adm-card" style="display:flex; justify-content:space-between; align-items:center; gap:6px; border-color:#00e676;">
+                    <div style="font-size:11px;">
+                        <b style="color:#00e676;">🏬 ${esc(b.name)}</b><br>
+                        <span>👔 مدير التصدير: <b>${esc(b.exportManagerPhone || 'غير محدد')}</b> | 🛵 السائق: <b>${esc(b.driverPhone || 'غير محدد')}</b></span><br>
+                        <small style="color:var(--gray-text);">الإحداثيات: ${parseFloat(b.lat).toFixed(5)}, ${parseFloat(b.lng).toFixed(5)}</small>
+                    </div>
+                    <div style="display:flex; gap:4px;">
+                        <button type="button" onclick="editStoreBranch('${b.id}')" class="btn" style="width:auto; padding:3px 8px; font-size:10px; background:#ff9800; color:#000;">✏️</button>
+                        <button type="button" onclick="deleteStoreBranch('${b.id}')" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">🗑️</button>
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        function evaluateSmartGPSDelivery(uLat, uLng, targetBranchId = null) {
+            const bMap = getAllBranchesMap();
+            const bId = targetBranchId || detectNearestBranchForCustomer();
+            const branchObj = bMap[bId] || bMap.main;
+            const airDist = calculateDistance(branchObj.lat, branchObj.lng, uLat, uLng);
             const inStoreD = !isNaN(parseFloat(gpsConfig.inStoreDist)) ? parseFloat(gpsConfig.inStoreDist) : 15;
             const t1D = !isNaN(parseFloat(gpsConfig.tier1Dist)) ? parseFloat(gpsConfig.tier1Dist) : 50;
             const t2D = !isNaN(parseFloat(gpsConfig.tier2Dist)) ? parseFloat(gpsConfig.tier2Dist) : 2000;
@@ -1544,9 +1839,11 @@
 
             let finalDist = airDist;
             let viaPointName = null;
-            const pts = Array.isArray(gpsConfig.distributionPoints)
+            let viaPointVillage = null;
+            const rawPts = Array.isArray(gpsConfig.distributionPoints)
                 ? gpsConfig.distributionPoints
                 : Object.values(gpsConfig.distributionPoints || {});
+            const pts = rawPts.filter(pt => (pt.branchId || "main") === bId);
 
             if (pts.length > 0) {
                 let nearestPt = null;
@@ -1564,17 +1861,22 @@
                 if (nearestPt) {
                     finalDist = nearestPt.totalRouteDist;
                     viaPointName = nearestPt.name || "نقطة توزيع";
+                    viaPointVillage = (nearestPt.village || "").trim() || null;
                 }
             }
 
             const fee = getGPSFee(finalDist);
+            const fullViaLabel = viaPointName
+                ? (viaPointVillage ? `قرية ${viaPointVillage} - عبر ${viaPointName}` : `عبر ${viaPointName}`)
+                : null;
             return {
                 effectiveDist: Math.round(finalDist),
                 airDist: Math.round(airDist),
                 fee,
                 tierType: fee < 0 ? "out_of_range" : "tier3",
-                tierLabel: viaPointName ? `عبر ${viaPointName} (${Math.round(finalDist)}م)` : `GPS (${Math.round(finalDist)}م)`,
-                viaPointName
+                tierLabel: fullViaLabel ? `${fullViaLabel} (${Math.round(finalDist)}م)` : `GPS (${Math.round(finalDist)}م)`,
+                viaPointName,
+                viaPointVillage
             };
         }
 
@@ -1593,6 +1895,8 @@
                 <div class="adm-card" style="display:flex; justify-content:space-between; align-items:center; gap:6px; padding:6px 8px; margin-bottom:5px;">
                     <div style="font-size:11px;">
                         <b style="color:var(--gold-color);">📍 ${ idx + 1 }. ${esc(pt.name)}</b>
+                        ${pt.village ? `<span style="color:#ff9800; font-weight:bold;">(🏘️ قرية: ${esc(pt.village)})</span>` : ''}
+                        <small style="color:#00b0ff;">[${esc(getBranchName(pt.branchId || 'main'))}]</small>
                         <span style="color:var(--success-color); font-weight:bold; margin-right:6px;">(مسافة الطريق: ${parseInt(pt.realDistMeters) || 0} متر)</span><br>
                         <small style="color:var(--gray-text);">${parseFloat(pt.lat).toFixed(5)}, ${parseFloat(pt.lng).toFixed(5)}</small>
                     </div>
@@ -1608,6 +1912,8 @@
             const pts = gpsConfig.distributionPoints || [];
             const pt = pts[idx];
             if (!pt) return;
+            setVal("newDistPtBranchSelect", pt.branchId || "main");
+            setVal("newDistPtVillage", pt.village || "");
             setVal("newDistPtName", pt.name || "");
             setVal("newDistPtRealMeters", pt.realDistMeters || "");
             setVal("newDistPtLat", pt.lat || "");
@@ -1629,30 +1935,35 @@
         }
 
         function addDistributionPoint() {
+            const branchId = $("newDistPtBranchSelect")?.value || "main";
+            const village = ($("newDistPtVillage")?.value || "").trim();
             const name = ($("newDistPtName")?.value || "").trim();
             const realDistMeters = parseInt($("newDistPtRealMeters")?.value);
             const lat = parseFloat($("newDistPtLat")?.value);
             const lng = parseFloat($("newDistPtLng")?.value);
-            if (!name || isNaN(realDistMeters) || realDistMeters < 0 || isNaN(lat) || isNaN(lng)) {
-                return alert("⚠️ يرجى إدخال اسم النقطة، المسافة الحقيقية من المخزن بالمتر، وإحداثيات الموقع (Lat / Lng).");
+            if (!name || !village || isNaN(realDistMeters) || realDistMeters < 0 || isNaN(lat) || isNaN(lng)) {
+                return alert("⚠️ يرجى إدخال القرية التابعة لها النقطة، اسم النقطة، المسافة الحقيقية من المخزن بالمتر، وإحداثيات الموقع (Lat / Lng).");
             }
             if (!Array.isArray(gpsConfig.distributionPoints)) {
                 gpsConfig.distributionPoints = Object.values(gpsConfig.distributionPoints || {});
             }
             gpsConfig.distributionPoints.push({
                 id: "DPT_" + Date.now(),
+                branchId,
+                village,
                 name,
                 realDistMeters,
                 lat: parseFloat(lat.toFixed(6)),
                 lng: parseFloat(lng.toFixed(6))
             });
+            setVal("newDistPtVillage", "");
             setVal("newDistPtName", "");
             setVal("newDistPtRealMeters", "");
             setVal("newDistPtLat", "");
             setVal("newDistPtLng", "");
             renderAdminDistributionPoints();
             db.ref("settings/gpsConfig/distributionPoints").set(gpsConfig.distributionPoints).then(() => {
-                showToast(`✅ تمت إضافة نقطة التوزيع (${name}) بنجاح!`);
+                showToast(`✅ تمت إضافة نقطة التوزيع (${name} - قرية ${village}) بنجاح!`);
             });
         }
 
@@ -1674,6 +1985,7 @@
             if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
             userLocation = { lat: parseFloat(lat.toFixed(6)), lng: parseFloat(lng.toFixed(6)), time: Date.now() };
             localStorage.setItem('moaath_user_location', JSON.stringify(userLocation));
+            detectNearestBranchForCustomer();
             updateCartBar();
             if ($("cartModal")?.style.display === "flex") renderCartModalItems();
         }
@@ -1868,11 +2180,6 @@
             }
         }
 
-        
-        window.addEventListener('online', () => { $("offlineIndicator").style.display = 'none'; });
-        window.addEventListener('offline', () => { $("offlineIndicator").style.display = 'block'; });
-        if (!navigator.onLine) $("offlineIndicator").style.display = 'block';
-
         window.addEventListener("load", () => {
             populateRegionSelects();
             // Copy region options to register select
@@ -1963,7 +2270,11 @@
             if ($("redeemPointsBtn")) $("redeemPointsBtn").style.display = (pts >= (parseInt(compSettings.minRedeemPoints) || 500) && !currentUser.banned) ? "inline-block" : "none";
             if ($("partnerDashboardBtn")) $("partnerDashboardBtn").style.display = (ut === "partner") ? "inline-block" : "none";
             if ($("customerDebtBtn")) $("customerDebtBtn").style.display = (ut === "credit") ? "inline-block" : "none";
-            if ($("exportManagerBtn")) $("exportManagerBtn").style.display = (exportManagerPhoneGlobal && currentUser.phone === exportManagerPhoneGlobal) ? "inline-block" : "none";
+            if ($("exportManagerBtn")) {
+                const assignedBranch = getUserAssignedExportBranchId(currentUser.phone);
+                $("exportManagerBtn").style.display = assignedBranch ? "inline-block" : "none";
+                if (assignedBranch) $("exportManagerBtn").textContent = "📦 تصدير: " + getBranchName(assignedBranch);
+            }
         }
 
         function redeemPointsWhatsApp() {
@@ -1990,21 +2301,27 @@
             const phone = currentUser.phone;
             let myPending = null;
             let myReady = null;
+            let myDispatched = null;
 
-            // Find user's latest pending order
             Object.values(pendingOrders || {}).forEach(o => {
                 if (o.customerPhone === phone) myPending = o;
             });
-            
-            // Find user's latest ready order
             Object.values(readyOrders || {}).forEach(o => {
                 if (o.customerPhone === phone) myReady = o;
             });
+            Object.values(dispatchedOrders || {}).forEach(o => {
+                if (o.customerPhone === phone) myDispatched = o;
+            });
 
-            if (myReady) {
+            if (myDispatched) {
+                box.innerHTML = `<div style="background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; border:2px solid #00e676; border-radius:8px; padding:12px; margin-bottom:12px; text-align:center; box-shadow:0 4px 15px rgba(0,230,118,0.35);">
+                    <div style="font-size:17px; font-weight:900; margin-bottom:4px;">🛵 طلبك خرج مع عامل التوصيل وفي الطريق إليك!</div>
+                    <div style="font-size:12px; font-weight:bold;">المخزن المجهز: ${esc(myDispatched.branchName || getBranchName(myDispatched.branchId || 'main'))} 🌸</div>
+                </div>`;
+            } else if (myReady) {
                 box.innerHTML = `<div style="background:linear-gradient(45deg,#00a152,#00e676); color:#000; border:2px solid #00e676; border-radius:8px; padding:12px; margin-bottom:12px; text-align:center; box-shadow:0 4px 15px rgba(0,230,118,0.3); animation: fadeInOut 2s infinite alternate;">
-                    <div style="font-size:18px; font-weight:900; margin-bottom:4px;">✅ تم الموافقة، طلبك قيد التجهيز!</div>
-                    <div style="font-size:12px; font-weight:bold;">سيتم إرساله مع السائق قريباً 🛵</div>
+                    <div style="font-size:18px; font-weight:900; margin-bottom:4px;">✅ تمت الموافقة، طلبك قيد التجهيز!</div>
+                    <div style="font-size:12px; font-weight:bold;">سيتم تسليمه لعامل التوصيل قريباً 🛵</div>
                 </div>`;
             } else if (myPending) {
                 box.innerHTML = `<div style="background:linear-gradient(45deg,#ff9800,#ff5722); color:#fff; border:2px solid #ff9800; border-radius:8px; padding:12px; margin-bottom:12px; text-align:center; box-shadow:0 4px 15px rgba(255,152,0,0.3);">
@@ -2023,7 +2340,7 @@
             if (!keys.length) return (container.innerHTML = "");
             const isW = currentUser?.userType === "wholesale";
             container.innerHTML = keys.map(k => {
-                const so = specialOffers[k], eff = (isW && so.wholesaleUSD > 0) ? so.wholesaleUSD : so.newPriceUSD, q = cart[k] ? cart[k].qty : 0, st = parseInt(so.stock) || 0;
+                const so = specialOffers[k], eff = (isW && so.wholesaleUSD > 0) ? so.wholesaleUSD : so.newPriceUSD, q = cart[k] ? cart[k].qty : 0, st = getProductStockForBranch(so, activeBranchId);
                 const waitMap = JSON.parse(localStorage.getItem('moaath_waiting') || '{}');
                 const isWaitOffer = !!waitMap[k];
                 const act = st <= 0 ? (isWaitOffer ? `<button class="btn btn-out" disabled style="font-size:10px;">⏳ سيتم إعلامك</button>` : `<button class="btn" style="background:linear-gradient(45deg,#00b0ff,#7c4dff); color:#fff; font-size:10px; padding:6px 8px;" onclick="addToWaitingList('${k}')">🔔 أعلمني عند التوفر</button>`) : (q > 0 ? `<div class="qty-controls"><button class="qty-btn" onclick="changeQty('${k}',1)">+</button><span class="qty-text">${q}</span><button class="qty-btn" onclick="changeQty('${k}',-1)">-</button></div>` : `<button class="btn" onclick="changeQty('${k}',1)">➕ أضف للسلة</button>`);
@@ -2048,7 +2365,7 @@
                 // 1. Single Unit Card
                 const waitMap = JSON.parse(localStorage.getItem('moaath_waiting') || '{}');
                 const isWaitingProd = !!waitMap[id];
-                const priceSYP = calcSYP((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0)), st = parseInt(p.stock) || 0, inC = cart[id] ? cart[id].qty : 0;
+                const priceSYP = calcSYP((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0)), st = getProductStockForBranch(p, activeBranchId), inC = cart[id] ? cart[id].qty : 0;
                 const reservedByPkg = getReservedUnitsInCart(id, id);
                 const availSingle = Math.max(0, st - reservedByPkg);
                 const outBtnHtml = st <= 0
@@ -2166,7 +2483,7 @@
                 const p = products[baseId] || specialOffers[baseId];
                 if (!p) return;
                 const reqStock = isPkg ? Math.max(1, parseInt(p.pkgCount) || parseInt(savedEntry?.reqStock) || 10) : 1;
-                if ((parseInt(p.stock) || 0) >= reqStock) {
+                if (getProductStockForBranch(p, activeBranchId) >= reqStock) {
                     const savedVisitorId = (typeof savedEntry === "object" && savedEntry?.visitorId) ? savedEntry.visitorId : currentVisitorId;
                     const unitPriceUSD = isPkg ? (parseFloat(p.pkgPriceUSD) || 0) : ((currentUser?.userType === "wholesale" && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || p.newPriceUSD || 0));
                     const itemImg = (isPkg && (p.pkgImage || p.pkgThumb)) ? (p.pkgImage || p.pkgThumb) : (p.image || getLockedHighResImage(baseId) || p.thumb || "store-icon.png");
@@ -2251,20 +2568,20 @@
             let item;
             if (id.startsWith("OFFER_")) {
                 const so = specialOffers[id]; if (!so?.active) return;
-                const maxStock = parseInt(so.stock) || 0;
+                const maxStock = getProductStockForBranch(so, activeBranchId);
                 const nQty = (cart[id] ? cart[id].qty : 0) + delta;
-                if (delta > 0 && nQty > maxStock) return showToast("⚠️ الكمية المطلوبة غير متوفرة بالكامل بالمخزون!", true);
+                if (delta > 0 && nQty > maxStock) return showToast("⚠️ الكمية المطلوبة غير متوفرة بالكامل في (" + getBranchName(activeBranchId) + ")!", true);
                 item = { id, name: "🔥 عرض: " + so.name, category: "عروض خاصة", priceUSD: parseFloat((isW && so.wholesaleUSD > 0) ? so.wholesaleUSD : so.newPriceUSD) || 0, costPrice: parseFloat(so.costPrice) || 0, stock: maxStock, pointsPct: parseFloat(so.pointsPct) || 2 };
                 if (nQty <= 0) delete cart[id]; else cart[id] = { ...item, qty: nQty };
             } else if (id.endsWith("_PKG")) {
                 const origId = id.replace(/_PKG$/, "");
                 const p = products[origId]; if (!p || !p.hasPackage) return;
                 const pkgCount = Math.max(1, parseInt(p.pkgCount) || 10);
-                const totalBaseStock = parseInt(p.stock) || 0;
+                const totalBaseStock = getProductStockForBranch(p, activeBranchId);
                 const nQty = (cart[id] ? cart[id].qty : 0) + delta;
                 const otherUnits = getReservedUnitsInCart(origId, id);
                 if (delta > 0 && (nQty * pkgCount + otherUnits) > totalBaseStock) {
-                    return showToast("⚠️ الكمية المطلوبة (مع ما في السلة) تتجاوز المتوفر بالمخزون!", true);
+                    return showToast("⚠️ الكمية المطلوبة (مع ما في السلة) تتجاوز المتوفر في (" + getBranchName(activeBranchId) + ")!", true);
                 }
                 item = {
                     id, origId, isPackage: true, pkgCount,
@@ -2278,7 +2595,7 @@
                 if (nQty <= 0) delete cart[id]; else cart[id] = { ...item, qty: nQty };
             } else {
                 const p = products[id]; if (!p) return;
-                const totalBaseStock = parseInt(p.stock) || 0;
+                const totalBaseStock = getProductStockForBranch(p, activeBranchId);
                 const nQty = (cart[id] ? cart[id].qty : 0) + delta;
                 const otherUnits = getReservedUnitsInCart(id, id);
                 if (delta > 0 && (nQty + otherUnits) > totalBaseStock) {
@@ -2356,31 +2673,41 @@
                 list.innerHTML = `<div style="text-align:center; padding:20px; color:var(--gray-text);">لا توجد طلبات سابقة مكتملة في سجلك.</div>`;
             } else {
                 list.innerHTML = myOrds.map(o => {
-                    const itemsList = (o.items || []).map(i => `• ${i.name} (×${i.qty})`).join("<br>");
-                    const reorderPayload = escape(JSON.stringify(o.items || []));
+                    const itemsList = (o.items || []).map(i => `• ${esc(i.name)} (×${i.qty})`).join("<br>");
+                    const histOrderId = o.orderId || "";
                     return `<div class="comp-card" style="border-color:var(--gold-color); margin-bottom:12px;">
                         <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--gold-color); margin-bottom:6px;">
-                            <span>🧾 فاتورة (${o.timestamp.split(' ')[0]})</span>
+                            <span>🧾 فاتورة (${esc((o.timestamp || '').split(' ')[0])})</span>
                             <span>${(o.totalSaleSYP || 0).toLocaleString()} ل.س</span>
                         </div>
                         <div style="font-size:11px; color:var(--text-color); margin-bottom:10px; line-height:1.6;">${itemsList}</div>
-                        <button class="btn" style="width:100%; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-size:11px; font-weight:bold;" onclick="reOrderItems('${reorderPayload}')">🔄 إعادة طلب هذه الفاتورة (إضافة للسلة)</button>
+                        <button class="btn" style="width:100%; background:linear-gradient(45deg,#00b0ff,#00e676); color:#000; font-size:11px; font-weight:bold;" onclick="reOrderItems('${esc(histOrderId)}')">🔄 إعادة طلب هذه الفاتورة (إضافة للسلة)</button>
                     </div>`;
                 }).join("");
             }
             $("myOrdersModal").style.display = "block";
         }
 
-        function reOrderItems(payloadStr) {
+        function reOrderItems(orderIdOrPayload) {
             try {
-                const items = JSON.parse(unescape(payloadStr));
+                let items = [];
+                if (completedOrdersHistory?.[orderIdOrPayload]?.items) {
+                    items = completedOrdersHistory[orderIdOrPayload].items;
+                } else {
+                    const found = Object.values(completedOrdersHistory || {}).find(ord => ord && ord.orderId === orderIdOrPayload);
+                    if (found?.items) items = found.items;
+                    else if (typeof orderIdOrPayload === "string" && orderIdOrPayload.trim().charAt(0) === String.fromCharCode(91)) {
+                        items = JSON.parse(decodeURIComponent(orderIdOrPayload));
+                    }
+                }
                 let addedCount = 0;
+                detectNearestBranchForCustomer();
                 items.forEach(item => {
                     const baseId = item.origId || String(item.id || "").replace(/_PKG$/, "");
                     const pObj = products[baseId] || specialOffers[item.id];
-                    if (pObj && (parseInt(pObj.stock) || 0) > 0) {
+                    if (pObj && getProductStockForBranch(pObj, activeBranchId) > 0) {
                         const currentQty = cart[item.id] ? cart[item.id].qty : 0;
-                        changeQty(item.id, item.qty - currentQty); // Set qty to match previous order
+                        changeQty(item.id, item.qty - currentQty);
                         addedCount++;
                     }
                 });
@@ -2398,6 +2725,7 @@
 
         function openCartModal() {
             if (!checkStoreWorkHours()) return;
+            detectNearestBranchForCustomer();
             if (!currentUser) {
                 showToast("⚠️ يرجى تسجيل الدخول أو إنشاء حساب لإتمام طلبك.", true);
                 $("authModal").style.display = "flex";
@@ -2475,7 +2803,8 @@
                     if (gpsEval.tierType === "in_store") {
                         setTxt("gpsDistanceText", `🏬 أنت الآن من داخل المخزن (${gpsEval.effectiveDist} متر) | التوصيل: مجاناً (0 ل.س)`);
                     } else if (gpsEval.viaPointName) {
-                        setTxt("gpsDistanceText", `🧭 عبر نقطة (${gpsEval.viaPointName}) - المسافة المعتمدة: ${gpsEval.effectiveDist} متر | الأجرة: ${fee.toLocaleString()} ل.س`);
+                        const vTxt = gpsEval.viaPointVillage ? `قرية (${gpsEval.viaPointVillage}) - ` : '';
+                        setTxt("gpsDistanceText", `🧭 ${vTxt}عبر نقطة (${gpsEval.viaPointName}) - المسافة: ${gpsEval.effectiveDist} متر | الأجرة: ${fee.toLocaleString()} ل.س`);
                     } else {
                         setTxt("gpsDistanceText", `تبعد عن المتجر: ${gpsEval.effectiveDist} متر | الأجرة: ${fee.toLocaleString()} ل.س`);
                     }
@@ -2590,7 +2919,7 @@
             const singleItem = cart[origId];
             const p = products[origId];
             if (!singleItem || !p || singleItem.qty < pkgCount) return;
-            const totalBaseStock = parseInt(p.stock) || 0;
+            const totalBaseStock = getProductStockForBranch(p, activeBranchId);
             const numPkgs = Math.floor(singleItem.qty / pkgCount);
             const rem = singleItem.qty % pkgCount;
             const pkgId = origId + "_PKG";
@@ -2657,13 +2986,16 @@
             if (users[currentUser.phone]?.banned) return alert("🚫 حسابك محظور.");
             const items = Object.values(cart); if (!items.length) return;
 
-            // فحص لحظي للمخزون الفعلي قبل إرسال الطلب لمنع طلب مواد نفدت أثناء وجودها في السلة
+            const targetBranchId = detectNearestBranchForCustomer();
+            const targetBranchName = getBranchName(targetBranchId);
+            // فحص لحظي للمخزون الفعلي في الفرع الأقرب قبل إرسال الطلب
             const stockReqByBase = {};
             for (const i of items) {
                 if (String(i.id || "").startsWith("OFFER_")) {
                     const so = specialOffers[i.id];
-                    if (!so || !so.active || (parseInt(so.stock) || 0) < i.qty) {
-                        alert(`⚠️ عذراً، العرض (${i.name}) لم يعد متوفراً بالكمية المطلوبة في المخزون حالياً. يرجى تحديث السلة.`);
+                    const availOfferSt = getProductStockForBranch(so, targetBranchId);
+                    if (!so || !so.active || availOfferSt < i.qty) {
+                        alert(`⚠️ عذراً، العرض (${i.name}) لم يعد متوفراً بالكمية المطلوبة في (${targetBranchName}) حالياً. يرجى تحديث السلة.`);
                         return;
                     }
                 } else {
@@ -2674,10 +3006,11 @@
                         alert(`⚠️ عذراً، الصنف (${i.name}) لم يعد موجوداً في المتجر. يرجى حذفه من السلة.`);
                         return;
                     }
+                    const availProdSt = getProductStockForBranch(pLive, targetBranchId);
                     const unitsPerItem = isPkg ? Math.max(1, parseInt(i.pkgCount) || parseInt(pLive.pkgCount) || 10) : 1;
                     stockReqByBase[baseId] = (stockReqByBase[baseId] || 0) + (i.qty * unitsPerItem);
-                    if (stockReqByBase[baseId] > (parseInt(pLive.stock) || 0)) {
-                        alert(`⚠️ عذراً، الكمية المطلوبة من (${pLive.name}) تتجاوز الرصيد المتبقي حالياً في المتجر (${pLive.stock}). يرجى تعديل الكمية في السلة.`);
+                    if (stockReqByBase[baseId] > availProdSt) {
+                        alert(`⚠️ عذراً، الكمية المطلوبة من (${pLive.name}) تتجاوز الرصيد المتبقي حالياً في (${targetBranchName}: ${availProdSt}). يرجى تعديل الكمية في السلة.`);
                         return;
                     }
                 }
@@ -2688,6 +3021,8 @@
             let mapsUrl = "";
             let isGpsOrder = false;
             let gpsDistanceMeters = 0;
+            let viaPointName = null;
+            let viaPointVillage = null;
             if (gpsConfig.enabled && userLocation) {
                 const latVal = parseFloat(userLocation.lat);
                 const lngVal = parseFloat(userLocation.lng);
@@ -2700,11 +3035,14 @@
                     fee = gpsEval.fee;
                     isGpsOrder = true;
                     gpsDistanceMeters = gpsEval.effectiveDist;
+                    viaPointName = gpsEval.viaPointName || null;
+                    viaPointVillage = gpsEval.viaPointVillage || null;
+                    const effVillage = viaPointVillage || reg;
                     finalDeliveryRegionName = gpsEval.tierType === "in_store"
-                        ? `${reg} - من داخل المخزن (${gpsDistanceMeters}م)`
-                        : (gpsEval.viaPointName
-                            ? `${reg} - عبر ${gpsEval.viaPointName} (${gpsDistanceMeters}م)`
-                            : `${reg} - GPS (${gpsDistanceMeters} متر)`);
+                        ? `${effVillage} - من داخل المخزن (${gpsDistanceMeters}م)`
+                        : (viaPointName
+                            ? `${effVillage} - عبر نقطة ${viaPointName} (${gpsDistanceMeters}م)`
+                            : `${effVillage} - GPS (${gpsDistanceMeters} متر)`);
                     mapsUrl = `https://maps.google.com/?q=${latVal.toFixed(6)},${lngVal.toFixed(6)}`;
                 } else {
                     fee = getRegionFee(reg);
@@ -2746,8 +3084,9 @@
 
             const orderPayload = {
                 orderId, timestamp: new Date().toLocaleString("ar-SY"), dateISO: new Date().toISOString(),
-                customerName: currentUser.name, customerPhone: currentUser.phone, customerRegion: finalDeliveryRegionName, customerBaseRegion: reg, customerAddress: currentUser.address,
-                mapsUrl, isGpsOrder, gpsDistanceMeters,
+                branchId: targetBranchId, branchName: targetBranchName,
+                customerName: currentUser.name, customerPhone: currentUser.phone, customerRegion: finalDeliveryRegionName, customerBaseRegion: viaPointVillage || reg, customerAddress: currentUser.address,
+                mapsUrl, isGpsOrder, gpsDistanceMeters, viaPointName, viaPointVillage,
                 isCreditOrder: isCreditUser, creditMarkupPct: markupPct, creditMarkupSYP: markupSYP, orderTotalUSD: finalOrderUSD,
                 paymentMethod: selectedPayMethod,
                 notes: ($("orderNotes")?.value || "").trim(), items: ordItems,
@@ -2759,7 +3098,7 @@
                    ? `🟢 *فاتورة طلب مدفوع مسبقاً - متجر معاذ* 🟢\n✅ *(سيتم الخصم من المحفظة تلقائياً - لا يتطلب إشعار تحويل)*\n`
                    : `🛍️ *فاتورة طلب جديد - متجر معاذ* (بانتظار شام كاش)\n`);
 
-            msg += `👤 الزبون: ${orderPayload.customerName}\n📱 الهاتف: ${orderPayload.customerPhone}\n🏘️ المنطقة: ${orderPayload.customerRegion}\n📍 العنوان: ${orderPayload.customerAddress}\n`;
+            msg += `🏬 الفرع الموجه إليه: *${targetBranchName}*\n👤 الزبون: ${orderPayload.customerName}\n📱 الهاتف: ${orderPayload.customerPhone}\n🏘️ المنطقة: ${orderPayload.customerRegion}\n📍 العنوان: ${orderPayload.customerAddress}\n`;
             if (mapsUrl) msg += `📌 رابط الموقع (GPS): ${mapsUrl}\n`;
             msg += `💳 الدفع: ${orderPayload.paymentMethod}\n`;
             if (orderPayload.notes) msg += `📝 ملاحظات: ${orderPayload.notes}\n`;
@@ -2806,10 +3145,25 @@
                 }
             }
 
-            db.ref().update(updates);
-            cart = {}; localStorage.setItem('moaath_cart', '{}'); setVal("orderNotes", "");
-            closeModal('cartModal'); renderStore();
-            window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(msg)}`, "_blank");
+            if (navigator.onLine === false) {
+                return alert("⚠️ لا يوجد اتصال بالإنترنت حالياً. يرجى الاتصال بالإنترنت لإرسال الطلب وتسجيله في النظام.");
+            }
+            const btnEl = $("submitOrderUnifiedBtn");
+            if (btnEl) { btnEl.disabled = true; btnEl.textContent = "⏳ جاري حفظ وإرسال الطلب..."; }
+            db.ref().update(updates).then(() => {
+                cart = {}; localStorage.setItem('moaath_cart', '{}'); setVal("orderNotes", "");
+                closeModal('cartModal'); renderStore();
+                showToast("✅ تم تسجيل طلبك بنجاح!");
+                const bMapForWa = getAllBranchesMap();
+                const bObjForWa = bMapForWa[targetBranchId] || bMapForWa.main;
+                const targetOrderWhatsApp = (targetBranchId !== "main" && bObjForWa.exportManagerPhone)
+                    ? formatWhatsAppPhone(bObjForWa.exportManagerPhone)
+                    : formatWhatsAppPhone(adminWhatsAppNumber);
+                window.open(`https://wa.me/${targetOrderWhatsApp}?text=${encodeURIComponent(msg)}`, "_blank");
+            }).catch(err => {
+                if (btnEl) { btnEl.disabled = false; renderCartModalItems(); }
+                alert("❌ تعذر إرسال الطلب إلى قاعدة البيانات: " + err.message);
+            });
         }
 
         function openCustomerDebtModal() {
@@ -2934,11 +3288,9 @@
                     .no-print-bar { text-align: center; margin-bottom: 15px; padding: 10px; background: #e8f5e9; border: 1px solid #2e7d32; border-radius: 8px; }
                     .btn-print { background: #2e7d32; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; margin: 0 5px; }
                     @media print { .no-print-bar { display: none !important; } body { margin: 0; } }
-                        #offlineIndicator { display:none; background:var(--danger-color); color:#fff; text-align:center; font-size:11px; font-weight:bold; padding:4px; position:fixed; top:0; width:100%; z-index:999999; }
-    </style>
+                </style>
             </head>
             <body>
-    <div id="offlineIndicator">⚠️ أنت تتصفح بدون اتصال بالإنترنت حالياً (الوضع غير المتصل)</div>
                 <div class="no-print-bar">
                     <span style="font-weight:bold; color:#1b5e20;">✅ تم تحميل هذه النسخة الاحتياطية على جهازك! يمكنك أيضاً طباعتها أو حفظها كـ PDF عبر الزر أدناه:</span><br><br>
                     <button class="btn-print" onclick="window.print()">🖨️ حفظ كـ PDF / طباعة التقرير</button>
@@ -2958,16 +3310,7 @@
                     <div style="font-size:15px; color:#b71c1c;">💰 إجمالي الديون المستحقة: <b>${totalAllUSD.toFixed(2)} $</b> (${totalAllSYP.toLocaleString()} ل.س)</div>
                 </div>
                 ${customersHtml}
-            
-    <div id="myOrdersModal" class="page-overlay">
-        <header style="position:sticky; top:0; z-index:10;">
-            <div class="store-info"><h1>📋 طلباتي السابقة</h1><p>سجل مشترياتك وإعادة الطلب السريع</p></div>
-            <button onclick="closeModal('myOrdersModal')" class="btn btn-danger" style="width:auto; padding:6px 12px;">🔙 رجوع</button>
-        </header>
-        <div class="container" id="myOrdersListContainer"></div>
-    </div>
-
-</body>
+            </body>
             </html>`;
 
             const blob = new Blob(["\uFEFF" + htmlContent], { type: 'text/html;charset=utf-8;' });
@@ -3185,9 +3528,11 @@
         function renderExportManagerInvoicesHistory() {
             const container = $("exportMgrInvoicesHistoryList");
             if (!container) return;
+            const assignedBranch = getUserAssignedExportBranchId(currentUser?.phone) || "main";
             const q = ($("exportMgrSearchInput")?.value || "").trim().toLowerCase();
             const keys = Object.keys(completedOrdersHistory || {}).filter(id => {
                 const o = completedOrdersHistory[id];
+                if ((o.branchId || "main") !== assignedBranch) return false;
                 return !q || o.customerName?.toLowerCase().includes(q) || o.customerPhone?.includes(q) || o.customerRegion?.toLowerCase().includes(q);
             }).sort((a, b) => (b.localeCompare(a)));
             if (!keys.length) {
@@ -3235,21 +3580,28 @@
 - سيتم عكس حركة الدين أو استرجاع رصيد المحفظة المسبقة.`)) return;
 
             const updates = {};
+            const ordBranch = o.branchId || "main";
             (o.items || []).forEach(i => {
                 if (i.id.startsWith("OFFER_") && specialOffers[i.id]) {
-                    const curStock = parseInt(specialOffers[i.id].stock) || 0;
-                    updates[`specialOffers/${i.id}/stock`] = curStock + i.qty;
+                    const curStock = getProductStockForBranch(specialOffers[i.id], ordBranch);
+                    const nextSt = curStock + i.qty;
+                    if (ordBranch === "main") updates[`specialOffers/${i.id}/stock`] = nextSt;
+                    updates[`specialOffers/${i.id}/branchStock/${ordBranch}`] = nextSt;
                 } else if (i.isPackage || String(i.id || "").endsWith("_PKG")) {
                     const origId = i.origId || String(i.id || "").replace(/_PKG$/, "");
                     if (products[origId]) {
                         const pkgUnits = parseInt(i.pkgCount) || parseInt(products[origId].pkgCount) || 10;
                         const addQty = i.qty * pkgUnits;
-                        const curStock = parseInt(products[origId].stock) || 0;
-                        updates[`products/${origId}/stock`] = curStock + addQty;
+                        const curStock = getProductStockForBranch(products[origId], ordBranch);
+                        const nextSt = curStock + addQty;
+                        if (ordBranch === "main") updates[`products/${origId}/stock`] = nextSt;
+                        updates[`products/${origId}/branchStock/${ordBranch}`] = nextSt;
                     }
                 } else if (products[i.id]) {
-                    const curStock = parseInt(products[i.id].stock) || 0;
-                    updates[`products/${i.id}/stock`] = curStock + i.qty;
+                    const curStock = getProductStockForBranch(products[i.id], ordBranch);
+                    const nextSt = curStock + i.qty;
+                    if (ordBranch === "main") updates[`products/${i.id}/stock`] = nextSt;
+                    updates[`products/${i.id}/branchStock/${ordBranch}`] = nextSt;
                 }
             });
 
@@ -3288,6 +3640,7 @@
 
             updates[`completedOrdersHistory/${orderId}`] = null;
             updates[`readyForDelivery/${orderId}`] = null;
+            updates[`outForDelivery/${orderId}`] = null;
 
             db.ref().update(updates).then(() => {
                 delete completedOrdersHistory[orderId];
@@ -3314,18 +3667,27 @@
         }
 
         function openExportManagerModal() {
-            if (!currentUser?.phone || currentUser.phone !== exportManagerPhoneGlobal) {
-                return alert("🚫 هذه اللوحة مخصصة لمدير التصدير المعتمد فقط.");
+            const assignedBranch = getUserAssignedExportBranchId(currentUser?.phone);
+            if (!assignedBranch) {
+                return alert("🚫 هذه اللوحة مخصصة لمدراء التصدير المعتمدين فقط.");
             }
-            renderExportManagerOrders(); renderExportManagerInvoicesHistory(); renderExportManagerEarningsView();
+            renderExportManagerOrders();
+            renderReadyOrders();
+            renderDispatchedOrders();
+            renderExportManagerBranchShortages();
+            renderExportManagerInvoicesHistory();
+            renderExportManagerEarningsView();
             renderCustomerTrackingBanner();
             if ($("exportManagerModal")) $("exportManagerModal").style.display = "block";
         }
 
         function renderExportManagerOrders() {
+            const assignedBranch = getUserAssignedExportBranchId(currentUser?.phone) || "main";
             const q = ($("exportMgrSearchInput")?.value || "").trim().toLowerCase();
             const keys = Object.keys(pendingOrders || {}).filter(id => {
                 const o = pendingOrders[id];
+                const ordBranch = o.branchId || "main";
+                if (ordBranch !== assignedBranch) return false;
                 return !q || o.customerName?.toLowerCase().includes(q) || o.customerPhone?.includes(q) || o.customerRegion?.toLowerCase().includes(q);
             }).sort((a, b) => (pendingOrders[b].dateISO || "").localeCompare(pendingOrders[a].dateISO || ""));
             setTxt("exportMgrPendingCount", keys.length);
@@ -3384,7 +3746,7 @@
                 return `<div class="adm-card" style="margin-bottom: 24px; border:3px solid ${isTampered ? 'var(--danger-color)' : borderColor}; background:${bgColor}; color:${isCred ? '#ff4444' : 'inherit'};">
                     ${tamperAlert}
                     ${bannerHtml}
-                    <div style="display:flex; justify-content:space-between; color:${textCol}; font-weight:bold; margin-bottom:4px;"><span>👤 ${esc(o.customerName)} (${esc(o.customerPhone)})</span><span>${o.timestamp}</span></div>
+                    <div style="display:flex; justify-content:space-between; color:${textCol}; font-weight:bold; margin-bottom:4px; flex-wrap:wrap; gap:4px;"><span>👤 ${esc(o.customerName)} (${esc(o.customerPhone)}) <small style="color:#00e676;">[${esc(o.branchName || getBranchName(o.branchId || 'main'))}]</small></span><span>${o.timestamp}</span></div>
                     <div style="margin-bottom:4px;">🏘️ ${esc(o.customerRegion)} | 📍 ${esc(o.customerAddress)} | 💳 ${esc(payMethod)} ${o.mapsUrl ? `<a href="${esc(o.mapsUrl)}" target="_blank" rel="noopener" style="color:#00e676; font-weight:bold; text-decoration:underline; margin-right:6px;">🗺️ فتح الموقع على الخريطة</a>` : ''}</div>
                     ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${esc(o.notes)}</div>` : ''}
                     <div style="border-top:1px dashed ${borderColor}; border-bottom:1px dashed ${borderColor}; padding:6px 0; margin:6px 0;">${itemsHtml}</div>
@@ -3435,9 +3797,101 @@
             return ` <span title="${names}" style="background:rgba(0,176,255,0.18); color:#00b0ff; border:1px solid #00b0ff; padding:1px 6px; border-radius:10px; font-size:10px; font-weight:bold; display:inline-block;">🔔 ${count} بالانتظار</span>`;
         }
 
+
+        function requestBranchReplenishmentWhatsApp(targetBranchId) {
+            const bId = targetBranchId || ($("shortagesBranchSelect")?.value || "main");
+            if (bId === "main") {
+                return alert("ℹ️ مخزن العوينة هو المخزن الرئيسي، يتم طلب نواقصه مباشرة من الموزعين المعتمدين عبر الأزرار أدناه.");
+            }
+            const bName = getBranchName(bId);
+            const shortageList = Object.values(products).filter(p => p && getProductStockForBranch(p, bId) <= (parseInt(p.alertLimit) || 2));
+            if (!shortageList.length) return alert(`✅ لا توجد أي نواقص حالياً في (${bName}).`);
+
+            let msg = `📥 *طلب توريد بضائع داخلي من المخزن الرئيسي (العوينة)* 📥\n`;
+            msg += `🏬 *الفرع الطالب:* ${bName}\n`;
+            msg += `👔 *موجه إلى:* مدير الاستيراد العام - مخزن العوينة الرئيسي\n`;
+            msg += `📅 *التاريخ:* ${new Date().toLocaleString("ar-SY")}\n`;
+            msg += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+            shortageList.forEach((p, idx) => {
+                const curBranchSt = getProductStockForBranch(p, bId);
+                const mainSt = getProductStockForBranch(p, "main");
+                const targetPacks = parseInt(p.targetOrderPacks) || 5;
+                const neededQty = Math.max(1, targetPacks - curBranchSt);
+                const unit = p.unitType || "قطعة";
+                msg += `${idx + 1}. *${p.name}*\n`;
+                msg += `   • المتبقي بالفرع: ${curBranchSt} ${unit}\n`;
+                msg += `   • المطلوب توريده للفرع: *${neededQty} ${unit}* (المتوفر بمخزن العوينة الرئيسي: ${mainSt} ${unit})\n\n`;
+            });
+
+            msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+            msg += `يرجى تجهيز وتوريد الأصناف المذكورة أعلاه من مخزن العوينة الرئيسي إلى (${bName}) 🌸`;
+            window.open(`https://wa.me/${formatWhatsAppPhone(adminWhatsAppNumber)}?text=${encodeURIComponent(msg)}`, "_blank");
+        }
+
+        function requestBranchReplenishmentFromMain() {
+            const assignedBranch = getUserAssignedExportBranchId(currentUser?.phone) || "main";
+            if (assignedBranch === "main") {
+                return alert("ℹ️ أنت مدير تصدير مخزن العوينة الرئيسي؛ النواقص تطلب من الموزعين من لوحة الإدارة.");
+            }
+            requestBranchReplenishmentWhatsApp(assignedBranch);
+        }
+
+        function renderExportManagerBranchShortages() {
+            const box = $("exportManagerBranchShortagesList");
+            if (!box) return;
+            const assignedBranch = getUserAssignedExportBranchId(currentUser?.phone) || "main";
+            const bName = getBranchName(assignedBranch);
+            const list = Object.values(products).filter(p => p && getProductStockForBranch(p, assignedBranch) <= (parseInt(p.alertLimit) || 2));
+            if (!list.length) {
+                box.innerHTML = `<p style="text-align:center; color:var(--success-color); font-size:12px;">✅ مخزون (${esc(bName)}) مكتمل ولا توجد نواقص حالياً.</p>`;
+                return;
+            }
+            box.innerHTML = list.map(p => {
+                const st = getProductStockForBranch(p, assignedBranch);
+                const mainSt = getProductStockForBranch(p, "main");
+                const targetPacks = parseInt(p.targetOrderPacks) || 5;
+                const needed = Math.max(1, targetPacks - st);
+                return `<div style="display:flex; justify-content:space-between; font-size:11px; border-bottom:1px dashed var(--border-color); padding:5px 0;">
+                    <span>• <b>${esc(p.name)}</b> <small style="color:var(--gold-color);">(المطلوب توريده: ${needed} ${esc(p.unitType || 'قطعة')})</small></span>
+                    <span><small style="color:var(--danger-color); font-weight:bold;">بالفرع: ${st}</small> | <small style="color:#00e676;">بمخزن العوينة: ${mainSt}</small></span>
+                </div>`;
+            }).join("");
+        }
+
         function renderShortages() {
             const suppContainer = $("shortagesBySupplierContainer"); if (!suppContainer) return;
-            const shortageIds = Object.keys(products).filter(id => products[id] && (parseInt(products[id].stock) || 0) <= (parseInt(products[id].alertLimit) || 2));
+            const selBranch = $("shortagesBranchSelect")?.value || "main";
+            const shortageIds = Object.keys(products).filter(id => products[id] && getProductStockForBranch(products[id], selBranch) <= (parseInt(products[id].alertLimit) || 2));
+            if (selBranch !== "main") {
+                const bName = getBranchName(selBranch);
+                if (!shortageIds.length) {
+                    suppContainer.innerHTML = `<p style="text-align:center; color:var(--success-color); font-size:12px;">✅ جميع الأصناف متوفرة في (${esc(bName)}) بشكل جيد.</p>`;
+                    return;
+                }
+                const rows = shortageIds.map(id => {
+                    const p = products[id];
+                    const curSt = getProductStockForBranch(p, selBranch);
+                    const mainSt = getProductStockForBranch(p, "main");
+                    const targetPacks = parseInt(p.targetOrderPacks) || 5;
+                    const needed = Math.max(1, targetPacks - curSt);
+                    return `<div style="font-size:11px; display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding:5px 0;">
+                        <span>• <b>${esc(p.name)}</b> <small style="color:var(--gold-color);">(المطلوب توريده: ${needed} ${esc(p.unitType || 'قطعة')})</small></span>
+                        <span><b style="color:var(--danger-color);">متبقي بالفرع: ${curSt}</b> | <small style="color:#00e676;">متوفر بمخزن العوينة: ${mainSt}</small></span>
+                    </div>`;
+                }).join("");
+                suppContainer.innerHTML = `<div class="adm-card" style="border-color:#00e676; background:rgba(0,230,118,0.05);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+                        <div>
+                            <b style="color:#00e676;">🏬 نواقص (${esc(bName)})</b><br>
+                            <small style="color:var(--gray-text);">يتم توجيه طلب التوريد إلى مدير الاستيراد العام في مخزن العوينة الرئيسي</small>
+                        </div>
+                        <button onclick="requestBranchReplenishmentWhatsApp('${selBranch}')" class="btn" style="width:auto; padding:6px 12px; font-size:11px; background:#25D366; color:#fff;">📥 إرسال طلب توريد لمدير الاستيراد العام (العوينة)</button>
+                    </div>
+                    ${rows}
+                </div>`;
+                return;
+            }
             const waitingProdIds = Object.keys(waitingStats).filter(pid => (products[pid] || specialOffers[pid]) && Object.keys(waitingStats[pid] || {}).length > 0);
             if (!shortageIds.length && !waitingProdIds.length) return (suppContainer.innerHTML = `<p style="text-align:center; color:var(--success-color); font-size:12px;">✅ جميع الأصناف متوفرة بالمخزون بشكل جيد ولا توجد قوائم انتظار.</p>`);
 
@@ -3509,7 +3963,7 @@
                 sel.innerHTML = '<option value="all">🌟 جميع التصنيفات</option>' + categories.filter(c => c !== "الكل").map(c => `<option value="${c}">${c}</option>`).join("") + '<option value="عروض خاصة">عروض خاصة</option>';
                 sel.value = cur;
             }
-            const period = $("reportPeriodSelect")?.value || "total", selCat = sel?.value || "all", now = new Date();
+            const period = $("reportPeriodSelect")?.value || "total", selCat = sel?.value || "all", selBranch = $("reportBranchSelect")?.value || "all", now = new Date();
             let totS = 0, totC = 0, netP = 0, catMap = {}, prodMap = {};
             let capBoxSYP = 0, drvNetSYP = 0, maintFundSYP = 0, importMgrAdminPool = 0, exportMgrAdminPool = 0, debtCollectionsSYP = 0, debtCollectionsUSD = 0;
 
@@ -3522,10 +3976,16 @@
 
             categories.filter(c => c !== "الكل").forEach(c => catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 });
             catMap["عروض خاصة"] = { sales: 0, cost: 0, profit: 0, count: 0 }; catMap["غير مصنف"] = { sales: 0, cost: 0, profit: 0, count: 0 };
+            const getAggregatedOrBranchStock = pObj => {
+                if (!pObj) return 0;
+                if (selBranch !== "all") return getProductStockForBranch(pObj, selBranch);
+                const bMap = getAllBranchesMap();
+                return Object.keys(bMap).reduce((sum, bId) => sum + getProductStockForBranch(pObj, bId), 0);
+            };
             Object.keys(products).forEach(pid => {
                 const c = products[pid].category || "غير مصنف";
                 if (!catMap[c]) catMap[c] = { sales: 0, cost: 0, profit: 0, count: 0 };
-                prodMap[pid] = { id: pid, name: products[pid].name || "صنف", category: c, stock: parseInt(products[pid].stock) || 0, qtySold: 0, sales: 0, cost: 0, profit: 0 };
+                prodMap[pid] = { id: pid, name: products[pid].name || "صنف", category: c, stock: getAggregatedOrBranchStock(products[pid]), qtySold: 0, sales: 0, cost: 0, profit: 0 };
             });
 
             Object.values(treasuryDebtCollections).forEach(coll => {
@@ -3537,6 +3997,8 @@
             });
 
             Object.values(completedOrdersHistory).forEach(ord => {
+                const ordBranch = ord.branchId || "main";
+                if (selBranch !== "all" && ordBranch !== selBranch) return;
                 const ordISO = ord.dateISO || new Date().toISOString();
                 const d = new Date(ordISO);
                 const fee = parseInt(ord.deliveryFeeSYP) || 0, dShare = Math.round((fee * getRegionDriverPct(ord.customerBaseRegion || String(ord.customerRegion || "").split(" - GPS")[0])) / 100);
@@ -3606,7 +4068,7 @@
             renderGoldenInsights(prodMap);
             renderCategoryBreakdownTable(catMap);
             renderProductBreakdownTable(prodMap, selCat);
-            updateInventoryValuation(selCat);
+            updateInventoryValuation(selCat, selBranch);
         }
 
         function renderAllPartnersStatsInDashboard() {
@@ -3675,12 +4137,16 @@
                 `<div style="overflow-x:auto; max-height:240px; overflow-y:auto;"><table class="tbl-clean"><thead><tr><th style="text-align:right;">الصنف</th><th>المباع</th><th>المبيعات</th><th>الربح</th><th>المخزون</th><th>تصفير</th></tr></thead><tbody>` + list.map(i => `<tr><td style="font-weight:bold; text-align:right;">${i.name}</td><td>${i.qtySold}</td><td>${i.sales.toLocaleString()}</td><td style="color:var(--success-color); font-weight:bold;">${i.profit.toLocaleString()}</td><td style="font-weight:bold;">${i.stock}</td><td><button onclick="resetSalesFilter('prod','${i.id}')" class="btn btn-danger" style="width:auto; padding:3px 7px; font-size:10px;">🔄</button></td></tr>`).join("") + `</tbody></table></div>`;
         }
 
-        function updateInventoryValuation(selCat = "all") {
+        function updateInventoryValuation(selCat = "all", selBranch = "all") {
             let cost = 0, sale = 0, cnt = 0, out = 0;
+            const bMap = getAllBranchesMap();
             Object.values(products).forEach(p => {
                 const c = p.category || "غير مصنف";
                 if (selCat === "all" || selCat === c) {
-                    cnt++; const s = Math.max(0, parseInt(p.stock) || 0);
+                    cnt++;
+                    const s = selBranch === "all"
+                        ? Object.keys(bMap).reduce((sum, bId) => sum + getProductStockForBranch(p, bId), 0)
+                        : getProductStockForBranch(p, selBranch);
                     if (s <= 0) out++; cost += calcSYP(p.costPrice || 0) * s; sale += calcSYP(p.priceUSD || 0) * s;
                 }
             });
@@ -3732,8 +4198,13 @@
                     pkgThumb = uploadedPkg.thumb;
                     pkgImage = uploadedPkg.url;
                 }
+                const existingBranchStock = { ...(products[id]?.branchStock || {}) };
+                const selBranchForForm = $("adminProdBranchSelect")?.value || "main";
+                existingBranchStock[selBranchForForm] = stock;
+                const mainStockVal = selBranchForForm === "main" ? stock : (existingBranchStock.main !== undefined ? existingBranchStock.main : (parseInt(products[id]?.stock) || stock));
+                existingBranchStock.main = mainStockVal;
                 await db.ref("products/" + id).set({
-                    name, costPrice, priceUSD, wholesaleUSD, stock, alertLimit, pointsPct, category, supplierId,
+                    name, costPrice, priceUSD, wholesaleUSD, stock: mainStockVal, branchStock: existingBranchStock, alertLimit, pointsPct, category, supplierId,
                     partnerPhone, partnerPct,
                     hasPackage, pkgCount, pkgPriceUSD, pkgThumb, pkgImage,
                     unitType, unitsPerPack, targetOrderPacks,
@@ -3771,7 +4242,8 @@
             setVal("prodWorkflowSYP", Math.round((p.wholesaleUSD || 0) * exchangeRate)); 
             setTxt("prodWholesaleUSDPreview", `≈ ${(parseFloat(p.wholesaleUSD)||0).toFixed(2)} $`);
 
-            setVal("prodStock", p.stock || 0); setVal("prodAlertLimit", p.alertLimit || 2); setVal("prodPointsPct", p.pointsPct || 2); setVal("prodCategory", p.category || ""); setVal("prodSupplierSelect", p.supplierId || "");
+            const selBranchForEdit = $("adminProdBranchSelect")?.value || "main";
+            setVal("prodStock", getProductStockForBranch(p, selBranchForEdit)); setVal("prodAlertLimit", p.alertLimit || 2); setVal("prodPointsPct", p.pointsPct || 2); setVal("prodCategory", p.category || ""); setVal("prodSupplierSelect", p.supplierId || "");
             populateAdminPartnerSelect();
             setVal("prodPartnerSelect", p.partnerPhone || "");
             setVal("prodPartnerPctInput", (p.partnerPct !== undefined && p.partnerPct !== null) ? p.partnerPct : "");
@@ -3790,12 +4262,28 @@
 
         function quickUpdateStock(id, delta) {
             if (!products[id]) return;
-            db.ref(`products/${id}/stock`).set(Math.max(0, (parseInt(products[id].stock) || 0) + delta));
+            const selBranch = $("adminProdBranchSelect")?.value || "main";
+            const cur = getProductStockForBranch(products[id], selBranch);
+            const nextVal = Math.max(0, cur + delta);
+            const updates = {};
+            if (selBranch === "main") updates[`products/${id}/stock`] = nextVal;
+            updates[`products/${id}/branchStock/${selBranch}`] = nextVal;
+            db.ref().update(updates);
         }
         function quickUpdatePrice(id, val) {
             const num = parseFloat(val);
             if (!products[id] || isNaN(num) || num <= 0) return;
             db.ref(`products/${id}/priceUSD`).set(num);
+        }
+
+        
+        function onAdminProdBranchChange() {
+            renderAdminProducts();
+            const editId = $("editProductId")?.value;
+            if (editId && products[editId]) {
+                const selBranch = $("adminProdBranchSelect")?.value || "main";
+                setVal("prodStock", getProductStockForBranch(products[editId], selBranch));
+            }
         }
 
         function renderAdminProducts() {
@@ -3823,7 +4311,7 @@
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; font-size:11px; border-top:1px dashed var(--border-color); padding-top:5px;">
                         <div>السعر ($): <input type="number" step="0.01" class="quick-inp" value="${p.priceUSD}" onchange="quickUpdatePrice('${id}', this.value)"> <small style="color:var(--gold-color);">(${calcSYP(p.priceUSD).toLocaleString()} ل.س)</small></div>
-                        <div style="display:flex; align-items:center; gap:5px;">المخزون: <button class="mini-btn" style="background:var(--success-color); color:#000;" onclick="quickUpdateStock('${id}', 1)">+</button> <b style="min-width:22px; text-align:center;">${p.stock}</b> <button class="mini-btn" style="background:var(--danger-color); color:#fff;" onclick="quickUpdateStock('${id}', -1)">-</button></div>
+                        <div style="display:flex; align-items:center; gap:5px;">المخزون (${esc(getBranchName($("adminProdBranchSelect")?.value || "main"))}): <button class="mini-btn" style="background:var(--success-color); color:#000;" onclick="quickUpdateStock('${id}', 1)">+</button> <b style="min-width:22px; text-align:center;">${getProductStockForBranch(p, $("adminProdBranchSelect")?.value || "main")}</b> <button class="mini-btn" style="background:var(--danger-color); color:#fff;" onclick="quickUpdateStock('${id}', -1)">-</button></div>
                     </div>
                     ${revHtml}
                 </div>`;
@@ -3990,9 +4478,9 @@
             showToast("⏳ جاري تجهيز النسخة الاحتياطية...", false);
             try {
                 const nodes = [
-                    "settings", "categories", "suppliers", "products", "productImages",
+                    "settings", "branches", "categories", "suppliers", "products", "productImages",
                     "specialOffers", "users", "partnersConfig", "competition",
-                    "pendingOrders", "readyForDelivery", "completedOrdersHistory",
+                    "pendingOrders", "readyForDelivery", "outForDelivery", "completedOrdersHistory",
                     "adminAccounting", "storeExpenses", "treasuryDebtCollections",
                     "waitingLists", "missingRequests"
                 ];
@@ -4025,9 +4513,9 @@
                     const json = JSON.parse(ev.target.result);
                     if (!confirm("⚠️ استعادة النسخة الاحتياطية واستبدال البيانات الحالية بالكامل؟")) return;
                     const nodes = [
-                        "settings", "categories", "suppliers", "products", "productImages",
+                        "settings", "branches", "categories", "suppliers", "products", "productImages",
                         "specialOffers", "users", "partnersConfig", "competition",
-                        "pendingOrders", "readyForDelivery", "completedOrdersHistory",
+                        "pendingOrders", "readyForDelivery", "outForDelivery", "completedOrdersHistory",
                         "adminAccounting", "storeExpenses", "treasuryDebtCollections",
                         "waitingLists", "missingRequests"
                     ];
@@ -4080,23 +4568,26 @@
             const container = $("editOrdItemsContainer");
             if (!container) return;
             
-            // Populate select dropdown
+            // Populate select dropdown based on the order's assigned branch stock
+            const ordBranch = o.branchId || "main";
             const sel = $("addNewItemToOrdSelect");
             if (sel) {
-                let opts = '<option value="">-- ➕ إضافة صنف جديد للفاتورة --</option>';
+                let opts = `<option value="">-- ➕ إضافة صنف من (${esc(getBranchName(ordBranch))}) --</option>`;
                 Object.keys(products).forEach(id => {
                     const p = products[id];
-                    if(p && (parseInt(p.stock)||0) > 0) {
-                        opts += `<option value="${id}">${p.name} (${p.stock} متوفر)</option>`;
-                        if (p.hasPackage && p.pkgCount > 0 && p.pkgPriceUSD > 0 && Math.floor((parseInt(p.stock)||0) / p.pkgCount) > 0) {
-                            opts += `<option value="${id}_PKG">📦 طرد ${p.name} (${Math.floor((parseInt(p.stock)||0) / p.pkgCount)} متوفر)</option>`;
+                    const bSt = getProductStockForBranch(p, ordBranch);
+                    if (p && bSt > 0) {
+                        opts += `<option value="${id}">${esc(p.name)} (${bSt} متوفر)</option>`;
+                        if (p.hasPackage && p.pkgCount > 0 && p.pkgPriceUSD > 0 && Math.floor(bSt / p.pkgCount) > 0) {
+                            opts += `<option value="${id}_PKG">📦 طرد ${esc(p.name)} (${Math.floor(bSt / p.pkgCount)} متوفر)</option>`;
                         }
                     }
                 });
                 Object.keys(specialOffers).forEach(id => {
                     const so = specialOffers[id];
-                    if (so && so.active && (parseInt(so.stock)||0) > 0) {
-                        opts += `<option value="${id}">🔥 ${so.name} (${so.stock} متوفر)</option>`;
+                    const bSt = getProductStockForBranch(so, ordBranch);
+                    if (so && so.active && bSt > 0) {
+                        opts += `<option value="${id}">🔥 ${esc(so.name)} (${bSt} متوفر)</option>`;
                     }
                 });
                 sel.innerHTML = opts;
@@ -4198,7 +4689,9 @@
             const o = pendingOrders[orderId];
             if (!o || !o.items) return;
 
-            // 1. التحقق من توفر المخزون للكميات المعدلة قبل الحفظ
+            // 1. التحقق من توفر المخزون للكميات المعدلة في فرع الطلب قبل الحفظ
+            const ordBranch = o.branchId || "main";
+            const ordBranchName = getBranchName(ordBranch);
             const reqStockByBase = {};
             for (let idx = 0; idx < o.items.length; idx++) {
                 const i = o.items[idx];
@@ -4207,18 +4700,20 @@
                 if (nQ <= 0) continue;
                 if (String(i.id || "").startsWith("OFFER_")) {
                     const so = specialOffers[i.id];
-                    if (so && nQ > (parseInt(so.stock) || 0)) {
-                        return alert(`⚠️ الكمية المعدلة للعرض (${i.name}) تتجاوز المتوفر بالمخزون (${so.stock})!`);
+                    const availSoSt = getProductStockForBranch(so, ordBranch);
+                    if (so && nQ > availSoSt) {
+                        return alert(`⚠️ الكمية المعدلة للعرض (${i.name}) تتجاوز المتوفر في (${ordBranchName}: ${availSoSt})!`);
                     }
                 } else {
                     const isPkg = i.isPackage || String(i.id || "").endsWith("_PKG");
                     const baseId = i.origId || String(i.id || "").replace(/_PKG$/, "");
                     const pLive = products[baseId];
                     if (pLive) {
+                        const availProdSt = getProductStockForBranch(pLive, ordBranch);
                         const unitsPerItem = isPkg ? Math.max(1, parseInt(i.pkgCount) || parseInt(pLive.pkgCount) || 10) : 1;
                         reqStockByBase[baseId] = (reqStockByBase[baseId] || 0) + (nQ * unitsPerItem);
-                        if (reqStockByBase[baseId] > (parseInt(pLive.stock) || 0)) {
-                            return alert(`⚠️ إجمالي الكمية المعدلة من (${pLive.name}) يتجاوز المتوفر بالمخزون حالياً (${pLive.stock})!`);
+                        if (reqStockByBase[baseId] > availProdSt) {
+                            return alert(`⚠️ إجمالي الكمية المعدلة من (${pLive.name}) يتجاوز المتوفر حالياً في (${ordBranchName}: ${availProdSt})!`);
                         }
                     }
                 }
@@ -4371,7 +4866,7 @@
                 return `<div class="adm-card" style="margin-bottom: 24px; border:3px solid ${isTampered ? 'var(--danger-color)' : borderColor}; background:${bgColor}; color:${isCred ? '#ff4444' : 'inherit'};">
                     ${tamperAlert}
                     ${bannerHtml}
-                    <div style="display:flex; justify-content:space-between; color:${textCol}; font-weight:bold; margin-bottom:4px;"><span>👤 ${esc(o.customerName)} (${esc(o.customerPhone)})</span><span>${o.timestamp}</span></div>
+                    <div style="display:flex; justify-content:space-between; color:${textCol}; font-weight:bold; margin-bottom:4px; flex-wrap:wrap; gap:4px;"><span>👤 ${esc(o.customerName)} (${esc(o.customerPhone)}) <small style="color:#00e676;">[${esc(o.branchName || getBranchName(o.branchId || 'main'))}]</small></span><span>${o.timestamp}</span></div>
                     <div style="margin-bottom:4px;">🏘️ ${esc(o.customerRegion)} | 📍 ${esc(o.customerAddress)} | 💳 ${esc(payMethod)} ${o.mapsUrl ? `<a href="${esc(o.mapsUrl)}" target="_blank" rel="noopener" style="color:#00e676; font-weight:bold; text-decoration:underline; margin-right:6px;">🗺️ فتح الموقع على الخريطة</a>` : ''}</div>
                     ${o.notes ? `<div style="color:#ff9800; font-size:11px; margin-bottom:4px;">📝 ملاحظات: ${esc(o.notes)}</div>` : ''}
                     <div style="border-top:1px dashed ${borderColor}; border-bottom:1px dashed ${borderColor}; padding:6px 0; margin:6px 0;">${itemsHtml}</div>
@@ -4394,23 +4889,30 @@
             const o = pendingOrders[orderId]; 
             if (!o) return alert("⚠️ الطلب غير موجود أو تم تأكيده مسبقاً.");
             
-            // 1. حساب الخصم من المخزون محلياً للتأكد
+            // 1. حساب الخصم من المخزون حسب فرع الطلب (المخزن الموجه إليه الطلب)
             const updates = {};
+            const ordBranch = o.branchId || "main";
             (o.items || []).forEach(i => {
                 if (i.id.startsWith("OFFER_") && specialOffers[i.id]) {
-                    const curStock = parseInt(specialOffers[i.id].stock) || 0;
-                    updates[`specialOffers/${i.id}/stock`] = Math.max(0, curStock - i.qty);
+                    const curStock = getProductStockForBranch(specialOffers[i.id], ordBranch);
+                    const nextSt = Math.max(0, curStock - i.qty);
+                    if (ordBranch === "main") updates[`specialOffers/${i.id}/stock`] = nextSt;
+                    updates[`specialOffers/${i.id}/branchStock/${ordBranch}`] = nextSt;
                 } else if (i.isPackage || String(i.id || "").endsWith("_PKG")) {
                     const origId = i.origId || String(i.id || "").replace(/_PKG$/, "");
                     if (products[origId]) {
                         const pkgUnits = parseInt(i.pkgCount) || parseInt(products[origId].pkgCount) || 10;
                         const deductQty = i.qty * pkgUnits;
-                        const curStock = parseInt(products[origId].stock) || 0;
-                        updates[`products/${origId}/stock`] = Math.max(0, curStock - deductQty);
+                        const curStock = getProductStockForBranch(products[origId], ordBranch);
+                        const nextSt = Math.max(0, curStock - deductQty);
+                        if (ordBranch === "main") updates[`products/${origId}/stock`] = nextSt;
+                        updates[`products/${origId}/branchStock/${ordBranch}`] = nextSt;
                     }
                 } else if (products[i.id]) {
-                    const curStock = parseInt(products[i.id].stock) || 0;
-                    updates[`products/${i.id}/stock`] = Math.max(0, curStock - i.qty);
+                    const curStock = getProductStockForBranch(products[i.id], ordBranch);
+                    const nextSt = Math.max(0, curStock - i.qty);
+                    if (ordBranch === "main") updates[`products/${i.id}/stock`] = nextSt;
+                    updates[`products/${i.id}/branchStock/${ordBranch}`] = nextSt;
                 }
             });
 
@@ -4509,25 +5011,63 @@
         function renderReadyOrders() {
             const list1 = $("readyOrdersList");
             const list2 = $("exportManagerReadyOrdersList");
-            const keys = Object.keys(readyOrders).sort((a, b) => (readyOrders[b].dateISO || "").localeCompare(readyOrders[a].dateISO || ""));
-            
-            const html = !keys.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد طلبات مجهزة حالياً.</p>` : keys.map(id => {
+            const allKeys = Object.keys(readyOrders || {}).sort((a, b) => (readyOrders[b].dateISO || "").localeCompare(readyOrders[a].dateISO || ""));
+
+            const buildCard = id => {
                 const o = readyOrders[id];
+                const bName = o.branchName || getBranchName(o.branchId || "main");
                 return `<div class="adm-card" style="border-color:#00b0ff; background:rgba(0,176,255,0.05);">
                     <div style="display:flex; justify-content:space-between; font-weight:bold; color:#00b0ff;">
-                        <span>👤 ${esc(o.customerName)} (${esc(o.customerPhone)})</span>
+                        <span>👤 ${esc(o.customerName)} (${esc(o.customerPhone)}) <small style="color:var(--gold-color);">[${esc(bName)}]</small></span>
                         <button onclick="removeReadyOrder('${id}')" class="btn btn-danger" style="width:auto; padding:2px 6px; font-size:10px;">✖ حذف</button>
                     </div>
                     <div style="font-size:11px; margin:4px 0;">🏘️ ${esc(o.customerRegion)} | 📍 ${esc(o.customerAddress)} ${o.mapsUrl ? `<a href="${esc(o.mapsUrl)}" target="_blank" rel="noopener" style="color:#00e676; font-weight:bold; margin-right:6px;">🗺️ الخريطة</a>` : ''}</div>
                 </div>`;
-            }).join("");
+            };
 
-            if (list1) list1.innerHTML = html;
-            if (list2) list2.innerHTML = html;
+            if (list1) {
+                list1.innerHTML = !allKeys.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد طلبات مجهزة بانتظار السائق.</p>` : allKeys.map(buildCard).join("");
+            }
+            if (list2) {
+                const assignedBranch = getUserAssignedExportBranchId(currentUser?.phone) || "main";
+                const branchKeys = allKeys.filter(id => (readyOrders[id]?.branchId || "main") === assignedBranch);
+                list2.innerHTML = !branchKeys.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد طلبات مجهزة لهذا الفرع حالياً.</p>` : branchKeys.map(buildCard).join("");
+            }
+        }
+
+        function renderDispatchedOrders() {
+            const list1 = $("dispatchedOrdersList");
+            const list2 = $("exportManagerDispatchedOrdersList");
+            const allKeys = Object.keys(dispatchedOrders || {}).sort((a, b) => (dispatchedOrders[b].dispatchedAtISO || dispatchedOrders[b].dateISO || "").localeCompare(dispatchedOrders[a].dispatchedAtISO || dispatchedOrders[a].dateISO || ""));
+
+            const buildDispatchedCard = id => {
+                const o = dispatchedOrders[id];
+                const bName = o.branchName || getBranchName(o.branchId || "main");
+                return `<div class="adm-card" style="border-color:#00e676; background:rgba(0,230,118,0.06);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold; color:#00e676; flex-wrap:wrap; gap:4px;">
+                        <span>🛵 ${esc(o.customerName)} (${esc(o.customerPhone)}) <small style="color:var(--gold-color);">[${esc(bName)}]</small></span>
+                        <div style="display:flex; gap:4px;">
+                            <button onclick="resendSingleDispatchedOrderToDriver('${id}')" class="btn" style="width:auto; padding:2px 7px; font-size:10px; background:#00b0ff; color:#000;" title="إعادة إرسال للسائق">📲 إعادة إرسال</button>
+                            <button onclick="markDispatchedOrderDelivered('${id}')" class="btn" style="width:auto; padding:2px 7px; font-size:10px; background:var(--success-color); color:#000;">✅ تم التسليم</button>
+                        </div>
+                    </div>
+                    <div style="font-size:11px; margin:4px 0;">🏘️ ${esc(o.customerRegion)} | 📍 ${esc(o.customerAddress)} ${o.mapsUrl ? `<a href="${esc(o.mapsUrl)}" target="_blank" rel="noopener" style="color:#00e676; font-weight:bold; margin-right:6px;">🗺️ الخريطة</a>` : ''}</div>
+                    <div style="font-size:10px; color:var(--gray-text);">⏰ أُرسلت للسائق: ${esc(o.dispatchedAtStr || o.timestamp || '-')}</div>
+                </div>`;
+            };
+
+            if (list1) {
+                list1.innerHTML = !allKeys.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد طلبات معزولة بعهدة السائقين حالياً.</p>` : allKeys.map(buildDispatchedCard).join("");
+            }
+            if (list2) {
+                const assignedBranch = getUserAssignedExportBranchId(currentUser?.phone) || "main";
+                const branchKeys = allKeys.filter(id => (dispatchedOrders[id]?.branchId || "main") === assignedBranch);
+                list2.innerHTML = !branchKeys.length ? `<p style="text-align:center; color:var(--gray-text); font-size:12px;">لا توجد طلبات بعهدة سائق هذا الفرع حالياً.</p>` : branchKeys.map(buildDispatchedCard).join("");
+            }
         }
 
         function removeReadyOrder(id) {
-            if (confirm("إزالة هذا الطلب من قائمة التوصيل؟ (لن يحذف من الأرشيف المالي)")) {
+            if (confirm("إزالة هذا الطلب من قائمة التجهيز؟ (لن يحذف من الأرشيف المالي)")) {
                 db.ref(`readyForDelivery/${id}`).set(null).then(() => {
                     delete readyOrders[id];
                     renderReadyOrders();
@@ -4536,44 +5076,138 @@
             }
         }
 
-        function sendBulkOrdersToDriver() {
-            const keys = Object.keys(readyOrders);
-            if (!keys.length) return alert("ℹ️ لا توجد طلبات مجهزة لإرسالها.");
-            
-            // Group by base region so GPS orders don't fragment the driver list
+        function markDispatchedOrderDelivered(id) {
+            db.ref(`outForDelivery/${id}`).set(null).then(() => {
+                delete dispatchedOrders[id];
+                renderDispatchedOrders();
+                renderCustomerTrackingBanner();
+                showToast("✅ تم تأكيد تسليم الطلب وإغلاق المهمة!");
+            });
+        }
+
+        function clearAllDispatchedOrders() {
+            const isExportModalOpen = $("exportManagerModal")?.style.display === "block";
+            const assignedBranch = isExportModalOpen ? (getUserAssignedExportBranchId(currentUser?.phone) || "main") : null;
+            const keys = Object.keys(dispatchedOrders || {}).filter(id => !assignedBranch || (dispatchedOrders[id]?.branchId || "main") === assignedBranch);
+            if (!keys.length) return alert("ℹ️ لا توجد طلبات بعهدة السائق لتأكيد تسليمها.");
+            if (!confirm(`✅ تأكيد تسليم جميع الطلبات المعزولة (${keys.length} طلب) وإفراغ قائمة السائق؟`)) return;
+            const updates = {};
+            keys.forEach(id => { updates[`outForDelivery/${id}`] = null; });
+            db.ref().update(updates).then(() => {
+                keys.forEach(id => delete dispatchedOrders[id]);
+                renderDispatchedOrders();
+                renderCustomerTrackingBanner();
+                showToast("✅ تم إغلاق وتأكيد تسليم جميع الطلبات!");
+            });
+        }
+
+        function formatDriverWhatsAppMessage(ordersArray, branchNameStr) {
             const grouped = {};
-            keys.forEach(k => {
-                const o = readyOrders[k];
-                const grpName = o.customerBaseRegion || String(o.customerRegion || "العوينة").split(" - GPS")[0];
+            ordersArray.forEach(o => {
+                const grpName = o.viaPointVillage || o.customerBaseRegion || String(o.customerRegion || "العوينة").split(" - ")[0];
                 if (!grouped[grpName]) grouped[grpName] = [];
                 grouped[grpName].push(o);
             });
 
-            let msg = `🛵 *قائمة التوصيل الجديدة - متجر معاذ* 🛵\nالتاريخ: ${new Date().toLocaleString("ar-SY")}\n\n`;
-            
-            Object.keys(grouped).forEach(region => {
-                msg += `📍 *${region}:*\n`;
-                grouped[region].forEach((o, i) => {
-                    msg += `  ${i+1}. ${o.customerName} (${o.customerPhone})\n     العنوان: ${o.customerAddress}\n`;
-                    if (o.mapsUrl) msg += `     الخريطة: ${o.mapsUrl}\n`;
-                });
-                msg += `──────────────\n`;
-            });
-            
-            msg += `\n*ملاحظة للسائق:* الزبائن قاموا بالدفع مسبقاً (عبر شام كاش أو بالآجل). الرجاء التسليم فقط دون تحصيل نقدي. 🌸`;
+            let msg = `🛵 *قائمة مهام التوصيل - متجر معاذ* 🛵\n`;
+            msg += `🏬 *المخزن المسلِّم:* ${branchNameStr}\n`;
+            msg += `📅 *التاريخ والوقت:* ${new Date().toLocaleString("ar-SY")}\n`;
+            msg += `━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-            window.open(`https://wa.me/${formatWhatsAppPhone(deliveryDriverPhone || adminWhatsAppNumber)}?text=${encodeURIComponent(msg)}`, "_blank");
-            
-            if (confirm("هل تم إرسال القائمة للسائق بنجاح؟ (سيتم إفراغ الشاشة من الطلبات الحالية)")) {
-                const updates = {};
-                keys.forEach(id => { updates[`readyForDelivery/${id}`] = null; });
-                db.ref().update(updates).then(() => {
-                    readyOrders = {};
-                    renderReadyOrders();
-                    renderCustomerTrackingBanner();
-                    showToast("✅ تم تفريغ قائمة التوصيل بنجاح!");
-                }).catch(err => alert("❌ خطأ أثناء تفريغ القائمة: " + err.message));
+            Object.keys(grouped).forEach(villageName => {
+                msg += `🏘️ *القرية / المنطقة: ${villageName}*\n`;
+                msg += `────────────────────\n\n`;
+                grouped[villageName].forEach((o, i) => {
+                    const itemsCount = (o.items || []).reduce((acc, it) => acc + (parseInt(it.qty) || 1), 0);
+                    msg += `📦 *الطلب رقم (${i + 1}):*\n`;
+                    msg += `👤 *الزبون:* ${o.customerName}\n`;
+                    msg += `📱 *الهاتف:* ${o.customerPhone}\n`;
+                    msg += `🏘️ *القرية التابعة:* ${o.viaPointVillage || villageName}\n`;
+                    if (o.viaPointName) {
+                        msg += `🧭 *نقطة التوزيع (GPS):* ${o.viaPointName} (تابعة لقرية ${o.viaPointVillage || villageName})\n`;
+                    } else {
+                        msg += `🧭 *مسار التوصيل:* ${o.customerRegion}\n`;
+                    }
+                    msg += `🏠 *العنوان التفصيلي:* ${o.customerAddress}\n`;
+                    msg += `🛍️ *عدد القطع:* ${itemsCount} قطعة\n`;
+                    if (o.notes) msg += `📝 *ملاحظة الزبون:* ${o.notes}\n`;
+                    if (o.mapsUrl) msg += `📍 *خريطة منزل الزبون (GPS):*\n${o.mapsUrl}\n`;
+                    msg += `\n➕  ➕  ➕  ➕  ➕\n\n`;
+                });
+                msg += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+            });
+
+            msg += `⚠️ *تعليمات هامة لعامل التوصيل:*\n`;
+            msg += `• مهمتك تقتصر على *تسليم الطلبات للزبائن فقط*.\n`;
+            msg += `• لا يوجد أي تحصيل مالي نقدي من الزبائن (جميع الطلبات مسددة أو مقيدة لدى الإدارة). 🌸`;
+            return msg;
+        }
+
+        function resendSingleDispatchedOrderToDriver(orderId) {
+            const o = dispatchedOrders[orderId];
+            if (!o) return;
+            const bMap = getAllBranchesMap();
+            const bId = o.branchId || "main";
+            const bObj = bMap[bId] || bMap.main;
+            const targetDriverPhone = bObj.driverPhone || deliveryDriverPhone || adminWhatsAppNumber;
+            const msg = formatDriverWhatsAppMessage([o], bObj.name);
+            window.open(`https://wa.me/${formatWhatsAppPhone(targetDriverPhone)}?text=${encodeURIComponent(msg)}`, "_blank");
+        }
+
+        
+        function sendBranchOrdersPrompt() {
+            const bMap = getAllBranchesMap();
+            const branchNames = Object.values(bMap).map(b => `• ${b.name} (أدخل: ${b.id})`).join("\n");
+            const chosen = prompt(`اختر معرف الفرع المراد إرسال طلباته المجهزة للسائق:\n\n${branchNames}\n\nأدخل الرمز (مثال: main أو المعرف الخاص بالفرع):`, "main");
+            if (chosen && bMap[chosen.trim()]) {
+                sendBulkOrdersToDriver(chosen.trim());
+            } else if (chosen) {
+                alert("❌ رمز الفرع غير صحيح.");
             }
+        }
+
+        function sendBulkOrdersToDriver(specificBranchId = null) {
+            const isExportModalOpen = $("exportManagerModal")?.style.display === "block";
+            const assignedBranch = specificBranchId || (isExportModalOpen ? (getUserAssignedExportBranchId(currentUser?.phone) || "main") : null);
+            const keys = Object.keys(readyOrders || {}).filter(id => !assignedBranch || (readyOrders[id]?.branchId || "main") === assignedBranch);
+
+            if (!keys.length) return alert("ℹ️ لا توجد طلبات مجهزة جديدة لإرسالها للسائق.");
+
+            const bMap = getAllBranchesMap();
+            const targetBranchId = assignedBranch || (readyOrders[keys[0]]?.branchId || "main");
+            const bObj = bMap[targetBranchId] || bMap.main;
+            const targetDriverPhone = bObj.driverPhone || deliveryDriverPhone || adminWhatsAppNumber;
+            const ordersToSend = keys.map(k => readyOrders[k]);
+
+            const msg = formatDriverWhatsAppMessage(ordersToSend, bObj.name);
+
+            const now = new Date();
+            const updates = {};
+            keys.forEach(id => {
+                const ordData = {
+                    ...readyOrders[id],
+                    dispatchedAtISO: now.toISOString(),
+                    dispatchedAtStr: now.toLocaleString("ar-SY")
+                };
+                updates[`outForDelivery/${id}`] = ordData;
+                updates[`readyForDelivery/${id}`] = null;
+            });
+
+            db.ref().update(updates).then(() => {
+                keys.forEach(id => {
+                    dispatchedOrders[id] = {
+                        ...readyOrders[id],
+                        dispatchedAtISO: now.toISOString(),
+                        dispatchedAtStr: now.toLocaleString("ar-SY")
+                    };
+                    delete readyOrders[id];
+                });
+                renderReadyOrders();
+                renderDispatchedOrders();
+                renderCustomerTrackingBanner();
+                showToast("🛵 تم عزل الطلبات المرسلة ونقلها لقسم (بعهدة السائق) لمنع تكرارها!");
+                window.open(`https://wa.me/${formatWhatsAppPhone(targetDriverPhone)}?text=${encodeURIComponent(msg)}`, "_blank");
+            }).catch(err => alert("❌ خطأ أثناء عزل وإرسال القائمة: " + err.message));
         }
 
         function cancelAllPendingOrders() {
