@@ -1,17 +1,18 @@
 // ============================================================================
-// محرك المرافق المتحدث + صقل السلة وإتمام الطلب + تنظيم الإدارة والتصدير (v41)
+// محرك المرافق المتحدث + صقل السلة وإتمام الطلب + تنظيم الإدارة والتصدير (v42)
 // - بدون أي تدخل للذكاء الاصطناعي في الدفع أو فحص الإشعارات
+// - إصلاح وعرض الصور المصغرة بأمان في الاقتراحات الذكية والتوصيات والسلة
 // - صقل السلة: شريط خطوات واضح + بطاقة ملخص فاتورة نظيفة قبل الإرسال
 // - تنظيم الإدارة والتصدير: فلترة تبويبات الإدارة + لوحة التصدير والتقارير الموحدة
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V41_LOADED__) return;
-  window.__MOAATH_AI_V41_LOADED__ = true;
+  if (window.__MOAATH_AI_V42_LOADED__) return;
+  window.__MOAATH_AI_V42_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v41_prefs";
-  const POS_KEY = "moaath_pet_v41_pos";
-  const LEARN_KEY = "moaath_pet_v41_learned";
+  const PREFS_KEY = "moaath_pet_v42_prefs";
+  const POS_KEY = "moaath_pet_v42_pos";
+  const LEARN_KEY = "moaath_pet_v42_learned";
 
   const PERSONAS = {
     buddy: { id: "buddy", name: "بندق الودود", icon: "🐱", accent: "#00b0ff", rate: 1.0, pitch: 1.05, greet: "وعليكم السلام يا هلا! نورت متجر معاذ، شو نجهزلك اليوم؟" },
@@ -229,11 +230,30 @@
     if (next) speakOutLoud(msg, true);
   };
 
+  // دالة جلب الصور المصغرة الآمنة مع صورة افتراضية عند غياب الصورة
   function getThumb(id) {
-    const baseId = String(id || "").replace(/_PKG$/, "");
-    const p = products?.[baseId] || specialOffers?.[id] || {};
-    if (String(id || "").endsWith("_PKG") && (p.pkgThumb || p.pkgImage)) return p.pkgThumb || p.pkgImage;
-    return (typeof getLockedHighResImage === "function" && getLockedHighResImage(baseId)) || p.thumb || p.image || "store-icon.png";
+    try {
+      const cleanId = String(id || "").trim();
+      const baseId = cleanId.replace(/_PKG$/, "");
+      const p = (typeof products === "object" && products?.[baseId]) ||
+                (typeof specialOffers === "object" && specialOffers?.[cleanId]) ||
+                {};
+
+      if (cleanId.endsWith("_PKG")) {
+        const pkgImg = p.pkgThumb || p.pkgImage;
+        if (pkgImg && typeof pkgImg === "string" && pkgImg.trim()) return pkgImg.trim();
+      }
+
+      if (typeof window.getLockedHighResImage === "function") {
+        const locked = window.getLockedHighResImage(baseId);
+        if (locked && typeof locked === "string" && locked.trim()) return locked.trim();
+      }
+
+      const candidate = p.thumb || p.image || p.img || p.photo;
+      if (candidate && typeof candidate === "string" && candidate.trim()) return candidate.trim();
+    } catch (_) {}
+
+    return "store-icon.png";
   }
 
   function getUnitSYP(id) {
@@ -347,7 +367,6 @@
     const modalContent = document.querySelector("#cartModal .modal-content");
     if (!modalContent) return;
 
-    // 1. شريط خطوات مرئي واضح في أعلى السلة
     if (!$("cartCheckoutStepper")) {
       const stepper = document.createElement("div");
       stepper.id = "cartCheckoutStepper";
@@ -364,7 +383,6 @@
       else modalContent.insertBefore(stepper, modalContent.firstChild);
     }
 
-    // 2. بطاقة ملخص فاتورة نظيفة وواضحة قبل زر الإرسال
     const submitBtn = $("submitOrderUnifiedBtn");
     if (submitBtn && submitBtn.parentNode) {
       let card = $("cleanCheckoutSummaryCard");
@@ -482,7 +500,6 @@
     const tabsBar = adminContent?.querySelector(".categories");
     if (!adminContent || !tabsBar) return;
 
-    // 1. شريط بحث سريع لتبويبات الإدارة لتسهيل التنقل على الهاتف
     if (!$("admTabsQuickSearch")) {
       const searchWrap = document.createElement("div");
       searchWrap.style.cssText = "margin-bottom:6px;";
@@ -498,7 +515,6 @@
       });
     }
 
-    // 2. تبويب الوصفات (🍲 الوصفات)
     if (!$("admTab12Recipes")) {
       const tabBtn = document.createElement("button");
       tabBtn.className = "cat-btn";
@@ -554,7 +570,6 @@
       renderAdminRecipesList();
     }
 
-    // 3. تبويب التصدير والتقارير الموحد (📤 التصدير)
     if (!$("admTab13Export")) {
       const expBtn = document.createElement("button");
       expBtn.className = "cat-btn";
@@ -585,8 +600,68 @@
   }
 
   // ==========================================================================
-  // بقية منطق المساعد الذكي والوصفات والمرافق المتحدث
+  // [C] التوصيات الذكية المصورة داخل السلة + نافذة الاقتراحات التفاعلية
   // ==========================================================================
+  window.renderSmartCartRecommendations = function () {
+    const box = $("aiCartRecommendationsBox");
+    if (!box) return;
+    const keys = Object.keys(cart || {});
+    if (!keys.length) {
+      box.style.display = "none";
+      box.innerHTML = "";
+      return;
+    }
+
+    const inCart = new Set(keys.map(k => cart[k]?.origId || String(k).replace(/_PKG$/, "")));
+    const cats = new Set(keys.map(k => cart[k]?.category).filter(Boolean));
+    const co = {};
+
+    Object.values(completedOrdersHistory || {}).forEach(ord => {
+      const ids = Array.from(new Set(
+        (ord?.items || [])
+          .filter(i => !String(i.id || "").startsWith("OFFER_"))
+          .map(i => i.origId || String(i.id || "").replace(/_PKG$/, ""))
+      ));
+      if (ids.some(id => inCart.has(id))) {
+        ids.forEach(id => {
+          if (!inCart.has(id)) co[id] = (co[id] || 0) + 1;
+        });
+      }
+    });
+
+    const picks = Object.keys(products || {})
+      .filter(pid => !inCart.has(pid) && getBranchAvail(pid) > 0)
+      .map(pid => ({
+        pid,
+        p: products[pid],
+        s: (co[pid] || 0) * 5 + (cats.has(products[pid].category) ? 2 : 0)
+      }))
+      .filter(x => x.s > 0)
+      .sort((a, b) => b.s - a.s)
+      .slice(0, 4);
+
+    if (!picks.length) {
+      box.style.display = "none";
+      box.innerHTML = "";
+      return;
+    }
+
+    box.style.display = "block";
+    box.innerHTML = `
+      <div style="background:rgba(0,176,255,0.06); border:1px dashed #00b0ff; border-radius:8px; padding:7px;">
+        <div style="font-size:11px; font-weight:bold; color:#00b0ff; margin-bottom:6px;">🛍️ مقترحات مصورة تكمل سلتك:</div>
+        <div style="display:flex; gap:6px; overflow-x:auto;">
+          ${picks.map(({ pid, p }) => `
+            <div style="min-width:112px; background:var(--bg-color); border:1px solid var(--gold-color); border-radius:7px; padding:6px; text-align:center; flex-shrink:0;">
+              <img src="${esc(getThumb(pid))}" onerror="this.onerror=null;this.src='store-icon.png';" style="width:46px; height:46px; border-radius:6px; object-fit:cover; margin:0 auto 4px auto; display:block;">
+              <div style="font-size:10px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${esc(p.name)}">${esc(p.name)}</div>
+              <div style="font-size:10px; color:var(--success-color); font-weight:bold; margin:2px 0;">${getUnitSYP(pid).toLocaleString()} ل.س</div>
+              <button type="button" onclick="changeQty('${pid}', 1)" class="btn" style="padding:3px 6px; font-size:10px;">➕ أضف</button>
+            </div>`).join("")}
+        </div>
+      </div>`;
+  };
+
   function answerLiveStoreQueries(normText) {
     if (/مفتوح|دوام|اوقات|ساعات|مسكر|يفتح/.test(normText)) {
       const openNow = typeof isGlobalStoreOpenNow === "function" ? isGlobalStoreOpenNow() : true;
@@ -764,7 +839,7 @@
       const isSelected = it.qty > 0;
       return `
         <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--bg-color); border:1px solid ${isSelected ? "var(--gold-color)" : "var(--border-color)"}; border-radius:8px; padding:7px; margin-bottom:7px;">
-          <img src="${esc(it.thumb)}" onerror="this.src='store-icon.png'" style="width:42px; height:42px; border-radius:6px; object-fit:cover; flex-shrink:0;">
+          <img src="${esc(it.thumb)}" onerror="this.onerror=null;this.src='store-icon.png';" style="width:42px; height:42px; border-radius:6px; object-fit:cover; flex-shrink:0;">
           <div style="flex:1; min-width:0; text-align:right;">
             <div style="font-size:12px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(it.name)}</div>
             <div style="font-size:10px; color:var(--gold-color);">${it.unitPrice.toLocaleString()} ل.س ${isSelected ? `× ${it.qty} = <b>${lineTotal.toLocaleString()} ل.س</b>` : ""}</div>
@@ -1028,8 +1103,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v41Bound) return;
-    orb.dataset.v41Bound = "1";
+    if (!orb || !root || orb.dataset.v42Bound) return;
+    orb.dataset.v42Bound = "1";
 
     let down = false, dragging = false, holdFired = false, holdTimer = null;
     let sx = 0, sy = 0, r0 = 14, b0 = 88;
@@ -1232,7 +1307,20 @@
     }).join("");
   };
 
-  function mountV41() {
+  window.runAssistantQACheck = function () {
+    const report = {
+      productsLoaded: Object.keys(products || {}).length,
+      categoriesLoaded: Array.isArray(categories) ? categories.length : 0,
+      recipesAvailable: getAllMergedRecipes().length,
+      speechSynthesisSupported: "speechSynthesis" in window,
+      speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
+      online: navigator.onLine !== false
+    };
+    console.info("[QA Assistant Diagnostic]", report);
+    return report;
+  };
+
+  function mountV42() {
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const assistBox = $("aiSmartAssistantBox");
@@ -1259,19 +1347,19 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV41";
+      styleTag.id = "petCharStyleV42";
       styleTag.textContent = `
-        @keyframes petFloatV41 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
-        @keyframes petRingV41 { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.36); opacity: 0; } }
+        @keyframes petFloatV42 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
+        @keyframes petRingV42 { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.36); opacity: 0; } }
         #petCharOrb {
           width: 56px; height: 56px; border-radius: 50%; border: 2.5px solid ${p.accent};
           font-size: 27px; display: flex; align-items: center; justify-content: center;
           cursor: grab; -webkit-touch-callout: none; user-select: none;
-          animation: petFloatV41 2.7s ease-in-out infinite;
+          animation: petFloatV42 2.7s ease-in-out infinite;
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: petRingV41 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: petRingV42 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 66px; right: 0; max-width: 225px; width: max-content;
@@ -1295,12 +1383,13 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV41(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV42(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
     if (typeof _origRenderCart === "function") _origRenderCart();
     enhanceCustomerCartCheckoutUX();
+    renderSmartCartRecommendations();
   };
 
   const _origToggleTheme = window.toggleTheme;
@@ -1313,6 +1402,6 @@
     window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV41);
-  else mountV41();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV42);
+  else mountV42();
 })();
