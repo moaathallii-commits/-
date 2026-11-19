@@ -1,27 +1,87 @@
 // ============================================================================
-// محرك المرافق المتحدث + صوت سحابي طبيعي + صقل السلة والإدارة والتصدير (v44)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v46 - Anime Fairies & 3D Roam)
 // - استبعاد صارم وكامل للذكاء الاصطناعي من عمليات الدفع وطرق الدفع والإشعارات المالية
+// - تصاميم جنيات أنمي مخصصة لكل شخصية (بندق، صقر، ثعلب، لولو، سارة، نور)
+// - حركة ثلاثية الأبعاد + ظل أرضي + تجوال حر يتوقف تلقائياً عند لمس/سحب/تحدث الزبون
 // - صوت عربي بشري طبيعي عبر Cloudflare Worker (mode: "tts") بدون صوت المتصفح
-// - إصلاح وعرض الصور المصغرة بأمان في الاقتراحات الذكية والتوصيات والسلة
-// - صقل السلة: شريط خطوات واضح + بطاقة ملخص فاتورة نظيفة قبل الإرسال
-// - تنظيم الإدارة والتصدير: فلترة تبويبات الإدارة + لوحة التصدير والتقارير الموحدة
+// - نافذة اقتراحات 0 افتراضي + وصفات الإدارة + التصدير + صقل السلة
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V44_LOADED__) return;
-  window.__MOAATH_AI_V44_LOADED__ = true;
+  if (window.__MOAATH_AI_V46_LOADED__) return;
+  window.__MOAATH_AI_V46_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v44_prefs";
-  const POS_KEY = "moaath_pet_v44_pos";
-  const LEARN_KEY = "moaath_pet_v44_learned";
+  const PREFS_KEY = "moaath_pet_v46_prefs";
+  const POS_KEY = "moaath_pet_v46_pos";
+  const LEARN_KEY = "moaath_pet_v46_learned";
 
   const PERSONAS = {
-    buddy: { id: "buddy", name: "بندق الودود", icon: "🐱", accent: "#00b0ff", voiceName: "Puck", speed: 1.0, greet: "وعليكم السلام يا هلا! نورت متجر معاذ، شو نجهزلك اليوم؟" },
-    pro: { id: "pro", name: "صقر السريع", icon: "🦅", accent: "#00e676", voiceName: "Charon", speed: 1.14, greet: "أهلاً بك! جاهز لخدمتك بسرعة، اذكر الصنف أو الوصفة." },
-    saver: { id: "saver", name: "ثعلب التوفير", icon: "🦊", accent: "#D4AF37", voiceName: "Fenrir", speed: 0.98, greet: "يا مرحبا! نجهزلك المتوفر بأفضل قيمة وتوفير." },
-    lulu: { id: "lulu", name: "لولو اللطيفة", icon: "🐰", accent: "#ff7eb6", voiceName: "Aoede", speed: 0.96, greet: "أهلاً فيكِ ونورتي المتجر! شو حابة تطبخي أو تحضّري حلى اليوم؟" },
-    sara: { id: "sara", name: "سارة المنظمة", icon: "🦋", accent: "#7c4dff", voiceName: "Kore", speed: 1.02, greet: "مرحباً بكِ! نرتب مكونات الوصفة حسب المتوفر بكل دقة." },
-    noor: { id: "noor", name: "نور الذكية", icon: "✨", accent: "#ff9800", voiceName: "Leda", speed: 1.06, greet: "أهلاً وسهلاً! اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر." }
+    buddy: {
+      id: "buddy",
+      name: "بندق الودود",
+      roleBadge: "جنية مرحة ودودة",
+      avatarUrl: "fairies/buddy.jpg",
+      fallbackUrl: "image_generation_content/8925614795600754675",
+      accent: "#00b0ff",
+      voiceName: "Puck",
+      speed: 1.0,
+      greet: "وعليكم السلام يا هلا! نورت متجر معاذ، شو نجهزلك اليوم؟"
+    },
+    pro: {
+      id: "pro",
+      name: "صقر السريع",
+      roleBadge: "جنية عملية سريعة",
+      avatarUrl: "fairies/pro.jpg",
+      fallbackUrl: "image_generation_content/2939152068369174048",
+      accent: "#00e676",
+      voiceName: "Charon",
+      speed: 1.14,
+      greet: "أهلاً بك! جاهز لخدمتك بسرعة، اذكر الصنف أو الوصفة."
+    },
+    saver: {
+      id: "saver",
+      name: "ثعلب التوفير",
+      roleBadge: "جنية ذكية للميزانية",
+      avatarUrl: "fairies/saver.jpg",
+      fallbackUrl: "image_generation_content/8978966884573139907",
+      accent: "#D4AF37",
+      voiceName: "Fenrir",
+      speed: 0.98,
+      greet: "يا مرحبا! نجهزلك المتوفر بأفضل قيمة وتوفير."
+    },
+    lulu: {
+      id: "lulu",
+      name: "لولو اللطيفة",
+      roleBadge: "جنية وردية لطيفة",
+      avatarUrl: "fairies/lulu.jpg",
+      fallbackUrl: "image_generation_content/16458470604382325854",
+      accent: "#ff7eb6",
+      voiceName: "Aoede",
+      speed: 0.96,
+      greet: "أهلاً فيكِ ونورتي المتجر! شو حابة تطبخي أو تحضّري حلى اليوم؟"
+    },
+    sara: {
+      id: "sara",
+      name: "سارة المنظمة",
+      roleBadge: "جنية منظمة للوصفات",
+      avatarUrl: "fairies/sara.jpg",
+      fallbackUrl: "image_generation_content/11046149226620010275",
+      accent: "#7c4dff",
+      voiceName: "Kore",
+      speed: 1.02,
+      greet: "مرحباً بكِ! نرتب مكونات الوصفة حسب المتوفر بكل دقة."
+    },
+    noor: {
+      id: "noor",
+      name: "نور الذكية",
+      roleBadge: "جنية مشرقة للخيارات",
+      avatarUrl: "fairies/noor.jpg",
+      fallbackUrl: "image_generation_content/13701790742975363569",
+      accent: "#ff9800",
+      voiceName: "Leda",
+      speed: 1.06,
+      greet: "أهلاً وسهلاً! اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر."
+    }
   };
 
   const DEFAULT_RECIPES = [
@@ -56,6 +116,8 @@
   let modalItemsState = [];
   let speechUnlocked = false;
   let selectedRecipeProductIds = new Set();
+  let roamTimer = null;
+  let userPausedUntil = 0;
 
   // ==========================================================================
   // [حاجز عدم تدخل الذكاء الاصطناعي في الدفع والإشعارات المالية]
@@ -81,6 +143,10 @@
 
   function haptic(pattern = 15) {
     try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (_) {}
+  }
+
+  function pauseRoaming(ms = 8000) {
+    userPausedUntil = Date.now() + ms;
   }
 
   function cleanArabicNorm(str) {
@@ -294,7 +360,7 @@
     const next = !prefs.voiceEnabled;
     setPrefs({ voiceEnabled: next });
     if (!next) stopEmbeddedVoice();
-    const msg = next ? "تم تفعيل الصوت للمساعد، أهلاً بك!" : "تم كتم صوت المساعد.";
+    const msg = next ? "تم تفعيل الصوت للجنية، أهلاً بك!" : "تم كتم صوت الجنية.";
     showBubble(next ? "🗣️ الصوت مفعّل" : "🔇 الصوت مكتوم", 2800);
     showToast(next ? "🗣️ الصوت مفعّل" : "🔇 الصوت مكتوم");
     if (next) speakOutLoud(msg, true);
@@ -346,14 +412,29 @@
     return typeof getProductStockForBranch === "function" ? getProductStockForBranch(pObj, activeBranchId) : (parseInt(pObj.stock) || 0);
   }
 
+  function renderFairyAvatarImage(imgEl, persona) {
+    if (!imgEl || !persona) return;
+    imgEl.alt = persona.name;
+    imgEl.onerror = function () {
+      this.onerror = null;
+      if (persona.fallbackUrl && this.src !== persona.fallbackUrl) {
+        this.src = persona.fallbackUrl;
+      } else {
+        this.src = "store-icon.png";
+      }
+    };
+    imgEl.src = persona.avatarUrl || persona.fallbackUrl || "store-icon.png";
+  }
+
   window.selectPetPersona = function (key) {
     if (!PERSONAS[key]) return;
     haptic(15);
+    pauseRoaming(7500);
     setPrefs({ persona: key });
     syncVisuals();
     const p = PERSONAS[key];
     const msg = `أهلاً بك مع ${p.name}! اضغط مطوّلاً وتحدّث معي.`;
-    showBubble(`${p.icon} ${msg}`, 3400);
+    showBubble(`🧚 ${msg}`, 3400);
     speakOutLoud(msg, false);
   };
 
@@ -378,12 +459,28 @@
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const orb = $("petCharOrb");
     const ring = $("petListenRing");
+    const statusBadge = $("fairyStateBadge");
     if (!orb) return;
 
-    const faces = { idle: p.icon, listening: "🎙️", thinking: "🤔", happy: "🤩", greet: "😊", choice: "🔀" };
-    orb.textContent = faces[state] || p.icon;
+    const badges = {
+      idle: "🧚",
+      listening: "🎙️",
+      thinking: "✨",
+      happy: "🤩",
+      greet: "🌸",
+      choice: "🔀"
+    };
+    if (statusBadge) statusBadge.textContent = badges[state] || "🧚";
+
     orb.style.borderColor = state === "listening" ? "#00e676" : p.accent;
     if (ring) ring.style.display = state === "listening" ? "block" : "none";
+
+    if (state === "happy" || state === "choice") {
+      pauseRoaming(6500);
+      orb.style.transform = "scale(1.12) rotateY(10deg)";
+      setTimeout(() => { if (orb) orb.style.transform = ""; }, 650);
+    }
+
     if (bubbleTxt) {
       showBubble(bubbleTxt, state === "listening" ? 0 : 5400);
       if (shouldSpeak) speakOutLoud(bubbleTxt, false);
@@ -406,6 +503,7 @@
 
     const root = $("petCharRoot");
     const orb = $("petCharOrb");
+    const img = $("fairyCharImg");
     const showBtn = $("petShowCharBtn");
     const sel = $("petPersonaSelect");
 
@@ -418,16 +516,70 @@
     if (sel && sel.value !== prefs.persona) sel.value = prefs.persona;
 
     if (orb) {
-      orb.textContent = p.icon;
       orb.style.borderColor = p.accent;
       orb.style.background = isLight
-        ? "radial-gradient(circle at 28% 25%, #ffffff, #e6ebf2 72%)"
-        : "radial-gradient(circle at 28% 25%, rgba(255,255,255,0.36), var(--card-bg) 66%)";
+        ? `radial-gradient(circle at 30% 25%, #ffffff, ${p.accent}26 75%)`
+        : `radial-gradient(circle at 30% 25%, ${p.accent}33, #0c1428 72%)`;
       orb.style.boxShadow = isLight
-        ? `0 10px 22px rgba(0,0,0,0.2), 0 0 14px ${p.accent}55`
-        : `0 12px 26px rgba(0,0,0,0.55), 0 0 16px ${p.accent}66, inset 0 2px 6px rgba(255,255,255,0.4)`;
+        ? `0 12px 24px rgba(0,0,0,0.22), 0 0 16px ${p.accent}66`
+        : `0 14px 28px rgba(0,0,0,0.6), 0 0 18px ${p.accent}77, inset 0 2px 6px rgba(255,255,255,0.35)`;
     }
+    if (img) renderFairyAvatarImage(img, p);
     syncConnectivityBadge();
+  }
+
+  // ==========================================================================
+  // [تجوال ثلاثي الأبعاد حر وكائن حي على الجوال]
+  // ==========================================================================
+  function ensureGroundShadow(root) {
+    if (!root || $("pet3DGroundShadow")) return;
+    const orbWrap = root.querySelector("div[style*='position:relative']");
+    if (orbWrap) {
+      const sh = document.createElement("div");
+      sh.id = "pet3DGroundShadow";
+      orbWrap.appendChild(sh);
+    }
+  }
+
+  function stepFreeRoam() {
+    const root = $("petCharRoot");
+    const orb = $("petCharOrb");
+    if (!root || !orb || root.style.display === "none") return;
+    if (Date.now() < userPausedUntil || isHoldingSpeak) return;
+
+    const modalOpen = Array.from(document.querySelectorAll(".modal-overlay")).some(
+      m => m.style.display === "flex" || m.style.display === "block"
+    );
+    if (modalOpen) return;
+
+    const maxR = Math.max(14, window.innerWidth - 82);
+    const minB = 94;
+    const maxB = Math.max(minB + 40, window.innerHeight - 175);
+
+    const curR = parseInt(root.style.right || "14", 10);
+    const curB = parseInt(root.style.bottom || "88", 10);
+
+    const nextR = Math.round(Math.max(14, Math.min(maxR, curR + (Math.random() - 0.5) * 145)));
+    const nextB = Math.round(Math.max(minB, Math.min(maxB, curB + (Math.random() - 0.5) * 155)));
+
+    const tiltY = nextR < curR ? 16 : -16;
+    const tiltX = nextB > curB ? -12 : 12;
+
+    orb.classList.add("is-roaming");
+    orb.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateZ(16px)`;
+    root.style.right = nextR + "px";
+    root.style.bottom = nextB + "px";
+
+    setTimeout(() => {
+      if (Date.now() >= userPausedUntil && orb) {
+        orb.style.transform = "";
+      }
+    }, 950);
+  }
+
+  function startRoamLoop() {
+    if (roamTimer) return;
+    roamTimer = setInterval(stepFreeRoam, 4300);
   }
 
   // ==========================================================================
@@ -1058,7 +1210,7 @@
     const chatReply = matchCasualChat(norm, persona);
     if (chatReply) {
       setOrbEmotion("greet", chatReply, true);
-      setTxt("aiShoppingStatusText", `${persona.icon} ${chatReply}`);
+      setTxt("aiShoppingStatusText", `🧚 ${chatReply}`);
       return;
     }
 
@@ -1126,6 +1278,7 @@
   function beginLongPressVoice() {
     unlockEmbeddedVoice();
     stopEmbeddedVoice();
+    pauseRoaming(12000);
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
       showBubble("المتصفح لا يدعم الميكروفون، اكتب طلبك أو وصفتك في الخانة.", 3600);
@@ -1181,20 +1334,24 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v44Bound) return;
-    orb.dataset.v44Bound = "1";
+    if (!orb || !root || orb.dataset.v46Bound) return;
+    orb.dataset.v46Bound = "1";
+
+    ensureGroundShadow(root);
 
     let down = false, dragging = false, holdFired = false, holdTimer = null;
     let sx = 0, sy = 0, r0 = 14, b0 = 88;
 
     const onDown = e => {
       unlockEmbeddedVoice();
+      pauseRoaming(9500);
+      orb.classList.remove("is-roaming");
       const pt = e.touches ? e.touches[0] : e;
       down = true; dragging = false; holdFired = false;
       sx = pt.clientX; sy = pt.clientY;
       r0 = parseInt(root.style.right || "14", 10);
       b0 = parseInt(root.style.bottom || "88", 10);
-      orb.style.transform = "scale(1.07)";
+      orb.style.transform = "scale(1.08)";
 
       clearTimeout(holdTimer);
       holdTimer = setTimeout(() => {
@@ -1217,10 +1374,11 @@
       }
 
       if (dragging) {
-        const nr = Math.max(8, Math.min(Math.max(8, window.innerWidth - 68), r0 - dx));
-        const nb = Math.max(84, Math.min(Math.max(84, window.innerHeight - 96), b0 - dy));
+        const nr = Math.max(8, Math.min(Math.max(8, window.innerWidth - 76), r0 - dx));
+        const nb = Math.max(84, Math.min(Math.max(84, window.innerHeight - 98), b0 - dy));
         root.style.right = nr + "px";
         root.style.bottom = nb + "px";
+        orb.style.transform = `scale(1.06) rotateX(${Math.max(-14, Math.min(14, -dy * 0.25))}deg) rotateY(${Math.max(-14, Math.min(14, dx * 0.25))}deg)`;
       }
     };
 
@@ -1229,6 +1387,7 @@
       down = false;
       clearTimeout(holdTimer);
       orb.style.transform = "";
+      orb.classList.add("is-roaming");
 
       if (holdFired) {
         endLongPressVoice();
@@ -1239,10 +1398,12 @@
         dragging = false;
         const curR = parseInt(root.style.right || "14", 10);
         const curB = parseInt(root.style.bottom || "88", 10);
-        const snapR = (window.innerWidth - curR - 28) >= window.innerWidth / 2 ? 12 : Math.max(12, window.innerWidth - 68);
-        root.style.transition = "right 0.2s ease, bottom 0.2s ease";
+        const snapR = (window.innerWidth - curR - 30) >= window.innerWidth / 2 ? 12 : Math.max(12, window.innerWidth - 76);
+        root.style.transition = "right 0.25s ease, bottom 0.25s ease";
         root.style.right = snapR + "px";
-        setTimeout(() => { root.style.transition = ""; }, 220);
+        setTimeout(() => {
+          root.style.transition = "right 1.15s cubic-bezier(0.22, 1, 0.36, 1), bottom 1.15s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease";
+        }, 260);
         savePos(snapR, curB);
         haptic(12);
         return;
@@ -1251,7 +1412,7 @@
       const prefs = getPrefs();
       const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
       const phrase = sessionCtx.lastSpokenText || persona.greet;
-      showBubble(`${persona.icon} ${phrase}`, 4000);
+      showBubble(`🧚 ${phrase}`, 4000);
       speakOutLoud(phrase, true);
     };
 
@@ -1265,7 +1426,8 @@
 
     window.addEventListener("scroll", () => {
       if (isHoldingSpeak) return;
-      root.style.opacity = "0.45";
+      pauseRoaming(4500);
+      root.style.opacity = "0.48";
       clearTimeout(scrollTimer);
       scrollTimer = setTimeout(() => { root.style.opacity = "1"; }, 550);
     }, { passive: true });
@@ -1387,8 +1549,9 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v44",
+      version: "v46",
       paymentAIExcluded: true,
+      fairiesCount: Object.keys(PERSONAS).length,
       productsLoaded: Object.keys(products || {}).length,
       categoriesLoaded: Array.isArray(categories) ? categories.length : 0,
       recipesAvailable: getAllMergedRecipes().length,
@@ -1396,11 +1559,11 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v44]", report);
+    console.info("[QA Assistant Diagnostic v46]", report);
     return report;
   };
 
-  function mountV44() {
+  function mountV46() {
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const assistBox = $("aiSmartAssistantBox");
@@ -1410,11 +1573,11 @@
       bar.id = "petPersonaBar";
       bar.style.cssText = "display:flex; align-items:center; justify-content:space-between; gap:5px; flex-wrap:wrap; margin-bottom:6px; font-size:10px;";
       const opts = Object.values(PERSONAS).map(per =>
-        `<option value="${per.id}">${per.icon} ${per.name}</option>`
+        `<option value="${per.id}">🧚 ${per.name} — ${per.roleBadge}</option>`
       ).join("");
       bar.innerHTML = `
-        <div style="display:flex; align-items:center; gap:4px; flex:1; min-width:165px;">
-          <span style="color:var(--gold-color); font-weight:bold;">المرافق:</span>
+        <div style="display:flex; align-items:center; gap:4px; flex:1; min-width:170px;">
+          <span style="color:var(--gold-color); font-weight:bold;">الجنية:</span>
           <select id="petPersonaSelect" class="form-control" onchange="selectPetPersona(this.value)" style="padding:3px 6px; font-size:10px; flex:1;">${opts}</select>
         </div>
         <div style="display:flex; align-items:center; gap:4px;">
@@ -1427,22 +1590,56 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV44";
+      styleTag.id = "petCharStyleV46";
       styleTag.textContent = `
-        @keyframes petFloatV44 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
-        @keyframes petRingV44 { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.36); opacity: 0; } }
+        @keyframes fairyHover3D {
+          0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
+          50% { transform: translateY(-7px) rotateX(-5deg) rotateY(6deg) scale(1.04); }
+        }
+        @keyframes fairyShadow3D {
+          0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.42; }
+          50% { transform: translateX(-50%) scale(0.75); opacity: 0.22; }
+        }
+        @keyframes fairyRingV46 {
+          0% { transform: scale(1); opacity: 0.9; }
+          100% { transform: scale(1.38); opacity: 0; }
+        }
+        #petCharRoot {
+          perspective: 760px;
+          transform-style: preserve-3d;
+          transition: right 1.15s cubic-bezier(0.22, 1, 0.36, 1), bottom 1.15s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+        }
         #petCharOrb {
-          width: 56px; height: 56px; border-radius: 50%; border: 2.5px solid ${p.accent};
-          font-size: 27px; display: flex; align-items: center; justify-content: center;
+          width: 62px; height: 62px; border-radius: 50%; border: 2.5px solid ${p.accent};
+          position: relative; overflow: hidden;
+          display: flex; align-items: center; justify-content: center;
           cursor: grab; -webkit-touch-callout: none; user-select: none;
-          animation: petFloatV44 2.7s ease-in-out infinite;
+          transform-style: preserve-3d;
+          transition: transform 0.28s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+        #petCharOrb.is-roaming {
+          animation: fairyHover3D 2.2s ease-in-out infinite;
+        }
+        #fairyCharImg {
+          width: 100%; height: 100%; object-fit: cover; border-radius: 50%; pointer-events: none;
+        }
+        #fairyStateBadge {
+          position: absolute; bottom: -2px; left: -2px;
+          background: var(--card-bg); border: 1px solid var(--gold-color);
+          border-radius: 50%; width: 20px; height: 20px; font-size: 11px;
+          display: flex; align-items: center; justify-content: center; pointer-events: none;
+        }
+        #pet3DGroundShadow {
+          position: absolute; left: 50%; bottom: -8px; width: 42px; height: 9px;
+          border-radius: 50%; background: rgba(0, 0, 0, 0.45); filter: blur(2px);
+          pointer-events: none; animation: fairyShadow3D 2.2s ease-in-out infinite;
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: petRingV44 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV46 1.1s infinite;
         }
         #petMiniBubble {
-          display: none; position: absolute; bottom: 66px; right: 0; max-width: 225px; width: max-content;
+          display: none; position: absolute; bottom: 72px; right: 0; max-width: 235px; width: max-content;
           background: var(--card-bg); color: var(--text-color); border: 1px solid var(--gold-color);
           border-radius: 10px; padding: 6px 9px; font-size: 11px; line-height: 1.4;
           box-shadow: 0 8px 20px rgba(0,0,0,0.45); pointer-events: none;
@@ -1451,8 +1648,16 @@
 
       const root = document.createElement("div");
       root.id = "petCharRoot";
-      root.style.cssText = "position:fixed; bottom:88px; right:14px; z-index:98; transition:opacity 0.2s ease;";
-      root.innerHTML = `<div id="petMiniBubble"></div><div style="position:relative;"><div id="petListenRing"></div><div id="petCharOrb" role="button" aria-label="المرافق المتحدث">${p.icon}</div></div>`;
+      root.style.cssText = "position:fixed; bottom:88px; right:14px; z-index:98;";
+      root.innerHTML = `
+        <div id="petMiniBubble"></div>
+        <div style="position:relative;">
+          <div id="petListenRing"></div>
+          <div id="petCharOrb" class="is-roaming" role="button" aria-label="جنية المساعد الذكي">
+            <img id="fairyCharImg" alt="${p.name}">
+          </div>
+          <div id="fairyStateBadge">🧚</div>
+        </div>`;
       document.body.appendChild(root);
       bindOrbInteractions($("petCharOrb"), root);
     }
@@ -1460,10 +1665,11 @@
     organizeAdminAndExportUI();
     enhanceCustomerCartCheckoutUX();
     syncVisuals();
+    startRoamLoop();
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV44(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV46(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
@@ -1478,166 +1684,6 @@
   window.addEventListener("online", syncConnectivityBadge);
   window.addEventListener("offline", syncConnectivityBadge);
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV44);
-  else mountV44();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV46);
+  else mountV46();
 })();
-// ============================================================================
-// حركة الكائن الحي ثلاثي الأبعاد والتجوال الحر على الجوال (v45 Patch)
-// - يحافظ على عدم تدخل الذكاء الاصطناعي في الدفع أو الإشعارات
-// - يضيف عمقاً ثلاثي الأبعاد + ظل أرضي + تجوالاً حراً يتوقف تلقائياً عند التفاعل
-// ============================================================================
-(function () {
-  if (window.__MOAATH_3D_ROAM_V45__) return;
-  window.__MOAATH_3D_ROAM_V45__ = true;
-
-  let roamTimer = null;
-  let userPausedUntil = 0;
-
-  function pauseRoaming(ms = 7000) {
-    userPausedUntil = Date.now() + ms;
-  }
-
-  function inject3DLivingStyles() {
-    if ($("pet3DRoamStyleV45")) return;
-    const st = document.createElement("style");
-    st.id = "pet3DRoamStyleV45";
-    st.textContent = `
-      @keyframes petBreathe3D {
-        0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
-        50% { transform: translateY(-7px) rotateX(-5deg) rotateY(6deg) scale(1.04); }
-      }
-      @keyframes petShadowPulse {
-        0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.42; }
-        50% { transform: translateX(-50%) scale(0.76); opacity: 0.22; }
-      }
-      #petCharRoot {
-        perspective: 750px !important;
-        transform-style: preserve-3d !important;
-        transition: right 1.15s cubic-bezier(0.22, 1, 0.36, 1), bottom 1.15s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease !important;
-      }
-      #petCharOrb.is-roaming {
-        animation: petBreathe3D 1.8s ease-in-out infinite !important;
-      }
-      #pet3DGroundShadow {
-        position: absolute;
-        left: 50%;
-        bottom: -7px;
-        width: 38px;
-        height: 9px;
-        border-radius: 50%;
-        background: rgba(0, 0, 0, 0.45);
-        filter: blur(2px);
-        pointer-events: none;
-        animation: petShadowPulse 1.8s ease-in-out infinite;
-      }
-    `;
-    document.head.appendChild(st);
-  }
-
-  function ensureGroundShadow(root) {
-    if (!root || $("pet3DGroundShadow")) return;
-    const orbWrap = root.querySelector("div[style*='position:relative']");
-    if (orbWrap) {
-      const sh = document.createElement("div");
-      sh.id = "pet3DGroundShadow";
-      orbWrap.appendChild(sh);
-    }
-  }
-
-  function stepFreeRoam() {
-    const root = $("petCharRoot");
-    const orb = $("petCharOrb");
-    if (!root || !orb || root.style.display === "none") return;
-    if (Date.now() < userPausedUntil) return;
-
-    const modalOpen = Array.from(document.querySelectorAll(".modal-overlay")).some(
-      m => m.style.display === "flex" || m.style.display === "block"
-    );
-    if (modalOpen) return;
-
-    const maxR = Math.max(14, window.innerWidth - 76);
-    const minB = 92;
-    const maxB = Math.max(minB + 40, window.innerHeight - 170);
-
-    const curR = parseInt(root.style.right || "14", 10);
-    const curB = parseInt(root.style.bottom || "88", 10);
-
-    const deltaR = (Math.random() - 0.5) * 140;
-    const deltaB = (Math.random() - 0.5) * 150;
-
-    const nextR = Math.round(Math.max(14, Math.min(maxR, curR + deltaR)));
-    const nextB = Math.round(Math.max(minB, Math.min(maxB, curB + deltaB)));
-
-    const tiltY = nextR < curR ? 14 : -14;
-    const tiltX = nextB > curB ? -10 : 10;
-
-    orb.classList.add("is-roaming");
-    orb.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateZ(14px)`;
-    root.style.right = nextR + "px";
-    root.style.bottom = nextB + "px";
-
-    setTimeout(() => {
-      if (Date.now() >= userPausedUntil && orb) {
-        orb.style.transform = "";
-      }
-    }, 900);
-  }
-
-  function bindRoamGuards() {
-    const root = $("petCharRoot");
-    const orb = $("petCharOrb");
-    if (!root || !orb || orb.dataset.v45GuardBound) return;
-    orb.dataset.v45GuardBound = "1";
-
-    ensureGroundShadow(root);
-
-    ["touchstart", "mousedown", "pointerdown"].forEach(evName => {
-      orb.addEventListener(evName, () => {
-        pauseRoaming(9000);
-        orb.classList.remove("is-roaming");
-      }, { passive: true });
-    });
-
-    ["touchend", "mouseup", "pointerup"].forEach(evName => {
-      window.addEventListener(evName, () => {
-        setTimeout(() => {
-          if (orb && Date.now() >= userPausedUntil) {
-            orb.classList.add("is-roaming");
-          }
-        }, 2500);
-      }, { passive: true });
-    });
-
-    window.addEventListener("scroll", () => pauseRoaming(4500), { passive: true });
-  }
-
-  function init3DRoaming() {
-    inject3DLivingStyles();
-    const root = $("petCharRoot");
-    if (root) ensureGroundShadow(root);
-    bindRoamGuards();
-
-    if (!roamTimer) {
-      roamTimer = setInterval(stepFreeRoam, 4200);
-    }
-  }
-
-  const _prevMount = window.mountV44;
-  if (typeof _prevMount === "function") {
-    window.mountV44 = function () {
-      _prevMount.apply(this, arguments);
-      init3DRoaming();
-    };
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => setTimeout(init3DRoaming, 250));
-  } else {
-    setTimeout(init3DRoaming, 250);
-  }
-})();
-
-
-
-
-
