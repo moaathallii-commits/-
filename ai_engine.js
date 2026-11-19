@@ -1,15 +1,18 @@
 // ============================================================================
-// محرك المرافق المتحدث + إدارة الوصفات في لوحة الإدارة (v39)
-// - تبويب "🍲 الوصفات" في الإدارة لإضافة/تعديل/حذف الوصفات واحتياجاتها في Firebase
-// - تفعيل التحدث الصوتي العربي الحقيقي للمساعد مع فك قفل الصوت على الهاتف
-// - الكمية الافتراضية في نافذة الاقتراحات = 0
+// محرك المرافق المتحدث لمتجر معاذ (v40 - All 15 Architect, PWA & QA Upgrades)
 // - بدون أي تدخل للذكاء الاصطناعي في الدفع أو فحص الإشعارات
+// - شجرة أولويات صارمة + ذاكرة جلسة + حماية دورة الحياة (Idempotent Mount)
+// - نافذة اقتراحات تفاعلية بكمية افتراضية 0 + زر تصفير + بدائل ذكية للمنفذ
+// - تبويب إدارة الوصفات محسّن مع بحث فوري وعداد مكونات + فحص QA صامت
 // ============================================================================
 
 (function () {
-  const PREFS_KEY = "moaath_pet_v39_prefs";
-  const POS_KEY = "moaath_pet_v39_pos";
-  const LEARN_KEY = "moaath_pet_v39_learned";
+  if (window.__MOAATH_AI_V40_LOADED__) return;
+  window.__MOAATH_AI_V40_LOADED__ = true;
+
+  const PREFS_KEY = "moaath_pet_v40_prefs";
+  const POS_KEY = "moaath_pet_v40_pos";
+  const LEARN_KEY = "moaath_pet_v40_learned";
 
   const PERSONAS = {
     buddy: { id: "buddy", name: "بندق الودود", icon: "🐱", accent: "#00b0ff", rate: 1.0, pitch: 1.05, greet: "وعليكم السلام يا هلا! نورت متجر معاذ، شو نجهزلك اليوم؟" },
@@ -20,7 +23,6 @@
     noor: { id: "noor", name: "نور الذكية", icon: "✨", accent: "#ff9800", rate: 1.05, pitch: 1.14, greet: "أهلاً وسهلاً! اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر." }
   };
 
-  // وصفات افتراضية أساسية تُدمج مع الوصفات التي تضيفها من لوحة الإدارة
   const DEFAULT_RECIPES = [
     { id: "DEF_1", title: "مقلوبة", category: "طبخ", keywords: ["مقلوبه", "مقلوبة"], ingredients: ["رز", "ارز", "زيت", "سمن", "باذنجان", "بطاطا", "بندوره", "بصل", "بهار", "ملح"] },
     { id: "DEF_2", title: "كبسة", category: "طبخ", keywords: ["كبسه", "كبسة"], ingredients: ["رز", "ارز", "زيت", "سمن", "بصل", "معجون طماطم", "بهار", "ملح"] },
@@ -36,6 +38,16 @@
     { id: "DEF_12", title: "تنظيف المطبخ", category: "تنظيف", keywords: ["تنظيف المطبخ", "منظفات المطبخ", "جلي"], ingredients: ["سائل جلي", "جلي", "صابون", "ليف", "اسفنج", "كلور", "منظف", "معقم"] }
   ];
 
+  // [3] ذاكرة سياقية للجلسة
+  let sessionCtx = {
+    lastModalTitle: "",
+    lastModalItems: [],
+    lastModalIntent: "general",
+    lastModalSubtitle: "",
+    lastAddedIds: [],
+    lastSpokenText: ""
+  };
+
   let customRecipesDB = {};
   let activeRecognizer = null;
   let isHoldingSpeak = false;
@@ -44,7 +56,7 @@
   let modalItemsState = [];
   let audioCtx = null;
   let speechUnlocked = false;
-  let lastSpokenSentence = "";
+  let selectedRecipeProductIds = new Set();
 
   // إبقاء الدفع خارج نطاق الذكاء الاصطناعي تماماً
   window.analyzeShamCashReceiptOCR = function () {
@@ -52,7 +64,6 @@
     if (outBox) outBox.innerHTML = "";
   };
 
-  // الاستماع للوصفات المضافة من الإدارة في Firebase
   if (typeof db !== "undefined" && db.ref) {
     db.ref("recipes").on("value", snap => {
       customRecipesDB = snap.val() || {};
@@ -64,6 +75,19 @@
 
   function haptic(pattern = 15) {
     try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (_) {}
+  }
+
+  // [8] تطبيع لغوي محسّن للهجات والأخطاء الشائعة
+  function cleanArabicNorm(str) {
+    const base = typeof normalizeArabic === "function" ? normalizeArabic(str) : String(str || "");
+    return base
+      .toLowerCase()
+      .replace(/[أإآ]/g, "ا")
+      .replace(/ة/g, "ه")
+      .replace(/ى/g, "ي")
+      .replace(/[^\w\u0600-\u06FF\s]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
   }
 
   function getPrefs() {
@@ -101,6 +125,7 @@
     localStorage.setItem(POS_KEY, JSON.stringify({ right, bottom }));
   }
 
+  // [7] التعلّم بالممارسة بأوزان منضبطة
   function getLearnedMap() {
     try { return JSON.parse(localStorage.getItem(LEARN_KEY) || "{}"); } catch (_) { return {}; }
   }
@@ -111,12 +136,12 @@
     map[intentKey] = map[intentKey] || {};
     productIds.forEach(pid => {
       if (!pid) return;
-      map[intentKey][pid] = Math.max(0, (map[intentKey][pid] || 0) + delta);
+      const cur = map[intentKey][pid] || 0;
+      map[intentKey][pid] = Math.max(0, Math.min(25, cur + delta));
     });
     localStorage.setItem(LEARN_KEY, JSON.stringify(map));
   }
 
-  // فك قفل الصوت على متصفحات الهواتف عند أول لمسة
   function unlockMobileAudio() {
     if (speechUnlocked) return;
     speechUnlocked = true;
@@ -137,7 +162,6 @@
   document.addEventListener("touchstart", unlockMobileAudio, { once: true, passive: true });
   document.addEventListener("click", unlockMobileAudio, { once: true });
 
-  // نغمة انفعالية خفيفة مرافقة للنطق
   function playToneCue(type = "happy") {
     try {
       const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -165,7 +189,7 @@
     } catch (_) {}
   }
 
-  // [التحدث الصوتي العربي الفعلي للمساعد لزيادة تفاعل الزبون]
+  // [9] إدارة نظيفة لقائمة انتظار النطق
   function speakOutLoud(rawText, force = false) {
     const prefs = getPrefs();
     if (!prefs.voiceEnabled && !force) return;
@@ -176,7 +200,7 @@
       .replace(/\s+/g, " ")
       .trim();
     if (!clean) return;
-    lastSpokenSentence = clean;
+    sessionCtx.lastSpokenText = clean;
 
     playToneCue("happy");
 
@@ -193,10 +217,9 @@
       utter.pitch = persona.pitch || 1.05;
       utter.volume = 1.0;
 
-      // بعض متصفحات أندرويد تحتاج تأخيراً صغيراً بعد cancel() لتنطق بوضوح
       setTimeout(() => {
         try { window.speechSynthesis.speak(utter); } catch (_) {}
-      }, 60);
+      }, 65);
     } catch (_) {}
   }
 
@@ -232,6 +255,13 @@
     return p ? calcSYP((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0)) : 0;
   }
 
+  function getBranchAvail(pid) {
+    const baseId = String(pid || "").replace(/_PKG$/, "");
+    const pObj = products?.[baseId] || specialOffers?.[pid];
+    if (!pObj) return 0;
+    return typeof getProductStockForBranch === "function" ? getProductStockForBranch(pObj, activeBranchId) : (parseInt(pObj.stock) || 0);
+  }
+
   window.selectPetPersona = function (key) {
     if (!PERSONAS[key]) return;
     haptic(15);
@@ -258,6 +288,7 @@
     if (ms > 0) bubbleTimer = setTimeout(() => { b.style.display = "none"; }, ms);
   }
 
+  // [10] مزامنة التعابير والحركة الانفعالية مع كل حالة
   function setOrbEmotion(state = "idle", bubbleTxt = "", shouldSpeak = false) {
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
@@ -273,6 +304,15 @@
       showBubble(bubbleTxt, state === "listening" ? 0 : 5400);
       if (shouldSpeak) speakOutLoud(bubbleTxt);
     }
+  }
+
+  // [12] مؤشر حالة الاتصال (PWA Online / Local)
+  function syncConnectivityBadge() {
+    const badge = $("petConnStatusBadge");
+    if (!badge) return;
+    const online = navigator.onLine !== false;
+    badge.textContent = online ? "🟢 متصل" : "🟡 محلي";
+    badge.style.color = online ? "#00e676" : "#ff9800";
   }
 
   function syncVisuals() {
@@ -304,9 +344,42 @@
         ? `0 10px 22px rgba(0,0,0,0.2), 0 0 14px ${p.accent}55`
         : `0 12px 26px rgba(0,0,0,0.55), 0 0 16px ${p.accent}66, inset 0 2px 6px rgba(255,255,255,0.4)`;
     }
+    syncConnectivityBadge();
   }
 
-  // دمج الوصفات المضافة من الإدارة مع الوصفات الافتراضية
+  // [11] إجابات فورية من بيانات المتجر الحية
+  function answerLiveStoreQueries(normText) {
+    if (/مفتوح|دوام|اوقات|ساعات|مسكر|يفتح/.test(normText)) {
+      const openNow = typeof isGlobalStoreOpenNow === "function" ? isGlobalStoreOpenNow() : true;
+      const wh = workHoursSettings || {};
+      const hours = wh.enabled ? `من ${wh.open || "08:00"} إلى ${wh.close || "23:00"}` : "متاح للطلب حالياً";
+      const branch = typeof getBranchName === "function" ? getBranchName(activeBranchId) : "الرئيسي";
+      return openNow
+        ? `نعم، المتجر مفتوح الآن في فرع ${branch}، ومواعيد الدوام ${hours}.`
+        : `المتجر مغلق حالياً، مواعيد الدوام ${hours}.`;
+    }
+    return null;
+  }
+
+  // [3] معالجة أوامر المتابعة داخل الجلسة
+  function handleSessionFollowUp(normText) {
+    if (/^(اعد|كرر|افتح)\s*(اخر)?\s*(اقتراح|قائمه|نافذه)/.test(normText) && sessionCtx.lastModalItems.length > 0) {
+      openZeroDefaultModal(sessionCtx.lastModalTitle, sessionCtx.lastModalItems, sessionCtx.lastModalIntent, sessionCtx.lastModalSubtitle);
+      return "أعدت فتح آخر قائمة اقتراحات لك.";
+    }
+    if (/^(زد|زود|حبه ثانيه|واحد ثاني)/.test(normText) && sessionCtx.lastAddedIds.length > 0) {
+      const lastId = sessionCtx.lastAddedIds[sessionCtx.lastAddedIds.length - 1];
+      const avail = getBranchAvail(lastId);
+      const cur = cart[lastId] ? (parseInt(cart[lastId].qty) || 0) : 0;
+      if (avail > cur) {
+        changeQty(lastId, 1);
+        return "زدت حبة إضافية في سلتك.";
+      }
+      return "وصلت للحد الأقصى المتوفر من هذا الصنف في الفرع.";
+    }
+    return null;
+  }
+
   function getAllMergedRecipes() {
     const adminList = Object.keys(customRecipesDB || {}).map(k => {
       const r = customRecipesDB[k];
@@ -325,13 +398,14 @@
     return [...adminList, ...DEFAULT_RECIPES];
   }
 
+  // [4] مطابقة الوصفات مع مخزون الفرع النشط + بدائل
   function matchRecipeOrSweet(normText) {
     const allRecipes = getAllMergedRecipes();
     const matched = allRecipes.find(r => {
-      const tNorm = (typeof normalizeArabic === "function" ? normalizeArabic(r.title) : r.title).toLowerCase();
-      if (normText.includes(tNorm) || tNorm.includes(normText)) return true;
+      const tNorm = cleanArabicNorm(r.title);
+      if (tNorm && (normText.includes(tNorm) || (normText.length >= 3 && tNorm.includes(normText)))) return true;
       return (r.keywords || []).some(kw => {
-        const kNorm = (typeof normalizeArabic === "function" ? normalizeArabic(kw) : kw).toLowerCase();
+        const kNorm = cleanArabicNorm(kw);
         return kNorm.length >= 2 && normText.includes(kNorm);
       });
     });
@@ -342,12 +416,10 @@
     const availableItems = [];
     const missingIngredients = [];
 
-    // 1. إذا ربط المدير أصنافاً محددة بالـ ID لهذه الوصفة
     (matched.productIds || []).forEach(pid => {
       const p = products?.[pid];
       if (!p) return;
-      const st = typeof getProductStockForBranch === "function" ? getProductStockForBranch(p, activeBranchId) : (parseInt(p.stock) || 0);
-      if (st > 0) {
+      if (getBranchAvail(pid) > 0) {
         availableItems.push({
           id: pid,
           name: p.name,
@@ -359,17 +431,14 @@
       }
     });
 
-    // 2. مطابقة أسماء الاحتياجات النصية مع المخزون المتوفر
     const prodEntries = Object.keys(products || {}).map(pid => {
       const p = products[pid];
       if (!p) return null;
-      const st = typeof getProductStockForBranch === "function" ? getProductStockForBranch(p, activeBranchId) : (parseInt(p.stock) || 0);
-      const pNorm = (typeof normalizeArabic === "function" ? normalizeArabic(p.name || "") : (p.name || "")).toLowerCase();
-      return { pid, p, st, pNorm };
+      return { pid, p, st: getBranchAvail(pid), pNorm: cleanArabicNorm(p.name || "") };
     }).filter(Boolean);
 
     (matched.ingredients || []).forEach(ing => {
-      const iNorm = (typeof normalizeArabic === "function" ? normalizeArabic(ing) : ing).toLowerCase();
+      const iNorm = cleanArabicNorm(ing);
       if (!iNorm) return;
       const found = prodEntries.find(x => x.pNorm.includes(iNorm) && x.st > 0);
       if (found) {
@@ -387,7 +456,7 @@
     });
 
     availableItems.sort((a, b) => b.score - a.score);
-    return { recipe: matched, availableItems, missingIngredients };
+    return { recipe: matched, availableItems: availableItems.slice(0, 8), missingIngredients };
   }
 
   function matchCasualChat(normText, persona) {
@@ -398,8 +467,15 @@
     return null;
   }
 
+  // [5, 14] نافذة الاقتراحات بكمية افتراضية 0 مع زر تصفير وحد أقصى متوازن
   function openZeroDefaultModal(title, items, intentKey = "general", subtitleNote = "") {
-    modalItemsState = items.map(it => ({
+    const cappedItems = items.slice(0, 8);
+    sessionCtx.lastModalTitle = title;
+    sessionCtx.lastModalItems = cappedItems;
+    sessionCtx.lastModalIntent = intentKey;
+    sessionCtx.lastModalSubtitle = subtitleNote;
+
+    modalItemsState = cappedItems.map(it => ({
       id: it.id,
       name: it.name,
       qty: 0,
@@ -419,7 +495,10 @@
         <div class="modal-content" style="max-width:440px; border-color:var(--gold-color);">
           <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px; margin-bottom:6px;">
             <b id="petSugModalTitle" style="color:var(--gold-color); font-size:13px;"></b>
-            <button type="button" onclick="closePetSuggestionsModal()" class="btn btn-danger" style="width:auto; padding:3px 9px; font-size:11px;">✕</button>
+            <div style="display:flex; gap:5px;">
+              <button type="button" onclick="resetZeroDefaultSuggestions()" class="btn" style="width:auto; padding:3px 8px; font-size:10px; background:var(--bg-color); color:var(--text-color); border:1px solid var(--border-color);">تصفير</button>
+              <button type="button" onclick="closePetSuggestionsModal()" class="btn btn-danger" style="width:auto; padding:3px 9px; font-size:11px;">✕</button>
+            </div>
           </div>
           <div id="petSugModalSubtitle" style="font-size:10px; color:var(--gray-text); margin-bottom:8px;"></div>
           <div id="petSugModalList" style="max-height:52vh; overflow-y:auto; margin-bottom:10px;"></div>
@@ -441,6 +520,12 @@
     setTxt("petSugModalSubtitle", subtitleNote || "الكمية الافتراضية 0 — اضغط (+) لزيادة الكمية المطلوبة من الأصناف المتوفرة:");
     renderZeroDefaultList();
   }
+
+  window.resetZeroDefaultSuggestions = function () {
+    modalItemsState.forEach(it => { it.qty = 0; });
+    haptic(10);
+    renderZeroDefaultList();
+  };
 
   function renderZeroDefaultList() {
     const listEl = $("petSugModalList");
@@ -473,9 +558,7 @@
   window.adjustSuggestionQty = function (idx, delta) {
     const it = modalItemsState[idx];
     if (!it) return;
-    const baseId = String(it.id).replace(/_PKG$/, "");
-    const pObj = products?.[baseId] || specialOffers?.[it.id];
-    const maxAvail = typeof getProductStockForBranch === "function" ? getProductStockForBranch(pObj, activeBranchId) : 99;
+    const maxAvail = getBranchAvail(it.id);
     it.qty = Math.max(0, Math.min(Math.max(0, maxAvail), it.qty + delta));
     haptic(10);
     renderZeroDefaultList();
@@ -497,15 +580,14 @@
     let addedTotal = 0;
     const addedIds = [];
     chosen.forEach(it => {
-      const baseId = String(it.id).replace(/_PKG$/, "");
-      const pObj = products?.[baseId] || specialOffers?.[it.id];
-      const avail = typeof getProductStockForBranch === "function" ? getProductStockForBranch(pObj, activeBranchId) : 99;
+      const avail = getBranchAvail(it.id);
       const cur = cart[it.id] ? (parseInt(cart[it.id].qty) || 0) : 0;
       const toAdd = Math.min(it.qty, Math.max(0, avail - cur));
       if (toAdd > 0) {
         changeQty(it.id, toAdd);
         addedTotal += toAdd;
         addedIds.push(it.id);
+        if (!sessionCtx.lastAddedIds.includes(it.id)) sessionCtx.lastAddedIds.push(it.id);
       }
     });
 
@@ -521,46 +603,70 @@
     }
   };
 
+  // [5, 6] مطابقة التصنيفات والأصناف والميزانية واقتراح بدائل للمنفذ
   function matchCategoriesAndProducts(normText) {
     const storeCats = (Array.isArray(categories) ? categories : []).filter(c => c && c !== "الكل");
+    const budgetMatch = normText.match(/(\d{2,7})/);
+    const maxBudget = budgetMatch ? parseInt(budgetMatch[1]) : null;
+
     const words = normText
-      .replace(/\b(تجهيز|فاتوره|طلب|اريد|بدي|ابغى|ابي|مواد|اغراض|وصفه|وصفة|حلى|حلويات|طبخ|بـ|ب)\b/g, " ")
-      .split(/[^a-z0-9\u0600-\u06FF]+/)
+      .replace(/\b(تجهيز|فاتوره|طلب|اريد|بدي|ابغى|ابي|مواد|اغراض|وصفه|وصفة|حلى|حلويات|طبخ|بـ|ب|\d+)\b/g, " ")
+      .split(/\s+/)
       .filter(w => w.length >= 2);
 
     const matchedCategories = storeCats.filter(catName => {
-      const cNorm = (typeof normalizeArabic === "function" ? normalizeArabic(catName) : catName).toLowerCase();
+      const cNorm = cleanArabicNorm(catName);
       return words.some(w => cNorm.includes(w) || w.includes(cNorm));
     });
 
     const learned = getLearnedMap();
-    const results = [];
+    const availableResults = [];
+    let outOfStockCategory = null;
 
     Object.keys(products || {}).forEach(pid => {
       const p = products[pid];
       if (!p) return;
-      const st = typeof getProductStockForBranch === "function" ? getProductStockForBranch(p, activeBranchId) : (parseInt(p.stock) || 0);
-      if (st <= 0) return;
-
-      const pNameNorm = (typeof normalizeArabic === "function" ? normalizeArabic(p.name || "") : (p.name || "")).toLowerCase();
+      const st = getBranchAvail(pid);
+      const price = getUnitSYP(pid);
+      const pNameNorm = cleanArabicNorm(p.name || "");
       const pCat = p.category || "";
       const inCat = matchedCategories.includes(pCat);
       const hitName = words.some(w => pNameNorm.includes(w));
 
       if (inCat || hitName) {
-        results.push({
+        if (st <= 0) {
+          outOfStockCategory = outOfStockCategory || pCat;
+          return;
+        }
+        if (maxBudget && price > maxBudget) return;
+        availableResults.push({
           id: pid,
           name: p.name,
-          reason: inCat ? `قسم: ${pCat}` : "متوفر في المخزون",
+          reason: inCat ? `قسم: ${pCat}` : "متوفر في الفرع",
           score: (hitName ? 20 : 0) + (inCat ? 10 : 0) + (learned[pCat]?.[pid] || 0)
         });
       }
     });
 
-    results.sort((a, b) => b.score - a.score);
-    return { matchedCategories, items: results.slice(0, 8) };
+    // إذا نفد الصنف المطلوب، نبحث عن بديل متوفر من نفس القسم
+    if (!availableResults.length && outOfStockCategory) {
+      Object.keys(products || {}).forEach(pid => {
+        const p = products[pid];
+        if (!p || p.category !== outOfStockCategory || getBranchAvail(pid) <= 0) return;
+        availableResults.push({
+          id: pid,
+          name: p.name,
+          reason: `بديل متوفر في قسم (${outOfStockCategory})`,
+          score: 5
+        });
+      });
+    }
+
+    availableResults.sort((a, b) => b.score - a.score);
+    return { matchedCategories, items: availableResults.slice(0, 8), usedAlternative: !!outOfStockCategory };
   }
 
+  // [1] شجرة الأولويات الصارمة للمساعد الذكي
   window.runAIShoppingAssistant = async function (overridePrompt = null) {
     const promptTxt = String(overridePrompt ?? ($("aiShoppingPromptInput")?.value || "")).trim();
     const prefs = getPrefs();
@@ -571,9 +677,9 @@
       return;
     }
 
-    const norm = (typeof normalizeArabic === "function" ? normalizeArabic(promptTxt) : promptTxt).toLowerCase();
+    const norm = cleanArabicNorm(promptTxt);
 
-    // 1. الحوار العادي والتحيات
+    // 1) التحيات والحوار العادي
     const chatReply = matchCasualChat(norm, persona);
     if (chatReply) {
       setOrbEmotion("greet", chatReply, true);
@@ -581,7 +687,23 @@
       return;
     }
 
-    // 2. وصفات الطبخ والحلويات (تشمل وصفات الإدارة + الافتراضية)
+    // 2) أوامر المتابعة السياقية داخل الجلسة
+    const followUpReply = handleSessionFollowUp(norm);
+    if (followUpReply) {
+      setOrbEmotion("happy", followUpReply, true);
+      setTxt("aiShoppingStatusText", `🔄 ${followUpReply}`);
+      return;
+    }
+
+    // 3) الاستفسارات الحية عن الدوام والفرع
+    const liveReply = answerLiveStoreQueries(norm);
+    if (liveReply) {
+      setOrbEmotion("greet", liveReply, true);
+      setTxt("aiShoppingStatusText", `⏰ ${liveReply}`);
+      return;
+    }
+
+    // 4) وصفات الطبخ والحلويات والمهام
     const recipeRes = matchRecipeOrSweet(norm);
     if (recipeRes) {
       if (recipeRes.availableItems.length > 0) {
@@ -606,16 +728,20 @@
       }
     }
 
-    // 3. مطابقة الأقسام والأصناف المباشرة
-    const { matchedCategories, items } = matchCategoriesAndProducts(norm);
+    // 5) التصنيفات والأصناف والميزانية والبدائل
+    const { matchedCategories, items, usedAlternative } = matchCategoriesAndProducts(norm);
     if (items.length > 0) {
-      const title = matchedCategories.length
-        ? `🛍️ أصناف قسم (${matchedCategories.join("، ")}) — حدد الكمية:`
-        : "🛍️ الأصناف المتوفرة المطابقة — حدد الكمية:";
+      const title = usedAlternative
+        ? "🔁 الصنف المطلوب نافد — إليك أقرب البدائل المتوفرة:"
+        : matchedCategories.length
+          ? `🛍️ أصناف قسم (${matchedCategories.join("، ")}) — حدد الكمية:`
+          : "🛍️ الأصناف المتوفرة المطابقة — حدد الكمية:";
       openZeroDefaultModal(title, items, matchedCategories[0] || `q_${norm.slice(0, 18)}`);
-      const msg = matchedCategories.length
-        ? `فتحتلك أصناف قسم ${matchedCategories.join(" و")}، حدد الكمية المناسبة.`
-        : "فتحتلك الأصناف المتوفرة، اضغط على زائد لتحديد الكمية.";
+      const msg = usedAlternative
+        ? "الصنف المطلوب غير متوفر حالياً، عرضتلك أقرب البدائل المتوفرة."
+        : matchedCategories.length
+          ? `فتحتلك أصناف قسم ${matchedCategories.join(" و")}، حدد الكمية المناسبة.`
+          : "فتحتلك الأصناف المتوفرة، اضغط على زائد لتحديد الكمية.";
       setOrbEmotion("choice", msg, true);
       setTxt("aiShoppingStatusText", `💡 ${msg}`);
       return;
@@ -684,8 +810,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v39Bound) return;
-    orb.dataset.v39Bound = "1";
+    if (!orb || !root || orb.dataset.v40Bound) return;
+    orb.dataset.v40Bound = "1";
 
     let down = false, dragging = false, holdFired = false, holdTimer = null;
     let sx = 0, sy = 0, r0 = 14, b0 = 88;
@@ -751,10 +877,9 @@
         return;
       }
 
-      // نقرة سريعة على الشخصية: تتحدث بالترحيب أو تعيد آخر جملة منطوقة
       const prefs = getPrefs();
       const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
-      const phrase = lastSpokenSentence || persona.greet;
+      const phrase = sessionCtx.lastSpokenText || persona.greet;
       showBubble(`${persona.icon} ${phrase}`, 4000);
       speakOutLoud(phrase, true);
     };
@@ -775,11 +900,7 @@
     }, { passive: true });
   }
 
-  // ==========================================================================
-  // إدارة الوصفات داخل لوحة الإدارة (إضافة وصفة واحتياجاتها في Firebase)
-  // ==========================================================================
-  let selectedRecipeProductIds = new Set();
-
+  // [13] تبويب الوصفات في الإدارة مع بحث فوري وعداد مكونات
   window.toggleRecipeProductTag = function (pid) {
     if (!pid) return;
     if (selectedRecipeProductIds.has(pid)) selectedRecipeProductIds.delete(pid);
@@ -790,13 +911,12 @@
   function renderRecipeProductPicker() {
     const box = $("admRecipeProductsPicker");
     if (!box) return;
-    const q = (typeof normalizeArabic === "function" ? normalizeArabic($("admRecipeProdSearch")?.value || "") : ($("admRecipeProdSearch")?.value || "")).toLowerCase();
+    const q = cleanArabicNorm($("admRecipeProdSearch")?.value || "");
     const keys = Object.keys(products || {}).filter(pid => {
       const p = products[pid];
       if (!p) return false;
       if (!q) return true;
-      const n = (typeof normalizeArabic === "function" ? normalizeArabic(p.name || "") : (p.name || "")).toLowerCase();
-      return n.includes(q);
+      return cleanArabicNorm(p.name || "").includes(q);
     }).slice(0, 30);
 
     box.innerHTML = keys.map(pid => {
@@ -853,7 +973,7 @@
 
   window.deleteAdminRecipe = function (rId) {
     const r = customRecipesDB?.[rId];
-    if (!r || !confirm(`هل تريد حذف وصفة (${r.title})؟`)) return;
+    if (!r || !confirm(`هل تريد حذف وصفة (${r.title}) نهائياً؟`)) return;
     db.ref(`recipes/${rId}`).set(null).then(() => showToast("🗑️ تم حذف الوصفة"));
   };
 
@@ -867,17 +987,24 @@
   window.renderAdminRecipesList = function () {
     const box = $("admRecipesSavedList");
     if (!box) return;
-    const list = Object.values(customRecipesDB || {});
+    const filterQ = cleanArabicNorm($("admRecipeListFilter")?.value || "");
+    const list = Object.values(customRecipesDB || {}).filter(r => {
+      if (!r || !r.title) return false;
+      if (!filterQ) return true;
+      return cleanArabicNorm(r.title + " " + (r.category || "")).includes(filterQ);
+    });
+
     if (!list.length) {
-      box.innerHTML = `<div style="font-size:11px; color:var(--gray-text); text-align:center; padding:8px;">لا توجد وصفات مضافة يدوياً بعد (الوصفات الافتراضية تعمل تلقائياً).</div>`;
+      box.innerHTML = `<div style="font-size:11px; color:var(--gray-text); text-align:center; padding:8px;">لا توجد وصفات مطابقة (الوصفات الافتراضية تعمل تلقائياً).</div>`;
       return;
     }
     box.innerHTML = list.map(r => {
       const linkedNames = (r.productIds || []).map(pid => products?.[pid]?.name).filter(Boolean);
+      const totalNeedsCount = linkedNames.length + (r.ingredients || []).length;
       const allNeeds = [...linkedNames, ...(r.ingredients || [])].join("، ");
       return `<div class="adm-card" style="border-color:var(--gold-color);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-          <b style="color:var(--gold-color);">🍲 ${esc(r.title)} <small style="color:#00e676;">[${esc(r.category || "طبخ")}]</small></b>
+          <b style="color:var(--gold-color);">🍲 ${esc(r.title)} <small style="color:#00e676;">[${esc(r.category || "طبخ")} • ${totalNeedsCount} مكونات]</small></b>
           <div style="display:flex; gap:4px;">
             <button type="button" onclick="editAdminRecipe('${r.id}')" class="btn" style="width:auto; padding:3px 8px; font-size:10px;">✏️</button>
             <button type="button" onclick="deleteAdminRecipe('${r.id}')" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">🗑️</button>
@@ -893,14 +1020,12 @@
     const tabsBar = adminContent?.querySelector(".categories");
     if (!adminContent || !tabsBar || $("admTab12Recipes")) return;
 
-    // 1. إضافة زر التبويب في شريط تبويبات الإدارة
     const tabBtn = document.createElement("button");
     tabBtn.className = "cat-btn";
     tabBtn.textContent = "🍲 الوصفات";
     tabBtn.onclick = function () { switchAdminTab("admTab12Recipes", this); renderRecipeProductPicker(); renderAdminRecipesList(); };
     tabsBar.appendChild(tabBtn);
 
-    // 2. إنشاء محتوى تبويب الوصفات
     const tabDiv = document.createElement("div");
     tabDiv.id = "admTab12Recipes";
     tabDiv.className = "admin-tab";
@@ -940,6 +1065,7 @@
       </div>
       <div class="adm-sec">
         <div class="adm-sec-title"><span>📋 الوصفات المضافة من الإدارة</span></div>
+        <input type="text" id="admRecipeListFilter" class="form-control" placeholder="🔍 ابحث في الوصفات المحفوظة..." oninput="renderAdminRecipesList()" style="margin-bottom:8px; padding:6px;">
         <div id="admRecipesSavedList"></div>
       </div>
     `;
@@ -948,7 +1074,22 @@
     renderAdminRecipesList();
   }
 
-  function mountV39() {
+  // [15] فحص تشخيصي صامت للمطور والإدارة (QA Self-Check)
+  window.runAssistantQACheck = function () {
+    const report = {
+      productsLoaded: Object.keys(products || {}).length,
+      categoriesLoaded: Array.isArray(categories) ? categories.length : 0,
+      recipesAvailable: getAllMergedRecipes().length,
+      speechSynthesisSupported: "speechSynthesis" in window,
+      speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
+      online: navigator.onLine !== false
+    };
+    console.info("[QA Assistant Diagnostic]", report);
+    return report;
+  };
+
+  // [2] حماية دورة الحياة (Idempotent Mount)
+  function mountV40() {
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const assistBox = $("aiSmartAssistantBox");
@@ -961,11 +1102,12 @@
         `<option value="${per.id}">${per.icon} ${per.name}</option>`
       ).join("");
       bar.innerHTML = `
-        <div style="display:flex; align-items:center; gap:4px; flex:1; min-width:170px;">
+        <div style="display:flex; align-items:center; gap:4px; flex:1; min-width:165px;">
           <span style="color:var(--gold-color); font-weight:bold;">المرافق:</span>
           <select id="petPersonaSelect" class="form-control" onchange="selectPetPersona(this.value)" style="padding:3px 6px; font-size:10px; flex:1;">${opts}</select>
         </div>
-        <div style="display:flex; gap:4px;">
+        <div style="display:flex; align-items:center; gap:4px;">
+          <span id="petConnStatusBadge" style="font-size:9px; font-weight:bold;">🟢 متصل</span>
           <button type="button" onclick="toggleCompanionVoice()" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:rgba(0,176,255,0.16); color:#00b0ff;">🗣️ صوت</button>
           <button id="petShowCharBtn" type="button" onclick="setPetHidden(false)" style="display:none; align-items:center; gap:3px; background:var(--gold-color); color:#000; border:none; border-radius:6px; padding:3px 8px; font-size:10px; font-weight:bold; cursor:pointer;">إظهار</button>
         </div>`;
@@ -974,19 +1116,19 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV39";
+      styleTag.id = "petCharStyleV40";
       styleTag.textContent = `
-        @keyframes petFloatV39 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
-        @keyframes petRingV39 { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.36); opacity: 0; } }
+        @keyframes petFloatV40 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
+        @keyframes petRingV40 { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.36); opacity: 0; } }
         #petCharOrb {
           width: 56px; height: 56px; border-radius: 50%; border: 2.5px solid ${p.accent};
           font-size: 27px; display: flex; align-items: center; justify-content: center;
           cursor: grab; -webkit-touch-callout: none; user-select: none;
-          animation: petFloatV39 2.7s ease-in-out infinite;
+          animation: petFloatV40 2.7s ease-in-out infinite;
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: petRingV39 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: petRingV40 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 66px; right: 0; max-width: 225px; width: max-content;
@@ -1009,15 +1151,18 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV39(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV40(); };
 
   const _origToggleTheme = window.toggleTheme;
   window.toggleTheme = function () { if (typeof _origToggleTheme === "function") _origToggleTheme(); setTimeout(syncVisuals, 60); };
+
+  window.addEventListener("online", syncConnectivityBadge);
+  window.addEventListener("offline", syncConnectivityBadge);
 
   if ("speechSynthesis" in window) {
     window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV39);
-  else mountV39();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV40);
+  else mountV40();
 })();
