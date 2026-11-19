@@ -1,26 +1,27 @@
 // ============================================================================
-// محرك المرافق المتحدث + صوت ناطق مدمج بدون الاعتماد على المتصفح (v43)
-// - الاستغناء الكامل عن speechSynthesis الافتراضي للمتصفح
-// - توليد أصوات ناطقة وانفعالية عربية مدمجة (Formant Vowel/Consonant Synth + PCM Audio)
-//   بالإضافة لدعم الصوت السحابي الطبيعي عند الاتصال مع بديل صوتي مدمج فوري بلا إنترنت
-// - الحفاظ على جميع ميزات v42 (نافذة الاقتراحات 0، الوصفات، التصدير، وصقل السلة)
+// محرك المرافق المتحدث + صوت سحابي طبيعي + صقل السلة والإدارة والتصدير (v44)
+// - استبعاد صارم وكامل للذكاء الاصطناعي من عمليات الدفع وطرق الدفع والإشعارات المالية
+// - صوت عربي بشري طبيعي عبر Cloudflare Worker (mode: "tts") بدون صوت المتصفح
+// - إصلاح وعرض الصور المصغرة بأمان في الاقتراحات الذكية والتوصيات والسلة
+// - صقل السلة: شريط خطوات واضح + بطاقة ملخص فاتورة نظيفة قبل الإرسال
+// - تنظيم الإدارة والتصدير: فلترة تبويبات الإدارة + لوحة التصدير والتقارير الموحدة
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V43_LOADED__) return;
-  window.__MOAATH_AI_V43_LOADED__ = true;
+  if (window.__MOAATH_AI_V44_LOADED__) return;
+  window.__MOAATH_AI_V44_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v43_prefs";
-  const POS_KEY = "moaath_pet_v43_pos";
-  const LEARN_KEY = "moaath_pet_v43_learned";
+  const PREFS_KEY = "moaath_pet_v44_prefs";
+  const POS_KEY = "moaath_pet_v44_pos";
+  const LEARN_KEY = "moaath_pet_v44_learned";
 
   const PERSONAS = {
-    buddy: { id: "buddy", name: "بندق الودود", icon: "🐱", accent: "#00b0ff", f0: 155, speed: 1.0, greet: "وعليكم السلام يا هلا! نورت متجر معاذ، شو نجهزلك اليوم؟" },
-    pro: { id: "pro", name: "صقر السريع", icon: "🦅", accent: "#00e676", f0: 132, speed: 1.15, greet: "أهلاً بك! جاهز لخدمتك بسرعة، اذكر الصنف أو الوصفة." },
-    saver: { id: "saver", name: "ثعلب التوفير", icon: "🦊", accent: "#D4AF37", f0: 145, speed: 0.98, greet: "يا مرحبا! نجهزلك المتوفر بأفضل قيمة وتوفير." },
-    lulu: { id: "lulu", name: "لولو اللطيفة", icon: "🐰", accent: "#ff7eb6", f0: 235, speed: 0.96, greet: "أهلاً فيكِ ونورتي المتجر! شو حابة تطبخي أو تحضّري حلى اليوم؟" },
-    sara: { id: "sara", name: "سارة المنظمة", icon: "🦋", accent: "#7c4dff", f0: 215, speed: 1.04, greet: "مرحباً بكِ! نرتب مكونات الوصفة حسب المتوفر بكل دقة." },
-    noor: { id: "noor", name: "نور الذكية", icon: "✨", accent: "#ff9800", f0: 225, speed: 1.08, greet: "أهلاً وسهلاً! اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر." }
+    buddy: { id: "buddy", name: "بندق الودود", icon: "🐱", accent: "#00b0ff", voiceName: "Puck", speed: 1.0, greet: "وعليكم السلام يا هلا! نورت متجر معاذ، شو نجهزلك اليوم؟" },
+    pro: { id: "pro", name: "صقر السريع", icon: "🦅", accent: "#00e676", voiceName: "Charon", speed: 1.14, greet: "أهلاً بك! جاهز لخدمتك بسرعة، اذكر الصنف أو الوصفة." },
+    saver: { id: "saver", name: "ثعلب التوفير", icon: "🦊", accent: "#D4AF37", voiceName: "Fenrir", speed: 0.98, greet: "يا مرحبا! نجهزلك المتوفر بأفضل قيمة وتوفير." },
+    lulu: { id: "lulu", name: "لولو اللطيفة", icon: "🐰", accent: "#ff7eb6", voiceName: "Aoede", speed: 0.96, greet: "أهلاً فيكِ ونورتي المتجر! شو حابة تطبخي أو تحضّري حلى اليوم؟" },
+    sara: { id: "sara", name: "سارة المنظمة", icon: "🦋", accent: "#7c4dff", voiceName: "Kore", speed: 1.02, greet: "مرحباً بكِ! نرتب مكونات الوصفة حسب المتوفر بكل دقة." },
+    noor: { id: "noor", name: "نور الذكية", icon: "✨", accent: "#ff9800", voiceName: "Leda", speed: 1.06, greet: "أهلاً وسهلاً! اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر." }
   };
 
   const DEFAULT_RECIPES = [
@@ -53,17 +54,21 @@
   let bubbleTimer = null;
   let scrollTimer = null;
   let modalItemsState = [];
-  let audioCtx = null;
-  let currentVoiceNodes = [];
-  let currentAudioElem = null;
   let speechUnlocked = false;
   let selectedRecipeProductIds = new Set();
 
-  // إبقاء الدفع خارج نطاق الذكاء الاصطناعي تماماً
+  // ==========================================================================
+  // [حاجز عدم تدخل الذكاء الاصطناعي في الدفع والإشعارات المالية]
+  // ==========================================================================
   window.analyzeShamCashReceiptOCR = function () {
     const outBox = $("shamCashOcrResult");
     if (outBox) outBox.innerHTML = "";
   };
+
+  function guardAgainstPaymentAI(text) {
+    const norm = cleanArabicNorm(text || "");
+    return /دفع|تحويل|شام\s*كاش|ايصال|اشعار\s*دفع|رصيد\s*دفع|فاتوره\s*دفع/.test(norm);
+  }
 
   if (typeof db !== "undefined" && db.ref) {
     db.ref("recipes").on("value", snap => {
@@ -142,82 +147,92 @@
   }
 
   // ==========================================================================
-  // [محرك الصوت المدمج — استغناء كامل عن speechSynthesis الافتراضي للمتصفح]
-  // يعتمد على:
-  // 1) تركيب الترددات الصوتية البشرية (Arabic Formant Vocal Tract Synthesizer)
-  //    لتحويل الحروف والكلمات العربية إلى مقاطع صوتية (حركات/حروف) بطبقة صوت كل شخصية
-  // 2) إيقاف فوري لأي صوت سابق ومنع التداخل + نبرة انفعالية واضحة لكل حالة
+  // [محرك الصوت البشري السحابي عبر Cloudflare Worker — بدون صوت المتصفح]
   // ==========================================================================
-  function getAudioEngine() {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!Ctx) return null;
-    if (!audioCtx) audioCtx = new Ctx();
-    if (audioCtx.state === "suspended") {
-      try { audioCtx.resume(); } catch (_) {}
+  const ttsAudioCache = new Map();
+  let sharedAudioPlayer = null;
+  let ttsRequestSeq = 0;
+
+  function ensureAudioPlayer() {
+    if (!sharedAudioPlayer) {
+      sharedAudioPlayer = new Audio();
+      sharedAudioPlayer.preload = "auto";
     }
-    return audioCtx;
+    return sharedAudioPlayer;
   }
 
   function unlockEmbeddedVoice() {
     if (speechUnlocked) return;
     speechUnlocked = true;
-    getAudioEngine();
+    try {
+      const p = ensureAudioPlayer();
+      p.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+      p.play().then(() => { p.pause(); p.currentTime = 0; }).catch(() => {});
+    } catch (_) {}
   }
   document.addEventListener("touchstart", unlockEmbeddedVoice, { once: true, passive: true });
   document.addEventListener("click", unlockEmbeddedVoice, { once: true });
 
   function stopEmbeddedVoice() {
-    if (currentAudioElem) {
+    ttsRequestSeq++;
+    if (sharedAudioPlayer) {
       try {
-        currentAudioElem.pause();
-        currentAudioElem.src = "";
+        sharedAudioPlayer.pause();
+        sharedAudioPlayer.currentTime = 0;
       } catch (_) {}
-      currentAudioElem = null;
     }
-    currentVoiceNodes.forEach(node => {
-      try { node.stop(); } catch (_) {}
-      try { node.disconnect(); } catch (_) {}
-    });
-    currentVoiceNodes = [];
   }
 
-  // تحسين النص للنطق العربي الطبيعي (تحويل الأرقام والرموز إلى صيغة مقروءة)
   function normalizeTextForArabicSpeech(rawText) {
     return String(rawText || "")
       .replace(/[\u{1F300}-\u{1FAFF}🐾✨🎤🎧🎙️🤔🤩💡📌📍🔊🔇🗣️🍲🌸🛍️🔁⏰✅⚠️]/gu, " ")
       .replace(/\+/g, " زائد ")
       .replace(/×/g, " ضرب ")
       .replace(/ل\.س/g, " ليرة سورية ")
-      .replace(/(\d+)/g, " $1 ")
       .replace(/[•\-_*#|()[\]{}]/g, " ")
       .replace(/\s+/g, " ")
       .trim();
   }
 
-  // خريطة الرنين الصوتي للحروف والحركات العربية (F1, F2, F3 Formants)
-  function getArabicPhonemeFormants(ch) {
-    // حروف مد وحركات مفتوحة (ا، آ، أ، إ، ى، ـَ)
-    if (/[اأإآىَ]/.test(ch)) return { f1: 730, f2: 1180, f3: 2450, voiced: true, dur: 0.082 };
-    // حروف مضمومة (و، ؤ، ـُ)
-    if (/[وؤُ]/.test(ch)) return { f1: 340, f2: 860, f3: 2250, voiced: true, dur: 0.082 };
-    // حروف مكسورة (ي، ئ، ـِ)
-    if (/[يئِ]/.test(ch)) return { f1: 310, f2: 2250, f3: 2950, voiced: true, dur: 0.08 };
-    // حروف رنينية أنفية (م، ن)
-    if (/[من]/.test(ch)) return { f1: 280, f2: 1050, f3: 2200, voiced: true, dur: 0.072 };
-    // حروف جانبية وتكرارية (ل، ر)
-    if (/[لر]/.test(ch)) return { f1: 420, f2: 1450, f3: 2400, voiced: true, dur: 0.068 };
-    // حروف احتكاكية مهموسة (س، ش، ص، ف، ث، ه، ح، خ)
-    if (/[سشصفثهحخ]/.test(ch)) return { f1: 500, f2: 1800, f3: 2700, voiced: false, dur: 0.062 };
-    // بقية الحروف العربية الصحيحة
-    if (/[\u0621-\u064A]/.test(ch)) return { f1: 540, f2: 1520, f3: 2500, voiced: true, dur: 0.066 };
-    // أرقام
-    if (/[0-9]/.test(ch)) return { f1: 600, f2: 1400, f3: 2450, voiced: true, dur: 0.085 };
-    // وقفة قصيرة عند المسافة أو الفاصلة
-    return { pause: true, dur: ch === "،" || ch === "." ? 0.14 : 0.045 };
+  function pcmBase64ToWavBlobUrl(base64Pcm, sampleRate = 24000) {
+    const binStr = atob(base64Pcm);
+    const pcmLen = binStr.length;
+    const buffer = new ArrayBuffer(44 + pcmLen);
+    const view = new DataView(buffer);
+    const writeStr = (offset, str) => {
+      for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+    };
+    writeStr(0, "RIFF");
+    view.setUint32(4, 36 + pcmLen, true);
+    writeStr(8, "WAVE");
+    writeStr(12, "fmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeStr(36, "data");
+    view.setUint32(40, pcmLen, true);
+    const outBytes = new Uint8Array(buffer, 44);
+    for (let i = 0; i < pcmLen; i++) outBytes[i] = binStr.charCodeAt(i);
+    return URL.createObjectURL(new Blob([buffer], { type: "audio/wav" }));
   }
 
-  // توليد الصوت الناطق المدمج عبر تركيب الرنين الصوتي (بدون أي استدعاء لـ speechSynthesis)
-  function speakOutLoud(rawText, force = false, emotion = "normal") {
+  function base64ToAudioBlobUrl(base64Data, mimeType) {
+    if (/pcm|L16/i.test(mimeType)) {
+      const rateMatch = String(mimeType).match(/rate=(\d+)/i);
+      const rate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
+      return pcmBase64ToWavBlobUrl(base64Data, rate);
+    }
+    const binStr = atob(base64Data);
+    const bytes = new Uint8Array(binStr.length);
+    for (let i = 0; i < binStr.length; i++) bytes[i] = binStr.charCodeAt(i);
+    return URL.createObjectURL(new Blob([bytes], { type: mimeType || "audio/mpeg" }));
+  }
+
+  async function speakOutLoud(rawText, force = false) {
     const prefs = getPrefs();
     if (!prefs.voiceEnabled && !force) return;
 
@@ -226,132 +241,51 @@
     sessionCtx.lastSpokenText = spokenText;
 
     stopEmbeddedVoice();
-    const ctx = getAudioEngine();
-    if (!ctx) return;
+    const mySeq = ttsRequestSeq;
 
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
-    const baseF0 = persona.f0 || 155;
-    const rate = persona.speed || 1.0;
+    const voiceName = persona.voiceName || "Puck";
+    const cacheKey = `${voiceName}::${spokenText}`;
 
-    // تعديل النبرة الانفعالية حسب الموقف
-    const emotionMul = {
-      greet: 1.08,
-      happy: 1.12,
-      choice: 1.03,
-      listen: 0.96,
-      normal: 1.0
-    }[emotion] || 1.0;
+    const playUrl = (url, speedRate = 1.0) => {
+      if (mySeq !== ttsRequestSeq) return;
+      const player = ensureAudioPlayer();
+      player.src = url;
+      player.playbackRate = speedRate;
+      player.play().catch(() => {});
+    };
 
-    // تقليص النص الطويل جداً إلى جملة مركزة واضحة وسريعة الاستماع
-    const compactChars = spokenText.slice(0, 75).split("");
-    let cursorTime = ctx.currentTime + 0.02;
-
-    // ضوضاء خفيفة مفلترة للحروف الاحتكاكية (س، ش، ف، هـ)
-    const noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.15), ctx.sampleRate);
-    const nData = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < nData.length; i++) {
-      nData[i] = (Math.random() * 2 - 1) * 0.25;
+    if (ttsAudioCache.has(cacheKey)) {
+      playUrl(ttsAudioCache.get(cacheKey), persona.speed || 1.0);
+      return;
     }
 
-    compactChars.forEach((ch, idx) => {
-      const ph = getArabicPhonemeFormants(ch);
-      const stepDur = ph.dur / rate;
+    const workerUrl = typeof getEffectiveAIWorkerUrl === "function" ? getEffectiveAIWorkerUrl() : "";
+    if (!workerUrl || navigator.onLine === false) return;
 
-      if (ph.pause) {
-        cursorTime += stepDur;
-        return;
+    try {
+      const res = await fetch(workerUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "tts",
+          text: spokenText,
+          voiceName
+        })
+      });
+      const json = await res.json();
+      if (mySeq !== ttsRequestSeq) return;
+      if (!res.ok || !json?.ok || !json?.audioBase64) return;
+
+      const blobUrl = base64ToAudioBlobUrl(json.audioBase64, json.mimeType || "audio/mpeg");
+      if (ttsAudioCache.size > 30) {
+        const firstKey = ttsAudioCache.keys().next().value;
+        URL.revokeObjectURL(ttsAudioCache.get(firstKey));
+        ttsAudioCache.delete(firstKey);
       }
-
-      // منحنى تنغيم طبيعي للجملة (يرتفع في البداية وينخفض بلطف في النهاية)
-      const progress = idx / Math.max(1, compactChars.length);
-      const intonation = 1 + 0.12 * Math.sin(progress * Math.PI) - 0.08 * progress;
-      const pitchNow = baseF0 * emotionMul * intonation;
-
-      if (ph.voiced) {
-        // مصدر الحبال الصوتية (Sawtooth) يمر عبر 3 مرشحات رنين (F1, F2, F3)
-        const glottal = ctx.createOscillator();
-        glottal.type = "sawtooth";
-        glottal.frequency.setValueAtTime(pitchNow, cursorTime);
-        glottal.frequency.exponentialRampToValueAtTime(pitchNow * 0.97, cursorTime + stepDur);
-
-        const f1 = ctx.createBiquadFilter();
-        f1.type = "bandpass";
-        f1.frequency.setValueAtTime(ph.f1, cursorTime);
-        f1.Q.setValueAtTime(6.5, cursorTime);
-
-        const f2 = ctx.createBiquadFilter();
-        f2.type = "bandpass";
-        f2.frequency.setValueAtTime(ph.f2, cursorTime);
-        f2.Q.setValueAtTime(8.0, cursorTime);
-
-        const f3 = ctx.createBiquadFilter();
-        f3.type = "bandpass";
-        f3.frequency.setValueAtTime(ph.f3, cursorTime);
-        f3.Q.setValueAtTime(9.5, cursorTime);
-
-        const env = ctx.createGain();
-        env.gain.setValueAtTime(0.0001, cursorTime);
-        env.gain.linearRampToValueAtTime(0.16, cursorTime + stepDur * 0.22);
-        env.gain.exponentialRampToValueAtTime(0.0001, cursorTime + stepDur);
-
-        glottal.connect(f1);
-        glottal.connect(f2);
-        glottal.connect(f3);
-        f1.connect(env);
-        f2.connect(env);
-        f3.connect(env);
-        env.connect(ctx.destination);
-
-        glottal.start(cursorTime);
-        glottal.stop(cursorTime + stepDur + 0.01);
-        currentVoiceNodes.push(glottal);
-      } else {
-        // نطق الحروف الاحتكاكية المهموسة (س، ش، ص، ف، هـ)
-        const noise = ctx.createBufferSource();
-        noise.buffer = noiseBuffer;
-
-        const bp = ctx.createBiquadFilter();
-        bp.type = "bandpass";
-        bp.frequency.setValueAtTime(ph.f2 * 1.4, cursorTime);
-        bp.Q.setValueAtTime(4.0, cursorTime);
-
-        const nEnv = ctx.createGain();
-        nEnv.gain.setValueAtTime(0.0001, cursorTime);
-        nEnv.gain.linearRampToValueAtTime(0.09, cursorTime + stepDur * 0.25);
-        nEnv.gain.exponentialRampToValueAtTime(0.0001, cursorTime + stepDur);
-
-        noise.connect(bp);
-        bp.connect(nEnv);
-        nEnv.connect(ctx.destination);
-
-        noise.start(cursorTime);
-        noise.stop(cursorTime + stepDur + 0.01);
-        currentVoiceNodes.push(noise);
-      }
-
-      cursorTime += stepDur * 0.92;
-    });
-  }
-
-  function playListenCue() {
-    const ctx = getAudioEngine();
-    if (!ctx) return;
-    const prefs = getPrefs();
-    const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
-    const now = ctx.currentTime;
-    [p.f0 * 2.2, p.f0 * 2.8].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, now + i * 0.07);
-      g.gain.setValueAtTime(0.001, now + i * 0.07);
-      g.gain.exponentialRampToValueAtTime(0.08, now + i * 0.07 + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.07 + 0.1);
-      osc.connect(g);
-      g.connect(ctx.destination);
-      osc.start(now + i * 0.07);
-      osc.stop(now + i * 0.07 + 0.11);
-    });
+      ttsAudioCache.set(cacheKey, blobUrl);
+      playUrl(blobUrl, json.source === "google_tts" ? (persona.speed || 1.0) : 1.0);
+    } catch (_) {}
   }
 
   window.toggleCompanionVoice = function () {
@@ -360,13 +294,12 @@
     const next = !prefs.voiceEnabled;
     setPrefs({ voiceEnabled: next });
     if (!next) stopEmbeddedVoice();
-    const msg = next ? "تم تفعيل الصوت المدمج للمساعد، أهلاً بك!" : "تم كتم صوت المساعد.";
-    showBubble(next ? "🗣️ الصوت المدمج مفعّل" : "🔇 الصوت مكتوم", 2800);
-    showToast(next ? "🗣️ الصوت المدمج مفعّل" : "🔇 الصوت مكتوم");
-    if (next) speakOutLoud(msg, true, "greet");
+    const msg = next ? "تم تفعيل الصوت للمساعد، أهلاً بك!" : "تم كتم صوت المساعد.";
+    showBubble(next ? "🗣️ الصوت مفعّل" : "🔇 الصوت مكتوم", 2800);
+    showToast(next ? "🗣️ الصوت مفعّل" : "🔇 الصوت مكتوم");
+    if (next) speakOutLoud(msg, true);
   };
 
-  // دالة جلب الصور المصغرة الآمنة مع صورة افتراضية عند غياب الصورة
   function getThumb(id) {
     try {
       const cleanId = String(id || "").trim();
@@ -421,7 +354,7 @@
     const p = PERSONAS[key];
     const msg = `أهلاً بك مع ${p.name}! اضغط مطوّلاً وتحدّث معي.`;
     showBubble(`${p.icon} ${msg}`, 3400);
-    speakOutLoud(msg, false, "greet");
+    speakOutLoud(msg, false);
   };
 
   window.setPetHidden = function (hide) {
@@ -453,10 +386,7 @@
     if (ring) ring.style.display = state === "listening" ? "block" : "none";
     if (bubbleTxt) {
       showBubble(bubbleTxt, state === "listening" ? 0 : 5400);
-      if (shouldSpeak) {
-        const emoMap = { greet: "greet", happy: "happy", choice: "choice", listening: "listen" };
-        speakOutLoud(bubbleTxt, false, emoMap[state] || "normal");
-      }
+      if (shouldSpeak) speakOutLoud(bubbleTxt, false);
     }
   }
 
@@ -501,7 +431,7 @@
   }
 
   // ==========================================================================
-  // [A] صقل تجربة الزبون في السلة وإتمام الطلب (Checkout UX)
+  // [A] صقل تجربة الزبون في السلة وإتمام الطلب (دون تدخل الذكاء الاصطناعي في الدفع)
   // ==========================================================================
   function enhanceCustomerCartCheckoutUX() {
     const modalContent = document.querySelector("#cartModal .modal-content");
@@ -514,7 +444,7 @@
       stepper.innerHTML = `
         <span style="color:#00e676;">① مراجعة السلة</span>
         <span style="color:var(--gray-text);">←</span>
-        <span style="color:var(--gold-color);">② التوصيل والدفع</span>
+        <span style="color:var(--gold-color);">② التوصيل والدفع اليدوي</span>
         <span style="color:var(--gray-text);">←</span>
         <span style="color:#00b0ff;">③ تأكيد الطلب</span>
       `;
@@ -547,7 +477,7 @@
         </div>
         <div style="display:flex; justify-content:space-between;"><span>عدد القطع:</span><b>${itemsCount}</b></div>
         <div style="display:flex; justify-content:space-between;"><span>المنطقة والتوصيل:</span><b>${esc(regionName)} (${esc(feeTxt)} ل.س)</b></div>
-        <div style="display:flex; justify-content:space-between;"><span>طريقة الدفع:</span><b>${esc(payMethod)}</b></div>
+        <div style="display:flex; justify-content:space-between;"><span>طريقة الدفع (يدوي):</span><b>${esc(payMethod)}</b></div>
         <div style="display:flex; justify-content:space-between; border-top:1px solid var(--border-color); margin-top:4px; padding-top:4px; font-size:12px;">
           <span>الإجمالي النهائي:</span>
           <strong style="color:var(--gold-color);">${esc(totalTxt)} ل.س</strong>
@@ -557,7 +487,7 @@
   }
 
   // ==========================================================================
-  // [B] تنظيم وتبسيط واجهات الإدارة والتصدير (Admin & Export UX)
+  // [B] تنظيم وتبسيط واجهات الإدارة والتصدير
   // ==========================================================================
   window.copyTextToClipboardClean = function (txt, successMsg) {
     if (!txt) return;
@@ -1115,6 +1045,14 @@
       return;
     }
 
+    // منع تدخل الذكاء الاصطناعي في أي طلب يخص الدفع أو التحويلات
+    if (guardAgainstPaymentAI(promptTxt)) {
+      const guardMsg = "عمليات الدفع وتأكيد التحويلات تتم يدوياً بالكامل خارج المساعد الذكي.";
+      setOrbEmotion("idle", guardMsg, false);
+      setTxt("aiShoppingStatusText", `🔒 ${guardMsg}`);
+      return;
+    }
+
     const norm = cleanArabicNorm(promptTxt);
 
     const chatReply = matchCasualChat(norm, persona);
@@ -1200,7 +1138,6 @@
 
     isHoldingSpeak = true;
     haptic(25);
-    playListenCue();
     setOrbEmotion("listening", "تحدّث الآن... اترك إصبعك عند الانتهاء", false);
 
     const rec = new SR();
@@ -1244,8 +1181,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v43Bound) return;
-    orb.dataset.v43Bound = "1";
+    if (!orb || !root || orb.dataset.v44Bound) return;
+    orb.dataset.v44Bound = "1";
 
     let down = false, dragging = false, holdFired = false, holdTimer = null;
     let sx = 0, sy = 0, r0 = 14, b0 = 88;
@@ -1315,7 +1252,7 @@
       const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
       const phrase = sessionCtx.lastSpokenText || persona.greet;
       showBubble(`${persona.icon} ${phrase}`, 4000);
-      speakOutLoud(phrase, true, "greet");
+      speakOutLoud(phrase, true);
     };
 
     orb.addEventListener("contextmenu", e => e.preventDefault());
@@ -1450,18 +1387,20 @@
 
   window.runAssistantQACheck = function () {
     const report = {
+      version: "v44",
+      paymentAIExcluded: true,
       productsLoaded: Object.keys(products || {}).length,
       categoriesLoaded: Array.isArray(categories) ? categories.length : 0,
       recipesAvailable: getAllMergedRecipes().length,
-      embeddedAudioSupported: !!(window.AudioContext || window.webkitAudioContext),
+      cloudAudioSupported: typeof Audio !== "undefined",
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic]", report);
+    console.info("[QA Assistant Diagnostic v44]", report);
     return report;
   };
 
-  function mountV43() {
+  function mountV44() {
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const assistBox = $("aiSmartAssistantBox");
@@ -1488,19 +1427,19 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV43";
+      styleTag.id = "petCharStyleV44";
       styleTag.textContent = `
-        @keyframes petFloatV43 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
-        @keyframes petRingV43 { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.36); opacity: 0; } }
+        @keyframes petFloatV44 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
+        @keyframes petRingV44 { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.36); opacity: 0; } }
         #petCharOrb {
           width: 56px; height: 56px; border-radius: 50%; border: 2.5px solid ${p.accent};
           font-size: 27px; display: flex; align-items: center; justify-content: center;
           cursor: grab; -webkit-touch-callout: none; user-select: none;
-          animation: petFloatV43 2.7s ease-in-out infinite;
+          animation: petFloatV44 2.7s ease-in-out infinite;
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: petRingV43 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: petRingV44 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 66px; right: 0; max-width: 225px; width: max-content;
@@ -1524,7 +1463,7 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV43(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV44(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
@@ -1539,6 +1478,6 @@
   window.addEventListener("online", syncConnectivityBadge);
   window.addEventListener("offline", syncConnectivityBadge);
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV43);
-  else mountV43();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV44);
+  else mountV44();
 })();
