@@ -1,474 +1,59 @@
 // ============================================================================
-// محرك المساعد الصوتي التفاعلي لمتجر معاذ (v63 - Distinct Voice Timbre, Pitch & Tone per Persona)
+// محرك المساعد الصوتي التفاعلي لمتجر معاذ (تباين الطبقات والنبر + سرعة 1.5 + أسماء ثابتة)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
-// - تمييز حقيقي وملموس بين الأصوات الذكرية والأنثوية والنبرة (حماسي، رياضي، ودود، لطيف، حازم، منظم)
-// - سرعة الإلقاء والتشغيل 1.5 مع الحفاظ على العربية الفصحى المبسطة ومخارج الحروف السليمة
-// - تمرير voicePitch و voiceTone و gender في طلب TTS لتمييز النبرة بوضوح حتى عند التبديل السريع
+// - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
+// - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
+// - كشف فوري لحالة الصوت والـ Worker في الشارة الجانبية مع إمكانية الاختبار المباشر
+// - رفع سرعة التحدث قليلاً لجميع الشخصيات + أسلوب بشري حر وتلقائي
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V58_LOADED__) return;
-  window.__MOAATH_AI_V58_LOADED__ = true;
+  if (window.__MOAATH_AI_ENGINE_LOADED__) return;
+  window.__MOAATH_AI_ENGINE_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v58_prefs";
-  const POS_KEY = "moaath_pet_v58_pos";
-  const LEARN_KEY = "moaath_pet_v58_learned";
+  const PREFS_KEY = "moaath_pet_prefs";
+  const POS_KEY = "moaath_pet_pos";
+  const LEARN_KEY = "moaath_pet_learned";
 
-  const phraseRotationState = {};
-  function pickPhrase(list, key) {
-    if (!Array.isArray(list) || !list.length) return "";
-    if (list.length === 1) return list[0];
-    const lastIdx = typeof phraseRotationState[key] === "number" ? phraseRotationState[key] : -1;
-    let nextIdx = (lastIdx + 1) % list.length;
-    phraseRotationState[key] = nextIdx;
-    return list[nextIdx];
-  }
-
-  // أصوات Gemini Prebuilt المميزة حسب الهوية:
-  // Puck / Fenrir / Charon / Orus للأصوات الذكرية بسمات ونبرات مختلفة
-  // Aoede / Kore / Leda / Zephyr للأصوات الأنثوية بسمات ونبرات مختلفة
-  const PERSONAS = {
-    buddy: {
-      id: "buddy",
-      gender: "male",
-      toneTag: "ودود",
-      name: "بندق الودود",
-      roleBadge: "ذكري • ودود ومبتسم",
-      specialtyNote: "بندق (ذكري ودود): صوت دافئ ومبتسم ومضيء يرحب بك بترحاب واضح.",
-      avatarUrl: "buddy.jpg",
-      accent: "#00b0ff",
-      voiceName: "Puck",
-      speed: 1.5,
-      pitchSemitones: 1.2,
-      fallbackDetune: 90,
-      fallbackRate: 1.5,
-      styleHint: "صوت ذكري شاب ودود ومبتسم جداً ومرحب، طبقة صوت متوسطة مشرقة، نبرة دافئة ومضيئة بالعربية الفصحى المبسطة بسرعة إلقاء 1.5",
-      greet: "أهلاً بك، نورت متجر معاذ. يسعدني مساعدتك، ماذا تحب أن أجهز لك اليوم؟",
-      greets: [
-        "أهلاً بك، نورت متجر معاذ. يسعدني مساعدتك، ماذا تحب أن أجهز لك اليوم؟",
-        "مرحباً بك يا صديقي، أخبرني بطلبك وسأجهزه لك في الحال.",
-        "أهلاً وسهلاً بك، ما الذي تحتاجه اليوم من المتجر؟"
-      ],
-      chatGood: "أنا بخير والحمد لله. كيف يمكنني أن أخدمك اليوم؟",
-      chatGoods: [
-        "أنا بخير والحمد لله. كيف يمكنني أن أخدمك اليوم؟",
-        "الحمد لله في أحسن حال. ما الذي تحب أن نرتبه لك اليوم؟"
-      ],
-      thanks: "العفو، يسعدني دائماً أن أكون في خدمتك.",
-      thanksList: [
-        "العفو، يسعدني دائماً أن أكون في خدمتك.",
-        "لا شكر على واجب، أنا هنا لمساعدتك في أي وقت."
-      ],
-      addedMsgs: [
-        (n) => `بكل سرور، أضفت ${n} إلى السلة.`,
-        (n) => `تمت الإضافة بنجاح، أصبح لديك ${n} في السلة.`
-      ],
-      recipeReady: (title) => `بكل سرور، جهزت لك المتوفر لوصفة ${title}، يمكنك زيادة الكمية من زر الزائد.`,
-      recipeMissing: (title) => `وصفة ${title} موجودة لدينا، لكن مكوناتها غير متوفرة حالياً.`,
-      itemsReady: (catsText) => catsText ? `عرضت لك أصناف قسم ${catsText}، اختر الكمية المناسبة لك.` : "عرضت لك الأصناف المتوفرة، اختر الكمية المناسبة.",
-      notFounds: [
-        "عذراً، لم أجد صنفاً مطابقاً متوفراً الآن، جرب اسم وصفة أو قسماً آخر.",
-        "لا يتوفر صنف مطابق حالياً، أخبرني بطلب آخر وسأبحث لك بكل سرور."
-      ],
-      notFound: "عذراً، لم أجد صنفاً مطابقاً متوفراً الآن، جرب اسم وصفة أو قسماً آخر."
-    },
-    pro: {
-      id: "pro",
-      gender: "male",
-      toneTag: "حازم وسريع",
-      name: "صقر السريع",
-      roleBadge: "ذكري • حازم وسريع",
-      specialtyNote: "صقر (ذكري حازم): صوت رجولي عميق وحازم ومباشر يفرز الأصناف فوراً.",
-      avatarUrl: "pro.jpg",
-      accent: "#00e676",
-      voiceName: "Charon",
-      speed: 1.5,
-      pitchSemitones: -2.2,
-      fallbackDetune: -220,
-      fallbackRate: 1.5,
-      styleHint: "صوت ذكري عميق وحازم ومباشر وجاد، طبقة صوت منخفضة وقوية، إلقاء سريع وحاسم بالعربية الفصحى المبسطة بسرعة 1.5",
-      greet: "أهلاً بك، أنا جاهز فوراً. اذكر اسم الصنف أو الوصفة.",
-      greets: [
-        "أهلاً بك، أنا جاهز فوراً. اذكر اسم الصنف أو الوصفة.",
-        "مرحباً، أعطني اسم الصنف وسأعرضه لك مباشرة.",
-        "مستعد للبدء الآن، ما هو طلبك؟"
-      ],
-      chatGood: "جاهز ومستعد تماماً. اطلب الصنف أو الوصفة مباشرة.",
-      chatGoods: [
-        "جاهز ومستعد تماماً. اطلب الصنف أو الوصفة مباشرة.",
-        "بأفضل حال. اذكر طلبك لنبدأ فوراً."
-      ],
-      thanks: "على الرحب والسعة، اطلب ما تحتاجه فوراً.",
-      thanksList: [
-        "على الرحب والسعة، اطلب ما تحتاجه فوراً.",
-        "في الخدمة دائماً، هل لديك طلب آخر؟"
-      ],
-      addedMsgs: [
-        (n) => `تمت إضافة ${n} إلى السلة فوراً.`,
-        (n) => `جاهز، أضفت ${n} إلى سلتك الآن.`
-      ],
-      recipeReady: (title) => `مواد ${title} المتوفرة جاهزة، حدد الكمية فوراً.`,
-      recipeMissing: (title) => `مكونات ${title} غير متوفرة حالياً في هذا الفرع.`,
-      itemsReady: (catsText) => catsText ? `أصناف ${catsText} جاهزة، اختر الكمية.` : "الأصناف المتوفرة أمامك، حدد الكمية.",
-      notFounds: [
-        "لا يوجد صنف مطابق متوفر الآن، جرب طلباً آخر.",
-        "غير متوفر حالياً، اذكر اسماً أو قسماً آخر."
-      ],
-      notFound: "لا يوجد صنف مطابق متوفر الآن، جرب طلباً آخر."
-    },
-    saver: {
-      id: "saver",
-      gender: "female",
-      toneTag: "عملي اقتصادي",
-      name: "ثعلب التوفير",
-      roleBadge: "أنثوي • عملي للتوفير",
-      specialtyNote: "ثعلب التوفير (أنثوي عملي): صوت أنثوي واضح وعملي وحكيم يختار الأوفر.",
-      avatarUrl: "saver.jpg",
-      accent: "#D4AF37",
-      voiceName: "Zephyr",
-      speed: 1.5,
-      pitchSemitones: 2.0,
-      fallbackDetune: 210,
-      fallbackRate: 1.5,
-      styleHint: "صوت أنثوي واضح وعملي ومتزن وحكيم، طبقة أنثوية متوسطة واضحة، نبرة ناصحة ذكية بالعربية الفصحى المبسطة بسرعة 1.5",
-      greet: "مرحباً بك. أنا هنا لأساعدك في اختيار المتوفر بأفضل قيمة وأوفر سعر.",
-      greets: [
-        "مرحباً بك. أنا هنا لأساعدك في اختيار المتوفر بأفضل قيمة وأوفر سعر.",
-        "أهلاً بك، أخبرني بميزانيتك أو طلبك لنختار الخيار الأوفر.",
-        "أهلاً وسهلاً، أنا مستعدة لترتيب أوفر الخيارات المتوفرة لك."
-      ],
-      chatGood: "الحمد لله بخير. مستعدة لترتيب طلبك بأفضل قيمة وتوفير.",
-      chatGoods: [
-        "الحمد لله بخير. مستعدة لترتيب طلبك بأفضل قيمة وتوفير.",
-        "بألف خير. ما هي الأغراض التي تريد توفير ثمنها اليوم؟"
-      ],
-      thanks: "العفو، أختار لك الأوفر والأفضل دائماً.",
-      thanksList: [
-        "العفو، أختار لك الأوفر والأفضل دائماً.",
-        "يسعدني دائماً مساعدتك في التوفير الذكي."
-      ],
-      addedMsgs: [
-        (n) => `ممتاز، أضفت ${n} بسعر واضح وموفر.`,
-        (n) => `أضفت ${n} إلى السلة بأفضل قيمة متوفرة.`
-      ],
-      recipeReady: (title) => `جهزت لك المتوفر لوصفة ${title} بأفضل الأسعار، حدد الكمية.`,
-      recipeMissing: (title) => `مكونات ${title} غير متوفرة حالياً، جرب وصفة متوفرة أوفر.`,
-      itemsReady: (catsText) => catsText ? `رتبت لك أوفر أصناف ${catsText}، حدد الكمية حسب ميزانيتك.` : "عرضت لك المتوفر بأسعار واضحة، حدد الكمية.",
-      notFounds: [
-        "لا يوجد صنف مطابق متوفر الآن، جرب قسماً أو ميزانية أخرى.",
-        "غير متوفر حالياً، اذكر قسماً آخر لنختار الأوفر."
-      ],
-      notFound: "لا يوجد صنف مطابق متوفر الآن، جرب قسماً أو وصفة أخرى."
-    },
-    lulu: {
-      id: "lulu",
-      gender: "female",
-      toneTag: "لطيف وناعم",
-      name: "لولو اللطيفة",
-      roleBadge: "أنثوي • لطيف وناعم",
-      specialtyNote: "لولو (أنثوي لطيف): صوت أنثوي ناعم ورقيق ومشرق للطبخ والحلويات.",
-      avatarUrl: "lulu.jpg",
-      accent: "#ff7eb6",
-      voiceName: "Aoede",
-      speed: 1.5,
-      pitchSemitones: 3.4,
-      fallbackDetune: 360,
-      fallbackRate: 1.5,
-      styleHint: "صوت أنثوي ناعم جداً ورقيق ومشرق وعذب، طبقة أنثوية عالية لطيفة، نبرة حنونة ومبهجة بالعربية الفصحى المبسطة بسرعة 1.5",
-      greet: "أهلاً بك ونورت المتجر. ماذا تحب أن تطبخ أو تحضر من الحلويات اليوم؟",
-      greets: [
-        "أهلاً بك ونورت المتجر. ماذا تحب أن تطبخ أو تحضر من الحلويات اليوم؟",
-        "مرحباً بك، بأي وصفة حلوة نبدأ اليوم؟",
-        "أهلاً وسهلاً، أخبرني ما الذي ترغب في تحضيره اليوم."
-      ],
-      chatGood: "أنا بخير والحمد لله. أخبرني ماذا تحب أن تحضر اليوم؟",
-      chatGoods: [
-        "أنا بخير والحمد لله. أخبرني ماذا تحب أن تحضر اليوم؟",
-        "الحمد لله بألف خير، يسعدني مساعدتك بكل سرور."
-      ],
-      thanks: "العفو، أنا في خدمتك دائماً بكل سرور.",
-      thanksList: [
-        "العفو، أنا في خدمتك دائماً بكل سرور.",
-        "لا شكر على واجب، أهلاً بك في أي وقت."
-      ],
-      addedMsgs: [
-        (n) => `رائع، أضفت ${n} إلى السلة بكل سرور.`,
-        (n) => `حسناً، أصبح لديك ${n} في السلة بسهولة.`
-      ],
-      recipeReady: (title) => `جهزت لك مكونات ${title} المتوفرة، اختر الكمية على مهلك.`,
-      recipeMissing: (title) => `وصفة ${title} جميلة، لكن مكوناتها غير متوفرة حالياً.`,
-      itemsReady: (catsText) => catsText ? `عرضت لك خيارات ${catsText}، اختر الكمية المناسبة.` : "عرضت لك الأصناف المتوفرة، اختر الكمية.",
-      notFounds: [
-        "لم أجد صنفاً مطابقاً متوفراً الآن، جرب وصفة أو قسماً آخر.",
-        "هذا الصنف غير متوفر حالياً، أخبرني بطلب آخر وأنا جاهزة."
-      ],
-      notFound: "لم أجد صنفاً مطابقاً متوفراً الآن، جرب وصفة أو قسماً آخر."
-    },
-    sara: {
-      id: "sara",
-      gender: "female",
-      toneTag: "منظم وهادئ",
-      name: "سارة المنظمة",
-      roleBadge: "أنثوي • منظم ودقيق",
-      specialtyNote: "سارة (أنثوي منظم): صوت أنثوي هادئ ومرتب ودقيق في تنسيق المكونات.",
-      avatarUrl: "sara.jpg",
-      accent: "#7c4dff",
-      voiceName: "Kore",
-      speed: 1.5,
-      pitchSemitones: 1.5,
-      fallbackDetune: 170,
-      fallbackRate: 1.5,
-      styleHint: "صوت أنثوي منظم ومرتب وهادئ وواضح، طبقة أنثوية رزينة، نبرة دقيقة ومنضبطة بالعربية الفصحى المبسطة بسرعة 1.5",
-      greet: "مرحباً بك. لنرتب احتياجات وصفتك حسب المتوفر بكل دقة.",
-      greets: [
-        "مرحباً بك. لنرتب احتياجات وصفتك حسب المتوفر بكل دقة.",
-        "أهلاً بك، دعنا نرتب قائمة مشترياتك خطوة بخطوة.",
-        "مرحباً، أخبرني بالوصفة أو القسم لنرتب المتوفر فوراً."
-      ],
-      chatGood: "أهلاً بك، كل شيء منظم. بأي وصفة أو صنف نبدأ؟",
-      chatGoods: [
-        "أهلاً بك، كل شيء منظم. بأي وصفة أو صنف نبدأ؟",
-        "بخير والحمد لله، القائمة جاهزة، بماذا نبدأ؟"
-      ],
-      thanks: "شكراً لك، نرتب طلبك في أي وقت.",
-      thanksList: [
-        "شكراً لك، نرتب طلبك في أي وقت.",
-        "على الرحب والسعة، يسعدني التنظيم معك."
-      ],
-      addedMsgs: [
-        (n) => `تمت إضافة ${n} إلى السلة بدقة.`,
-        (n) => `رتبت وأضفت ${n} في سلتك بنجاح.`
-      ],
-      recipeReady: (title) => `رتبت لك المتوفر لوصفة ${title}، حدد الكمية بدقة.`,
-      recipeMissing: (title) => `مكونات وصفة ${title} غير متوفرة حالياً في الفرع.`,
-      itemsReady: (catsText) => catsText ? `رتبت لك أصناف ${catsText}، حدد الكميات المطلوبة.` : "رتبت لك الأصناف المتوفرة، حدد الكمية.",
-      notFounds: [
-        "لم أجد مطابقة متوفرة حالياً، جرب اسماً آخر للوصفة أو القسم.",
-        "هذا الصنف غير متوفر الآن، لنبحث عن بديل مناسب."
-      ],
-      notFound: "لم أجد مطابقة متوفرة حالياً، جرب اسماً آخر للوصفة أو القسم."
-    },
-    noor: {
-      id: "noor",
-      gender: "female",
-      toneTag: "حيوي ومشرق",
-      name: "نور الذكية",
-      roleBadge: "أنثوي • حيوي ومشرق",
-      specialtyNote: "نور (أنثوي حيوي): صوت أنثوي مشرق وذكي ومليء بالحيوية والأفكار.",
-      avatarUrl: "noor.jpg",
-      accent: "#ff9800",
-      voiceName: "Leda",
-      speed: 1.5,
-      pitchSemitones: 2.8,
-      fallbackDetune: 290,
-      fallbackRate: 1.5,
-      styleHint: "صوت أنثوي حيوي ومشرق وذكي ومفعم بالنشاط، طبقة أنثوية صافية ومضيئة، نبرة حماسية لطيفة بالعربية الفصحى المبسطة بسرعة 1.5",
-      greet: "أهلاً وسهلاً بك. اطلب أي وصفة طبخ أو حلى وسأجهز لك المتوفر.",
-      greets: [
-        "أهلاً وسهلاً بك. اطلب أي وصفة طبخ أو حلى وسأجهز لك المتوفر.",
-        "مرحباً بك، لدي أفكار رائعة لمشترياتك، بماذا نبدأ؟",
-        "أهلاً بك، أخبرني بطلبك أو اسألني عما ينقص سلتك."
-      ],
-      chatGood: "أهلاً بك، الأفكار جاهزة. ماذا نجهز أو نطبخ اليوم؟",
-      chatGoods: [
-        "أهلاً بك، الأفكار جاهزة. ماذا نجهز أو نطبخ اليوم؟",
-        "الحمد لله بنشاط وحيوية، هيا نجهز قائمة رائعة."
-      ],
-      thanks: "العفو، يسعدني مساعدتك دائماً.",
-      thanksList: [
-        "العفو، يسعدني مساعدتك دائماً.",
-        "لا شكر على واجب، لأي فكرة أو طلب أنا جاهزة."
-      ],
-      addedMsgs: [
-        (n) => `ممتاز، أضفت ${n} إلى السلة.`,
-        (n) => `تمت إضافة ${n} بنجاح، اختيار موفق.`
-      ],
-      recipeReady: (title) => `جهزت لك المتوفر لوصفة ${title} بلمحة، حدد الكمية.`,
-      recipeMissing: (title) => `مكونات ${title} غير متوفرة حالياً في هذا الفرع.`,
-      itemsReady: (catsText) => catsText ? `اخترت لك المتوفر من ${catsText}، حدد الكمية.` : "اخترت لك الأصناف المتوفرة، حدد الكمية.",
-      notFounds: [
-        "لم أجد صنفاً مطابقاً متوفراً الآن، جرب خياراً آخر.",
-        "غير متوفر حالياً، جرب كلمة أو قسماً آخر."
-      ],
-      notFound: "لم أجد صنفاً مطابقاً متوفراً الآن، جرب خياراً آخر."
-    },
-    chef: {
-      id: "chef",
-      gender: "male",
-      toneTag: "مطبخي ودود",
-      name: "الطباخ الماهر",
-      roleBadge: "ذكري • خبير وصفات",
-      specialtyNote: "الطباخ الماهر (ذكري مطبخي): صوت ذكري دافئ وخبير يشرح أطباقاً ومكونات شهية.",
-      avatarUrl: "chef.jpg",
-      accent: "#f97316",
-      voiceName: "Orus",
-      speed: 1.5,
-      pitchSemitones: -1.4,
-      fallbackDetune: -140,
-      fallbackRate: 1.5,
-      styleHint: "صوت ذكري خبير ودافئ وودود كطباخ ماهر، طبقة ذكورية متزنة وغنية، نبرة مريحة ومشجعة بالعربية الفصحى المبسطة بسرعة 1.5",
-      greet: "أهلاً بك في المطبخ. ما هي الطبخة التي تحب أن نجهز مكوناتها اليوم؟",
-      greets: [
-        "أهلاً بك في المطبخ. ما هي الطبخة التي تحب أن نجهز مكوناتها اليوم؟",
-        "مرحباً بك، اذكر اسم الأكلة وسأعرض لك المتوفر من الوصفات بدقة.",
-        "جاهز للطبخ. اطلب أي أكلة أو مكون وسنرتبها معاً."
-      ],
-      chatGood: "تمام والحمد لله. المكونات جاهزة، ماذا نطبخ اليوم؟",
-      chatGoods: [
-        "تمام والحمد لله. المكونات جاهزة، ماذا نطبخ اليوم؟",
-        "بألف خير. أخبرني ما هي الأكلة التي تريد طبخها اليوم."
-      ],
-      thanks: "صحة وعافية مقدماً، أنا في خدمتك في أي وقت.",
-      thanksList: [
-        "صحة وعافية مقدماً، أنا في خدمتك في أي وقت.",
-        "العفو، يسعدني دائماً ترتيب مكونات طبختك."
-      ],
-      addedMsgs: [
-        (n) => `ممتاز، أضفت ${n} لمكونات الطبخة.`,
-        (n) => `حسناً، أصبح لديك ${n} في السلة للطبخ.`
-      ],
-      recipeReady: (title) => `من وصفاتنا، جهزت لك المتوفر لطبخة ${title} بدقة، حدد الكمية.`,
-      recipeMissing: (title) => `طبخة ${title} موجودة في الوصفات، لكن مكوناتها غير متوفرة حالياً.`,
-      itemsReady: (catsText) => catsText ? `رتبت لك مكونات ${catsText} المتوفرة للطبخ، حدد الكمية.` : "رتبت لك الأصناف المتوفرة للطبخ، حدد الكمية.",
-      notFounds: [
-        "لم أجد طبخة مطابقة متوفرة الآن، جرب اسم أكلة أخرى مثل مقلوبة أو كبسة.",
-        "هذه الأكلة غير متوفرة مكوناتها حالياً، اطلب وصفة أخرى."
-      ],
-      notFound: "لم أجد طبخة مطابقة متوفرة الآن، جرب اسم أكلة أخرى."
-    },
-    pastry: {
-      id: "pastry",
-      gender: "female",
-      toneTag: "رقيق ومبهج",
-      name: "صانعة الحلويات",
-      roleBadge: "أنثوي • رقيق ومبهج",
-      specialtyNote: "صانعة الحلويات (أنثوي رقيق): صوت أنثوي رقيق ومبهج وحلو للحلويات والضيافة.",
-      avatarUrl: "pastry.jpg",
-      accent: "#ec4899",
-      voiceName: "Aoede",
-      speed: 1.5,
-      pitchSemitones: 3.0,
-      fallbackDetune: 310,
-      fallbackRate: 1.5,
-      styleHint: "صوت أنثوي رقيق ومبهج وحلو ولطيف، طبقة أنثوية عالية ناعمة، نبرة مبهجة ودافئة بالعربية الفصحى المبسطة بسرعة 1.5",
-      greet: "مرحباً بك. ما هو الحلى الذي تحب تحضيره اليوم من وصفاتنا؟",
-      greets: [
-        "مرحباً بك. ما هو الحلى الذي تحب تحضيره اليوم من وصفاتنا؟",
-        "أهلاً بك، اطلب أي حلى مثل كيك أو بسبوسة أو مهلبية وسأجهز المتوفر.",
-        "أهلاً وسهلاً، أخبرني ما الذي تود تحضيره من الحلويات اليوم."
-      ],
-      chatGood: "الحمد لله بخير وبأجمل مزاج. ما هو الحلى الذي نجهزه اليوم؟",
-      chatGoods: [
-        "الحمد لله بخير وبأجمل مزاج. ما هو الحلى الذي نجهزه اليوم؟",
-        "بألف خير، جاهزة لاختيار مكونات حلى شهي اليوم."
-      ],
-      thanks: "ألف صحة وعافية، أنا في خدمتك دائماً بكل سرور.",
-      thanksList: [
-        "ألف صحة وعافية، أنا في خدمتك دائماً بكل سرور.",
-        "العفو، أهلاً بك في أي وقت."
-      ],
-      addedMsgs: [
-        (n) => `رائع، أضفت ${n} لمكونات الحلى.`,
-        (n) => `حسناً، أصبح لديك ${n} في السلة لتحضير الحلى.`
-      ],
-      recipeReady: (title) => `من حلوياتنا، جهزت لك المتوفر لوصفة ${title}، حدد الكمية.`,
-      recipeMissing: (title) => `وصفة ${title} موجودة، لكن مكوناتها غير متوفرة حالياً.`,
-      itemsReady: (catsText) => catsText ? `جهزت لك مكونات ${catsText} للحلويات، حدد الكمية.` : "جهزت لك الأصناف المتوفرة للحلويات، حدد الكمية.",
-      notFounds: [
-        "لم أجد حلى مطابقاً متوفراً الآن، جرب كيك أو بسبوسة أو مهلبية.",
-        "هذا الحلى غير متوفر مكوناته حالياً، جرب وصفة حلو أخرى."
-      ],
-      notFound: "لم أجد حلى مطابقاً متوفراً الآن، جرب وصفة حلو أخرى."
-    },
-    athlete: {
-      id: "athlete",
-      gender: "male",
-      toneTag: "رياضي وقوي",
-      name: "البطل الرياضي",
-      roleBadge: "ذكري • رياضي وقوي",
-      specialtyNote: "البطل الرياضي (ذكري رياضي): صوت ذكري قوي ومندفع ونشيط يبعث على الطاقة والحيوية.",
-      avatarUrl: "athlete.jpg",
-      accent: "#10b981",
-      voiceName: "Fenrir",
-      speed: 1.5,
-      pitchSemitones: -1.8,
-      fallbackDetune: -180,
-      fallbackRate: 1.5,
-      styleHint: "صوت ذكري رياضي قوي ومندفع ومليء بالطاقة والحيوية، طبقة ذكورية قوية، نبرة تحفيزية نشيطة بالعربية الفصحى المبسطة بسرعة 1.5",
-      greet: "أهلاً بالبطل. هل أنت مستعد لاختيار أغراض صحية ومغذية تمنحك النشاط والطاقة؟",
-      greets: [
-        "أهلاً بالبطل. هل أنت مستعد لاختيار أغراض صحية ومغذية تمنحك النشاط والطاقة؟",
-        "مرحباً بالنشاط، اطلب مواد صحية أو أطعمة مفيدة وسنرتبها فوراً.",
-        "يومك رياضي ومليء بالحيوية، ماذا نجهز لك من المتوفر؟"
-      ],
-      chatGood: "بأعلى لياقة ونشاط. ماذا نجهز من الطعام الصحي والمفيد اليوم؟",
-      chatGoods: [
-        "بأعلى لياقة ونشاط. ماذا نجهز من الطعام الصحي والمفيد اليوم؟",
-        "تمام والحمد لله، الصحة والرياضة أساس، كيف نساعدك؟"
-      ],
-      thanks: "أحسنت، صحة وعافية ودوماً في القمة.",
-      thanksList: [
-        "أحسنت، صحة وعافية ودوماً في القمة.",
-        "العفو يا بطل، في خدمتك دائماً."
-      ],
-      addedMsgs: [
-        (n) => `ممتاز، أضفت ${n} إلى السلة بكل نشاط.`,
-        (n) => `حسناً، أصبح لديك ${n} صحية في السلة.`
-      ],
-      recipeReady: (title) => `جهزت لك المتوفر لوصفة ${title} بأسلوب صحي، حدد الكمية.`,
-      recipeMissing: (title) => `مكونات ${title} غير متوفرة حالياً، جرب خياراً صحياً متوفراً.`,
-      itemsReady: (catsText) => catsText ? `رتبت لك المتوفر في ${catsText}، اختر الأنسب لصحتك.` : "رتبت لك الأصناف المتوفرة، حدد الكمية.",
-      notFounds: [
-        "لم أجد صنفاً مطابقاً متوفراً الآن، جرب شوربة عدس أو مجدرة أو خضار.",
-        "غير متوفر حالياً، جرب صنفاً أو قسماً آخر."
-      ],
-      notFound: "لم أجد صنفاً مطابقاً متوفراً الآن، جرب صنفاً أو قسماً آخر."
-    },
-    sheikh: {
-      id: "sheikh",
-      gender: "male",
-      toneTag: "حماسي ومشتعل",
-      name: "شيخ الشباب",
-      roleBadge: "ذكري • حماسي ومشتعل",
-      specialtyNote: "شيخ الشباب (ذكري حماسي): صوت ذكري حماسي ومندفع وعفوي يرفع الحماس في السهرات.",
-      avatarUrl: "sheikh.jpg",
-      accent: "#ef4444",
-      voiceName: "Fenrir",
-      speed: 1.5,
-      pitchSemitones: 0.6,
-      fallbackDetune: 60,
-      fallbackRate: 1.5,
-      styleHint: "صوت ذكري حماسي جداً ومشتعل وعفوي وحيوي، إلقاء حماسي مندفع ومليء بالحماس بالعربية الفصحى المبسطة بسرعة 1.5",
-      greet: "أهلاً بك يا صديقي. أنا جاهز تماماً، ماذا نجهز لك اليوم بسرعة؟",
-      greets: [
-        "أهلاً بك يا صديقي. أنا جاهز تماماً، ماذا نجهز لك اليوم بسرعة؟",
-        "مرحباً بك، مستعد لترتيب السهرة أو الطلب بأسرع وقت.",
-        "أهلاً وسهلاً، اطلب ما تريده اليوم بكل سهولة."
-      ],
-      chatGood: "بأحسن حال ونشاط. ماذا نرتب أو نجهز لك اليوم؟",
-      chatGoods: [
-        "بأحسن حال ونشاط. ماذا نرتب أو نجهز لك اليوم؟",
-        "تمام التمام، أخبرني ما الذي تريد إحضاره."
-      ],
-      thanks: "على الرحب والسعة، جاهزون دائماً لخدمتك.",
-      thanksList: [
-        "على الرحب والسعة، جاهزون دائماً لخدمتك.",
-        "لا عليك، نحن هنا في أي وقت."
-      ],
-      addedMsgs: [
-        (n) => `رائع، أضفت ${n} إلى السلة بسرعة.`,
-        (n) => `تمت إضافة ${n} إلى السلة، جاهز للانطلاق.`
-      ],
-      recipeReady: (title) => `جهزت لك المتوفر لوصفة ${title} بسرعة، زد الكمية من زر الزائد.`,
-      recipeMissing: (title) => `مكونات ${title} غير متوفرة حالياً، جرب سهرة ومتة أو وصفة أخرى.`,
-      itemsReady: (catsText) => catsText ? `عرضت لك ${catsText}، اختر الكمية بسرعة.` : "عرضت لك المتوفر، زد الكمية بضغطة.",
-      notFounds: [
-        "لا يوجد صنف مطابق متوفر الآن، جرب سهرة ومتة أو قسماً آخر.",
-        "هذا الصنف غير متوفر حالياً، اطلب شيئاً آخر."
-      ],
-      notFound: "لا يوجد صنف مطابق متوفر الآن، جرب سهرة ومتة أو قسماً آخر."
-    }
+  const FALLBACK_BUDDY = {
+    id: "buddy",
+    gender: "male",
+    toneTag: "ودود ومبتسم",
+    name: "بندق الودود",
+    roleBadge: "ذكري • ودود ومبتسم",
+    specialtyNote: "بندق (ذكري ودود): صوت دافئ ومبتسم ومضيء يرحب بك بترحاب واضح.",
+    avatarUrl: "buddy.jpg",
+    accent: "#00b0ff",
+    voiceName: "Puck",
+    speed: 1.5,
+    pitchSemitones: 1.2,
+    fallbackDetune: 90,
+    fallbackRate: 1.5,
+    styleHint: "صوت ذكري شاب ودود ومبتسم بالعربية الفصحى المبسطة بسرعة إلقاء 1.5",
+    greet: "أهلاً بك، نورت متجر معاذ. ماذا تحب أن أجهز لك اليوم؟",
+    greets: ["أهلاً بك، نورت متجر معاذ. ماذا تحب أن أجهز لك اليوم؟"],
+    chatGood: "أنا بخير والحمد لله، كيف يمكنني خدمتك اليوم؟",
+    chatGoods: ["أنا بخير والحمد لله، كيف يمكنني خدمتك اليوم؟"],
+    thanks: "العفو، يسعدني دائماً أن أكون في خدمتك.",
+    thanksList: ["العفو، يسعدني دائماً أن أكون في خدمتك."],
+    addedMsgs: [(n) => `تمت إضافة ${n} إلى السلة.`],
+    recipeReady: (t) => `جهزت لك المتوفر لوصفة ${t}، حدد الكمية.`,
+    recipeMissing: (t) => `مكونات وصفة ${t} غير متوفرة حالياً.`,
+    itemsReady: () => "عرضت لك الأصناف المتوفرة، حدد الكمية.",
+    notFounds: ["لم أجد صنفاً مطابقاً متوفراً الآن."],
+    notFound: "لم أجد صنفاً مطابقاً متوفراً الآن."
   };
+
+  const PERSONAS = (window.MoaathAIPersonas && window.MoaathAIPersonas.PERSONAS)
+    ? window.MoaathAIPersonas.PERSONAS
+    : { buddy: FALLBACK_BUDDY };
+
+  function pickPhrase(list, key) {
+    if (window.MoaathAIPersonas && typeof window.MoaathAIPersonas.pickPhrase === "function") {
+      return window.MoaathAIPersonas.pickPhrase(list, key);
+    }
+    return Array.isArray(list) && list.length ? list[0] : "";
+  }
 
   const DEFAULT_RECIPES = [
     { id: "DEF_1", title: "مقلوبة", category: "طبخ", keywords: ["مقلوبه", "مقلوبة"], ingredients: ["رز", "ارز", "زيت", "سمن", "باذنجان", "بطاطا", "بندوره", "بصل", "بهار", "ملح"] },
@@ -526,9 +111,16 @@
     return /دفع|تحويل|شام\s*كاش|شامكاش|ايصال|اشعار\s*دفع|تحقق\s*من\s*الدفع|رصيد\s*دفع|فاتوره\s*دفع/.test(norm);
   }
 
+  customRecipesDB = loadLocalRecipesFallback();
   if (typeof db !== "undefined" && db.ref) {
     db.ref("recipes").on("value", snap => {
-      customRecipesDB = snap.val() || {};
+      const cloud = snap.val() || {};
+      customRecipesDB = { ...loadLocalRecipesFallback(), ...cloud };
+      if (typeof window.renderAdminRecipesList === "function") {
+        window.renderAdminRecipesList();
+      }
+    }, () => {
+      customRecipesDB = loadLocalRecipesFallback();
       if (typeof window.renderAdminRecipesList === "function") {
         window.renderAdminRecipesList();
       }
@@ -607,7 +199,7 @@
   }
 
   // ==========================================================================
-  // [محرك النطق المميز لكل شخصية — نوع الصوت، النبرة، الطبقة، والسرعة 1.5]
+  // [محرك الصوت المضمون على الهاتف — كشف رابط الـ Worker + تشغيل مباشر واضح]
   // ==========================================================================
   const ttsAudioCache = new Map();
   let sharedAudioPlayer = null;
@@ -690,46 +282,31 @@
     return String(txt || "")
       .replace(/\b1\s*(مواد|قطع|اصناف|أصناف)\b/g, "صنف واحد")
       .replace(/\b2\s*(مواد|قطع|اصناف|أصناف)\b/g, "صنفين")
-      .replace(/\b3\b/g, "ثلاثة")
-      .replace(/\b4\b/g, "أربعة")
-      .replace(/\b5\b/g, "خمسة")
       .replace(/\b(\d+)\s*ل\.?س\b/g, "$1 ليرة")
       .replace(/\b0\b/g, "صفر");
   }
 
-  function shortenForSpeech(text, maxWords = 15) {
+  function shortenForSpeech(text, maxWords = 16) {
     const words = String(text || "").trim().split(/\s+/).filter(Boolean);
     if (words.length <= maxWords) return words.join(" ");
-
-    const sliceWords = words.slice(0, maxWords);
-    const joined = sliceWords.join(" ");
-    const cutAt = Math.max(
-      joined.lastIndexOf("،"),
-      joined.lastIndexOf("."),
-      joined.lastIndexOf("!"),
-      joined.lastIndexOf("؟")
-    );
-    if (cutAt >= Math.floor(joined.length * 0.5)) {
-      return joined.slice(0, cutAt + 1).trim();
-    }
-
-    const trailingParticles = new Set(["و", "ف", "ب", "ل", "من", "في", "على", "عن", "مع", "يا", "إلى", "الى", "أن", "ما"]);
-    while (sliceWords.length > 4 && trailingParticles.has(sliceWords[sliceWords.length - 1])) {
-      sliceWords.pop();
-    }
-    return sliceWords.join(" ");
+    const sliced = words.slice(0, maxWords).join(" ");
+    const lastPunct = Math.max(sliced.lastIndexOf("،"), sliced.lastIndexOf("."), sliced.lastIndexOf("!"));
+    if (lastPunct > sliced.length * 0.55) return sliced.slice(0, lastPunct + 1).trim();
+    return sliced;
   }
 
   function normalizeTextForArabicSpeech(rawText) {
     let cleaned = humanizeArabicNumbersForSpeech(rawText)
-      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, " ")
-      .replace(/[A-Za-z0-9_+×•\-_*#|()[\]{}]/g, " ")
-      .replace(/ل\.?س/g, " ليرة ")
+      .replace(/[\u{1F300}-\u{1FAFF}🐾✨🎤🎧🎙️🤔🤩💡📌📍🔊🔇🗣️🍲🌸🛍️🔁⏰✅⚠️🔒🔄🧚🧉🍰💰🛒]/gu, " ")
+      .replace(/[A-Za-z_]+/g, " ")
+      .replace(/\+/g, " زائد ")
+      .replace(/×/g, " ضرب ")
+      .replace(/ل\.س/g, " ليرة ")
+      .replace(/[•\-_*#|()[\]{}]/g, " ")
       .replace(/\s*([،؛.!؟])\s*/g, "$1 ")
-      .replace(/([،؛.!؟]){2,}/g, "$1")
       .replace(/\s+/g, " ")
       .trim();
-    return shortenForSpeech(cleaned, 15);
+    return shortenForSpeech(cleaned, 16);
   }
 
   function base64ToUint8Array(base64Data) {
@@ -773,41 +350,105 @@
     if (titleText) badge.title = titleText;
   }
 
+  function pcmBase64ToAudioBuffer(ctx, base64Pcm, sampleRate = 24000) {
+    try {
+      const binStr = atob(base64Pcm);
+      const sampleCount = Math.floor(binStr.length / 2);
+      if (!sampleCount) return null;
+      const audioBuf = ctx.createBuffer(1, sampleCount, sampleRate);
+      const channel = audioBuf.getChannelData(0);
+      for (let i = 0; i < sampleCount; i++) {
+        const lo = binStr.charCodeAt(i * 2) & 0xff;
+        const hi = binStr.charCodeAt(i * 2 + 1) & 0xff;
+        let val = (hi << 8) | lo;
+        if (val >= 0x8000) val -= 0x10000;
+        channel[i] = val / 32768;
+      }
+      return audioBuf;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function clearPersonaSpeechCache(clearPersistent = false) {
+    ttsAudioCache.forEach(entry => {
+      if (entry?.url) {
+        try { URL.revokeObjectURL(entry.url); } catch (_) {}
+      }
+    });
+    ttsAudioCache.clear();
+    if (clearPersistent && typeof caches !== "undefined") {
+      caches.delete(PERSISTENT_TTS_CACHE_NAME).catch(() => {});
+    }
+  }
+  window.clearCompanionVoiceCache = () => clearPersonaSpeechCache(true);
+
   function playViaHtmlAudio(entry, persona, mySeq) {
     if (mySeq !== ttsRequestSeq) return;
     const player = ensureAudioPlayer();
     player.pause();
     player.src = entry.url;
     player.load();
-    player.preservesPitch = true;
-    player.mozPreservesPitch = true;
-    player.webkitPreservesPitch = true;
-    player.playbackRate = persona.speed || 1.5;
+    player.preservesPitch = false;
+    player.mozPreservesPitch = false;
+    player.webkitPreservesPitch = false;
+    const semitones = typeof persona.pitchSemitones === "number" ? persona.pitchSemitones : 0;
+    const baseRate = persona.speed || 1.5;
+    const pitchFactor = Math.pow(2, semitones / 24);
+    player.playbackRate = Math.max(1.15, Math.min(1.85, baseRate * pitchFactor));
     const p = player.play();
     if (p && typeof p.catch === "function") {
       p.catch(() => {
-        showBubble("اضغط على الشخصية لتشغيل الصوت", 2600);
+        showBubble("اضغط على الجنية لتشغيل الصوت", 2600);
       });
     }
   }
 
-  async function playWithPersonaTimbre(arrayBuf, persona, mySeq) {
+  async function playDistinctPersonaAudio(entry, persona, mySeq) {
+    if (mySeq !== ttsRequestSeq) return false;
     const ctx = ensureWebAudioCtx();
-    if (!ctx) return false;
+    if (!ctx || !entry) return false;
+
     try {
       if (ctx.state === "suspended") await ctx.resume();
-      const cloned = arrayBuf.slice(0);
-      const decoded = await ctx.decodeAudioData(cloned);
-      if (mySeq !== ttsRequestSeq) return true;
+      let decoded = entry.decodedBuffer || null;
+      if (!decoded && entry.rawBuffer) {
+        const cloned = entry.rawBuffer.slice(0);
+        decoded = await ctx.decodeAudioData(cloned);
+        entry.decodedBuffer = decoded;
+      }
+      if (!decoded || mySeq !== ttsRequestSeq) return false;
 
       const src = ctx.createBufferSource();
       src.buffer = decoded;
+
       const semitones = typeof persona.pitchSemitones === "number" ? persona.pitchSemitones : 0;
+      const targetSpeed = persona.speed || 1.5;
+      const detuneCents = semitones * 100;
+
       if (src.detune) {
-        src.detune.value = semitones * 100;
+        src.detune.value = detuneCents;
+        // موازنة خفيفة للسرعة حتى يبقى الإيقاع قريباً من 1.5 مع الحفاظ الكامل على فرق الطبقة
+        const compensatedRate = targetSpeed / Math.pow(2, detuneCents / 2400);
+        src.playbackRate.value = Math.max(1.25, Math.min(1.65, compensatedRate));
+      } else {
+        src.playbackRate.value = targetSpeed;
       }
-      src.playbackRate.value = persona.speed || 1.5;
-      src.connect(ctx.destination);
+
+      // تشكيل نبرة إضافي لتمييز الصوت الذكري الدافئ عن الصوت الأنثوي المشرق
+      const eq = ctx.createBiquadFilter();
+      if (persona.gender === "female") {
+        eq.type = "highshelf";
+        eq.frequency.value = 2600;
+        eq.gain.value = 3.5;
+      } else {
+        eq.type = "lowshelf";
+        eq.frequency.value = 260;
+        eq.gain.value = 3.5;
+      }
+
+      src.connect(eq);
+      eq.connect(ctx.destination);
       activeBufferSource = src;
       src.onended = () => {
         if (activeBufferSource === src) activeBufferSource = null;
@@ -819,7 +460,7 @@
     }
   }
 
-  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_v63";
+  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_cache";
   const missingLocalClips = new Set();
 
   function detectStaticClipName(persona, spokenText) {
@@ -841,7 +482,7 @@
       if (cached?.source === "local_repo") {
         sessionCtx.lastTtsSource = "local_repo";
         updateVoiceSourceBadge("🔊 يتحدث", "#00e676", relUrl);
-        if (cached.rawBuffer && await playWithPersonaTimbre(cached.rawBuffer, persona, mySeq)) return true;
+        if (await playDistinctPersonaAudio(cached, persona, mySeq)) return true;
         playViaHtmlAudio(cached, persona, mySeq);
         return true;
       }
@@ -862,7 +503,7 @@
       const blob = new Blob([arrBuf], { type: cType || "audio/mpeg" });
       if (mySeq !== ttsRequestSeq) return true;
       const blobUrl = URL.createObjectURL(blob);
-      const entry = { url: blobUrl, rawBuffer: arrBuf, source: "local_repo", geminiError: "" };
+      const entry = { url: blobUrl, rawBuffer: arrBuf, decodedBuffer: null, source: "local_repo", geminiError: "" };
       if (ttsAudioCache.size > 30) {
         const firstKey = ttsAudioCache.keys().next().value;
         const oldEntry = ttsAudioCache.get(firstKey);
@@ -872,7 +513,7 @@
       ttsAudioCache.set(cacheKey, entry);
       sessionCtx.lastTtsSource = "local_repo";
       updateVoiceSourceBadge("🔊 يتحدث", "#00e676", relUrl);
-      if (await playWithPersonaTimbre(arrBuf, persona, mySeq)) return true;
+      if (await playDistinctPersonaAudio(entry, persona, mySeq)) return true;
       playViaHtmlAudio(entry, persona, mySeq);
       return true;
     } catch (_) {
@@ -909,7 +550,7 @@
     } catch (_) {}
   }
 
-  async function speakOutLoud(rawText, force = false) {
+  async function speakOutLoud(rawText, force = false, bypassCache = false) {
     const prefs = getPrefs();
     if (!prefs.voiceEnabled && !force) return;
 
@@ -922,45 +563,41 @@
 
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const voiceName = persona.voiceName || "Puck";
-    const cacheKey = `${persona.id}::${voiceName}::${persona.gender}::${persona.toneTag}::${spokenText}`;
+    const pitchTag = typeof persona.pitchSemitones === "number" ? persona.pitchSemitones : 0;
+    const cacheKey = `${persona.id}::${voiceName}::${persona.gender || "male"}::${pitchTag}::${spokenText}`;
 
     const playEntry = async (entry) => {
       if (mySeq !== ttsRequestSeq) return;
       sessionCtx.lastTtsSource = entry.source;
       sessionCtx.lastGeminiError = entry.geminiError || "";
 
-      if (entry.source === "gemini_tts" || entry.source === "persistent_cache" || entry.source === "local_repo") {
-        updateVoiceSourceBadge("🔊 يتحدث", "#00e676", entry.source);
-        if (entry.rawBuffer && Math.abs(persona.pitchSemitones || 0) >= 0.4) {
-          const okTimbre = await playWithPersonaTimbre(entry.rawBuffer, persona, mySeq);
-          if (okTimbre) return;
-        }
-        playViaHtmlAudio(entry, persona, mySeq);
-      } else {
-        if (entry.geminiError) console.info("[TTS Diagnostic]", entry.geminiError);
-        updateVoiceSourceBadge("🔊 يتحدث", "#38bdf8", "صوت نشط");
-        if (entry.rawBuffer) {
-          const okWebAudio = await playWithPersonaTimbre(entry.rawBuffer, persona, mySeq);
-          if (okWebAudio) return;
-        }
-        playViaHtmlAudio(entry, persona, mySeq);
+      const isHuman = entry.source === "gemini_tts" || entry.source === "persistent_cache" || entry.source === "local_repo";
+      updateVoiceSourceBadge("🔊 يتحدث", isHuman ? "#00e676" : "#38bdf8", entry.source);
+      if (!isHuman && entry.geminiError) {
+        console.info("[TTS Diagnostic]", entry.geminiError);
       }
+
+      const okDistinct = await playDistinctPersonaAudio(entry, persona, mySeq);
+      if (okDistinct) return;
+      playViaHtmlAudio(entry, persona, mySeq);
     };
 
-    const playedLocal = await tryLocalRepoClip(persona, spokenText, mySeq, cacheKey);
-    if (playedLocal) return;
+    if (!bypassCache) {
+      const playedLocal = await tryLocalRepoClip(persona, spokenText, mySeq, cacheKey);
+      if (playedLocal) return;
 
-    if (ttsAudioCache.has(cacheKey)) {
-      await playEntry(ttsAudioCache.get(cacheKey));
-      return;
-    }
+      if (ttsAudioCache.has(cacheKey)) {
+        await playEntry(ttsAudioCache.get(cacheKey));
+        return;
+      }
 
-    const persisted = await readPersistentHumanCache(cacheKey);
-    if (persisted && mySeq === ttsRequestSeq) {
-      const pEntry = { url: persisted.url, rawBuffer: persisted.rawBuffer, source: "persistent_cache", geminiError: "" };
-      ttsAudioCache.set(cacheKey, pEntry);
-      await playEntry(pEntry);
-      return;
+      const persisted = await readPersistentHumanCache(cacheKey);
+      if (persisted && mySeq === ttsRequestSeq) {
+        const pEntry = { url: persisted.url, rawBuffer: persisted.rawBuffer, decodedBuffer: null, source: "persistent_cache", geminiError: "" };
+        ttsAudioCache.set(cacheKey, pEntry);
+        await playEntry(pEntry);
+        return;
+      }
     }
 
     const workerUrl = resolveWorkerEndpoint();
@@ -986,7 +623,7 @@
           voiceName,
           gender: persona.gender || "male",
           toneTag: persona.toneTag || "",
-          pitchSemitones: persona.pitchSemitones || 0,
+          pitchSemitones: pitchTag,
           styleHint: persona.styleHint || ""
         })
       });
@@ -999,12 +636,16 @@
       }
 
       let rawBuffer = null;
+      let decodedBuffer = null;
       let audioBlob = null;
       let blobUrl = "";
+      const ctx = ensureWebAudioCtx();
+
       if (/pcm|L16/i.test(json.mimeType || "")) {
         const rateMatch = String(json.mimeType).match(/rate=(\d+)/i);
         const rate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
         rawBuffer = pcmBase64ToWavArrayBuffer(json.audioBase64, rate);
+        if (ctx) decodedBuffer = pcmBase64ToAudioBuffer(ctx, json.audioBase64, rate);
         audioBlob = new Blob([rawBuffer], { type: "audio/wav" });
         blobUrl = URL.createObjectURL(audioBlob);
       } else {
@@ -1017,6 +658,7 @@
       const entry = {
         url: blobUrl,
         rawBuffer,
+        decodedBuffer,
         source: json.source || "google_tts",
         geminiError: json.geminiError || ""
       };
@@ -1046,7 +688,7 @@
     setPrefs({ voiceEnabled: next });
     if (!next) stopEmbeddedVoice();
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
-    const msg = next ? `${persona.name}: الصوت مفعّل، أهلاً بك.` : "تم كتم الصوت.";
+    const msg = next ? `${persona.name}: الصوت مفعّل، أهلاً بك!` : "تم كتم صوت الجنية.";
     showBubble(next ? "🗣️ الصوت مفعّل" : "🔇 الصوت مكتوم", 2800);
     showToast(next ? "🗣️ الصوت مفعّل" : "🔇 الصوت مكتوم");
     if (next) speakOutLoud(msg, true);
@@ -1058,7 +700,7 @@
     const prefs = getPrefs();
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const phrase = sessionCtx.lastSpokenText || pickPhrase(persona.greets, `greet_${persona.id}`);
-    showBubble(`✨ ${phrase}`, 3800);
+    showBubble(`🧚 ${phrase}`, 3800);
     speakOutLoud(phrase, true);
   };
 
@@ -1105,7 +747,7 @@
     const baseId = String(pid || "").replace(/_PKG$/, "");
     const pObj = products?.[baseId] || specialOffers?.[pid];
     if (!pObj) return 0;
-    return typeof getProductStockForBranch === "function" ? getProductStockForBranch(pObj, activeBranchId) : (parseInt(pObj.stock) || 0);
+    return typeof getProductStockForBranch === "function" ? getProductStockForBranch(pObj, typeof activeBranchId !== "undefined" ? activeBranchId : "main") : (parseInt(pObj.stock) || 0);
   }
 
   function renderFairyAvatarImage(imgEl, persona) {
@@ -1122,15 +764,19 @@
     if (!PERSONAS[key]) return;
     haptic(15);
     unlockEmbeddedVoice();
+    stopEmbeddedVoice();
+    clearPersonaSpeechCache(false);
     pauseRoaming(7500);
     setPrefs({ persona: key });
     syncVisuals();
     const p = PERSONAS[key];
-    const greetLine = pickPhrase(p.greets || [p.greet], `greet_${p.id}`);
+    const greetLine = (window.MoaathAIPersonas && typeof window.MoaathAIPersonas.getTimeGreet === "function")
+      ? window.MoaathAIPersonas.getTimeGreet(p.id)
+      : pickPhrase(p.greets || [p.greet], `greet_${p.id}`);
     const specEl = $("fairySpecialtyNote");
     if (specEl) specEl.textContent = p.specialtyNote || "";
-    showBubble(`✨ ${greetLine}`, 3800);
-    speakOutLoud(greetLine, true);
+    showBubble(`🧚 ${greetLine}`, 3800);
+    speakOutLoud(greetLine, true, true);
   };
 
   window.setPetHidden = function (hide) {
@@ -1158,14 +804,14 @@
     if (!orb) return;
 
     const badges = {
-      idle: "✨",
+      idle: "🧚",
       listening: "🎙️",
       thinking: "✨",
       happy: "🤩",
       greet: "🌸",
       choice: "🔀"
     };
-    if (statusBadge) statusBadge.textContent = badges[state] || "✨";
+    if (statusBadge) statusBadge.textContent = badges[state] || "🧚";
 
     orb.style.borderColor = state === "listening" ? "#00e676" : p.accent;
     if (ring) ring.style.display = state === "listening" ? "block" : "none";
@@ -1265,6 +911,7 @@
     const curR = parseInt(root.style.right || "12", 10);
     const curB = parseInt(root.style.bottom || "96", 10);
 
+    // حصر التجوال على الحواف الجانبية فقط (يمين أو يسار) لتجنب تغطية أزرار الشراء
     const stickLeft = curR > window.innerWidth / 2;
     const nextR = stickLeft ? maxR : 12;
     const nextB = Math.round(Math.max(minB, Math.min(maxB, curB + (Math.random() - 0.5) * 120)));
@@ -1517,9 +1164,70 @@
             <textarea id="admExportPreviewArea" class="form-control" rows="6" readonly placeholder="اضغط أحد أزرار التصدير بالأعلى لمعاينة التقرير ونسخه تلقائياً..."></textarea>
           </div>
         </div>
+        <div class="adm-sec" style="border-color:var(--gold-color);">
+          <div class="adm-sec-title"><span>🧠 تدريب العقل الذكي (مرادفات واستعلامات غير مطابقة)</span></div>
+          <div class="form-group">
+            <label>إضافة مجموعة مرادفات جديدة (مثال: لبن، زبادي، رايب):</label>
+            <input type="text" id="admBrainSynInput" class="form-control" placeholder="كلمة1، كلمة2، كلمة3">
+          </div>
+          <button type="button" onclick="saveAdminBrainSynonym()" class="btn" style="background:var(--success-color); color:#000; font-size:11px;">➕ حفظ مجموعة المرادفات</button>
+          <div id="admBrainUnmatchedBox" style="margin-top:8px; font-size:11px;"></div>
+        </div>
       `;
       adminContent.appendChild(expDiv);
+      renderAdminBrainUnmatchedList();
     }
+
+    const LOCAL_SYN_KEY = "moaath_local_synonyms";
+
+    function saveLocalSynonymFallback(id, parts) {
+      try {
+        const cur = JSON.parse(localStorage.getItem(LOCAL_SYN_KEY) || "{}");
+        cur[id] = parts;
+        localStorage.setItem(LOCAL_SYN_KEY, JSON.stringify(cur));
+      } catch (_) {}
+    }
+
+    window.saveAdminBrainSynonym = function () {
+      const raw = String($("admBrainSynInput")?.value || "").trim();
+      const parts = raw.split(/[،,]/).map(s => s.trim()).filter(Boolean);
+      if (parts.length < 2) return alert("⚠️ أدخل كلمتين أو أكثر مفصولتين بفاصلة.");
+      const id = "SYN_" + Date.now();
+      saveLocalSynonymFallback(id, parts);
+
+      if (typeof db === "undefined" || !db || typeof db.ref !== "function") {
+        setVal("admBrainSynInput", "");
+        showToast("✅ تم حفظ المرادفات محلياً على الجهاز!");
+        return;
+      }
+
+      db.ref(`ai_brain/synonyms/${id}`).set(parts).then(() => {
+        setVal("admBrainSynInput", "");
+        showToast("✅ تم حفظ المرادفات في العقل الذكي!");
+      }).catch(() => {
+        setVal("admBrainSynInput", "");
+        showToast("✅ تم حفظ المرادفات محلياً (صلاحيات Firebase على ai_brain/synonyms مقيدة).");
+      });
+    };
+
+    window.renderAdminBrainUnmatchedList = function () {
+      const box = $("admBrainUnmatchedBox");
+      if (!box || typeof db === "undefined" || !db.ref) return;
+      db.ref("ai_brain/unmatched_queries").limitToLast(10).once("value", snap => {
+        const val = snap.val() || {};
+        const rows = Object.values(val);
+        if (!rows.length) {
+          box.innerHTML = `<div style="color:var(--gray-text);">لا توجد استعلامات غير مطابقة مسجلة حالياً.</div>`;
+          return;
+        }
+        box.innerHTML = rows.map(r =>
+          `<div style="padding:4px 6px; border-bottom:1px dashed var(--border-color); display:flex; justify-content:space-between;">
+            <span>${esc(r.query || "")}</span>
+            <span style="color:var(--gold-color);">×${r.count || 1}</span>
+          </div>`
+        ).join("");
+      });
+    };
   }
 
   window.renderSmartCartRecommendations = function () {
@@ -1587,7 +1295,7 @@
       const openNow = typeof isGlobalStoreOpenNow === "function" ? isGlobalStoreOpenNow() : true;
       const wh = workHoursSettings || {};
       const hours = wh.enabled ? `من ${wh.open || "08:00"} إلى ${wh.close || "23:00"}` : "متاح للطلب حالياً";
-      const branch = typeof getBranchName === "function" ? getBranchName(activeBranchId) : "الرئيسي";
+      const branch = typeof getBranchName === "function" ? getBranchName(typeof activeBranchId !== "undefined" ? activeBranchId : "main") : "الرئيسي";
       return openNow
         ? `نعم، المتجر مفتوح الآن في فرع ${branch}، ومواعيد الدوام ${hours}.`
         : `المتجر مغلق حالياً، مواعيد الدوام ${hours}.`;
@@ -1606,7 +1314,7 @@
       const cur = cart[lastId] ? (parseInt(cart[lastId].qty) || 0) : 0;
       if (avail > cur) {
         changeQty(lastId, 1);
-        return "زدت قطعة إضافية في سلتك.";
+        return "زدت حبة إضافية في سلتك.";
       }
       return "وصلت للحد الأقصى المتوفر من هذا الصنف في الفرع.";
     }
@@ -1700,7 +1408,7 @@
     if (!/(ناقصني|كمل\s*سلت|كمّل\s*سلت|مكملات|اضيف\s*عليها|كملها|شو\s*ناقص)/.test(normText)) return false;
     const keys = Object.keys(cart || {});
     if (!keys.length) {
-      const msg = "سلتك فارغة الآن، أخبرني بطلبك أو اختر من الاقتراحات السريعة.";
+      const msg = "سلتك فاضية هلق، خبرني بطلبك أو اختر من الاقتراحات السريعة!";
       setOrbEmotion("idle", msg, true);
       setTxt("aiShoppingStatusText", `🛒 ${msg}`);
       return true;
@@ -1719,7 +1427,7 @@
       .slice(0, 8);
     if (picks.length) {
       openZeroDefaultModal("🛒 مكملات متوفرة تناسب سلتك الحالية:", picks, "cart_complement");
-      const msg = "جهزت لك مكملات متوفرة تناسب سلتك دون تكرار.";
+      const msg = "جهزتلك مكملات متوفرة تناسب سلتك بدون تكرار.";
       setOrbEmotion("choice", msg, true);
       setTxt("aiShoppingStatusText", `🛒 ${msg}`);
       return true;
@@ -1741,10 +1449,28 @@
       .slice(0, 8);
     if (picks.length) {
       openZeroDefaultModal("💰 أوفر الأصناف المتوفرة في الفرع:", picks, "cheapest_picks");
-      const msg = "رتبت لك أوفر الأصناف المتوفرة حالياً، حدد الكمية.";
+      const msg = "رتبتلك أوفر الأصناف المتوفرة حالياً، حدد الكمية.";
       setOrbEmotion("choice", msg, true);
       setTxt("aiShoppingStatusText", `💰 ${msg}`);
       return true;
+    }
+    return false;
+  }
+
+  function handlePersonalHabitsRequest(normText) {
+    if (!/(مفضلاتي|عادات|معتاد|المعتادة)/.test(normText)) return false;
+    if (window.MoaathAIBrain && typeof window.MoaathAIBrain.getPersonalHabitSuggestions === "function") {
+      const picks = window.MoaathAIBrain.getPersonalHabitSuggestions(products || {}, getBranchAvail, 8);
+      if (picks.length > 0) {
+        openZeroDefaultModal("⭐ مفضلاتك المعتادة المتوفرة:", picks, "personal_habits");
+        const prefs = getPrefs();
+        const msg = (window.MoaathAIPersonas && typeof window.MoaathAIPersonas.getHabitReaction === "function")
+          ? window.MoaathAIPersonas.getHabitReaction(prefs.persona)
+          : "عرضت لك الأصناف التي تعتاد اختيارها، حدد الكمية المناسبة.";
+        setOrbEmotion("happy", msg, true);
+        setTxt("aiShoppingStatusText", `⭐ ${msg}`);
+        return true;
+      }
     }
     return false;
   }
@@ -1753,7 +1479,7 @@
     if (!/(كرر\s*طلبي|طلبي\s*السابق|اخر\s*طلب|آخر\s*طلب)/.test(normText)) return false;
     if (sessionCtx.lastModalItems.length > 0) {
       openZeroDefaultModal(sessionCtx.lastModalTitle, sessionCtx.lastModalItems, sessionCtx.lastModalIntent, sessionCtx.lastModalSubtitle);
-      const msg = "فتحت لك آخر قائمة اقتراحات لك بنقرة واحدة.";
+      const msg = "فتحتلك آخر قائمة اقتراحات لك بنقرة واحدة.";
       setOrbEmotion("happy", msg, true);
       setTxt("aiShoppingStatusText", `🔁 ${msg}`);
       return true;
@@ -1771,13 +1497,13 @@
         .slice(0, 8);
       if (items.length) {
         openZeroDefaultModal("🔁 تكرار أصناف طلبك السابق المتوفرة:", items, "repeat_last_order");
-        const msg = "أحضرت لك الأصناف المتوفرة من طلبك السابق، حدد الكمية.";
+        const msg = "جبتلك الأصناف المتوفرة من طلبك السابق، اضغط تحديد المتوفر أو زائد.";
         setOrbEmotion("happy", msg, true);
         setTxt("aiShoppingStatusText", `🔁 ${msg}`);
         return true;
       }
     }
-    const msg = "لا يوجد طلب سابق محفوظ بعد، جرب طبخة اليوم أو سهرة ومتة.";
+    const msg = "ما في طلب سابق محفوظ بعد، جرّب طبخة اليوم أو سهرة ومتة!";
     setOrbEmotion("idle", msg, true);
     setTxt("aiShoppingStatusText", `🔁 ${msg}`);
     return true;
@@ -1917,7 +1643,16 @@
       }
     });
 
-    if (addedIds.length) recordPracticeLearning(intentKey, addedIds, 2);
+    if (addedIds.length) {
+      recordPracticeLearning(intentKey, addedIds, 2);
+      if (window.MoaathAIBrain && typeof window.MoaathAIBrain.recordCustomerChoice === "function") {
+        chosen.forEach(it => {
+          const baseId = String(it.id || "").replace(/_PKG$/, "");
+          const cat = products?.[baseId]?.category || specialOffers?.[it.id]?.category || "";
+          window.MoaathAIBrain.recordCustomerChoice(it.id, cat, it.qty, sessionCtx.lastQuery || "");
+        });
+      }
+    }
     window.closePetSuggestionsModal();
 
     if (addedTotal > 0) {
@@ -1925,8 +1660,9 @@
       const prefs = getPrefs();
       const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
       const countLabel = addedTotal === 1 ? "صنف واحد" : (addedTotal === 2 ? "صنفين" : `${addedTotal} أصناف`);
-      const tpl = pickPhrase(persona.addedMsgs || [(n) => `تمت إضافة ${n} إلى السلة.`], `added_${persona.id}`);
-      const msg = typeof tpl === "function" ? tpl(countLabel) : `تمت إضافة ${countLabel} إلى السلة.`;
+      const msg = (window.MoaathAIPersonas && typeof window.MoaathAIPersonas.getAddedReaction === "function")
+        ? window.MoaathAIPersonas.getAddedReaction(persona.id, countLabel)
+        : `تمت إضافة ${countLabel} إلى السلة.`;
       setOrbEmotion("happy", msg, true);
       setTxt("aiShoppingStatusText", `✅ ${msg}`);
       showToast(`✅ ${msg}`);
@@ -1934,9 +1670,19 @@
   };
 
   function matchCategoriesAndProducts(normText) {
+    if (window.MoaathAIBrain && typeof window.MoaathAIBrain.smartSearch === "function") {
+      return window.MoaathAIBrain.smartSearch(
+        sessionCtx.lastQuery || normText,
+        products || {},
+        categories || [],
+        getBranchAvail,
+        getUnitSYP
+      );
+    }
+
     const storeCats = (Array.isArray(categories) ? categories : []).filter(c => c && c !== "الكل");
     const budgetMatch = normText.match(/(\d{2,7})/);
-    const maxBudget = budgetMatch ? parseInt(budgetMatch[1]) : null;
+    const maxBudget = budgetMatch ? parseInt(budgetMatch[1], 10) : null;
 
     const words = normText
       .replace(/\b(تجهيز|فاتوره|طلب|اريد|بدي|ابغى|ابي|مواد|اغراض|وصفه|وصفة|حلى|حلويات|طبخ|بـ|ب|\d+)\b/g, " ")
@@ -1996,14 +1742,16 @@
 
   window.runAIShoppingAssistant = async function (overridePrompt = null) {
     const promptTxt = String(overridePrompt ?? ($("aiShoppingPromptInput")?.value || "")).trim();
+    sessionCtx.lastQuery = promptTxt;
     const prefs = getPrefs();
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
 
     if (!promptTxt) {
-      setOrbEmotion("idle", `${persona.name}: اضغط مطولاً وتحدث بطلبك.`, true);
+      setOrbEmotion("idle", `${persona.name}: اضغط مطوّلاً وتحدّث بطلبك.`, true);
       return;
     }
 
+    // إلغاء تدخل الذكاء الاصطناعي في الدفع أو شام كاش تماماً
     if (guardAgainstPaymentAI(promptTxt)) {
       const guardMsg = "التحقق من الدفع وشام كاش ملغى من الذكاء الاصطناعي ويتم يدوياً بالكامل.";
       setOrbEmotion("idle", guardMsg, false);
@@ -2016,7 +1764,7 @@
     const chatReply = matchCasualChat(norm, persona);
     if (chatReply) {
       setOrbEmotion("greet", chatReply, true);
-      setTxt("aiShoppingStatusText", `✨ ${chatReply}`);
+      setTxt("aiShoppingStatusText", `🧚 ${chatReply}`);
       return;
     }
 
@@ -2036,11 +1784,13 @@
 
     if (handleCartComplementRequest(norm, persona)) return;
     if (handleCheapestAvailableRequest(norm, persona)) return;
+    if (handlePersonalHabitsRequest(norm)) return;
     if (handleRepeatPreviousOrder(norm, persona)) return;
 
     const peopleCount = parsePeopleCount(norm);
     const suggestedPerItem = peopleCount && peopleCount >= 5 ? Math.min(4, Math.ceil(peopleCount / 3)) : 1;
 
+    // دعم طلبات الرياضة والصحة (خاصة مع البطل الرياضي أو أي شخصية)
     if (/(رياضه|رياضة|صحي|صحه|صحة|دايت|بروتين|تمرين|لياقه|لياقة|طاقة)/.test(norm)) {
       const healthyKw = /(عدس|مجدره|مجدرة|شوربه|شوربة|حليب|لبن|بيض|رز|ارز|برغل|شوفان|عسل|ماء|عصير|خضار|فواكه|تونه|تونة)/;
       const healthyItems = Object.keys(products || {})
@@ -2060,14 +1810,15 @@
       if (healthyItems.length > 0) {
         openZeroDefaultModal("🏋️ خيارات صحية ومغذية للرياضة والنشاط:", healthyItems, "sports_health");
         const msg = persona.id === "athlete"
-          ? "جهزت لك خيارات صحية ومغذية تمنحك الطاقة، حدد الكمية."
-          : "جهزت لك خيارات صحية مناسبة للرياضة والنشاط، حدد الكمية.";
+          ? "يا بطل، جهزتلك خيارات صحية ومغذية تعطي طاقة، حدد الكمية."
+          : "جهزتلك خيارات صحية مناسبة للرياضة والنشاط، حدد الكمية.";
         setOrbEmotion("choice", msg, true);
         setTxt("aiShoppingStatusText", `🏋️ ${msg}`);
         return;
       }
     }
 
+    // دعم طلبات وصفات الطعام (الطباخ الماهر) أو الحلويات (صانعة الحلويات)
     if (/(وصفه|وصفة|اكله|أكلة|طبخه|طبخة|غداء|عشاء)/.test(norm) && !matchRecipeOrSweet(norm)) {
       const allRecs = getAllMergedRecipes();
       const wantsSweets = persona.id === "pastry" || /(حلى|حلويات|حلو|كيك|بسبوسه|بسبوسة|مهلبيه|مهلبية)/.test(norm);
@@ -2078,8 +1829,8 @@
       if (filteredRecs.length > 0) {
         const sampleTitles = filteredRecs.slice(0, 5).map(r => r.title).join("، ");
         const msg = wantsSweets
-          ? `من الحلويات المتوفرة لدينا: ${sampleTitles}. اذكر اسم الحلى وسأجهز المتوفر.`
-          : `من وصفات الطعام المتوفرة لدينا: ${sampleTitles}. اذكر اسم الطبخة وسأجهز مكوناتها.`;
+          ? `من حلويات الإدارة عندنا: ${sampleTitles}. اذكر اسم الحلى وأجهز المتوفر!`
+          : `من وصفات الطعام عندنا: ${sampleTitles}. اذكر اسم الطبخة وأجهز مكوناتها!`;
         setOrbEmotion("choice", msg, true);
         setTxt("aiShoppingStatusText", `🍲 ${msg}`);
         return;
@@ -2116,7 +1867,7 @@
       }
     }
 
-    const { matchedCategories, items, usedAlternative } = matchCategoriesAndProducts(norm);
+    const { matchedCategories, items, usedAlternative, usedFuzzy, usedSynonym } = matchCategoriesAndProducts(norm);
     if (items.length > 0) {
       const title = usedAlternative
         ? "🔁 الصنف المطلوب نافد — إليك أقرب البدائل المتوفرة:"
@@ -2124,17 +1875,18 @@
           ? `🛍️ أصناف قسم (${matchedCategories.join("، ")}) — حدد الكمية:`
           : "🛍️ الأصناف المتوفرة المطابقة — حدد الكمية:";
       openZeroDefaultModal(title, items, matchedCategories[0] || `q_${norm.slice(0, 18)}`);
-      const msg = usedAlternative
-        ? "الصنف غير متوفر حالياً، عرضت لك أقرب البدائل المتوفرة."
-        : persona.itemsReady(matchedCategories.join(" و"));
+      const msg = (window.MoaathAIPersonas && typeof window.MoaathAIPersonas.getSearchReaction === "function")
+        ? window.MoaathAIPersonas.getSearchReaction(persona.id, { matchedCategories, usedAlternative, usedFuzzy, usedSynonym })
+        : (usedAlternative ? "الصنف غير متوفر حالياً، عرضت لك أقرب البدائل المتوفرة." : persona.itemsReady(matchedCategories.join(" و")));
       setOrbEmotion("choice", msg, true);
       setTxt("aiShoppingStatusText", `💡 ${msg}`);
       return;
     }
 
+    // خيار أخير: استدعاء الذكاء الاصطناعي التفاعلي (companion_shop) مع حظر تام لأي أمر دفع
     const workerUrl = resolveWorkerEndpoint();
     if (workerUrl && navigator.onLine !== false) {
-      setOrbEmotion("thinking", "جاري البحث في أصناف المتجر...", false);
+      setOrbEmotion("thinking", "جاري البحث الذكي في أصناف المتجر...", false);
       try {
         const catalogSummary = Object.keys(products || {})
           .filter(pid => getBranchAvail(pid) > 0)
@@ -2149,7 +1901,7 @@
             prompt: promptTxt,
             catalog: catalogSummary,
             currentCart: currentCartSummary,
-            storeMeta: { persona: persona.name, branch: activeBranchId }
+            storeMeta: { persona: persona.name, branch: typeof activeBranchId !== "undefined" ? activeBranchId : "main" }
           })
         });
         const aiJson = await aiRes.json();
@@ -2175,13 +1927,15 @@
         }
         if (aiData.reply) {
           setOrbEmotion("greet", aiData.reply, true);
-          setTxt("aiShoppingStatusText", `✨ ${aiData.reply}`);
+          setTxt("aiShoppingStatusText", `🧚 ${aiData.reply}`);
           return;
         }
       } catch (_) {}
     }
 
-    const nfLine = pickPhrase(persona.notFounds || [persona.notFound], `nf_${persona.id}`);
+    const nfLine = (window.MoaathAIPersonas && typeof window.MoaathAIPersonas.getNotFoundReaction === "function")
+      ? window.MoaathAIPersonas.getNotFoundReaction(persona.id)
+      : pickPhrase(persona.notFounds || [persona.notFound], `nf_${persona.id}`);
     setOrbEmotion("idle", nfLine, true);
     setTxt("aiShoppingStatusText", `⚠️ ${nfLine}`);
   };
@@ -2205,7 +1959,7 @@
     updateVoiceSourceBadge("🎙️ يستمع...", "#00e676", "الميكروفون نشط الآن");
     const directMic = $("petDirectMicBtn");
     if (directMic) directMic.classList.add("mic-listening-pulse");
-    setOrbEmotion("listening", "تحدث الآن... أستمع إليك بوضوح", false);
+    setOrbEmotion("listening", "تحدّث الآن... أسمعك بوضوح", false);
 
     const rec = new SR();
     activeRecognizer = rec;
@@ -2216,7 +1970,7 @@
     rec.onresult = ev => {
       const heard = String(ev?.results?.[0]?.[0]?.transcript || "").trim();
       if (!heard) {
-        setOrbEmotion("idle", "لم أسمع صوتاً واضحاً، جرب الضغط المطول مرة أخرى.", true);
+        setOrbEmotion("idle", "لم أسمع صوتاً واضحاً، جرّب النقر المطوّل مرة أخرى.", true);
         return;
       }
       setVal("aiShoppingPromptInput", heard);
@@ -2251,8 +2005,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v58Bound) return;
-    orb.dataset.v58Bound = "1";
+    if (!orb || !root || orb.dataset.orbBound) return;
+    orb.dataset.orbBound = "1";
 
     ensureGroundShadow(root);
 
@@ -2329,7 +2083,7 @@
       const prefs = getPrefs();
       const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
       const phrase = sessionCtx.lastSpokenText || persona.greet;
-      showBubble(`✨ ${phrase}`, 4000);
+      showBubble(`🧚 ${phrase}`, 4000);
       speakOutLoud(phrase, true);
     };
 
@@ -2375,6 +2129,35 @@
     }).join("");
   }
 
+  const LOCAL_RECIPES_KEY = "moaath_local_recipes";
+
+  function loadLocalRecipesFallback() {
+    try {
+      const d = JSON.parse(localStorage.getItem(LOCAL_RECIPES_KEY) || "{}");
+      return d && typeof d === "object" ? d : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function saveLocalRecipeFallback(recipeObj) {
+    const cur = loadLocalRecipesFallback();
+    cur[recipeObj.id] = recipeObj;
+    localStorage.setItem(LOCAL_RECIPES_KEY, JSON.stringify(cur));
+    customRecipesDB = { ...loadLocalRecipesFallback(), ...(customRecipesDB || {}), [recipeObj.id]: recipeObj };
+  }
+
+  function deleteLocalRecipeFallback(rId) {
+    const cur = loadLocalRecipesFallback();
+    if (cur[rId]) {
+      delete cur[rId];
+      localStorage.setItem(LOCAL_RECIPES_KEY, JSON.stringify(cur));
+    }
+    if (customRecipesDB && customRecipesDB[rId]) {
+      delete customRecipesDB[rId];
+    }
+  }
+
   window.saveAdminRecipe = function () {
     const editId = ($("admRecipeEditId")?.value || "").trim();
     const title = ($("admRecipeTitle")?.value || "").trim();
@@ -2393,7 +2176,7 @@
     }
 
     const rId = editId || ("REC_" + Date.now());
-    db.ref(`recipes/${rId}`).set({
+    const payload = {
       id: rId,
       title,
       category,
@@ -2401,10 +2184,33 @@
       ingredients,
       productIds,
       updatedAt: new Date().toISOString()
-    }).then(() => {
+    };
+
+    const finishLocalSave = (noteToast) => {
+      saveLocalRecipeFallback(payload);
       resetAdminRecipeForm();
+      if (typeof window.renderAdminRecipesList === "function") window.renderAdminRecipesList();
+      showToast(noteToast);
+    };
+
+    if (typeof db === "undefined" || !db || typeof db.ref !== "function") {
+      finishLocalSave(`✅ تم حفظ وصفة (${title}) محلياً على الجهاز!`);
+      return;
+    }
+
+    db.ref(`recipes/${rId}`).set(payload).then(() => {
+      saveLocalRecipeFallback(payload);
+      resetAdminRecipeForm();
+      if (typeof window.renderAdminRecipesList === "function") window.renderAdminRecipesList();
       showToast(`✅ تم حفظ وصفة (${title}) بنجاح!`);
-    }).catch(err => alert("❌ خطأ أثناء الحفظ: " + err.message));
+    }).catch(err => {
+      const msg = String(err?.message || err || "");
+      if (/permission_denied/i.test(msg)) {
+        finishLocalSave(`✅ تم حفظ وصفة (${title}) محلياً (صلاحيات Firebase على المسار recipes مغلقة).`);
+      } else {
+        finishLocalSave(`✅ تم حفظ وصفة (${title}) محلياً بعد تعذر الحفظ السحابي.`);
+      }
+    });
   };
 
   window.editAdminRecipe = function (rId) {
@@ -2423,7 +2229,13 @@
   window.deleteAdminRecipe = function (rId) {
     const r = customRecipesDB?.[rId];
     if (!r || !confirm(`هل تريد حذف وصفة (${r.title}) نهائياً؟`)) return;
-    db.ref(`recipes/${rId}`).set(null).then(() => showToast("🗑️ تم حذف الوصفة"));
+    deleteLocalRecipeFallback(rId);
+    if (typeof window.renderAdminRecipesList === "function") window.renderAdminRecipesList();
+    if (typeof db !== "undefined" && db && typeof db.ref === "function") {
+      db.ref(`recipes/${rId}`).set(null).then(() => showToast("🗑️ تم حذف الوصفة")).catch(() => showToast("🗑️ تم حذف الوصفة محلياً"));
+    } else {
+      showToast("🗑️ تم حذف الوصفة محلياً");
+    }
   };
 
   window.resetAdminRecipeForm = function () {
@@ -2466,12 +2278,12 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v63",
+      version: "stable",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
       lastGeminiError: sessionCtx.lastGeminiError || "none",
-      personasCount: Object.keys(PERSONAS).length,
+      fairiesCount: Object.keys(PERSONAS).length,
       productsLoaded: Object.keys(products || {}).length,
       categoriesLoaded: Array.isArray(categories) ? categories.length : 0,
       recipesAvailable: getAllMergedRecipes().length,
@@ -2479,11 +2291,11 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v63]", report);
+    console.info("[QA Assistant Diagnostic]", report);
     return report;
   };
 
-  function mountV58() {
+  function mountEngine() {
     window.analyzeShamCashReceiptOCR();
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
@@ -2499,12 +2311,12 @@
       bar.innerHTML = `
         <div style="display:flex; align-items:center; gap:4px; flex:1; min-width:155px;">
           <img id="fairyBarThumb" alt="${p.name}" style="width:22px; height:22px; border-radius:50%; object-fit:cover; border:1.5px solid ${p.accent}; flex-shrink:0;">
-          <span style="color:var(--gold-color); font-weight:bold;">الشخصية:</span>
+          <span style="color:var(--gold-color); font-weight:bold;">الجنية:</span>
           <select id="petPersonaSelect" class="form-control" onchange="selectPetPersona(this.value)" style="padding:3px 6px; font-size:10px; flex:1;">${opts}</select>
         </div>
         <div style="display:flex; align-items:center; gap:4px;">
           <span id="petConnStatusBadge" style="font-size:9px; font-weight:bold;">🟢 جاهز</span>
-          <button id="petDirectMicBtn" type="button" onclick="startVoiceShoppingInput()" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:rgba(0,230,118,0.16); color:#00e676;" title="تحدث الآن">🎙️</button>
+          <button id="petDirectMicBtn" type="button" onclick="startVoiceShoppingInput()" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:rgba(0,230,118,0.16); color:#00e676;" title="تحدّث الآن">🎙️</button>
           <button type="button" onclick="replayLastCompanionSpeech()" class="btn" style="width:auto; padding:3px 6px; font-size:10px; background:rgba(212,175,55,0.16); color:var(--gold-color);" title="إعادة الاستماع">🔁</button>
           <button type="button" onclick="toggleCompanionVoice()" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:rgba(0,176,255,0.16); color:#00b0ff;" title="تفعيل أو كتم الصوت">🗣️ صوت</button>
           <button id="petShowCharBtn" type="button" onclick="setPetHidden(false)" style="display:none; align-items:center; gap:3px; background:var(--gold-color); color:#000; border:none; border-radius:6px; padding:3px 8px; font-size:10px; font-weight:bold; cursor:pointer;">إظهار</button>
@@ -2528,7 +2340,8 @@
         { label: "🏋️ أكل صحي", q: "أكل صحي رياضة" },
         { label: "🔥 سهرة ومتة", q: "سهرة ومتة" },
         { label: "💰 أوفر المتوفر", q: "أوفر المتوفر" },
-        { label: "🛒 كمل سلتي", q: "شو ناقصني كمل سلتي" },
+        { label: "🛒 كمّل سلتي", q: "شو ناقصني كمّل سلتي" },
+        { label: "⭐ مفضلاتي", q: "مفضلاتي المعتادة" },
         { label: "🔁 كرر طلبي", q: "كرر طلبي السابق" }
       ];
       chips.innerHTML = quickItems.map(it =>
@@ -2537,8 +2350,9 @@
       assistBox.appendChild(chips);
     }
 
-    if (!window.__MOAATH_QUIET_HOOK_V58__) {
-      window.__MOAATH_QUIET_HOOK_V58__ = true;
+    // احترام هدوء الزبون عند التركيز على حقول البحث أو الكتابة
+    if (!window.__MOAATH_QUIET_HOOK__) {
+      window.__MOAATH_QUIET_HOOK__ = true;
       document.addEventListener("focusin", (e) => {
         if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) {
           pauseRoaming(12000);
@@ -2550,7 +2364,7 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV58";
+      styleTag.id = "petCharStyle";
       styleTag.textContent = `
         @keyframes fairyHover3D {
           0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
@@ -2560,16 +2374,16 @@
           0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.42; }
           50% { transform: translateX(-50%) scale(0.75); opacity: 0.22; }
         }
-        @keyframes fairyRingV58 {
+        @keyframes fairyRingV68 {
           0% { transform: scale(1); opacity: 0.9; }
           100% { transform: scale(1.38); opacity: 0; }
         }
-        @keyframes micPulseV58 {
+        @keyframes micPulseV68 {
           0%, 100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
           50% { box-shadow: 0 0 0 7px rgba(0, 230, 118, 0); }
         }
         .mic-listening-pulse {
-          animation: micPulseV58 1s infinite !important;
+          animation: micPulseV68 1s infinite !important;
           background: rgba(0, 230, 118, 0.35) !important;
         }
         #petCharRoot {
@@ -2604,7 +2418,7 @@
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV58 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV68 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 72px; right: 0; max-width: 235px; width: max-content;
@@ -2621,10 +2435,10 @@
         <div id="petMiniBubble"></div>
         <div style="position:relative;">
           <div id="petListenRing"></div>
-          <div id="petCharOrb" class="is-roaming" role="button" aria-label="المساعد الصوتي الذكي">
+          <div id="petCharOrb" class="is-roaming" role="button" aria-label="جنية المساعد الذكي">
             <img id="fairyCharImg" alt="${p.name}">
           </div>
-          <div id="fairyStateBadge">✨</div>
+          <div id="fairyStateBadge">🧚</div>
         </div>`;
       document.body.appendChild(root);
       bindOrbInteractions($("petCharOrb"), root);
@@ -2637,7 +2451,7 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV58(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountEngine(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
@@ -2655,6 +2469,6 @@
   window.addEventListener("online", syncConnectivityBadge);
   window.addEventListener("offline", syncConnectivityBadge);
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV58);
-  else mountV58();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountEngine);
+  else mountEngine();
 })();
