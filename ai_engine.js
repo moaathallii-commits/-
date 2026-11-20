@@ -1,10 +1,9 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v58 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v59 - Natural Arabic Speech & Voice Polish)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
-// - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
-// - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
-// - كشف فوري لحالة الصوت والـ Worker في الشارة الجانبية مع إمكانية الاختبار المباشر
-// - رفع سرعة التحدث قليلاً لجميع الشخصيات + أسلوب بشري حر وتلقائي
+// - تحسين النطق البشري العربي والوقوف الطبيعي وتجنب بتر الجمل أو تشويه النبرة
+// - الإبقاء على جميع الشخصيات العشر (بما فيها chef و pastry و athlete و sheikh)
+// - بحث ذكي عن رابط Cloudflare Worker + كاش ذاكرة وكاش دائم + ملفات صوت محلية
 // ============================================================================
 
 (function () {
@@ -34,10 +33,10 @@
       avatarUrl: "buddy.jpg",
       accent: "#00b0ff",
       voiceName: "Puck",
-      speed: 1.20,
-      fallbackDetune: -40,
-      fallbackRate: 1.14,
-      styleHint: "بلهجة شامية ودودة وخدومة جداً، بنبرة دافئة ومبتسمة وبسرعة إلقاء أسرع قليلاً",
+      speed: 1.12,
+      fallbackDetune: -15,
+      fallbackRate: 1.08,
+      styleHint: "بلهجة شامية ودودة ومأنوسة وبنبرة طبيعية دافئة ومبتسمة وإيقاع واضح دون استعجال مخل",
       greet: "يا هلا والله، نورت متجر معاذ! تكرم عينك، شو حابب أجهزلك اليوم؟",
       greets: [
         "يا هلا والله، نورت متجر معاذ! تكرم عينك، شو نجهزلك اليوم؟",
@@ -75,10 +74,10 @@
       avatarUrl: "pro.jpg",
       accent: "#00e676",
       voiceName: "Charon",
-      speed: 1.30,
-      fallbackDetune: -260,
-      fallbackRate: 1.18,
-      styleHint: "بأسلوب بشري سريع ومباشر وحازم وبلا تكلف وبسرعة إلقاء أعلى قليلاً",
+      speed: 1.15,
+      fallbackDetune: -25,
+      fallbackRate: 1.10,
+      styleHint: "بأسلوب بشري عربي سريع ومباشر وواضح وبلا تكلف مع مخارج حروف مضبوطة",
       greet: "أهلاً بك، جاهز فوراً؛ اذكر الصنف أو الوصفة.",
       greets: [
         "أهلاً بك، جاهز فوراً؛ اذكر الصنف أو الوصفة.",
@@ -116,10 +115,10 @@
       avatarUrl: "saver.jpg",
       accent: "#D4AF37",
       voiceName: "Zephyr",
-      speed: 1.20,
-      fallbackDetune: 165,
-      fallbackRate: 1.13,
-      styleHint: "بصوت أنثوي بشري حر وذكي وعملي وموفر وبسرعة إلقاء أسرع قليلاً",
+      speed: 1.11,
+      fallbackDetune: 20,
+      fallbackRate: 1.07,
+      styleHint: "بصوت بشري عربي واضح وعملي وموفر، بنبرة طبيعية متزنة وإلقاء سلس ومفهوم",
       greet: "يا مرحبا! أنا معك نختار المتوفر بأفضل قيمة وأوفر سعر.",
       greets: [
         "يا مرحبا! أنا معك نختار المتوفر بأفضل قيمة وأوفر سعر.",
@@ -157,10 +156,10 @@
       avatarUrl: "lulu.jpg",
       accent: "#ff7eb6",
       voiceName: "Aoede",
-      speed: 1.19,
-      fallbackDetune: 260,
-      fallbackRate: 1.12,
-      styleHint: "بلهجة شامية أنثوية ناعمة ولطيفة ومشرقة وبسرعة إلقاء أسرع قليلاً",
+      speed: 1.10,
+      fallbackDetune: 35,
+      fallbackRate: 1.07,
+      styleHint: "بلهجة شامية أنثوية لطيفة ومشرقة وطبيعية، بنبرة هادئة واضحة دون تكلّف",
       greet: "أهلاً فيكِ ونورتي! شو حابة تطبخي أو تحضّري حلى اليوم؟",
       greets: [
         "أهلاً فيكِ ونورتي! شو حابة تطبخي أو تحضّري حلى اليوم؟",
@@ -198,10 +197,10 @@
       avatarUrl: "sara.jpg",
       accent: "#7c4dff",
       voiceName: "Kore",
-      speed: 1.22,
-      fallbackDetune: 130,
-      fallbackRate: 1.14,
-      styleHint: "بأسلوب بشري طبيعي ومنظم وواضح ودقيق وبسرعة إلقاء أسرع قليلاً",
+      speed: 1.12,
+      fallbackDetune: 15,
+      fallbackRate: 1.08,
+      styleHint: "بأسلوب بشري عربي منظم وهادئ وواضح ودقيق، مع نطق سليم للكلمات والوقوف",
       greet: "مرحباً بكِ، نرتب احتياجات وصفتك حسب المتوفر بكل دقة.",
       greets: [
         "مرحباً بكِ، نرتب احتياجات وصفتك حسب المتوفر بكل دقة.",
@@ -239,10 +238,10 @@
       avatarUrl: "noor.jpg",
       accent: "#ff9800",
       voiceName: "Leda",
-      speed: 1.24,
-      fallbackDetune: 200,
-      fallbackRate: 1.16,
-      styleHint: "بأسلوب بشري حيوي ومشرق وذكي وبسرعة إلقاء أسرع قليلاً",
+      speed: 1.13,
+      fallbackDetune: 25,
+      fallbackRate: 1.09,
+      styleHint: "بأسلوب بشري عربي حيوي ومشرق وذكي، بنبرة طبيعية واضحة وسلسة",
       greet: "أهلاً وسهلاً، اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر!",
       greets: [
         "أهلاً وسهلاً، اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر!",
@@ -280,10 +279,10 @@
       avatarUrl: "chef.jpg",
       accent: "#f97316",
       voiceName: "Charon",
-      speed: 1.16,
-      fallbackDetune: -25,
-      fallbackRate: 1.12,
-      styleHint: "بصوت طباخ عربي خبير وودود، طبيعي وتلقائي وسريع قليلاً كأنه يشرح بالمطبخ",
+      speed: 1.10,
+      fallbackDetune: -10,
+      fallbackRate: 1.07,
+      styleHint: "بلهجة شامية ومطبخية ودودة وطبيعية، كطباخ عربي يشرح بوضوح وطمأنينة",
       greet: "أهلاً بك بالمطبخ! شو الطبخة اللي عبالك نجهز مكوناتها اليوم؟",
       greets: [
         "أهلاً بك بالمطبخ! شو الطبخة اللي عبالك نجهز مكوناتها اليوم؟",
@@ -321,10 +320,10 @@
       avatarUrl: "pastry.jpg",
       accent: "#ec4899",
       voiceName: "Aoede",
-      speed: 1.15,
-      fallbackDetune: 90,
-      fallbackRate: 1.12,
-      styleHint: "بصوت أنثوي عربي لطيف ومبهج، طبيعي وتلقائي وسريع قليلاً كأنه يحضّر حلى",
+      speed: 1.09,
+      fallbackDetune: 20,
+      fallbackRate: 1.07,
+      styleHint: "بصوت عربي لطيف ومبهج وطبيعي، بنبرة مريحة وواضحة تناسب وصفات الحلويات",
       greet: "يا هلا! شو الحلى اللي حابة تحضّريه اليوم من وصفاتنا؟",
       greets: [
         "يا هلا! شو الحلى اللي حابة تحضّريه اليوم من وصفاتنا؟",
@@ -362,10 +361,10 @@
       avatarUrl: "athlete.jpg",
       accent: "#10b981",
       voiceName: "Fenrir",
-      speed: 1.20,
-      fallbackDetune: -30,
-      fallbackRate: 1.15,
-      styleHint: "بصوت رياضي نشيط وحماسي وطبيعي، سريع قليلاً وبنبرة صحية واضحة",
+      speed: 1.13,
+      fallbackDetune: -12,
+      fallbackRate: 1.09,
+      styleHint: "بصوت عربي نشيط وواضح وطبيعي، بنبرة صحية متوازنة دون مبالغة أو تشويش",
       greet: "أهلاً بالبطل! جاهز نختار أغراض صحية ومغذية تعطي نشاط وطاقة؟",
       greets: [
         "أهلاً بالبطل! جاهز نختار أغراض صحية ومغذية تعطي نشاط وطاقة؟",
@@ -403,10 +402,10 @@
       avatarUrl: "sheikh.jpg",
       accent: "#ef4444",
       voiceName: "Puck",
-      speed: 1.24,
-      fallbackDetune: -15,
-      fallbackRate: 1.16,
-      styleHint: "بلهجة شبابية جامحة وجريئة وحماسية وعفوية جداً وبسرعة إلقاء أسرع قليلاً",
+      speed: 1.14,
+      fallbackDetune: -8,
+      fallbackRate: 1.09,
+      styleHint: "بلهجة شبابية شامية عفوية وحيوية وواضحة، مع نطق سليم ومفهوم للكلمات",
       greet: "ولك يا هلا بشيخ الشباب! مولّعة اليوم، شو نجمّع عالسريع؟",
       greets: [
         "ولك يا هلا بشيخ الشباب! مولّعة اليوم، شو نجمّع عالسريع؟",
@@ -575,7 +574,7 @@
   }
 
   // ==========================================================================
-  // [محرك الصوت المضمون على الهاتف — كشف رابط الـ Worker + تشغيل مباشر واضح]
+  // [محرك النطق البشري السليم والواضح]
   // ==========================================================================
   const ttsAudioCache = new Map();
   let sharedAudioPlayer = null;
@@ -658,31 +657,46 @@
     return String(txt || "")
       .replace(/\b1\s*(مواد|قطع|اصناف|أصناف)\b/g, "صنف واحد")
       .replace(/\b2\s*(مواد|قطع|اصناف|أصناف)\b/g, "صنفين")
+      .replace(/\b3\b/g, "تلاتة")
+      .replace(/\b4\b/g, "أربعة")
+      .replace(/\b5\b/g, "خمسة")
       .replace(/\b(\d+)\s*ل\.?س\b/g, "$1 ليرة")
       .replace(/\b0\b/g, "صفر");
   }
 
-  function shortenForSpeech(text, maxWords = 16) {
+  function shortenForSpeech(text, maxWords = 15) {
     const words = String(text || "").trim().split(/\s+/).filter(Boolean);
     if (words.length <= maxWords) return words.join(" ");
-    const sliced = words.slice(0, maxWords).join(" ");
-    const lastPunct = Math.max(sliced.lastIndexOf("،"), sliced.lastIndexOf("."), sliced.lastIndexOf("!"));
-    if (lastPunct > sliced.length * 0.55) return sliced.slice(0, lastPunct + 1).trim();
-    return sliced;
+
+    const sliceWords = words.slice(0, maxWords);
+    const joined = sliceWords.join(" ");
+    const cutAt = Math.max(
+      joined.lastIndexOf("،"),
+      joined.lastIndexOf("."),
+      joined.lastIndexOf("!"),
+      joined.lastIndexOf("؟")
+    );
+    if (cutAt >= Math.floor(joined.length * 0.5)) {
+      return joined.slice(0, cutAt + 1).trim();
+    }
+
+    const trailingParticles = new Set(["و", "ف", "ب", "ل", "من", "في", "على", "عن", "مع", "يا", "شو", "اللي", "إلى", "الى"]);
+    while (sliceWords.length > 4 && trailingParticles.has(sliceWords[sliceWords.length - 1])) {
+      sliceWords.pop();
+    }
+    return sliceWords.join(" ");
   }
 
   function normalizeTextForArabicSpeech(rawText) {
     let cleaned = humanizeArabicNumbersForSpeech(rawText)
-      .replace(/[\u{1F300}-\u{1FAFF}🐾✨🎤🎧🎙️🤔🤩💡📌📍🔊🔇🗣️🍲🌸🛍️🔁⏰✅⚠️🔒🔄🧚🧉🍰💰🛒]/gu, " ")
-      .replace(/[A-Za-z_]+/g, " ")
-      .replace(/\+/g, " زائد ")
-      .replace(/×/g, " ضرب ")
-      .replace(/ل\.س/g, " ليرة ")
-      .replace(/[•\-_*#|()[\]{}]/g, " ")
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, " ")
+      .replace(/[A-Za-z0-9_+×•\-_*#|()[\]{}]/g, " ")
+      .replace(/ل\.?س/g, " ليرة ")
       .replace(/\s*([،؛.!؟])\s*/g, "$1 ")
+      .replace(/([،؛.!؟]){2,}/g, "$1")
       .replace(/\s+/g, " ")
       .trim();
-    return shortenForSpeech(cleaned, 16);
+    return shortenForSpeech(cleaned, 15);
   }
 
   function base64ToUint8Array(base64Data) {
@@ -735,11 +749,12 @@
     player.preservesPitch = true;
     player.mozPreservesPitch = true;
     player.webkitPreservesPitch = true;
-    player.playbackRate = persona.speed || 1.22;
+    const isHumanClip = entry.source === "gemini_tts" || entry.source === "local_repo" || entry.source === "persistent_cache";
+    player.playbackRate = isHumanClip ? (persona.speed || 1.12) : (persona.fallbackRate || 1.08);
     const p = player.play();
     if (p && typeof p.catch === "function") {
       p.catch(() => {
-        showBubble("اضغط على الجنية لتشغيل الصوت", 2600);
+        showBubble("اضغط على الشخصية لتشغيل الصوت", 2600);
       });
     }
   }
@@ -755,11 +770,10 @@
 
       const src = ctx.createBufferSource();
       src.buffer = decoded;
-      // إبقاء النبرة قريبة من الطبيعي قدر الإمكان لتجنب صوت الروبوت أو التضخيم المزعج
       if (src.detune) {
-        src.detune.value = Math.max(-90, Math.min(90, (persona.fallbackDetune || 0) * 0.25));
+        src.detune.value = Math.max(-45, Math.min(45, persona.fallbackDetune || 0));
       }
-      src.playbackRate.value = persona.fallbackRate || 1.13;
+      src.playbackRate.value = Math.max(0.98, Math.min(1.14, persona.fallbackRate || 1.08));
       src.connect(ctx.destination);
       activeBufferSource = src;
       src.onended = () => {
@@ -772,7 +786,7 @@
     }
   }
 
-  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_v58";
+  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_v59";
   const missingLocalClips = new Set();
 
   function detectStaticClipName(persona, spokenText) {
@@ -892,17 +906,14 @@
       }
     };
 
-    // 1) التحقق أولاً من ملفات الصوت الثابتة في مستودع GitHub (sounds/<id>_greet.mp3)
     const playedLocal = await tryLocalRepoClip(persona, spokenText, mySeq, cacheKey);
     if (playedLocal) return;
 
-    // 2) التحقق من الكاش في الذاكرة الحالية
     if (ttsAudioCache.has(cacheKey)) {
       await playEntry(ttsAudioCache.get(cacheKey));
       return;
     }
 
-    // 3) التحقق من الكاش الدائم في الهاتف (Cache API) لتجنب استهلاك الحصة
     const persistedUrl = await readPersistentHumanCache(cacheKey);
     if (persistedUrl && mySeq === ttsRequestSeq) {
       const pEntry = { url: persistedUrl, rawBuffer: null, source: "persistent_cache", geminiError: "" };
@@ -966,7 +977,6 @@
         geminiError: json.geminiError || ""
       };
 
-      // حفظ الصوت البشري الأصلي فقط في الكاش الدائم على الهاتف (لا نحفظ البديل دائماً حتى يُستبدل بالبشري فور تجدد الحصة)
       if (entry.source === "gemini_tts" && audioBlob) {
         writePersistentHumanCache(cacheKey, audioBlob);
       }
@@ -992,7 +1002,7 @@
     setPrefs({ voiceEnabled: next });
     if (!next) stopEmbeddedVoice();
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
-    const msg = next ? `${persona.name}: الصوت مفعّل، أهلاً بك!` : "تم كتم صوت الجنية.";
+    const msg = next ? `${persona.name}: الصوت مفعّل، أهلاً بك!` : "تم كتم الصوت.";
     showBubble(next ? "🗣️ الصوت مفعّل" : "🔇 الصوت مكتوم", 2800);
     showToast(next ? "🗣️ الصوت مفعّل" : "🔇 الصوت مكتوم");
     if (next) speakOutLoud(msg, true);
@@ -1004,7 +1014,7 @@
     const prefs = getPrefs();
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const phrase = sessionCtx.lastSpokenText || pickPhrase(persona.greets, `greet_${persona.id}`);
-    showBubble(`🧚 ${phrase}`, 3800);
+    showBubble(`✨ ${phrase}`, 3800);
     speakOutLoud(phrase, true);
   };
 
@@ -1075,7 +1085,7 @@
     const greetLine = pickPhrase(p.greets || [p.greet], `greet_${p.id}`);
     const specEl = $("fairySpecialtyNote");
     if (specEl) specEl.textContent = p.specialtyNote || "";
-    showBubble(`🧚 ${greetLine}`, 3800);
+    showBubble(`✨ ${greetLine}`, 3800);
     speakOutLoud(greetLine, true);
   };
 
@@ -1104,14 +1114,14 @@
     if (!orb) return;
 
     const badges = {
-      idle: "🧚",
+      idle: "✨",
       listening: "🎙️",
       thinking: "✨",
       happy: "🤩",
       greet: "🌸",
       choice: "🔀"
     };
-    if (statusBadge) statusBadge.textContent = badges[state] || "🧚";
+    if (statusBadge) statusBadge.textContent = badges[state] || "✨";
 
     orb.style.borderColor = state === "listening" ? "#00e676" : p.accent;
     if (ring) ring.style.display = state === "listening" ? "block" : "none";
@@ -1211,7 +1221,6 @@
     const curR = parseInt(root.style.right || "12", 10);
     const curB = parseInt(root.style.bottom || "96", 10);
 
-    // حصر التجوال على الحواف الجانبية فقط (يمين أو يسار) لتجنب تغطية أزرار الشراء
     const stickLeft = curR > window.innerWidth / 2;
     const nextR = stickLeft ? maxR : 12;
     const nextB = Math.round(Math.max(minB, Math.min(maxB, curB + (Math.random() - 0.5) * 120)));
@@ -1951,7 +1960,6 @@
       return;
     }
 
-    // إلغاء تدخل الذكاء الاصطناعي في الدفع أو شام كاش تماماً
     if (guardAgainstPaymentAI(promptTxt)) {
       const guardMsg = "التحقق من الدفع وشام كاش ملغى من الذكاء الاصطناعي ويتم يدوياً بالكامل.";
       setOrbEmotion("idle", guardMsg, false);
@@ -1964,7 +1972,7 @@
     const chatReply = matchCasualChat(norm, persona);
     if (chatReply) {
       setOrbEmotion("greet", chatReply, true);
-      setTxt("aiShoppingStatusText", `🧚 ${chatReply}`);
+      setTxt("aiShoppingStatusText", `✨ ${chatReply}`);
       return;
     }
 
@@ -1989,7 +1997,6 @@
     const peopleCount = parsePeopleCount(norm);
     const suggestedPerItem = peopleCount && peopleCount >= 5 ? Math.min(4, Math.ceil(peopleCount / 3)) : 1;
 
-    // دعم طلبات الرياضة والصحة (خاصة مع البطل الرياضي أو أي شخصية)
     if (/(رياضه|رياضة|صحي|صحه|صحة|دايت|بروتين|تمرين|لياقه|لياقة|طاقة)/.test(norm)) {
       const healthyKw = /(عدس|مجدره|مجدرة|شوربه|شوربة|حليب|لبن|بيض|رز|ارز|برغل|شوفان|عسل|ماء|عصير|خضار|فواكه|تونه|تونة)/;
       const healthyItems = Object.keys(products || {})
@@ -2017,7 +2024,6 @@
       }
     }
 
-    // دعم طلبات وصفات الطعام (الطباخ الماهر) أو الحلويات (صانعة الحلويات)
     if (/(وصفه|وصفة|اكله|أكلة|طبخه|طبخة|غداء|عشاء)/.test(norm) && !matchRecipeOrSweet(norm)) {
       const allRecs = getAllMergedRecipes();
       const wantsSweets = persona.id === "pastry" || /(حلى|حلويات|حلو|كيك|بسبوسه|بسبوسة|مهلبيه|مهلبية)/.test(norm);
@@ -2082,7 +2088,6 @@
       return;
     }
 
-    // خيار أخير: استدعاء الذكاء الاصطناعي التفاعلي (companion_shop) مع حظر تام لأي أمر دفع
     const workerUrl = resolveWorkerEndpoint();
     if (workerUrl && navigator.onLine !== false) {
       setOrbEmotion("thinking", "جاري البحث الذكي في أصناف المتجر...", false);
@@ -2126,7 +2131,7 @@
         }
         if (aiData.reply) {
           setOrbEmotion("greet", aiData.reply, true);
-          setTxt("aiShoppingStatusText", `🧚 ${aiData.reply}`);
+          setTxt("aiShoppingStatusText", `✨ ${aiData.reply}`);
           return;
         }
       } catch (_) {}
@@ -2280,7 +2285,7 @@
       const prefs = getPrefs();
       const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
       const phrase = sessionCtx.lastSpokenText || persona.greet;
-      showBubble(`🧚 ${phrase}`, 4000);
+      showBubble(`✨ ${phrase}`, 4000);
       speakOutLoud(phrase, true);
     };
 
@@ -2417,12 +2422,12 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v58",
+      version: "v59",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
       lastGeminiError: sessionCtx.lastGeminiError || "none",
-      fairiesCount: Object.keys(PERSONAS).length,
+      personasCount: Object.keys(PERSONAS).length,
       productsLoaded: Object.keys(products || {}).length,
       categoriesLoaded: Array.isArray(categories) ? categories.length : 0,
       recipesAvailable: getAllMergedRecipes().length,
@@ -2430,7 +2435,7 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v58]", report);
+    console.info("[QA Assistant Diagnostic v59]", report);
     return report;
   };
 
@@ -2450,7 +2455,7 @@
       bar.innerHTML = `
         <div style="display:flex; align-items:center; gap:4px; flex:1; min-width:155px;">
           <img id="fairyBarThumb" alt="${p.name}" style="width:22px; height:22px; border-radius:50%; object-fit:cover; border:1.5px solid ${p.accent}; flex-shrink:0;">
-          <span style="color:var(--gold-color); font-weight:bold;">الجنية:</span>
+          <span style="color:var(--gold-color); font-weight:bold;">الشخصية:</span>
           <select id="petPersonaSelect" class="form-control" onchange="selectPetPersona(this.value)" style="padding:3px 6px; font-size:10px; flex:1;">${opts}</select>
         </div>
         <div style="display:flex; align-items:center; gap:4px;">
@@ -2488,7 +2493,6 @@
       assistBox.appendChild(chips);
     }
 
-    // احترام هدوء الزبون عند التركيز على حقول البحث أو الكتابة
     if (!window.__MOAATH_QUIET_HOOK_V58__) {
       window.__MOAATH_QUIET_HOOK_V58__ = true;
       document.addEventListener("focusin", (e) => {
@@ -2573,10 +2577,10 @@
         <div id="petMiniBubble"></div>
         <div style="position:relative;">
           <div id="petListenRing"></div>
-          <div id="petCharOrb" class="is-roaming" role="button" aria-label="جنية المساعد الذكي">
+          <div id="petCharOrb" class="is-roaming" role="button" aria-label="المساعد الصوتي الذكي">
             <img id="fairyCharImg" alt="${p.name}">
           </div>
-          <div id="fairyStateBadge">🧚</div>
+          <div id="fairyStateBadge">✨</div>
         </div>`;
       document.body.appendChild(root);
       bindOrbInteractions($("petCharOrb"), root);
