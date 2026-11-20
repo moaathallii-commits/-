@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v68 - Guaranteed Audible TTS & Diagnostics)
+// محرك المساعد الصوتي التفاعلي لمتجر معاذ (تباين الطبقات والنبر + سرعة 1.5 + أسماء ثابتة)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -8,12 +8,12 @@
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V68_LOADED__) return;
-  window.__MOAATH_AI_V68_LOADED__ = true;
+  if (window.__MOAATH_AI_ENGINE_LOADED__) return;
+  window.__MOAATH_AI_ENGINE_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v68_prefs";
-  const POS_KEY = "moaath_pet_v68_pos";
-  const LEARN_KEY = "moaath_pet_v68_learned";
+  const PREFS_KEY = "moaath_pet_prefs";
+  const POS_KEY = "moaath_pet_pos";
+  const LEARN_KEY = "moaath_pet_learned";
 
   const FALLBACK_BUDDY = {
     id: "buddy",
@@ -359,7 +359,7 @@
     player.preservesPitch = true;
     player.mozPreservesPitch = true;
     player.webkitPreservesPitch = true;
-    player.playbackRate = persona.speed || 1.22;
+    player.playbackRate = persona.speed || 1.5;
     const p = player.play();
     if (p && typeof p.catch === "function") {
       p.catch(() => {
@@ -368,7 +368,7 @@
     }
   }
 
-  async function playFallbackWithDetune(arrayBuf, persona, mySeq) {
+  async function playWithPersonaTimbre(arrayBuf, persona, mySeq) {
     const ctx = ensureWebAudioCtx();
     if (!ctx) return false;
     try {
@@ -379,11 +379,11 @@
 
       const src = ctx.createBufferSource();
       src.buffer = decoded;
-      // إبقاء النبرة قريبة من الطبيعي قدر الإمكان لتجنب صوت الروبوت أو التضخيم المزعج
+      const semitones = typeof persona.pitchSemitones === "number" ? persona.pitchSemitones : 0;
       if (src.detune) {
-        src.detune.value = Math.max(-90, Math.min(90, (persona.fallbackDetune || 0) * 0.25));
+        src.detune.value = semitones * 100;
       }
-      src.playbackRate.value = persona.fallbackRate || 1.13;
+      src.playbackRate.value = persona.speed || 1.5;
       src.connect(ctx.destination);
       activeBufferSource = src;
       src.onended = () => {
@@ -396,7 +396,7 @@
     }
   }
 
-  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_v68";
+  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_cache";
   const missingLocalClips = new Set();
 
   function detectStaticClipName(persona, spokenText) {
@@ -418,6 +418,7 @@
       if (cached?.source === "local_repo") {
         sessionCtx.lastTtsSource = "local_repo";
         updateVoiceSourceBadge("🔊 يتحدث", "#00e676", relUrl);
+        if (cached.rawBuffer && await playWithPersonaTimbre(cached.rawBuffer, persona, mySeq)) return true;
         playViaHtmlAudio(cached, persona, mySeq);
         return true;
       }
@@ -434,10 +435,11 @@
         missingLocalClips.add(relUrl);
         return false;
       }
-      const blob = await res.blob();
+      const arrBuf = await res.arrayBuffer();
+      const blob = new Blob([arrBuf], { type: cType || "audio/mpeg" });
       if (mySeq !== ttsRequestSeq) return true;
       const blobUrl = URL.createObjectURL(blob);
-      const entry = { url: blobUrl, rawBuffer: null, source: "local_repo", geminiError: "" };
+      const entry = { url: blobUrl, rawBuffer: arrBuf, source: "local_repo", geminiError: "" };
       if (ttsAudioCache.size > 30) {
         const firstKey = ttsAudioCache.keys().next().value;
         const oldEntry = ttsAudioCache.get(firstKey);
@@ -447,6 +449,7 @@
       ttsAudioCache.set(cacheKey, entry);
       sessionCtx.lastTtsSource = "local_repo";
       updateVoiceSourceBadge("🔊 يتحدث", "#00e676", relUrl);
+      if (await playWithPersonaTimbre(arrBuf, persona, mySeq)) return true;
       playViaHtmlAudio(entry, persona, mySeq);
       return true;
     } catch (_) {
@@ -462,8 +465,9 @@
       const reqUrl = "https://moaath-tts.local/" + encodeURIComponent(cacheKey);
       const match = await cache.match(reqUrl);
       if (!match) return null;
-      const blob = await match.blob();
-      return URL.createObjectURL(blob);
+      const arrBuf = await match.arrayBuffer();
+      const blob = new Blob([arrBuf], { type: match.headers.get("Content-Type") || "audio/wav" });
+      return { url: URL.createObjectURL(blob), rawBuffer: arrBuf };
     } catch (_) {
       return null;
     }
@@ -495,7 +499,7 @@
 
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const voiceName = persona.voiceName || "Puck";
-    const cacheKey = `${persona.id}::${voiceName}::${spokenText}`;
+    const cacheKey = `${persona.id}::${voiceName}::${persona.gender || "male"}::${persona.toneTag || ""}::${spokenText}`;
 
     const playEntry = async (entry) => {
       if (mySeq !== ttsRequestSeq) return;
@@ -504,12 +508,16 @@
 
       if (entry.source === "gemini_tts" || entry.source === "persistent_cache" || entry.source === "local_repo") {
         updateVoiceSourceBadge("🔊 يتحدث", "#00e676", entry.source);
+        if (entry.rawBuffer && Math.abs(persona.pitchSemitones || 0) >= 0.4) {
+          const okTimbre = await playWithPersonaTimbre(entry.rawBuffer, persona, mySeq);
+          if (okTimbre) return;
+        }
         playViaHtmlAudio(entry, persona, mySeq);
       } else {
         if (entry.geminiError) console.info("[TTS Diagnostic]", entry.geminiError);
         updateVoiceSourceBadge("🔊 يتحدث", "#38bdf8", "صوت نشط");
         if (entry.rawBuffer) {
-          const okWebAudio = await playFallbackWithDetune(entry.rawBuffer, persona, mySeq);
+          const okWebAudio = await playWithPersonaTimbre(entry.rawBuffer, persona, mySeq);
           if (okWebAudio) return;
         }
         playViaHtmlAudio(entry, persona, mySeq);
@@ -527,9 +535,9 @@
     }
 
     // 3) التحقق من الكاش الدائم في الهاتف (Cache API) لتجنب استهلاك الحصة
-    const persistedUrl = await readPersistentHumanCache(cacheKey);
-    if (persistedUrl && mySeq === ttsRequestSeq) {
-      const pEntry = { url: persistedUrl, rawBuffer: null, source: "persistent_cache", geminiError: "" };
+    const persisted = await readPersistentHumanCache(cacheKey);
+    if (persisted && mySeq === ttsRequestSeq) {
+      const pEntry = { url: persisted.url, rawBuffer: persisted.rawBuffer, source: "persistent_cache", geminiError: "" };
       ttsAudioCache.set(cacheKey, pEntry);
       await playEntry(pEntry);
       return;
@@ -556,6 +564,9 @@
           mode: "tts",
           text: spokenText,
           voiceName,
+          gender: persona.gender || "male",
+          toneTag: persona.toneTag || "",
+          pitchSemitones: persona.pitchSemitones || 0,
           styleHint: persona.styleHint || ""
         })
       });
@@ -1104,7 +1115,7 @@
       renderAdminBrainUnmatchedList();
     }
 
-    const LOCAL_SYN_KEY = "moaath_local_synonyms_v68";
+    const LOCAL_SYN_KEY = "moaath_local_synonyms";
 
     function saveLocalSynonymFallback(id, parts) {
       try {
@@ -1931,8 +1942,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v68Bound) return;
-    orb.dataset.v68Bound = "1";
+    if (!orb || !root || orb.dataset.orbBound) return;
+    orb.dataset.orbBound = "1";
 
     ensureGroundShadow(root);
 
@@ -2055,7 +2066,7 @@
     }).join("");
   }
 
-  const LOCAL_RECIPES_KEY = "moaath_local_recipes_v68";
+  const LOCAL_RECIPES_KEY = "moaath_local_recipes";
 
   function loadLocalRecipesFallback() {
     try {
@@ -2204,7 +2215,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v68",
+      version: "stable",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
@@ -2217,11 +2228,11 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v68]", report);
+    console.info("[QA Assistant Diagnostic]", report);
     return report;
   };
 
-  function mountV68() {
+  function mountEngine() {
     window.analyzeShamCashReceiptOCR();
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
@@ -2277,8 +2288,8 @@
     }
 
     // احترام هدوء الزبون عند التركيز على حقول البحث أو الكتابة
-    if (!window.__MOAATH_QUIET_HOOK_V68__) {
-      window.__MOAATH_QUIET_HOOK_V68__ = true;
+    if (!window.__MOAATH_QUIET_HOOK__) {
+      window.__MOAATH_QUIET_HOOK__ = true;
       document.addEventListener("focusin", (e) => {
         if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) {
           pauseRoaming(12000);
@@ -2290,7 +2301,7 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV68";
+      styleTag.id = "petCharStyle";
       styleTag.textContent = `
         @keyframes fairyHover3D {
           0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
@@ -2377,7 +2388,7 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV68(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountEngine(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
@@ -2395,6 +2406,6 @@
   window.addEventListener("online", syncConnectivityBadge);
   window.addEventListener("offline", syncConnectivityBadge);
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV68);
-  else mountV68();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountEngine);
+  else mountEngine();
 })();
