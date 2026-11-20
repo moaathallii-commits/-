@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك المساعد الصوتي التفاعلي لمتجر معاذ (تباين الطبقات والنبر + سرعة 1.5 + أسماء ثابتة)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v69 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -8,12 +8,12 @@
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_ENGINE_LOADED__) return;
-  window.__MOAATH_AI_ENGINE_LOADED__ = true;
+  if (window.__MOAATH_AI_V69_LOADED__) return;
+  window.__MOAATH_AI_V69_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_prefs";
-  const POS_KEY = "moaath_pet_pos";
-  const LEARN_KEY = "moaath_pet_learned";
+  const PREFS_KEY = "moaath_pet_v69_prefs";
+  const POS_KEY = "moaath_pet_v69_pos";
+  const LEARN_KEY = "moaath_pet_v69_learned";
 
   const FALLBACK_BUDDY = {
     id: "buddy",
@@ -350,52 +350,16 @@
     if (titleText) badge.title = titleText;
   }
 
-  function pcmBase64ToAudioBuffer(ctx, base64Pcm, sampleRate = 24000) {
-    try {
-      const binStr = atob(base64Pcm);
-      const sampleCount = Math.floor(binStr.length / 2);
-      if (!sampleCount) return null;
-      const audioBuf = ctx.createBuffer(1, sampleCount, sampleRate);
-      const channel = audioBuf.getChannelData(0);
-      for (let i = 0; i < sampleCount; i++) {
-        const lo = binStr.charCodeAt(i * 2) & 0xff;
-        const hi = binStr.charCodeAt(i * 2 + 1) & 0xff;
-        let val = (hi << 8) | lo;
-        if (val >= 0x8000) val -= 0x10000;
-        channel[i] = val / 32768;
-      }
-      return audioBuf;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  function clearPersonaSpeechCache(clearPersistent = false) {
-    ttsAudioCache.forEach(entry => {
-      if (entry?.url) {
-        try { URL.revokeObjectURL(entry.url); } catch (_) {}
-      }
-    });
-    ttsAudioCache.clear();
-    if (clearPersistent && typeof caches !== "undefined") {
-      caches.delete(PERSISTENT_TTS_CACHE_NAME).catch(() => {});
-    }
-  }
-  window.clearCompanionVoiceCache = () => clearPersonaSpeechCache(true);
-
   function playViaHtmlAudio(entry, persona, mySeq) {
     if (mySeq !== ttsRequestSeq) return;
     const player = ensureAudioPlayer();
     player.pause();
     player.src = entry.url;
     player.load();
-    player.preservesPitch = false;
-    player.mozPreservesPitch = false;
-    player.webkitPreservesPitch = false;
-    const semitones = typeof persona.pitchSemitones === "number" ? persona.pitchSemitones : 0;
-    const baseRate = persona.speed || 1.5;
-    const pitchFactor = Math.pow(2, semitones / 24);
-    player.playbackRate = Math.max(1.15, Math.min(1.85, baseRate * pitchFactor));
+    player.preservesPitch = true;
+    player.mozPreservesPitch = true;
+    player.webkitPreservesPitch = true;
+    player.playbackRate = persona.speed || 1.22;
     const p = player.play();
     if (p && typeof p.catch === "function") {
       p.catch(() => {
@@ -404,51 +368,23 @@
     }
   }
 
-  async function playDistinctPersonaAudio(entry, persona, mySeq) {
-    if (mySeq !== ttsRequestSeq) return false;
+  async function playFallbackWithDetune(arrayBuf, persona, mySeq) {
     const ctx = ensureWebAudioCtx();
-    if (!ctx || !entry) return false;
-
+    if (!ctx) return false;
     try {
       if (ctx.state === "suspended") await ctx.resume();
-      let decoded = entry.decodedBuffer || null;
-      if (!decoded && entry.rawBuffer) {
-        const cloned = entry.rawBuffer.slice(0);
-        decoded = await ctx.decodeAudioData(cloned);
-        entry.decodedBuffer = decoded;
-      }
-      if (!decoded || mySeq !== ttsRequestSeq) return false;
+      const cloned = arrayBuf.slice(0);
+      const decoded = await ctx.decodeAudioData(cloned);
+      if (mySeq !== ttsRequestSeq) return true;
 
       const src = ctx.createBufferSource();
       src.buffer = decoded;
-
-      const semitones = typeof persona.pitchSemitones === "number" ? persona.pitchSemitones : 0;
-      const targetSpeed = persona.speed || 1.5;
-      const detuneCents = semitones * 100;
-
+      // إبقاء النبرة قريبة من الطبيعي قدر الإمكان لتجنب صوت الروبوت أو التضخيم المزعج
       if (src.detune) {
-        src.detune.value = detuneCents;
-        // موازنة خفيفة للسرعة حتى يبقى الإيقاع قريباً من 1.5 مع الحفاظ الكامل على فرق الطبقة
-        const compensatedRate = targetSpeed / Math.pow(2, detuneCents / 2400);
-        src.playbackRate.value = Math.max(1.25, Math.min(1.65, compensatedRate));
-      } else {
-        src.playbackRate.value = targetSpeed;
+        src.detune.value = Math.max(-90, Math.min(90, (persona.fallbackDetune || 0) * 0.25));
       }
-
-      // تشكيل نبرة إضافي لتمييز الصوت الذكري الدافئ عن الصوت الأنثوي المشرق
-      const eq = ctx.createBiquadFilter();
-      if (persona.gender === "female") {
-        eq.type = "highshelf";
-        eq.frequency.value = 2600;
-        eq.gain.value = 3.5;
-      } else {
-        eq.type = "lowshelf";
-        eq.frequency.value = 260;
-        eq.gain.value = 3.5;
-      }
-
-      src.connect(eq);
-      eq.connect(ctx.destination);
+      src.playbackRate.value = persona.fallbackRate || 1.13;
+      src.connect(ctx.destination);
       activeBufferSource = src;
       src.onended = () => {
         if (activeBufferSource === src) activeBufferSource = null;
@@ -460,7 +396,7 @@
     }
   }
 
-  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_cache";
+  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_v68";
   const missingLocalClips = new Set();
 
   function detectStaticClipName(persona, spokenText) {
@@ -482,7 +418,6 @@
       if (cached?.source === "local_repo") {
         sessionCtx.lastTtsSource = "local_repo";
         updateVoiceSourceBadge("🔊 يتحدث", "#00e676", relUrl);
-        if (await playDistinctPersonaAudio(cached, persona, mySeq)) return true;
         playViaHtmlAudio(cached, persona, mySeq);
         return true;
       }
@@ -499,11 +434,10 @@
         missingLocalClips.add(relUrl);
         return false;
       }
-      const arrBuf = await res.arrayBuffer();
-      const blob = new Blob([arrBuf], { type: cType || "audio/mpeg" });
+      const blob = await res.blob();
       if (mySeq !== ttsRequestSeq) return true;
       const blobUrl = URL.createObjectURL(blob);
-      const entry = { url: blobUrl, rawBuffer: arrBuf, decodedBuffer: null, source: "local_repo", geminiError: "" };
+      const entry = { url: blobUrl, rawBuffer: null, source: "local_repo", geminiError: "" };
       if (ttsAudioCache.size > 30) {
         const firstKey = ttsAudioCache.keys().next().value;
         const oldEntry = ttsAudioCache.get(firstKey);
@@ -513,7 +447,6 @@
       ttsAudioCache.set(cacheKey, entry);
       sessionCtx.lastTtsSource = "local_repo";
       updateVoiceSourceBadge("🔊 يتحدث", "#00e676", relUrl);
-      if (await playDistinctPersonaAudio(entry, persona, mySeq)) return true;
       playViaHtmlAudio(entry, persona, mySeq);
       return true;
     } catch (_) {
@@ -529,9 +462,8 @@
       const reqUrl = "https://moaath-tts.local/" + encodeURIComponent(cacheKey);
       const match = await cache.match(reqUrl);
       if (!match) return null;
-      const arrBuf = await match.arrayBuffer();
-      const blob = new Blob([arrBuf], { type: match.headers.get("Content-Type") || "audio/wav" });
-      return { url: URL.createObjectURL(blob), rawBuffer: arrBuf };
+      const blob = await match.blob();
+      return URL.createObjectURL(blob);
     } catch (_) {
       return null;
     }
@@ -550,7 +482,7 @@
     } catch (_) {}
   }
 
-  async function speakOutLoud(rawText, force = false, bypassCache = false) {
+  async function speakOutLoud(rawText, force = false) {
     const prefs = getPrefs();
     if (!prefs.voiceEnabled && !force) return;
 
@@ -563,41 +495,44 @@
 
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const voiceName = persona.voiceName || "Puck";
-    const pitchTag = typeof persona.pitchSemitones === "number" ? persona.pitchSemitones : 0;
-    const cacheKey = `${persona.id}::${voiceName}::${persona.gender || "male"}::${pitchTag}::${spokenText}`;
+    const cacheKey = `${persona.id}::${voiceName}::${spokenText}`;
 
     const playEntry = async (entry) => {
       if (mySeq !== ttsRequestSeq) return;
       sessionCtx.lastTtsSource = entry.source;
       sessionCtx.lastGeminiError = entry.geminiError || "";
 
-      const isHuman = entry.source === "gemini_tts" || entry.source === "persistent_cache" || entry.source === "local_repo";
-      updateVoiceSourceBadge("🔊 يتحدث", isHuman ? "#00e676" : "#38bdf8", entry.source);
-      if (!isHuman && entry.geminiError) {
-        console.info("[TTS Diagnostic]", entry.geminiError);
+      if (entry.source === "gemini_tts" || entry.source === "persistent_cache" || entry.source === "local_repo") {
+        updateVoiceSourceBadge("🔊 يتحدث", "#00e676", entry.source);
+        playViaHtmlAudio(entry, persona, mySeq);
+      } else {
+        if (entry.geminiError) console.info("[TTS Diagnostic]", entry.geminiError);
+        updateVoiceSourceBadge("🔊 يتحدث", "#38bdf8", "صوت نشط");
+        if (entry.rawBuffer) {
+          const okWebAudio = await playFallbackWithDetune(entry.rawBuffer, persona, mySeq);
+          if (okWebAudio) return;
+        }
+        playViaHtmlAudio(entry, persona, mySeq);
       }
-
-      const okDistinct = await playDistinctPersonaAudio(entry, persona, mySeq);
-      if (okDistinct) return;
-      playViaHtmlAudio(entry, persona, mySeq);
     };
 
-    if (!bypassCache) {
-      const playedLocal = await tryLocalRepoClip(persona, spokenText, mySeq, cacheKey);
-      if (playedLocal) return;
+    // 1) التحقق أولاً من ملفات الصوت الثابتة في مستودع GitHub (sounds/<id>_greet.mp3)
+    const playedLocal = await tryLocalRepoClip(persona, spokenText, mySeq, cacheKey);
+    if (playedLocal) return;
 
-      if (ttsAudioCache.has(cacheKey)) {
-        await playEntry(ttsAudioCache.get(cacheKey));
-        return;
-      }
+    // 2) التحقق من الكاش في الذاكرة الحالية
+    if (ttsAudioCache.has(cacheKey)) {
+      await playEntry(ttsAudioCache.get(cacheKey));
+      return;
+    }
 
-      const persisted = await readPersistentHumanCache(cacheKey);
-      if (persisted && mySeq === ttsRequestSeq) {
-        const pEntry = { url: persisted.url, rawBuffer: persisted.rawBuffer, decodedBuffer: null, source: "persistent_cache", geminiError: "" };
-        ttsAudioCache.set(cacheKey, pEntry);
-        await playEntry(pEntry);
-        return;
-      }
+    // 3) التحقق من الكاش الدائم في الهاتف (Cache API) لتجنب استهلاك الحصة
+    const persistedUrl = await readPersistentHumanCache(cacheKey);
+    if (persistedUrl && mySeq === ttsRequestSeq) {
+      const pEntry = { url: persistedUrl, rawBuffer: null, source: "persistent_cache", geminiError: "" };
+      ttsAudioCache.set(cacheKey, pEntry);
+      await playEntry(pEntry);
+      return;
     }
 
     const workerUrl = resolveWorkerEndpoint();
@@ -621,9 +556,6 @@
           mode: "tts",
           text: spokenText,
           voiceName,
-          gender: persona.gender || "male",
-          toneTag: persona.toneTag || "",
-          pitchSemitones: pitchTag,
           styleHint: persona.styleHint || ""
         })
       });
@@ -636,16 +568,12 @@
       }
 
       let rawBuffer = null;
-      let decodedBuffer = null;
       let audioBlob = null;
       let blobUrl = "";
-      const ctx = ensureWebAudioCtx();
-
       if (/pcm|L16/i.test(json.mimeType || "")) {
         const rateMatch = String(json.mimeType).match(/rate=(\d+)/i);
         const rate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
         rawBuffer = pcmBase64ToWavArrayBuffer(json.audioBase64, rate);
-        if (ctx) decodedBuffer = pcmBase64ToAudioBuffer(ctx, json.audioBase64, rate);
         audioBlob = new Blob([rawBuffer], { type: "audio/wav" });
         blobUrl = URL.createObjectURL(audioBlob);
       } else {
@@ -658,11 +586,11 @@
       const entry = {
         url: blobUrl,
         rawBuffer,
-        decodedBuffer,
         source: json.source || "google_tts",
         geminiError: json.geminiError || ""
       };
 
+      // حفظ الصوت البشري الأصلي فقط في الكاش الدائم على الهاتف (لا نحفظ البديل دائماً حتى يُستبدل بالبشري فور تجدد الحصة)
       if (entry.source === "gemini_tts" && audioBlob) {
         writePersistentHumanCache(cacheKey, audioBlob);
       }
@@ -764,8 +692,6 @@
     if (!PERSONAS[key]) return;
     haptic(15);
     unlockEmbeddedVoice();
-    stopEmbeddedVoice();
-    clearPersonaSpeechCache(false);
     pauseRoaming(7500);
     setPrefs({ persona: key });
     syncVisuals();
@@ -776,7 +702,7 @@
     const specEl = $("fairySpecialtyNote");
     if (specEl) specEl.textContent = p.specialtyNote || "";
     showBubble(`🧚 ${greetLine}`, 3800);
-    speakOutLoud(greetLine, true, true);
+    speakOutLoud(greetLine, true);
   };
 
   window.setPetHidden = function (hide) {
@@ -1178,7 +1104,7 @@
       renderAdminBrainUnmatchedList();
     }
 
-    const LOCAL_SYN_KEY = "moaath_local_synonyms";
+    const LOCAL_SYN_KEY = "moaath_local_synonyms_v68";
 
     function saveLocalSynonymFallback(id, parts) {
       try {
@@ -2005,8 +1931,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.orbBound) return;
-    orb.dataset.orbBound = "1";
+    if (!orb || !root || orb.dataset.v68Bound) return;
+    orb.dataset.v68Bound = "1";
 
     ensureGroundShadow(root);
 
@@ -2129,7 +2055,7 @@
     }).join("");
   }
 
-  const LOCAL_RECIPES_KEY = "moaath_local_recipes";
+  const LOCAL_RECIPES_KEY = "moaath_local_recipes_v68";
 
   function loadLocalRecipesFallback() {
     try {
@@ -2278,7 +2204,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "stable",
+      version: "v68",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
@@ -2291,11 +2217,11 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic]", report);
+    console.info("[QA Assistant Diagnostic v68]", report);
     return report;
   };
 
-  function mountEngine() {
+  function mountV68() {
     window.analyzeShamCashReceiptOCR();
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
@@ -2351,8 +2277,8 @@
     }
 
     // احترام هدوء الزبون عند التركيز على حقول البحث أو الكتابة
-    if (!window.__MOAATH_QUIET_HOOK__) {
-      window.__MOAATH_QUIET_HOOK__ = true;
+    if (!window.__MOAATH_QUIET_HOOK_V68__) {
+      window.__MOAATH_QUIET_HOOK_V68__ = true;
       document.addEventListener("focusin", (e) => {
         if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) {
           pauseRoaming(12000);
@@ -2364,7 +2290,7 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyle";
+      styleTag.id = "petCharStyleV68";
       styleTag.textContent = `
         @keyframes fairyHover3D {
           0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
@@ -2451,7 +2377,7 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountEngine(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV68(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
@@ -2469,6 +2395,6 @@
   window.addEventListener("online", syncConnectivityBadge);
   window.addEventListener("offline", syncConnectivityBadge);
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountEngine);
-  else mountEngine();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV69);
+  else mountV69();
 })();
