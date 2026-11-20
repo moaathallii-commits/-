@@ -78,7 +78,8 @@
     lastAddedIds: [],
     lastSpokenText: "",
     lastTtsSource: "",
-    lastGeminiError: ""
+    lastGeminiError: "",
+    lastEdgeCache: ""
   };
 
   let customRecipesDB = {};
@@ -426,6 +427,31 @@
   }
 
   const PERSISTENT_TTS_CACHE_NAME = "moaath_store_tts_human";
+  const GEMINI_COOLDOWN_KEY = "moaath_store_gemini_cooldown_until";
+  let prewarmStarted = false;
+  let prewarmQuotaHit = false;
+
+  function getGeminiCooldownRemainingSec() {
+    try {
+      const until = parseInt(localStorage.getItem(GEMINI_COOLDOWN_KEY) || "0", 10);
+      const diff = until - Date.now();
+      return diff > 0 ? Math.ceil(diff / 1000) : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function setGeminiCooldown(seconds = 900) {
+    try {
+      const sec = Math.max(60, Math.min(3600, parseInt(seconds, 10) || 900));
+      localStorage.setItem(GEMINI_COOLDOWN_KEY, String(Date.now() + sec * 1000));
+    } catch (_) {}
+  }
+
+  function clearGeminiCooldown() {
+    try { localStorage.removeItem(GEMINI_COOLDOWN_KEY); } catch (_) {}
+  }
+
   const missingLocalClips = new Set();
 
   function getCoreClipPhrasesForPersona(persona) {
@@ -569,17 +595,14 @@
       }
     };
 
-    // 1) التحقق أولاً من ملفات الصوت الثابتة في مستودع GitHub (sounds/<id>_greet.mp3)
     const playedLocal = await tryLocalRepoClip(persona, spokenText, mySeq, cacheKey);
     if (playedLocal) return;
 
-    // 2) التحقق من الكاش في الذاكرة الحالية
     if (ttsAudioCache.has(cacheKey)) {
       await playEntry(ttsAudioCache.get(cacheKey));
       return;
     }
 
-    // 3) التحقق من الكاش الدائم في الهاتف (Cache API) لتجنب استهلاك الحصة
     const persistedUrl = await readPersistentHumanCache(cacheKey);
     if (persistedUrl && mySeq === ttsRequestSeq) {
       const pEntry = { url: persistedUrl, rawBuffer: null, source: "persistent_cache", geminiError: "" };
@@ -602,6 +625,7 @@
     }
 
     updateVoiceSourceBadge("⏳ يجهّز...", "#ffd54f", "جاري تجهيز الصوت");
+    const inCooldown = getGeminiCooldownRemainingSec() > 0;
 
     try {
       const res = await fetch(workerUrl, {
@@ -615,10 +639,18 @@
           toneTag: persona.toneTag || "",
           dialectMode: persona.dialectMode || "shami_friendly",
           pitchSemitones: typeof persona.pitchSemitones === "number" ? persona.pitchSemitones : 0,
-          styleHint: persona.styleHint || ""
+          styleHint: persona.styleHint || "",
+          skipGemini: inCooldown
         })
       });
       const json = await res.json();
+      if (json?.edgeCache) sessionCtx.lastEdgeCache = json.edgeCache;
+      if (json?.cooldownActive || (json?.geminiError && /429|RESOURCE_EXHAUSTED|QUOTA|COOLDOWN/i.test(json.geminiError))) {
+        setGeminiCooldown(json.retryAfterSec || 900);
+        prewarmQuotaHit = true;
+      } else if (json?.source === "gemini_tts" && json?.edgeCache !== "HIT") {
+        clearGeminiCooldown();
+      }
       if (mySeq !== ttsRequestSeq) return;
 
       if (!res.ok || !json?.ok || !json?.audioBase64) {
@@ -651,7 +683,6 @@
         geminiError: json.geminiError || ""
       };
 
-      // حفظ الصوت البشري الأصلي فقط في الكاش الدائم على الهاتف (لا نحفظ البديل دائماً حتى يُستبدل بالبشري فور تجدد الحصة)
       if (entry.source === "gemini_tts" && audioBlob) {
         writePersistentHumanCache(cacheKey, audioBlob);
       }
@@ -671,15 +702,12 @@
     }
   }
 
-
-  // ==========================================================================
-  // [التحميل التدريجي الذكي في الخلفية — 10 مقاطع أساسية لكل شخصية دون حرق الحصة]
-  // ==========================================================================
-  let prewarmStarted = false;
-  let prewarmQuotaHit = false;
-
   async function runDripFeedPrewarm() {
     if (prewarmStarted || prewarmQuotaHit || navigator.onLine === false) return;
+    if (getGeminiCooldownRemainingSec() > 0) {
+      prewarmQuotaHit = true;
+      return;
+    }
     const workerUrl = resolveWorkerEndpoint();
     if (!workerUrl) return;
     prewarmStarted = true;
@@ -697,7 +725,6 @@
       if (!spokenText) continue;
       const cacheKey = `${persona.id}::${voiceName}::${spokenText}`;
 
-      // تخطي إذا كان موجوداً في الكاش الدائم أو الذاكرة
       if (ttsAudioCache.has(cacheKey)) continue;
       const existing = await readPersistentHumanCache(cacheKey);
       if (existing) {
@@ -705,9 +732,8 @@
         continue;
       }
 
-      // انتظار 10 ثوانٍ بين كل طلب لحماية الحصة المجانية
       await new Promise(r => setTimeout(r, 10000));
-      if (prewarmQuotaHit || navigator.onLine === false) break;
+      if (prewarmQuotaHit || navigator.onLine === false || getGeminiCooldownRemainingSec() > 0) break;
 
       try {
         const res = await fetch(workerUrl, {
@@ -725,7 +751,8 @@
           })
         });
         const json = await res.json();
-        if (json?.geminiError && /429|RESOURCE_EXHAUSTED|QUOTA/i.test(json.geminiError)) {
+        if (json?.cooldownActive || (json?.geminiError && /429|RESOURCE_EXHAUSTED|QUOTA|COOLDOWN/i.test(json.geminiError))) {
+          setGeminiCooldown(json.retryAfterSec || 900);
           prewarmQuotaHit = true;
           break;
         }
@@ -984,7 +1011,6 @@
     const curR = parseInt(root.style.right || "12", 10);
     const curB = parseInt(root.style.bottom || "96", 10);
 
-    // حصر التجوال على الحواف الجانبية فقط (يمين أو يسار) لتجنب تغطية أزرار الشراء
     const stickLeft = curR > window.innerWidth / 2;
     const nextR = stickLeft ? maxR : 12;
     const nextB = Math.round(Math.max(minB, Math.min(maxB, curB + (Math.random() - 0.5) * 120)));
@@ -1828,7 +1854,6 @@
       return;
     }
 
-    // إلغاء تدخل الذكاء الاصطناعي في الدفع أو شام كاش تماماً
     if (guardAgainstPaymentAI(promptTxt)) {
       const guardMsg = "التحقق من الدفع وشام كاش ملغى من الذكاء الاصطناعي ويتم يدوياً بالكامل.";
       setOrbEmotion("idle", guardMsg, false);
@@ -1867,7 +1892,6 @@
     const peopleCount = parsePeopleCount(norm);
     const suggestedPerItem = peopleCount && peopleCount >= 5 ? Math.min(4, Math.ceil(peopleCount / 3)) : 1;
 
-    // دعم طلبات الرياضة والصحة (خاصة مع البطل الرياضي أو أي شخصية)
     if (/(رياضه|رياضة|صحي|صحه|صحة|دايت|بروتين|تمرين|لياقه|لياقة|طاقة)/.test(norm)) {
       const healthyKw = /(عدس|مجدره|مجدرة|شوربه|شوربة|حليب|لبن|بيض|رز|ارز|برغل|شوفان|عسل|ماء|عصير|خضار|فواكه|تونه|تونة)/;
       const healthyItems = Object.keys(products || {})
@@ -1895,7 +1919,6 @@
       }
     }
 
-    // دعم طلبات وصفات الطعام (الطباخ الماهر) أو الحلويات (صانعة الحلويات)
     if (/(وصفه|وصفة|اكله|أكلة|طبخه|طبخة|غداء|عشاء)/.test(norm) && !matchRecipeOrSweet(norm)) {
       const allRecs = getAllMergedRecipes();
       const wantsSweets = persona.id === "pastry" || /(حلى|حلويات|حلو|كيك|بسبوسه|بسبوسة|مهلبيه|مهلبية)/.test(norm);
@@ -1960,7 +1983,6 @@
       return;
     }
 
-    // خيار أخير: استدعاء الذكاء الاصطناعي التفاعلي (companion_shop) مع حظر تام لأي أمر دفع
     const workerUrl = resolveWorkerEndpoint();
     if (workerUrl && navigator.onLine !== false) {
       setOrbEmotion("thinking", "جاري البحث الذكي في أصناف المتجر...", false);
@@ -2367,6 +2389,7 @@
     const srcNow = sessionCtx.lastTtsSource || "لم يتم النطق بعد";
     const errNow = sessionCtx.lastGeminiError || "لا يوجد خطأ مسجل";
     const netNow = navigator.onLine !== false ? "متصل" : "غير متصل";
+    const cdSec = getGeminiCooldownRemainingSec();
 
     let box = document.getElementById("moaathVoiceDiagModal");
     if (!box) {
@@ -2387,6 +2410,8 @@
         <div>• <b>المصدر الحالي:</b> ${escTxt(srcNow)}</div>
         <div>• <b>سبب فشل Gemini TTS:</b> <span style="color:#38bdf8;">${escTxt(errNow)}</span></div>
         <div>• <b>المقاطع البشرية المحفوظة:</b> ${cachedCount}</div>
+        <div>• <b>كاش Cloudflare السحابي:</b> ${escTxt(sessionCtx.lastEdgeCache || "-")}</div>
+        <div>• <b>التبريد التلقائي (Cooldown):</b> ${cdSec > 0 ? Math.ceil(cdSec / 60) + " دقيقة متبقية" : "غير نشط (جاهز)"}</div>
         <div>• <b>رابط Worker:</b> <span style="word-break:break-all; color:#a7f3d0;">${escTxt(wUrl)}</span></div>
         <div>• <b>الاتصال:</b> ${escTxt(netNow)}</div>
         <div style="margin-top:12px; text-align:left;">
@@ -2405,6 +2430,7 @@
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
       lastGeminiError: sessionCtx.lastGeminiError || "none",
+      lastEdgeCache: sessionCtx.lastEdgeCache || "none",
       fairiesCount: Object.keys(PERSONAS).length,
       productsLoaded: Object.keys(products || {}).length,
       categoriesLoaded: Array.isArray(categories) ? categories.length : 0,
@@ -2472,7 +2498,6 @@
       assistBox.appendChild(chips);
     }
 
-    // احترام هدوء الزبون عند التركيز على حقول البحث أو الكتابة
     if (!window.__MOAATH_QUIET_HOOK__) {
       window.__MOAATH_QUIET_HOOK__ = true;
       document.addEventListener("focusin", (e) => {
