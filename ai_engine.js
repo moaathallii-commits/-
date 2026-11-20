@@ -1,80 +1,121 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v48 - Direct Root Fairies)
-// - استبعاد صارم وكامل للذكاء الاصطناعي من عمليات الدفع وطرق الدفع والإشعارات المالية
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v49 - Persona Voice, Style & Speed)
+// - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
+// - تخصيص نبرة وأسلوب وصوت وسرعة نطق (أسرع قليلاً) لكل شخصية لتعبر عنها بوضوح
 // - ربط مباشر بالصور الست المرفوعة في المجلد الجذر (buddy.jpg, pro.jpg, saver.jpg, lulu.jpg, sara.jpg, noor.jpg)
 // - حركة ثلاثية الأبعاد + ظل أرضي + تجوال حر يتوقف تلقائياً عند لمس/سحب/تحدث الزبون
-// - صوت عربي بشري طبيعي عبر Cloudflare Worker (mode: "tts") بدون صوت المتصفح
-// - نافذة اقتراحات 0 افتراضي + وصفات الإدارة + التصدير + صقل السلة
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V48_LOADED__) return;
-  window.__MOAATH_AI_V48_LOADED__ = true;
+  if (window.__MOAATH_AI_V49_LOADED__) return;
+  window.__MOAATH_AI_V49_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v48_prefs";
-  const POS_KEY = "moaath_pet_v48_pos";
-  const LEARN_KEY = "moaath_pet_v48_learned";
+  const PREFS_KEY = "moaath_pet_v49_prefs";
+  const POS_KEY = "moaath_pet_v49_pos";
+  const LEARN_KEY = "moaath_pet_v49_learned";
 
   const PERSONAS = {
     buddy: {
       id: "buddy",
       name: "بندق الودود",
-      roleBadge: "جنية مرحة ودودة",
+      roleBadge: "ودود ومرح",
       avatarUrl: "buddy.jpg",
       accent: "#00b0ff",
       voiceName: "Puck",
-      speed: 1.0,
-      greet: "وعليكم السلام يا هلا! نورت متجر معاذ، شو نجهزلك اليوم؟"
+      speed: 1.14,
+      styleHint: "بنبرة ودودة مرحة وخفيفة وسريعة قليلاً",
+      greet: "يا هلا والله! نورت متجر معاذ، شو نجهزلك اليوم؟",
+      chatGood: "تمام التمام يا غالي! شو نطبخ أو نجهزلك اليوم؟",
+      thanks: "العفو يا هلا، بالخدمة بأي وقت!",
+      recipeReady: (title) => `جهزتلك أغراض ${title} المتوفرة، زيد الكمية من زائد!`,
+      recipeMissing: (title) => `وصفة ${title} موجودة، بس مكوناتها مو متوفرة بهالفرع حالياً.`,
+      itemsReady: (catsText) => catsText ? `فتحتلك قسم ${catsText}، نقّي الكمية اللي بتناسبك.` : "فتحتلك الأصناف المتوفرة، زيد الكمية بضغطة وحدة.",
+      notFound: "ما لقيت وصفة أو صنف مطابق هلق، جرّب اسم وصفة أو قسم تاني."
     },
     pro: {
       id: "pro",
       name: "صقر السريع",
-      roleBadge: "جنية عملية سريعة",
+      roleBadge: "سريع ومباشر",
       avatarUrl: "pro.jpg",
       accent: "#00e676",
       voiceName: "Charon",
-      speed: 1.14,
-      greet: "أهلاً بك! جاهز لخدمتك بسرعة، اذكر الصنف أو الوصفة."
+      speed: 1.24,
+      styleHint: "بنبرة حازمة عملية سريعة ومباشرة بدون إطالة",
+      greet: "أهلاً بك! جاهز فوراً، اذكر الصنف أو الوصفة.",
+      chatGood: "جاهز ومستعد، اطلب صنفك أو وصفتك مباشرة.",
+      thanks: "على الرحب، اطلب ما تحتاج.",
+      recipeReady: (title) => `مواد ${title} المتوفرة جاهزة، حدد الكمية فوراً.`,
+      recipeMissing: (title) => `مكونات ${title} غير متوفرة حالياً في هذا الفرع.`,
+      itemsReady: (catsText) => catsText ? `أصناف ${catsText} جاهزة، اختر الكمية.` : "الأصناف المتوفرة أمامك، حدد الكمية.",
+      notFound: "لا يوجد صنف أو وصفة مطابقة متوفرة الآن، جرّب طلباً آخر."
     },
     saver: {
       id: "saver",
       name: "ثعلب التوفير",
-      roleBadge: "جنية ذكية للميزانية",
+      roleBadge: "ذكي للميزانية",
       avatarUrl: "saver.jpg",
       accent: "#D4AF37",
       voiceName: "Fenrir",
-      speed: 0.98,
-      greet: "يا مرحبا! نجهزلك المتوفر بأفضل قيمة وتوفير."
+      speed: 1.12,
+      styleHint: "بنبرة ذكية عملية وموفرة وسريعة قليلاً",
+      greet: "يا مرحبا! نختارلك المتوفر بأفضل قيمة وأوفر سعر.",
+      chatGood: "الحمد لله تمام، نرتبلك طلبك بأفضل قيمة وتوفير.",
+      thanks: "تسلم يا رب، دايماً نختارلك الأوفر.",
+      recipeReady: (title) => `جهزتلك المتوفر لـ ${title} بأفضل الأسعار، اختر الكمية.`,
+      recipeMissing: (title) => `مكونات ${title} غير متوفرة حالياً، جرب وصفة متوفرة أوفر.`,
+      itemsReady: (catsText) => catsText ? `رتبتلك المتوفر في ${catsText}، حدد الكمية حسب ميزانيتك.` : "عرضتلك المتوفر بأسعار واضحة، حدد الكمية.",
+      notFound: "ما في صنف مطابق متوفر حالياً، جرّب قسماً أو وصفة أخرى."
     },
     lulu: {
       id: "lulu",
       name: "لولو اللطيفة",
-      roleBadge: "جنية وردية لطيفة",
+      roleBadge: "لطيفة وحلويات",
       avatarUrl: "lulu.jpg",
       accent: "#ff7eb6",
       voiceName: "Aoede",
-      speed: 0.96,
-      greet: "أهلاً فيكِ ونورتي المتجر! شو حابة تطبخي أو تحضّري حلى اليوم؟"
+      speed: 1.12,
+      styleHint: "بنبرة أنثوية لطيفة ناعمة ومشرقة وسريعة قليلاً",
+      greet: "أهلاً فيكِ ونورتي! شو حابة تطبخي أو تحضّري حلى اليوم؟",
+      chatGood: "أنا بخير الحمد لله! خبريني شو حابة تحضّري اليوم؟",
+      thanks: "يا روحي تسلمي، دايماً بالخدمة بكل حب!",
+      recipeReady: (title) => `جهزتلك مكونات ${title} المتوفرة، نقّي الكمية اللي بدك ياها.`,
+      recipeMissing: (title) => `وصفة ${title} حلوة، بس مكوناتها خالصة من الفرع حالياً.`,
+      itemsReady: (catsText) => catsText ? `فتحتلك خيارات ${catsText}، اختاري الكمية على مهلك.` : "فتحتلك الأصناف المتوفرة، زيدي الكمية بضغطة.",
+      notFound: "ما طلعلي شي مطابق متوفر هلأ، جرّبي وصفة أو قسم تاني."
     },
     sara: {
       id: "sara",
       name: "سارة المنظمة",
-      roleBadge: "جنية منظمة للوصفات",
+      roleBadge: "منظمة ودقيقة",
       avatarUrl: "sara.jpg",
       accent: "#7c4dff",
       voiceName: "Kore",
-      speed: 1.02,
-      greet: "مرحباً بكِ! نرتب مكونات الوصفة حسب المتوفر بكل دقة."
+      speed: 1.15,
+      styleHint: "بنبرة منظمة واضحة ودقيقة وسريعة قليلاً",
+      greet: "مرحباً بكِ! نرتب احتياجات وصفتك حسب المتوفر بكل دقة.",
+      chatGood: "أهلاً بكِ، كل شيء منظم، بأي وصفة أو صنف نبدأ؟",
+      thanks: "شكراً لكِ، نرتب طلبك بأي وقت.",
+      recipeReady: (title) => `رتبتلك المتوفر لوصفة ${title}، حددي الكمية المطلوبة بدقة.`,
+      recipeMissing: (title) => `مكونات وصفة ${title} غير متوفرة حالياً في الفرع.`,
+      itemsReady: (catsText) => catsText ? `رتبتلك أصناف ${catsText}، حددي الكميات المطلوبة.` : "رتبتلك الأصناف المتوفرة، حددي الكمية.",
+      notFound: "لم أجد مطابقة متوفرة حالياً، جرّبي اسماً آخر للوصفة أو القسم."
     },
     noor: {
       id: "noor",
       name: "نور الذكية",
-      roleBadge: "جنية مشرقة للخيارات",
+      roleBadge: "مشرقة وذكية",
       avatarUrl: "noor.jpg",
       accent: "#ff9800",
       voiceName: "Leda",
-      speed: 1.06,
-      greet: "أهلاً وسهلاً! اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر."
+      speed: 1.18,
+      styleHint: "بنبرة مشرقة حيوية ذكية وسريعة قليلاً",
+      greet: "أهلاً وسهلاً! اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر.",
+      chatGood: "أهلاً بكِ! فكرتي جاهزة، شو نجهز أو نطبخ اليوم؟",
+      thanks: "العفو، يسعدني مساعدتك دائماً!",
+      recipeReady: (title) => `جهزتلك المتوفر لـ ${title} بلمحة، حددي الكمية المناسبة.`,
+      recipeMissing: (title) => `مكونات ${title} غير متوفرة حالياً في هذا الفرع.`,
+      itemsReady: (catsText) => catsText ? `اخترتلك المتوفر من ${catsText}، حددي الكمية.` : "اخترتلك الأصناف المتوفرة، حددي الكمية.",
+      notFound: "ما وجدت صنفاً أو وصفة مطابقة متوفرة الآن، جرّبي خياراً آخر."
     }
   };
 
@@ -114,16 +155,22 @@
   let userPausedUntil = 0;
 
   // ==========================================================================
-  // [حاجز عدم تدخل الذكاء الاصطناعي في الدفع والإشعارات المالية]
+  // [إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي]
   // ==========================================================================
   window.analyzeShamCashReceiptOCR = function () {
     const outBox = $("shamCashOcrResult");
-    if (outBox) outBox.innerHTML = "";
+    if (outBox) {
+      outBox.innerHTML = "";
+      outBox.style.display = "none";
+    }
+    return null;
   };
+  window.verifyShamCashPaymentWithAI = null;
+  window.checkPaymentReceiptAI = null;
 
   function guardAgainstPaymentAI(text) {
     const norm = cleanArabicNorm(text || "");
-    return /دفع|تحويل|شام\s*كاش|ايصال|اشعار\s*دفع|رصيد\s*دفع|فاتوره\s*دفع/.test(norm);
+    return /دفع|تحويل|شام\s*كاش|شامكاش|ايصال|اشعار\s*دفع|تحقق\s*من\s*الدفع|رصيد\s*دفع|فاتوره\s*دفع/.test(norm);
   }
 
   if (typeof db !== "undefined" && db.ref) {
@@ -207,7 +254,7 @@
   }
 
   // ==========================================================================
-  // [محرك الصوت البشري السحابي عبر Cloudflare Worker — بدون صوت المتصفح]
+  // [محرك الصوت المخصص لكل شخصية مع تسريع النطق قليلاً]
   // ==========================================================================
   const ttsAudioCache = new Map();
   let sharedAudioPlayer = null;
@@ -245,7 +292,7 @@
 
   function normalizeTextForArabicSpeech(rawText) {
     return String(rawText || "")
-      .replace(/[\u{1F300}-\u{1FAFF}🐾✨🎤🎧🎙️🤔🤩💡📌📍🔊🔇🗣️🍲🌸🛍️🔁⏰✅⚠️]/gu, " ")
+      .replace(/[\u{1F300}-\u{1FAFF}🐾✨🎤🎧🎙️🤔🤩💡📌📍🔊🔇🗣️🍲🌸🛍️🔁⏰✅⚠️🔒🔄]/gu, " ")
       .replace(/\+/g, " زائد ")
       .replace(/×/g, " ضرب ")
       .replace(/ل\.س/g, " ليرة سورية ")
@@ -305,18 +352,19 @@
 
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const voiceName = persona.voiceName || "Puck";
-    const cacheKey = `${voiceName}::${spokenText}`;
+    const speedRate = persona.speed || 1.14;
+    const cacheKey = `${persona.id}::${voiceName}::${spokenText}`;
 
-    const playUrl = (url, speedRate = 1.0) => {
+    const playUrl = (url, rate) => {
       if (mySeq !== ttsRequestSeq) return;
       const player = ensureAudioPlayer();
       player.src = url;
-      player.playbackRate = speedRate;
+      player.playbackRate = rate;
       player.play().catch(() => {});
     };
 
     if (ttsAudioCache.has(cacheKey)) {
-      playUrl(ttsAudioCache.get(cacheKey), persona.speed || 1.0);
+      playUrl(ttsAudioCache.get(cacheKey), speedRate);
       return;
     }
 
@@ -330,7 +378,8 @@
         body: JSON.stringify({
           mode: "tts",
           text: spokenText,
-          voiceName
+          voiceName,
+          styleHint: persona.styleHint || ""
         })
       });
       const json = await res.json();
@@ -344,7 +393,7 @@
         ttsAudioCache.delete(firstKey);
       }
       ttsAudioCache.set(cacheKey, blobUrl);
-      playUrl(blobUrl, json.source === "google_tts" ? (persona.speed || 1.0) : 1.0);
+      playUrl(blobUrl, speedRate);
     } catch (_) {}
   }
 
@@ -354,7 +403,8 @@
     const next = !prefs.voiceEnabled;
     setPrefs({ voiceEnabled: next });
     if (!next) stopEmbeddedVoice();
-    const msg = next ? "تم تفعيل الصوت للجنية، أهلاً بك!" : "تم كتم صوت الجنية.";
+    const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
+    const msg = next ? `${persona.name}: الصوت مفعّل، أهلاً بك!` : "تم كتم صوت الجنية.";
     showBubble(next ? "🗣️ الصوت مفعّل" : "🔇 الصوت مكتوم", 2800);
     showToast(next ? "🗣️ الصوت مفعّل" : "🔇 الصوت مكتوم");
     if (next) speakOutLoud(msg, true);
@@ -423,9 +473,8 @@
     setPrefs({ persona: key });
     syncVisuals();
     const p = PERSONAS[key];
-    const msg = `أهلاً بك مع ${p.name}! اضغط مطوّلاً وتحدّث معي.`;
-    showBubble(`🧚 ${msg}`, 3400);
-    speakOutLoud(msg, false);
+    showBubble(`🧚 ${p.greet}`, 3400);
+    speakOutLoud(p.greet, false);
   };
 
   window.setPetHidden = function (hide) {
@@ -969,8 +1018,8 @@
   function matchCasualChat(normText, persona) {
     if (/^(ال)?سلام\s*عليكم|السلام/.test(normText)) return persona.greet;
     if (/^(مرحبا|اهلا|هلا|هاي|صباح\s*الخير|مساء\s*الخير)/.test(normText)) return persona.greet;
-    if (/كيف\s*حالك|شلونك|كيفك|شو\s*اخبارك|اخبارك/.test(normText)) return "الحمد لله بألف خير! خبرني شو نطبخ أو نجهزلك اليوم؟";
-    if (/شكرا|مشكور|يعطيك\s*العافيه|يسلمو/.test(normText)) return "العفو ولو، بالخدمة دائماً!";
+    if (/كيف\s*حالك|شلونك|كيفك|شو\s*اخبارك|اخبارك/.test(normText)) return persona.chatGood;
+    if (/شكرا|مشكور|يعطيك\s*العافيه|يسلمو/.test(normText)) return persona.thanks;
     return null;
   }
 
@@ -1102,7 +1151,7 @@
 
     if (addedTotal > 0) {
       haptic([15, 35, 15]);
-      const msg = `تمت إضافة ${addedTotal} مواد إلى سلتك بنجاح.`;
+      const msg = `تمت إضافة ${addedTotal} مواد إلى السلة.`;
       setOrbEmotion("happy", msg, true);
       setTxt("aiShoppingStatusText", `✅ ${msg}`);
       showToast(`✅ ${msg}`);
@@ -1176,12 +1225,13 @@
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
 
     if (!promptTxt) {
-      setOrbEmotion("idle", "اضغط مطوّلاً وتحدّث بطلبك أو وصفتك.", true);
+      setOrbEmotion("idle", `${persona.name}: اضغط مطوّلاً وتحدّث بطلبك.`, true);
       return;
     }
 
+    // إلغاء تدخل الذكاء الاصطناعي في الدفع أو شام كاش تماماً
     if (guardAgainstPaymentAI(promptTxt)) {
-      const guardMsg = "عمليات الدفع وتأكيد التحويلات تتم يدوياً بالكامل خارج المساعد الذكي.";
+      const guardMsg = "التحقق من الدفع وشام كاش ملغى من الذكاء الاصطناعي ويتم يدوياً بالكامل.";
       setOrbEmotion("idle", guardMsg, false);
       setTxt("aiShoppingStatusText", `🔒 ${guardMsg}`);
       return;
@@ -1222,12 +1272,12 @@
           `recipe_${recipeRes.recipe.title}`,
           `الكمية الافتراضية 0 — اضغط (+) لاختيار ما تحتاجه${missingNote}`
         );
-        const msg = `جهزتلك المواد المتوفرة لوصفة ${recipeRes.recipe.title}، حدد الكمية بالضغط على زائد.`;
+        const msg = persona.recipeReady(recipeRes.recipe.title);
         setOrbEmotion("choice", msg, true);
         setTxt("aiShoppingStatusText", `✅ ${msg}`);
         return;
       } else {
-        const noStockMsg = `وصفة ${recipeRes.recipe.title} مسجلة لدينا، لكن مكوناتها غير متوفرة حالياً في الفرع.`;
+        const noStockMsg = persona.recipeMissing(recipeRes.recipe.title);
         setOrbEmotion("idle", noStockMsg, true);
         setTxt("aiShoppingStatusText", `⚠️ ${noStockMsg}`);
         return;
@@ -1243,18 +1293,15 @@
           : "🛍️ الأصناف المتوفرة المطابقة — حدد الكمية:";
       openZeroDefaultModal(title, items, matchedCategories[0] || `q_${norm.slice(0, 18)}`);
       const msg = usedAlternative
-        ? "الصنف المطلوب غير متوفر حالياً، عرضتلك أقرب البدائل المتوفرة."
-        : matchedCategories.length
-          ? `فتحتلك أصناف قسم ${matchedCategories.join(" و")}، حدد الكمية المناسبة.`
-          : "فتحتلك الأصناف المتوفرة، اضغط على زائد لتحديد الكمية.";
+        ? "الصنف غير متوفر حالياً، عرضتلك أقرب البدائل المتوفرة."
+        : persona.itemsReady(matchedCategories.join(" و"));
       setOrbEmotion("choice", msg, true);
       setTxt("aiShoppingStatusText", `💡 ${msg}`);
       return;
     }
 
-    const fallbackMsg = "لم أجد وصفة أو صنفاً مطابقاً متوفراً الآن، جرّب اسم وصفة أو قسم آخر.";
-    setOrbEmotion("idle", fallbackMsg, true);
-    setTxt("aiShoppingStatusText", `⚠️ ${fallbackMsg}`);
+    setOrbEmotion("idle", persona.notFound, true);
+    setTxt("aiShoppingStatusText", `⚠️ ${persona.notFound}`);
   };
 
   function beginLongPressVoice() {
@@ -1316,8 +1363,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v48Bound) return;
-    orb.dataset.v48Bound = "1";
+    if (!orb || !root || orb.dataset.v49Bound) return;
+    orb.dataset.v49Bound = "1";
 
     ensureGroundShadow(root);
 
@@ -1531,8 +1578,8 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v48",
-      paymentAIExcluded: true,
+      version: "v49",
+      shamCashPaymentAI: "COMPLETELY_DISABLED",
       fairiesCount: Object.keys(PERSONAS).length,
       productsLoaded: Object.keys(products || {}).length,
       categoriesLoaded: Array.isArray(categories) ? categories.length : 0,
@@ -1541,11 +1588,12 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v48]", report);
+    console.info("[QA Assistant Diagnostic v49]", report);
     return report;
   };
 
-  function mountV48() {
+  function mountV49() {
+    window.analyzeShamCashReceiptOCR();
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const assistBox = $("aiSmartAssistantBox");
@@ -1573,7 +1621,7 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV48";
+      styleTag.id = "petCharStyleV49";
       styleTag.textContent = `
         @keyframes fairyHover3D {
           0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
@@ -1583,7 +1631,7 @@
           0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.42; }
           50% { transform: translateX(-50%) scale(0.75); opacity: 0.22; }
         }
-        @keyframes fairyRingV48 {
+        @keyframes fairyRingV49 {
           0% { transform: scale(1); opacity: 0.9; }
           100% { transform: scale(1.38); opacity: 0; }
         }
@@ -1619,7 +1667,7 @@
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV48 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV49 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 72px; right: 0; max-width: 235px; width: max-content;
@@ -1652,7 +1700,7 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV48(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV49(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
@@ -1667,6 +1715,6 @@
   window.addEventListener("online", syncConnectivityBadge);
   window.addEventListener("offline", syncConnectivityBadge);
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV48);
-  else mountV48();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV49);
+  else mountV49();
 })();
