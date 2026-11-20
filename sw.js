@@ -1,11 +1,11 @@
 // ============================================================================
-// Service Worker لمتجر معاذ (v64 - Offline-First Shell + ai_brain.js Support)
+// Service Worker (v65) لمتجر معاذ - Offline-First Shell + ai_brain.js Support
 // - يضمن فتح التطبيق والعمل دون إنترنت بسلاسة للواجهة، المحرك، العقل الذكي، والصور
-// - يتجنب تخزين طلبات API الخارجية (Cloudflare Worker و Firebase و Google TTS)
-// - يدعم التحديث الفوري والآمن وتنظيف الكاش القديم تلقائياً
+// - يتجنب تخزين طلبات API الخارجية مثل Cloudflare Worker وFirebase وGoogle TTS
+// - يدعم التحديث الفوري وتنظيف الكاش القديم تلقائياً
 // ============================================================================
 
-const CACHE_VERSION = "moaath-store-v64";
+const CACHE_VERSION = "moaath-store-v65";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const MAX_RUNTIME_ITEMS = 80;
@@ -14,6 +14,7 @@ const PRECACHE_ASSETS = [
   "./",
   "./index.html",
   "./ai_brain.js",
+  "./ai_personas.js",
   "./ai_engine.js",
   "./manifest.json",
   "./logo.png",
@@ -107,7 +108,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // التنقل للصفحات: Network-First مع سقوط إلى الكاش عند انقطاع الإنترنت
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
@@ -126,7 +126,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // الملفات الثابتة والصور والأصوات: Cache-First مع تحديث خلفي (Stale-While-Revalidate)
   event.respondWith(
     caches.match(request).then((cachedResp) => {
       const networkFetch = fetch(request)
