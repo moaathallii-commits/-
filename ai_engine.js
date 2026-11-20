@@ -2353,6 +2353,26 @@
     }).join("");
   };
 
+  window.showVoiceDiagnosticOnPhone = async function () {
+    let cachedCount = 0;
+    try {
+      if (typeof caches !== "undefined") {
+        const cache = await caches.open(PERSISTENT_TTS_CACHE_NAME);
+        const keys = await cache.keys();
+        cachedCount = keys.length;
+      }
+    } catch (_) {}
+    const info = [
+      `📊 تشخيص الصوت البشري:`,
+      `• المصدر الحالي: ${sessionCtx.lastTtsSource || "لم يتم النطق بعد"}`,
+      `• سبب فشل Gemini TTS: ${sessionCtx.lastGeminiError || "لا يوجد خطأ مسجل"}`,
+      `• المقاطع البشرية المحفوظة: ${cachedCount}`,
+      `• رابط Worker: ${resolveWorkerEndpoint() || "غير مضبوط"}`,
+      `• الاتصال: ${navigator.onLine !== false ? "متصل" : "غير متصل"}`
+    ].join("\n");
+    alert(info);
+  };
+
   window.runAssistantQACheck = function () {
     const report = {
       version: "v70",
@@ -2392,7 +2412,7 @@
           <select id="petPersonaSelect" class="form-control" onchange="selectPetPersona(this.value)" style="padding:3px 6px; font-size:10px; flex:1;">${opts}</select>
         </div>
         <div style="display:flex; align-items:center; gap:4px;">
-          <span id="petConnStatusBadge" style="font-size:9px; font-weight:bold;">🟢 جاهز</span>
+          <span id="petConnStatusBadge" onclick="showVoiceDiagnosticOnPhone()" style="font-size:9px; font-weight:bold; cursor:pointer; text-decoration:underline;" title="اضغط لعرض سبب الخطأ وعدد المقاطع المحفوظة">🟢 جاهز</span>
           <button id="petDirectMicBtn" type="button" onclick="startVoiceShoppingInput()" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:rgba(0,230,118,0.16); color:#00e676;" title="تحدّث الآن">🎙️</button>
           <button type="button" onclick="replayLastCompanionSpeech()" class="btn" style="width:auto; padding:3px 6px; font-size:10px; background:rgba(212,175,55,0.16); color:var(--gold-color);" title="إعادة الاستماع">🔁</button>
           <button type="button" onclick="toggleCompanionVoice()" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:rgba(0,176,255,0.16); color:#00b0ff;" title="تفعيل أو كتم الصوت">🗣️ صوت</button>
