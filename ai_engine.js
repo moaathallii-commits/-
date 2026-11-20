@@ -1,19 +1,19 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v51 - WebAudio Detune & TTS Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v52 - Natural Human Speech & Faster Pace)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
+// - رفع سرعة التحدث قليلاً لجميع الشخصيات + تحسين النطق ليكون بأسلوب بشري حر وتلقائي
 // - تمييز حقيقي لطبقة الصوت لكل شخصية على الهاتف عبر Web Audio API (detune) عند التحول للبديل
-// - الحفاظ على النبرة البشرية الأصلية لـ Gemini TTS مع عرض مؤشر حالة الصوت وسبب التحول للبديل
 // - ربط مباشر بالصور الست المرفوعة في المجلد الجذر (buddy.jpg, pro.jpg, saver.jpg, lulu.jpg, sara.jpg, noor.jpg)
 // - حركة ثلاثية الأبعاد + ظل أرضي + تجوال حر يتوقف تلقائياً عند لمس/سحب/تحدث الزبون
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V51_LOADED__) return;
-  window.__MOAATH_AI_V51_LOADED__ = true;
+  if (window.__MOAATH_AI_V52_LOADED__) return;
+  window.__MOAATH_AI_V52_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v51_prefs";
-  const POS_KEY = "moaath_pet_v51_pos";
-  const LEARN_KEY = "moaath_pet_v51_learned";
+  const PREFS_KEY = "moaath_pet_v52_prefs";
+  const POS_KEY = "moaath_pet_v52_pos";
+  const LEARN_KEY = "moaath_pet_v52_learned";
 
   const PERSONAS = {
     buddy: {
@@ -23,13 +23,13 @@
       avatarUrl: "buddy.jpg",
       accent: "#00b0ff",
       voiceName: "Puck",
-      speed: 1.14,
+      speed: 1.22,
       fallbackDetune: -60,
-      fallbackRate: 1.06,
-      styleHint: "بنبرة ودودة مرحة وخفيفة وسريعة قليلاً",
-      greet: "يا هلا والله! نورت متجر معاذ، شو نجهزلك اليوم؟",
-      chatGood: "تمام التمام يا غالي! شو نطبخ أو نجهزلك اليوم؟",
-      thanks: "العفو يا هلا، بالخدمة بأي وقت!",
+      fallbackRate: 1.14,
+      styleHint: "بأسلوب بشري حر وعفوي وودود ومرح وبسرعة إلقاء أسرع قليلاً",
+      greet: "يا هلا والله، نورت متجر معاذ! شو حابب نجهزلك اليوم؟",
+      chatGood: "تمام التمام يا غالي، شو نطبخ أو نجهزلك اليوم؟",
+      thanks: "العفو يا هلا، بأي وقت بالخدمة!",
       recipeReady: (title) => `جهزتلك أغراض ${title} المتوفرة، زيد الكمية من زائد!`,
       recipeMissing: (title) => `وصفة ${title} موجودة، بس مكوناتها مو متوفرة بهالفرع حالياً.`,
       itemsReady: (catsText) => catsText ? `فتحتلك قسم ${catsText}، نقّي الكمية اللي بتناسبك.` : "فتحتلك الأصناف المتوفرة، زيد الكمية بضغطة وحدة.",
@@ -42,13 +42,13 @@
       avatarUrl: "pro.jpg",
       accent: "#00e676",
       voiceName: "Charon",
-      speed: 1.24,
+      speed: 1.32,
       fallbackDetune: -320,
-      fallbackRate: 1.12,
-      styleHint: "بنبرة حازمة عملية سريعة ومباشرة بدون إطالة",
-      greet: "أهلاً بك! جاهز فوراً، اذكر الصنف أو الوصفة.",
+      fallbackRate: 1.20,
+      styleHint: "بأسلوب بشري سريع ومباشر وحازم وبلا تكلف وبسرعة إلقاء أعلى قليلاً",
+      greet: "أهلاً بك، جاهز فوراً؛ اذكر الصنف أو الوصفة.",
       chatGood: "جاهز ومستعد، اطلب صنفك أو وصفتك مباشرة.",
-      thanks: "على الرحب، اطلب ما تحتاج.",
+      thanks: "على الرحب، اطلب اللي بدك ياه.",
       recipeReady: (title) => `مواد ${title} المتوفرة جاهزة، حدد الكمية فوراً.`,
       recipeMissing: (title) => `مكونات ${title} غير متوفرة حالياً في هذا الفرع.`,
       itemsReady: (catsText) => catsText ? `أصناف ${catsText} جاهزة، اختر الكمية.` : "الأصناف المتوفرة أمامك، حدد الكمية.",
@@ -61,11 +61,11 @@
       avatarUrl: "saver.jpg",
       accent: "#D4AF37",
       voiceName: "Fenrir",
-      speed: 1.12,
+      speed: 1.20,
       fallbackDetune: -200,
-      fallbackRate: 1.05,
-      styleHint: "بنبرة ذكية عملية وموفرة وسريعة قليلاً",
-      greet: "يا مرحبا! نختارلك المتوفر بأفضل قيمة وأوفر سعر.",
+      fallbackRate: 1.13,
+      styleHint: "بأسلوب بشري عملي وتلقائي وموفر وبسرعة إلقاء أسرع قليلاً",
+      greet: "يا مرحبا، نختارلك المتوفر بأفضل قيمة وأوفر سعر!",
       chatGood: "الحمد لله تمام، نرتبلك طلبك بأفضل قيمة وتوفير.",
       thanks: "تسلم يا رب، دايماً نختارلك الأوفر.",
       recipeReady: (title) => `جهزتلك المتوفر لـ ${title} بأفضل الأسعار، اختر الكمية.`,
@@ -80,12 +80,12 @@
       avatarUrl: "lulu.jpg",
       accent: "#ff7eb6",
       voiceName: "Aoede",
-      speed: 1.12,
+      speed: 1.20,
       fallbackDetune: 320,
-      fallbackRate: 1.04,
-      styleHint: "بنبرة أنثوية لطيفة ناعمة ومشرقة وسريعة قليلاً",
+      fallbackRate: 1.12,
+      styleHint: "بأسلوب بشري حر وناعم ولطيف ومشرق وبسرعة إلقاء أسرع قليلاً",
       greet: "أهلاً فيكِ ونورتي! شو حابة تطبخي أو تحضّري حلى اليوم؟",
-      chatGood: "أنا بخير الحمد لله! خبريني شو حابة تحضّري اليوم؟",
+      chatGood: "أنا بخير الحمد لله، خبريني شو حابة تحضّري اليوم؟",
       thanks: "يا روحي تسلمي، دايماً بالخدمة بكل حب!",
       recipeReady: (title) => `جهزتلك مكونات ${title} المتوفرة، نقّي الكمية اللي بدك ياها.`,
       recipeMissing: (title) => `وصفة ${title} حلوة، بس مكوناتها خالصة من الفرع حالياً.`,
@@ -99,12 +99,12 @@
       avatarUrl: "sara.jpg",
       accent: "#7c4dff",
       voiceName: "Kore",
-      speed: 1.15,
+      speed: 1.23,
       fallbackDetune: 140,
-      fallbackRate: 1.06,
-      styleHint: "بنبرة منظمة واضحة ودقيقة وسريعة قليلاً",
-      greet: "مرحباً بكِ! نرتب احتياجات وصفتك حسب المتوفر بكل دقة.",
-      chatGood: "أهلاً بكِ، كل شيء منظم، بأي وصفة أو صنف نبدأ؟",
+      fallbackRate: 1.14,
+      styleHint: "بأسلوب بشري طبيعي ومنظم وواضح وبسرعة إلقاء أسرع قليلاً",
+      greet: "مرحباً بكِ، نرتب احتياجات وصفتك حسب المتوفر بكل دقة.",
+      chatGood: "أهلاً بكِ، كل شيء منظم؛ بأي وصفة أو صنف نبدأ؟",
       thanks: "شكراً لكِ، نرتب طلبك بأي وقت.",
       recipeReady: (title) => `رتبتلك المتوفر لوصفة ${title}، حددي الكمية المطلوبة بدقة.`,
       recipeMissing: (title) => `مكونات وصفة ${title} غير متوفرة حالياً في الفرع.`,
@@ -118,12 +118,12 @@
       avatarUrl: "noor.jpg",
       accent: "#ff9800",
       voiceName: "Leda",
-      speed: 1.18,
+      speed: 1.26,
       fallbackDetune: 220,
-      fallbackRate: 1.08,
-      styleHint: "بنبرة مشرقة حيوية ذكية وسريعة قليلاً",
-      greet: "أهلاً وسهلاً! اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر.",
-      chatGood: "أهلاً بكِ! فكرتي جاهزة، شو نجهز أو نطبخ اليوم؟",
+      fallbackRate: 1.16,
+      styleHint: "بأسلوب بشري حيوي ومشرق وذكي وبسرعة إلقاء أسرع قليلاً",
+      greet: "أهلاً وسهلاً، اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر!",
+      chatGood: "أهلاً بكِ، فكرتي جاهزة؛ شو نجهز أو نطبخ اليوم؟",
       thanks: "العفو، يسعدني مساعدتك دائماً!",
       recipeReady: (title) => `جهزتلك المتوفر لـ ${title} بلمحة، حددي الكمية المناسبة.`,
       recipeMissing: (title) => `مكونات ${title} غير متوفرة حالياً في هذا الفرع.`,
@@ -269,7 +269,7 @@
   }
 
   // ==========================================================================
-  // [محرك الصوت المخصص لكل شخصية — Web Audio API detune للبديل + Gemini TTS]
+  // [محرك الصوت المخصص لكل شخصية — أسلوب بشري حر وسرعة أسرع قليلاً]
   // ==========================================================================
   const ttsAudioCache = new Map();
   let sharedAudioPlayer = null;
@@ -323,12 +323,13 @@
     }
   }
 
+  // تحسين النص ليكون طبيعياً وسلساً في النطق البشري الحر
   function normalizeTextForArabicSpeech(rawText) {
     return String(rawText || "")
       .replace(/[\u{1F300}-\u{1FAFF}🐾✨🎤🎧🎙️🤔🤩💡📌📍🔊🔇🗣️🍲🌸🛍️🔁⏰✅⚠️🔒🔄]/gu, " ")
-      .replace(/\+/g, " زائد ")
-      .replace(/×/g, " ضرب ")
-      .replace(/ل\.س/g, " ليرة سورية ")
+      .replace(/\+/g, " و ")
+      .replace(/×/g, " في ")
+      .replace(/ل\.س/g, " ليرة ")
       .replace(/[•\-_*#|()[\]{}]/g, " ")
       .replace(/\s+/g, " ")
       .trim();
@@ -401,7 +402,7 @@
       if (src.detune) {
         src.detune.value = persona.fallbackDetune || 0;
       }
-      src.playbackRate.value = persona.fallbackRate || 1.06;
+      src.playbackRate.value = persona.fallbackRate || 1.14;
       src.connect(ctx.destination);
       activeBufferSource = src;
       src.onended = () => {
@@ -427,6 +428,7 @@
 
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const voiceName = persona.voiceName || "Puck";
+    const speedRate = persona.speed || 1.22;
     const cacheKey = `${persona.id}::${voiceName}::${spokenText}`;
 
     const playEntry = async (entry) => {
@@ -445,7 +447,7 @@
       player.preservesPitch = true;
       player.mozPreservesPitch = true;
       player.webkitPreservesPitch = true;
-      player.playbackRate = persona.speed || 1.14;
+      player.playbackRate = speedRate;
       player.play().catch(() => {});
     };
 
@@ -486,7 +488,7 @@
       } else {
         const bytes = base64ToUint8Array(json.audioBase64);
         rawBuffer = bytes.buffer;
-        blobUrl = URL.createObjectURL(new Blob([bytes], { type: json.mimeType || "audio/mpeg" }));
+        blobUrl = URL.createObjectURL(new Blob([bytes], { type: mimeType || "audio/mpeg" }));
       }
 
       const entry = {
@@ -1473,8 +1475,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v51Bound) return;
-    orb.dataset.v51Bound = "1";
+    if (!orb || !root || orb.dataset.v52Bound) return;
+    orb.dataset.v52Bound = "1";
 
     ensureGroundShadow(root);
 
@@ -1688,7 +1690,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v51",
+      version: "v52",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
       lastGeminiError: sessionCtx.lastGeminiError || "none",
@@ -1700,11 +1702,11 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v51]", report);
+    console.info("[QA Assistant Diagnostic v52]", report);
     return report;
   };
 
-  function mountV51() {
+  function mountV52() {
     window.analyzeShamCashReceiptOCR();
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
@@ -1733,7 +1735,7 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV51";
+      styleTag.id = "petCharStyleV52";
       styleTag.textContent = `
         @keyframes fairyHover3D {
           0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
@@ -1743,7 +1745,7 @@
           0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.42; }
           50% { transform: translateX(-50%) scale(0.75); opacity: 0.22; }
         }
-        @keyframes fairyRingV51 {
+        @keyframes fairyRingV52 {
           0% { transform: scale(1); opacity: 0.9; }
           100% { transform: scale(1.38); opacity: 0; }
         }
@@ -1779,7 +1781,7 @@
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV51 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV52 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 72px; right: 0; max-width: 235px; width: max-content;
@@ -1812,7 +1814,7 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV51(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV52(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
@@ -1827,6 +1829,6 @@
   window.addEventListener("online", syncConnectivityBadge);
   window.addEventListener("offline", syncConnectivityBadge);
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV51);
-  else mountV51();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV52);
+  else mountV52();
 })();
