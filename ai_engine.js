@@ -1,19 +1,19 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v50 - Distinct Voices & Fallback Pitch)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v51 - WebAudio Detune & TTS Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
-// - تمييز طبقة ونبرة الصوت لكل شخصية سواء على Gemini TTS أو عند التحول التلقائي للبديل google_tts
-// - تخصيص الأسلوب والجمل وسرعة النطق (أسرع قليلاً) لكل شخصية لتعبر عنها بوضوح
+// - تمييز حقيقي لطبقة الصوت لكل شخصية على الهاتف عبر Web Audio API (detune) عند التحول للبديل
+// - الحفاظ على النبرة البشرية الأصلية لـ Gemini TTS مع عرض مؤشر حالة الصوت وسبب التحول للبديل
 // - ربط مباشر بالصور الست المرفوعة في المجلد الجذر (buddy.jpg, pro.jpg, saver.jpg, lulu.jpg, sara.jpg, noor.jpg)
 // - حركة ثلاثية الأبعاد + ظل أرضي + تجوال حر يتوقف تلقائياً عند لمس/سحب/تحدث الزبون
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V50_LOADED__) return;
-  window.__MOAATH_AI_V50_LOADED__ = true;
+  if (window.__MOAATH_AI_V51_LOADED__) return;
+  window.__MOAATH_AI_V51_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v50_prefs";
-  const POS_KEY = "moaath_pet_v50_pos";
-  const LEARN_KEY = "moaath_pet_v50_learned";
+  const PREFS_KEY = "moaath_pet_v51_prefs";
+  const POS_KEY = "moaath_pet_v51_pos";
+  const LEARN_KEY = "moaath_pet_v51_learned";
 
   const PERSONAS = {
     buddy: {
@@ -24,7 +24,8 @@
       accent: "#00b0ff",
       voiceName: "Puck",
       speed: 1.14,
-      fallbackPitchRate: 1.04,
+      fallbackDetune: -60,
+      fallbackRate: 1.06,
       styleHint: "بنبرة ودودة مرحة وخفيفة وسريعة قليلاً",
       greet: "يا هلا والله! نورت متجر معاذ، شو نجهزلك اليوم؟",
       chatGood: "تمام التمام يا غالي! شو نطبخ أو نجهزلك اليوم؟",
@@ -42,7 +43,8 @@
       accent: "#00e676",
       voiceName: "Charon",
       speed: 1.24,
-      fallbackPitchRate: 0.90,
+      fallbackDetune: -320,
+      fallbackRate: 1.12,
       styleHint: "بنبرة حازمة عملية سريعة ومباشرة بدون إطالة",
       greet: "أهلاً بك! جاهز فوراً، اذكر الصنف أو الوصفة.",
       chatGood: "جاهز ومستعد، اطلب صنفك أو وصفتك مباشرة.",
@@ -60,7 +62,8 @@
       accent: "#D4AF37",
       voiceName: "Fenrir",
       speed: 1.12,
-      fallbackPitchRate: 0.95,
+      fallbackDetune: -200,
+      fallbackRate: 1.05,
       styleHint: "بنبرة ذكية عملية وموفرة وسريعة قليلاً",
       greet: "يا مرحبا! نختارلك المتوفر بأفضل قيمة وأوفر سعر.",
       chatGood: "الحمد لله تمام، نرتبلك طلبك بأفضل قيمة وتوفير.",
@@ -78,7 +81,8 @@
       accent: "#ff7eb6",
       voiceName: "Aoede",
       speed: 1.12,
-      fallbackPitchRate: 1.22,
+      fallbackDetune: 320,
+      fallbackRate: 1.04,
       styleHint: "بنبرة أنثوية لطيفة ناعمة ومشرقة وسريعة قليلاً",
       greet: "أهلاً فيكِ ونورتي! شو حابة تطبخي أو تحضّري حلى اليوم؟",
       chatGood: "أنا بخير الحمد لله! خبريني شو حابة تحضّري اليوم؟",
@@ -96,7 +100,8 @@
       accent: "#7c4dff",
       voiceName: "Kore",
       speed: 1.15,
-      fallbackPitchRate: 1.12,
+      fallbackDetune: 140,
+      fallbackRate: 1.06,
       styleHint: "بنبرة منظمة واضحة ودقيقة وسريعة قليلاً",
       greet: "مرحباً بكِ! نرتب احتياجات وصفتك حسب المتوفر بكل دقة.",
       chatGood: "أهلاً بكِ، كل شيء منظم، بأي وصفة أو صنف نبدأ؟",
@@ -114,7 +119,8 @@
       accent: "#ff9800",
       voiceName: "Leda",
       speed: 1.18,
-      fallbackPitchRate: 1.16,
+      fallbackDetune: 220,
+      fallbackRate: 1.08,
       styleHint: "بنبرة مشرقة حيوية ذكية وسريعة قليلاً",
       greet: "أهلاً وسهلاً! اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر.",
       chatGood: "أهلاً بكِ! فكرتي جاهزة، شو نجهز أو نطبخ اليوم؟",
@@ -147,7 +153,9 @@
     lastModalIntent: "general",
     lastModalSubtitle: "",
     lastAddedIds: [],
-    lastSpokenText: ""
+    lastSpokenText: "",
+    lastTtsSource: "",
+    lastGeminiError: ""
   };
 
   let customRecipesDB = {};
@@ -261,10 +269,12 @@
   }
 
   // ==========================================================================
-  // [محرك الصوت المخصص لكل شخصية — تمييز فوري على Gemini TTS وعلى البديل google_tts]
+  // [محرك الصوت المخصص لكل شخصية — Web Audio API detune للبديل + Gemini TTS]
   // ==========================================================================
   const ttsAudioCache = new Map();
   let sharedAudioPlayer = null;
+  let webAudioCtx = null;
+  let activeBufferSource = null;
   let ttsRequestSeq = 0;
 
   function ensureAudioPlayer() {
@@ -275,10 +285,21 @@
     return sharedAudioPlayer;
   }
 
+  function ensureWebAudioCtx() {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    if (!webAudioCtx) webAudioCtx = new Ctx();
+    if (webAudioCtx.state === "suspended") {
+      try { webAudioCtx.resume(); } catch (_) {}
+    }
+    return webAudioCtx;
+  }
+
   function unlockEmbeddedVoice() {
     if (speechUnlocked) return;
     speechUnlocked = true;
     try {
+      ensureWebAudioCtx();
       const p = ensureAudioPlayer();
       p.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
       p.play().then(() => { p.pause(); p.currentTime = 0; }).catch(() => {});
@@ -289,6 +310,11 @@
 
   function stopEmbeddedVoice() {
     ttsRequestSeq++;
+    if (activeBufferSource) {
+      try { activeBufferSource.stop(); } catch (_) {}
+      try { activeBufferSource.disconnect(); } catch (_) {}
+      activeBufferSource = null;
+    }
     if (sharedAudioPlayer) {
       try {
         sharedAudioPlayer.pause();
@@ -308,7 +334,14 @@
       .trim();
   }
 
-  function pcmBase64ToWavBlobUrl(base64Pcm, sampleRate = 24000) {
+  function base64ToUint8Array(base64Data) {
+    const binStr = atob(base64Data);
+    const bytes = new Uint8Array(binStr.length);
+    for (let i = 0; i < binStr.length; i++) bytes[i] = binStr.charCodeAt(i);
+    return bytes;
+  }
+
+  function pcmBase64ToWavArrayBuffer(base64Pcm, sampleRate = 24000) {
     const binStr = atob(base64Pcm);
     const pcmLen = binStr.length;
     const buffer = new ArrayBuffer(44 + pcmLen);
@@ -331,19 +364,54 @@
     view.setUint32(40, pcmLen, true);
     const outBytes = new Uint8Array(buffer, 44);
     for (let i = 0; i < pcmLen; i++) outBytes[i] = binStr.charCodeAt(i);
-    return URL.createObjectURL(new Blob([buffer], { type: "audio/wav" }));
+    return buffer;
   }
 
-  function base64ToAudioBlobUrl(base64Data, mimeType) {
-    if (/pcm|L16/i.test(mimeType)) {
-      const rateMatch = String(mimeType).match(/rate=(\d+)/i);
-      const rate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
-      return pcmBase64ToWavBlobUrl(base64Data, rate);
+  function updateVoiceSourceBadge(source, geminiError) {
+    const badge = $("petConnStatusBadge");
+    if (!badge) return;
+    if (navigator.onLine === false) {
+      badge.textContent = "🟡 محلي";
+      badge.style.color = "#ff9800";
+      badge.title = "غير متصل بالإنترنت";
+      return;
     }
-    const binStr = atob(base64Data);
-    const bytes = new Uint8Array(binStr.length);
-    for (let i = 0; i < binStr.length; i++) bytes[i] = binStr.charCodeAt(i);
-    return URL.createObjectURL(new Blob([bytes], { type: mimeType || "audio/mpeg" }));
+    if (source === "gemini_tts") {
+      badge.textContent = "🟢 صوت بشري";
+      badge.style.color = "#00e676";
+      badge.title = "Gemini TTS يعمل بنبرته البشرية الأصلية";
+    } else if (source === "google_tts") {
+      const shortErr = geminiError ? String(geminiError).split(":")[0] : "FALLBACK";
+      badge.textContent = `🔵 بديل (${shortErr})`;
+      badge.style.color = "#38bdf8";
+      badge.title = `سبب التحول للبديل: ${geminiError || "غير معروف"}`;
+    }
+  }
+
+  async function playFallbackWithDetune(arrayBuf, persona, mySeq) {
+    const ctx = ensureWebAudioCtx();
+    if (!ctx) return false;
+    try {
+      const cloned = arrayBuf.slice(0);
+      const decoded = await ctx.decodeAudioData(cloned);
+      if (mySeq !== ttsRequestSeq) return true;
+
+      const src = ctx.createBufferSource();
+      src.buffer = decoded;
+      if (src.detune) {
+        src.detune.value = persona.fallbackDetune || 0;
+      }
+      src.playbackRate.value = persona.fallbackRate || 1.06;
+      src.connect(ctx.destination);
+      activeBufferSource = src;
+      src.onended = () => {
+        if (activeBufferSource === src) activeBufferSource = null;
+      };
+      src.start(0);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   async function speakOutLoud(rawText, force = false) {
@@ -361,25 +429,23 @@
     const voiceName = persona.voiceName || "Puck";
     const cacheKey = `${persona.id}::${voiceName}::${spokenText}`;
 
-    const playEntry = (entry) => {
+    const playEntry = async (entry) => {
       if (mySeq !== ttsRequestSeq) return;
-      const player = ensureAudioPlayer();
-      player.src = entry.url;
+      sessionCtx.lastTtsSource = entry.source;
+      sessionCtx.lastGeminiError = entry.geminiError || "";
+      updateVoiceSourceBadge(entry.source, entry.geminiError);
 
-      if (entry.source === "google_tts") {
-        // تعطيل تثبيت الطبقة للتمييز الصوتي الواضح بين كل شخصية على البديل
-        player.preservesPitch = false;
-        player.mozPreservesPitch = false;
-        player.webkitPreservesPitch = false;
-        player.playbackRate = persona.fallbackPitchRate || 1.05;
-      } else {
-        // الحفاظ على نبرة Gemini TTS البشرية الأصلية مع تسريع لطيف
-        player.preservesPitch = true;
-        player.mozPreservesPitch = true;
-        player.webkitPreservesPitch = true;
-        player.playbackRate = persona.speed || 1.14;
+      if (entry.source === "google_tts" && entry.rawBuffer) {
+        const played = await playFallbackWithDetune(entry.rawBuffer, persona, mySeq);
+        if (played) return;
       }
 
+      const player = ensureAudioPlayer();
+      player.src = entry.url;
+      player.preservesPitch = true;
+      player.mozPreservesPitch = true;
+      player.webkitPreservesPitch = true;
+      player.playbackRate = persona.speed || 1.14;
       player.play().catch(() => {});
     };
 
@@ -406,8 +472,29 @@
       if (mySeq !== ttsRequestSeq) return;
       if (!res.ok || !json?.ok || !json?.audioBase64) return;
 
-      const blobUrl = base64ToAudioBlobUrl(json.audioBase64, json.mimeType || "audio/mpeg");
-      const entry = { url: blobUrl, source: json.source || "google_tts" };
+      if (json.geminiError) {
+        console.warn("[TTS Gemini Fallback Reason]:", json.geminiError);
+      }
+
+      let rawBuffer = null;
+      let blobUrl = "";
+      if (/pcm|L16/i.test(json.mimeType || "")) {
+        const rateMatch = String(json.mimeType).match(/rate=(\d+)/i);
+        const rate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
+        rawBuffer = pcmBase64ToWavArrayBuffer(json.audioBase64, rate);
+        blobUrl = URL.createObjectURL(new Blob([rawBuffer], { type: "audio/wav" }));
+      } else {
+        const bytes = base64ToUint8Array(json.audioBase64);
+        rawBuffer = bytes.buffer;
+        blobUrl = URL.createObjectURL(new Blob([bytes], { type: json.mimeType || "audio/mpeg" }));
+      }
+
+      const entry = {
+        url: blobUrl,
+        rawBuffer,
+        source: json.source || "google_tts",
+        geminiError: json.geminiError || ""
+      };
 
       if (ttsAudioCache.size > 30) {
         const firstKey = ttsAudioCache.keys().next().value;
@@ -1386,8 +1473,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v50Bound) return;
-    orb.dataset.v50Bound = "1";
+    if (!orb || !root || orb.dataset.v51Bound) return;
+    orb.dataset.v51Bound = "1";
 
     ensureGroundShadow(root);
 
@@ -1601,21 +1688,23 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v50",
+      version: "v51",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
+      lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
+      lastGeminiError: sessionCtx.lastGeminiError || "none",
       fairiesCount: Object.keys(PERSONAS).length,
       productsLoaded: Object.keys(products || {}).length,
       categoriesLoaded: Array.isArray(categories) ? categories.length : 0,
       recipesAvailable: getAllMergedRecipes().length,
-      cloudAudioSupported: typeof Audio !== "undefined",
+      webAudioSupported: !!(window.AudioContext || window.webkitAudioContext),
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v50]", report);
+    console.info("[QA Assistant Diagnostic v51]", report);
     return report;
   };
 
-  function mountV50() {
+  function mountV51() {
     window.analyzeShamCashReceiptOCR();
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
@@ -1644,7 +1733,7 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV50";
+      styleTag.id = "petCharStyleV51";
       styleTag.textContent = `
         @keyframes fairyHover3D {
           0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
@@ -1654,7 +1743,7 @@
           0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.42; }
           50% { transform: translateX(-50%) scale(0.75); opacity: 0.22; }
         }
-        @keyframes fairyRingV50 {
+        @keyframes fairyRingV51 {
           0% { transform: scale(1); opacity: 0.9; }
           100% { transform: scale(1.38); opacity: 0; }
         }
@@ -1690,7 +1779,7 @@
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV50 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV51 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 72px; right: 0; max-width: 235px; width: max-content;
@@ -1723,7 +1812,7 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV50(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV51(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
@@ -1738,6 +1827,6 @@
   window.addEventListener("online", syncConnectivityBadge);
   window.addEventListener("offline", syncConnectivityBadge);
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV50);
-  else mountV50();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV51);
+  else mountV51();
 })();
