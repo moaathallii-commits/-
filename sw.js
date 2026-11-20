@@ -1,11 +1,11 @@
 // ============================================================================
-// Service Worker (v65) لمتجر معاذ - Offline-First Shell + ai_brain.js Support
+// Service Worker (v68) لمتجر معاذ - Offline-First Shell + ai_brain.js Support
 // - يضمن فتح التطبيق والعمل دون إنترنت بسلاسة للواجهة، المحرك، العقل الذكي، والصور
 // - يتجنب تخزين طلبات API الخارجية مثل Cloudflare Worker وFirebase وGoogle TTS
 // - يدعم التحديث الفوري وتنظيف الكاش القديم تلقائياً
 // ============================================================================
 
-const CACHE_VERSION = "moaath-store-v65";
+const CACHE_VERSION = "moaath-store-v68";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const MAX_RUNTIME_ITEMS = 80;
