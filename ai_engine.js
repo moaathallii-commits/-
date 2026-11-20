@@ -1,8 +1,8 @@
 // ============================================================================
-// محرك المساعد الصوتي التفاعلي لمتجر معاذ (v61 - Simplified Modern Standard Arabic & Persona Voice Harmony)
+// محرك المساعد الصوتي التفاعلي لمتجر معاذ (v62 - Gender-Matched Voices & 1.5x Speed)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
-// - اعتماد العربية الفصحى المبسطة والواضحة لضمان نطق بشري سليم ومخارج حروف دقيقة
-// - مواءمة الصوت والأسلوب والسرعة لكل شخصية من الشخصيات العشر
+// - اعتماد العربية الفصحى المبسطة مع مواءمة واضحة لنوع الصوت (أنثوي / ذكري) وشخصية كل مساعد
+// - رفع سرعة الإلقاء والتشغيل إلى 1.5
 // ============================================================================
 
 (function () {
@@ -26,16 +26,17 @@
   const PERSONAS = {
     buddy: {
       id: "buddy",
+      gender: "male",
       name: "بندق الودود",
-      roleBadge: "ودود وخدوم",
-      specialtyNote: "بندق: أرحب بك وأجهز طلباتك اليومية بسرعة وود.",
+      roleBadge: "ذكري • ودود وخدوم",
+      specialtyNote: "بندق (صوت ذكري ودود): أرحب بك وأجهز طلباتك اليومية بسرعة وود.",
       avatarUrl: "buddy.jpg",
       accent: "#00b0ff",
       voiceName: "Puck",
-      speed: 1.05,
-      fallbackDetune: 0,
-      fallbackRate: 1.01,
-      styleHint: "تحدث بالعربية الفصحى المبسطة بنبرة شابة ودودة ومبتسمة ودافئة، مع نطق واضح ومخارج حروف سليمة دون استعجال",
+      speed: 1.5,
+      fallbackDetune: -20,
+      fallbackRate: 1.5,
+      styleHint: "تحدث بصوت ذكري شاب ودود ومبتسم بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 مع نطق واضح ومخارج حروف سليمة",
       greet: "أهلاً بك، نورت متجر معاذ. يسعدني مساعدتك، ماذا تحب أن أجهز لك اليوم؟",
       greets: [
         "أهلاً بك، نورت متجر معاذ. يسعدني مساعدتك، ماذا تحب أن أجهز لك اليوم؟",
@@ -67,16 +68,17 @@
     },
     pro: {
       id: "pro",
+      gender: "male",
       name: "صقر السريع",
-      roleBadge: "سريع ومباشر",
-      specialtyNote: "صقر: أفرز لك الأصناف والبدائل فوراً بدون إطالة.",
+      roleBadge: "ذكري • سريع ومباشر",
+      specialtyNote: "صقر (صوت ذكري سريع): أفرز لك الأصناف والبدائل فوراً بدون إطالة.",
       avatarUrl: "pro.jpg",
       accent: "#00e676",
       voiceName: "Charon",
-      speed: 1.09,
-      fallbackDetune: 0,
-      fallbackRate: 1.04,
-      styleHint: "تحدث بالعربية الفصحى المبسطة بأسلوب عملي حازم ومباشر وسلس، بنبرة واثقة وواضحة ومخارج حروف دقيقة",
+      speed: 1.5,
+      fallbackDetune: -35,
+      fallbackRate: 1.5,
+      styleHint: "تحدث بصوت ذكري حازم ومباشر وواثق بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 مع مخارج حروف دقيقة",
       greet: "أهلاً بك، أنا جاهز فوراً. اذكر اسم الصنف أو الوصفة.",
       greets: [
         "أهلاً بك، أنا جاهز فوراً. اذكر اسم الصنف أو الوصفة.",
@@ -108,25 +110,26 @@
     },
     saver: {
       id: "saver",
+      gender: "female",
       name: "ثعلب التوفير",
-      roleBadge: "ذكي للتوفير",
-      specialtyNote: "ثعلب التوفير: أختار لك أوفر الأصناف وأنسبها لميزانيتك.",
+      roleBadge: "أنثوي • ذكية للتوفير",
+      specialtyNote: "ثعلب التوفير (صوت أنثوي عملي): أختار لك أوفر الأصناف وأنسبها لميزانيتك.",
       avatarUrl: "saver.jpg",
       accent: "#D4AF37",
       voiceName: "Zephyr",
-      speed: 1.05,
-      fallbackDetune: 0,
-      fallbackRate: 1.01,
-      styleHint: "تحدث بالعربية الفصحى المبسطة بنبرة ذكية وعملية ومتزنة، كخبير اقتصادي ودود يرشح أوفر الخيارات بوضوح",
+      speed: 1.5,
+      fallbackDetune: 25,
+      fallbackRate: 1.5,
+      styleHint: "تحدث بصوت أنثوي ذكي وعملي ومتزن بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 مع وضوح تام في النطق",
       greet: "مرحباً بك. أنا هنا لأساعدك في اختيار المتوفر بأفضل قيمة وأوفر سعر.",
       greets: [
         "مرحباً بك. أنا هنا لأساعدك في اختيار المتوفر بأفضل قيمة وأوفر سعر.",
         "أهلاً بك، أخبرني بميزانيتك أو طلبك لنختار الخيار الأوفر.",
-        "أهلاً وسهلاً، أنا مستعد لترتيب أوفر الخيارات المتوفرة لك."
+        "أهلاً وسهلاً، أنا مستعدة لترتيب أوفر الخيارات المتوفرة لك."
       ],
-      chatGood: "الحمد لله بخير. مستعد لترتيب طلبك بأفضل قيمة وتوفير.",
+      chatGood: "الحمد لله بخير. مستعدة لترتيب طلبك بأفضل قيمة وتوفير.",
       chatGoods: [
-        "الحمد لله بخير. مستعد لترتيب طلبك بأفضل قيمة وتوفير.",
+        "الحمد لله بخير. مستعدة لترتيب طلبك بأفضل قيمة وتوفير.",
         "بألف خير. ما هي الأغراض التي تريد توفير ثمنها اليوم؟"
       ],
       thanks: "العفو، أختار لك الأوفر والأفضل دائماً.",
@@ -142,23 +145,24 @@
       recipeMissing: (title) => `مكونات ${title} غير متوفرة حالياً، جرب وصفة متوفرة أوفر.`,
       itemsReady: (catsText) => catsText ? `رتبت لك أوفر أصناف ${catsText}، حدد الكمية حسب ميزانيتك.` : "عرضت لك المتوفر بأسعار واضحة، حدد الكمية.",
       notFounds: [
-        "لا يوجد صنف مطابق متوفر حالياً، جرب قسماً أو ميزانية أخرى.",
+        "لا يوجد صنف مطابق متوفر الآن، جرب قسماً أو ميزانية أخرى.",
         "غير متوفر حالياً، اذكر قسماً آخر لنختار الأوفر."
       ],
-      notFound: "لا يوجد صنف مطابق متوفر حالياً، جرب قسماً أو وصفة أخرى."
+      notFound: "لا يوجد صنف مطابق متوفر الآن، جرب قسماً أو وصفة أخرى."
     },
     lulu: {
       id: "lulu",
+      gender: "female",
       name: "لولو اللطيفة",
-      roleBadge: "لطيفة وحلويات",
-      specialtyNote: "لولو: أساعدك في الطبخ والحلويات ومستلزمات السهرة بكل لطف.",
+      roleBadge: "أنثوي • لطيفة وحلويات",
+      specialtyNote: "لولو (صوت أنثوي لطيف): أساعدك في الطبخ والحلويات ومستلزمات السهرة بكل لطف.",
       avatarUrl: "lulu.jpg",
       accent: "#ff7eb6",
       voiceName: "Aoede",
-      speed: 1.04,
-      fallbackDetune: 0,
-      fallbackRate: 1.00,
-      styleHint: "تحدث بالعربية الفصحى المبسطة بصوت أنثوي ناعم ولطيف ومشرق، بنبرة هادئة وعذبة ومخارج حروف نقية",
+      speed: 1.5,
+      fallbackDetune: 35,
+      fallbackRate: 1.5,
+      styleHint: "تحدث بصوت أنثوي ناعم ولطيف ومشرق بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 مع مخارج حروف نقية",
       greet: "أهلاً بك ونورت المتجر. ماذا تحب أن تطبخ أو تحضر من الحلويات اليوم؟",
       greets: [
         "أهلاً بك ونورت المتجر. ماذا تحب أن تطبخ أو تحضر من الحلويات اليوم؟",
@@ -190,16 +194,17 @@
     },
     sara: {
       id: "sara",
+      gender: "female",
       name: "سارة المنظمة",
-      roleBadge: "منظمة ودقيقة",
-      specialtyNote: "سارة: أرتب لك مكونات الوصفة والكميات المطلوبة بدقة.",
+      roleBadge: "أنثوي • منظمة ودقيقة",
+      specialtyNote: "سارة (صوت أنثوي منظم): أرتب لك مكونات الوصفة والكميات المطلوبة بدقة.",
       avatarUrl: "sara.jpg",
       accent: "#7c4dff",
       voiceName: "Kore",
-      speed: 1.05,
-      fallbackDetune: 0,
-      fallbackRate: 1.01,
-      styleHint: "تحدث بالعربية الفصحى المبسطة بصوت أنثوي متزن ومنظم وواضح، مع وقفات طبيعية ونطق دقيق لكل كلمة",
+      speed: 1.5,
+      fallbackDetune: 20,
+      fallbackRate: 1.5,
+      styleHint: "تحدث بصوت أنثوي متزن ومنظم وواضح بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 مع نطق دقيق لكل كلمة",
       greet: "مرحباً بك. لنرتب احتياجات وصفتك حسب المتوفر بكل دقة.",
       greets: [
         "مرحباً بك. لنرتب احتياجات وصفتك حسب المتوفر بكل دقة.",
@@ -231,16 +236,17 @@
     },
     noor: {
       id: "noor",
+      gender: "female",
       name: "نور الذكية",
-      roleBadge: "مشرقة وذكية",
-      specialtyNote: "نور: أقترح لك أفكار طبخ ومكملات ذكية تناسب سلتك.",
+      roleBadge: "أنثوي • مشرقة وذكية",
+      specialtyNote: "نور (صوت أنثوي مشرق): أقترح لك أفكار طبخ ومكملات ذكية تناسب سلتك.",
       avatarUrl: "noor.jpg",
       accent: "#ff9800",
       voiceName: "Leda",
-      speed: 1.06,
-      fallbackDetune: 0,
-      fallbackRate: 1.02,
-      styleHint: "تحدث بالعربية الفصحى المبسطة بصوت أنثوي حيوي ومشرق وذكي، بنبرة طبيعية سلسة ومفعمة بالنشاط",
+      speed: 1.5,
+      fallbackDetune: 30,
+      fallbackRate: 1.5,
+      styleHint: "تحدث بصوت أنثوي حيوي ومشرق وذكي بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 بنبرة سلسة ومفعمة بالنشاط",
       greet: "أهلاً وسهلاً بك. اطلب أي وصفة طبخ أو حلى وسأجهز لك المتوفر.",
       greets: [
         "أهلاً وسهلاً بك. اطلب أي وصفة طبخ أو حلى وسأجهز لك المتوفر.",
@@ -272,16 +278,17 @@
     },
     chef: {
       id: "chef",
+      gender: "male",
       name: "الطباخ الماهر",
-      roleBadge: "وصفات طعام دقيقة",
-      specialtyNote: "الطباخ الماهر: أرشح لك وصفات طعام من الإدارة وأرتب مكوناتها بدقة.",
+      roleBadge: "ذكري • وصفات طعام دقيقة",
+      specialtyNote: "الطباخ الماهر (صوت ذكري مطبخي): أرشح لك وصفات طعام من الإدارة وأرتب مكوناتها بدقة.",
       avatarUrl: "chef.jpg",
       accent: "#f97316",
       voiceName: "Charon",
-      speed: 1.04,
-      fallbackDetune: 0,
-      fallbackRate: 1.00,
-      styleHint: "تحدث بالعربية الفصحى المبسطة بصوت طباخ خبير ودافئ وودود، يشرح مكونات الطبخ بهدوء وثقة",
+      speed: 1.5,
+      fallbackDetune: -20,
+      fallbackRate: 1.5,
+      styleHint: "تحدث بصوت ذكري خبير ودافئ وودود كطباخ بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 مع وضوح في شرح المكونات",
       greet: "أهلاً بك في المطبخ. ما هي الطبخة التي تحب أن نجهز مكوناتها اليوم؟",
       greets: [
         "أهلاً بك في المطبخ. ما هي الطبخة التي تحب أن نجهز مكوناتها اليوم؟",
@@ -313,16 +320,17 @@
     },
     pastry: {
       id: "pastry",
+      gender: "female",
       name: "صانعة الحلويات",
-      roleBadge: "حلويات من الإدارة",
-      specialtyNote: "صانعة الحلويات: أرشح لك وصفات حلويات من الإدارة وأجهز مكوناتها.",
+      roleBadge: "أنثوي • حلويات من الإدارة",
+      specialtyNote: "صانعة الحلويات (صوت أنثوي رقيق): أرشح لك وصفات حلويات من الإدارة وأجهز مكوناتها.",
       avatarUrl: "pastry.jpg",
       accent: "#ec4899",
       voiceName: "Aoede",
-      speed: 1.04,
-      fallbackDetune: 0,
-      fallbackRate: 1.00,
-      styleHint: "تحدث بالعربية الفصحى المبسطة بصوت أنثوي رقيق ومبهج ودافئ، يناسب الحديث عن الحلويات بوضوح وسلاسة",
+      speed: 1.5,
+      fallbackDetune: 30,
+      fallbackRate: 1.5,
+      styleHint: "تحدث بصوت أنثوي رقيق ومبهج ودافئ بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 يناسب الحلويات بوضوح وسلاسة",
       greet: "مرحباً بك. ما هو الحلى الذي تحب تحضيره اليوم من وصفاتنا؟",
       greets: [
         "مرحباً بك. ما هو الحلى الذي تحب تحضيره اليوم من وصفاتنا؟",
@@ -354,16 +362,17 @@
     },
     athlete: {
       id: "athlete",
+      gender: "male",
       name: "البطل الرياضي",
-      roleBadge: "رياضة وصحة",
-      specialtyNote: "البطل الرياضي: أساعدك بخيارات صحية ومغذية تناسب الرياضة والنشاط.",
+      roleBadge: "ذكري • رياضة وصحة",
+      specialtyNote: "البطل الرياضي (صوت ذكري نشيط): أساعدك بخيارات صحية ومغذية تناسب الرياضة والنشاط.",
       avatarUrl: "athlete.jpg",
       accent: "#10b981",
       voiceName: "Fenrir",
-      speed: 1.07,
-      fallbackDetune: 0,
-      fallbackRate: 1.03,
-      styleHint: "تحدث بالعربية الفصحى المبسطة بصوت رياضي قوي ونشيط ومتزن، بنبرة صحية واضحة ومشجعة",
+      speed: 1.5,
+      fallbackDetune: -25,
+      fallbackRate: 1.5,
+      styleHint: "تحدث بصوت ذكري رياضي قوي ونشيط ومتزن بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 بنبرة صحية واضحة ومشجعة",
       greet: "أهلاً بالبطل. هل أنت مستعد لاختيار أغراض صحية ومغذية تمنحك النشاط والطاقة؟",
       greets: [
         "أهلاً بالبطل. هل أنت مستعد لاختيار أغراض صحية ومغذية تمنحك النشاط والطاقة؟",
@@ -395,16 +404,17 @@
     },
     sheikh: {
       id: "sheikh",
+      gender: "male",
       name: "شيخ الشباب",
-      roleBadge: "حيوي وحماسي",
-      specialtyNote: "شيخ الشباب: أسلوب حيوي وحماسي لترتيب الطلبات والسهرات بسرعة.",
+      roleBadge: "ذكري • حيوي وحماسي",
+      specialtyNote: "شيخ الشباب (صوت ذكري حماسي): أسلوب حيوي وحماسي لترتيب الطلبات والسهرات بسرعة.",
       avatarUrl: "sheikh.jpg",
       accent: "#ef4444",
       voiceName: "Puck",
-      speed: 1.08,
-      fallbackDetune: 0,
-      fallbackRate: 1.03,
-      styleHint: "تحدث بالعربية الفصحى المبسطة بنبرة شبابية حماسية وعفوية وواضحة، مع إيقاع حيوي ومخارج حروف سليمة",
+      speed: 1.5,
+      fallbackDetune: -15,
+      fallbackRate: 1.5,
+      styleHint: "تحدث بصوت ذكري شبابي حيوي وحماسي وعفوي بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 مع مخارج حروف سليمة",
       greet: "أهلاً بك يا صديقي. أنا جاهز تماماً، ماذا نجهز لك اليوم بسرعة؟",
       greets: [
         "أهلاً بك يا صديقي. أنا جاهز تماماً، ماذا نجهز لك اليوم بسرعة؟",
@@ -573,7 +583,7 @@
   }
 
   // ==========================================================================
-  // [محرك النطق البشري بالفصحى المبسطة]
+  // [محرك النطق بالفصحى المبسطة + مواءمة الصوت الذكري/الأنثوي + سرعة 1.5]
   // ==========================================================================
   const ttsAudioCache = new Map();
   let sharedAudioPlayer = null;
@@ -749,7 +759,7 @@
     player.mozPreservesPitch = true;
     player.webkitPreservesPitch = true;
     const isHumanClip = entry.source === "gemini_tts" || entry.source === "local_repo" || entry.source === "persistent_cache";
-    player.playbackRate = isHumanClip ? (persona.speed || 1.05) : (persona.fallbackRate || 1.01);
+    player.playbackRate = isHumanClip ? (persona.speed || 1.5) : (persona.fallbackRate || 1.5);
     const p = player.play();
     if (p && typeof p.catch === "function") {
       p.catch(() => {
@@ -770,9 +780,9 @@
       const src = ctx.createBufferSource();
       src.buffer = decoded;
       if (src.detune) {
-        src.detune.value = 0;
+        src.detune.value = persona.fallbackDetune || 0;
       }
-      src.playbackRate.value = Math.max(0.98, Math.min(1.05, persona.fallbackRate || 1.01));
+      src.playbackRate.value = persona.fallbackRate || 1.5;
       src.connect(ctx.destination);
       activeBufferSource = src;
       src.onended = () => {
@@ -785,7 +795,7 @@
     }
   }
 
-  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_v61";
+  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_v62";
   const missingLocalClips = new Set();
 
   function detectStaticClipName(persona, spokenText) {
@@ -2421,7 +2431,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v61",
+      version: "v62",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
@@ -2434,7 +2444,7 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v61]", report);
+    console.info("[QA Assistant Diagnostic v62]", report);
     return report;
   };
 
