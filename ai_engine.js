@@ -1,18 +1,19 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v49 - Persona Voice, Style & Speed)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v50 - Distinct Voices & Fallback Pitch)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
-// - تخصيص نبرة وأسلوب وصوت وسرعة نطق (أسرع قليلاً) لكل شخصية لتعبر عنها بوضوح
+// - تمييز طبقة ونبرة الصوت لكل شخصية سواء على Gemini TTS أو عند التحول التلقائي للبديل google_tts
+// - تخصيص الأسلوب والجمل وسرعة النطق (أسرع قليلاً) لكل شخصية لتعبر عنها بوضوح
 // - ربط مباشر بالصور الست المرفوعة في المجلد الجذر (buddy.jpg, pro.jpg, saver.jpg, lulu.jpg, sara.jpg, noor.jpg)
 // - حركة ثلاثية الأبعاد + ظل أرضي + تجوال حر يتوقف تلقائياً عند لمس/سحب/تحدث الزبون
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V49_LOADED__) return;
-  window.__MOAATH_AI_V49_LOADED__ = true;
+  if (window.__MOAATH_AI_V50_LOADED__) return;
+  window.__MOAATH_AI_V50_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v49_prefs";
-  const POS_KEY = "moaath_pet_v49_pos";
-  const LEARN_KEY = "moaath_pet_v49_learned";
+  const PREFS_KEY = "moaath_pet_v50_prefs";
+  const POS_KEY = "moaath_pet_v50_pos";
+  const LEARN_KEY = "moaath_pet_v50_learned";
 
   const PERSONAS = {
     buddy: {
@@ -23,6 +24,7 @@
       accent: "#00b0ff",
       voiceName: "Puck",
       speed: 1.14,
+      fallbackPitchRate: 1.04,
       styleHint: "بنبرة ودودة مرحة وخفيفة وسريعة قليلاً",
       greet: "يا هلا والله! نورت متجر معاذ، شو نجهزلك اليوم؟",
       chatGood: "تمام التمام يا غالي! شو نطبخ أو نجهزلك اليوم؟",
@@ -40,6 +42,7 @@
       accent: "#00e676",
       voiceName: "Charon",
       speed: 1.24,
+      fallbackPitchRate: 0.90,
       styleHint: "بنبرة حازمة عملية سريعة ومباشرة بدون إطالة",
       greet: "أهلاً بك! جاهز فوراً، اذكر الصنف أو الوصفة.",
       chatGood: "جاهز ومستعد، اطلب صنفك أو وصفتك مباشرة.",
@@ -57,6 +60,7 @@
       accent: "#D4AF37",
       voiceName: "Fenrir",
       speed: 1.12,
+      fallbackPitchRate: 0.95,
       styleHint: "بنبرة ذكية عملية وموفرة وسريعة قليلاً",
       greet: "يا مرحبا! نختارلك المتوفر بأفضل قيمة وأوفر سعر.",
       chatGood: "الحمد لله تمام، نرتبلك طلبك بأفضل قيمة وتوفير.",
@@ -74,6 +78,7 @@
       accent: "#ff7eb6",
       voiceName: "Aoede",
       speed: 1.12,
+      fallbackPitchRate: 1.22,
       styleHint: "بنبرة أنثوية لطيفة ناعمة ومشرقة وسريعة قليلاً",
       greet: "أهلاً فيكِ ونورتي! شو حابة تطبخي أو تحضّري حلى اليوم؟",
       chatGood: "أنا بخير الحمد لله! خبريني شو حابة تحضّري اليوم؟",
@@ -91,6 +96,7 @@
       accent: "#7c4dff",
       voiceName: "Kore",
       speed: 1.15,
+      fallbackPitchRate: 1.12,
       styleHint: "بنبرة منظمة واضحة ودقيقة وسريعة قليلاً",
       greet: "مرحباً بكِ! نرتب احتياجات وصفتك حسب المتوفر بكل دقة.",
       chatGood: "أهلاً بكِ، كل شيء منظم، بأي وصفة أو صنف نبدأ؟",
@@ -108,6 +114,7 @@
       accent: "#ff9800",
       voiceName: "Leda",
       speed: 1.18,
+      fallbackPitchRate: 1.16,
       styleHint: "بنبرة مشرقة حيوية ذكية وسريعة قليلاً",
       greet: "أهلاً وسهلاً! اطلبي أي وصفة طبخ أو حلى وأنا أجهز المتوفر.",
       chatGood: "أهلاً بكِ! فكرتي جاهزة، شو نجهز أو نطبخ اليوم؟",
@@ -254,7 +261,7 @@
   }
 
   // ==========================================================================
-  // [محرك الصوت المخصص لكل شخصية مع تسريع النطق قليلاً]
+  // [محرك الصوت المخصص لكل شخصية — تمييز فوري على Gemini TTS وعلى البديل google_tts]
   // ==========================================================================
   const ttsAudioCache = new Map();
   let sharedAudioPlayer = null;
@@ -352,19 +359,32 @@
 
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const voiceName = persona.voiceName || "Puck";
-    const speedRate = persona.speed || 1.14;
     const cacheKey = `${persona.id}::${voiceName}::${spokenText}`;
 
-    const playUrl = (url, rate) => {
+    const playEntry = (entry) => {
       if (mySeq !== ttsRequestSeq) return;
       const player = ensureAudioPlayer();
-      player.src = url;
-      player.playbackRate = rate;
+      player.src = entry.url;
+
+      if (entry.source === "google_tts") {
+        // تعطيل تثبيت الطبقة للتمييز الصوتي الواضح بين كل شخصية على البديل
+        player.preservesPitch = false;
+        player.mozPreservesPitch = false;
+        player.webkitPreservesPitch = false;
+        player.playbackRate = persona.fallbackPitchRate || 1.05;
+      } else {
+        // الحفاظ على نبرة Gemini TTS البشرية الأصلية مع تسريع لطيف
+        player.preservesPitch = true;
+        player.mozPreservesPitch = true;
+        player.webkitPreservesPitch = true;
+        player.playbackRate = persona.speed || 1.14;
+      }
+
       player.play().catch(() => {});
     };
 
     if (ttsAudioCache.has(cacheKey)) {
-      playUrl(ttsAudioCache.get(cacheKey), speedRate);
+      playEntry(ttsAudioCache.get(cacheKey));
       return;
     }
 
@@ -387,13 +407,16 @@
       if (!res.ok || !json?.ok || !json?.audioBase64) return;
 
       const blobUrl = base64ToAudioBlobUrl(json.audioBase64, json.mimeType || "audio/mpeg");
+      const entry = { url: blobUrl, source: json.source || "google_tts" };
+
       if (ttsAudioCache.size > 30) {
         const firstKey = ttsAudioCache.keys().next().value;
-        URL.revokeObjectURL(ttsAudioCache.get(firstKey));
+        const oldEntry = ttsAudioCache.get(firstKey);
+        if (oldEntry?.url) URL.revokeObjectURL(oldEntry.url);
         ttsAudioCache.delete(firstKey);
       }
-      ttsAudioCache.set(cacheKey, blobUrl);
-      playUrl(blobUrl, speedRate);
+      ttsAudioCache.set(cacheKey, entry);
+      playEntry(entry);
     } catch (_) {}
   }
 
@@ -1363,8 +1386,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v49Bound) return;
-    orb.dataset.v49Bound = "1";
+    if (!orb || !root || orb.dataset.v50Bound) return;
+    orb.dataset.v50Bound = "1";
 
     ensureGroundShadow(root);
 
@@ -1578,7 +1601,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v49",
+      version: "v50",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       fairiesCount: Object.keys(PERSONAS).length,
       productsLoaded: Object.keys(products || {}).length,
@@ -1588,11 +1611,11 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v49]", report);
+    console.info("[QA Assistant Diagnostic v50]", report);
     return report;
   };
 
-  function mountV49() {
+  function mountV50() {
     window.analyzeShamCashReceiptOCR();
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
@@ -1621,7 +1644,7 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV49";
+      styleTag.id = "petCharStyleV50";
       styleTag.textContent = `
         @keyframes fairyHover3D {
           0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
@@ -1631,7 +1654,7 @@
           0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.42; }
           50% { transform: translateX(-50%) scale(0.75); opacity: 0.22; }
         }
-        @keyframes fairyRingV49 {
+        @keyframes fairyRingV50 {
           0% { transform: scale(1); opacity: 0.9; }
           100% { transform: scale(1.38); opacity: 0; }
         }
@@ -1667,7 +1690,7 @@
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV49 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV50 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 72px; right: 0; max-width: 235px; width: max-content;
@@ -1700,7 +1723,7 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV49(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV50(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
@@ -1715,6 +1738,6 @@
   window.addEventListener("online", syncConnectivityBadge);
   window.addEventListener("offline", syncConnectivityBadge);
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV49);
-  else mountV49();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV50);
+  else mountV50();
 })();
