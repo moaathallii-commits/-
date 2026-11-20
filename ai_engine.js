@@ -1,8 +1,9 @@
 // ============================================================================
-// محرك المساعد الصوتي التفاعلي لمتجر معاذ (v62 - Gender-Matched Voices & 1.5x Speed)
+// محرك المساعد الصوتي التفاعلي لمتجر معاذ (v63 - Distinct Voice Timbre, Pitch & Tone per Persona)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
-// - اعتماد العربية الفصحى المبسطة مع مواءمة واضحة لنوع الصوت (أنثوي / ذكري) وشخصية كل مساعد
-// - رفع سرعة الإلقاء والتشغيل إلى 1.5
+// - تمييز حقيقي وملموس بين الأصوات الذكرية والأنثوية والنبرة (حماسي، رياضي، ودود، لطيف، حازم، منظم)
+// - سرعة الإلقاء والتشغيل 1.5 مع الحفاظ على العربية الفصحى المبسطة ومخارج الحروف السليمة
+// - تمرير voicePitch و voiceTone و gender في طلب TTS لتمييز النبرة بوضوح حتى عند التبديل السريع
 // ============================================================================
 
 (function () {
@@ -23,20 +24,25 @@
     return list[nextIdx];
   }
 
+  // أصوات Gemini Prebuilt المميزة حسب الهوية:
+  // Puck / Fenrir / Charon / Orus للأصوات الذكرية بسمات ونبرات مختلفة
+  // Aoede / Kore / Leda / Zephyr للأصوات الأنثوية بسمات ونبرات مختلفة
   const PERSONAS = {
     buddy: {
       id: "buddy",
       gender: "male",
+      toneTag: "ودود",
       name: "بندق الودود",
-      roleBadge: "ذكري • ودود وخدوم",
-      specialtyNote: "بندق (صوت ذكري ودود): أرحب بك وأجهز طلباتك اليومية بسرعة وود.",
+      roleBadge: "ذكري • ودود ومبتسم",
+      specialtyNote: "بندق (ذكري ودود): صوت دافئ ومبتسم ومضيء يرحب بك بترحاب واضح.",
       avatarUrl: "buddy.jpg",
       accent: "#00b0ff",
       voiceName: "Puck",
       speed: 1.5,
-      fallbackDetune: -20,
+      pitchSemitones: 1.2,
+      fallbackDetune: 90,
       fallbackRate: 1.5,
-      styleHint: "تحدث بصوت ذكري شاب ودود ومبتسم بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 مع نطق واضح ومخارج حروف سليمة",
+      styleHint: "صوت ذكري شاب ودود ومبتسم جداً ومرحب، طبقة صوت متوسطة مشرقة، نبرة دافئة ومضيئة بالعربية الفصحى المبسطة بسرعة إلقاء 1.5",
       greet: "أهلاً بك، نورت متجر معاذ. يسعدني مساعدتك، ماذا تحب أن أجهز لك اليوم؟",
       greets: [
         "أهلاً بك، نورت متجر معاذ. يسعدني مساعدتك، ماذا تحب أن أجهز لك اليوم؟",
@@ -69,16 +75,18 @@
     pro: {
       id: "pro",
       gender: "male",
+      toneTag: "حازم وسريع",
       name: "صقر السريع",
-      roleBadge: "ذكري • سريع ومباشر",
-      specialtyNote: "صقر (صوت ذكري سريع): أفرز لك الأصناف والبدائل فوراً بدون إطالة.",
+      roleBadge: "ذكري • حازم وسريع",
+      specialtyNote: "صقر (ذكري حازم): صوت رجولي عميق وحازم ومباشر يفرز الأصناف فوراً.",
       avatarUrl: "pro.jpg",
       accent: "#00e676",
       voiceName: "Charon",
       speed: 1.5,
-      fallbackDetune: -35,
+      pitchSemitones: -2.2,
+      fallbackDetune: -220,
       fallbackRate: 1.5,
-      styleHint: "تحدث بصوت ذكري حازم ومباشر وواثق بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 مع مخارج حروف دقيقة",
+      styleHint: "صوت ذكري عميق وحازم ومباشر وجاد، طبقة صوت منخفضة وقوية، إلقاء سريع وحاسم بالعربية الفصحى المبسطة بسرعة 1.5",
       greet: "أهلاً بك، أنا جاهز فوراً. اذكر اسم الصنف أو الوصفة.",
       greets: [
         "أهلاً بك، أنا جاهز فوراً. اذكر اسم الصنف أو الوصفة.",
@@ -111,16 +119,18 @@
     saver: {
       id: "saver",
       gender: "female",
+      toneTag: "عملي اقتصادي",
       name: "ثعلب التوفير",
-      roleBadge: "أنثوي • ذكية للتوفير",
-      specialtyNote: "ثعلب التوفير (صوت أنثوي عملي): أختار لك أوفر الأصناف وأنسبها لميزانيتك.",
+      roleBadge: "أنثوي • عملي للتوفير",
+      specialtyNote: "ثعلب التوفير (أنثوي عملي): صوت أنثوي واضح وعملي وحكيم يختار الأوفر.",
       avatarUrl: "saver.jpg",
       accent: "#D4AF37",
       voiceName: "Zephyr",
       speed: 1.5,
-      fallbackDetune: 25,
+      pitchSemitones: 2.0,
+      fallbackDetune: 210,
       fallbackRate: 1.5,
-      styleHint: "تحدث بصوت أنثوي ذكي وعملي ومتزن بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 مع وضوح تام في النطق",
+      styleHint: "صوت أنثوي واضح وعملي ومتزن وحكيم، طبقة أنثوية متوسطة واضحة، نبرة ناصحة ذكية بالعربية الفصحى المبسطة بسرعة 1.5",
       greet: "مرحباً بك. أنا هنا لأساعدك في اختيار المتوفر بأفضل قيمة وأوفر سعر.",
       greets: [
         "مرحباً بك. أنا هنا لأساعدك في اختيار المتوفر بأفضل قيمة وأوفر سعر.",
@@ -153,16 +163,18 @@
     lulu: {
       id: "lulu",
       gender: "female",
+      toneTag: "لطيف وناعم",
       name: "لولو اللطيفة",
-      roleBadge: "أنثوي • لطيفة وحلويات",
-      specialtyNote: "لولو (صوت أنثوي لطيف): أساعدك في الطبخ والحلويات ومستلزمات السهرة بكل لطف.",
+      roleBadge: "أنثوي • لطيف وناعم",
+      specialtyNote: "لولو (أنثوي لطيف): صوت أنثوي ناعم ورقيق ومشرق للطبخ والحلويات.",
       avatarUrl: "lulu.jpg",
       accent: "#ff7eb6",
       voiceName: "Aoede",
       speed: 1.5,
-      fallbackDetune: 35,
+      pitchSemitones: 3.4,
+      fallbackDetune: 360,
       fallbackRate: 1.5,
-      styleHint: "تحدث بصوت أنثوي ناعم ولطيف ومشرق بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 مع مخارج حروف نقية",
+      styleHint: "صوت أنثوي ناعم جداً ورقيق ومشرق وعذب، طبقة أنثوية عالية لطيفة، نبرة حنونة ومبهجة بالعربية الفصحى المبسطة بسرعة 1.5",
       greet: "أهلاً بك ونورت المتجر. ماذا تحب أن تطبخ أو تحضر من الحلويات اليوم؟",
       greets: [
         "أهلاً بك ونورت المتجر. ماذا تحب أن تطبخ أو تحضر من الحلويات اليوم؟",
@@ -195,16 +207,18 @@
     sara: {
       id: "sara",
       gender: "female",
+      toneTag: "منظم وهادئ",
       name: "سارة المنظمة",
-      roleBadge: "أنثوي • منظمة ودقيقة",
-      specialtyNote: "سارة (صوت أنثوي منظم): أرتب لك مكونات الوصفة والكميات المطلوبة بدقة.",
+      roleBadge: "أنثوي • منظم ودقيق",
+      specialtyNote: "سارة (أنثوي منظم): صوت أنثوي هادئ ومرتب ودقيق في تنسيق المكونات.",
       avatarUrl: "sara.jpg",
       accent: "#7c4dff",
       voiceName: "Kore",
       speed: 1.5,
-      fallbackDetune: 20,
+      pitchSemitones: 1.5,
+      fallbackDetune: 170,
       fallbackRate: 1.5,
-      styleHint: "تحدث بصوت أنثوي متزن ومنظم وواضح بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 مع نطق دقيق لكل كلمة",
+      styleHint: "صوت أنثوي منظم ومرتب وهادئ وواضح، طبقة أنثوية رزينة، نبرة دقيقة ومنضبطة بالعربية الفصحى المبسطة بسرعة 1.5",
       greet: "مرحباً بك. لنرتب احتياجات وصفتك حسب المتوفر بكل دقة.",
       greets: [
         "مرحباً بك. لنرتب احتياجات وصفتك حسب المتوفر بكل دقة.",
@@ -237,16 +251,18 @@
     noor: {
       id: "noor",
       gender: "female",
+      toneTag: "حيوي ومشرق",
       name: "نور الذكية",
-      roleBadge: "أنثوي • مشرقة وذكية",
-      specialtyNote: "نور (صوت أنثوي مشرق): أقترح لك أفكار طبخ ومكملات ذكية تناسب سلتك.",
+      roleBadge: "أنثوي • حيوي ومشرق",
+      specialtyNote: "نور (أنثوي حيوي): صوت أنثوي مشرق وذكي ومليء بالحيوية والأفكار.",
       avatarUrl: "noor.jpg",
       accent: "#ff9800",
       voiceName: "Leda",
       speed: 1.5,
-      fallbackDetune: 30,
+      pitchSemitones: 2.8,
+      fallbackDetune: 290,
       fallbackRate: 1.5,
-      styleHint: "تحدث بصوت أنثوي حيوي ومشرق وذكي بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 بنبرة سلسة ومفعمة بالنشاط",
+      styleHint: "صوت أنثوي حيوي ومشرق وذكي ومفعم بالنشاط، طبقة أنثوية صافية ومضيئة، نبرة حماسية لطيفة بالعربية الفصحى المبسطة بسرعة 1.5",
       greet: "أهلاً وسهلاً بك. اطلب أي وصفة طبخ أو حلى وسأجهز لك المتوفر.",
       greets: [
         "أهلاً وسهلاً بك. اطلب أي وصفة طبخ أو حلى وسأجهز لك المتوفر.",
@@ -279,16 +295,18 @@
     chef: {
       id: "chef",
       gender: "male",
+      toneTag: "مطبخي ودود",
       name: "الطباخ الماهر",
-      roleBadge: "ذكري • وصفات طعام دقيقة",
-      specialtyNote: "الطباخ الماهر (صوت ذكري مطبخي): أرشح لك وصفات طعام من الإدارة وأرتب مكوناتها بدقة.",
+      roleBadge: "ذكري • خبير وصفات",
+      specialtyNote: "الطباخ الماهر (ذكري مطبخي): صوت ذكري دافئ وخبير يشرح أطباقاً ومكونات شهية.",
       avatarUrl: "chef.jpg",
       accent: "#f97316",
-      voiceName: "Charon",
+      voiceName: "Orus",
       speed: 1.5,
-      fallbackDetune: -20,
+      pitchSemitones: -1.4,
+      fallbackDetune: -140,
       fallbackRate: 1.5,
-      styleHint: "تحدث بصوت ذكري خبير ودافئ وودود كطباخ بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 مع وضوح في شرح المكونات",
+      styleHint: "صوت ذكري خبير ودافئ وودود كطباخ ماهر، طبقة ذكورية متزنة وغنية، نبرة مريحة ومشجعة بالعربية الفصحى المبسطة بسرعة 1.5",
       greet: "أهلاً بك في المطبخ. ما هي الطبخة التي تحب أن نجهز مكوناتها اليوم؟",
       greets: [
         "أهلاً بك في المطبخ. ما هي الطبخة التي تحب أن نجهز مكوناتها اليوم؟",
@@ -321,16 +339,18 @@
     pastry: {
       id: "pastry",
       gender: "female",
+      toneTag: "رقيق ومبهج",
       name: "صانعة الحلويات",
-      roleBadge: "أنثوي • حلويات من الإدارة",
-      specialtyNote: "صانعة الحلويات (صوت أنثوي رقيق): أرشح لك وصفات حلويات من الإدارة وأجهز مكوناتها.",
+      roleBadge: "أنثوي • رقيق ومبهج",
+      specialtyNote: "صانعة الحلويات (أنثوي رقيق): صوت أنثوي رقيق ومبهج وحلو للحلويات والضيافة.",
       avatarUrl: "pastry.jpg",
       accent: "#ec4899",
       voiceName: "Aoede",
       speed: 1.5,
-      fallbackDetune: 30,
+      pitchSemitones: 3.0,
+      fallbackDetune: 310,
       fallbackRate: 1.5,
-      styleHint: "تحدث بصوت أنثوي رقيق ومبهج ودافئ بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 يناسب الحلويات بوضوح وسلاسة",
+      styleHint: "صوت أنثوي رقيق ومبهج وحلو ولطيف، طبقة أنثوية عالية ناعمة، نبرة مبهجة ودافئة بالعربية الفصحى المبسطة بسرعة 1.5",
       greet: "مرحباً بك. ما هو الحلى الذي تحب تحضيره اليوم من وصفاتنا؟",
       greets: [
         "مرحباً بك. ما هو الحلى الذي تحب تحضيره اليوم من وصفاتنا؟",
@@ -363,16 +383,18 @@
     athlete: {
       id: "athlete",
       gender: "male",
+      toneTag: "رياضي وقوي",
       name: "البطل الرياضي",
-      roleBadge: "ذكري • رياضة وصحة",
-      specialtyNote: "البطل الرياضي (صوت ذكري نشيط): أساعدك بخيارات صحية ومغذية تناسب الرياضة والنشاط.",
+      roleBadge: "ذكري • رياضي وقوي",
+      specialtyNote: "البطل الرياضي (ذكري رياضي): صوت ذكري قوي ومندفع ونشيط يبعث على الطاقة والحيوية.",
       avatarUrl: "athlete.jpg",
       accent: "#10b981",
       voiceName: "Fenrir",
       speed: 1.5,
-      fallbackDetune: -25,
+      pitchSemitones: -1.8,
+      fallbackDetune: -180,
       fallbackRate: 1.5,
-      styleHint: "تحدث بصوت ذكري رياضي قوي ونشيط ومتزن بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 بنبرة صحية واضحة ومشجعة",
+      styleHint: "صوت ذكري رياضي قوي ومندفع ومليء بالطاقة والحيوية، طبقة ذكورية قوية، نبرة تحفيزية نشيطة بالعربية الفصحى المبسطة بسرعة 1.5",
       greet: "أهلاً بالبطل. هل أنت مستعد لاختيار أغراض صحية ومغذية تمنحك النشاط والطاقة؟",
       greets: [
         "أهلاً بالبطل. هل أنت مستعد لاختيار أغراض صحية ومغذية تمنحك النشاط والطاقة؟",
@@ -405,16 +427,18 @@
     sheikh: {
       id: "sheikh",
       gender: "male",
+      toneTag: "حماسي ومشتعل",
       name: "شيخ الشباب",
-      roleBadge: "ذكري • حيوي وحماسي",
-      specialtyNote: "شيخ الشباب (صوت ذكري حماسي): أسلوب حيوي وحماسي لترتيب الطلبات والسهرات بسرعة.",
+      roleBadge: "ذكري • حماسي ومشتعل",
+      specialtyNote: "شيخ الشباب (ذكري حماسي): صوت ذكري حماسي ومندفع وعفوي يرفع الحماس في السهرات.",
       avatarUrl: "sheikh.jpg",
       accent: "#ef4444",
-      voiceName: "Puck",
+      voiceName: "Fenrir",
       speed: 1.5,
-      fallbackDetune: -15,
+      pitchSemitones: 0.6,
+      fallbackDetune: 60,
       fallbackRate: 1.5,
-      styleHint: "تحدث بصوت ذكري شبابي حيوي وحماسي وعفوي بالعربية الفصحى المبسطة بسرعة إلقاء 1.5 مع مخارج حروف سليمة",
+      styleHint: "صوت ذكري حماسي جداً ومشتعل وعفوي وحيوي، إلقاء حماسي مندفع ومليء بالحماس بالعربية الفصحى المبسطة بسرعة 1.5",
       greet: "أهلاً بك يا صديقي. أنا جاهز تماماً، ماذا نجهز لك اليوم بسرعة؟",
       greets: [
         "أهلاً بك يا صديقي. أنا جاهز تماماً، ماذا نجهز لك اليوم بسرعة؟",
@@ -583,7 +607,7 @@
   }
 
   // ==========================================================================
-  // [محرك النطق بالفصحى المبسطة + مواءمة الصوت الذكري/الأنثوي + سرعة 1.5]
+  // [محرك النطق المميز لكل شخصية — نوع الصوت، النبرة، الطبقة، والسرعة 1.5]
   // ==========================================================================
   const ttsAudioCache = new Map();
   let sharedAudioPlayer = null;
@@ -758,8 +782,7 @@
     player.preservesPitch = true;
     player.mozPreservesPitch = true;
     player.webkitPreservesPitch = true;
-    const isHumanClip = entry.source === "gemini_tts" || entry.source === "local_repo" || entry.source === "persistent_cache";
-    player.playbackRate = isHumanClip ? (persona.speed || 1.5) : (persona.fallbackRate || 1.5);
+    player.playbackRate = persona.speed || 1.5;
     const p = player.play();
     if (p && typeof p.catch === "function") {
       p.catch(() => {
@@ -768,7 +791,7 @@
     }
   }
 
-  async function playFallbackWithDetune(arrayBuf, persona, mySeq) {
+  async function playWithPersonaTimbre(arrayBuf, persona, mySeq) {
     const ctx = ensureWebAudioCtx();
     if (!ctx) return false;
     try {
@@ -779,10 +802,11 @@
 
       const src = ctx.createBufferSource();
       src.buffer = decoded;
+      const semitones = typeof persona.pitchSemitones === "number" ? persona.pitchSemitones : 0;
       if (src.detune) {
-        src.detune.value = persona.fallbackDetune || 0;
+        src.detune.value = semitones * 100;
       }
-      src.playbackRate.value = persona.fallbackRate || 1.5;
+      src.playbackRate.value = persona.speed || 1.5;
       src.connect(ctx.destination);
       activeBufferSource = src;
       src.onended = () => {
@@ -795,7 +819,7 @@
     }
   }
 
-  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_v62";
+  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_v63";
   const missingLocalClips = new Set();
 
   function detectStaticClipName(persona, spokenText) {
@@ -817,6 +841,7 @@
       if (cached?.source === "local_repo") {
         sessionCtx.lastTtsSource = "local_repo";
         updateVoiceSourceBadge("🔊 يتحدث", "#00e676", relUrl);
+        if (cached.rawBuffer && await playWithPersonaTimbre(cached.rawBuffer, persona, mySeq)) return true;
         playViaHtmlAudio(cached, persona, mySeq);
         return true;
       }
@@ -833,10 +858,11 @@
         missingLocalClips.add(relUrl);
         return false;
       }
-      const blob = await res.blob();
+      const arrBuf = await res.arrayBuffer();
+      const blob = new Blob([arrBuf], { type: cType || "audio/mpeg" });
       if (mySeq !== ttsRequestSeq) return true;
       const blobUrl = URL.createObjectURL(blob);
-      const entry = { url: blobUrl, rawBuffer: null, source: "local_repo", geminiError: "" };
+      const entry = { url: blobUrl, rawBuffer: arrBuf, source: "local_repo", geminiError: "" };
       if (ttsAudioCache.size > 30) {
         const firstKey = ttsAudioCache.keys().next().value;
         const oldEntry = ttsAudioCache.get(firstKey);
@@ -846,6 +872,7 @@
       ttsAudioCache.set(cacheKey, entry);
       sessionCtx.lastTtsSource = "local_repo";
       updateVoiceSourceBadge("🔊 يتحدث", "#00e676", relUrl);
+      if (await playWithPersonaTimbre(arrBuf, persona, mySeq)) return true;
       playViaHtmlAudio(entry, persona, mySeq);
       return true;
     } catch (_) {
@@ -861,8 +888,9 @@
       const reqUrl = "https://moaath-tts.local/" + encodeURIComponent(cacheKey);
       const match = await cache.match(reqUrl);
       if (!match) return null;
-      const blob = await match.blob();
-      return URL.createObjectURL(blob);
+      const arrBuf = await match.arrayBuffer();
+      const blob = new Blob([arrBuf], { type: match.headers.get("Content-Type") || "audio/wav" });
+      return { url: URL.createObjectURL(blob), rawBuffer: arrBuf };
     } catch (_) {
       return null;
     }
@@ -894,7 +922,7 @@
 
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const voiceName = persona.voiceName || "Puck";
-    const cacheKey = `${persona.id}::${voiceName}::${spokenText}`;
+    const cacheKey = `${persona.id}::${voiceName}::${persona.gender}::${persona.toneTag}::${spokenText}`;
 
     const playEntry = async (entry) => {
       if (mySeq !== ttsRequestSeq) return;
@@ -903,12 +931,16 @@
 
       if (entry.source === "gemini_tts" || entry.source === "persistent_cache" || entry.source === "local_repo") {
         updateVoiceSourceBadge("🔊 يتحدث", "#00e676", entry.source);
+        if (entry.rawBuffer && Math.abs(persona.pitchSemitones || 0) >= 0.4) {
+          const okTimbre = await playWithPersonaTimbre(entry.rawBuffer, persona, mySeq);
+          if (okTimbre) return;
+        }
         playViaHtmlAudio(entry, persona, mySeq);
       } else {
         if (entry.geminiError) console.info("[TTS Diagnostic]", entry.geminiError);
         updateVoiceSourceBadge("🔊 يتحدث", "#38bdf8", "صوت نشط");
         if (entry.rawBuffer) {
-          const okWebAudio = await playFallbackWithDetune(entry.rawBuffer, persona, mySeq);
+          const okWebAudio = await playWithPersonaTimbre(entry.rawBuffer, persona, mySeq);
           if (okWebAudio) return;
         }
         playViaHtmlAudio(entry, persona, mySeq);
@@ -923,9 +955,9 @@
       return;
     }
 
-    const persistedUrl = await readPersistentHumanCache(cacheKey);
-    if (persistedUrl && mySeq === ttsRequestSeq) {
-      const pEntry = { url: persistedUrl, rawBuffer: null, source: "persistent_cache", geminiError: "" };
+    const persisted = await readPersistentHumanCache(cacheKey);
+    if (persisted && mySeq === ttsRequestSeq) {
+      const pEntry = { url: persisted.url, rawBuffer: persisted.rawBuffer, source: "persistent_cache", geminiError: "" };
       ttsAudioCache.set(cacheKey, pEntry);
       await playEntry(pEntry);
       return;
@@ -952,6 +984,9 @@
           mode: "tts",
           text: spokenText,
           voiceName,
+          gender: persona.gender || "male",
+          toneTag: persona.toneTag || "",
+          pitchSemitones: persona.pitchSemitones || 0,
           styleHint: persona.styleHint || ""
         })
       });
@@ -2431,7 +2466,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v62",
+      version: "v63",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
@@ -2444,7 +2479,7 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v62]", report);
+    console.info("[QA Assistant Diagnostic v63]", report);
     return report;
   };
 
