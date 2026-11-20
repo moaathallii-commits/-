@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v53 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v54 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -8,32 +8,32 @@
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V53_LOADED__) return;
-  window.__MOAATH_AI_V53_LOADED__ = true;
+  if (window.__MOAATH_AI_V54_LOADED__) return;
+  window.__MOAATH_AI_V54_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v53_prefs";
-  const POS_KEY = "moaath_pet_v53_pos";
-  const LEARN_KEY = "moaath_pet_v53_learned";
+  const PREFS_KEY = "moaath_pet_v54_prefs";
+  const POS_KEY = "moaath_pet_v54_pos";
+  const LEARN_KEY = "moaath_pet_v54_learned";
 
   const PERSONAS = {
     buddy: {
       id: "buddy",
       name: "بندق الودود",
-      roleBadge: "ودود ومرح",
+      roleBadge: "ودود وخدوم",
       avatarUrl: "buddy.jpg",
       accent: "#00b0ff",
       voiceName: "Puck",
-      speed: 1.22,
-      fallbackDetune: -60,
-      fallbackRate: 1.14,
-      styleHint: "بأسلوب بشري حر وعفوي وودود ومرح وبسرعة إلقاء أسرع قليلاً",
-      greet: "يا هلا والله، نورت متجر معاذ! شو حابب نجهزلك اليوم؟",
-      chatGood: "تمام التمام يا غالي، شو نطبخ أو نجهزلك اليوم؟",
-      thanks: "العفو يا هلا، بأي وقت بالخدمة!",
-      recipeReady: (title) => `جهزتلك أغراض ${title} المتوفرة، زيد الكمية من زائد!`,
-      recipeMissing: (title) => `وصفة ${title} موجودة، بس مكوناتها مو متوفرة بهالفرع حالياً.`,
-      itemsReady: (catsText) => catsText ? `فتحتلك قسم ${catsText}، نقّي الكمية اللي بتناسبك.` : "فتحتلك الأصناف المتوفرة، زيد الكمية بضغطة وحدة.",
-      notFound: "ما لقيت وصفة أو صنف مطابق هلق، جرّب اسم وصفة أو قسم تاني."
+      speed: 1.20,
+      fallbackDetune: -50,
+      fallbackRate: 1.13,
+      styleHint: "بأسلوب بشري حر وودود وخدوم جداً وبنبرة دافئة ومبتسمة وبسرعة إلقاء أسرع قليلاً",
+      greet: "يا هلا والله، نورت متجر معاذ! تكرم عينك، شو حابب أجهزلك اليوم؟",
+      chatGood: "بألف خير بشوفتك يا غالي! أمرني، شو حابب أرتبلك أو أجهزلك اليوم؟",
+      thanks: "ولو، تكرم عينك! أنا دائماً جاهز وبخدمتك بأي وقت.",
+      recipeReady: (title) => `تكرم عينك، جهزتلك أغراض ${title} المتوفرة، زيد الكمية اللي بدك ياها من زائد!`,
+      recipeMissing: (title) => `على عيني، وصفة ${title} موجودة بس مكوناتها مو متوفرة بهالفرع حالياً.`,
+      itemsReady: (catsText) => catsText ? `تكرم، فتحتلك قسم ${catsText}، اختار الكمية اللي بتناسبك وأنا بالخدمة.` : "تكرم، فتحتلك الأصناف المتوفرة، زيد الكمية بضغطة وحدة.",
+      notFound: "يا هلا، ما لقيت وصفة أو صنف مطابق هلق، خبرني باسم وصفة أو قسم تاني وتكرم عينك."
     },
     pro: {
       id: "pro",
@@ -57,20 +57,20 @@
     saver: {
       id: "saver",
       name: "ثعلب التوفير",
-      roleBadge: "ذكي للميزانية",
+      roleBadge: "ذكية للتوفير",
       avatarUrl: "saver.jpg",
       accent: "#D4AF37",
-      voiceName: "Fenrir",
+      voiceName: "Zephyr",
       speed: 1.20,
-      fallbackDetune: -200,
+      fallbackDetune: 185,
       fallbackRate: 1.13,
-      styleHint: "بأسلوب بشري عملي وتلقائي وموفر وبسرعة إلقاء أسرع قليلاً",
-      greet: "يا مرحبا، نختارلك المتوفر بأفضل قيمة وأوفر سعر!",
-      chatGood: "الحمد لله تمام، نرتبلك طلبك بأفضل قيمة وتوفير.",
-      thanks: "تسلم يا رب، دايماً نختارلك الأوفر.",
-      recipeReady: (title) => `جهزتلك المتوفر لـ ${title} بأفضل الأسعار، اختر الكمية.`,
+      styleHint: "بصوت أنثوي بشري حر وذكي وعملي وموفر وبسرعة إلقاء أسرع قليلاً",
+      greet: "يا مرحبا! أنا معك نختار المتوفر بأفضل قيمة وأوفر سعر.",
+      chatGood: "الحمد لله تمام، جاهزة أرتبلك طلبك بأفضل قيمة وتوفير.",
+      thanks: "العفو، دايماً بختارلك الأوفر والأفضل.",
+      recipeReady: (title) => `جهزتلك المتوفر لـ ${title} بأفضل الأسعار، حدد الكمية اللي بتناسب ميزانيتك.`,
       recipeMissing: (title) => `مكونات ${title} غير متوفرة حالياً، جرب وصفة متوفرة أوفر.`,
-      itemsReady: (catsText) => catsText ? `رتبتلك المتوفر في ${catsText}، حدد الكمية حسب ميزانيتك.` : "عرضتلك المتوفر بأسعار واضحة، حدد الكمية.",
+      itemsReady: (catsText) => catsText ? `رتبتلك المتوفر في ${catsText} بأسعار واضحة، حدد الكمية حسب ميزانيتك.` : "عرضتلك المتوفر بأسعار واضحة، حدد الكمية.",
       notFound: "ما في صنف مطابق متوفر حالياً، جرّب قسماً أو وصفة أخرى."
     },
     lulu: {
@@ -1517,8 +1517,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v53Bound) return;
-    orb.dataset.v53Bound = "1";
+    if (!orb || !root || orb.dataset.v54Bound) return;
+    orb.dataset.v54Bound = "1";
 
     ensureGroundShadow(root);
 
@@ -1732,7 +1732,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v53",
+      version: "v54",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
@@ -1745,11 +1745,11 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v53]", report);
+    console.info("[QA Assistant Diagnostic v54]", report);
     return report;
   };
 
-  function mountV53() {
+  function mountV54() {
     window.analyzeShamCashReceiptOCR();
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
@@ -1778,7 +1778,7 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV53";
+      styleTag.id = "petCharStyleV54";
       styleTag.textContent = `
         @keyframes fairyHover3D {
           0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
@@ -1788,7 +1788,7 @@
           0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.42; }
           50% { transform: translateX(-50%) scale(0.75); opacity: 0.22; }
         }
-        @keyframes fairyRingV53 {
+        @keyframes fairyRingV54 {
           0% { transform: scale(1); opacity: 0.9; }
           100% { transform: scale(1.38); opacity: 0; }
         }
@@ -1824,7 +1824,7 @@
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV53 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV54 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 72px; right: 0; max-width: 235px; width: max-content;
@@ -1857,7 +1857,7 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV53(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV54(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
@@ -1872,6 +1872,6 @@
   window.addEventListener("online", syncConnectivityBadge);
   window.addEventListener("offline", syncConnectivityBadge);
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV53);
-  else mountV53();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV54);
+  else mountV54();
 })();
