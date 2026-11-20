@@ -2362,15 +2362,40 @@
         cachedCount = keys.length;
       }
     } catch (_) {}
-    const info = [
-      `📊 تشخيص الصوت البشري:`,
-      `• المصدر الحالي: ${sessionCtx.lastTtsSource || "لم يتم النطق بعد"}`,
-      `• سبب فشل Gemini TTS: ${sessionCtx.lastGeminiError || "لا يوجد خطأ مسجل"}`,
-      `• المقاطع البشرية المحفوظة: ${cachedCount}`,
-      `• رابط Worker: ${resolveWorkerEndpoint() || "غير مضبوط"}`,
-      `• الاتصال: ${navigator.onLine !== false ? "متصل" : "غير متصل"}`
-    ].join("\n");
-    alert(info);
+
+    const wUrl = resolveWorkerEndpoint() || "غير مضبوط";
+    const srcNow = sessionCtx.lastTtsSource || "لم يتم النطق بعد";
+    const errNow = sessionCtx.lastGeminiError || "لا يوجد خطأ مسجل";
+    const netNow = navigator.onLine !== false ? "متصل" : "غير متصل";
+
+    let box = document.getElementById("moaathVoiceDiagModal");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "moaathVoiceDiagModal";
+      box.style.cssText = "position:fixed; inset:0; z-index:20000; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; padding:14px;";
+      document.body.appendChild(box);
+    }
+
+    const escTxt = (s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    box.innerHTML = `
+      <div style="background:#111827; color:#f9fafb; border:1.5px solid #d4af37; border-radius:12px; max-width:380px; width:100%; padding:14px; font-size:12px; line-height:1.7; text-align:right; box-shadow:0 12px 30px rgba(0,0,0,0.6);">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #374151; padding-bottom:8px; margin-bottom:10px;">
+          <b style="color:#fbbf24; font-size:13px;">📊 تشخيص الصوت البشري</b>
+          <button type="button" onclick="document.getElementById('moaathVoiceDiagModal').style.display='none'" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:2px 9px; font-size:12px; cursor:pointer;">✕</button>
+        </div>
+        <div>• <b>المصدر الحالي:</b> ${escTxt(srcNow)}</div>
+        <div>• <b>سبب فشل Gemini TTS:</b> <span style="color:#38bdf8;">${escTxt(errNow)}</span></div>
+        <div>• <b>المقاطع البشرية المحفوظة:</b> ${cachedCount}</div>
+        <div>• <b>رابط Worker:</b> <span style="word-break:break-all; color:#a7f3d0;">${escTxt(wUrl)}</span></div>
+        <div>• <b>الاتصال:</b> ${escTxt(netNow)}</div>
+        <div style="margin-top:12px; text-align:left;">
+          <button type="button" onclick="document.getElementById('moaathVoiceDiagModal').style.display='none'" style="background:#10b981; color:#000; font-weight:bold; border:none; border-radius:8px; padding:6px 14px; font-size:12px; cursor:pointer;">حسناً</button>
+        </div>
+      </div>
+    `;
+    box.style.display = "flex";
+    try { if (typeof showToast === "function") showToast(`المصدر: ${srcNow} | الخطأ: ${errNow}`); } catch (_) {}
   };
 
   window.runAssistantQACheck = function () {
