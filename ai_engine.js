@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v65 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v68 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -8,12 +8,12 @@
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V65_LOADED__) return;
-  window.__MOAATH_AI_V65_LOADED__ = true;
+  if (window.__MOAATH_AI_V68_LOADED__) return;
+  window.__MOAATH_AI_V68_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v65_prefs";
-  const POS_KEY = "moaath_pet_v65_pos";
-  const LEARN_KEY = "moaath_pet_v65_learned";
+  const PREFS_KEY = "moaath_pet_v68_prefs";
+  const POS_KEY = "moaath_pet_v68_pos";
+  const LEARN_KEY = "moaath_pet_v68_learned";
 
   const FALLBACK_BUDDY = {
     id: "buddy",
@@ -111,9 +111,16 @@
     return /دفع|تحويل|شام\s*كاش|شامكاش|ايصال|اشعار\s*دفع|تحقق\s*من\s*الدفع|رصيد\s*دفع|فاتوره\s*دفع/.test(norm);
   }
 
+  customRecipesDB = loadLocalRecipesFallback();
   if (typeof db !== "undefined" && db.ref) {
     db.ref("recipes").on("value", snap => {
-      customRecipesDB = snap.val() || {};
+      const cloud = snap.val() || {};
+      customRecipesDB = { ...loadLocalRecipesFallback(), ...cloud };
+      if (typeof window.renderAdminRecipesList === "function") {
+        window.renderAdminRecipesList();
+      }
+    }, () => {
+      customRecipesDB = loadLocalRecipesFallback();
       if (typeof window.renderAdminRecipesList === "function") {
         window.renderAdminRecipesList();
       }
@@ -389,7 +396,7 @@
     }
   }
 
-  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_v65";
+  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_v68";
   const missingLocalClips = new Set();
 
   function detectStaticClipName(persona, spokenText) {
@@ -668,7 +675,7 @@
     const baseId = String(pid || "").replace(/_PKG$/, "");
     const pObj = products?.[baseId] || specialOffers?.[pid];
     if (!pObj) return 0;
-    return typeof getProductStockForBranch === "function" ? getProductStockForBranch(pObj, activeBranchId) : (parseInt(pObj.stock) || 0);
+    return typeof getProductStockForBranch === "function" ? getProductStockForBranch(pObj, typeof activeBranchId !== "undefined" ? activeBranchId : "main") : (parseInt(pObj.stock) || 0);
   }
 
   function renderFairyAvatarImage(imgEl, persona) {
@@ -1097,15 +1104,35 @@
       renderAdminBrainUnmatchedList();
     }
 
+    const LOCAL_SYN_KEY = "moaath_local_synonyms_v68";
+
+    function saveLocalSynonymFallback(id, parts) {
+      try {
+        const cur = JSON.parse(localStorage.getItem(LOCAL_SYN_KEY) || "{}");
+        cur[id] = parts;
+        localStorage.setItem(LOCAL_SYN_KEY, JSON.stringify(cur));
+      } catch (_) {}
+    }
+
     window.saveAdminBrainSynonym = function () {
       const raw = String($("admBrainSynInput")?.value || "").trim();
       const parts = raw.split(/[،,]/).map(s => s.trim()).filter(Boolean);
       if (parts.length < 2) return alert("⚠️ أدخل كلمتين أو أكثر مفصولتين بفاصلة.");
-      if (typeof db === "undefined" || !db.ref) return alert("⚠️ قاعدة البيانات غير متاحة حالياً.");
       const id = "SYN_" + Date.now();
+      saveLocalSynonymFallback(id, parts);
+
+      if (typeof db === "undefined" || !db || typeof db.ref !== "function") {
+        setVal("admBrainSynInput", "");
+        showToast("✅ تم حفظ المرادفات محلياً على الجهاز!");
+        return;
+      }
+
       db.ref(`ai_brain/synonyms/${id}`).set(parts).then(() => {
         setVal("admBrainSynInput", "");
         showToast("✅ تم حفظ المرادفات في العقل الذكي!");
+      }).catch(() => {
+        setVal("admBrainSynInput", "");
+        showToast("✅ تم حفظ المرادفات محلياً (صلاحيات Firebase على ai_brain/synonyms مقيدة).");
       });
     };
 
@@ -1194,7 +1221,7 @@
       const openNow = typeof isGlobalStoreOpenNow === "function" ? isGlobalStoreOpenNow() : true;
       const wh = workHoursSettings || {};
       const hours = wh.enabled ? `من ${wh.open || "08:00"} إلى ${wh.close || "23:00"}` : "متاح للطلب حالياً";
-      const branch = typeof getBranchName === "function" ? getBranchName(activeBranchId) : "الرئيسي";
+      const branch = typeof getBranchName === "function" ? getBranchName(typeof activeBranchId !== "undefined" ? activeBranchId : "main") : "الرئيسي";
       return openNow
         ? `نعم، المتجر مفتوح الآن في فرع ${branch}، ومواعيد الدوام ${hours}.`
         : `المتجر مغلق حالياً، مواعيد الدوام ${hours}.`;
@@ -1800,7 +1827,7 @@
             prompt: promptTxt,
             catalog: catalogSummary,
             currentCart: currentCartSummary,
-            storeMeta: { persona: persona.name, branch: activeBranchId }
+            storeMeta: { persona: persona.name, branch: typeof activeBranchId !== "undefined" ? activeBranchId : "main" }
           })
         });
         const aiJson = await aiRes.json();
@@ -1904,8 +1931,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v65Bound) return;
-    orb.dataset.v65Bound = "1";
+    if (!orb || !root || orb.dataset.v68Bound) return;
+    orb.dataset.v68Bound = "1";
 
     ensureGroundShadow(root);
 
@@ -2028,6 +2055,35 @@
     }).join("");
   }
 
+  const LOCAL_RECIPES_KEY = "moaath_local_recipes_v68";
+
+  function loadLocalRecipesFallback() {
+    try {
+      const d = JSON.parse(localStorage.getItem(LOCAL_RECIPES_KEY) || "{}");
+      return d && typeof d === "object" ? d : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function saveLocalRecipeFallback(recipeObj) {
+    const cur = loadLocalRecipesFallback();
+    cur[recipeObj.id] = recipeObj;
+    localStorage.setItem(LOCAL_RECIPES_KEY, JSON.stringify(cur));
+    customRecipesDB = { ...loadLocalRecipesFallback(), ...(customRecipesDB || {}), [recipeObj.id]: recipeObj };
+  }
+
+  function deleteLocalRecipeFallback(rId) {
+    const cur = loadLocalRecipesFallback();
+    if (cur[rId]) {
+      delete cur[rId];
+      localStorage.setItem(LOCAL_RECIPES_KEY, JSON.stringify(cur));
+    }
+    if (customRecipesDB && customRecipesDB[rId]) {
+      delete customRecipesDB[rId];
+    }
+  }
+
   window.saveAdminRecipe = function () {
     const editId = ($("admRecipeEditId")?.value || "").trim();
     const title = ($("admRecipeTitle")?.value || "").trim();
@@ -2046,7 +2102,7 @@
     }
 
     const rId = editId || ("REC_" + Date.now());
-    db.ref(`recipes/${rId}`).set({
+    const payload = {
       id: rId,
       title,
       category,
@@ -2054,10 +2110,33 @@
       ingredients,
       productIds,
       updatedAt: new Date().toISOString()
-    }).then(() => {
+    };
+
+    const finishLocalSave = (noteToast) => {
+      saveLocalRecipeFallback(payload);
       resetAdminRecipeForm();
+      if (typeof window.renderAdminRecipesList === "function") window.renderAdminRecipesList();
+      showToast(noteToast);
+    };
+
+    if (typeof db === "undefined" || !db || typeof db.ref !== "function") {
+      finishLocalSave(`✅ تم حفظ وصفة (${title}) محلياً على الجهاز!`);
+      return;
+    }
+
+    db.ref(`recipes/${rId}`).set(payload).then(() => {
+      saveLocalRecipeFallback(payload);
+      resetAdminRecipeForm();
+      if (typeof window.renderAdminRecipesList === "function") window.renderAdminRecipesList();
       showToast(`✅ تم حفظ وصفة (${title}) بنجاح!`);
-    }).catch(err => alert("❌ خطأ أثناء الحفظ: " + err.message));
+    }).catch(err => {
+      const msg = String(err?.message || err || "");
+      if (/permission_denied/i.test(msg)) {
+        finishLocalSave(`✅ تم حفظ وصفة (${title}) محلياً (صلاحيات Firebase على المسار recipes مغلقة).`);
+      } else {
+        finishLocalSave(`✅ تم حفظ وصفة (${title}) محلياً بعد تعذر الحفظ السحابي.`);
+      }
+    });
   };
 
   window.editAdminRecipe = function (rId) {
@@ -2076,7 +2155,13 @@
   window.deleteAdminRecipe = function (rId) {
     const r = customRecipesDB?.[rId];
     if (!r || !confirm(`هل تريد حذف وصفة (${r.title}) نهائياً؟`)) return;
-    db.ref(`recipes/${rId}`).set(null).then(() => showToast("🗑️ تم حذف الوصفة"));
+    deleteLocalRecipeFallback(rId);
+    if (typeof window.renderAdminRecipesList === "function") window.renderAdminRecipesList();
+    if (typeof db !== "undefined" && db && typeof db.ref === "function") {
+      db.ref(`recipes/${rId}`).set(null).then(() => showToast("🗑️ تم حذف الوصفة")).catch(() => showToast("🗑️ تم حذف الوصفة محلياً"));
+    } else {
+      showToast("🗑️ تم حذف الوصفة محلياً");
+    }
   };
 
   window.resetAdminRecipeForm = function () {
@@ -2119,7 +2204,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v65",
+      version: "v68",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
@@ -2132,11 +2217,11 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v65]", report);
+    console.info("[QA Assistant Diagnostic v68]", report);
     return report;
   };
 
-  function mountV65() {
+  function mountV68() {
     window.analyzeShamCashReceiptOCR();
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
@@ -2192,8 +2277,8 @@
     }
 
     // احترام هدوء الزبون عند التركيز على حقول البحث أو الكتابة
-    if (!window.__MOAATH_QUIET_HOOK_V65__) {
-      window.__MOAATH_QUIET_HOOK_V65__ = true;
+    if (!window.__MOAATH_QUIET_HOOK_V68__) {
+      window.__MOAATH_QUIET_HOOK_V68__ = true;
       document.addEventListener("focusin", (e) => {
         if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) {
           pauseRoaming(12000);
@@ -2205,7 +2290,7 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV65";
+      styleTag.id = "petCharStyleV68";
       styleTag.textContent = `
         @keyframes fairyHover3D {
           0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
@@ -2215,16 +2300,16 @@
           0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.42; }
           50% { transform: translateX(-50%) scale(0.75); opacity: 0.22; }
         }
-        @keyframes fairyRingV65 {
+        @keyframes fairyRingV68 {
           0% { transform: scale(1); opacity: 0.9; }
           100% { transform: scale(1.38); opacity: 0; }
         }
-        @keyframes micPulseV65 {
+        @keyframes micPulseV68 {
           0%, 100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
           50% { box-shadow: 0 0 0 7px rgba(0, 230, 118, 0); }
         }
         .mic-listening-pulse {
-          animation: micPulseV65 1s infinite !important;
+          animation: micPulseV68 1s infinite !important;
           background: rgba(0, 230, 118, 0.35) !important;
         }
         #petCharRoot {
@@ -2259,7 +2344,7 @@
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV65 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV68 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 72px; right: 0; max-width: 235px; width: max-content;
@@ -2292,7 +2377,7 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV65(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV68(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
@@ -2310,6 +2395,6 @@
   window.addEventListener("online", syncConnectivityBadge);
   window.addEventListener("offline", syncConnectivityBadge);
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV65);
-  else mountV65();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV68);
+  else mountV68();
 })();
