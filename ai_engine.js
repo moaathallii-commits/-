@@ -265,6 +265,7 @@
 
   function stopEmbeddedVoice() {
     ttsRequestSeq++;
+    try { if (typeof window.speechSynthesis !== "undefined") window.speechSynthesis.cancel(); } catch (_) {}
     if (activeBufferSource) {
       try { activeBufferSource.stop(); } catch (_) {}
       try { activeBufferSource.disconnect(); } catch (_) {}
@@ -279,19 +280,24 @@
   }
 
   function humanizeArabicNumbersForSpeech(txt) {
+    const smallMap = {
+      "0": "صفر", "1": "واحد", "2": "اثنين", "3": "ثلاثة", "4": "أربعة",
+      "5": "خمسة", "6": "ستة", "7": "سبعة", "8": "ثمانية", "9": "تسعة", "10": "عشرة"
+    };
     return String(txt || "")
       .replace(/\b1\s*(مواد|قطع|اصناف|أصناف)\b/g, "صنف واحد")
       .replace(/\b2\s*(مواد|قطع|اصناف|أصناف)\b/g, "صنفين")
+      .replace(/\b(\d+)\s*%/g, "$1 بالمئة")
       .replace(/\b(\d+)\s*ل\.?س\b/g, "$1 ليرة")
-      .replace(/\b0\b/g, "صفر");
+      .replace(/\b([0-9]|10)\b/g, (m) => smallMap[m] || m);
   }
 
-  function shortenForSpeech(text, maxWords = 16) {
+  function shortenForSpeech(text, maxWords = 26) {
     const words = String(text || "").trim().split(/\s+/).filter(Boolean);
     if (words.length <= maxWords) return words.join(" ");
     const sliced = words.slice(0, maxWords).join(" ");
-    const lastPunct = Math.max(sliced.lastIndexOf("،"), sliced.lastIndexOf("."), sliced.lastIndexOf("!"));
-    if (lastPunct > sliced.length * 0.55) return sliced.slice(0, lastPunct + 1).trim();
+    const lastPunct = Math.max(sliced.lastIndexOf("،"), sliced.lastIndexOf("؛"), sliced.lastIndexOf("."), sliced.lastIndexOf("!"), sliced.lastIndexOf("؟"));
+    if (lastPunct > sliced.length * 0.5) return sliced.slice(0, lastPunct + 1).trim();
     return sliced;
   }
 
@@ -306,7 +312,28 @@
       .replace(/\s*([،؛.!؟])\s*/g, "$1 ")
       .replace(/\s+/g, " ")
       .trim();
-    return shortenForSpeech(cleaned, 16);
+    return shortenForSpeech(cleaned, 26);
+  }
+
+  function speakViaWebSpeechFallback(spokenText, persona) {
+    if (typeof window.speechSynthesis === "undefined" || !spokenText) return false;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(spokenText);
+      u.lang = "ar-SA";
+      u.rate = Math.max(0.9, Math.min(1.35, persona.speed || 1.2));
+      const semi = typeof persona.pitchSemitones === "number" ? persona.pitchSemitones : 0;
+      u.pitch = Math.max(0.75, Math.min(1.35, 1 + semi * 0.08));
+      const voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+      const arVoice = voices.find(v => /ar/i.test(v.lang || ""));
+      if (arVoice) u.voice = arVoice;
+      window.speechSynthesis.speak(u);
+      sessionCtx.lastTtsSource = "web_speech";
+      updateVoiceSourceBadge("🔊 يتحدث", "#38bdf8", "نطق محلي فوري");
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   function base64ToUint8Array(base64Data) {
@@ -544,7 +571,9 @@
       return;
     }
     if (navigator.onLine === false) {
-      updateVoiceSourceBadge("🟡 محلي", "#ff9800", "لا يوجد اتصال بالإنترنت");
+      if (!speakViaWebSpeechFallback(spokenText, persona)) {
+        updateVoiceSourceBadge("🟡 محلي", "#ff9800", "لا يوجد اتصال بالإنترنت");
+      }
       return;
     }
 
@@ -560,6 +589,7 @@
           voiceName,
           gender: persona.gender || "male",
           toneTag: persona.toneTag || "",
+          dialectMode: persona.dialectMode || "shami_friendly",
           pitchSemitones: typeof persona.pitchSemitones === "number" ? persona.pitchSemitones : 0,
           styleHint: persona.styleHint || ""
         })
@@ -568,7 +598,9 @@
       if (mySeq !== ttsRequestSeq) return;
 
       if (!res.ok || !json?.ok || !json?.audioBase64) {
-        updateVoiceSourceBadge("🟢 جاهز", "#00e676", "جاهز");
+        if (!speakViaWebSpeechFallback(spokenText, persona)) {
+          updateVoiceSourceBadge("🟢 جاهز", "#00e676", "جاهز");
+        }
         return;
       }
 
@@ -609,7 +641,9 @@
       ttsAudioCache.set(cacheKey, entry);
       await playEntry(entry);
     } catch (_) {
-      updateVoiceSourceBadge("🟡 محلي", "#ff9800", "اتصال محدود");
+      if (!speakViaWebSpeechFallback(spokenText, persona)) {
+        updateVoiceSourceBadge("🟡 محلي", "#ff9800", "اتصال محدود");
+      }
     }
   }
 
@@ -1836,7 +1870,7 @@
             prompt: promptTxt,
             catalog: catalogSummary,
             currentCart: currentCartSummary,
-            storeMeta: { persona: persona.name, branch: typeof activeBranchId !== "undefined" ? activeBranchId : "main" }
+            storeMeta: { persona: persona.name, dialectMode: persona.dialectMode || "shami_friendly", branch: typeof activeBranchId !== "undefined" ? activeBranchId : "main" }
           })
         });
         const aiJson = await aiRes.json();
