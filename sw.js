@@ -1,14 +1,23 @@
 // ============================================================================
-// Service Worker (v69) لمتجر معاذ - Offline-First Shell + ai_brain.js Support
-// - يضمن فتح التطبيق والعمل دون إنترنت بسلاسة للواجهة، المحرك، العقل الذكي، والصور
+// Service Worker لمتجر معاذ (تحديث تلقائي بدون أرقام إصدار + دعم العمل دون إنترنت)
+// - يستخدم Network-First لملفات الواجهة والسكربتات لضمان وصول التحديثات فوراً
+// - يستخدم الكاش عند انقطاع الإنترنت أو فشل الشبكة
 // - يتجنب تخزين طلبات API الخارجية مثل Cloudflare Worker وFirebase وGoogle TTS
-// - يدعم التحديث الفوري وتنظيف الكاش القديم تلقائياً
 // ============================================================================
 
-const CACHE_VERSION = "moaath-store-v69";
-const STATIC_CACHE = `${CACHE_VERSION}-static`;
-const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
+const STATIC_CACHE = "moaath-store-shell-static";
+const RUNTIME_CACHE = "moaath-store-shell-runtime";
 const MAX_RUNTIME_ITEMS = 80;
+
+const SCRIPT_AND_DOC_ASSETS = new Set([
+  "./",
+  "./index.html",
+  "./ai_brain.js",
+  "./ai_personas.js",
+  "./ai_recipes.js",
+  "./ai_engine.js",
+  "./manifest.json"
+]);
 
 const PRECACHE_ASSETS = [
   "./",
@@ -38,7 +47,7 @@ self.addEventListener("install", (event) => {
       await Promise.allSettled(
         PRECACHE_ASSETS.map(async (assetUrl) => {
           try {
-            const resp = await fetch(assetUrl, { cache: "no-cache" });
+            const resp = await fetch(assetUrl, { cache: "no-store" });
             if (resp && resp.ok) {
               await cache.put(assetUrl, resp);
             }
@@ -96,6 +105,14 @@ function isBypassRequest(urlObj, request) {
   return false;
 }
 
+function isScriptOrDoc(urlObj, request) {
+  if (request.mode === "navigate") return true;
+  const path = (urlObj.pathname || "").toLowerCase();
+  if (path.endsWith(".html") || path.endsWith(".js") || path.endsWith(".json")) return true;
+  const cleanUrl = path.split("?")[0];
+  return SCRIPT_AND_DOC_ASSETS.has(cleanUrl) || cleanUrl.endsWith("/");
+}
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   let urlObj;
@@ -109,24 +126,30 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (request.mode === "navigate") {
+  // Network-First للملفات البرمجية والصفحات لضمان وصول التحديثات فوراً بدون أرقام إصدار
+  if (isScriptOrDoc(urlObj, request)) {
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: "no-store" })
         .then((networkResp) => {
-          if (networkResp && networkResp.ok) {
+          if (networkResp && networkResp.ok && urlObj.origin === self.location.origin) {
             const copy = networkResp.clone();
-            caches.open(STATIC_CACHE).then((c) => c.put("./index.html", copy)).catch(() => {});
+            caches.open(STATIC_CACHE).then((c) => c.put(request, copy)).catch(() => {});
           }
           return networkResp;
         })
         .catch(async () => {
-          const cachedIndex = await caches.match("./index.html");
-          return cachedIndex || caches.match("./");
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          if (request.mode === "navigate") {
+            return (await caches.match("./index.html")) || caches.match("./");
+          }
+          return new Response("Offline", { status: 503, statusText: "Service Unavailable" });
         })
     );
     return;
   }
 
+  // للصور والملفات الثابتة الأخرى: كاش أولاً مع تحديث خلفي
   event.respondWith(
     caches.match(request).then((cachedResp) => {
       const networkFetch = fetch(request)
