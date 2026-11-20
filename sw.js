@@ -1,12 +1,12 @@
 // ============================================================================
-// Service Worker لمتجر معاذ (Offline-First Shell + Network-First Scripts)
-// - يضمن فتح التطبيق والعمل دون إنترنت بسلاسة للواجهة، المحرك، العقل، الشخصيات، والصور
-// - يجلب تحديثات ملفات .js تلقائياً من الشبكة دون الحاجة لتغيير أسماء الملفات أو ?v=
-// - يتجنب تخزين طلبات API الخارجية (Cloudflare Worker و Firebase و Google TTS)
+// Service Worker (v69) لمتجر معاذ - Offline-First Shell + ai_brain.js Support
+// - يضمن فتح التطبيق والعمل دون إنترنت بسلاسة للواجهة، المحرك، العقل الذكي، والصور
+// - يتجنب تخزين طلبات API الخارجية مثل Cloudflare Worker وFirebase وGoogle TTS
+// - يدعم التحديث الفوري وتنظيف الكاش القديم تلقائياً
 // ============================================================================
 
-const CACHE_VERSION = "moaath-store-static";
-const STATIC_CACHE = `${CACHE_VERSION}-core`;
+const CACHE_VERSION = "moaath-store-v69";
+const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const MAX_RUNTIME_ITEMS = 80;
 
@@ -127,23 +127,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // الملفات البرمجية (.js): Network-First حتى تصل التحديثات فوراً دون تغيير اسم الملف أو ?v=
-  if (request.destination === "script" || urlObj.pathname.endsWith(".js")) {
-    event.respondWith(
-      fetch(request, { cache: "no-cache" })
-        .then((freshResp) => {
-          if (freshResp && freshResp.ok && urlObj.origin === self.location.origin) {
-            const clone = freshResp.clone();
-            caches.open(STATIC_CACHE).then((c) => c.put(request, clone)).catch(() => {});
-          }
-          return freshResp;
-        })
-        .catch(() => caches.match(request))
-    );
-    return;
-  }
-
-  // الصور والأصوات والملفات الأخرى: Cache-First مع تحديث خلفي
   event.respondWith(
     caches.match(request).then((cachedResp) => {
       const networkFetch = fetch(request)
