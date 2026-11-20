@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v54 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v55 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -8,12 +8,12 @@
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V54_LOADED__) return;
-  window.__MOAATH_AI_V54_LOADED__ = true;
+  if (window.__MOAATH_AI_V55_LOADED__) return;
+  window.__MOAATH_AI_V55_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v54_prefs";
-  const POS_KEY = "moaath_pet_v54_pos";
-  const LEARN_KEY = "moaath_pet_v54_learned";
+  const PREFS_KEY = "moaath_pet_v55_prefs";
+  const POS_KEY = "moaath_pet_v55_pos";
+  const LEARN_KEY = "moaath_pet_v55_learned";
 
   const PERSONAS = {
     buddy: {
@@ -445,6 +445,70 @@
     }
   }
 
+  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_v55";
+  const missingLocalClips = new Set();
+
+  function detectStaticClipName(persona, spokenText) {
+    const t = normalizeTextForArabicSpeech(spokenText);
+    if (t === normalizeTextForArabicSpeech(persona.greet)) return "greet";
+    if (t === normalizeTextForArabicSpeech(persona.chatGood)) return "chatGood";
+    if (t === normalizeTextForArabicSpeech(persona.thanks)) return "thanks";
+    return null;
+  }
+
+  async function tryLocalRepoClip(persona, spokenText, mySeq) {
+    const clipName = detectStaticClipName(persona, spokenText);
+    if (!clipName) return false;
+    const relUrl = `sounds/${persona.id}_${clipName}.mp3`;
+    if (missingLocalClips.has(relUrl)) return false;
+
+    try {
+      const res = await fetch(relUrl, { method: "GET", cache: "force-cache" });
+      if (!res.ok) {
+        missingLocalClips.add(relUrl);
+        return false;
+      }
+      const cType = res.headers.get("content-type") || "";
+      if (/text\/html/i.test(cType)) {
+        missingLocalClips.add(relUrl);
+        return false;
+      }
+      const blob = await res.blob();
+      if (mySeq !== ttsRequestSeq) return true;
+      const blobUrl = URL.createObjectURL(blob);
+      const entry = { url: blobUrl, source: "local_repo", geminiError: "" };
+      updateVoiceSourceBadge("🟢 صوت محلي", "#00e676", relUrl);
+      playViaHtmlAudio(entry, persona, mySeq);
+      return true;
+    } catch (_) {
+      missingLocalClips.add(relUrl);
+      return false;
+    }
+  }
+
+  async function readPersistentHumanCache(cacheKey) {
+    if (typeof caches === "undefined") return null;
+    try {
+      const cache = await caches.open(PERSISTENT_TTS_CACHE_NAME);
+      const reqUrl = "https://moaath-tts.local/" + encodeURIComponent(cacheKey);
+      const match = await cache.match(reqUrl);
+      if (!match) return null;
+      const blob = await match.blob();
+      return URL.createObjectURL(blob);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async function writePersistentHumanCache(cacheKey, blob) {
+    if (typeof caches === "undefined" || !blob) return;
+    try {
+      const cache = await caches.open(PERSISTENT_TTS_CACHE_NAME);
+      const reqUrl = "https://moaath-tts.local/" + encodeURIComponent(cacheKey);
+      await cache.put(reqUrl, new Response(blob, { headers: { "Content-Type": blob.type || "audio/wav" } }));
+    } catch (_) {}
+  }
+
   async function speakOutLoud(rawText, force = false) {
     const prefs = getPrefs();
     if (!prefs.voiceEnabled && !force) return;
@@ -465,8 +529,8 @@
       sessionCtx.lastTtsSource = entry.source;
       sessionCtx.lastGeminiError = entry.geminiError || "";
 
-      if (entry.source === "gemini_tts") {
-        updateVoiceSourceBadge("🟢 صوت بشري", "#00e676", "Gemini TTS");
+      if (entry.source === "gemini_tts" || entry.source === "persistent_cache") {
+        updateVoiceSourceBadge("🟢 صوت بشري", "#00e676", entry.source === "persistent_cache" ? "من ذاكرة الهاتف الدائمة" : "Gemini TTS");
         playViaHtmlAudio(entry, persona, mySeq);
       } else {
         const shortErr = entry.geminiError ? String(entry.geminiError).split(":")[0] : "TTS";
@@ -479,8 +543,22 @@
       }
     };
 
+    // 1) التحقق أولاً من ملفات الصوت الثابتة في مستودع GitHub (sounds/<id>_greet.mp3)
+    const playedLocal = await tryLocalRepoClip(persona, spokenText, mySeq);
+    if (playedLocal) return;
+
+    // 2) التحقق من الكاش في الذاكرة الحالية
     if (ttsAudioCache.has(cacheKey)) {
       await playEntry(ttsAudioCache.get(cacheKey));
+      return;
+    }
+
+    // 3) التحقق من الكاش الدائم في الهاتف (Cache API) لتجنب استهلاك الحصة
+    const persistedUrl = await readPersistentHumanCache(cacheKey);
+    if (persistedUrl && mySeq === ttsRequestSeq) {
+      const pEntry = { url: persistedUrl, rawBuffer: null, source: "persistent_cache", geminiError: "" };
+      ttsAudioCache.set(cacheKey, pEntry);
+      await playEntry(pEntry);
       return;
     }
 
@@ -517,16 +595,19 @@
       }
 
       let rawBuffer = null;
+      let audioBlob = null;
       let blobUrl = "";
       if (/pcm|L16/i.test(json.mimeType || "")) {
         const rateMatch = String(json.mimeType).match(/rate=(\d+)/i);
         const rate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
         rawBuffer = pcmBase64ToWavArrayBuffer(json.audioBase64, rate);
-        blobUrl = URL.createObjectURL(new Blob([rawBuffer], { type: "audio/wav" }));
+        audioBlob = new Blob([rawBuffer], { type: "audio/wav" });
+        blobUrl = URL.createObjectURL(audioBlob);
       } else {
         const bytes = base64ToUint8Array(json.audioBase64);
         rawBuffer = bytes.buffer;
-        blobUrl = URL.createObjectURL(new Blob([bytes], { type: json.mimeType || "audio/mpeg" }));
+        audioBlob = new Blob([bytes], { type: json.mimeType || "audio/mpeg" });
+        blobUrl = URL.createObjectURL(audioBlob);
       }
 
       const entry = {
@@ -535,6 +616,11 @@
         source: json.source || "google_tts",
         geminiError: json.geminiError || ""
       };
+
+      // حفظ الصوت البشري الأصلي فقط في الكاش الدائم على الهاتف (لا نحفظ البديل دائماً حتى يُستبدل بالبشري فور تجدد الحصة)
+      if (entry.source === "gemini_tts" && audioBlob) {
+        writePersistentHumanCache(cacheKey, audioBlob);
+      }
 
       if (ttsAudioCache.size > 30) {
         const firstKey = ttsAudioCache.keys().next().value;
@@ -1517,8 +1603,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v54Bound) return;
-    orb.dataset.v54Bound = "1";
+    if (!orb || !root || orb.dataset.v55Bound) return;
+    orb.dataset.v55Bound = "1";
 
     ensureGroundShadow(root);
 
@@ -1732,7 +1818,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v54",
+      version: "v55",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
@@ -1745,11 +1831,11 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v54]", report);
+    console.info("[QA Assistant Diagnostic v55]", report);
     return report;
   };
 
-  function mountV54() {
+  function mountV55() {
     window.analyzeShamCashReceiptOCR();
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
@@ -1778,7 +1864,7 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV54";
+      styleTag.id = "petCharStyleV55";
       styleTag.textContent = `
         @keyframes fairyHover3D {
           0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
@@ -1788,7 +1874,7 @@
           0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.42; }
           50% { transform: translateX(-50%) scale(0.75); opacity: 0.22; }
         }
-        @keyframes fairyRingV54 {
+        @keyframes fairyRingV55 {
           0% { transform: scale(1); opacity: 0.9; }
           100% { transform: scale(1.38); opacity: 0; }
         }
@@ -1824,7 +1910,7 @@
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV54 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV55 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 72px; right: 0; max-width: 235px; width: max-content;
@@ -1857,7 +1943,7 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV54(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV55(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
@@ -1872,6 +1958,6 @@
   window.addEventListener("online", syncConnectivityBadge);
   window.addEventListener("offline", syncConnectivityBadge);
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV54);
-  else mountV54();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV55);
+  else mountV55();
 })();
