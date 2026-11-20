@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v69 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v70 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -8,12 +8,12 @@
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V69_LOADED__) return;
-  window.__MOAATH_AI_V69_LOADED__ = true;
+  if (window.__MOAATH_AI_LOADED__) return;
+  window.__MOAATH_AI_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v69_prefs";
-  const POS_KEY = "moaath_pet_v69_pos";
-  const LEARN_KEY = "moaath_pet_v69_learned";
+  const PREFS_KEY = "moaath_store_pet_prefs";
+  const POS_KEY = "moaath_store_pet_pos";
+  const LEARN_KEY = "moaath_store_pet_learned";
 
   const FALLBACK_BUDDY = {
     id: "buddy",
@@ -359,7 +359,7 @@
     player.preservesPitch = true;
     player.mozPreservesPitch = true;
     player.webkitPreservesPitch = true;
-    player.playbackRate = persona.speed || 1.22;
+    player.playbackRate = persona.speed || 1.38;
     const p = player.play();
     if (p && typeof p.catch === "function") {
       p.catch(() => {
@@ -379,11 +379,13 @@
 
       const src = ctx.createBufferSource();
       src.buffer = decoded;
-      // إبقاء النبرة قريبة من الطبيعي قدر الإمكان لتجنب صوت الروبوت أو التضخيم المزعج
+      const pitchShift = typeof persona.pitchSemitones === "number"
+        ? persona.pitchSemitones * 100
+        : (persona.fallbackDetune || 0);
       if (src.detune) {
-        src.detune.value = Math.max(-90, Math.min(90, (persona.fallbackDetune || 0) * 0.25));
+        src.detune.value = Math.max(-320, Math.min(320, pitchShift));
       }
-      src.playbackRate.value = persona.fallbackRate || 1.13;
+      src.playbackRate.value = persona.fallbackRate || persona.speed || 1.35;
       src.connect(ctx.destination);
       activeBufferSource = src;
       src.onended = () => {
@@ -396,7 +398,7 @@
     }
   }
 
-  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_v68";
+  const PERSISTENT_TTS_CACHE_NAME = "moaath_store_tts_human";
   const missingLocalClips = new Set();
 
   function detectStaticClipName(persona, spokenText) {
@@ -556,6 +558,9 @@
           mode: "tts",
           text: spokenText,
           voiceName,
+          gender: persona.gender || "male",
+          toneTag: persona.toneTag || "",
+          pitchSemitones: typeof persona.pitchSemitones === "number" ? persona.pitchSemitones : 0,
           styleHint: persona.styleHint || ""
         })
       });
@@ -1104,7 +1109,7 @@
       renderAdminBrainUnmatchedList();
     }
 
-    const LOCAL_SYN_KEY = "moaath_local_synonyms_v68";
+    const LOCAL_SYN_KEY = "moaath_store_local_synonyms";
 
     function saveLocalSynonymFallback(id, parts) {
       try {
@@ -1262,7 +1267,11 @@
       };
     }).filter(Boolean);
 
-    return [...adminList, ...DEFAULT_RECIPES];
+    const bank250 = (window.MoaathAIRecipes && Array.isArray(window.MoaathAIRecipes.recipes))
+      ? window.MoaathAIRecipes.recipes
+      : [];
+
+    return [...adminList, ...bank250, ...DEFAULT_RECIPES];
   }
 
   function matchRecipeOrSweet(normText) {
@@ -1931,8 +1940,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v68Bound) return;
-    orb.dataset.v68Bound = "1";
+    if (!orb || !root || orb.dataset.orbBound) return;
+    orb.dataset.orbBound = "1";
 
     ensureGroundShadow(root);
 
@@ -2055,7 +2064,7 @@
     }).join("");
   }
 
-  const LOCAL_RECIPES_KEY = "moaath_local_recipes_v68";
+  const LOCAL_RECIPES_KEY = "moaath_store_local_recipes";
 
   function loadLocalRecipesFallback() {
     try {
@@ -2204,7 +2213,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v68",
+      version: "v70",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
@@ -2217,11 +2226,11 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v68]", report);
+    console.info("[QA Assistant Diagnostic v70]", report);
     return report;
   };
 
-  function mountV68() {
+  function mountAssistant() {
     window.analyzeShamCashReceiptOCR();
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
@@ -2277,8 +2286,8 @@
     }
 
     // احترام هدوء الزبون عند التركيز على حقول البحث أو الكتابة
-    if (!window.__MOAATH_QUIET_HOOK_V68__) {
-      window.__MOAATH_QUIET_HOOK_V68__ = true;
+    if (!window.__MOAATH_QUIET_HOOK__) {
+      window.__MOAATH_QUIET_HOOK__ = true;
       document.addEventListener("focusin", (e) => {
         if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) {
           pauseRoaming(12000);
@@ -2290,7 +2299,7 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV68";
+      styleTag.id = "petCharStyle";
       styleTag.textContent = `
         @keyframes fairyHover3D {
           0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
@@ -2300,16 +2309,16 @@
           0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.42; }
           50% { transform: translateX(-50%) scale(0.75); opacity: 0.22; }
         }
-        @keyframes fairyRingV68 {
+        @keyframes fairyRing {
           0% { transform: scale(1); opacity: 0.9; }
           100% { transform: scale(1.38); opacity: 0; }
         }
-        @keyframes micPulseV68 {
+        @keyframes micPulse {
           0%, 100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
           50% { box-shadow: 0 0 0 7px rgba(0, 230, 118, 0); }
         }
         .mic-listening-pulse {
-          animation: micPulseV68 1s infinite !important;
+          animation: micPulse 1s infinite !important;
           background: rgba(0, 230, 118, 0.35) !important;
         }
         #petCharRoot {
@@ -2344,7 +2353,7 @@
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV68 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRing 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 72px; right: 0; max-width: 235px; width: max-content;
@@ -2377,7 +2386,7 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV68(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountAssistant(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
@@ -2395,6 +2404,6 @@
   window.addEventListener("online", syncConnectivityBadge);
   window.addEventListener("offline", syncConnectivityBadge);
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV69);
-  else mountV69();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountAssistant);
+  else mountAssistant();
 })();
