@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v55 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v56 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -8,12 +8,12 @@
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V55_LOADED__) return;
-  window.__MOAATH_AI_V55_LOADED__ = true;
+  if (window.__MOAATH_AI_V56_LOADED__) return;
+  window.__MOAATH_AI_V56_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v55_prefs";
-  const POS_KEY = "moaath_pet_v55_pos";
-  const LEARN_KEY = "moaath_pet_v55_learned";
+  const PREFS_KEY = "moaath_pet_v56_prefs";
+  const POS_KEY = "moaath_pet_v56_pos";
+  const LEARN_KEY = "moaath_pet_v56_learned";
 
   const PERSONAS = {
     buddy: {
@@ -445,7 +445,7 @@
     }
   }
 
-  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_v55";
+  const PERSISTENT_TTS_CACHE_NAME = "moaath_tts_human_v56";
   const missingLocalClips = new Set();
 
   function detectStaticClipName(persona, spokenText) {
@@ -456,11 +456,21 @@
     return null;
   }
 
-  async function tryLocalRepoClip(persona, spokenText, mySeq) {
+  async function tryLocalRepoClip(persona, spokenText, mySeq, cacheKey) {
     const clipName = detectStaticClipName(persona, spokenText);
     if (!clipName) return false;
     const relUrl = `sounds/${persona.id}_${clipName}.mp3`;
     if (missingLocalClips.has(relUrl)) return false;
+
+    if (ttsAudioCache.has(cacheKey)) {
+      const cached = ttsAudioCache.get(cacheKey);
+      if (cached?.source === "local_repo") {
+        sessionCtx.lastTtsSource = "local_repo";
+        updateVoiceSourceBadge("🟢 صوت محلي", "#00e676", relUrl);
+        playViaHtmlAudio(cached, persona, mySeq);
+        return true;
+      }
+    }
 
     try {
       const res = await fetch(relUrl, { method: "GET", cache: "force-cache" });
@@ -476,7 +486,15 @@
       const blob = await res.blob();
       if (mySeq !== ttsRequestSeq) return true;
       const blobUrl = URL.createObjectURL(blob);
-      const entry = { url: blobUrl, source: "local_repo", geminiError: "" };
+      const entry = { url: blobUrl, rawBuffer: null, source: "local_repo", geminiError: "" };
+      if (ttsAudioCache.size > 30) {
+        const firstKey = ttsAudioCache.keys().next().value;
+        const oldEntry = ttsAudioCache.get(firstKey);
+        if (oldEntry?.url) URL.revokeObjectURL(oldEntry.url);
+        ttsAudioCache.delete(firstKey);
+      }
+      ttsAudioCache.set(cacheKey, entry);
+      sessionCtx.lastTtsSource = "local_repo";
       updateVoiceSourceBadge("🟢 صوت محلي", "#00e676", relUrl);
       playViaHtmlAudio(entry, persona, mySeq);
       return true;
@@ -504,6 +522,10 @@
     if (typeof caches === "undefined" || !blob) return;
     try {
       const cache = await caches.open(PERSISTENT_TTS_CACHE_NAME);
+      const keys = await cache.keys();
+      if (keys.length >= 25) {
+        await cache.delete(keys[0]);
+      }
       const reqUrl = "https://moaath-tts.local/" + encodeURIComponent(cacheKey);
       await cache.put(reqUrl, new Response(blob, { headers: { "Content-Type": blob.type || "audio/wav" } }));
     } catch (_) {}
@@ -544,7 +566,7 @@
     };
 
     // 1) التحقق أولاً من ملفات الصوت الثابتة في مستودع GitHub (sounds/<id>_greet.mp3)
-    const playedLocal = await tryLocalRepoClip(persona, spokenText, mySeq);
+    const playedLocal = await tryLocalRepoClip(persona, spokenText, mySeq, cacheKey);
     if (playedLocal) return;
 
     // 2) التحقق من الكاش في الذاكرة الحالية
@@ -770,8 +792,15 @@
     const badge = $("petConnStatusBadge");
     if (!badge) return;
     const online = navigator.onLine !== false;
-    badge.textContent = online ? "🟢 متصل" : "🟡 محلي";
-    badge.style.color = online ? "#00e676" : "#ff9800";
+    if (!online) {
+      badge.textContent = "🟡 محلي";
+      badge.style.color = "#ff9800";
+      return;
+    }
+    if (!sessionCtx.lastTtsSource) {
+      badge.textContent = "🟢 متصل";
+      badge.style.color = "#00e676";
+    }
   }
 
   function syncVisuals() {
@@ -833,15 +862,17 @@
     );
     if (modalOpen) return;
 
-    const maxR = Math.max(14, window.innerWidth - 82);
-    const minB = 94;
-    const maxB = Math.max(minB + 40, window.innerHeight - 175);
+    const maxR = Math.max(12, window.innerWidth - 76);
+    const minB = 96;
+    const maxB = Math.max(minB + 40, window.innerHeight - 185);
 
-    const curR = parseInt(root.style.right || "14", 10);
-    const curB = parseInt(root.style.bottom || "88", 10);
+    const curR = parseInt(root.style.right || "12", 10);
+    const curB = parseInt(root.style.bottom || "96", 10);
 
-    const nextR = Math.round(Math.max(14, Math.min(maxR, curR + (Math.random() - 0.5) * 145)));
-    const nextB = Math.round(Math.max(minB, Math.min(maxB, curB + (Math.random() - 0.5) * 155)));
+    // حصر التجوال على الحواف الجانبية فقط (يمين أو يسار) لتجنب تغطية أزرار الشراء
+    const stickLeft = curR > window.innerWidth / 2;
+    const nextR = stickLeft ? maxR : 12;
+    const nextB = Math.round(Math.max(minB, Math.min(maxB, curB + (Math.random() - 0.5) * 120)));
 
     const tiltY = nextR < curR ? 16 : -16;
     const tiltX = nextB > curB ? -12 : 12;
@@ -1540,6 +1571,56 @@
       return;
     }
 
+    // خيار أخير: استدعاء الذكاء الاصطناعي التفاعلي (companion_shop) مع حظر تام لأي أمر دفع
+    const workerUrl = resolveWorkerEndpoint();
+    if (workerUrl && navigator.onLine !== false) {
+      setOrbEmotion("thinking", "جاري البحث الذكي في أصناف المتجر...", false);
+      try {
+        const catalogSummary = Object.keys(products || {})
+          .filter(pid => getBranchAvail(pid) > 0)
+          .slice(0, 85)
+          .map(pid => ({ id: pid, name: products[pid].name, cat: products[pid].category || "", price: getUnitSYP(pid) }));
+        const currentCartSummary = Object.keys(cart || {}).map(k => ({ id: k, name: cart[k]?.name || "", qty: cart[k]?.qty || 0 }));
+        const aiRes = await fetch(workerUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mode: "companion_shop",
+            prompt: promptTxt,
+            catalog: catalogSummary,
+            currentCart: currentCartSummary,
+            storeMeta: { persona: persona.name, branch: activeBranchId }
+          })
+        });
+        const aiJson = await aiRes.json();
+        const aiData = aiJson?.data || {};
+        const aiItems = [];
+        (Array.isArray(aiData.items) ? aiData.items : []).forEach(it => {
+          if (it?.id && products?.[it.id] && getBranchAvail(it.id) > 0) {
+            aiItems.push({ id: it.id, name: products[it.id].name, reason: it.reason || "اقتراح ذكي" });
+          }
+        });
+        (Array.isArray(aiData.choices) ? aiData.choices : []).forEach(ch => {
+          if (ch?.id && products?.[ch.id] && getBranchAvail(ch.id) > 0 && !aiItems.some(x => x.id === ch.id)) {
+            aiItems.push({ id: ch.id, name: products[ch.id].name, reason: ch.reason || "خيار مقترح" });
+          }
+        });
+
+        if (aiItems.length > 0) {
+          const replyTxt = String(aiData.reply || persona.itemsReady("")).trim();
+          openZeroDefaultModal("✨ اقتراحات المساعد الذكي — حدد الكمية:", aiItems, `ai_${norm.slice(0, 16)}`);
+          setOrbEmotion("choice", replyTxt, true);
+          setTxt("aiShoppingStatusText", `✨ ${replyTxt}`);
+          return;
+        }
+        if (aiData.reply) {
+          setOrbEmotion("greet", aiData.reply, true);
+          setTxt("aiShoppingStatusText", `🧚 ${aiData.reply}`);
+          return;
+        }
+      } catch (_) {}
+    }
+
     setOrbEmotion("idle", persona.notFound, true);
     setTxt("aiShoppingStatusText", `⚠️ ${persona.notFound}`);
   };
@@ -1603,8 +1684,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v55Bound) return;
-    orb.dataset.v55Bound = "1";
+    if (!orb || !root || orb.dataset.v56Bound) return;
+    orb.dataset.v56Bound = "1";
 
     ensureGroundShadow(root);
 
@@ -1628,7 +1709,7 @@
           holdFired = true;
           beginLongPressVoice();
         }
-      }, 380);
+      }, 550);
     };
 
     const onMove = e => {
@@ -1818,7 +1899,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v55",
+      version: "v56",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
@@ -1831,11 +1912,11 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v55]", report);
+    console.info("[QA Assistant Diagnostic v56]", report);
     return report;
   };
 
-  function mountV55() {
+  function mountV56() {
     window.analyzeShamCashReceiptOCR();
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
@@ -1864,7 +1945,7 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV55";
+      styleTag.id = "petCharStyleV56";
       styleTag.textContent = `
         @keyframes fairyHover3D {
           0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
@@ -1874,7 +1955,7 @@
           0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.42; }
           50% { transform: translateX(-50%) scale(0.75); opacity: 0.22; }
         }
-        @keyframes fairyRingV55 {
+        @keyframes fairyRingV56 {
           0% { transform: scale(1); opacity: 0.9; }
           100% { transform: scale(1.38); opacity: 0; }
         }
@@ -1910,7 +1991,7 @@
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV55 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV56 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 72px; right: 0; max-width: 235px; width: max-content;
@@ -1943,7 +2024,7 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV55(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV56(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
@@ -1958,6 +2039,6 @@
   window.addEventListener("online", syncConnectivityBadge);
   window.addEventListener("offline", syncConnectivityBadge);
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV55);
-  else mountV55();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV56);
+  else mountV56();
 })();
