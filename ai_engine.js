@@ -428,11 +428,32 @@
   const PERSISTENT_TTS_CACHE_NAME = "moaath_store_tts_human";
   const missingLocalClips = new Set();
 
+  function getCoreClipPhrasesForPersona(persona) {
+    if (!persona) return [];
+    const pickFirst = (arr, fallback) => (Array.isArray(arr) && arr.length ? arr[0] : (fallback || ""));
+    const addedSample = Array.isArray(persona.addedMsgs) && typeof persona.addedMsgs[0] === "function"
+      ? persona.addedMsgs[0]("صنف واحد")
+      : "تمت إضافة صنف واحد إلى السلة.";
+    return [
+      { key: "greet", text: persona.greet || pickFirst(persona.greets, "") },
+      { key: "greetMorning", text: pickFirst(persona.timeGreets?.morning, persona.greet) },
+      { key: "greetEvening", text: pickFirst(persona.timeGreets?.evening, persona.greet) },
+      { key: "chatGood", text: persona.chatGood || pickFirst(persona.chatGoods, "") },
+      { key: "thanks", text: persona.thanks || pickFirst(persona.thanksList, "") },
+      { key: "added", text: addedSample },
+      { key: "itemsReady", text: typeof persona.itemsReady === "function" ? persona.itemsReady("") : "" },
+      { key: "alternative", text: pickFirst(persona.alternativeReplies, "") },
+      { key: "habit", text: pickFirst(persona.habitReplies, "") },
+      { key: "notFound", text: persona.notFound || pickFirst(persona.notFounds, "") }
+    ].filter(x => x.text && x.text.trim());
+  }
+
   function detectStaticClipName(persona, spokenText) {
     const t = normalizeTextForArabicSpeech(spokenText);
-    if (t === normalizeTextForArabicSpeech(persona.greet)) return "greet";
-    if (t === normalizeTextForArabicSpeech(persona.chatGood)) return "chatGood";
-    if (t === normalizeTextForArabicSpeech(persona.thanks)) return "thanks";
+    const clips = getCoreClipPhrasesForPersona(persona);
+    for (const c of clips) {
+      if (t === normalizeTextForArabicSpeech(c.text)) return c.key;
+    }
     return null;
   }
 
@@ -503,7 +524,7 @@
     try {
       const cache = await caches.open(PERSISTENT_TTS_CACHE_NAME);
       const keys = await cache.keys();
-      if (keys.length >= 25) {
+      if (keys.length >= 150) {
         await cache.delete(keys[0]);
       }
       const reqUrl = "https://moaath-tts.local/" + encodeURIComponent(cacheKey);
@@ -531,12 +552,15 @@
       sessionCtx.lastTtsSource = entry.source;
       sessionCtx.lastGeminiError = entry.geminiError || "";
 
-      if (entry.source === "gemini_tts" || entry.source === "persistent_cache" || entry.source === "local_repo") {
-        updateVoiceSourceBadge("🔊 يتحدث", "#00e676", entry.source);
+      if (entry.source === "gemini_tts") {
+        updateVoiceSourceBadge("🎙️ بشري", "#00e676", "صوت بشري (Gemini)");
+        playViaHtmlAudio(entry, persona, mySeq);
+      } else if (entry.source === "persistent_cache" || entry.source === "local_repo") {
+        updateVoiceSourceBadge("💾 محفوظ", "#00e676", entry.source === "local_repo" ? "ملف صوتي محلي" : "كاش بشري محفوظ");
         playViaHtmlAudio(entry, persona, mySeq);
       } else {
         if (entry.geminiError) console.info("[TTS Diagnostic]", entry.geminiError);
-        updateVoiceSourceBadge("🔊 يتحدث", "#38bdf8", "صوت نشط");
+        updateVoiceSourceBadge("🔊 بديل", "#38bdf8", entry.geminiError || "صوت بديل");
         if (entry.rawBuffer) {
           const okWebAudio = await playFallbackWithDetune(entry.rawBuffer, persona, mySeq);
           if (okWebAudio) return;
@@ -646,6 +670,90 @@
       }
     }
   }
+
+
+  // ==========================================================================
+  // [التحميل التدريجي الذكي في الخلفية — 10 مقاطع أساسية لكل شخصية دون حرق الحصة]
+  // ==========================================================================
+  let prewarmStarted = false;
+  let prewarmQuotaHit = false;
+
+  async function runDripFeedPrewarm() {
+    if (prewarmStarted || prewarmQuotaHit || navigator.onLine === false) return;
+    const workerUrl = resolveWorkerEndpoint();
+    if (!workerUrl) return;
+    prewarmStarted = true;
+
+    const prefs = getPrefs();
+    const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
+    const voiceName = persona.voiceName || "Puck";
+    const coreList = getCoreClipPhrasesForPersona(persona);
+    let fetchedThisSession = 0;
+    const MAX_PER_SESSION = 5;
+
+    for (const item of coreList) {
+      if (prewarmQuotaHit || fetchedThisSession >= MAX_PER_SESSION || navigator.onLine === false) break;
+      const spokenText = normalizeTextForArabicSpeech(item.text);
+      if (!spokenText) continue;
+      const cacheKey = `${persona.id}::${voiceName}::${spokenText}`;
+
+      // تخطي إذا كان موجوداً في الكاش الدائم أو الذاكرة
+      if (ttsAudioCache.has(cacheKey)) continue;
+      const existing = await readPersistentHumanCache(cacheKey);
+      if (existing) {
+        URL.revokeObjectURL(existing);
+        continue;
+      }
+
+      // انتظار 10 ثوانٍ بين كل طلب لحماية الحصة المجانية
+      await new Promise(r => setTimeout(r, 10000));
+      if (prewarmQuotaHit || navigator.onLine === false) break;
+
+      try {
+        const res = await fetch(workerUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mode: "tts",
+            text: spokenText,
+            voiceName,
+            gender: persona.gender || "male",
+            toneTag: persona.toneTag || "",
+            dialectMode: persona.dialectMode || "shami_friendly",
+            pitchSemitones: typeof persona.pitchSemitones === "number" ? persona.pitchSemitones : 0,
+            styleHint: persona.styleHint || ""
+          })
+        });
+        const json = await res.json();
+        if (json?.geminiError && /429|RESOURCE_EXHAUSTED|QUOTA/i.test(json.geminiError)) {
+          prewarmQuotaHit = true;
+          break;
+        }
+        if (res.ok && json?.ok && json?.source === "gemini_tts" && json?.audioBase64) {
+          let audioBlob = null;
+          if (/pcm|L16/i.test(json.mimeType || "")) {
+            const rateMatch = String(json.mimeType).match(/rate=(\d+)/i);
+            const rate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
+            const wavBuf = pcmBase64ToWavArrayBuffer(json.audioBase64, rate);
+            audioBlob = new Blob([wavBuf], { type: "audio/wav" });
+          } else {
+            const bytes = base64ToUint8Array(json.audioBase64);
+            audioBlob = new Blob([bytes], { type: json.mimeType || "audio/mpeg" });
+          }
+          if (audioBlob) {
+            await writePersistentHumanCache(cacheKey, audioBlob);
+            fetchedThisSession++;
+          }
+        }
+      } catch (_) {
+        break;
+      }
+    }
+  }
+
+  window.addEventListener("load", () => {
+    setTimeout(() => { runDripFeedPrewarm(); }, 6000);
+  });
 
   window.toggleCompanionVoice = function () {
     haptic(12);
