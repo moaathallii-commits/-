@@ -1,19 +1,19 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v52 - Natural Human Speech & Faster Pace)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v53 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
-// - رفع سرعة التحدث قليلاً لجميع الشخصيات + تحسين النطق ليكون بأسلوب بشري حر وتلقائي
-// - تمييز حقيقي لطبقة الصوت لكل شخصية على الهاتف عبر Web Audio API (detune) عند التحول للبديل
-// - ربط مباشر بالصور الست المرفوعة في المجلد الجذر (buddy.jpg, pro.jpg, saver.jpg, lulu.jpg, sara.jpg, noor.jpg)
-// - حركة ثلاثية الأبعاد + ظل أرضي + تجوال حر يتوقف تلقائياً عند لمس/سحب/تحدث الزبون
+// - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
+// - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
+// - كشف فوري لحالة الصوت والـ Worker في الشارة الجانبية مع إمكانية الاختبار المباشر
+// - رفع سرعة التحدث قليلاً لجميع الشخصيات + أسلوب بشري حر وتلقائي
 // ============================================================================
 
 (function () {
-  if (window.__MOAATH_AI_V52_LOADED__) return;
-  window.__MOAATH_AI_V52_LOADED__ = true;
+  if (window.__MOAATH_AI_V53_LOADED__) return;
+  window.__MOAATH_AI_V53_LOADED__ = true;
 
-  const PREFS_KEY = "moaath_pet_v52_prefs";
-  const POS_KEY = "moaath_pet_v52_pos";
-  const LEARN_KEY = "moaath_pet_v52_learned";
+  const PREFS_KEY = "moaath_pet_v53_prefs";
+  const POS_KEY = "moaath_pet_v53_pos";
+  const LEARN_KEY = "moaath_pet_v53_learned";
 
   const PERSONAS = {
     buddy: {
@@ -269,7 +269,7 @@
   }
 
   // ==========================================================================
-  // [محرك الصوت المخصص لكل شخصية — أسلوب بشري حر وسرعة أسرع قليلاً]
+  // [محرك الصوت المضمون على الهاتف — كشف رابط الـ Worker + تشغيل مباشر واضح]
   // ==========================================================================
   const ttsAudioCache = new Map();
   let sharedAudioPlayer = null;
@@ -277,10 +277,35 @@
   let activeBufferSource = null;
   let ttsRequestSeq = 0;
 
+  function resolveWorkerEndpoint() {
+    try {
+      if (typeof window.getEffectiveAIWorkerUrl === "function") {
+        const u = String(window.getEffectiveAIWorkerUrl() || "").trim();
+        if (u) return u;
+      }
+    } catch (_) {}
+    const candidates = [
+      window.AI_WORKER_URL,
+      window.WORKER_URL,
+      window.aiWorkerUrl,
+      localStorage.getItem("moaath_ai_worker_url"),
+      localStorage.getItem("ai_worker_url"),
+      localStorage.getItem("worker_url")
+    ];
+    for (const c of candidates) {
+      if (typeof c === "string" && /^https?:\/\//i.test(c.trim())) {
+        return c.trim();
+      }
+    }
+    return "";
+  }
+
   function ensureAudioPlayer() {
     if (!sharedAudioPlayer) {
       sharedAudioPlayer = new Audio();
       sharedAudioPlayer.preload = "auto";
+      sharedAudioPlayer.playsInline = true;
+      sharedAudioPlayer.setAttribute("playsinline", "");
     }
     return sharedAudioPlayer;
   }
@@ -296,10 +321,10 @@
   }
 
   function unlockEmbeddedVoice() {
+    ensureWebAudioCtx();
     if (speechUnlocked) return;
     speechUnlocked = true;
     try {
-      ensureWebAudioCtx();
       const p = ensureAudioPlayer();
       p.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
       p.play().then(() => { p.pause(); p.currentTime = 0; }).catch(() => {});
@@ -323,7 +348,6 @@
     }
   }
 
-  // تحسين النص ليكون طبيعياً وسلساً في النطق البشري الحر
   function normalizeTextForArabicSpeech(rawText) {
     return String(rawText || "")
       .replace(/[\u{1F300}-\u{1FAFF}🐾✨🎤🎧🎙️🤔🤩💡📌📍🔊🔇🗣️🍲🌸🛍️🔁⏰✅⚠️🔒🔄]/gu, " ")
@@ -368,24 +392,29 @@
     return buffer;
   }
 
-  function updateVoiceSourceBadge(source, geminiError) {
+  function updateVoiceSourceBadge(labelText, colorHex, titleText) {
     const badge = $("petConnStatusBadge");
     if (!badge) return;
-    if (navigator.onLine === false) {
-      badge.textContent = "🟡 محلي";
-      badge.style.color = "#ff9800";
-      badge.title = "غير متصل بالإنترنت";
-      return;
-    }
-    if (source === "gemini_tts") {
-      badge.textContent = "🟢 صوت بشري";
-      badge.style.color = "#00e676";
-      badge.title = "Gemini TTS يعمل بنبرته البشرية الأصلية";
-    } else if (source === "google_tts") {
-      const shortErr = geminiError ? String(geminiError).split(":")[0] : "FALLBACK";
-      badge.textContent = `🔵 بديل (${shortErr})`;
-      badge.style.color = "#38bdf8";
-      badge.title = `سبب التحول للبديل: ${geminiError || "غير معروف"}`;
+    badge.textContent = labelText;
+    badge.style.color = colorHex;
+    if (titleText) badge.title = titleText;
+  }
+
+  function playViaHtmlAudio(entry, persona, mySeq) {
+    if (mySeq !== ttsRequestSeq) return;
+    const player = ensureAudioPlayer();
+    player.pause();
+    player.src = entry.url;
+    player.load();
+    player.preservesPitch = true;
+    player.mozPreservesPitch = true;
+    player.webkitPreservesPitch = true;
+    player.playbackRate = persona.speed || 1.22;
+    const p = player.play();
+    if (p && typeof p.catch === "function") {
+      p.catch(() => {
+        showBubble("اضغط على الجنية لتشغيل الصوت", 2600);
+      });
     }
   }
 
@@ -393,6 +422,7 @@
     const ctx = ensureWebAudioCtx();
     if (!ctx) return false;
     try {
+      if (ctx.state === "suspended") await ctx.resume();
       const cloned = arrayBuf.slice(0);
       const decoded = await ctx.decodeAudioData(cloned);
       if (mySeq !== ttsRequestSeq) return true;
@@ -428,36 +458,44 @@
 
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const voiceName = persona.voiceName || "Puck";
-    const speedRate = persona.speed || 1.22;
     const cacheKey = `${persona.id}::${voiceName}::${spokenText}`;
 
     const playEntry = async (entry) => {
       if (mySeq !== ttsRequestSeq) return;
       sessionCtx.lastTtsSource = entry.source;
       sessionCtx.lastGeminiError = entry.geminiError || "";
-      updateVoiceSourceBadge(entry.source, entry.geminiError);
 
-      if (entry.source === "google_tts" && entry.rawBuffer) {
-        const played = await playFallbackWithDetune(entry.rawBuffer, persona, mySeq);
-        if (played) return;
+      if (entry.source === "gemini_tts") {
+        updateVoiceSourceBadge("🟢 صوت بشري", "#00e676", "Gemini TTS");
+        playViaHtmlAudio(entry, persona, mySeq);
+      } else {
+        const shortErr = entry.geminiError ? String(entry.geminiError).split(":")[0] : "TTS";
+        updateVoiceSourceBadge(`🔵 صوت (${shortErr})`, "#38bdf8", entry.geminiError || "");
+        if (entry.rawBuffer) {
+          const okWebAudio = await playFallbackWithDetune(entry.rawBuffer, persona, mySeq);
+          if (okWebAudio) return;
+        }
+        playViaHtmlAudio(entry, persona, mySeq);
       }
-
-      const player = ensureAudioPlayer();
-      player.src = entry.url;
-      player.preservesPitch = true;
-      player.mozPreservesPitch = true;
-      player.webkitPreservesPitch = true;
-      player.playbackRate = speedRate;
-      player.play().catch(() => {});
     };
 
     if (ttsAudioCache.has(cacheKey)) {
-      playEntry(ttsAudioCache.get(cacheKey));
+      await playEntry(ttsAudioCache.get(cacheKey));
       return;
     }
 
-    const workerUrl = typeof getEffectiveAIWorkerUrl === "function" ? getEffectiveAIWorkerUrl() : "";
-    if (!workerUrl || navigator.onLine === false) return;
+    const workerUrl = resolveWorkerEndpoint();
+    if (!workerUrl) {
+      updateVoiceSourceBadge("🔴 بلا رابط", "#ff5252", "رابط Cloudflare Worker غير مضبوط");
+      showBubble("رابط الصوت غير مضبوط في التطبيق", 3200);
+      return;
+    }
+    if (navigator.onLine === false) {
+      updateVoiceSourceBadge("🟡 محلي", "#ff9800", "لا يوجد اتصال بالإنترنت");
+      return;
+    }
+
+    updateVoiceSourceBadge("⏳ نطق...", "#ffd54f", "جاري توليد الصوت");
 
     try {
       const res = await fetch(workerUrl, {
@@ -472,10 +510,10 @@
       });
       const json = await res.json();
       if (mySeq !== ttsRequestSeq) return;
-      if (!res.ok || !json?.ok || !json?.audioBase64) return;
 
-      if (json.geminiError) {
-        console.warn("[TTS Gemini Fallback Reason]:", json.geminiError);
+      if (!res.ok || !json?.ok || !json?.audioBase64) {
+        updateVoiceSourceBadge("⚠️ تعذر الصوت", "#ff8a80", json?.error || `HTTP ${res.status}`);
+        return;
       }
 
       let rawBuffer = null;
@@ -488,7 +526,7 @@
       } else {
         const bytes = base64ToUint8Array(json.audioBase64);
         rawBuffer = bytes.buffer;
-        blobUrl = URL.createObjectURL(new Blob([bytes], { type: mimeType || "audio/mpeg" }));
+        blobUrl = URL.createObjectURL(new Blob([bytes], { type: json.mimeType || "audio/mpeg" }));
       }
 
       const entry = {
@@ -505,12 +543,15 @@
         ttsAudioCache.delete(firstKey);
       }
       ttsAudioCache.set(cacheKey, entry);
-      playEntry(entry);
-    } catch (_) {}
+      await playEntry(entry);
+    } catch (_) {
+      updateVoiceSourceBadge("⚠️ خطأ شبكة", "#ff8a80", "تعذر الاتصال بخدمة الصوت");
+    }
   }
 
   window.toggleCompanionVoice = function () {
     haptic(12);
+    unlockEmbeddedVoice();
     const prefs = getPrefs();
     const next = !prefs.voiceEnabled;
     setPrefs({ voiceEnabled: next });
@@ -581,12 +622,13 @@
   window.selectPetPersona = function (key) {
     if (!PERSONAS[key]) return;
     haptic(15);
+    unlockEmbeddedVoice();
     pauseRoaming(7500);
     setPrefs({ persona: key });
     syncVisuals();
     const p = PERSONAS[key];
     showBubble(`🧚 ${p.greet}`, 3400);
-    speakOutLoud(p.greet, false);
+    speakOutLoud(p.greet, true);
   };
 
   window.setPetHidden = function (hide) {
@@ -1475,8 +1517,8 @@
   };
 
   function bindOrbInteractions(orb, root) {
-    if (!orb || !root || orb.dataset.v52Bound) return;
-    orb.dataset.v52Bound = "1";
+    if (!orb || !root || orb.dataset.v53Bound) return;
+    orb.dataset.v53Bound = "1";
 
     ensureGroundShadow(root);
 
@@ -1690,8 +1732,9 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v52",
+      version: "v53",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
+      resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
       lastGeminiError: sessionCtx.lastGeminiError || "none",
       fairiesCount: Object.keys(PERSONAS).length,
@@ -1702,11 +1745,11 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v52]", report);
+    console.info("[QA Assistant Diagnostic v53]", report);
     return report;
   };
 
-  function mountV52() {
+  function mountV53() {
     window.analyzeShamCashReceiptOCR();
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
@@ -1735,7 +1778,7 @@
 
     if (!$("petCharRoot")) {
       const styleTag = document.createElement("style");
-      styleTag.id = "petCharStyleV52";
+      styleTag.id = "petCharStyleV53";
       styleTag.textContent = `
         @keyframes fairyHover3D {
           0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
@@ -1745,7 +1788,7 @@
           0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.42; }
           50% { transform: translateX(-50%) scale(0.75); opacity: 0.22; }
         }
-        @keyframes fairyRingV52 {
+        @keyframes fairyRingV53 {
           0% { transform: scale(1); opacity: 0.9; }
           100% { transform: scale(1.38); opacity: 0; }
         }
@@ -1781,7 +1824,7 @@
         }
         #petListenRing {
           display: none; position: absolute; inset: -6px; border-radius: 50%;
-          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV52 1.1s infinite;
+          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRingV53 1.1s infinite;
         }
         #petMiniBubble {
           display: none; position: absolute; bottom: 72px; right: 0; max-width: 235px; width: max-content;
@@ -1814,7 +1857,7 @@
   }
 
   const _origRenderStore = window.renderStore;
-  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV52(); };
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountV53(); };
 
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
@@ -1829,6 +1872,6 @@
   window.addEventListener("online", syncConnectivityBadge);
   window.addEventListener("offline", syncConnectivityBadge);
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV52);
-  else mountV52();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountV53);
+  else mountV53();
 })();
