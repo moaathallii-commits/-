@@ -399,6 +399,7 @@
     }
     renderAdminVIPTab();
     renderVIPShowcaseModal();
+    syncUnlockedVIPPersonasIntoCompanion();
   }
 
   function getDayOfYearIndex() {
@@ -851,6 +852,11 @@
   function initVIPSystem() {
     injectVIPButtonIntoAssistantHeader();
     mountAdminVIPSection();
+    syncUnlockedVIPPersonasIntoCompanion();
+    const curSelVal = document.getElementById('petPersonaSelect')?.value;
+    if (curSelVal && VIP_PERSONAS[curSelVal] && isPersonaUnlockedLifetime(curSelVal) && typeof window.__registerDynamicCompanionPersona === 'function') {
+      window.__registerDynamicCompanionPersona(curSelVal, enrichVIPPersonaForCompanion(VIP_PERSONAS[curSelVal]));
+    }
   }
 
   if (document.readyState === "loading") {
@@ -863,6 +869,213 @@
   window.renderStore = function () {
     if (typeof _origRenderStoreVIP === "function") _origRenderStoreVIP();
     setTimeout(initVIPSystem, 80);
+  };
+
+  // بناء حزمة كاملة من العبارات والردود المميزة لكل شخصية VIP لتعمل كجنية متحدثة بأسلوبها الخاص
+  function enrichVIPPersonaForCompanion(p) {
+    if (!p) return null;
+    const baseGreets = [
+      p.greet,
+      `${p.name} معك (${p.role})، بماذا أساعدك اليوم في متجر معاذ؟`,
+      `أهلاً بك، ${p.name} جاهز لتجهيز طلبك بسرعة ودقة.`
+    ].filter(Boolean);
+
+    const chatGoods = {
+      coach_sakhr: ["بأعلى جاهزية ولياقة! هيا نكمل يومك بنشاط.", "تمام التمام يا بطل، ما هدفك الرياضي أو الغذائي اليوم؟"],
+      grand_chef: ["بأفضل حال في المطبخ، المقادير جاهزة والذوق مضمون.", "أهلاً بك، أخبرني عن الطبخة أو الصنف الذي تريده اليوم."],
+      princess_layla: ["بكل لطف وصفاء، يسعدني جداً مساعدتك اليوم.", "أهلاً بك، أختار لك دائماً ما يليق بذوقك الرفيع."],
+      butler_farid: ["تحت أمرك سيدي، كل شيء منظم ومضبوط بدقة.", "بأتم الاستعداد لتنسيق مؤونة واحتياجات اليوم."],
+      friend_fadi: ["عايش ومبسوط ورايق، ومجهزلك أحلى مزاج وسهرة!", "يا هلا بالصديق، شو بنضبط اليوم ليكسر الروتين؟"],
+      anime_zain: ["طاقتي مشتعلة ومستعد لأي مهمة تسوق اليوم!", "بأقصى سرعة وحماس، انطلق لنجهز وقود الأبطال!"],
+      anime_ryu: ["كل المؤشرات ممتازة، والصفقة الأذكى بانتظارك.", "بهدوء وتحليل دقيق، اخترت لك الأنسب دائماً."],
+      anime_ritaj: ["مبسوطة ومشرقة بوجودك، وراح نخلي يومك أحلى!", "أهلاً بك، مع ريتاج كل شيء ألطف وأجمل!"]
+    };
+
+    const thanksList = {
+      coach_sakhr: ["كفو منك، استمر على هذا الانضباط الرائع.", "على الرحب يا بطل، دائماً في الخدمة."],
+      grand_chef: ["بالعافية مقدماً، يسعدني تقديم الأفضل دائماً.", "العفو، نكهة متجر معاذ ترحب بك."],
+      princess_layla: ["بكل سرور، وجودك يزيد المكان جمالاً.", "العفو، يسعدني دائماً خدمتك بلطف."],
+      butler_farid: ["على الرحب والسعة سيدي، في خدمتكم دائماً.", "لا شكر على واجب، التنظيم من أولوياتي."],
+      friend_fadi: ["ولو يا غالي، الصديق وقت الضيق والطلب!", "العفو يا معلم، خلينا نشوف شو بدك بعد."],
+      anime_zain: ["هذا واجب الأبطال، نراكم في المهمة القادمة!", "العفو، انطلق بثقة ونجاح!"],
+      anime_ryu: ["تحليل ناجح، يسعدني مساعدتك دائماً.", "العفو، لأي استفسار أنا هنا."],
+      anime_ritaj: ["شكراً لك أنت على لطفك، يسعدني أساعدك دايماً!", "العفو يا حلو، نورت المتجر!"]
+    };
+
+    const addedMsgs = {
+      coach_sakhr: [(n) => `ممتاز يا بطل، تمت إضافة ${n} إلى سلة القوة.`],
+      grand_chef: [(n) => `أضفت ${n} إلى السلة بعناية للمطبخ.`],
+      princess_layla: [(n) => `بكل ذوق، تمت إضافة ${n} إلى سلتك.`],
+      butler_farid: [(n) => `تم قيد وإضافة ${n} إلى السلة بنظام.`],
+      friend_fadi: [(n) => `يا سلام! نزلت ${n} بالسلة وصارت جاهزة.`],
+      anime_zain: [(n) => `تمت إضافة ${n} إلى السلة، مهمة ناجحة!`],
+      anime_ryu: [(n) => `تمت إضافة ${n} إلى السلة بعد التحقق من التوفر.`],
+      anime_ritaj: [(n) => `ياي! تمت إضافة ${n} إلى سلتك بكل حب.`]
+    };
+
+    return {
+      ...p,
+      roleBadge: `${p.gender === "female" ? "أنثوي" : "ذكري"} • ${p.badge || p.role}`,
+      specialtyNote: `${p.name} (${p.role}): ${p.shortDesc}`,
+      fallbackDetune: Math.round((p.pitchSemitones || 0) * 90),
+      fallbackRate: p.speed || 1.24,
+      greets: baseGreets,
+      timeGreets: {
+        morning: [`صباح الخير والنشاط، ${p.name} معك في متجر معاذ.`],
+        evening: [`مساء الخير، ${p.name} جاهز لخدمتك اليوم.`]
+      },
+      chatGood: (chatGoods[p.id] || ["أنا بخير، كيف يمكنني خدمتك اليوم?"])[0],
+      chatGoods: chatGoods[p.id] || ["أنا بخير، كيف يمكنني خدمتك اليوم?"],
+      thanks: (thanksList[p.id] || ["العفو، يسعدني دائماً خدمتك."])[0],
+      thanksList: thanksList[p.id] || ["العفو، يسعدني دائماً خدمتك."],
+      addedMsgs: addedMsgs[p.id] || [(n) => `تمت إضافة ${n} إلى السلة.`],
+      recipeReady: (t) => `جهزت لك المتوفر لوصفة ${t} بأسلوب ${p.name}، حدد الكمية.`,
+      recipeMissing: (t) => `بعض مكونات ${t} غير متوفرة حالياً في الفرع.`,
+      itemsReady: () => `عرضت لك الأصناف المتوفرة في الفرع، حدد الكمية.`,
+      alternativeReplies: ["الطلب غير متوفر حالياً، وعرضت لك أقرب البدائل المتوفرة."],
+      habitReplies: ["هذه اختياراتك المعتادة والمتوفرة في الفرع."],
+      notFounds: ["لم أجد صنفاً مطابقاً متوفراً الآن."],
+      notFound: "لم أجد صنفاً مطابقاً متوفراً الآن."
+    };
+  }
+
+  // حركة دخول بارزة وعصرية عند تفعيل أو اختيار شخصية مميزة أو فتح غرفتها
+  window.triggerVIPProminentEntrance = function (personaId) {
+    const p = VIP_PERSONAS[personaId];
+    if (!p) return;
+    if (!document.getElementById("vipEntranceAnimStyle")) {
+      const st = document.createElement("style");
+      st.id = "vipEntranceAnimStyle";
+      st.textContent = `
+        @keyframes vipGrandEntrance {
+          0% {
+            opacity: 0;
+            transform: translateY(24px) scale(0.72) rotate(-8deg);
+            filter: drop-shadow(0 0 0 rgba(212, 175, 55, 0));
+          }
+          55% {
+            opacity: 1;
+            transform: translateY(-6px) scale(1.14) rotate(4deg);
+            filter: drop-shadow(0 0 22px rgba(212, 175, 55, 0.85));
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1) rotate(0deg);
+            filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.45));
+          }
+        }
+        @keyframes vipBannerSlide {
+          0% { opacity: 0; transform: translate(-50%, -18px) scale(0.92); }
+          15%, 85% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+          100% { opacity: 0; transform: translate(-50%, -14px) scale(0.95); }
+        }
+        .vip-grand-entrance-active {
+          animation: vipGrandEntrance 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+        }
+        #vipEntranceSpotlightBanner {
+          position: fixed;
+          top: 16px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 10060;
+          background: linear-gradient(135deg, rgba(18, 18, 22, 0.96), rgba(30, 27, 15, 0.96));
+          border: 1.5px solid #d4af37;
+          border-radius: 999px;
+          padding: 7px 14px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #f9fafb;
+          font-size: 11px;
+          font-weight: 800;
+          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55), 0 0 18px rgba(212, 175, 55, 0.45);
+          pointer-events: none;
+          animation: vipBannerSlide 2.6s ease forwards;
+        }
+      `;
+      document.head.appendChild(st);
+    }
+
+    const orb = document.getElementById("petCharOrb");
+    if (orb) {
+      orb.classList.remove("vip-grand-entrance-active");
+      void orb.offsetWidth;
+      orb.classList.add("vip-grand-entrance-active");
+      setTimeout(() => orb.classList.remove("vip-grand-entrance-active"), 900);
+    }
+
+    let banner = document.getElementById("vipEntranceSpotlightBanner");
+    if (banner) banner.remove();
+    banner = document.createElement("div");
+    banner.id = "vipEntranceSpotlightBanner";
+    banner.style.borderColor = p.accent || "#d4af37";
+    banner.innerHTML = `
+      <img src="${p.avatarUrl}" onerror="this.onerror=null;this.src='store-icon.png';" alt="${p.name}" style="width:24px; height:24px; border-radius:50%; object-fit:cover; border:1.5px solid ${p.accent || "#d4af37"};">
+      <span style="color:${p.accent || "#fbbf24"};">✨ دخل ${p.name}</span>
+      <span style="color:#d1d5db; font-weight:600;">(${p.role})</span>
+    `;
+    document.body.appendChild(banner);
+    setTimeout(() => { if (banner && banner.parentNode) banner.remove(); }, 2650);
+  };
+
+  // ربط الشخصيات المفعّلة للزبون بقائمة اختيار الجنية المتحدثة في ai_engine.js
+  function syncUnlockedVIPPersonasIntoCompanion() {
+    const sel = document.getElementById("petPersonaSelect");
+    if (!sel) return;
+
+    const allVip = Object.values(VIP_PERSONAS);
+    const unlockedVip = allVip.filter(p => isPersonaUnlockedLifetime(p.id));
+
+    // إزالة أي خيارات VIP قديمة ثم إضافة المفعّلة فقط للزبون
+    Array.from(sel.options).forEach(opt => {
+      if (opt.dataset && opt.dataset.vipOption === "1") opt.remove();
+    });
+
+    unlockedVip.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.dataset.vipOption = "1";
+      opt.textContent = `👑 ${p.name} — ${p.role}`;
+      sel.appendChild(opt);
+    });
+  }
+
+  // اعتراض استدعاء selectPetPersona في ai_engine.js ليدعم الشخصيات المفعّلة مع حركة الدخول البارزة
+  const _origSelectPetPersona = window.selectPetPersona;
+  window.selectPetPersona = function (key) {
+    if (VIP_PERSONAS[key]) {
+      if (!isPersonaUnlockedLifetime(key)) {
+        if (typeof showToast === "function") showToast("🔒 هذه الشخصية تتطلب اشتراكاً مدى الحياة وتفعيلها من الإدارة.");
+        window.openVIPShowcaseModal("all");
+        return;
+      }
+      // تسجيل الشخصية المفعّلة في خريطة الشخصيات المتاحة قبل تشغيل التحديد
+      if (typeof window.__registerDynamicCompanionPersona === "function") {
+        window.__registerDynamicCompanionPersona(key, enrichVIPPersonaForCompanion(VIP_PERSONAS[key]));
+      }
+      if (typeof _origSelectPetPersona === "function") {
+        _origSelectPetPersona(key);
+      }
+      window.triggerVIPProminentEntrance(key);
+      return;
+    }
+    if (typeof _origSelectPetPersona === "function") {
+      _origSelectPetPersona(key);
+    }
+  };
+
+  // تحديث زر البطاقة داخل الغرفة اليومية لتعيين الشخصية كجنية متحدثة فعلياً مع حركة الدخول
+  window.__vipActivateAsCompanion = function (personaId) {
+    const p = VIP_PERSONAS[personaId];
+    if (!p) return;
+    if (!isPersonaUnlockedLifetime(personaId)) {
+      window.openVIPShowcaseModal("all");
+      return;
+    }
+    syncUnlockedVIPPersonasIntoCompanion();
+    window.selectPetPersona(personaId);
+    const roomModal = document.getElementById("vipDailyRoomModal");
+    if (roomModal) roomModal.style.display = "none";
   };
 
   window.MoaathVIPSystem = {
