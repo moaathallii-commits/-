@@ -945,6 +945,9 @@
     unlockEmbeddedVoice();
     pauseRoaming(7500);
     setPrefs({ persona: key });
+    if (window.MoaathAIBrain && typeof window.MoaathAIBrain.recordPersonaUsage === "function") {
+      window.MoaathAIBrain.recordPersonaUsage(key);
+    }
     syncVisuals();
     syncFuturisticCollapseUI();
     const p = PERSONAS[key];
@@ -1568,6 +1571,16 @@
     });
 
     availableItems.sort((a, b) => b.score - a.score);
+    if (window.MoaathAIBrain) {
+      if (typeof window.MoaathAIBrain.recordRecipeUsage === "function") {
+        window.MoaathAIBrain.recordRecipeUsage(matched.title);
+      }
+      if (typeof window.MoaathAIBrain.getPreferredQty === "function") {
+        availableItems.forEach(it => {
+          it.suggestedQty = window.MoaathAIBrain.getPreferredQty(it.id, 1);
+        });
+      }
+    }
     return { recipe: matched, availableItems: availableItems.slice(0, 8), missingIngredients };
   }
 
@@ -1640,15 +1653,22 @@
   }
 
   function handlePersonalHabitsRequest(normText) {
-    if (!/(مفضلاتي|عادات|معتاد|المعتادة)/.test(normText)) return false;
+    if (!/(مفضلاتي|عادات|معتاد|المعتادة|توقعات|اعاده\s*طلب|إعادة\s*طلب|مقترحاتي)/.test(normText)) return false;
     if (window.MoaathAIBrain && typeof window.MoaathAIBrain.getPersonalHabitSuggestions === "function") {
-      const picks = window.MoaathAIBrain.getPersonalHabitSuggestions(products || {}, getBranchAvail, 8);
-      if (picks.length > 0) {
-        openZeroDefaultModal("⭐ مفضلاتك المعتادة المتوفرة:", picks, "personal_habits");
+      const habitPicks = window.MoaathAIBrain.getPersonalHabitSuggestions(products || {}, getBranchAvail, 6);
+      const predictivePicks = typeof window.MoaathAIBrain.getPredictiveReorderSuggestions === "function"
+        ? window.MoaathAIBrain.getPredictiveReorderSuggestions(products || {}, getBranchAvail, 4)
+        : [];
+      const merged = [...habitPicks];
+      predictivePicks.forEach(pp => {
+        if (!merged.some(m => m.id === pp.id)) merged.push(pp);
+      });
+      if (merged.length > 0) {
+        openZeroDefaultModal("⭐ مفضلاتك وتوقعات التعلم الذاتي المتوفرة:", merged.slice(0, 8), "personal_habits");
         const prefs = getPrefs();
         const msg = (window.MoaathAIPersonas && typeof window.MoaathAIPersonas.getHabitReaction === "function")
           ? window.MoaathAIPersonas.getHabitReaction(prefs.persona)
-          : "عرضت لك الأصناف التي تعتاد اختيارها، حدد الكمية المناسبة.";
+          : "عرضت لك الأصناف التي تعتاد اختيارها وتوقعات التعلم الذاتي، حدد الكمية.";
         setOrbEmotion("happy", msg, true);
         setTxt("aiShoppingStatusText", `⭐ ${msg}`);
         return true;
@@ -1798,7 +1818,13 @@
     renderZeroDefaultList();
   };
 
-  window.closePetSuggestionsModal = function () {
+  window.closePetSuggestionsModal = function (wasConfirmed = false) {
+    if (!wasConfirmed && Array.isArray(modalItemsState) && modalItemsState.length) {
+      const ignoredIds = modalItemsState.filter(x => (x.qty || 0) === 0).map(x => x.id);
+      if (ignoredIds.length && window.MoaathAIBrain && typeof window.MoaathAIBrain.recordIgnoredSuggestions === "function") {
+        window.MoaathAIBrain.recordIgnoredSuggestions(ignoredIds);
+      }
+    }
     const m = $("petSuggestionsFloatingModal");
     if (m) m.style.display = "none";
   };
@@ -1827,15 +1853,25 @@
 
     if (addedIds.length) {
       recordPracticeLearning(intentKey, addedIds, 2);
-      if (window.MoaathAIBrain && typeof window.MoaathAIBrain.recordCustomerChoice === "function") {
-        chosen.forEach(it => {
-          const baseId = String(it.id || "").replace(/_PKG$/, "");
-          const cat = products?.[baseId]?.category || specialOffers?.[it.id]?.category || "";
-          window.MoaathAIBrain.recordCustomerChoice(it.id, cat, it.qty, sessionCtx.lastQuery || "");
-        });
+      if (window.MoaathAIBrain) {
+        if (typeof window.MoaathAIBrain.recordCustomerChoice === "function") {
+          chosen.forEach(it => {
+            const baseId = String(it.id || "").replace(/_PKG$/, "");
+            const cat = products?.[baseId]?.category || specialOffers?.[it.id]?.category || "";
+            window.MoaathAIBrain.recordCustomerChoice(it.id, cat, it.qty, sessionCtx.lastQuery || "");
+          });
+        }
+        if (typeof window.MoaathAIBrain.recordBasketCoOccurrence === "function") {
+          const allBasketIds = Array.from(new Set([...Object.keys(cart || {}), ...addedIds]));
+          window.MoaathAIBrain.recordBasketCoOccurrence(allBasketIds);
+        }
+        if (typeof window.MoaathAIBrain.recordIgnoredSuggestions === "function") {
+          const unchosenIds = modalItemsState.filter(x => (x.qty || 0) === 0).map(x => x.id);
+          if (unchosenIds.length) window.MoaathAIBrain.recordIgnoredSuggestions(unchosenIds);
+        }
       }
     }
-    window.closePetSuggestionsModal();
+    window.closePetSuggestionsModal(true);
 
     if (addedTotal > 0) {
       haptic([15, 35, 15]);
@@ -1853,12 +1889,14 @@
 
   function matchCategoriesAndProducts(normText) {
     if (window.MoaathAIBrain && typeof window.MoaathAIBrain.smartSearch === "function") {
+      const activeCartIds = Object.keys(cart || {}).map(k => cart[k]?.origId || String(k).replace(/_PKG$/, ""));
       return window.MoaathAIBrain.smartSearch(
         sessionCtx.lastQuery || normText,
         products || {},
         categories || [],
         getBranchAvail,
-        getUnitSYP
+        getUnitSYP,
+        activeCartIds
       );
     }
 
