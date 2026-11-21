@@ -1089,10 +1089,10 @@
     const curR = parseInt(root.style.right || "12", 10);
     const curB = parseInt(root.style.bottom || "96", 10);
 
-    // حصر التجوال على الحواف الجانبية فقط (يمين أو يسار) لتجنب تغطية أزرار الشراء
+    // إبقاء الجنية هادئة في زاويتها الجانبية الآمنة دون التنقل العشوائي فوق أزرار الشراء
     const stickLeft = curR > window.innerWidth / 2;
     const nextR = stickLeft ? maxR : 12;
-    const nextB = Math.round(Math.max(minB, Math.min(maxB, curB + (Math.random() - 0.5) * 120)));
+    const nextB = Math.round(Math.max(minB, Math.min(145, curB + (Math.random() - 0.5) * 26)));
 
     const tiltY = nextR < curR ? 16 : -16;
     const tiltX = nextB > curB ? -12 : 12;
@@ -2528,25 +2528,76 @@
     const st = document.createElement("style");
     st.id = "futuristicUiMasterStyle";
     st.textContent = `
+      /* =====================================================================
+         [تحسينات واجهة المتجر الكاملة + المساعد الذكي المستقبلي القابل للطي]
+         ===================================================================== */
+      :root {
+        --moaath-radius-lg: 16px;
+        --moaath-radius-md: 12px;
+        --moaath-radius-pill: 999px;
+      }
+      body {
+        letter-spacing: 0;
+        -webkit-font-smoothing: antialiased;
+      }
+      /* تناسق البطاقات والأقسام في واجهة المتجر */
+      .product-card, .offer-card, .adm-card, .adm-sec {
+        border-radius: var(--moaath-radius-lg) !important;
+        transition: transform 0.2s ease, box-shadow 0.22s ease, border-color 0.22s ease !important;
+      }
+      .product-card:hover, .offer-card:hover {
+        border-color: rgba(212, 175, 55, 0.65) !important;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28) !important;
+      }
+      /* تهذيب شريط التصنيفات الأفقي */
+      .categories {
+        gap: 6px !important;
+        padding: 6px 2px !important;
+        scrollbar-width: none !important;
+      }
+      .categories::-webkit-scrollbar,
+      .fut-quick-chips::-webkit-scrollbar {
+        display: none !important;
+      }
+      .cat-btn {
+        border-radius: var(--moaath-radius-pill) !important;
+        padding: 6px 13px !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        transition: all 0.18s ease !important;
+      }
+      /* توحيد أزرار المتجر الرئيسية */
+      .btn {
+        border-radius: var(--moaath-radius-md) !important;
+        font-weight: 700 !important;
+        transition: transform 0.16s ease, filter 0.18s ease !important;
+      }
+      .btn:active {
+        transform: scale(0.97) !important;
+      }
+      .form-control {
+        border-radius: var(--moaath-radius-md) !important;
+      }
+      /* حاوية المساعد والبحث المستقبلية */
       .fut-ai-dock {
         position: relative !important;
         border-radius: 18px !important;
-        border: 1.5px solid rgba(56, 189, 248, 0.45) !important;
-        background: linear-gradient(145deg, rgba(13, 22, 40, 0.94), rgba(8, 13, 26, 0.98)) !important;
+        border: 1px solid rgba(56, 189, 248, 0.35) !important;
+        background: linear-gradient(155deg, rgba(15, 23, 42, 0.92), rgba(9, 13, 24, 0.97)) !important;
         backdrop-filter: blur(14px) !important;
         -webkit-backdrop-filter: blur(14px) !important;
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 20px rgba(56, 189, 248, 0.14) !important;
-        padding: 9px 11px !important;
-        margin-bottom: 10px !important;
-        transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1) !important;
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+        padding: 8px 10px !important;
+        margin: 8px 0 10px 0 !important;
+        transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1) !important;
       }
       body.light-mode .fut-ai-dock {
-        background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(241, 245, 249, 0.98)) !important;
-        border: 1.5px solid rgba(2, 132, 199, 0.35) !important;
-        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.09) !important;
+        background: linear-gradient(155deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.98)) !important;
+        border: 1px solid rgba(2, 132, 199, 0.25) !important;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.07) !important;
       }
       .fut-ai-dock.is-dock-collapsed {
-        padding: 7px 10px !important;
+        padding: 6px 9px !important;
         border-radius: 999px !important;
       }
       .fut-ai-header {
@@ -2554,54 +2605,51 @@
         align-items: center !important;
         justify-content: space-between !important;
         gap: 6px !important;
-        flex-wrap: wrap !important;
+        flex-wrap: nowrap !important;
       }
       .fut-ai-pill-btn {
         display: inline-flex !important;
         align-items: center !important;
         gap: 6px !important;
-        background: linear-gradient(90deg, rgba(56, 189, 248, 0.2), rgba(212, 175, 55, 0.22)) !important;
+        background: linear-gradient(90deg, rgba(56, 189, 248, 0.16), rgba(212, 175, 55, 0.18)) !important;
         color: var(--text-color) !important;
-        border: 1px solid rgba(56, 189, 248, 0.55) !important;
+        border: 1px solid rgba(212, 175, 55, 0.48) !important;
         border-radius: 999px !important;
-        padding: 6px 12px !important;
+        padding: 5px 11px !important;
         font-size: 11px !important;
         font-weight: 800 !important;
         cursor: pointer !important;
-        box-shadow: 0 0 12px rgba(56, 189, 248, 0.18) !important;
-        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-      }
-      .fut-ai-pill-btn:active {
-        transform: scale(0.96) !important;
+        white-space: nowrap !important;
       }
       .fut-dot {
-        width: 8px !important;
-        height: 8px !important;
+        width: 7px !important;
+        height: 7px !important;
         border-radius: 50% !important;
         background: #00e676 !important;
         box-shadow: 0 0 8px #00e676 !important;
         flex-shrink: 0 !important;
       }
       .fut-chev {
-        font-size: 11px !important;
-        color: #38bdf8 !important;
+        font-size: 10px !important;
+        color: var(--gold-color) !important;
       }
       .fut-ai-header-actions {
         display: flex !important;
         align-items: center !important;
-        gap: 5px !important;
-        flex-wrap: wrap !important;
+        gap: 4px !important;
+        flex-shrink: 0 !important;
       }
       .fut-status-badge {
         font-size: 9px !important;
         font-weight: 700 !important;
         cursor: pointer !important;
-        text-decoration: underline !important;
         padding: 2px 5px !important;
+        border-radius: 999px !important;
+        background: rgba(255, 255, 255, 0.05) !important;
       }
       .fut-icon-btn {
         width: auto !important;
-        padding: 5px 9px !important;
+        padding: 4px 8px !important;
         font-size: 10px !important;
         border-radius: 999px !important;
         font-weight: 700 !important;
@@ -2610,39 +2658,38 @@
         border: 1px solid transparent !important;
       }
       .fut-mic-btn {
-        background: rgba(0, 230, 118, 0.16) !important;
+        background: rgba(0, 230, 118, 0.15) !important;
         color: #00e676 !important;
-        border-color: rgba(0, 230, 118, 0.4) !important;
+        border-color: rgba(0, 230, 118, 0.35) !important;
       }
       .fut-gold-btn {
-        background: rgba(212, 175, 55, 0.16) !important;
+        background: rgba(212, 175, 55, 0.15) !important;
         color: var(--gold-color) !important;
-        border-color: rgba(212, 175, 55, 0.4) !important;
+        border-color: rgba(212, 175, 55, 0.35) !important;
       }
       .fut-blue-btn {
-        background: rgba(56, 189, 248, 0.16) !important;
+        background: rgba(56, 189, 248, 0.15) !important;
         color: #38bdf8 !important;
-        border-color: rgba(56, 189, 248, 0.4) !important;
+        border-color: rgba(56, 189, 248, 0.35) !important;
       }
       .fut-show-fairy-btn {
         display: inline-flex !important;
         align-items: center !important;
-        gap: 3px !important;
         background: var(--gold-color) !important;
         color: #000 !important;
         border: none !important;
         border-radius: 999px !important;
-        padding: 4px 9px !important;
+        padding: 4px 8px !important;
         font-size: 10px !important;
         font-weight: 700 !important;
         cursor: pointer !important;
       }
       .fut-ai-body {
-        max-height: 560px !important;
+        max-height: 480px !important;
         opacity: 1 !important;
         overflow: hidden !important;
-        margin-top: 9px !important;
-        transition: max-height 0.34s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease, margin-top 0.28s ease !important;
+        margin-top: 8px !important;
+        transition: max-height 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease, margin-top 0.25s ease !important;
       }
       .fut-ai-body.is-collapsed {
         max-height: 0 !important;
@@ -2655,8 +2702,7 @@
         align-items: center !important;
         justify-content: space-between !important;
         gap: 6px !important;
-        flex-wrap: wrap !important;
-        margin-bottom: 6px !important;
+        margin-bottom: 5px !important;
         font-size: 10px !important;
       }
       .fut-persona-select-wrap {
@@ -2664,40 +2710,44 @@
         align-items: center !important;
         gap: 5px !important;
         flex: 1 !important;
-        min-width: 165px !important;
+        min-width: 0 !important;
       }
       .fut-select {
         padding: 4px 8px !important;
         font-size: 10px !important;
         border-radius: 10px !important;
         flex: 1 !important;
+        min-width: 0 !important;
       }
       .fut-sub-toggle-btn {
         background: rgba(56, 189, 248, 0.12) !important;
         color: #38bdf8 !important;
-        border: 1px solid rgba(56, 189, 248, 0.38) !important;
+        border: 1px solid rgba(56, 189, 248, 0.32) !important;
         border-radius: 999px !important;
-        padding: 3px 9px !important;
+        padding: 3px 8px !important;
         font-size: 9px !important;
         font-weight: 700 !important;
         cursor: pointer !important;
+        white-space: nowrap !important;
       }
       .fut-specialty-note {
         font-size: 10px !important;
         color: var(--gray-text) !important;
         margin-bottom: 6px !important;
-        line-height: 1.4 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
       }
       .fut-quick-chips {
         display: flex !important;
-        gap: 6px !important;
+        gap: 5px !important;
         overflow-x: auto !important;
-        padding: 6px 2px 2px 2px !important;
-        margin-top: 6px !important;
-        max-height: 58px !important;
+        padding: 5px 1px 2px 1px !important;
+        margin-top: 5px !important;
+        max-height: 46px !important;
         opacity: 1 !important;
         scrollbar-width: none !important;
-        transition: max-height 0.28s ease, opacity 0.22s ease, margin-top 0.24s ease !important;
+        transition: max-height 0.26s ease, opacity 0.2s ease, margin-top 0.22s ease !important;
       }
       .fut-quick-chips.is-chips-collapsed {
         max-height: 0 !important;
@@ -2709,20 +2759,24 @@
       }
       .fut-chip-btn {
         flex-shrink: 0 !important;
-        background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(212, 175, 55, 0.08)) !important;
+        background: rgba(255, 255, 255, 0.05) !important;
         color: var(--text-color) !important;
-        border: 1px solid rgba(56, 189, 248, 0.35) !important;
+        border: 1px solid rgba(212, 175, 55, 0.32) !important;
         border-radius: 999px !important;
-        padding: 5px 11px !important;
+        padding: 4px 10px !important;
         font-size: 10px !important;
         font-weight: 700 !important;
         cursor: pointer !important;
       }
       body.light-mode .fut-chip-btn {
         background: #ffffff !important;
-        border-color: rgba(2, 132, 199, 0.25) !important;
+        border-color: rgba(15, 23, 42, 0.14) !important;
       }
       .fut-search-collapsed {
+        display: none !important;
+      }
+      /* إخفاء الأزرار الزائدة داخل جسم المساعد لتجنب التكرار مع الشريط العلوي */
+      #futuristicAiBody button[onclick*="startVoiceShoppingInput"] {
         display: none !important;
       }
     `;
@@ -2738,8 +2792,16 @@
     searchRow.dataset.futSearchRow = "1";
   }
 
+  function polishStoreHeaderLayout() {
+    const header = document.querySelector("header, .store-header, .top-bar");
+    if (!header || header.dataset.moaathHeaderPolished) return;
+    header.dataset.moaathHeaderPolished = "1";
+    header.style.borderRadius = "0 0 18px 18px";
+  }
+
   function mountAssistant() {
     ensureFuturisticStylesInjected();
+    polishStoreHeaderLayout();
     wrapCustomerSearchBarCollapsible();
     window.analyzeShamCashReceiptOCR();
     const prefs = getPrefs();
@@ -2810,14 +2872,11 @@
       chips.id = "petQuickPromptChips";
       chips.className = "fut-quick-chips";
       const quickItems = [
-        { label: "🍲 مقلوبة", q: "مقلوبة" },
+        { label: "🍲 طبخة اليوم", q: "مقلوبة" },
         { label: "🍰 حلى سريع", q: "حلى بارد" },
-        { label: "🏋️ أكل صحي", q: "أكل صحي رياضة" },
         { label: "🔥 سهرة ومتة", q: "سهرة ومتة" },
         { label: "💰 أوفر المتوفر", q: "أوفر المتوفر" },
-        { label: "🛒 كمّل سلتي", q: "شو ناقصني كمّل سلتي" },
-        { label: "⭐ مفضلاتي", q: "مفضلاتي المعتادة" },
-        { label: "🔁 كرر طلبي", q: "كرر طلبي السابق" }
+        { label: "🛒 كمّل سلتي", q: "شو ناقصني كمّل سلتي" }
       ];
       chips.innerHTML = quickItems.map(it =>
         `<button type="button" onclick="runAIShoppingAssistant('${it.q}')" class="fut-chip-btn">${it.label}</button>`
