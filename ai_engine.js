@@ -197,6 +197,9 @@
     if (dockEl) {
       dockEl.classList.toggle("is-dock-collapsed", collapsed);
     }
+    document.querySelectorAll('[data-fut-search-row="1"]').forEach(el => {
+      el.classList.toggle("fut-search-collapsed", collapsed);
+    });
     if (toggleBtn) {
       toggleBtn.innerHTML = collapsed
         ? `<span class="fut-dot"></span><span>فتح المساعد والبحث</span><span class="fut-chev">▾</span>`
@@ -2520,7 +2523,224 @@
     return report;
   };
 
+  function ensureFuturisticStylesInjected() {
+    if ($("futuristicUiMasterStyle")) return;
+    const st = document.createElement("style");
+    st.id = "futuristicUiMasterStyle";
+    st.textContent = `
+      .fut-ai-dock {
+        position: relative !important;
+        border-radius: 18px !important;
+        border: 1.5px solid rgba(56, 189, 248, 0.45) !important;
+        background: linear-gradient(145deg, rgba(13, 22, 40, 0.94), rgba(8, 13, 26, 0.98)) !important;
+        backdrop-filter: blur(14px) !important;
+        -webkit-backdrop-filter: blur(14px) !important;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 20px rgba(56, 189, 248, 0.14) !important;
+        padding: 9px 11px !important;
+        margin-bottom: 10px !important;
+        transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1) !important;
+      }
+      body.light-mode .fut-ai-dock {
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(241, 245, 249, 0.98)) !important;
+        border: 1.5px solid rgba(2, 132, 199, 0.35) !important;
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.09) !important;
+      }
+      .fut-ai-dock.is-dock-collapsed {
+        padding: 7px 10px !important;
+        border-radius: 999px !important;
+      }
+      .fut-ai-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+      }
+      .fut-ai-pill-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        background: linear-gradient(90deg, rgba(56, 189, 248, 0.2), rgba(212, 175, 55, 0.22)) !important;
+        color: var(--text-color) !important;
+        border: 1px solid rgba(56, 189, 248, 0.55) !important;
+        border-radius: 999px !important;
+        padding: 6px 12px !important;
+        font-size: 11px !important;
+        font-weight: 800 !important;
+        cursor: pointer !important;
+        box-shadow: 0 0 12px rgba(56, 189, 248, 0.18) !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+      }
+      .fut-ai-pill-btn:active {
+        transform: scale(0.96) !important;
+      }
+      .fut-dot {
+        width: 8px !important;
+        height: 8px !important;
+        border-radius: 50% !important;
+        background: #00e676 !important;
+        box-shadow: 0 0 8px #00e676 !important;
+        flex-shrink: 0 !important;
+      }
+      .fut-chev {
+        font-size: 11px !important;
+        color: #38bdf8 !important;
+      }
+      .fut-ai-header-actions {
+        display: flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        flex-wrap: wrap !important;
+      }
+      .fut-status-badge {
+        font-size: 9px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+        text-decoration: underline !important;
+        padding: 2px 5px !important;
+      }
+      .fut-icon-btn {
+        width: auto !important;
+        padding: 5px 9px !important;
+        font-size: 10px !important;
+        border-radius: 999px !important;
+        font-weight: 700 !important;
+        line-height: 1.2 !important;
+        cursor: pointer !important;
+        border: 1px solid transparent !important;
+      }
+      .fut-mic-btn {
+        background: rgba(0, 230, 118, 0.16) !important;
+        color: #00e676 !important;
+        border-color: rgba(0, 230, 118, 0.4) !important;
+      }
+      .fut-gold-btn {
+        background: rgba(212, 175, 55, 0.16) !important;
+        color: var(--gold-color) !important;
+        border-color: rgba(212, 175, 55, 0.4) !important;
+      }
+      .fut-blue-btn {
+        background: rgba(56, 189, 248, 0.16) !important;
+        color: #38bdf8 !important;
+        border-color: rgba(56, 189, 248, 0.4) !important;
+      }
+      .fut-show-fairy-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 3px !important;
+        background: var(--gold-color) !important;
+        color: #000 !important;
+        border: none !important;
+        border-radius: 999px !important;
+        padding: 4px 9px !important;
+        font-size: 10px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+      }
+      .fut-ai-body {
+        max-height: 560px !important;
+        opacity: 1 !important;
+        overflow: hidden !important;
+        margin-top: 9px !important;
+        transition: max-height 0.34s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease, margin-top 0.28s ease !important;
+      }
+      .fut-ai-body.is-collapsed {
+        max-height: 0 !important;
+        opacity: 0 !important;
+        margin-top: 0 !important;
+        pointer-events: none !important;
+      }
+      .fut-persona-bar {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+        margin-bottom: 6px !important;
+        font-size: 10px !important;
+      }
+      .fut-persona-select-wrap {
+        display: flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        flex: 1 !important;
+        min-width: 165px !important;
+      }
+      .fut-select {
+        padding: 4px 8px !important;
+        font-size: 10px !important;
+        border-radius: 10px !important;
+        flex: 1 !important;
+      }
+      .fut-sub-toggle-btn {
+        background: rgba(56, 189, 248, 0.12) !important;
+        color: #38bdf8 !important;
+        border: 1px solid rgba(56, 189, 248, 0.38) !important;
+        border-radius: 999px !important;
+        padding: 3px 9px !important;
+        font-size: 9px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+      }
+      .fut-specialty-note {
+        font-size: 10px !important;
+        color: var(--gray-text) !important;
+        margin-bottom: 6px !important;
+        line-height: 1.4 !important;
+      }
+      .fut-quick-chips {
+        display: flex !important;
+        gap: 6px !important;
+        overflow-x: auto !important;
+        padding: 6px 2px 2px 2px !important;
+        margin-top: 6px !important;
+        max-height: 58px !important;
+        opacity: 1 !important;
+        scrollbar-width: none !important;
+        transition: max-height 0.28s ease, opacity 0.22s ease, margin-top 0.24s ease !important;
+      }
+      .fut-quick-chips.is-chips-collapsed {
+        max-height: 0 !important;
+        opacity: 0 !important;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        pointer-events: none !important;
+      }
+      .fut-chip-btn {
+        flex-shrink: 0 !important;
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(212, 175, 55, 0.08)) !important;
+        color: var(--text-color) !important;
+        border: 1px solid rgba(56, 189, 248, 0.35) !important;
+        border-radius: 999px !important;
+        padding: 5px 11px !important;
+        font-size: 10px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+      }
+      body.light-mode .fut-chip-btn {
+        background: #ffffff !important;
+        border-color: rgba(2, 132, 199, 0.25) !important;
+      }
+      .fut-search-collapsed {
+        display: none !important;
+      }
+    `;
+    document.head.appendChild(st);
+  }
+
+  function wrapCustomerSearchBarCollapsible() {
+    // البحث عن حقل البحث الأساسي للمنتجات في الواجهة لجعله قابلاً للطي مع اللوحة المستقبلية
+    const searchInput = document.querySelector("#searchInput, #productSearchInput, #storeSearchInput, input[placeholder*='ابحث عن']");
+    if (!searchInput) return;
+    const searchRow = searchInput.closest(".search-box, .search-bar, .form-group, div") || searchInput.parentElement;
+    if (!searchRow || searchRow.id === "futuristicAiBody" || searchRow.closest("#aiSmartAssistantBox") || searchRow.closest(".modal-overlay")) return;
+    searchRow.dataset.futSearchRow = "1";
+  }
+
   function mountAssistant() {
+    ensureFuturisticStylesInjected();
+    wrapCustomerSearchBarCollapsible();
     window.analyzeShamCashReceiptOCR();
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
