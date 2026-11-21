@@ -48,6 +48,11 @@
     ? window.MoaathAIPersonas.PERSONAS
     : { buddy: FALLBACK_BUDDY };
 
+  window.__registerDynamicCompanionPersona = function (key, personaObj) {
+    if (!key || !personaObj || typeof PERSONAS !== "object") return;
+    PERSONAS[key] = personaObj;
+  };
+
   function pickPhrase(list, key) {
     if (window.MoaathAIPersonas && typeof window.MoaathAIPersonas.pickPhrase === "function") {
       return window.MoaathAIPersonas.pickPhrase(list, key);
@@ -105,10 +110,12 @@
   };
   window.verifyShamCashPaymentWithAI = null;
   window.checkPaymentReceiptAI = null;
+  window.checkShamCashPriceAI = null;
+  window.verifyShamCashAmountAI = null;
 
   function guardAgainstPaymentAI(text) {
     const norm = cleanArabicNorm(text || "");
-    return /دفع|تحويل|شام\s*كاش|شامكاش|ايصال|اشعار\s*دفع|تحقق\s*من\s*الدفع|رصيد\s*دفع|فاتوره\s*دفع/.test(norm);
+    return /دفع|تحويل|شام\s*كاش|شامكاش|ايصال|اشعار\s*دفع|تحقق\s*من\s*الدفع|رصيد\s*دفع|فاتوره\s*دفع|اسعار\s*شام|سعر\s*شام/.test(norm);
   }
 
   customRecipesDB = loadLocalRecipesFallback();
@@ -1019,6 +1026,91 @@
     speakOutLoud(greetLine, true);
   };
 
+  window.closeFairyGalleryModal = function () {
+    const m = $("fairyGalleryPickerModal");
+    if (m) m.style.display = "none";
+  };
+
+  window.openFairyGalleryModal = function () {
+    haptic(12);
+    unlockEmbeddedVoice();
+    pauseRoaming(12000);
+
+    const prefs = getPrefs();
+    const activeId = prefs.persona || "buddy";
+
+    // جمع الشخصيات الأساسية + أي شخصيات VIP مفعّلة للزبون
+    const allList = Object.values(PERSONAS || {});
+    if (window.MoaathVIPSystem && window.MoaathVIPSystem.personas && typeof window.MoaathVIPSystem.isPersonaUnlockedLifetime === "function") {
+      Object.values(window.MoaathVIPSystem.personas).forEach(vp => {
+        if (window.MoaathVIPSystem.isPersonaUnlockedLifetime(vp.id) && !allList.some(x => x.id === vp.id)) {
+          allList.push({
+            ...vp,
+            isVip: true,
+            roleBadge: `👑 VIP • ${vp.role || ""}`,
+            specialtyNote: vp.shortDesc || vp.role || ""
+          });
+        }
+      });
+    }
+
+    let modal = $("fairyGalleryPickerModal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "fairyGalleryPickerModal";
+      modal.className = "modal-overlay";
+      modal.style.cssText = "display:flex; z-index:10042; background:rgba(0,0,0,0.82); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);";
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) window.closeFairyGalleryModal();
+      });
+      document.body.appendChild(modal);
+    } else {
+      modal.style.display = "flex";
+    }
+
+    const cardsHtml = allList.map(per => {
+      const isSelected = per.id === activeId;
+      const accent = per.accent || "#d4af37";
+      const snippet = per.specialtyNote || per.shortDesc || per.roleBadge || "";
+      return `
+        <button type="button" onclick="window.__pickFairyFromGallery('${per.id}')" class="fairy-gal-card ${isSelected ? "is-active" : ""}" style="--f-accent:${accent};">
+          ${isSelected ? `<span class="fairy-gal-active-pill">✓ نشطة</span>` : ""}
+          <div class="fairy-gal-avatar-wrap">
+            <img src="${esc(per.avatarUrl || "store-icon.png")}" onerror="this.onerror=null;this.src='store-icon.png';" alt="${esc(per.name)}" class="fairy-gal-avatar">
+          </div>
+          <div class="fairy-gal-name">${esc(per.name)}</div>
+          <div class="fairy-gal-badge">${esc(per.roleBadge || "")}</div>
+          <div class="fairy-gal-desc">${esc(snippet)}</div>
+        </button>
+      `;
+    }).join("");
+
+    const vipBtnHtml = typeof window.openVIPShowcaseModal === "function"
+      ? `<button type="button" onclick="window.closeFairyGalleryModal(); window.openVIPShowcaseModal('all');" class="btn" style="margin-top:10px; background:linear-gradient(45deg, rgba(212,175,55,0.22), rgba(56,189,248,0.18)); color:var(--gold-color); border:1px solid var(--gold-color); font-size:11px; padding:7px 10px;">👑 استعراض الشخصيات المميزة والباقة الشاملة (VIP)</button>`
+      : "";
+
+    modal.innerHTML = `
+      <div class="modal-content fairy-gal-modal">
+        <div class="fairy-gal-header">
+          <div>
+            <div class="fairy-gal-title">🧚 اختر الجنية المتحدثة</div>
+            <div class="fairy-gal-sub">اضغط على أي شخصية لتفعيلها والاستماع إلى صوتها فوراً</div>
+          </div>
+          <button type="button" onclick="window.closeFairyGalleryModal()" class="btn btn-danger" style="width:auto; padding:4px 10px; font-size:11px;">✕</button>
+        </div>
+        <div class="fairy-gal-grid">${cardsHtml}</div>
+        ${vipBtnHtml}
+      </div>
+    `;
+  };
+
+  window.__pickFairyFromGallery = function (key) {
+    window.closeFairyGalleryModal();
+    if (typeof window.selectPetPersona === "function") {
+      window.selectPetPersona(key);
+    }
+  };
+
   window.setPetHidden = function (hide) {
     haptic(15);
     if (hide) stopEmbeddedVoice();
@@ -1118,6 +1210,8 @@
       barThumb.style.borderColor = p.accent;
       renderFairyAvatarImage(barThumb, p);
     }
+    const barNameEl = $("fairyBarActiveName");
+    if (barNameEl) barNameEl.textContent = p.name || "";
     const specEl = $("fairySpecialtyNote");
     if (specEl) specEl.textContent = p.specialtyNote || "";
     syncConnectivityBadge();
@@ -2872,6 +2966,138 @@
       .fut-search-collapsed {
         display: none !important;
       }
+
+      /* نافذة اختيار الجنيات المنبثقة الأنيقة */
+      .fairy-picker-trigger {
+        display: flex !important;
+        align-items: center !important;
+        gap: 7px !important;
+        width: 100% !important;
+        background: linear-gradient(135deg, rgba(212, 175, 55, 0.12), rgba(56, 189, 248, 0.08)) !important;
+        border: 1px solid rgba(212, 175, 55, 0.45) !important;
+        border-radius: 999px !important;
+        padding: 4px 10px 4px 10px !important;
+        cursor: pointer !important;
+        font-size: 11px !important;
+        transition: border-color 0.2s ease, transform 0.16s ease !important;
+      }
+      .fairy-picker-trigger:active {
+        transform: scale(0.98) !important;
+      }
+      .fairy-gal-modal {
+        max-width: 450px !important;
+        width: 94% !important;
+        background: linear-gradient(160deg, #141824, #0d1018) !important;
+        border: 1.5px solid rgba(212, 175, 55, 0.65) !important;
+        border-radius: 20px !important;
+        padding: 14px !important;
+        color: #f9fafb !important;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 26px rgba(212, 175, 55, 0.16) !important;
+      }
+      body.light-mode .fairy-gal-modal {
+        background: linear-gradient(160deg, #ffffff, #f8fafc) !important;
+        color: #0f172a !important;
+      }
+      .fairy-gal-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.22) !important;
+        padding-bottom: 9px !important;
+        margin-bottom: 11px !important;
+      }
+      .fairy-gal-title {
+        font-size: 14px !important;
+        font-weight: 800 !important;
+        color: var(--gold-color) !important;
+      }
+      .fairy-gal-sub {
+        font-size: 10px !important;
+        color: var(--gray-text) !important;
+        margin-top: 2px !important;
+      }
+      .fairy-gal-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 9px !important;
+        max-height: 56vh !important;
+        overflow-y: auto !important;
+        padding: 2px !important;
+      }
+      .fairy-gal-card {
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        background: rgba(255, 255, 255, 0.04) !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 16px !important;
+        padding: 11px 8px 10px 8px !important;
+        cursor: pointer !important;
+        color: inherit !important;
+        transition: transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+      }
+      body.light-mode .fairy-gal-card {
+        background: #ffffff !important;
+        border-color: rgba(15, 23, 42, 0.1) !important;
+      }
+      .fairy-gal-card:hover,
+      .fairy-gal-card.is-active {
+        border-color: var(--f-accent, #d4af37) !important;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35), 0 0 14px color-mix(in srgb, var(--f-accent, #d4af37) 35%, transparent) !important;
+        transform: translateY(-2px) !important;
+      }
+      .fairy-gal-active-pill {
+        position: absolute !important;
+        top: 6px !important;
+        left: 6px !important;
+        background: #00e676 !important;
+        color: #000 !important;
+        font-size: 9px !important;
+        font-weight: 800 !important;
+        padding: 2px 6px !important;
+        border-radius: 999px !important;
+      }
+      .fairy-gal-avatar-wrap {
+        width: 58px !important;
+        height: 58px !important;
+        border-radius: 50% !important;
+        padding: 2px !important;
+        border: 2px solid var(--f-accent, #d4af37) !important;
+        box-shadow: 0 0 14px color-mix(in srgb, var(--f-accent, #d4af37) 40%, transparent) !important;
+        margin-bottom: 6px !important;
+        overflow: hidden !important;
+      }
+      .fairy-gal-avatar {
+        width: 100% !important;
+        height: 100% !important;
+        border-radius: 50% !important;
+        object-fit: cover !important;
+        display: block !important;
+      }
+      .fairy-gal-name {
+        font-size: 12px !important;
+        font-weight: 800 !important;
+        color: var(--f-accent, #d4af37) !important;
+        margin-bottom: 2px !important;
+      }
+      .fairy-gal-badge {
+        font-size: 9px !important;
+        color: var(--gray-text) !important;
+        margin-bottom: 4px !important;
+      }
+      .fairy-gal-desc {
+        font-size: 9.5px !important;
+        line-height: 1.4 !important;
+        color: var(--text-color) !important;
+        opacity: 0.88 !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+      }
+
       /* إخفاء الأزرار الزائدة داخل جسم المساعد لتجنب التكرار مع الشريط العلوي */
       #futuristicAiBody button[onclick*="startVoiceShoppingInput"] {
         display: none !important;
@@ -2896,11 +3122,22 @@
     header.style.borderRadius = "0 0 18px 18px";
   }
 
+  function purgeShamCashPaymentAIDOM() {
+    ["shamCashOcrResult", "shamCashAiCheckBtn", "shamCashPriceAiBox"].forEach(id => {
+      const el = $(id);
+      if (el) {
+        el.innerHTML = "";
+        el.style.display = "none";
+      }
+    });
+  }
+
   function mountAssistant() {
     ensureFuturisticStylesInjected();
     polishStoreHeaderLayout();
     wrapCustomerSearchBarCollapsible();
     window.analyzeShamCashReceiptOCR();
+    purgeShamCashPaymentAIDOM();
     const prefs = getPrefs();
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const assistBox = $("aiSmartAssistantBox");
@@ -2949,9 +3186,12 @@
       ).join("");
       bar.innerHTML = `
         <div class="fut-persona-select-wrap">
-          <img id="fairyBarThumb" alt="${p.name}" style="width:24px; height:24px; border-radius:50%; object-fit:cover; border:1.5px solid ${p.accent}; flex-shrink:0;">
-          <span style="color:var(--gold-color); font-weight:bold;">الشخصية:</span>
-          <select id="petPersonaSelect" class="form-control fut-select" onchange="selectPetPersona(this.value)">${opts}</select>
+          <button type="button" id="fairyGalleryTriggerBtn" class="fairy-picker-trigger" onclick="openFairyGalleryModal()">
+            <img id="fairyBarThumb" alt="${p.name}" style="width:24px; height:24px; border-radius:50%; object-fit:cover; border:1.5px solid ${p.accent}; flex-shrink:0;">
+            <span id="fairyBarActiveName" style="font-weight:800; color:var(--text-color);">${esc(p.name)}</span>
+            <span style="font-size:9px; color:var(--gold-color); margin-right:auto;">تغيير الجنية ▾</span>
+          </button>
+          <select id="petPersonaSelect" class="form-control fut-select" onchange="selectPetPersona(this.value)" style="display:none;">${opts}</select>
         </div>
         <button id="futuristicChipsToggleBtn" type="button" class="fut-sub-toggle-btn" onclick="toggleFuturisticChipsPanel()">طي الاختصارات ▴</button>
       `;
