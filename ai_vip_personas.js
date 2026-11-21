@@ -810,15 +810,19 @@
 
   function injectVIPButtonIntoAssistantHeader() {
     const actionsEl = document.querySelector("#futuristicAiHeader .fut-ai-header-actions");
-    if (!actionsEl || document.getElementById("futVipShowcaseBtn")) return;
-    const btn = document.createElement("button");
-    btn.id = "futVipShowcaseBtn";
-    btn.type = "button";
-    btn.className = "fut-icon-btn fut-gold-btn";
-    btn.textContent = "👑 VIP";
-    btn.title = "الشخصيات المميزة والباقة الشاملة (اشتراك مدى الحياة)";
+    if (!actionsEl) return;
+    let btn = document.getElementById("futVipShowcaseBtn");
+    if (!btn) {
+      btn = document.createElement("button");
+      btn.id = "futVipShowcaseBtn";
+      btn.type = "button";
+      btn.className = "fut-icon-btn fut-gold-btn";
+      actionsEl.insertBefore(btn, actionsEl.firstChild);
+    }
+    const unlockedCount = Object.keys(VIP_PERSONAS).filter(id => isPersonaUnlockedLifetime(id)).length;
+    btn.textContent = unlockedCount > 0 ? `👑 غرف VIP (${unlockedCount})` : "👑 غرف VIP";
+    btn.title = "غرف الشخصيات المميزة والباقة الشاملة (اشتراك مدى الحياة)";
     btn.onclick = function () { window.openVIPShowcaseModal("all"); };
-    actionsEl.insertBefore(btn, actionsEl.firstChild);
   }
 
   // مزامنة تلقائية مع Firebase إن وُجد
