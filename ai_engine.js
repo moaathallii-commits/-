@@ -1008,6 +1008,33 @@
   }
 
   window.selectPetPersona = function (key) {
+    if (!PERSONAS[key] && window.MoaathVIPSystem && window.MoaathVIPSystem.personas && window.MoaathVIPSystem.personas[key]) {
+      const vp = window.MoaathVIPSystem.personas[key];
+      const unlocked = typeof window.MoaathVIPSystem.isPersonaUnlockedLifetime === "function"
+        ? window.MoaathVIPSystem.isPersonaUnlockedLifetime(key)
+        : false;
+      if (!unlocked) {
+        if (typeof showToast === "function") showToast("🔒 هذه الشخصية تتطلب اشتراكاً مدى الحياة وتفعيلها من الإدارة.");
+        if (typeof window.openVIPShowcaseModal === "function") window.openVIPShowcaseModal("all");
+        return;
+      }
+      PERSONAS[key] = {
+        ...vp,
+        roleBadge: `👑 VIP • ${vp.role || ""}`,
+        specialtyNote: `${vp.name} (${vp.role || ""}): ${vp.shortDesc || ""}`,
+        greets: [vp.greet || `أهلاً بك مع ${vp.name} في متجر معاذ.`],
+        chatGood: "بأفضل حال، كيف يمكنني خدمتك اليوم؟",
+        chatGoods: ["بأفضل حال، كيف يمكنني خدمتك اليوم؟"],
+        thanks: "العفو، يسعدني دائماً خدمتك.",
+        thanksList: ["العفو، يسعدني دائماً خدمتك."],
+        addedMsgs: [(n) => `تمت إضافة ${n} إلى السلة.`],
+        recipeReady: (t) => `جهزت لك المتوفر لوصفة ${t}، حدد الكمية.`,
+        recipeMissing: (t) => `بعض مكونات ${t} غير متوفرة حالياً.`,
+        itemsReady: () => "عرضت لك الأصناف المتوفرة في الفرع، حدد الكمية.",
+        notFounds: ["لم أجد صنفاً مطابقاً متوفراً الآن."],
+        notFound: "لم أجد صنفاً مطابقاً متوفراً الآن."
+      };
+    }
     if (!PERSONAS[key]) return;
     haptic(15);
     unlockEmbeddedVoice();
@@ -1110,6 +1137,9 @@
     window.closeFairyGalleryModal();
     if (typeof window.selectPetPersona === "function") {
       window.selectPetPersona(key);
+    }
+    if (window.MoaathVIPSystem && window.MoaathVIPSystem.personas && window.MoaathVIPSystem.personas[key] && typeof window.triggerVIPProminentEntrance === "function") {
+      window.triggerVIPProminentEntrance(key);
     }
   };
 
@@ -2903,14 +2933,15 @@
     st.id = "futuristicUiMasterStyle";
     st.textContent = `
 
-      html, body {
-        overflow-x: hidden !important;
-        max-width: 100vw !important;
-        width: 100% !important;
+      html {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
       }
-      .container, .main-content, .page-wrapper {
+      body {
+        overflow-x: clip !important;
+        overflow-y: auto !important;
         max-width: 100% !important;
-        overflow-x: hidden !important;
+        touch-action: pan-y;
       }
 
       /* =====================================================================
