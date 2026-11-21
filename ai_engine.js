@@ -3123,13 +3123,35 @@
   }
 
   function purgeShamCashPaymentAIDOM() {
-    ["shamCashOcrResult", "shamCashAiCheckBtn", "shamCashPriceAiBox"].forEach(id => {
+    ["shamCashOcrResult", "shamCashOcrBox", "shamCashReceiptBox", "shamCashAiCheckBtn", "shamCashPriceAiBox"].forEach(id => {
       const el = $(id);
       if (el) {
         el.innerHTML = "";
         el.style.display = "none";
       }
     });
+    // إخفاء أي صندوق يحتوي على "فحص مبدئي لإشعار شام كاش" أو حقل رفع إشعار مرتبط بـ analyzeShamCashReceiptOCR داخل سلة المشتريات
+    const cartModal = $("cartModal") || document.body;
+    if (cartModal) {
+      cartModal.querySelectorAll("input[type='file']").forEach(inp => {
+        const onchg = String(inp.getAttribute("onchange") || "");
+        const idStr = String(inp.id || "");
+        if (/analyzeShamCash|shamCash/i.test(onchg) || /shamCash|ocr/i.test(idStr)) {
+          const box = inp.closest("div[style*='dashed'], .form-group, div") || inp.parentElement;
+          if (box && box.id !== "cartModal") {
+            box.style.display = "none";
+          }
+        }
+      });
+      cartModal.querySelectorAll("div, section, label").forEach(el => {
+        if (el.children.length <= 4 && /فحص\s*مبدئي\s*لإشعار\s*شام\s*كاش/.test(el.textContent || "")) {
+          const container = el.closest("div[style*='dashed']") || el;
+          if (container && container.id !== "cartModal") {
+            container.style.display = "none";
+          }
+        }
+      });
+    }
   }
 
   function mountAssistant() {
@@ -3155,6 +3177,7 @@
           <span class="fut-chev">▾</span>
         </button>
         <div class="fut-ai-header-actions">
+          <button id="futVipShowcaseBtn" type="button" onclick="if(typeof window.openVIPShowcaseModal==='function'){window.openVIPShowcaseModal('all');}else{showToast('يرجى التأكد من رفع ملف ai_vip_personas.js وربطه في index.html');}" class="fut-icon-btn fut-gold-btn" title="غرف الشخصيات المميزة والباقة الشاملة">👑 غرف VIP</button>
           <span id="petConnStatusBadge" onclick="showVoiceDiagnosticOnPhone()" class="fut-status-badge" title="اضغط لعرض سبب الخطأ وعدد المقاطع المحفوظة">🟢 جاهز</span>
           <button id="petDirectMicBtn" type="button" onclick="startVoiceShoppingInput()" class="fut-icon-btn fut-mic-btn" title="تحدّث الآن">🎙️</button>
           <button type="button" onclick="replayLastCompanionSpeech()" class="fut-icon-btn fut-gold-btn" title="إعادة الاستماع">🔁</button>
@@ -3538,6 +3561,12 @@
     if (b) b.style.display = "none";
     if (typeof _origRenderCart === "function") _origRenderCart();
     enhanceCustomerCartCheckoutUX();
+    purgeShamCashPaymentAIDOM();
+    const paySel = $("cartPaymentMethod");
+    if (paySel && !paySel.dataset.purgeHooked) {
+      paySel.dataset.purgeHooked = "1";
+      paySel.addEventListener("change", () => setTimeout(purgeShamCashPaymentAIDOM, 30));
+    }
     renderSmartCartRecommendations();
   };
 
