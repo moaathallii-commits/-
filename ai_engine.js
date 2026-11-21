@@ -532,6 +532,10 @@
 
   const missingLocalClips = new Set();
 
+  function looseSpeechNorm(str) {
+    return cleanArabicNorm(normalizeTextForArabicSpeech(str));
+  }
+
   function getCoreClipPhrasesForPersona(persona) {
     if (!persona) return [];
     const pickFirst = (arr, fallback) => (Array.isArray(arr) && arr.length ? arr[0] : (fallback || ""));
@@ -552,61 +556,99 @@
     ].filter(x => x.text && x.text.trim());
   }
 
-  function detectStaticClipName(persona, spokenText) {
-    const t = normalizeTextForArabicSpeech(spokenText);
-    const clips = getCoreClipPhrasesForPersona(persona);
-    for (const c of clips) {
-      if (t === normalizeTextForArabicSpeech(c.text)) return c.key;
+  function detectStaticClipCandidates(persona, spokenText) {
+    const tLoose = looseSpeechNorm(spokenText);
+    if (!tLoose) return [];
+    const candidates = [];
+    const addCandidate = (k) => { if (k && !candidates.includes(k)) candidates.push(k); };
+
+    // 1) مطابقة دقيقة أو مرنة مع العبارات الأساسية العشر
+    const core = getCoreClipPhrasesForPersona(persona);
+    for (const c of core) {
+      if (tLoose === looseSpeechNorm(c.text)) addCandidate(c.key);
     }
-    return null;
+
+    // 2) مطابقة جميع مصفوفات التحيات والردود البديلة لنفس الشخصية (لأن pickPhrase يدوّر بين عناصر المصفوفة)
+    const matchAny = (arr) => Array.isArray(arr) && arr.some(item => typeof item === "string" && looseSpeechNorm(item) === tLoose);
+    if (matchAny(persona.greets) || matchAny(persona.timeGreets?.afternoon)) addCandidate("greet");
+    if (matchAny(persona.timeGreets?.morning)) { addCandidate("greetMorning"); addCandidate("greet"); }
+    if (matchAny(persona.timeGreets?.evening)) { addCandidate("greetEvening"); addCandidate("greet"); }
+    if (matchAny(persona.chatGoods)) addCandidate("chatGood");
+    if (matchAny(persona.thanksList)) addCandidate("thanks");
+    if (matchAny(persona.alternativeReplies) || matchAny(persona.fuzzyReplies) || matchAny(persona.synonymReplies)) addCandidate("alternative");
+    if (matchAny(persona.habitReplies)) addCandidate("habit");
+    if (matchAny(persona.notFounds)) addCandidate("notFound");
+
+    // 3) مطابقة العبارات الديناميكية (إضافة للسلة / عرض الأصناف / جاهزية الوصفة)
+    if (Array.isArray(persona.addedMsgs) && persona.addedMsgs.some(fn => typeof fn === "function" && (
+      looseSpeechNorm(fn("صنف واحد")) === tLoose ||
+      looseSpeechNorm(fn("صنفين")) === tLoose ||
+      tLoose.includes("السله") || tLoose.includes("ضفتلك") || tLoose.includes("اضفت")
+    ))) {
+      addCandidate("added");
+    }
+    if (typeof persona.itemsReady === "function" && (
+      looseSpeechNorm(persona.itemsReady("")) === tLoose ||
+      tLoose.includes("المتوفر") || tLoose.includes("الكميه")
+    )) {
+      addCandidate("itemsReady");
+    }
+
+    return candidates;
   }
 
   async function tryLocalRepoClip(persona, spokenText, mySeq, cacheKey) {
-    const clipName = detectStaticClipName(persona, spokenText);
-    if (!clipName) return false;
-    const relUrl = `sounds/${persona.id}_${clipName}.mp3`;
-    if (missingLocalClips.has(relUrl)) return false;
+    const candidateClips = detectStaticClipCandidates(persona, spokenText);
+    if (!candidateClips.length) return false;
 
     if (ttsAudioCache.has(cacheKey)) {
       const cached = ttsAudioCache.get(cacheKey);
       if (cached?.source === "local_repo") {
         sessionCtx.lastTtsSource = "local_repo";
-        updateVoiceSourceBadge("🔊 يتحدث", "#00e676", relUrl);
+        updateVoiceSourceBadge("💾 محفوظ", "#00e676", cached.relUrl || "ملف صوتي محلي");
         playViaHtmlAudio(cached, persona, mySeq);
         return true;
       }
     }
 
-    try {
-      const res = await fetch(relUrl, { method: "GET", cache: "force-cache" });
-      if (!res.ok) {
+    for (const clipName of candidateClips) {
+      const relUrl = `sounds/${persona.id}_${clipName}.mp3`;
+      if (missingLocalClips.has(relUrl)) continue;
+      try {
+        const res = await fetch(relUrl, { method: "GET", cache: "default" });
+        if (!res.ok) {
+          missingLocalClips.add(relUrl);
+          continue;
+        }
+        const cType = res.headers.get("content-type") || "";
+        if (/text\/html/i.test(cType)) {
+          missingLocalClips.add(relUrl);
+          continue;
+        }
+        const blob = await res.blob();
+        if (!blob || blob.size < 400) {
+          missingLocalClips.add(relUrl);
+          continue;
+        }
+        if (mySeq !== ttsRequestSeq) return true;
+        const blobUrl = URL.createObjectURL(blob);
+        const entry = { url: blobUrl, rawBuffer: null, source: "local_repo", relUrl, geminiError: "" };
+        if (ttsAudioCache.size > 30) {
+          const firstKey = ttsAudioCache.keys().next().value;
+          const oldEntry = ttsAudioCache.get(firstKey);
+          if (oldEntry?.url) URL.revokeObjectURL(oldEntry.url);
+          ttsAudioCache.delete(firstKey);
+        }
+        ttsAudioCache.set(cacheKey, entry);
+        sessionCtx.lastTtsSource = "local_repo";
+        updateVoiceSourceBadge("💾 محفوظ", "#00e676", relUrl);
+        playViaHtmlAudio(entry, persona, mySeq);
+        return true;
+      } catch (_) {
         missingLocalClips.add(relUrl);
-        return false;
       }
-      const cType = res.headers.get("content-type") || "";
-      if (/text\/html/i.test(cType)) {
-        missingLocalClips.add(relUrl);
-        return false;
-      }
-      const blob = await res.blob();
-      if (mySeq !== ttsRequestSeq) return true;
-      const blobUrl = URL.createObjectURL(blob);
-      const entry = { url: blobUrl, rawBuffer: null, source: "local_repo", geminiError: "" };
-      if (ttsAudioCache.size > 30) {
-        const firstKey = ttsAudioCache.keys().next().value;
-        const oldEntry = ttsAudioCache.get(firstKey);
-        if (oldEntry?.url) URL.revokeObjectURL(oldEntry.url);
-        ttsAudioCache.delete(firstKey);
-      }
-      ttsAudioCache.set(cacheKey, entry);
-      sessionCtx.lastTtsSource = "local_repo";
-      updateVoiceSourceBadge("🔊 يتحدث", "#00e676", relUrl);
-      playViaHtmlAudio(entry, persona, mySeq);
-      return true;
-    } catch (_) {
-      missingLocalClips.add(relUrl);
-      return false;
     }
+    return false;
   }
 
   async function readPersistentHumanCache(cacheKey) {
@@ -614,7 +656,24 @@
     try {
       const cache = await caches.open(PERSISTENT_TTS_CACHE_NAME);
       const reqUrl = "https://moaath-tts.local/" + encodeURIComponent(cacheKey);
-      const match = await cache.match(reqUrl);
+      let match = await cache.match(reqUrl);
+      if (!match) {
+        // بحث مرن في الكاش الدائم عن نفس الشخصية ونفس العبارة (لتوافق المقاطع المحفوظة قبل التحديث)
+        const parts = String(cacheKey || "").split("::");
+        const pid = parts[0] || "";
+        const targetLoose = looseSpeechNorm(parts[2] || "");
+        if (pid && targetLoose) {
+          const allReqs = await cache.keys();
+          for (const r of allReqs) {
+            const decoded = decodeURIComponent(r.url.replace("https://moaath-tts.local/", ""));
+            const dParts = decoded.split("::");
+            if (dParts[0] === pid && looseSpeechNorm(dParts[2] || "") === targetLoose) {
+              match = await cache.match(r);
+              if (match) break;
+            }
+          }
+        }
+      }
       if (!match) return null;
       const blob = await match.blob();
       return URL.createObjectURL(blob);
