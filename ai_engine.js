@@ -309,9 +309,15 @@
     userPausedUntil = Date.now() + ms;
   }
 
+  function toWesternDigits(str) {
+    return String(str || "")
+      .replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660))
+      .replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 0x06F0));
+  }
+
   function cleanArabicNorm(str) {
     const base = typeof normalizeArabic === "function" ? normalizeArabic(str) : String(str || "");
-    return base
+    return toWesternDigits(base)
       .toLowerCase()
       .replace(/[أإآ]/g, "ا")
       .replace(/ة/g, "ه")
@@ -1840,42 +1846,101 @@
   }
 
   // ==========================================================================
-  // [محرك الحوار المتتابع الذكي (Multi-Turn Dialog) — يعمل محلياً بـ 0 حصة API]
+  // [محرك الحوار المتتابع الذكي (Multi-Turn Dialog v2) — يعمل محلياً بـ 0 حصة API]
+  // - يدعم الأرقام العربية (٥٠٠) والإنجليزية (500) والأرقام المنطوقة (خمسمية / ألف)
+  // - يحفظ حالة الحوار في sessionStorage لعدم فقدانها عند إعادة رسم الواجهة
   // ==========================================================================
+  const PENDING_DIALOG_STORAGE_KEY = "moaath_ai_pending_dialog_v2";
+
+  function loadPendingDialog() {
+    if (sessionCtx.pendingDialog && sessionCtx.pendingDialog.expiresAt > Date.now()) {
+      return sessionCtx.pendingDialog;
+    }
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(PENDING_DIALOG_STORAGE_KEY) || "null");
+      if (saved && saved.expiresAt > Date.now()) {
+        sessionCtx.pendingDialog = saved;
+        return saved;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  function savePendingDialog(obj) {
+    sessionCtx.pendingDialog = obj;
+    try {
+      if (obj) sessionStorage.setItem(PENDING_DIALOG_STORAGE_KEY, JSON.stringify(obj));
+      else sessionStorage.removeItem(PENDING_DIALOG_STORAGE_KEY);
+    } catch (_) {}
+  }
+
   const DIALOG_PLAN_TOPICS = [
     {
       key: "sahra",
       title: "سهرة ومتة",
-      regex: /(تنظيم|تجهيز|جهزلي|جهز|رتبلي|حضرلي|اعمل|بدي|اريد).*(سهره|سهرة|مته|متة|تسالي|جمعه|جمعة)/,
+      regex: /(تنظيم|نظم|تجهيز|جهز|رتب|حضر|اقترح|سوي|اعمل|بدي|اريد).*(سهره|مته|تسالي|جمعه|قعده)|^(سهره|تنظيم سهره|تجهيز سهره)$/,
       keywords: ["متة", "مته", "بزر", "شيبس", "بسكوت", "شوكولاتة", "شوكولاته", "عصير", "شاي", "قهوة", "موالح", "نقارش"]
     },
     {
       key: "breakfast",
       title: "فطور صباحي",
-      regex: /(تنظيم|تجهيز|جهزلي|جهز|رتبلي|حضرلي|بدي|اريد).*(فطور|افطار|إفطار|صباحي)/,
+      regex: /(تنظيم|نظم|تجهيز|جهز|رتب|حضر|اقترح|سوي|اعمل|بدي|اريد).*(فطور|افطار|صباحي)|^(فطور|فطور صباحي)$/,
       keywords: ["بيض", "جبن", "لبنة", "لبنه", "حليب", "خبز", "حلاوة", "حلاوه", "زيتون", "شاي", "زعتر", "مربى", "عسل"]
     },
     {
       key: "hospitality",
       title: "ضيافة وحلويات",
-      regex: /(تنظيم|تجهيز|جهزلي|جهز|رتبلي|حضرلي|بدي|اريد).*(ضيافه|ضيافة|ضيوف|عزيمه|عزيمة|حلى|حلويات)/,
+      regex: /(تنظيم|نظم|تجهيز|جهز|رتب|حضر|اقترح|سوي|اعمل|بدي|اريد).*(ضيافه|ضيوف|عزيمه|حلى|حلويات)|^(ضيافه|ضيافة)$/,
       keywords: ["قهوة", "قهوه", "شاي", "بسكوت", "شوكولاتة", "شوكولاته", "عصير", "حليب", "كيك", "سميد", "سكر", "نشا"]
     },
     {
       key: "cleaning",
       title: "تنظيف ومنظفات",
-      regex: /(تنظيم|تجهيز|جهزلي|جهز|رتبلي|حضرلي|بدي|اريد).*(تنظيف|منظفات|غسيل|جلي)/,
+      regex: /(تنظيم|نظم|تجهيز|جهز|رتب|حضر|اقترح|سوي|اعمل|بدي|اريد).*(تنظيف|منظفات|غسيل|جلي)/,
       keywords: ["سائل جلي", "جلي", "مسحوق غسيل", "كلور", "صابون", "شامبو", "مناديل", "محارم", "معقم", "ليف", "اسفنج"]
+    },
+    {
+      key: "general_basket",
+      title: "سلة مشتريات بميزانية",
+      regex: /(تنظيم|نظم|تجهيز|جهز|رتب|اقترح).*(سله|مشتريات|اغراض|طلب|ميزانيه)/,
+      keywords: []
     }
   ];
 
   function extractBudgetNumber(normText) {
-    const clean = String(normText || "").replace(/[,،]/g, "").trim();
-    // رقم صرف مثل "500" أو "ب 500" أو "ميزانيتي 500" أو "500 ليرة"
-    const pureMatch = clean.match(/^(?:ب|بـ|حوالي|تقريبا|تقريباً|حدود|ميزانيه|ميزانية|ميزانيتي|مبلغ)?\s*(\d{2,7})\s*(?:ليره|ليرة|ل\s*س|سوري|فقط)?$/);
-    if (pureMatch) return parseInt(pureMatch[1], 10);
-    const inlineMatch = clean.match(/(?:ب|بـ|بميزانيه|بميزانية|ميزانيه|ميزانية|مبلغ|حدود|اقل\s*من|أقل\s*من|تحت)\s*(\d{2,7})/);
-    if (inlineMatch) return parseInt(inlineMatch[1], 10);
+    const clean = toWesternDigits(String(normText || "")).replace(/[,،]/g, "").trim();
+
+    // 1) أرقام رقمية (مثل 500، ٥٠٠، ب 500، ميزانيتي 1000 ليرة)
+    const numMatch = clean.match(/(\d{2,7})/);
+    if (numMatch) {
+      const val = parseInt(numMatch[1], 10);
+      if (val >= 10) return val;
+    }
+
+    // 2) أرقام منطوقة بالعربية (للصوت أو الكتابة)
+    const spokenMap = [
+      [/عشر\s*الاف|عشره\s*الاف/, 10000],
+      [/خمس\s*الاف|خمسه\s*الاف/, 5000],
+      [/اربع\s*الاف|اربعه\s*الاف/, 4000],
+      [/تلت\s*الاف|ثلاث\s*الاف|ثلاثه\s*الاف/, 3000],
+      [/الفين/, 2000],
+      [/الف\s*ونص/, 1500],
+      [/\bالف\b/, 1000],
+      [/تسعميه|تسع\s*ميه|تسعمائه|تسعمئه/, 900],
+      [/تمنميه|تمن\s*ميه|ثمانميه|ثمان\s*ميه/, 800],
+      [/سبعميه|سبع\s*ميه|سبعمئه/, 700],
+      [/ستميه|ست\s*ميه|ستمئه/, 600],
+      [/خمسميه|خمس\s*ميه|خمسمئه|خمسمائه/, 500],
+      [/اربعميه|اربع\s*ميه|اربعمئه/, 400],
+      [/تلتميه|تلت\s*ميه|ثلاثميه|ثلاث\s*ميه|ثلاثمئه/, 300],
+      [/ميتين|مائتين|مئتين/, 200],
+      [/ميه\s*ونص/, 150],
+      [/\b(ميه|مئه|مائه)\b/, 100],
+      [/\bخمسين\b/, 50]
+    ];
+    for (const [rx, val] of spokenMap) {
+      if (rx.test(clean)) return val;
+    }
     return null;
   }
 
@@ -1894,7 +1959,6 @@
         };
       });
 
-    // أولوية للأصناف المرتبطة بالموضوع، ثم إكمال بأوفر المتوفر ضمن الميزانية
     const matched = allAvail.filter(x => x.kwScore > 0).sort((a, b) => (b.kwScore - a.kwScore) || (a.price - b.price));
     const pool = matched.length >= 2 ? matched : [...matched, ...allAvail.filter(x => x.kwScore === 0).sort((a, b) => a.price - b.price)];
 
@@ -1917,15 +1981,14 @@
 
   function handleMultiTurnDialog(normText, persona) {
     const now = Date.now();
-    const pending = sessionCtx.pendingDialog && sessionCtx.pendingDialog.expiresAt > now
-      ? sessionCtx.pendingDialog
-      : null;
-
-    // 1) إذا كان هناك حوار مفتوح ينتظر الميزانية وردّ الزبون برقم (مثل "500")
+    const pending = loadPendingDialog();
     const budgetVal = extractBudgetNumber(normText);
+
+    // 1) إذا كان هناك حوار مفتوح ينتظر الميزانية وردّ الزبون برقم (مثل "500" أو "٥٠٠" أو "خمسمية")
     if (pending && pending.type === "awaiting_budget" && budgetVal) {
       const { picked, runningTotal } = buildBudgetBasket(budgetVal, pending.keywords, pending.title);
-      sessionCtx.pendingDialog = null;
+      savePendingDialog(null);
+      setVal("aiShoppingPromptInput", "");
       if (picked.length > 0) {
         openZeroDefaultModal(
           `🎯 تجهيز (${pending.title}) بميزانية ${budgetVal.toLocaleString()} ل.س:`,
@@ -1945,11 +2008,12 @@
       }
     }
 
-    // 2) إذا كتب الزبون رقماً فقط (مثل "500") دون حوار معلق لكن لديه سياق سابق أو يريد تجهيز سلة بميزانية
-    if (!pending && budgetVal && /^\s*(?:ب|بـ|ميزانيه|ميزانية|ميزانيتي)?\s*\d{2,7}\s*(?:ليره|ليرة|ل\s*س)?\s*$/.test(normText)) {
+    // 2) إذا كتب الزبون رقماً فقط (مثل "500" أو "٥٠٠" أو "ب 500") دون حوار معلق -> يجهز له سلة فورية ضمن الميزانية
+    if (!pending && budgetVal && /^(?:ب|حوالي|تقريبا|حدود|ميزانيه|ميزانيتي|مبلغ)?\s*(?:\d{2,7}|خمسميه|خمس\s*ميه|الف|الفين|ميه|ميتين|تلتميه|اربعميه|ستميه|سبعميه|تمنميه|تسعميه)\s*(?:ليره|ل\s*س|سوري|فقط)?$/.test(normText)) {
       const ctxTitle = sessionCtx.lastModalTitle ? "تشكيلة حسب طلبك السابق" : "تشكيلة متوفرة";
       const ctxKws = sessionCtx.lastQuery ? [sessionCtx.lastQuery] : [];
       const { picked, runningTotal } = buildBudgetBasket(budgetVal, ctxKws, ctxTitle);
+      setVal("aiShoppingPromptInput", "");
       if (picked.length > 0) {
         openZeroDefaultModal(
           `💰 ${ctxTitle} ضمن ميزانية ${budgetVal.toLocaleString()} ل.س:`,
@@ -1965,7 +2029,8 @@
     }
 
     // 3) ردود الموافقة والمتابعة ("موافق"، "تمام"، "نعم"، "أوكي"، "ماشي"، "أضفهم")
-    if (/^(موافق|تمام|نعم|اوكي|أوكي|ماشي|ايه|أيوه|ايوه|طيب|ممتاز|اكمل|أكمل|اضفهم|أضفهم)$/.test(normText)) {
+    if (/^(موافق|تمام|نعم|اوكي|ماشي|ايه|ايوه|طيب|ممتاز|اكمل|اضفهم)$/.test(normText)) {
+      setVal("aiShoppingPromptInput", "");
       if (pending && pending.type === "awaiting_budget") {
         const askAgain = `ممتاز! اكتب رقم الميزانية بالليرة (مثلاً 500 أو 1000) لأجهزلك (${pending.title}) فوراً.`;
         setOrbEmotion("greet", askAgain, true);
@@ -1982,9 +2047,10 @@
       }
     }
 
-    // 4) التقاط طلب تنظيم/تجهيز مناسبة (مثل "تنظيم سهرة") بدون ميزانية -> يفتح حواراً متتابعاً ذكياً
+    // 4) التقاط طلب تنظيم/تجهيز مناسبة (مثل "تنظيم سهرة" أو "نظم لي سهرة")
     for (const topic of DIALOG_PLAN_TOPICS) {
       if (topic.regex.test(normText)) {
+        setVal("aiShoppingPromptInput", "");
         if (budgetVal) {
           const { picked, runningTotal } = buildBudgetBasket(budgetVal, topic.keywords, topic.title);
           if (picked.length > 0) {
@@ -2000,13 +2066,13 @@
             return true;
           }
         } else {
-          sessionCtx.pendingDialog = {
+          savePendingDialog({
             type: "awaiting_budget",
             key: topic.key,
             title: topic.title,
             keywords: topic.keywords,
-            expiresAt: now + 5 * 60 * 1000
-          };
+            expiresAt: now + 10 * 60 * 1000
+          });
           const askMsg = `على عيني! كم الميزانية التي تحب أن أجهز بها (${topic.title})؟ اكتب الرقم فقط مثل 500 أو 1000.`;
           setOrbEmotion("greet", askMsg, true);
           setTxt("aiShoppingStatusText", `💬 ${askMsg}`);
