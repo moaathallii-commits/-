@@ -10,6 +10,6 @@
   <circle cx="540" cy="160" r="64" fill="#10b981" fill-opacity="0.14" stroke="#10b981" stroke-width="2.5"/>
   <text x="540" y="178" font-size="52" text-anchor="middle">💪</text>
   <text x="445" y="135" fill="#10b981" font-family="sans-serif" font-size="28" font-weight="bold" text-anchor="end">تمرين الضغط (Push-Up)</text>
-  <text x="445" y="185" fill="#e5e7eb" font-family="sans-serif" font-size="18" text-anchor="end">ظهر مستقيم • نزول متوازن • 4×12</text>
-  <text x="445" y="245" fill="#9ca3af" font-family="sans-serif" font-size="13" text-anchor="end">متجر معاذ • غرف VIP اليومية</text>
+  <text x="445" y="185" fill="#e5e7eb" font-family="sans-serif" font-size="18" text-anchor="end">4×12 تكرار • ظهر مستقيم</text>
+  <text x="445" y="245" fill="#9ca3af" font-family="sans-serif" font-size="13" text-anchor="end">غرف VIP اليومية • متجر معاذ</text>
 </svg>

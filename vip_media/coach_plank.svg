@@ -8,8 +8,8 @@
   <rect width="640" height="320" rx="22" fill="url(#bg)"/>
   <rect x="10" y="10" width="620" height="300" rx="18" fill="none" stroke="#10b981" stroke-width="3" stroke-opacity="0.7"/>
   <circle cx="540" cy="160" r="64" fill="#10b981" fill-opacity="0.14" stroke="#10b981" stroke-width="2.5"/>
-  <text x="540" y="178" font-size="52" text-anchor="middle">🏋️</text>
+  <text x="540" y="178" font-size="52" text-anchor="middle">⏱️</text>
   <text x="445" y="135" fill="#10b981" font-family="sans-serif" font-size="28" font-weight="bold" text-anchor="end">تمرين البلانك (Plank)</text>
   <text x="445" y="185" fill="#e5e7eb" font-family="sans-serif" font-size="18" text-anchor="end">شد الجذع والبطن • ثبات 3×40 ثانية</text>
-  <text x="445" y="245" fill="#9ca3af" font-family="sans-serif" font-size="13" text-anchor="end">متجر معاذ • غرف VIP اليومية</text>
+  <text x="445" y="245" fill="#9ca3af" font-family="sans-serif" font-size="13" text-anchor="end">غرف VIP اليومية • متجر معاذ</text>
 </svg>
