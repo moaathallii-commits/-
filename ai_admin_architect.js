@@ -471,6 +471,7 @@
     if (typeof _origRenderStoreArch === "function") _origRenderStoreArch();
     setTimeout(initAdminArchitect, 90);
   };
+  
 
   window.MoaathAdminArchitect = {
     name: "الحكيم التقني",
@@ -479,3 +480,43 @@
     getTelemetry: collectSystemTelemetry
   };
 })();
+// ============================================================================
+// ترقيع الحكيم التقني: سد ثغرة renderAdminBrainUnmatchedList المفقودة
+// ============================================================================
+window.renderAdminBrainUnmatchedList = window.renderAdminBrainUnmatchedList || function (dataObj) {
+  const container = document.getElementById("adminBrainUnmatchedContainer") || 
+                    document.getElementById("unmatchedQueriesBox");
+  
+  if (!container) {
+    console.warn("[الحكيم التقني] حاوية عرض الاستعلامات غير المطابقة غير موجودة في الواجهة حالياً.");
+    return;
+  }
+
+  const items = dataObj ? (typeof dataObj === 'object' ? Object.values(dataObj) : dataObj) : [];
+  
+  if (!Array.isArray(items) || items.length === 0) {
+    container.innerHTML = `<div style="font-size:11px; color:var(--gray-text); padding:8px;">لا توجد استعلامات غير مطابقة مسجلة.</div>`;
+    return;
+  }
+
+  // ترتيب الاستعلامات حسب الأكثر تكراراً
+  const sortedItems = items
+    .filter(it => it && it.query)
+    .sort((a, b) => (b.count || 0) - (a.count || 0))
+    .slice(0, 15);
+
+  container.innerHTML = sortedItems.map(item => `
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 8px; border-bottom:1px dashed var(--border-color); font-size:11px;">
+      <span style="color:var(--text-color); font-weight:bold;">${String(item.query).replace(/</g, "&lt;")}</span>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <span style="background:rgba(245,158,11,0.15); color:var(--gold-color); padding:1px 6px; border-radius:4px; font-size:10px;">${item.count || 1} 🔁</span>
+        <button type="button" class="btn" style="width:auto; padding:2px 6px; font-size:9px; background:rgba(56,189,248,0.2); color:#38bdf8; border:none;" 
+                onclick="if(typeof window._admArchPromoteTopUnmatchedToSynonym === 'function') { window._admArchPromoteTopUnmatchedToSynonym() }">
+          ترقية
+        </button>
+      </div>
+    </div>
+  `).join("");
+};
+
+console.log("[الحكيم التقني] تم حقن renderAdminBrainUnmatchedList الوقائية بأمان.");
