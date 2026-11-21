@@ -1,5 +1,5 @@
 // ============================================================================
-// منظومة الشخصيات الثماني المدفوعة (مدى الحياة) - الإصدار 3.1 (ai_vip_personas.js)
+// منظومة الشخصيات الثماني المدفوعة (مدى الحياة) - الإصدار 3.2 (ai_vip_personas.js)
 // - تجربة يومية مستقبلية أنيقة ومتكاملة لكل شخصية من الشخصيات الثماني
 // - ربط مباشر بالمخزون المتوفر في الفرع + سجل تعلم ذاتي مستقل لكل شخصية
 // - قراءة التحديث اليومي من vip_media/daily_vip_feed.json + كاش دائم على الجوال
@@ -1612,7 +1612,7 @@
   };
 
   window.MoaathVIPSystem = {
-    version: "3.1-daily-companion-rooms",
+    version: "3.2-daily-companion-rooms",
     personas: VIP_PERSONAS,
     isPersonaUnlockedLifetime,
     isBundleUnlockedLifetime,
