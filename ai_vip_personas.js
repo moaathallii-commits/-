@@ -1,10 +1,10 @@
 // ============================================================================
-// منظومة الشخصيات الثماني المدفوعة (مدى الحياة) + الغرف التفاعلية اليومية + التفعيل الإداري الحصري
-// (ai_vip_personas.js - v2.0 Interactive Daily Rooms & Distinct Voices)
-// - اشتراك لمرة واحدة مدى الحياة لكل شخصية أو عبر «الباقة الشاملة»
-// - 8 أصوات بشرية متمايزة تماماً دون أي تداخل في voiceName
-// - 8 أدوات تفاعلية حقيقية داخل الغرف اليومية + بنك محتوى يومي موسّع
-// - التفعيل والإلغاء يتم حصراً من لوحة الإدارة
+// منظومة الشخصيات الثماني المدفوعة (مدى الحياة) — الإصدار 3.0
+// (ai_vip_personas.js - Self-Learning VIP + Visual Daily Rooms + Cloud Cache)
+// - تعلّم تلقائي مستقل لكل شخصية VIP من تفاعلات الزبون داخل الغرفة والسلة
+// - دعم الغرف بالصور التوضيحية (تمارين كابتن صخر، طبخات الشيف الذهبي، صور فادي المضحكة، وغيرها)
+// - قراءة التحديث اليومي التلقائي من السحابة/المستودع (vip_media/daily_vip_feed.json) + كاش دائم على الجوال
+// - حفظ أي تحميل ناجح تلقائياً في الكاش الدائم (Cache API) لتوفير الحصص المجانية والعمل مع الإنترنت الضعيف
 // - عزل كامل ونهائي للذكاء الاصطناعي عن الدفع وشام كاش والإيصالات المالية
 // ============================================================================
 
@@ -14,6 +14,9 @@
   const VIP_ENTITLEMENTS_KEY = "moaath_vip_lifetime_entitlements_v1";
   const VIP_CONFIG_KEY = "moaath_vip_pricing_config_v1";
   const VIP_INTERACTIVE_KEY = "moaath_vip_interactive_state_v2";
+  const VIP_LEARNING_KEY = "moaath_vip_self_learning_v3";
+  const VIP_FEED_CACHE_KEY = "moaath_vip_daily_feed_cache_v3";
+  const VIP_MEDIA_CACHE_NAME = "moaath_vip_media_cache_v1";
   const STORE_WHATSAPP_PHONE = "963965461504";
 
   const DEFAULT_VIP_CONFIG = {
@@ -40,7 +43,7 @@
       pitchSemitones: -1.6,
       accent: "#10b981",
       avatarUrl: "coach_sakhr.jpg",
-      shortDesc: "قائمة تمارين يومية قابلة للتأشير وحاسبة ماء وبروتين وسلة رياضية.",
+      shortDesc: "تمارين يومية مصورة قابلة للتأشير وحاسبة ماء وبروتين وتعلّم لمستواك.",
       styleHint: "بصوت مدرب رياضي حازم ومحفز وعميق بالعربية الواضحة",
       greet: "أهلاً بالبطل في غرفة التدريب! انضباط اليوم يصنع قوة الغد."
     },
@@ -58,7 +61,7 @@
       pitchSemitones: -1.2,
       accent: "#f59e0b",
       avatarUrl: "grand_chef.jpg",
-      shortDesc: "وصفات يومية دقيقة مع الصور وضبط المقادير حسب عدد الأشخاص.",
+      shortDesc: "وصفات طبخ يومية مصورة مع ضبط المقادير وتعلّم أكلاتك المفضلة.",
       styleHint: "بصوت طباخ خبير وهادئ وراقٍ يشرح الوصفات والمقادير بدقة",
       greet: "أهلاً بك في مطبخ الشيف الذهبي، حيث الدقة والمذاق الأصيل."
     },
@@ -76,7 +79,7 @@
       pitchSemitones: 3.0,
       accent: "#ec4899",
       avatarUrl: "princess_layla.jpg",
-      shortDesc: "منسّق المناسبات السريع وركن الضيافة والحلويات اليومية.",
+      shortDesc: "منسّق المناسبات المصور وركن الضيافة والحلويات اليومية.",
       styleHint: "بصوت أنثوي راقٍ ومهذب وناعم ومشرق بالعربية الفصحى اللطيفة",
       greet: "أهلاً بك في جناح الضيافة الملكي، يسعدني تنسيق أرقى اختياراتك اليوم."
     },
@@ -94,7 +97,7 @@
       pitchSemitones: -1.8,
       accent: "#8b5cf6",
       avatarUrl: "butler_farid.jpg",
-      shortDesc: "دفتر مؤونة البيت التفاعلي وحاسبة الميزانية وتنظيم الاحتياجات.",
+      shortDesc: "دفتر مؤونة البيت الذكي وحاسبة الميزانية وتعلّم نواقصك الأسبوعية.",
       styleHint: "بصوت وقور ورسمي ومنظم يخاطب الزبون باحترام ودقة",
       greet: "أهلاً بك سيدي، كل شيء مرتب وجاهز لتنظيم مؤونة اليوم بدقة."
     },
@@ -112,7 +115,7 @@
       pitchSemitones: 1.1,
       accent: "#f97316",
       avatarUrl: "friend_fadi.jpg",
-      shortDesc: "عجلة السهرة والمتة التفاعلية وبنك نكات متجدد يومياً.",
+      shortDesc: "صور ومواقف مضحكة يومياً وعجلة السهرة والمتة التفاعلية.",
       styleHint: "بصوت صديق شاب مرح وعفوي وخفيف الظل بلهجة شامية ودودة",
       greet: "ولك هلا بالصديق الوفي! خلينا نكسر الروتين ونضبط أحلى مزاج اليوم."
     },
@@ -130,7 +133,7 @@
       pitchSemitones: 0.4,
       accent: "#ef4444",
       avatarUrl: "anime_zain.jpg",
-      shortDesc: "مهام يومية ونظام مستوى ونقاط خبرة XP حقيقية ووقود الأبطال.",
+      shortDesc: "مهام يومية مصورة ونظام مستوى ونقاط خبرة XP حقيقية.",
       styleHint: "بصوت بطل أنمي شاب حماسي ومندفع وحيوي",
       greet: "مهمة جديدة بدأت اليوم! هل أنت مستعد لتجهيز وقود الأبطال؟"
     },
@@ -148,7 +151,7 @@
       pitchSemitones: -0.9,
       accent: "#38bdf8",
       avatarUrl: "anime_ryu.jpg",
-      shortDesc: "لغز يومي تفاعلي بزر كشف الحل ورادار حقيقي لأوفر الصفقات.",
+      shortDesc: "لغز يومي تفاعلي ورادار حقيقي لأوفر الصفقات حسب عاداتك.",
       styleHint: "بصوت محقق ذكي وهادئ وواثق ومختصر",
       greet: "كل تفصيل له معنى؛ دعنا نحلل أفضل خيارات اليوم بدقة."
     },
@@ -166,72 +169,228 @@
       pitchSemitones: 2.8,
       accent: "#f472b6",
       avatarUrl: "anime_ritaj.jpg",
-      shortDesc: "مقياس المزاج التفاعلي ورسائل طاقة ريتاج اليومية وحلى اليوم.",
+      shortDesc: "مقياس المزاج التفاعلي وبطاقات ريتاج المصورة وحلى اليوم.",
       styleHint: "بصوت أنثوي لطيف ومشرق ومبهج بنبرة أنمي ودودة",
       greet: "أهلاً بك في عالم ريتاج المشرق! لنجعل يومك مليئاً بالبهجة والحلاوة."
     }
   };
 
   // ==========================================================================
-  // 2) بنك المحتوى اليومي الموسّع (يدور تلقائياً كل يوم دون تكرار سريع)
+  // 2) بنك المحتوى اليومي المدعوم بالصور (مع تحديث تلقائي من vip_media/daily_vip_feed.json)
   // ==========================================================================
   const DAILY_ROOM_ROTATIONS = {
     coach_sakhr: [
-      { title: "قوة الجزء العلوي والجذع", exercises: ["إحماء مفاصل وكتفين 5 دقائق", "تمرين ضغط 4×12 تكرار", "بلانك ثابت 3×40 ثانية", "تمدد للصدر والذراعين 4 دقائق"], nutritionTip: "وجبة بروتين (بيض أو تونة أو عدس) خلال ساعتين بعد التمرين.", keywords: ["بيض", "عدس", "تونة", "حليب", "رز"] },
-      { title: "قوة الأرجل والتحمل", exercises: ["إحماء مشي بالمكان 5 دقائق", "سكوات حر 4×15 تكرار", "لانجز أمامي 3×12 لكل رجل", "إطالة للأرجل 5 دقائق"], nutritionTip: "اشرب كوبين ماء قبل وبعد التمرين لتعويض السوائل.", keywords: ["ماء", "حليب", "شوفان", "رز", "بيض"] },
-      { title: "كارديو وحرق دهون سريع", exercises: ["قفز حبل أو نط خفيف 4 جولات", "تسلق الجبل 3×30 ثانية", "رفع ركبتين سريع 3×30 ثانية", "تهدئة وتنفس عميق 4 دقائق"], nutritionTip: "خفف السكريات المسائية وركز على الخضار واللبن.", keywords: ["ماء", "لبن", "خضار", "عصير", "شاي"] },
-      { title: "مرونة واستشفاء عضلي", exercises: ["إطالة كاملة للظهر والرقبة", "تمدد أوتار الركبة والحوض", "مشي هادئ 15 دقيقة", "تنفس عميق لتخفيف التوتر"], nutritionTip: "النوم المبكر وشرب الحليب أو العسل يدعمان الاستشفاء.", keywords: ["حليب", "عسل", "لبنة", "بيض", "ماء"] },
-      { title: "تحدي اللياقة الشامل", exercises: ["ضغط 3×15 تكرار", "سكوات 3×20 تكرار", "بطن كرانش 3×20 تكرار", "بلانك جانبي 2×30 ثانية"], nutritionTip: "وزّع وجباتك على 3 وجبات متوازنة ووجبة خفيفة صحية.", keywords: ["بيض", "برغل", "عدس", "حليب", "عسل"] },
-      { title: "نشاط الصباح وتنشيط الدورة", exercises: ["تحريك المفاصل 5 دقائق", "مشي سريع 20 دقيقة", "تمارين بطن خفيفة 3×15", "إطالة عامة 5 دقائق"], nutritionTip: "فطور متوازن من البيض والجبن والخبز يمنحك طاقة ثابتة.", keywords: ["بيض", "جبن", "خبز", "حليب", "زيتون"] },
-      { title: "ثبات الجذع والتوازن", exercises: ["بلانك أمامي 4×35 ثانية", "سوبرمان للظهر 3×15", "جسر الألوية 3×15", "تمدد عميق للعمود الفقري"], nutritionTip: "البقوليات مثل العدس والحمص مصدر ممتاز للبروتين النباتي.", keywords: ["عدس", "حمص", "زيتون", "رز", "ماء"] }
+      {
+        title: "قوة الجزء العلوي والجذع",
+        categoryTag: "strength",
+        imageUrl: "vip_media/coach_pushup.svg",
+        exercises: [
+          { name: "إحماء مفاصل وكتفين 5 دقائق", img: "vip_media/coach_warmup.svg" },
+          { name: "تمرين ضغط 4×12 تكرار", img: "vip_media/coach_pushup.svg" },
+          { name: "بلانك ثابت 3×40 ثانية", img: "vip_media/coach_plank.svg" },
+          { name: "تمدد للصدر والذراعين 4 دقائق", img: "vip_media/coach_stretch.svg" }
+        ],
+        nutritionTip: "وجبة بروتين (بيض أو تونة أو عدس) خلال ساعتين بعد التمرين.",
+        keywords: ["بيض", "عدس", "تونة", "حليب", "رز"]
+      },
+      {
+        title: "قوة الأرجل والتحمل",
+        categoryTag: "legs",
+        imageUrl: "vip_media/coach_squat.svg",
+        exercises: [
+          { name: "إحماء مشي بالمكان 5 دقائق", img: "vip_media/coach_warmup.svg" },
+          { name: "سكوات حر 4×15 تكرار", img: "vip_media/coach_squat.svg" },
+          { name: "لانجز أمامي 3×12 لكل رجل", img: "vip_media/coach_squat.svg" },
+          { name: "إطالة للأرجل 5 دقائق", img: "vip_media/coach_stretch.svg" }
+        ],
+        nutritionTip: "اشرب كوبين ماء قبل وبعد التمرين لتعويض السوائل.",
+        keywords: ["ماء", "حليب", "شوفان", "رز", "بيض"]
+      },
+      {
+        title: "كارديو وحرق دهون سريع",
+        categoryTag: "cardio",
+        imageUrl: "vip_media/coach_cardio.svg",
+        exercises: [
+          { name: "قفز حبل أو نط خفيف 4 جولات", img: "vip_media/coach_cardio.svg" },
+          { name: "تسلق الجبل 3×30 ثانية", img: "vip_media/coach_plank.svg" },
+          { name: "رفع ركبتين سريع 3×30 ثانية", img: "vip_media/coach_cardio.svg" },
+          { name: "تهدئة وتنفس عميق 4 دقائق", img: "vip_media/coach_stretch.svg" }
+        ],
+        nutritionTip: "خفف السكريات المسائية وركز على الخضار واللبن.",
+        keywords: ["ماء", "لبن", "خضار", "عصير", "شاي"]
+      }
     ],
     grand_chef: [
-      { recipeTitle: "مقلوبة باذنجان على أصولها", imageUrl: "recipe_maqlouba.jpg", baseServings: 4, ingredients: [{ n: "رز", q: 2, u: "كوب" }, { n: "باذنجان", q: 2, u: "حبة" }, { n: "بطاطا", q: 2, u: "حبة" }, { n: "بندورة", q: 2, u: "حبة" }, { n: "بهار مشكل", q: 1, u: "ملعقة" }], steps: ["قطّع الباذنجان والبطاطا شرائح واقلِهما حتى يأخذا لوناً ذهبياً.", "رتّب شرائح البندورة في قاع القدر ثم الخضار والرز المغسول.", "أضف المرق المتبل واتركها تغلي ثم على نار هادئة 25 دقيقة."], keywords: ["رز", "باذنجان", "بطاطا", "بندورة", "بهار", "زيت"] },
-      { recipeTitle: "مجدرة برغل بالزيت والكمون", imageUrl: "recipe_moujaddara.jpg", baseServings: 4, ingredients: [{ n: "برغل خشن", q: 2, u: "كوب" }, { n: "عدس حب", q: 1, u: "كوب" }, { n: "بصل", q: 3, u: "حبات" }, { n: "زيت زيتون", q: 4, u: "ملاعق" }, { n: "كمون", q: 1, u: "ملعقة" }], steps: ["اسلق العدس نصف سلقة ثم أضف البرغل والملح والكمون.", "حمّر البصل المفروم بزيت الزيتون حتى يصبح مقرمشاً.", "اسكب المجدرة وزيّنها بالبصل المقرمش ورشة زيت زيتون."], keywords: ["برغل", "عدس", "بصل", "زيتون", "كمون", "ملح"] },
-      { recipeTitle: "معكرونة بالبشاميل الكريمية", imageUrl: "recipe_bechamel.jpg", baseServings: 4, ingredients: [{ n: "معكرونة", q: 1, u: "عبوة" }, { n: "حليب", q: 4, u: "أكواب" }, { n: "طحين", q: 3, u: "ملاعق" }, { n: "سمن أو زبدة", q: 3, u: "ملاعق" }, { n: "جبن مبشور", q: 1, u: "كوب" }], steps: ["اسلق المعكرونة في ماء مملح وصفّها جانباً.", "حمّص الطحين بالسمن ثم أضف الحليب تدريجياً مع التحريك.", "امزج المعكرونة مع البشاميل والجبن وحمّرها في الفرن."], keywords: ["معكرونة", "حليب", "طحين", "سمن", "جبن", "ملح"] },
-      { recipeTitle: "شوربة عدس شتوية دافئة", imageUrl: "store-icon.png", baseServings: 4, ingredients: [{ n: "عدس أحمر", q: 1.5, u: "كوب" }, { n: "بطاطا", q: 1, u: "حبة" }, { n: "بصل", q: 1, u: "حبة" }, { n: "كمون", q: 1, u: "ملعقة" }, { n: "زيت", q: 2, u: "ملعقة" }], steps: ["اقلِ البصل المفروم بالزيت ثم أضف العدس المغسول ومكعبات البطاطا.", "أضف الماء واتركها تنضج 20 دقيقة ثم اهرسها جيداً.", "تبّل بالكمون والملح وقدّمها ساخنة مع الخبز المحمص."], keywords: ["عدس", "بطاطا", "بصل", "كمون", "زيت", "خبز"] },
-      { recipeTitle: "كبسة رز بالبهارات الشرقية", imageUrl: "store-icon.png", baseServings: 4, ingredients: [{ n: "رز طويل", q: 2, u: "كوب" }, { n: "معجون طماطم", q: 2, u: "ملعقة" }, { n: "بصل", q: 2, u: "حبة" }, { n: "بهار كبسة", q: 1.5, u: "ملعقة" }, { n: "سمن", q: 2, u: "ملعقة" }], steps: ["حمّر البصل بالسمن وأضف البهارات ومعجون الطماطم.", "أضف الماء الساخن والملح ثم الرز المغسول والمنقوع.", "غطِّ القدر على نار هادئة حتى تتفتح حبات الرز."], keywords: ["رز", "معجون طماطم", "بصل", "بهار", "سمن", "ملح"] },
-      { recipeTitle: "فريكة مفلفلة بالسمن البلدي", imageUrl: "store-icon.png", baseServings: 4, ingredients: [{ n: "فريكة", q: 2, u: "كوب" }, { n: "سمن", q: 2, u: "ملعقة" }, { n: "بصل", q: 1, u: "حبة" }, { n: "بهار مشكل", q: 1, u: "ملعقة" }], steps: ["نقِّ الفريكة واغسلها جيداً ثم صفّها.", "قلّبها مع البصل والسمن والبهار 3 دقائق ثم أضف المرق.", "اتركها على نار هادئة حتى تنضج تماماً."], keywords: ["فريكة", "سمن", "بصل", "بهار", "ملح"] }
+      {
+        recipeTitle: "مقلوبة باذنجان على أصولها",
+        imageUrl: "vip_media/chef_maqlouba.svg",
+        baseServings: 4,
+        ingredients: [{ n: "رز", q: 2, u: "كوب" }, { n: "باذنجان", q: 2, u: "حبة" }, { n: "بطاطا", q: 2, u: "حبة" }, { n: "بندورة", q: 2, u: "حبة" }, { n: "بهار مشكل", q: 1, u: "ملعقة" }],
+        steps: ["قطّع الباذنجان والبطاطا شرائح واقلِهما حتى يأخذا لوناً ذهبياً.", "رتّب شرائح البندورة في قاع القدر ثم الخضار والرز المغسول.", "أضف المرق المتبل واتركها تغلي ثم على نار هادئة 25 دقيقة."],
+        keywords: ["رز", "باذنجان", "بطاطا", "بندورة", "بهار", "زيت"]
+      },
+      {
+        recipeTitle: "مجدرة برغل بالزيت والكمون",
+        imageUrl: "vip_media/chef_moujaddara.svg",
+        baseServings: 4,
+        ingredients: [{ n: "برغل خشن", q: 2, u: "كوب" }, { n: "عدس حب", q: 1, u: "كوب" }, { n: "بصل", q: 3, u: "حبات" }, { n: "زيت زيتون", q: 4, u: "ملاعق" }, { n: "كمون", q: 1, u: "ملعقة" }],
+        steps: ["اسلق العدس نصف سلقة ثم أضف البرغل والملح والكمون.", "حمّر البصل المفروم بزيت الزيتون حتى يصبح مقرمشاً.", "اسكب المجدرة وزيّنها بالبصل المقرمش ورشة زيت زيتون."],
+        keywords: ["برغل", "عدس", "بصل", "زيتون", "كمون", "ملح"]
+      },
+      {
+        recipeTitle: "معكرونة بالبشاميل الكريمية",
+        imageUrl: "vip_media/chef_bechamel.svg",
+        baseServings: 4,
+        ingredients: [{ n: "معكرونة", q: 1, u: "عبوة" }, { n: "حليب", q: 4, u: "أكواب" }, { n: "طحين", q: 3, u: "ملاعق" }, { n: "سمن أو زبدة", q: 3, u: "ملاعق" }, { n: "جبن مبشور", q: 1, u: "كوب" }],
+        steps: ["اسلق المعكرونة في ماء مملح وصفّها جانباً.", "حمّص الطحين بالسمن ثم أضف الحليب تدريجياً مع التحريك.", "امزج المعكرونة مع البشاميل والجبن وحمّرها في الفرن."],
+        keywords: ["معكرونة", "حليب", "طحين", "سمن", "جبن", "ملح"]
+      }
     ],
     princess_layla: [
-      { title: "ضيافة القهوة وحلى البسكويت الملكي", detail: "نسّق فناجين القهوة مع طبق حلى بارد بالبسكويت والشوكولاتة بترتيب أنيق.", careTip: "الاهتمام بالتفاصيل الصغيرة في التقديم يترك أثراً راقياً.", keywords: ["بسكوت", "شوكولاتة", "قهوة", "شاي", "حليب"] },
-      { title: "ركن العناية والصفاء المسائي", detail: "حضّر كوباً دافئاً مهدئاً ورتّب ركن الضيافة والمناديل بهدوء.", careTip: "الذوق الرفيع يظهر في البساطة والترتيب واللطف.", keywords: ["شاي", "عسل", "حليب", "مناديل", "صابون"] },
-      { title: "ضيافة الصباح المشرقة", detail: "تشكيلة فطور ناعمة مع شاي معطر ومربى أو حلاوة طحينية.", careTip: "بداية الصباح الهادئة تمنح اليوم كله أناقة وراحة.", keywords: ["شاي", "حلاوة", "جبن", "خبز", "عسل"] },
-      { title: "لمسة الحلويات الشرقية", detail: "بسبوسة أو مهلبية بالحليب مزينة بشكل لطيف للزوار.", careTip: "تقديم الحلى بارداً ومنسقاً يضاعف بهجة الضيافة.", keywords: ["سميد", "حليب", "نشا", "سكر", "سمن"] }
+      { title: "ضيافة القهوة وحلى البسكويت الملكي", imageUrl: "vip_media/layla_hospitality.svg", detail: "نسّق فناجين القهوة مع طبق حلى بارد بالبسكويت والشوكولاتة بترتيب أنيق.", careTip: "الاهتمام بالتفاصيل الصغيرة في التقديم يترك أثراً راقياً.", keywords: ["بسكوت", "شوكولاتة", "قهوة", "شاي", "حليب"] },
+      { title: "ركن العناية والصفاء المسائي", imageUrl: "vip_media/layla_hospitality.svg", detail: "حضّر كوباً دافئاً مهدئاً ورتّب ركن الضيافة والمناديل بهدوء.", careTip: "الذوق الرفيع يظهر في البساطة والترتيب واللطف.", keywords: ["شاي", "عسل", "حليب", "مناديل", "صابون"] }
     ],
     butler_farid: [
-      { title: "تدقيق المؤونة الأساسية للمنزل", detail: "مراجعة الأرز، الزيت، السكر، الخبز، وسوائل التنظيف لضمان عدم نفادها.", budgetTip: "قسّم المشتريات إلى أساسيات ضرورية وكماليات مؤجلة.", checklist: ["رز أو برغل", "زيت طبخ", "سكر وشاي", "خبز طازج", "سائل جلي ومنظفات"], keywords: ["رز", "زيت", "سكر", "خبز", "سائل جلي"] },
-      { title: "تنظيم قائمة الفطور والأسبوع", detail: "تجهيز البيض والجبن واللبن والحليب لتأمين فطور منظم طوال الأسبوع.", budgetTip: "الشراء المنظم يوفر الوقت ويقلل الهدر اليومي.", checklist: ["بيض طازج", "جبن أو لبنة", "حليب", "مربى أو حلاوة", "مناديل"], keywords: ["بيض", "جبن", "حليب", "حلاوة", "مناديل"] },
-      { title: "جرد المنظفات والعناية المنزلية", detail: "تأكد من توفر مسحوق الغسيل، الكلور، الصابون، والمناديل قبل نفادها.", budgetTip: "العبوات العائلية للمنظفات أوفر على المدى الشهري.", checklist: ["مسحوق غسيل", "كلور ومعقم", "صابون وشامبو", "سائل جلي", "محارم"], keywords: ["مسحوق غسيل", "كلور", "صابون", "سائل جلي", "مناديل"] }
+      { title: "تدقيق المؤونة الأساسية للمنزل", imageUrl: "vip_media/farid_pantry.svg", detail: "مراجعة الأرز، الزيت، السكر، الخبز، وسوائل التنظيف لضمان عدم نفادها.", budgetTip: "قسّم المشتريات إلى أساسيات ضرورية وكماليات مؤجلة.", checklist: ["رز أو برغل", "زيت طبخ", "سكر وشاي", "خبز طازج", "سائل جلي ومنظفات"], keywords: ["رز", "زيت", "سكر", "خبز", "سائل جلي"] },
+      { title: "تنظيم قائمة الفطور والأسبوع", imageUrl: "vip_media/farid_pantry.svg", detail: "تجهيز البيض والجبن واللبن والحليب لتأمين فطور منظم طوال الأسبوع.", budgetTip: "الشراء المنظم يوفر الوقت ويقلل الهدر اليومي.", checklist: ["بيض طازج", "جبن أو لبنة", "حليب", "مربى أو حلاوة", "مناديل"], keywords: ["بيض", "جبن", "حليب", "حلاوة", "مناديل"] }
     ],
     friend_fadi: [
-      { joke: "مرة واحد راح عالدكان بدو غرضين، طلع ومعو كيس كامل قال للمحاسب: هاد الكيس لحالو بدو كرسي!", moodPick: "تشكيلة سهرة ومتة وبزر وشيبس لرفع المزاج.", keywords: ["متة", "بزر", "شيبس", "بسكوت", "عصير"] },
-      { joke: "الفرق بين الجوعان قبل الفطور وبعده: قبل الفطور يشوف الرغيف قد الشمس، وبعده يسأل: وين راح الصحن؟", moodPick: "سناكس مقرمشة ومشروبات باردة لضحكة سريعة وسهرة حلوة.", keywords: ["شيبس", "بزر", "شوكولاتة", "عصير", "قهوة"] },
-      { joke: "واحد فتح البراد 5 مرات ورا بعض على أمل يطلع فيه شي جديد… وبالمرة السادسة اقتنع يطلب من متجر معاذ!", moodPick: "موالح وبزر وشاي سريع لإنقاذ السهرة.", keywords: ["بزر", "شاي", "بسكوت", "شيبس", "متة"] },
-      { joke: "قالولو شو خطتك اليوم؟ قال: كاسة متة وصحن بزر والباقي على الله!", moodPick: "عدة المتة والتسالي الكاملة.", keywords: ["متة", "بزر", "سكر", "شيبس", "شوكولاتة"] }
+      { joke: "مرة واحد راح عالدكان بدو غرضين، طلع ومعو كيس كامل قال للمحاسب: هاد الكيس لحالو بدو كرسي!", imageUrl: "vip_media/fadi_comic_1.svg", moodPick: "تشكيلة سهرة ومتة وبزر وشيبس لرفع المزاج.", keywords: ["متة", "بزر", "شيبس", "بسكوت", "عصير"] },
+      { joke: "واحد فتح البراد 5 مرات ورا بعض على أمل يطلع فيه شي جديد… وبالمرة السادسة اقتنع يطلب من متجر معاذ!", imageUrl: "vip_media/fadi_comic_2.svg", moodPick: "موالح وبزر وشاي سريع لإنقاذ السهرة.", keywords: ["بزر", "شاي", "بسكوت", "شيبس", "متة"] },
+      { joke: "قالولو شو خطتك اليوم؟ قال: كاسة متة وصحن بزر والباقي على الله!", imageUrl: "vip_media/fadi_comic_1.svg", moodPick: "عدة المتة والتسالي الكاملة.", keywords: ["متة", "بزر", "سكر", "شيبس", "شوكولاتة"] }
     ],
     anime_zain: [
-      { mission: "مهمة اليوم: جهّز وجبة طاقة متكاملة وأكمل هدفك اليومي بثبات.", xpReward: 150, badge: "روح قتالية", keywords: ["رز", "بيض", "حليب", "عصير", "بسكوت"] },
-      { mission: "مهمة اليوم: تحدّي السرعة والانضباط — اختر أصنافك الأساسية دون تردد.", xpReward: 200, badge: "بطل الميدان", keywords: ["عدس", "برغل", "شاي", "ماء", "شيبس"] },
-      { mission: "مهمة اليوم: تزوّد بوقود الأبطال لجلسة مذاكرة أو عمل طويلة.", xpReward: 180, badge: "طاقة لا تهدأ", keywords: ["قهوة", "شوكولاتة", "بسكوت", "ماء", "عصير"] },
-      { mission: "مهمة اليوم: اجمع 3 أصناف أساسية للبيت في سلة واحدة.", xpReward: 220, badge: "قائد الفريق", keywords: ["زيت", "سكر", "رز", "خبز", "جبن"] }
+      { mission: "مهمة اليوم: جهّز وجبة طاقة متكاملة وأكمل هدفك اليومي بثبات.", imageUrl: "vip_media/zain_mission.svg", xpReward: 150, badge: "روح قتالية", keywords: ["رز", "بيض", "حليب", "عصير", "بسكوت"] },
+      { mission: "مهمة اليوم: تحدّي السرعة والانضباط — اختر أصنافك الأساسية دون تردد.", imageUrl: "vip_media/zain_mission.svg", xpReward: 200, badge: "بطل الميدان", keywords: ["عدس", "برغل", "شاي", "ماء", "شيبس"] }
     ],
     anime_ryu: [
-      { mystery: "ما الشيء الذي يكتب ولا يقرأ؟", answer: "القلم — والصفقة الأذكى تجمع الجودة والسعر المناسب.", clue: "اضغط رادار الصفقات بالأسفل لاكتشاف أوفر الأصناف الآن.", keywords: ["سكر", "زيت", "شاي", "جبن", "خبز"] },
-      { mystery: "ما الشيء الذي كلما زاد نقص؟", answer: "العمر — والوقت الأنسب لتنظيم طلباتك هو الآن.", clue: "قارن أسعار الأصناف المتوفرة قبل الإضافة.", keywords: ["رز", "حليب", "بيض", "بندورة", "بطاطا"] },
-      { mystery: "له أسنان ولا يعض، فما هو؟", answer: "المشط — والتفاصيل الصغيرة تصنع فرقاً كبيراً.", clue: "راجع رادار أوفر العروض المتوفرة في الفرع.", keywords: ["صابون", "شامبو", "مناديل", "سائل جلي", "كلور"] },
-      { mystery: "يمشي بلا قدمين ويبكي بلا عينين، فما هو؟", answer: "السحاب — والذكي يختار الأصناف المتوفرة بأفضل قيمة.", clue: "افحص قائمة أوفر الصفقات اليومية بالأسفل.", keywords: ["عدس", "برغل", "معكرونة", "شاي", "زيت"] }
+      { mystery: "ما الشيء الذي يكتب ولا يقرأ؟", answer: "القلم — والصفقة الأذكى تجمع الجودة والسعر المناسب.", imageUrl: "vip_media/ryu_radar.svg", clue: "اضغط رادار الصفقات بالأسفل لاكتشاف أوفر الأصناف الآن.", keywords: ["سكر", "زيت", "شاي", "جبن", "خبز"] },
+      { mystery: "ما الشيء الذي كلما زاد نقص؟", answer: "العمر — والوقت الأنسب لتنظيم طلباتك هو الآن.", imageUrl: "vip_media/ryu_radar.svg", clue: "قارن أسعار الأصناف المتوفرة قبل الإضافة.", keywords: ["رز", "حليب", "بيض", "بندورة", "بطاطا"] }
     ],
     anime_ritaj: [
-      { message: "ريتاج تقول لك: ابتسامتك اليوم تصنع فرقاً كبيراً، ودلّل نفسك بحلى أو مشروب تحبه!", sweetIdea: "حلى بارد بالبسكويت أو كيك منزلي خفيف.", keywords: ["بسكوت", "شوكولاتة", "حليب", "سكر", "عصير"] },
-      { message: "إشراقة ريتاج اليوم: كل يوم فرصة جديدة لطاقة حلوة واختيارات تسعد قلبك.", sweetIdea: "مهلبية أو كاسترد حلو أو شوكولاتة خفيفة للمساء.", keywords: ["حليب", "نشا", "سكر", "شوكولاتة", "بسكوت"] },
-      { message: "رسالة لطيفة من ريتاج: خذ استراحة قصيرة مع كوب دافئ وشيء حلو يرفع معنوياتك!", sweetIdea: "بسكوت شاي مع شوكولاتة أو عصير منعش.", keywords: ["شاي", "بسكوت", "شوكولاتة", "عصير", "قهوة"] },
-      { message: "نجمة اليوم: أنت تستحق يوماً هادئاً ولطيفاً مليئاً بالخير والبهجة!", sweetIdea: "حلاوة أو عسل مع فطور لطيف ومشروب دافئ.", keywords: ["عسل", "حلاوة", "حليب", "شاي", "بسكوت"] }
+      { message: "ريتاج تقول لك: ابتسامتك اليوم تصنع فرقاً كبيراً، ودلّل نفسك بحلى أو مشروب تحبه!", imageUrl: "vip_media/ritaj_mood.svg", sweetIdea: "حلى بارد بالبسكويت أو كيك منزلي خفيف.", keywords: ["بسكوت", "شوكولاتة", "حليب", "سكر", "عصير"] },
+      { message: "إشراقة ريتاج اليوم: كل يوم فرصة جديدة لطاقة حلوة واختيارات تسعد قلبك.", imageUrl: "vip_media/ritaj_mood.svg", sweetIdea: "مهلبية أو كاسترد حلو أو شوكولاتة خفيفة للمساء.", keywords: ["حليب", "نشا", "سكر", "شوكولاتة", "بسكوت"] }
     ]
   };
 
   let adminEntitlements = loadLocalEntitlements();
   let vipConfig = loadLocalConfig();
+  let cloudDailyFeed = loadCachedDailyFeed();
+
+  // ==========================================================================
+  // 3) محرك التعلّم الذاتي الخاص بالشخصيات المدفوعة (VIP Self-Learning)
+  // ==========================================================================
+  function loadVIPLearning() {
+    try {
+      const d = JSON.parse(localStorage.getItem(VIP_LEARNING_KEY) || "{}");
+      return d && typeof d === "object" ? d : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function saveVIPLearning(obj) {
+    try { localStorage.setItem(VIP_LEARNING_KEY, JSON.stringify(obj)); } catch (_) {}
+  }
+
+  function recordVIPInteraction(personaId, actionType, tag = "") {
+    if (!personaId) return;
+    const lr = loadVIPLearning();
+    lr[personaId] = lr[personaId] || { visits: 0, cartAdds: 0, tags: {}, lastActive: 0 };
+    if (actionType === "visit") lr[personaId].visits++;
+    if (actionType === "cart_add") lr[personaId].cartAdds++;
+    if (tag) {
+      lr[personaId].tags[tag] = (lr[personaId].tags[tag] || 0) + 1;
+    }
+    lr[personaId].lastActive = Date.now();
+    saveVIPLearning(lr);
+
+    // مزامنة خفيفة لاستهلاك الزبون مع Firebase (اختيارية ومغلقة على الدفع)
+    if (typeof db !== "undefined" && db && typeof db.ref === "function") {
+      try {
+        const ck = getCustomerKey();
+        if (ck && ck !== "guest") {
+          db.ref(`vip_learning/${ck}/${personaId}`).update({
+            visits: lr[personaId].visits,
+            cartAdds: lr[personaId].cartAdds,
+            lastActive: lr[personaId].lastActive
+          }).catch(() => {});
+        }
+      } catch (_) {}
+    }
+  }
+
+  function getVIPLearnedHint(personaId) {
+    const lr = loadVIPLearning()[personaId];
+    if (!lr) return "";
+    const topTag = Object.entries(lr.tags || {}).sort((a, b) => b[1] - a[1])[0]?.[0];
+    if (personaId === "coach_sakhr" && topTag) return `🧠 تعلّم صخر: تميل لتمارين (${topTag}) — أحسنت الاستمرار!`;
+    if (personaId === "grand_chef" && lr.visits >= 2) return `🧠 تعلّم الشيف: زيارتك رقم ${lr.visits} للمطبخ الذهبي.`;
+    if (personaId === "anime_ritaj" && topTag) return `🧠 تعلّم ريتاج: مزاجك المفضل غالباً (${topTag}).`;
+    if (lr.cartAdds >= 2) return `🧠 تعلّم ذكي: أضفت ${lr.cartAdds} مرات من هذه الغرفة، والأولوية للأصناف التي تفضلها.`;
+    return "";
+  }
+
+  // ==========================================================================
+  // 4) كاش سحابي + كاش دائم على جوال المشترك لتوفير الحصص المجانية
+  // ==========================================================================
+  function loadCachedDailyFeed() {
+    try {
+      const d = JSON.parse(localStorage.getItem(VIP_FEED_CACHE_KEY) || "null");
+      return d && typeof d === "object" ? d : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async function cacheMediaAssetPermanently(url) {
+    if (!url || typeof caches === "undefined") return;
+    try {
+      const cache = await caches.open(VIP_MEDIA_CACHE_NAME);
+      const existing = await cache.match(url);
+      if (existing) return;
+      const res = await fetch(url, { cache: "default" });
+      if (res.ok && !/text\/html/i.test(res.headers.get("content-type") || "")) {
+        await cache.put(url, res.clone());
+      }
+    } catch (_) {}
+  }
+
+  async function syncDailyVIPFeedFromCloud() {
+    // 1) محاولة قراءة التحديث اليومي التلقائي المولّد عبر GitHub Actions (vip_media/daily_vip_feed.json)
+    try {
+      const res = await fetch("vip_media/daily_vip_feed.json", { cache: "default" });
+      if (res.ok) {
+        const json = await res.json();
+        if (json && typeof json === "object" && json.rooms) {
+          cloudDailyFeed = json;
+          try { localStorage.setItem(VIP_FEED_CACHE_KEY, JSON.stringify(json)); } catch (_) {}
+          // تخزين الصور المرفقة في الكاش الدائم على جوال المشترك تلقائياً
+          Object.values(json.rooms).forEach(entry => {
+            if (entry?.imageUrl) cacheMediaAssetPermanently(entry.imageUrl);
+          });
+          return;
+        }
+      }
+    } catch (_) {}
+
+    // 2) بديل سحابي عبر Cloudflare Worker Edge Cache (إن وُجد رابط الـ Worker)
+    try {
+      const wUrl = window.AI_WORKER_URL || localStorage.getItem("moaath_ai_worker_url") || "";
+      if (wUrl && navigator.onLine !== false) {
+        const r = await fetch(wUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "vip_daily_feed", dateKey: getTodayKey() })
+        });
+        const j = await r.json();
+        if (r.ok && j?.ok && j?.data?.rooms) {
+          cloudDailyFeed = j.data;
+          try { localStorage.setItem(VIP_FEED_CACHE_KEY, JSON.stringify(j.data)); } catch (_) {}
+        }
+      }
+    } catch (_) {}
+  }
 
   function loadInteractiveState() {
     try {
@@ -356,12 +515,22 @@
   }
 
   function getDailyContentForPersona(personaId, offset = 0) {
+    // أولوية للتحديث السحابي/اليومي المحفوظ إذا كان متوفراً لليوم ولم يُطلب تدوير يدوي
+    if (offset === 0 && cloudDailyFeed?.rooms?.[personaId]) {
+      return {
+        dayIndex: getDayOfYearIndex(),
+        dateLabel: cloudDailyFeed.dateLabel || new Date().toLocaleDateString("ar-SY"),
+        fromCloud: true,
+        item: cloudDailyFeed.rooms[personaId]
+      };
+    }
     const list = DAILY_ROOM_ROTATIONS[personaId] || [];
     if (!list.length) return null;
     const idx = (getDayOfYearIndex() + offset) % list.length;
     return {
       dayIndex: getDayOfYearIndex(),
       dateLabel: new Date().toLocaleDateString("ar-SY"),
+      fromCloud: false,
       item: list[idx]
     };
   }
@@ -435,7 +604,7 @@
       .slice(0, limit);
   }
 
-  function addMatchedProductsToCart(keywords = []) {
+  function addMatchedProductsToCart(keywords = [], personaId = "") {
     const found = findAvailableStoreProductsByKeywords(keywords, 6);
     if (!found.length) {
       if (typeof showToast === "function") showToast("لا توجد أصناف مطابقة متوفرة حالياً في الفرع.");
@@ -448,20 +617,22 @@
         added++;
       }
     });
-    if (added > 0 && typeof showToast === "function") {
-      showToast(`✅ تمت إضافة ${added} أصناف متوفرة إلى السلة.`);
+    if (added > 0) {
+      if (personaId) recordVIPInteraction(personaId, "cart_add");
+      if (typeof showToast === "function") showToast(`✅ تمت إضافة ${added} أصناف متوفرة إلى السلة.`);
     }
   }
 
   // ==========================================================================
-  // 3) الأدوات التفاعلية الثماني داخل الغرفة اليومية لكل شخصية
+  // 5) الأدوات التفاعلية المدعومة بالصور داخل الغرف اليومية
   // ==========================================================================
-  window.__vipToggleCoachEx = function (idx) {
+  window.__vipToggleCoachEx = function (idx, catTag = "") {
     const st = loadInteractiveState();
     const key = `coach_${getTodayKey()}`;
     st[key] = st[key] || {};
     st[key][idx] = !st[key][idx];
     saveInteractiveState(st);
+    if (st[key][idx]) recordVIPInteraction("coach_sakhr", "action", catTag || "strength");
     window.openVIPDailyRoom("coach_sakhr");
   };
 
@@ -470,13 +641,14 @@
     const waterL = (w * 0.035).toFixed(1);
     const proteinG = Math.round(w * 1.6);
     const out = document.getElementById("vipCoachCalcOut");
-    if (out) out.innerHTML = `💧 احتياجك اليومي التقريبي: <b>${waterL} لتر ماء</b> • 🥩 البروتين المستهدف: <b>${proteinG} غرام</b>`;
+    if (out) out.innerHTML = `💧 احتياجك اليومي: <b>${waterL} لتر ماء</b> • 🥩 البروتين المستهدف: <b>${proteinG} غرام</b>`;
   };
 
   window.__vipSetChefServings = function (n) {
     const st = loadInteractiveState();
     st.chefServings = n;
     saveInteractiveState(st);
+    recordVIPInteraction("grand_chef", "action", `servings_${n}`);
     window.openVIPDailyRoom("grand_chef");
   };
 
@@ -484,6 +656,7 @@
     const st = loadInteractiveState();
     st.laylaOccasion = occ;
     saveInteractiveState(st);
+    recordVIPInteraction("princess_layla", "action", occ);
     window.openVIPDailyRoom("princess_layla");
   };
 
@@ -500,6 +673,7 @@
     const st = loadInteractiveState();
     st.fadiOffset = ((st.fadiOffset || 0) + 1) % DAILY_ROOM_ROTATIONS.friend_fadi.length;
     saveInteractiveState(st);
+    recordVIPInteraction("friend_fadi", "action", "joke");
     window.openVIPDailyRoom("friend_fadi");
   };
 
@@ -525,6 +699,7 @@
     st.zainXP = (st.zainXP || 0) + (Number(xpAmount) || 150);
     st.zainLastClaim = today;
     saveInteractiveState(st);
+    recordVIPInteraction("anime_zain", "action", "mission_done");
     if (typeof showToast === "function") showToast(`🏆 مبروك! حصلت على +${xpAmount} XP!`);
     window.openVIPDailyRoom("anime_zain");
   };
@@ -532,12 +707,14 @@
   window.__vipRevealRyuAnswer = function () {
     const el = document.getElementById("vipRyuAnswerBox");
     if (el) el.style.display = "block";
+    recordVIPInteraction("anime_ryu", "action", "riddle");
   };
 
   window.__vipSelectRitajMood = function (mood) {
     const st = loadInteractiveState();
     st.ritajMood = mood;
     saveInteractiveState(st);
+    recordVIPInteraction("anime_ritaj", "action", mood);
     window.openVIPDailyRoom("anime_ritaj");
   };
 
@@ -550,11 +727,15 @@
       return;
     }
 
+    recordVIPInteraction(personaId, "visit");
     const st = loadInteractiveState();
     const offset = personaId === "friend_fadi" ? (st.fadiOffset || 0) : 0;
     const daily = getDailyContentForPersona(personaId, offset);
     const data = daily?.item || {};
     let activeKeywords = data.keywords || [];
+    const learnedHint = getVIPLearnedHint(personaId);
+
+    if (data.imageUrl) cacheMediaAssetPermanently(data.imageUrl);
 
     let modal = document.getElementById("vipDailyRoomModal");
     if (!modal) {
@@ -571,7 +752,7 @@
 
     if (personaId === "coach_sakhr") {
       const doneMap = st[`coach_${getTodayKey()}`] || {};
-      const exList = data.exercises || [];
+      const exList = (data.exercises || []).map(ex => typeof ex === "string" ? { name: ex, img: data.imageUrl || "vip_media/coach_pushup.svg" } : ex);
       const doneCount = exList.filter((_, i) => !!doneMap[i]).length;
       const pct = exList.length ? Math.round((doneCount / exList.length) * 100) : 0;
       bodyHtml = `
@@ -579,12 +760,13 @@
         <div style="height:6px; background:rgba(255,255,255,0.1); border-radius:999px; overflow:hidden; margin-bottom:8px;">
           <div style="height:100%; width:${pct}%; background:#10b981; transition:width 0.25s ease;"></div>
         </div>
-        <div style="display:flex; flex-direction:column; gap:5px; margin-bottom:8px;">
+        <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px;">
           ${exList.map((ex, i) => `
-            <label onclick="window.__vipToggleCoachEx(${i})" style="display:flex; align-items:center; gap:7px; background:rgba(16,185,129,0.08); border:1px solid ${doneMap[i] ? "#10b981" : "rgba(255,255,255,0.1)"}; border-radius:8px; padding:6px 8px; font-size:11px; cursor:pointer;">
+            <div onclick="window.__vipToggleCoachEx(${i}, '${data.categoryTag || "strength"}')" style="display:flex; align-items:center; gap:8px; background:rgba(16,185,129,0.08); border:1px solid ${doneMap[i] ? "#10b981" : "rgba(255,255,255,0.12)"}; border-radius:10px; padding:6px 8px; font-size:11px; cursor:pointer;">
+              <img src="${ex.img || "store-icon.png"}" onerror="this.onerror=null;this.src='store-icon.png';" alt="تمرين" style="width:46px; height:46px; border-radius:8px; object-fit:cover; background:#0f172a; border:1px solid rgba(16,185,129,0.45); flex-shrink:0;">
+              <div style="flex:1; ${doneMap[i] ? "text-decoration:line-through; opacity:0.7;" : ""}">${ex.name}</div>
               <span>${doneMap[i] ? "✅" : "⬜"}</span>
-              <span style="${doneMap[i] ? "text-decoration:line-through; opacity:0.7;" : ""}">${ex}</span>
-            </label>
+            </div>
           `).join("")}
         </div>
         <div style="background:rgba(255,255,255,0.04); border-radius:10px; padding:8px; font-size:10px; margin-bottom:6px;">
@@ -606,7 +788,7 @@
       }).join("");
       const stepsHtml = (data.steps || []).map((step, idx) => `<li style="margin-bottom:4px;"><b>${idx + 1}.</b> ${step}</li>`).join("");
       bodyHtml = `
-        <img src="${data.imageUrl || "store-icon.png"}" onerror="this.onerror=null;this.src='store-icon.png';" alt="${data.recipeTitle || ""}" style="width:100%; max-height:135px; object-fit:cover; border-radius:10px; border:1px solid ${p.accent}; margin-bottom:8px;">
+        <img src="${data.imageUrl || "store-icon.png"}" onerror="this.onerror=null;this.src='store-icon.png';" alt="${data.recipeTitle || ""}" style="width:100%; max-height:150px; object-fit:cover; border-radius:12px; border:1px solid ${p.accent}; margin-bottom:8px; background:#0f172a;">
         <div style="font-weight:800; color:${p.accent}; font-size:13px; margin-bottom:6px;">🍲 وصفة اليوم: ${data.recipeTitle || ""}</div>
         <div style="display:flex; align-items:center; gap:5px; margin-bottom:7px; font-size:10px;">
           <span>عدد الأشخاص:</span>
@@ -625,11 +807,12 @@
       const curOcc = occMap[occ] || occMap.guests;
       activeKeywords = curOcc.kws;
       bodyHtml = `
+        <img src="${data.imageUrl || "store-icon.png"}" onerror="this.onerror=null;this.src='store-icon.png';" alt="${data.title || ""}" style="width:100%; max-height:125px; object-fit:cover; border-radius:12px; border:1px solid ${p.accent}; margin-bottom:8px;">
         <div style="font-weight:800; color:${p.accent}; font-size:13px; margin-bottom:6px;">👑 منسّق المناسبات — ${data.title || ""}</div>
         <div style="display:flex; gap:5px; margin-bottom:8px;">
           ${Object.entries(occMap).map(([k, v]) => `<button type="button" onclick="window.__vipSelectLaylaOccasion('${k}')" class="btn" style="flex:1; padding:4px 6px; font-size:10px; background:${occ === k ? "#ec4899" : "rgba(255,255,255,0.08)"}; color:${occ === k ? "#000" : "#fff"};">${v.label}</button>`).join("")}
         </div>
-        <div style="background:rgba(236,72,153,0.08); border:1px solid rgba(236,72,153,0.3); border-radius:10px; padding:8px; font-size:11px; line-height:1.6; margin-bottom:6px;">
+        <div style="background:rgba(236,72,153,0.08); border:1px solid rgba(236,72,153,0.3); border-radius:10px; padding:8px; font-size:11px; line-height:1.6;">
           <div><b>اقتراح المناسبة:</b> ${curOcc.desc}</div>
           <div style="margin-top:4px; color:#fbcfe8;">✨ ${data.careTip || ""}</div>
         </div>
@@ -638,6 +821,7 @@
       const doneMap = st[`farid_${getTodayKey()}`] || {};
       const chkList = data.checklist || [];
       bodyHtml = `
+        <img src="${data.imageUrl || "store-icon.png"}" onerror="this.onerror=null;this.src='store-icon.png';" alt="${data.title || ""}" style="width:100%; max-height:120px; object-fit:cover; border-radius:12px; border:1px solid ${p.accent}; margin-bottom:8px;">
         <div style="font-weight:800; color:${p.accent}; font-size:13px; margin-bottom:6px;">🎩 دفتر مؤونة البيت — ${data.title || ""}</div>
         <div style="display:flex; flex-direction:column; gap:5px; margin-bottom:8px;">
           ${chkList.map((item, i) => `
@@ -651,8 +835,9 @@
       `;
     } else if (personaId === "friend_fadi") {
       bodyHtml = `
+        <img src="${data.imageUrl || "store-icon.png"}" onerror="this.onerror=null;this.src='store-icon.png';" alt="موقف مضحك" style="width:100%; max-height:145px; object-fit:cover; border-radius:12px; border:1px solid ${p.accent}; margin-bottom:8px;">
         <div style="font-weight:800; color:${p.accent}; font-size:13px; margin-bottom:6px;">😂 ركن الفرفشة وعجلة السهرة</div>
-        <div style="background:rgba(249,115,22,0.09); border:1px solid rgba(249,115,22,0.3); border-radius:10px; padding:8px; font-size:11px; line-height:1.6; margin-bottom:8px;">
+        <div style="background:rgba(249,115,22,0.09); border:1px solid rgba(249,115,22,0.3); border-radius:10px; padding:8px; font-size:11px; line-height:1.6;">
           <div>${data.joke || ""}</div>
           <div style="margin-top:6px; display:flex; gap:6px;">
             <button type="button" onclick="window.__vipNextFadiJoke()" class="btn" style="flex:1; padding:4px 8px; font-size:10px; background:rgba(249,115,22,0.22); color:#fed7aa;">😂 نكتة أخرى</button>
@@ -666,11 +851,12 @@
       const lvl = Math.floor(xp / 300) + 1;
       const claimedToday = st.zainLastClaim === getTodayKey();
       bodyHtml = `
+        <img src="${data.imageUrl || "store-icon.png"}" onerror="this.onerror=null;this.src='store-icon.png';" alt="مهمة اليوم" style="width:100%; max-height:125px; object-fit:cover; border-radius:12px; border:1px solid ${p.accent}; margin-bottom:8px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-weight:800; color:${p.accent}; font-size:13px;">⚡ مهمة كابتن زين</span>
           <span style="background:rgba(239,68,68,0.2); border:1px solid #ef4444; color:#fca5a5; border-radius:999px; padding:2px 9px; font-size:10px; font-weight:800;">المستوى ${lvl} • ${xp} XP</span>
         </div>
-        <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:8px; font-size:11px; line-height:1.6; margin-bottom:8px;">
+        <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:8px; font-size:11px; line-height:1.6;">
           <div>${data.mission || ""}</div>
           <div style="margin-top:6px;">
             <button type="button" onclick="window.__vipClaimZainXP(${data.xpReward || 150})" class="btn" style="padding:5px 10px; font-size:10px; background:${claimedToday ? "#374151" : "#ef4444"}; color:${claimedToday ? "#9ca3af" : "#fff"};">
@@ -685,6 +871,7 @@
         ? deals.map(d => `<div style="display:flex; justify-content:space-between; font-size:10px; padding:3px 0; border-bottom:1px dashed rgba(255,255,255,0.08);"><span>${d.name}</span><b style="color:#00e676;">${d.priceSYP.toLocaleString()} ل.س</b></div>`).join("")
         : `<div style="font-size:10px; color:#9ca3af;">تصفح الأصناف المتوفرة في الفرع.</div>`;
       bodyHtml = `
+        <img src="${data.imageUrl || "store-icon.png"}" onerror="this.onerror=null;this.src='store-icon.png';" alt="رادار الصفقات" style="width:100%; max-height:120px; object-fit:cover; border-radius:12px; border:1px solid ${p.accent}; margin-bottom:8px;">
         <div style="font-weight:800; color:${p.accent}; font-size:13px; margin-bottom:6px;">🕵️ لغز اليوم ورادار الصفقات</div>
         <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:10px; padding:8px; font-size:11px; margin-bottom:8px;">
           <div><b>اللغز:</b> ${data.mystery || ""}</div>
@@ -707,6 +894,7 @@
       const curMood = moodMap[mood] || moodMap.happy;
       activeKeywords = curMood.kws;
       bodyHtml = `
+        <img src="${data.imageUrl || "store-icon.png"}" onerror="this.onerror=null;this.src='store-icon.png';" alt="إشراقة ريتاج" style="width:100%; max-height:125px; object-fit:cover; border-radius:12px; border:1px solid ${p.accent}; margin-bottom:8px;">
         <div style="font-weight:800; color:${p.accent}; font-size:13px; margin-bottom:6px;">🌟 غرفة ريتاج — مقياس المزاج</div>
         <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:5px; margin-bottom:8px;">
           ${Object.entries(moodMap).map(([k, v]) => `<button type="button" onclick="window.__vipSelectRitajMood('${k}')" class="btn" style="padding:4px 6px; font-size:10px; background:${mood === k ? "#f472b6" : "rgba(255,255,255,0.08)"}; color:${mood === k ? "#000" : "#fff"};">${v.label}</button>`).join("")}
@@ -731,11 +919,13 @@
             <img src="${p.avatarUrl}" onerror="this.onerror=null;this.src='store-icon.png';" alt="${p.name}" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid ${p.accent};">
             <div>
               <div style="font-size:13px; font-weight:800; color:${p.accent};">${p.name} <small style="color:#9ca3af; font-weight:600;">(${p.role})</small></div>
-              <div style="font-size:9px; color:#00e676;">✅ اشتراك مدى الحياة • تحديث يومي (${daily?.dateLabel || ""})</div>
+              <div style="font-size:9px; color:#00e676;">✅ اشتراك مدى الحياة • ${daily?.fromCloud ? "☁️ محدث سحابياً" : "تحديث يومي"} (${daily?.dateLabel || ""})</div>
             </div>
           </div>
           <button type="button" onclick="document.getElementById('vipDailyRoomModal').style.display='none'" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:11px;">✕</button>
         </div>
+
+        ${learnedHint ? `<div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); border-radius:8px; padding:5px 8px; font-size:10px; color:#7dd3fc; margin-bottom:8px;">${learnedHint}</div>` : ""}
 
         ${bodyHtml}
 
@@ -759,12 +949,9 @@
       const daily = getDailyContentForPersona(personaId);
       kws = daily?.item?.keywords || [];
     }
-    addMatchedProductsToCart(kws);
+    addMatchedProductsToCart(kws, personaId);
   };
 
-  // ==========================================================================
-  // 4) نافذة عرض بطاقات الاشتراك (الباقة الشاملة + بطاقات مدى الحياة)
-  // ==========================================================================
   window.openVIPShowcaseModal = function (activeTab = "all") {
     let modal = document.getElementById("vipShowcaseModal");
     if (!modal) {
@@ -823,7 +1010,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:8px; margin-bottom:10px;">
           <div>
             <b style="color:var(--gold-color); font-size:13px;">👑 الشخصيات المميزة — اشتراك لمرة واحدة مدى الحياة</b>
-            <div style="font-size:9px; color:#9ca3af;">التفعيل حصراً عبر الإدارة • غرف تفاعلية تتجدد يومياً</div>
+            <div style="font-size:9px; color:#9ca3af;">التفعيل حصراً عبر الإدارة • غرف تفاعلية مصورة تتجدد يومياً</div>
           </div>
           <button type="button" onclick="document.getElementById('vipShowcaseModal').style.display='none'" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:11px;">✕</button>
         </div>
@@ -832,7 +1019,7 @@
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
             <div>
               <div style="font-size:12px; font-weight:800; color:var(--gold-color);">💎 الباقة الشاملة (جميع الـ 8 شخصيات)</div>
-              <div style="font-size:10px; color:#e5e7eb; margin-top:2px;">اشتراك واحد مدى الحياة يفتح كافة الغرف التفاعلية والأصوات الثمانية.</div>
+              <div style="font-size:10px; color:#e5e7eb; margin-top:2px;">اشتراك واحد مدى الحياة يفتح كافة الغرف التفاعلية المصورة والأصوات الثمانية.</div>
             </div>
             <div style="font-size:11px; font-weight:800; color:#00e676;">${bundlePriceLbl}</div>
           </div>
@@ -867,9 +1054,6 @@
     openWhatsAppSubscriptionRequest("الباقة الشاملة (8 شخصيات)", formatPriceFromUSD(vipConfig.bundlePriceUSD));
   };
 
-  // ==========================================================================
-  // 5) لوحة التفعيل الحصرية في لوحة الإدارة (#adminModal)
-  // ==========================================================================
   function renderAdminVIPTab() {
     const box = document.getElementById("admVipActivationBox");
     if (!box) return;
@@ -984,9 +1168,6 @@
     btn.onclick = function () { window.openVIPShowcaseModal("all"); };
   }
 
-  // ==========================================================================
-  // 6) ربط الشخصيات المفعّلة بمحرك الجنيات المتحدثة + حركة الدخول البارزة
-  // ==========================================================================
   function enrichVIPPersonaForCompanion(p) {
     if (!p) return null;
     const baseGreets = [
@@ -1186,6 +1367,7 @@
     injectVIPButtonIntoAssistantHeader();
     mountAdminVIPSection();
     syncUnlockedVIPPersonasIntoCompanion();
+    syncDailyVIPFeedFromCloud();
     const curSelVal = document.getElementById("petPersonaSelect")?.value;
     if (curSelVal && VIP_PERSONAS[curSelVal] && isPersonaUnlockedLifetime(curSelVal) && typeof window.__registerDynamicCompanionPersona === "function") {
       window.__registerDynamicCompanionPersona(curSelVal, enrichVIPPersonaForCompanion(VIP_PERSONAS[curSelVal]));
@@ -1205,11 +1387,12 @@
   };
 
   window.MoaathVIPSystem = {
-    version: "2.0-interactive-daily-rooms",
+    version: "3.0-self-learning-visual-cloud",
     personas: VIP_PERSONAS,
     isPersonaUnlockedLifetime,
     isBundleUnlockedLifetime,
     getDailyContentForPersona,
-    adminSetEntitlement
+    adminSetEntitlement,
+    syncDailyVIPFeedFromCloud
   };
 })();
