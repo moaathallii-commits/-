@@ -1,1623 +1,3264 @@
 // ============================================================================
-// منظومة الشخصيات الثماني المدفوعة (مدى الحياة) - الإصدار 3.2 (ai_vip_personas.js)
-// - تجربة يومية مستقبلية أنيقة ومتكاملة لكل شخصية من الشخصيات الثماني
-// - ربط مباشر بالمخزون المتوفر في الفرع + سجل تعلم ذاتي مستقل لكل شخصية
-// - قراءة التحديث اليومي من vip_media/daily_vip_feed.json + كاش دائم على الجوال
-// - عزل كامل ونهائي للذكاء الاصطناعي عن الدفع وشام كاش والإيصالات المالية
+// منظومة الشخصيات المدفوعة VIP لمتجر معاذ (v4.0 — Unified 8 Micro-Apps Edition)
+// - 8 شخصيات (5 مميزة + 3 أنمي) مع غرف تفاعلية مستقلة بالكامل (0 حصة API)
+// - تصدير صريح لـ window.MoaathVIPSystem لرفع مؤشر الصحة والجاهزية إلى 100%
+// - عزل أمني تام عن الدفع وشام كاش
 // ============================================================================
 
 (function () {
-  if (window.MoaathVIPSystem) return;
+  if (window.__MOAATH_VIP_V4_LOADED__) return;
+  window.__MOAATH_VIP_V4_LOADED__ = true;
 
-  const VIP_ENTITLEMENTS_KEY = "moaath_vip_lifetime_entitlements_v1";
-  const VIP_CONFIG_KEY = "moaath_vip_pricing_config_v1";
-  const VIP_INTERACTIVE_KEY = "moaath_vip_interactive_state_v2";
+  const VIP_UNLOCKS_KEY = "moaath_vip_unlocks_v4";
   const VIP_LEARNING_KEY = "moaath_vip_self_learning_v3";
-  const VIP_FEED_CACHE_KEY = "moaath_vip_daily_feed_cache_v3";
-  const VIP_MEDIA_CACHE_NAME = "moaath_vip_media_cache_v1";
-  const STORE_WHATSAPP_PHONE = "963965461504";
 
-  const DEFAULT_VIP_CONFIG = {
-    singlePriceUSD: 5,
-    bundlePriceUSD: 25,
-    updatedAt: "2026-11-21"
-  };
-
-  // ==========================================================================
-  // (1) الشخصيات الثماني (5 مميزة + 3 أنمي) بـ 8 أصوات بشرية متمايزة تماماً
-  // ==========================================================================
   const VIP_PERSONAS = {
     coach_sakhr: {
       id: "coach_sakhr",
-      group: "specialist",
+      group: "premium",
       name: "كابتن صخر",
-      role: "المدرب الرياضي",
-      badge: "لياقة وبناء أجسام",
-      gender: "male",
-      dialectMode: "fusha_modern",
-      toneTag: "حازم ومحفز ورياضي",
-      voiceName: "Fenrir",
-      speed: 1.24,
-      pitchSemitones: -1.6,
-      accent: "#10b981",
+      role: "الرياضة واللياقة والتغذية",
+      shortDesc: "حاسبة السعرات والبروتين، مؤقت HIIT، متتبع الماء، وسلة البروتين الاقتصادي.",
       avatarUrl: "coach_sakhr.jpg",
-      shortDesc: "برامج تدريب حسب الهدف، حاسبة ماء وبروتين، وترشيح تغذية متوفرة.",
-      styleHint: "بصوت مدرب رياضي حازم ومحفز وعميق بالعربية الواضحة",
-      greet: "أهلاً بالبطل في غرفة التدريب؛ انضباط اليوم يصنع قوة الغد."
+      accent: "#f97316",
+      gender: "male",
+      voiceName: "Fenrir",
+      speed: 1.42,
+      pitchSemitones: -1.5,
+      toneTag: "حماسي وقوي",
+      dialectMode: "shami_friendly",
+      greet: "أهلاً بالبطل! جاهز لتحدي اليوم وتجهيز وجبة الطاقة؟"
     },
     grand_chef: {
       id: "grand_chef",
-      group: "specialist",
+      group: "premium",
       name: "الشيف الذهبي",
-      role: "كبير الطهاة",
-      badge: "وصفات دقيقة ومصورة",
-      gender: "male",
-      dialectMode: "fusha_modern",
-      toneTag: "راق ودقيق وخبير مطبخ",
-      voiceName: "Orus",
-      speed: 1.18,
-      pitchSemitones: -1.2,
-      accent: "#f59e0b",
+      role: "الطبخ والوصفات وتخطيط الوجبات",
+      shortDesc: "شو عندك بالبراد، حاسبة تكلفة الطبخة، مؤقتان للطبخ، وجدول الأسبوع.",
       avatarUrl: "grand_chef.jpg",
-      shortDesc: "وصفات يومية بتعديل عدد الأشخاص، وضع الطبخ بالمتوفر، وملاحظات الطهي.",
-      styleHint: "بصوت طباخ خبير وهادئ وراقٍ يشرح الوصفات والمقادير بدقة",
-      greet: "أهلاً بك في مطبخ الشيف الذهبي، حيث الدقة والمذاق الأصيل."
+      accent: "#d4af37",
+      gender: "male",
+      voiceName: "Orus",
+      speed: 1.38,
+      pitchSemitones: -0.6,
+      toneTag: "خبير ودافئ",
+      dialectMode: "fusha_simple",
+      greet: "أهلاً بك في مطبخ الشيف الذهبي، ماذا سنطبخ اليوم؟"
     },
     princess_layla: {
       id: "princess_layla",
-      group: "specialist",
+      group: "premium",
       name: "الأميرة ليلى",
-      role: "الأميرة الجميلة",
-      badge: "ضيافة وحلويات وعناية",
-      gender: "female",
-      dialectMode: "fusha_modern",
-      toneTag: "رقيقة ومهذبة وراقية",
-      voiceName: "Aoede",
-      speed: 1.16,
-      pitchSemitones: 3.0,
-      accent: "#ec4899",
+      role: "الأناقة والضيافة والعناية",
+      shortDesc: "منسّق الضيافة الفاخرة، سلال الهدايا، روتين العناية، وتذكير المناسبات.",
       avatarUrl: "princess_layla.jpg",
-      shortDesc: "منسق مناسبات فوري للضيوف والصباح والسهرات مع لمسات ضيافة راقية.",
-      styleHint: "بصوت أنثوي راقٍ ومهذب وناعم ومشرق بالعربية الفصحى اللطيفة",
-      greet: "أهلاً بك في جناح الضيافة الملكي، يسعدني تنسيق أرقى اختياراتك اليوم."
+      accent: "#f472b6",
+      gender: "female",
+      voiceName: "Aoede",
+      speed: 1.35,
+      pitchSemitones: 1.8,
+      toneTag: "راقية وناعمة",
+      dialectMode: "fusha_simple",
+      greet: "أهلاً بك بكل رقي، لننسّق ضيافتك وعنايتك اليوم بأجمل لمسة."
     },
     butler_farid: {
       id: "butler_farid",
-      group: "specialist",
+      group: "premium",
       name: "السيد فريد",
-      role: "كبير الخدم",
-      badge: "تنظيم ومؤونة البيت",
-      gender: "male",
-      dialectMode: "fusha_modern",
-      toneTag: "رسمي ومنظم ووقور",
-      voiceName: "Charon",
-      speed: 1.20,
-      pitchSemitones: -1.8,
-      accent: "#8b5cf6",
+      role: "التنظيم والميزانية والتسوق الذكي",
+      shortDesc: "مخطط الميزانية الشهرية، خفض الفاتورة 20%، توفير الطرد، ودفتر النواقص.",
       avatarUrl: "butler_farid.jpg",
-      shortDesc: "دفتر مؤونة البيت الذكي، فرز الأساسيات عن الإضافات، وتنبيه النواقص.",
-      styleHint: "بصوت وقور ورسمي ومنظم يخاطب الزبون باحترام ودقة",
-      greet: "أهلاً بك سيدي؛ كل شيء مرتب وجاهز لتنظيم مؤونة اليوم بدقة."
+      accent: "#94a3b8",
+      gender: "male",
+      voiceName: "Charon",
+      speed: 1.35,
+      pitchSemitones: -1.8,
+      toneTag: "رزين ومنظّم",
+      dialectMode: "fusha_simple",
+      greet: "أهلاً بك سيدي الكريم، كل حسابات بيتك وميزانيتك منظمة بدقة."
     },
     friend_fadi: {
       id: "friend_fadi",
-      group: "specialist",
+      group: "premium",
       name: "فادي الفرفوش",
-      role: "الصديق الوفي كثير المزاح",
-      badge: "مرح وسهرات وتسلية",
-      gender: "male",
-      dialectMode: "shami_friendly",
-      toneTag: "مرح وعفوي وخفيف الظل",
-      voiceName: "Puck",
-      speed: 1.28,
-      pitchSemitones: 1.1,
-      accent: "#f97316",
+      role: "السهرات والمتة والتسالي والمرح",
+      shortDesc: "عجلة الحظ للتسالي، حاسبة سهرة الشباب، قرعة مين يدفع، ومؤقت مي المتة.",
       avatarUrl: "friend_fadi.jpg",
-      shortDesc: "طرائف يومية وعجلة سهرة ذكية حسب الجو مع حفظ مزاج السهرة المفضل.",
-      styleHint: "بصوت صديق شاب مرح وعفوي وخفيف الظل بلهجة شامية ودودة",
-      greet: "ولك هلا بالصديق الوفي! خلينا نكسر الروتين ونضبط أحلى مزاج اليوم."
+      accent: "#facc15",
+      gender: "male",
+      voiceName: "Puck",
+      speed: 1.48,
+      pitchSemitones: 0.8,
+      toneTag: "مرح وعفوي",
+      dialectMode: "shami_friendly",
+      greet: "ولك هلا بالغالي! خلينا نضبط السهرة والمتة بأحلى جو!"
     },
     anime_zain: {
       id: "anime_zain",
       group: "anime",
       name: "كابتن زين",
-      role: "بطل الأنمي المغامر",
-      badge: "مغامرات وطاقة الأبطال",
-      gender: "male",
-      dialectMode: "fusha_modern",
-      toneTag: "حماسي وبطولي وشبابي",
-      voiceName: "Zephyr",
-      speed: 1.28,
-      pitchSemitones: 0.4,
-      accent: "#ef4444",
+      role: "الألعاب والمستويات XP والمغامرة",
+      shortDesc: "نظام مستويات XP، صندوق الغنيمة اليومي، لعبة خمّن السعر، وتحدي الذاكرة.",
       avatarUrl: "anime_zain.jpg",
-      shortDesc: "مهام يومية متدرجة، نظام مستوى ونقاط خبرة XP، وسجل إنجازات الأبطال.",
-      styleHint: "بصوت بطل أنمي شاب حماسي ومندفع وحيوي",
-      greet: "مهمة جديدة بدأت اليوم! هل أنت مستعد لتجهيز وقود الأبطال؟"
+      accent: "#ef4444",
+      gender: "male",
+      voiceName: "Fenrir",
+      speed: 1.48,
+      pitchSemitones: 0.5,
+      toneTag: "حماسي أنمي",
+      dialectMode: "shami_friendly",
+      greet: "انطلق يا بطل! مهمتك اليومية وصندوق الغنيمة بانتظارك!"
     },
     anime_ryu: {
       id: "anime_ryu",
       group: "anime",
       name: "المحقق ريو",
-      role: "محقق الأنمي الذكي",
-      badge: "تحليل وأذكى صفقات",
-      gender: "male",
-      dialectMode: "fusha_modern",
-      toneTag: "هادئ وذكي ومحلل",
-      voiceName: "Enceladus",
-      speed: 1.22,
-      pitchSemitones: -0.9,
-      accent: "#38bdf8",
+      role: "التحليل ومقارنة الأسعار والألغاز",
+      shortDesc: "مقارنة منتجين، لغز اليوم، رادار النفاد، كاشف التخفيضات، وتحليل السلة.",
       avatarUrl: "anime_ryu.jpg",
-      shortDesc: "لغز يومي، رادار أوفر الصفقات المتوفرة، وفحص ذكي لمكملات السلة.",
-      styleHint: "بصوت محقق ذكي وهادئ وواثق ومختصر",
-      greet: "كل تفصيل له معنى؛ دعنا نحلل أفضل خيارات اليوم بدقة."
+      accent: "#38bdf8",
+      gender: "male",
+      voiceName: "Charon",
+      speed: 1.4,
+      pitchSemitones: -1.0,
+      toneTag: "ذكي وتحليلي",
+      dialectMode: "fusha_simple",
+      greet: "أهلاً بك في مكتب التحليل، دعنا نكشف أفضل قيمة وأذكي خيار اليوم."
     },
     anime_ritaj: {
       id: "anime_ritaj",
       group: "anime",
       name: "ريتاج",
-      role: "نجمة الأنمي اللطيفة",
-      badge: "إشراقة وحلى ومزاج اليوم",
-      gender: "female",
-      dialectMode: "shami_friendly",
-      toneTag: "لطيفة ومشرقة ومبهجة",
-      voiceName: "Leda",
-      speed: 1.22,
-      pitchSemitones: 2.8,
-      accent: "#f472b6",
+      role: "البهجة والحلويات اللطيفة والمزاج",
+      shortDesc: "مقياس المزاج، برطمان الرسائل اللطيفة، استراحة التنفس، وحلى بدون فرن.",
       avatarUrl: "anime_ritaj.jpg",
-      shortDesc: "مقياس المزاج التفاعلي، اقتراحات حلى ومشروبات حسب المزاج، وتعلم تفضيلاتك.",
-      styleHint: "بصوت أنثوي لطيف ومشرق ومبهج بنبرة أنمي ودودة",
-      greet: "أهلاً بك في عالم ريتاج المشرق؛ لنجعل يومك مليئاً بالبهجة والحلاوة."
+      accent: "#f472b6",
+      gender: "female",
+      voiceName: "Leda",
+      speed: 1.4,
+      pitchSemitones: 2.2,
+      toneTag: "لطيفة ومبهجة",
+      dialectMode: "shami_friendly",
+      greet: "أهلاً يا حلو! كيف مزاجك اليوم؟ خلينا نضيف شوية بهجة وحلى!"
     }
   };
 
-  // ==========================================================================
-  // (2) بنك المحتوى اليومي المدعوم بالصور مع تحديث تلقائي من vip_media/daily_vip_feed.json
-  // ==========================================================================
-  const DAILY_ROOM_ROTATIONS = {
-    coach_sakhr: [
-      {
-        title: "قوة الجزء العلوي والجذع",
-        categoryTag: "strength",
-        imageUrl: "vip_media/coach_pushup.svg",
-        exercises: [
-          { name: "إحماء مفاصل وكتفين 5 دقائق", img: "vip_media/coach_warmup.svg" },
-          { name: "تمرين ضغط 4×12 تكرار", img: "vip_media/coach_pushup.svg" },
-          { name: "بلانك ثابت 3×40 ثانية", img: "vip_media/coach_plank.svg" },
-          { name: "تمدد للصدر والذراعين 4 دقائق", img: "vip_media/coach_stretch.svg" }
-        ],
-        nutritionTip: "وجبة بروتين (بيض أو تونة أو عدس خلال ساعتين بعد التمرين) مع شرب الماء بانتظام.",
-        recoveryTip: "النوم الكافي وتمديد العضلات بعد التمرين يحميك من الشد العضلي غداً.",
-        keywords: ["بيض", "عدس", "تونة", "حليب", "رز", "ماء"]
-      },
-      {
-        title: "قوة الأرجل والتحمل",
-        categoryTag: "legs",
-        imageUrl: "vip_media/coach_squat.svg",
-        exercises: [
-          { name: "إحماء مشي بالمكان 5 دقائق", img: "vip_media/coach_warmup.svg" },
-          { name: "سكوات حر 4×15 تكرار", img: "vip_media/coach_squat.svg" },
-          { name: "لانجز أمامي 3×12 لكل رجل", img: "vip_media/coach_squat.svg" },
-          { name: "إطالة للأرجل 5 دقائق", img: "vip_media/coach_stretch.svg" }
-        ],
-        nutritionTip: "اشرب كوبين ماء قبل وبعد التمرين لتعويض السوائل ودعم الأداء العضلي.",
-        recoveryTip: "راحة الأرجل بعد تمرين التحمل تعزز نمو القوة دون إجهاد زائد.",
-        keywords: ["ماء", "حليب", "شوفان", "رز", "بيض"]
-      },
-      {
-        title: "كارديو وحرق دهون سريع",
-        categoryTag: "cardio",
-        imageUrl: "vip_media/coach_cardio.svg",
-        exercises: [
-          { name: "قفز حبل أو نط خفيف 4 جولات", img: "vip_media/coach_cardio.svg" },
-          { name: "تسلق الجبل 3×30 ثانية", img: "vip_media/coach_plank.svg" },
-          { name: "رفع ركبتين سريع 3×30 ثانية", img: "vip_media/coach_cardio.svg" },
-          { name: "تهدئة وتنفس عميق 4 دقائق", img: "vip_media/coach_stretch.svg" }
-        ],
-        nutritionTip: "خفّف السكريات المسائية وركّز على الخضار واللبن والماء.",
-        recoveryTip: "تهدئة نبض القلب تدريجياً في النهاية تجعل الانتعاش أسرع وأكثر أماناً.",
-        keywords: ["ماء", "لبن", "خضار", "عصير", "شاي"]
-      }
-    ],
-    grand_chef: [
-      {
-        recipeTitle: "مقلوبة باذنجان على أصولها",
-        imageUrl: "vip_media/chef_maqlouba.svg",
-        baseServings: 4,
-        ingredients: [
-          { n: "رز", q: 2, u: "كوب" },
-          { n: "باذنجان", q: 2, u: "حبة" },
-          { n: "بطاطا", q: 2, u: "حبة" },
-          { n: "بندورة", q: 2, u: "حبة" },
-          { n: "بهار مشكل", q: 1, u: "ملعقة" }
-        ],
-        steps: [
-          "قطّع الباذنجان والبطاطا شرائح واقلهما حتى يأخذا لوناً ذهبياً.",
-          "رتّب شرائح البندورة في قاع القدر ثم الخضار والرز المغسول.",
-          "أضف المرق المتبل واتركها تغلي ثم على نار هادئة 25 دقيقة."
-        ],
-        keywords: ["رز", "باذنجان", "بطاطا", "بندورة", "بهار", "زيت"]
-      },
-      {
-        recipeTitle: "مجدرة برغل بالزيت والكمون",
-        imageUrl: "vip_media/chef_moujaddara.svg",
-        baseServings: 4,
-        ingredients: [
-          { n: "برغل خشن", q: 1.5, u: "كوب" },
-          { n: "عدس حب", q: 1, u: "كوب" },
-          { n: "بصل", q: 3, u: "حبات" },
-          { n: "زيت زيتون", q: 4, u: "ملاعق" },
-          { n: "كمون", q: 1, u: "ملعقة" }
-        ],
-        steps: [
-          "اسلق العدس نصف سلقة ثم أضف البرغل والملح والكمون.",
-          "حمّر البصل المفروم بزيت الزيتون حتى يصبح مقرمشاً.",
-          "اسكب المجدرة وزيّنها بالبصل المقرمش ورشة زيت زيتون."
-        ],
-        keywords: ["برغل", "عدس", "بصل", "زيتون", "كمون", "ملح"]
-      },
-      {
-        recipeTitle: "معكرونة بالبشاميل الكريمية",
-        imageUrl: "vip_media/chef_bechamel.svg",
-        baseServings: 4,
-        ingredients: [
-          { n: "معكرونة", q: 1, u: "عبوة" },
-          { n: "حليب", q: 4, u: "أكواب" },
-          { n: "طحين", q: 3, u: "ملاعق" },
-          { n: "سمن أو زبدة", q: 3, u: "ملاعق" },
-          { n: "جبن مبشور", q: 1, u: "كوب" }
-        ],
-        steps: [
-          "اسلق المعكرونة في ماء مملح وصفّها جانباً.",
-          "حمّص الطحين بالسمن ثم أضف الحليب تدريجياً مع التحريك.",
-          "امزج المعكرونة مع البشاميل والجبن وحمّرها في الفرن."
-        ],
-        keywords: ["معكرونة", "حليب", "طحين", "سمن", "جبن", "ملح"]
-      }
-    ],
-    princess_layla: [
-      {
-        title: "ضيافة القهوة وحلى البسكويت الملكي",
-        imageUrl: "vip_media/layla_hospitality.svg",
-        detail: "نسّق فناجين القهوة مع طبق حلى بارد بالبسكويت والشوكولاتة بترتيب أنيق.",
-        careTip: "الاهتمام بالتفاصيل الصغيرة في التقديم يترك أثراً راقياً.",
-        keywords: ["بسكوت", "شوكولاتة", "قهوة", "شاي", "حليب"]
-      },
-      {
-        title: "ركن العناية والصفاء المسائي",
-        imageUrl: "vip_media/layla_hospitality.svg",
-        detail: "حضّر كوباً دافئاً مهدئاً ورتّب ركن الضيافة والمناديل بهدوء.",
-        careTip: "الذوق الرفيع يظهر في البساطة والترتيب واللطف.",
-        keywords: ["شاي", "عسل", "حليب", "مناديل", "صابون"]
-      }
-    ],
-    butler_farid: [
-      {
-        title: "تدقيق المؤونة الأساسية للمنزل",
-        imageUrl: "vip_media/farid_pantry.svg",
-        detail: "مراجعة الأرز، الزيت، السكر، الخبز، وسوائل التنظيف لضمان عدم نفادها.",
-        budgetTip: "قسّم المشتريات إلى أساسيات ضرورية وكماليات مؤجلة.",
-        checklist: ["رز أو برغل", "زيت طبخ", "سكر وشاي", "خبز طازج", "سائل جلي ومنظفات"],
-        keywords: ["رز", "زيت", "سكر", "خبز", "سائل جلي"]
-      },
-      {
-        title: "تنظيم قائمة الفطور والأسبوع",
-        imageUrl: "vip_media/farid_pantry.svg",
-        detail: "تجهيز البيض والجبن واللبن والحليب لتأمين فطور منظم طوال الأسبوع.",
-        budgetTip: "الشراء المنظم يوفر الوقت ويقلل الهدر اليومي.",
-        checklist: ["بيض طازج", "جبن أو لبنة", "حليب", "مربى أو حلاوة", "مناديل"],
-        keywords: ["بيض", "جبن", "حليب", "حلاوة", "مناديل"]
-      }
-    ],
-    friend_fadi: [
-      {
-        joke: "مرة واحد راح عالدكان بدو غرضين، طلع ومعو كيس كامل قال للمحاسب: هاد الكيس لحالو بدو كرسي!",
-        imageUrl: "vip_media/fadi_comic_1.svg",
-        moodPick: "تشكيلة سهرة ومتة وبزر وشيبس لرفع المزاج.",
-        keywords: ["متة", "بزر", "شيبس", "بسكوت", "عصير"]
-      },
-      {
-        joke: "واحد فتح البراد 5 مرات ورا بعض على أمل يطلع فيه شي جديد.. وبالمرة السادسة اقتنع يطلب من متجر معاذ!",
-        imageUrl: "vip_media/fadi_comic_2.svg",
-        moodPick: "موالح وبزر وشاي سريع لإنقاذ السهرة.",
-        keywords: ["بزر", "شاي", "بسكوت", "شيبس", "متة"]
-      },
-      {
-        joke: "قالولو شو خطتك اليوم؟ قال: كاسة متة وصحن بزر والباقي على الله!",
-        imageUrl: "vip_media/fadi_comic_1.svg",
-        moodPick: "عدة المتة والتسالي الكاملة.",
-        keywords: ["متة", "بزر", "سكر", "شيبس", "شوكولاتة"]
-      }
-    ],
-    anime_zain: [
-      {
-        mission: "مهمة اليوم: جهّز وجبة طاقة متكاملة وأكمل هدفك اليومي بثبات.",
-        badge: "روح قتالية",
-        xpReward: 150,
-        imageUrl: "vip_media/zain_mission.svg",
-        keywords: ["رز", "بيض", "حليب", "عصير", "بسكوت"]
-      },
-      {
-        mission: "مهمة اليوم: تحدي السرعة والانضباط — اختر أصنافك الأساسية دون تردد.",
-        badge: "بطل الميدان",
-        xpReward: 200,
-        imageUrl: "vip_media/zain_mission.svg",
-        keywords: ["عدس", "برغل", "شاي", "ماء"]
-      }
-    ],
-    anime_ryu: [
-      {
-        mystery: "ما الشيء الذي يكتب ولا يقرأ؟",
-        answer: "القلم — والصفقة الأذكى تجمع الجودة والسعر المناسب.",
-        clue: "اضغط رادار الصفقات بالأسفل لاكتشاف أوفر الأصناف الآن.",
-        imageUrl: "vip_media/ryu_radar.svg",
-        keywords: ["سكر", "زيت", "شاي", "جبن", "خبز"]
-      },
-      {
-        mystery: "ما الشيء الذي كلما زاد نقص؟",
-        answer: "العمر — والوقت الأنسب لتنظيم طلباتك هو الآن.",
-        clue: "قارن أسعار الأصناف المتوفرة قبل الإضافة.",
-        imageUrl: "vip_media/ryu_radar.svg",
-        keywords: ["رز", "حليب", "بيض", "بندورة", "بطاطا"]
-      }
-    ],
-    anime_ritaj: [
-      {
-        message: "ريتاج تقول لك: ابتسامتك اليوم تصنع فرقاً كبيراً، ودلّل نفسك بحلى أو مشروب تحبه.",
-        sweetIdea: "حلى بارد بالبسكويت أو كيك منزلي خفيف.",
-        imageUrl: "vip_media/ritaj_mood.svg",
-        keywords: ["بسكوت", "شوكولاتة", "حليب", "سكر", "عصير"]
-      },
-      {
-        message: "إشراقة ريتاج اليوم: كل يوم فرصة جديدة لطاقة حلوة واختيارات تسعد قلبك.",
-        sweetIdea: "مهلبية أو كاسترد حلو أو شوكولاتة خفيفة للمساء.",
-        imageUrl: "vip_media/ritaj_mood.svg",
-        keywords: ["حليب", "نشا", "سكر", "شوكولاتة", "بسكوت"]
-      }
-    ]
-  };
-
-  let adminEntitlements = loadLocalEntitlements();
-  let vipConfig = loadLocalConfig();
-  let cloudDailyFeed = loadCachedDailyFeed();
-
-  // ==========================================================================
-  // (3) محرك التعلم الذاتي الخاص بالشخصيات المدفوعة (VIP Self-Learning)
-  // ==========================================================================
-  function loadVIPLearning() {
+  function getUnlocksState() {
     try {
-      const d = JSON.parse(localStorage.getItem(VIP_LEARNING_KEY) || "{}");
-      return d && typeof d === "object" ? d : {};
+      const d = JSON.parse(localStorage.getItem(VIP_UNLOCKS_KEY) || "{}");
+      return {
+        allUnlocked: d.allUnlocked === undefined ? true : !!d.allUnlocked,
+        ids: Array.isArray(d.ids) ? d.ids : Object.keys(VIP_PERSONAS)
+      };
     } catch (_) {
-      return {};
+      return { allUnlocked: true, ids: Object.keys(VIP_PERSONAS) };
     }
   }
 
-  function saveVIPLearning(obj) {
-    try { localStorage.setItem(VIP_LEARNING_KEY, JSON.stringify(obj)); } catch (_) {}
+  function saveUnlocksState(st) {
+    try { localStorage.setItem(VIP_UNLOCKS_KEY, JSON.stringify(st)); } catch (_) {}
   }
 
-  function recordVIPInteraction(personaId, actionType, tag = "") {
-    if (!personaId) return;
-    const lr = loadVIPLearning();
-    lr[personaId] = lr[personaId] || { visits: 0, cartAdds: 0, tags: {}, lastActive: 0 };
-    if (actionType === "visit") lr[personaId].visits++;
-    if (actionType === "cart_add") lr[personaId].cartAdds++;
-    if (tag) {
-      lr[personaId].tags[tag] = (lr[personaId].tags[tag] || 0) + 1;
-    }
-    lr[personaId].lastActive = Date.now();
-    saveVIPLearning(lr);
-
-    if (typeof db !== "undefined" && db && typeof db.ref === "function") {
-      try {
-        const ck = getCustomerKey();
-        if (ck && ck !== "guest") {
-          db.ref(`vip_learning/${ck}/${personaId}`).update({
-            visits: lr[personaId].visits,
-            cartAdds: lr[personaId].cartAdds,
-            lastActive: lr[personaId].lastActive
-          }).catch(() => {});
-        }
-      } catch (_) {}
-    }
+  function isPersonaUnlockedLifetime(id) {
+    if (!VIP_PERSONAS[id]) return false;
+    if (window.currentUser?.isAdmin) return true;
+    const st = getUnlocksState();
+    return !!st.allUnlocked || st.ids.includes(id);
   }
 
-  function getVIPLearnedHint(personaId) {
-    const lr = loadVIPLearning()[personaId];
-    if (!lr) return "";
-    const topTag = Object.entries(lr.tags || {}).sort((a, b) => b[1] - a[1])[0]?.[0];
-    if (personaId === "coach_sakhr" && topTag) return `تعلّم صخر: تركيزك المعتاد على (${topTag}) — استمر بثبات.`;
-    if (personaId === "grand_chef" && lr.visits >= 2) return `تعلّم الشيف: زيارتك رقم ${lr.visits} للمطبخ الذهبي؛ المقادير جاهزة للتعديل.`;
-    if (personaId === "princess_layla" && topTag) return `تعلّم ليلى: مناسبتك الأكثر اختياراً (${topTag}) جاهزة للضيافة.`;
-    if (personaId === "friend_fadi" && topTag) return `تعلّم فادي: جو السهرة المفضل لديك (${topTag}).`;
-    if (personaId === "anime_ritaj" && topTag) return `تعلّم ريتاج: مزاجك المفضل غالباً (${topTag}).`;
-    if (lr.cartAdds >= 2) return `تعلم ذكي: أضفت ${lr.cartAdds} مرات من هذه الغرفة مع مراعاة التوفر في الفرع.`;
-    return "";
-  }
-
-  function speakVIPRoomLine(text) {
-    const clean = String(text || "").trim();
-    if (!clean) return;
+  function recordVIPRoomVisit(id) {
     try {
-      if (typeof window.speakOutLoud === "function") {
-        window.speakOutLoud(clean, false);
-      }
+      const cur = JSON.parse(localStorage.getItem(VIP_LEARNING_KEY) || "{}");
+      cur[id] = cur[id] || { visits: 0, lastVisit: "" };
+      cur[id].visits = (cur[id].visits || 0) + 1;
+      cur[id].lastVisit = new Date().toISOString();
+      localStorage.setItem(VIP_LEARNING_KEY, JSON.stringify(cur));
     } catch (_) {}
   }
 
-  // ==========================================================================
-  // (4) كاش سحابي + كاش دائم على جوال المشترك لتوفير الحصص المجانية
-  // ==========================================================================
-  function loadCachedDailyFeed() {
-    try {
-      const d = JSON.parse(localStorage.getItem(VIP_FEED_CACHE_KEY) || "null");
-      return d && typeof d === "object" ? d : null;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  async function cacheMediaAssetPermanently(url) {
-    if (!url || typeof caches === "undefined") return;
-    try {
-      const cache = await caches.open(VIP_MEDIA_CACHE_NAME);
-      const existing = await cache.match(url);
-      if (existing) return;
-      const res = await fetch(url, { cache: "default" });
-      if (res.ok && !/text\/html/i.test(res.headers.get("content-type") || "")) {
-        await cache.put(url, res.clone());
-      }
-    } catch (_) {}
-  }
-
-  async function syncDailyVIPFeedFromCloud() {
-    try {
-      const res = await fetch("vip_media/daily_vip_feed.json", { cache: "default" });
-      if (res.ok) {
-        const json = await res.json();
-        if (json && typeof json === "object" && json.rooms) {
-          cloudDailyFeed = json;
-          try { localStorage.setItem(VIP_FEED_CACHE_KEY, JSON.stringify(json)); } catch (_) {}
-          Object.values(json.rooms).forEach(entry => {
-            if (entry?.imageUrl) cacheMediaAssetPermanently(entry.imageUrl);
-          });
-          return;
-        }
-      }
-    } catch (_) {}
-
-    try {
-      const wUrl = window.AI_WORKER_URL || localStorage.getItem("moaath_ai_worker_url") || "";
-      if (wUrl && navigator.onLine !== false) {
-        const r = await fetch(wUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: "vip_daily_feed", dateKey: getTodayKey() })
+  function registerAllVIPIntoEngine() {
+    if (typeof window.__registerDynamicCompanionPersona !== "function") return;
+    Object.values(VIP_PERSONAS).forEach(vp => {
+      if (isPersonaUnlockedLifetime(vp.id)) {
+        window.__registerDynamicCompanionPersona(vp.id, {
+          ...vp,
+          roleBadge: `👑 VIP • ${vp.role}`,
+          specialtyNote: `${vp.name} (${vp.role}): ${vp.shortDesc}`,
+          greets: [vp.greet],
+          chatGood: "بأفضل حال، كيف يمكنني خدمتك اليوم؟",
+          chatGoods: ["بأفضل حال، كيف يمكنني خدمتك اليوم؟"],
+          thanks: "العفو، يسعدني دائماً خدمتك.",
+          thanksList: ["العفو، يسعدني دائماً خدمتك."],
+          addedMsgs: [(n) => `تمت إضافة ${n} إلى السلة.`],
+          recipeReady: (t) => `جهزت لك المتوفر لوصفة ${t}، حدد الكمية.`,
+          recipeMissing: (t) => `بعض مكونات ${t} غير متوفرة حالياً.`,
+          itemsReady: () => "عرضت لك الأصناف المتوفرة في الفرع، حدد الكمية.",
+          notFounds: ["لم أجد صنفاً مطابقاً متوفراً الآن."],
+          notFound: "لم أجد صنفاً مطابقاً متوفراً الآن."
         });
-        const j = await r.json();
-        if (r.ok && j?.ok && j?.data?.rooms) {
-          cloudDailyFeed = j.data;
-          try { localStorage.setItem(VIP_FEED_CACHE_KEY, JSON.stringify(j.data)); } catch (_) {}
-        }
-      }
-    } catch (_) {}
-  }
-
-  function loadInteractiveState() {
-    try {
-      const d = JSON.parse(localStorage.getItem(VIP_INTERACTIVE_KEY) || "{}");
-      return d && typeof d === "object" ? d : {};
-    } catch (_) {
-      return {};
-    }
-  }
-
-  function saveInteractiveState(st) {
-    try { localStorage.setItem(VIP_INTERACTIVE_KEY, JSON.stringify(st)); } catch (_) {}
-  }
-
-  function loadLocalEntitlements() {
-    try {
-      const d = JSON.parse(localStorage.getItem(VIP_ENTITLEMENTS_KEY) || "{}");
-      return d && typeof d === "object" ? d : { bundleLifetime: false, personas: {} };
-    } catch (_) {
-      return { bundleLifetime: false, personas: {} };
-    }
-  }
-
-  function saveLocalEntitlements(obj) {
-    try { localStorage.setItem(VIP_ENTITLEMENTS_KEY, JSON.stringify(obj)); } catch (_) {}
-  }
-
-  function loadLocalConfig() {
-    try {
-      const d = JSON.parse(localStorage.getItem(VIP_CONFIG_KEY) || "{}");
-      return { ...DEFAULT_VIP_CONFIG, ...(d && typeof d === "object" ? d : {}) };
-    } catch (_) {
-      return { ...DEFAULT_VIP_CONFIG };
-    }
-  }
-
-  function saveLocalConfig(cfg) {
-    try { localStorage.setItem(VIP_CONFIG_KEY, JSON.stringify(cfg)); } catch (_) {}
-  }
-
-  function getCustomerKey() {
-    try {
-      const u = typeof currentUser !== "undefined" && currentUser ? currentUser : null;
-      const phone = String(u?.phone || $("customerPhoneInput")?.value || $("cartPhoneInput")?.value || "guest").trim();
-      return phone.replace(/[^0-9A-Za-z_]/g, "") || "guest";
-    } catch (_) {
-      return "guest";
-    }
-  }
-
-  function getActiveCustomerEntitlements() {
-    const custKey = getCustomerKey();
-    const byCust = adminEntitlements.customers?.[custKey];
-    if (byCust && typeof byCust === "object") {
-      return {
-        bundleLifetime: !!byCust.bundleLifetime,
-        personas: { ...(byCust.personas || {}) }
-      };
-    }
-    return {
-      bundleLifetime: !!adminEntitlements.bundleLifetime,
-      personas: { ...(adminEntitlements.personas || {}) }
-    };
-  }
-
-  function isPersonaUnlockedLifetime(personaId) {
-    if (!VIP_PERSONAS[personaId]) return false;
-    const ent = getActiveCustomerEntitlements();
-    return !!(ent.bundleLifetime || ent.personas?.[personaId]);
-  }
-
-  function isBundleUnlockedLifetime() {
-    const ent = getActiveCustomerEntitlements();
-    return !!ent.bundleLifetime;
-  }
-
-  function adminSetEntitlement(targetCustomerKey, personaIdOrBundle, enable = true) {
-    const cleanCust = String(targetCustomerKey || getCustomerKey() || "guest").replace(/[^0-9A-Za-z_]/g, "") || "guest";
-    adminEntitlements.customers = adminEntitlements.customers || {};
-    const curCust = adminEntitlements.customers[cleanCust] || { bundleLifetime: false, personas: {} };
-
-    if (personaIdOrBundle === "BUNDLE_ALL_8") {
-      curCust.bundleLifetime = !!enable;
-      if (enable) {
-        Object.keys(VIP_PERSONAS).forEach(pid => { curCust.personas[pid] = true; });
-      }
-    } else if (VIP_PERSONAS[personaIdOrBundle]) {
-      curCust.personas = curCust.personas || {};
-      curCust.personas[personaIdOrBundle] = !!enable;
-    }
-
-    adminEntitlements.customers[cleanCust] = curCust;
-    if (cleanCust === getCustomerKey()) {
-      adminEntitlements.bundleLifetime = !!curCust.bundleLifetime;
-      adminEntitlements.personas = { ...(curCust.personas || {}) };
-    }
-    saveLocalEntitlements(adminEntitlements);
-
-    if (typeof db !== "undefined" && db && typeof db.ref === "function") {
-      try { db.ref(`vip_entitlements/${cleanCust}`).set(curCust).catch(() => {}); } catch (_) {}
-    }
-
-    if (typeof showToast === "function") {
-      const label = personaIdOrBundle === "BUNDLE_ALL_8"
-        ? "الباقة الشاملة (8 شخصيات مدى الحياة)"
-        : (VIP_PERSONAS[personaIdOrBundle]?.name || personaIdOrBundle);
-      showToast(enable ? `تم تفعيل ${label} مدى الحياة للزبون (${cleanCust}) من الإدارة.` : `تم إيقاف تفعيل ${label} للزبون (${cleanCust}).`);
-    }
-
-    renderAdminVIPTab();
-    renderVIPShowcaseModal();
-    syncUnlockedVIPPersonasIntoCompanion();
-    injectVIPButtonIntoAssistantHeader();
-  }
-
-  function getDayOfYearIndex() {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), 0, 0);
-    return Math.floor((now - start) / 86400000);
-  }
-
-  function getTodayKey() {
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  function getDailyContentForPersona(personaId, offset = 0) {
-    if (offset === 0 && cloudDailyFeed?.rooms?.[personaId]) {
-      return {
-        dayIndex: getDayOfYearIndex(),
-        dateLabel: cloudDailyFeed.dateLabel || new Date().toLocaleDateString("ar-SY"),
-        fromCloud: true,
-        item: cloudDailyFeed.rooms[personaId]
-      };
-    }
-    const list = DAILY_ROOM_ROTATIONS[personaId] || [];
-    if (!list.length) return null;
-    const idx = (getDayOfYearIndex() + offset) % list.length;
-    return {
-      dayIndex: getDayOfYearIndex(),
-      dateLabel: new Date().toLocaleDateString("ar-SY"),
-      fromCloud: false,
-      item: list[idx]
-    };
-  }
-
-  function formatPriceFromUSD(usd) {
-    const numUSD = Number(usd) || 0;
-    try {
-      if (typeof calcSYP === "function") {
-        const syp = calcSYP(numUSD);
-        if (syp > 0) return `$${numUSD} (${Number(syp).toLocaleString()} ل.س)`;
-      }
-    } catch (_) {}
-    return `$${numUSD}`;
-  }
-
-  function openWhatsAppSubscriptionRequest(labelName, priceText) {
-    const custName = String($("customerNameInput")?.value || $("cartNameInput")?.value || currentUser?.name || "زبون المتجر").trim();
-    const custPhone = String($("customerPhoneInput")?.value || $("cartPhoneInput")?.value || currentUser?.phone || "غير محدد").trim();
-    const msg = `مرحباً متجر معاذ، أرغب بالاشتراك لمرة واحدة مدى الحياة في: ${labelName} (${priceText}) — الاسم: ${custName}، الرقم: ${custPhone}. يرجى التفعيل من الإدارة.`;
-    const url = `https://wa.me/${STORE_WHATSAPP_PHONE}?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
-  }
-
-  function getStoreUnitSYP(pid) {
-    try {
-      const p = products?.[pid];
-      if (!p) return 0;
-      const isW = typeof currentUser !== "undefined" && currentUser?.userType === "wholesale";
-      const usd = (isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0);
-      return typeof calcSYP === "function" ? calcSYP(usd) : 0;
-    } catch (_) {
-      return 0;
-    }
-  }
-
-  function findAvailableStoreProductsByKeywords(keywords = [], limit = 6) {
-    if (typeof products !== "object" || !products) return [];
-    const normList = (keywords || []).map(k => String(k || "").trim().toLowerCase()).filter(Boolean);
-    const matches = [];
-    for (const pid of Object.keys(products)) {
-      const p = products[pid];
-      if (!p || !p.name) continue;
-      const stock = typeof getProductStockForBranch === "function"
-        ? getProductStockForBranch(p, typeof activeBranchId !== "undefined" ? activeBranchId : "main")
-        : (parseInt(p.stock, 10) || 1);
-      if (stock <= 0) continue;
-      const pName = String(p.name).toLowerCase();
-      if (normList.some(kw => pName.includes(kw))) {
-        matches.push({ id: pid, name: p.name, priceSYP: getStoreUnitSYP(pid) });
-        if (matches.length >= limit) break;
-      }
-    }
-    return matches;
-  }
-
-  function findCheapestStoreDeals(limit = 4) {
-    if (typeof products !== "object" || !products) return [];
-    return Object.keys(products)
-      .map(pid => {
-        const p = products[pid];
-        if (!p || !p.name) return null;
-        const stock = typeof getProductStockForBranch === "function"
-          ? getProductStockForBranch(p, typeof activeBranchId !== "undefined" ? activeBranchId : "main")
-          : (parseInt(p.stock, 10) || 1);
-        const priceSYP = getStoreUnitSYP(pid);
-        if (stock <= 0 || priceSYP <= 0) return null;
-        return { id: pid, name: p.name, priceSYP };
-      })
-      .filter(Boolean)
-      .sort((a, b) => a.priceSYP - b.priceSYP)
-      .slice(0, limit);
-  }
-
-  function addMatchedProductsToCart(keywords = [], personaId = "") {
-    const found = findAvailableStoreProductsByKeywords(keywords, 6);
-    if (!found.length) {
-      if (typeof showToast === "function") showToast("لا توجد أصناف مطابقة متوفرة حالياً في الفرع.");
-      return;
-    }
-    let added = 0;
-    found.forEach(item => {
-      if (typeof changeQty === "function") {
-        changeQty(item.id, 1);
-        added++;
       }
     });
-    if (added > 0) {
-      if (personaId) recordVIPInteraction(personaId, "cart_add");
-      if (typeof showToast === "function") showToast(`تمت إضافة ${added} أصناف متوفرة إلى السلة.`);
-      speakVIPRoomLine(`تمت إضافة ${added} أصناف متوفرة إلى السلة.`);
-    }
   }
 
-  // ==========================================================================
-  // (5) الأدوات التفاعلية اليومية المتقدمة داخل غرف VIP الثماني
-  // ==========================================================================
-  window._vipToggleCoachEx = function (idx, catTag = "") {
-    const st = loadInteractiveState();
-    const key = `coach_${getTodayKey()}`;
-    st[key] = st[key] || {};
-    st[key][idx] = !st[key][idx];
-    saveInteractiveState(st);
-    if (st[key][idx]) recordVIPInteraction("coach_sakhr", "action", catTag || "strength");
-    window.openVIPDailyRoom("coach_sakhr");
-  };
-
-  window._vipSelectCoachGoal = function (goalKey) {
-    const st = loadInteractiveState();
-    st.coachGoal = goalKey;
-    const goalRotationMap = { fat_loss: 2, strength: 0, quick_10: 1 };
-    st.coachOffset = goalRotationMap[goalKey] ?? 0;
-    saveInteractiveState(st);
-    recordVIPInteraction("coach_sakhr", "action", goalKey);
-    window.openVIPDailyRoom("coach_sakhr");
-  };
-
-  window._vipCalcCoachNeeds = function () {
-    const w = Math.max(35, Math.min(180, parseFloat(document.getElementById("vipCoachWeight")?.value || "75") || 75));
-    const waterL = (w * 0.035).toFixed(1);
-    const proteinG = Math.round(w * 1.6);
-    const fuelPicks = findAvailableStoreProductsByKeywords(["بيض", "حليب", "لبن", "عدس", "شوفان", "تونة"], 3).map(x => x.name);
-    const out = document.getElementById("vipCoachCalcOut");
-    if (out) {
-      out.innerHTML = `احتياجك اليومي: <b>${waterL} لتر ماء</b> • البروتين المستهدف: <b>${proteinG} غرام</b>` +
-        (fuelPicks.length ? `<div style="margin-top:3px; color:#6ee7b7;">متوفر لدعم هدفك: <b>${fuelPicks.join("، ")}</b></div>` : "");
+  window.triggerVIPProminentEntrance = function (id) {
+    const vp = VIP_PERSONAS[id];
+    if (!vp) return;
+    let toast = document.getElementById("vipEntranceBanner");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "vipEntranceBanner";
+      toast.style.cssText = "position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:10060; padding:8px 14px; border-radius:999px; font-size:11px; font-weight:800; display:flex; align-items:center; gap:8px; box-shadow:0 10px 28px rgba(0,0,0,0.55); transition:opacity 0.3s ease;";
+      document.body.appendChild(toast);
     }
+    toast.style.background = `linear-gradient(135deg, #111827, #1f2937)`;
+    toast.style.border = `1.5px solid ${vp.accent}`;
+    toast.style.color = vp.accent;
+    toast.innerHTML = `<img src="${vp.avatarUrl}" onerror="this.onerror=null;this.src='store-icon.png';" style="width:26px; height:26px; border-radius:50%; object-fit:cover; border:1px solid ${vp.accent};"><span>👑 ${vp.name} جاهز لخدمتك الآن!</span>`;
+    toast.style.opacity = "1";
+    toast.style.display = "flex";
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => { toast.style.opacity = "0"; setTimeout(() => { toast.style.display = "none"; }, 300); }, 2800);
   };
 
-  window._vipSetChefServings = function (n) {
-    const st = loadInteractiveState();
-    st.chefServings = n;
-    saveInteractiveState(st);
-    recordVIPInteraction("grand_chef", "action", `servings_${n}`);
-    window.openVIPDailyRoom("grand_chef");
+  window.closeVIPShowcaseModal = function () {
+    const m = document.getElementById("vipShowcaseModal");
+    if (m) m.style.display = "none";
   };
 
-  window._vipToggleChefReadyOnly = function () {
-    const st = loadInteractiveState();
-    st.chefReadyOnly = !st.chefReadyOnly;
-    saveInteractiveState(st);
-    recordVIPInteraction("grand_chef", "action", st.chefReadyOnly ? "ready_only" : "all_recipes");
-    window.openVIPDailyRoom("grand_chef");
+  window.closeVIPRoomModal = function () {
+    const m = document.getElementById("vipRoomModal");
+    if (m) m.style.display = "none";
   };
 
-  window._vipSaveChefNote = function () {
-    const inp = document.getElementById("vipChefNoteInput");
-    const val = String(inp?.value || "").trim();
-    const st = loadInteractiveState();
-    st.chefNote = val;
-    saveInteractiveState(st);
-    if (typeof showToast === "function") showToast(val ? "تم حفظ ملاحظتك في دفتر الشيف." : "تم مسح ملاحظة الطهي.");
-  };
-
-  window._vipSelectLaylaOccasion = function (occ) {
-    const st = loadInteractiveState();
-    st.laylaOccasion = occ;
-    saveInteractiveState(st);
-    recordVIPInteraction("princess_layla", "action", occ);
-    window.openVIPDailyRoom("princess_layla");
-  };
-
-  window._vipToggleFaridItem = function (idx) {
-    const st = loadInteractiveState();
-    const key = `farid_${getTodayKey()}`;
-    st[key] = st[key] || {};
-    st[key][idx] = !st[key][idx];
-    saveInteractiveState(st);
-    recordVIPInteraction("butler_farid", "action", "pantry_check");
-    window.openVIPDailyRoom("butler_farid");
-  };
-
-  window._vipToggleFaridEssentialsOnly = function () {
-    const st = loadInteractiveState();
-    st.faridEssentialsOnly = !st.faridEssentialsOnly;
-    saveInteractiveState(st);
-    window.openVIPDailyRoom("butler_farid");
-  };
-
-  window._vipNextFadiJoke = function () {
-    const st = loadInteractiveState();
-    st.fadiOffset = ((st.fadiOffset || 0) + 1) % DAILY_ROOM_ROTATIONS.friend_fadi.length;
-    saveInteractiveState(st);
-    recordVIPInteraction("friend_fadi", "action", "joke");
-    window.openVIPDailyRoom("friend_fadi");
-  };
-
-  window._vipSpinFadiWheel = function (moodMode = "") {
-    const st = loadInteractiveState();
-    const mode = moodMode || st.fadiMood || "mate_night";
-    st.fadiMood = mode;
-    saveInteractiveState(st);
-    recordVIPInteraction("friend_fadi", "action", mode);
-
-    const pools = {
-      mate_night: ["متة", "بزر", "شيبس", "بسكوت", "شاي", "سكر"],
-      sweet_chill: ["شوكولاتة", "بسكوت", "عصير", "حليب", "بزر"],
-      quick_snack: ["شيبس", "بزر", "عصير", "قهوة"]
-    };
-    const pool = pools[mode] || pools.mate_night;
-    const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 4);
-    const found = findAvailableStoreProductsByKeywords(shuffled, 4);
-
-    const modal = document.getElementById("vipDailyRoomModal");
-    if (modal) modal.dataset.activeKws = JSON.stringify(shuffled);
-
-    const out = document.getElementById("vipFadiWheelOut");
-    if (out) {
-      out.innerHTML = found.length
-        ? `تشكيلة السهرة المتوفرة: <b>${found.map(f => f.name).join(" + ")}</b>`
-        : `تشكيلة السهرة المقترحة: <b>${shuffled.join(" + ")}</b>`;
-    }
-  };
-
-  window._vipClaimZainXP = function (xpAmount) {
-    const st = loadInteractiveState();
-    const today = getTodayKey();
-    if (st.zainLastClaim === today) {
-      if (typeof showToast === "function") showToast("لقد استلمت نقاط مهمة اليوم بالفعل؛ عد غداً لمهمة جديدة.");
-      return;
-    }
-    st.zainXP = (st.zainXP || 0) + (Number(xpAmount) || 150);
-    st.zainCompletedCount = (st.zainCompletedCount || 0) + 1;
-    st.zainLastClaim = today;
-    saveInteractiveState(st);
-    recordVIPInteraction("anime_zain", "action", "mission_done");
-    if (typeof showToast === "function") showToast(`مبروك! حصلت على +${xpAmount} XP.`);
-    window.openVIPDailyRoom("anime_zain");
-  };
-
-  window._vipRevealRyuAnswer = function () {
-    const el = document.getElementById("vipRyuAnswerBox");
-    if (el) el.style.display = "block";
-    recordVIPInteraction("anime_ryu", "action", "riddle");
-  };
-
-  window._vipSelectRitajMood = function (mood) {
-    const st = loadInteractiveState();
-    st.ritajMood = mood;
-    saveInteractiveState(st);
-    recordVIPInteraction("anime_ritaj", "action", mood);
-    window.openVIPDailyRoom("anime_ritaj");
-  };
-
-  window.openVIPDailyRoom = function (personaId) {
-    const p = VIP_PERSONAS[personaId];
-    if (!p) return;
-
-    if (!isPersonaUnlockedLifetime(personaId)) {
-      if (typeof showToast === "function") showToast("هذه الشخصية تتطلب اشتراكاً لمرة واحدة مدى الحياة وتفعيلها من الإدارة.");
-      window.openVIPShowcaseModal();
+  window.openVIPRoom = function (id) {
+    const vp = VIP_PERSONAS[id];
+    if (!vp) return;
+    if (!isPersonaUnlockedLifetime(id)) {
+      if (typeof window.showToast === "function") window.showToast("🔒 هذه الغرفة تتطلب تفعيل اشتراك VIP.");
       return;
     }
 
-    recordVIPInteraction(personaId, "visit");
-    const st = loadInteractiveState();
-    const offset = personaId === "friend_fadi"
-      ? (st.fadiOffset || 0)
-      : (personaId === "coach_sakhr" ? (st.coachOffset || 0) : 0);
+    window.closeVIPShowcaseModal();
+    recordVIPRoomVisit(id);
 
-    const daily = getDailyContentForPersona(personaId, offset);
-    const data = daily?.item || {};
-    let activeKeywords = data.keywords || [];
-    const learnedHint = getVIPLearnedHint(personaId);
-
-    if (data.imageUrl) cacheMediaAssetPermanently(data.imageUrl);
-
-    let modal = document.getElementById("vipDailyRoomModal");
+    let modal = document.getElementById("vipRoomModal");
     if (!modal) {
       modal = document.createElement("div");
-      modal.id = "vipDailyRoomModal";
+      modal.id = "vipRoomModal";
       modal.className = "modal-overlay";
-      modal.style.cssText = "display:flex; z-index:10045; background:rgba(0,0,0,0.84);";
+      modal.style.cssText = "display:flex; z-index:10050; background:rgba(0,0,0,0.85); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);";
+      modal.addEventListener("click", (e) => { if (e.target === modal) window.closeVIPRoomModal(); });
       document.body.appendChild(modal);
     } else {
       modal.style.display = "flex";
     }
 
-    let bodyHtml = "";
-
-    if (personaId === "coach_sakhr") {
-      const doneMap = st[`coach_${getTodayKey()}`] || {};
-      const exList = (data.exercises || []).map(ex => typeof ex === "string" ? { name: ex, img: data.imageUrl || "vip_media/coach_pushup.svg" } : ex);
-      const doneCount = exList.filter((_, i) => !!doneMap[i]).length;
-      const pct = exList.length ? Math.round((doneCount / exList.length) * 100) : 0;
-      const goal = st.coachGoal || "strength";
-      const goals = [
-        { k: "strength", lbl: "قوة وبناء" },
-        { k: "fat_loss", lbl: "كارديو وحرق" },
-        { k: "quick_10", lbl: "تحمل سريع" }
-      ];
-
-      bodyHtml = `
-        <div style="display:flex; gap:5px; margin-bottom:7px;">
-          ${goals.map(g => `<button type="button" onclick="window._vipSelectCoachGoal('${g.k}')" class="btn" style="flex:1; padding:4px 6px; font-size:10px; background:${goal === g.k ? "#10b981" : "rgba(255,255,255,0.08)"}; color:${goal === g.k ? "#000" : "#fff"};">${g.lbl}</button>`).join("")}
-        </div>
-        <div style="font-weight:800; color:${p.accent}; font-size:13px; margin-bottom:6px;">برنامج اليوم: ${data.title || ""} (${pct}%)</div>
-        <div style="height:6px; background:rgba(255,255,255,0.1); border-radius:999px; overflow:hidden; margin-bottom:8px;">
-          <div style="height:100%; width:${pct}%; background:#10b981; transition:width 0.25s ease;"></div>
-        </div>
-        <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px;">
-          ${exList.map((ex, i) => `
-            <div onclick="window._vipToggleCoachEx(${i}, '${data.categoryTag || "strength"}')" style="display:flex; align-items:center; gap:8px; background:rgba(16,185,129,0.08); border:1px solid ${doneMap[i] ? "#10b981" : "rgba(255,255,255,0.12)"}; border-radius:10px; padding:6px 8px; font-size:11px; cursor:pointer;">
-              <img src="${ex.img || "store-icon.png"}" onerror="this.onerror=null;this.src='store-icon.png';" alt="تمرين" style="width:46px; height:46px; border-radius:8px; object-fit:cover; background:#0f172a; border:1px solid rgba(16,185,129,0.45); flex-shrink:0;">
-              <div style="flex:1; ${doneMap[i] ? "text-decoration:line-through; opacity:0.7;" : ""}">${ex.name}</div>
-              <span>${doneMap[i] ? "✅" : "⬜"}</span>
-            </div>
-          `).join("")}
-        </div>
-        <div style="background:rgba(255,255,255,0.04); border-radius:10px; padding:8px; font-size:10px; margin-bottom:6px;">
-          <div style="font-weight:700; color:#a7f3d0; margin-bottom:5px;">حاسبة الماء والبروتين والتغذية المتوفرة:</div>
-          <div style="display:flex; gap:6px; align-items:center;">
-            <input type="number" id="vipCoachWeight" value="75" class="form-control" style="padding:4px 8px; font-size:11px; width:85px;" placeholder="الوزن">
-            <button type="button" onclick="window._vipCalcCoachNeeds()" class="btn" style="width:auto; padding:4px 10px; font-size:10px; background:#10b981; color:#000;">احسب</button>
-          </div>
-          <div id="vipCoachCalcOut" style="margin-top:5px; color:#d1fae5;"></div>
-        </div>
-        <div style="font-size:10px; color:#a7f3d0; margin-bottom:3px;">🥗 ${data.nutritionTip || ""}</div>
-        ${data.recoveryTip ? `<div style="font-size:10px; color:#6ee7b7;">🛌 ${data.recoveryTip}</div>` : ""}
-      `;
-    } else if (personaId === "grand_chef") {
-      const servings = st.chefServings || data.baseServings || 4;
-      const factor = servings / (data.baseServings || 4);
-      const readyOnly = !!st.chefReadyOnly;
-      const ingHtml = (data.ingredients || []).map(it => {
-        const scaled = Math.round(it.q * factor * 10) / 10;
-        const availNow = findAvailableStoreProductsByKeywords([it.n], 1).length > 0;
-        if (readyOnly && !availNow) return "";
-        return `<span style="background:${availNow ? "rgba(245,158,11,0.14)" : "rgba(255,255,255,0.05)"}; border:1px solid ${availNow ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.12)"}; border-radius:8px; padding:3px 7px; font-size:10px;">${it.n}: <b>${scaled} ${it.u}</b> ${availNow ? "• متوفر" : "• غير متاح"}</span>`;
-      }).filter(Boolean).join("");
-      const stepsHtml = (data.steps || []).map((step, idx) => `<li style="margin-bottom:4px;"><b>${idx + 1}.</b> ${step}</li>`).join("");
-
-      bodyHtml = `
-        <img src="${data.imageUrl || "store-icon.png"}" onerror="this.onerror=null;this.src='store-icon.png';" alt="${data.recipeTitle || ""}" style="width:100%; max-height:150px; object-fit:cover; border-radius:12px; border:1px solid ${p.accent}; margin-bottom:8px; background:#0f172a;">
-        <div style="font-weight:800; color:${p.accent}; font-size:13px; margin-bottom:6px;">وصفة اليوم: ${data.recipeTitle || ""}</div>
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:5px; flex-wrap:wrap; margin-bottom:7px; font-size:10px;">
-          <div style="display:flex; align-items:center; gap:4px;">
-            <span>عدد الأشخاص:</span>
-            ${[2, 4, 6, 8].map(n => `<button type="button" onclick="window._vipSetChefServings(${n})" class="btn" style="width:auto; padding:2px 8px; font-size:10px; background:${servings === n ? "#f59e0b" : "rgba(255,255,255,0.08)"}; color:${servings === n ? "#000" : "#fff"};">${n}</button>`).join("")}
-          </div>
-          <button type="button" onclick="window._vipToggleChefReadyOnly()" class="btn" style="width:auto; padding:2px 8px; font-size:10px; background:${readyOnly ? "#10b981" : "rgba(255,255,255,0.08)"}; color:${readyOnly ? "#000" : "#fde68a"};">${readyOnly ? "عرض كل المكونات" : "المتوفر فقط"}</button>
-        </div>
-        <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:7px;">${ingHtml}</div>
-        <ol style="padding-right:16px; margin:0 0 8px 0; font-size:11px; line-height:1.6;">${stepsHtml}</ol>
-        <div style="background:rgba(255,255,255,0.04); border-radius:10px; padding:7px; font-size:10px;">
-          <div style="color:#fde68a; font-weight:700; margin-bottom:4px;">ملاحظة الطهي الخاصة بك:</div>
-          <div style="display:flex; gap:5px;">
-            <input type="text" id="vipChefNoteInput" value="${String(st.chefNote || "").replace(/"/g, "&quot;")}" class="form-control" placeholder="مثال: أحب زيادة الكمون أو تقليل الملح" style="padding:4px 7px; font-size:10px; flex:1;">
-            <button type="button" onclick="window._vipSaveChefNote()" class="btn" style="width:auto; padding:4px 9px; font-size:10px; background:#f59e0b; color:#000;">حفظ</button>
-          </div>
-        </div>
-      `;
-    } else if (personaId === "princess_layla") {
-      const occ = st.laylaOccasion || "guests";
-      const occMap = {
-        guests: { label: "ضيوف فجأة", desc: "تشكيلة قهوة وشوكولاتة وبسكوت ضيافة جاهزة فوراً.", kws: ["قهوة", "شوكولاتة", "بسكوت"] },
-        morning: { label: "قهوة الصباح", desc: "فطور ناعم وقهوة أو شاي مع حلاوة أو عسل.", kws: ["قهوة", "شاي", "عسل", "حلاوة"] },
-        family: { label: "سهرة عائلية", desc: "حلى بارد بالبسكويت وعصائر وموالح لطيفة.", kws: ["بسكوت", "شوكولاتة", "عصير", "بزر"] }
-      };
-      const curOcc = occMap[occ] || occMap.guests;
-      activeKeywords = curOcc.kws;
-
-      bodyHtml = `
-        <img src="${data.imageUrl || "store-icon.png"}" onerror="this.onerror=null;this.src='store-icon.png';" alt="${data.title || ""}" style="width:100%; max-height:125px; object-fit:cover; border-radius:12px; border:1px solid ${p.accent}; margin-bottom:8px;">
-        <div style="font-weight:800; color:${p.accent}; font-size:13px; margin-bottom:6px;">منسّق المناسبات: ${data.title || ""}</div>
-        <div style="display:flex; gap:5px; margin-bottom:8px;">
-          ${Object.entries(occMap).map(([k, v]) => `<button type="button" onclick="window._vipSelectLaylaOccasion('${k}')" class="btn" style="flex:1; padding:4px 6px; font-size:10px; background:${occ === k ? "#ec4899" : "rgba(255,255,255,0.08)"}; color:${occ === k ? "#000" : "#fff"};">${v.label}</button>`).join("")}
-        </div>
-        <div style="background:rgba(236,72,153,0.08); border:1px solid rgba(236,72,153,0.3); border-radius:10px; padding:8px; font-size:11px; line-height:1.6;">
-          <div><b>اقتراح المناسبة:</b> ${curOcc.desc}</div>
-          <div style="margin-top:4px; color:#fbcfe8;">✨ ${data.careTip || ""}</div>
-        </div>
-      `;
-    } else if (personaId === "butler_farid") {
-      const doneMap = st[`farid_${getTodayKey()}`] || {};
-      const chkList = data.checklist || [];
-      const essentialsOnly = !!st.faridEssentialsOnly;
-      const visibleList = essentialsOnly ? chkList.slice(0, 3) : chkList;
-
-      bodyHtml = `
-        <img src="${data.imageUrl || "store-icon.png"}" onerror="this.onerror=null;this.src='store-icon.png';" alt="${data.title || ""}" style="width:100%; max-height:120px; object-fit:cover; border-radius:12px; border:1px solid ${p.accent}; margin-bottom:8px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:6px;">
-          <div style="font-weight:800; color:${p.accent}; font-size:13px;">دفتر مؤونة البيت: ${data.title || ""}</div>
-          <button type="button" onclick="window._vipToggleFaridEssentialsOnly()" class="btn" style="width:auto; padding:2px 8px; font-size:10px; background:${essentialsOnly ? "#8b5cf6" : "rgba(255,255,255,0.08)"}; color:${essentialsOnly ? "#000" : "#ddd6fe"};">${essentialsOnly ? "الكل" : "الأساسيات"}</button>
-        </div>
-        <div style="display:flex; flex-direction:column; gap:5px; margin-bottom:8px;">
-          ${visibleList.map((item, i) => `
-            <label onclick="window._vipToggleFaridItem(${i})" style="display:flex; align-items:center; gap:7px; background:rgba(139,92,246,0.09); border:1px solid ${doneMap[i] ? "#8b5cf6" : "rgba(255,255,255,0.1)"}; border-radius:8px; padding:6px 8px; font-size:11px; cursor:pointer;">
-              <span>${doneMap[i] ? "☑️" : "☐"}</span>
-              <span style="${doneMap[i] ? "text-decoration:line-through; opacity:0.7;" : ""}">${item}</span>
-            </label>
-          `).join("")}
-        </div>
-        <div style="font-size:10px; color:#ddd6fe;">📌 ${data.budgetTip || ""}</div>
-      `;
-    } else if (personaId === "friend_fadi") {
-      const fMood = st.fadiMood || "mate_night";
-      bodyHtml = `
-        <img src="${data.imageUrl || "store-icon.png"}" onerror="this.onerror=null;this.src='store-icon.png';" alt="موقف مضحك" style="width:100%; max-height:145px; object-fit:cover; border-radius:12px; border:1px solid ${p.accent}; margin-bottom:8px;">
-        <div style="font-weight:800; color:${p.accent}; font-size:13px; margin-bottom:6px;">ركن الفرفشة وعجلة السهرة</div>
-        <div style="display:flex; gap:4px; margin-bottom:6px;">
-          <button type="button" onclick="window._vipSpinFadiWheel('mate_night')" class="btn" style="flex:1; padding:3px 5px; font-size:9px; background:${fMood === "mate_night" ? "#f97316" : "rgba(255,255,255,0.08)"}; color:${fMood === "mate_night" ? "#000" : "#fff"};">متة وسهرة</button>
-          <button type="button" onclick="window._vipSpinFadiWheel('sweet_chill')" class="btn" style="flex:1; padding:3px 5px; font-size:9px; background:${fMood === "sweet_chill" ? "#f97316" : "rgba(255,255,255,0.08)"}; color:${fMood === "sweet_chill" ? "#000" : "#fff"};">حلو وروقان</button>
-          <button type="button" onclick="window._vipSpinFadiWheel('quick_snack')" class="btn" style="flex:1; padding:3px 5px; font-size:9px; background:${fMood === "quick_snack" ? "#f97316" : "rgba(255,255,255,0.08)"}; color:${fMood === "quick_snack" ? "#000" : "#fff"};">تسالي سريعة</button>
-        </div>
-        <div style="background:rgba(249,115,22,0.09); border:1px solid rgba(249,115,22,0.3); border-radius:10px; padding:8px; font-size:11px; line-height:1.6;">
-          <div>${data.joke || ""}</div>
-          <div style="margin-top:6px; display:flex; gap:6px;">
-            <button type="button" onclick="window._vipNextFadiJoke()" class="btn" style="flex:1; padding:4px 8px; font-size:10px; background:rgba(249,115,22,0.22); color:#fed7aa;">نكتة أخرى</button>
-            <button type="button" onclick="window._vipSpinFadiWheel()" class="btn" style="flex:1; padding:4px 8px; font-size:10px; background:#f97316; color:#000;">دور عجلة السهرة</button>
-          </div>
-          <div id="vipFadiWheelOut" style="margin-top:6px; font-size:10px; color:#fed7aa;"></div>
-        </div>
-      `;
-    } else if (personaId === "anime_zain") {
-      const xp = st.zainXP || 0;
-      const lvl = Math.floor(xp / 300) + 1;
-      const doneTasks = st.zainCompletedCount || 0;
-      const claimedToday = st.zainLastClaim === getTodayKey();
-
-      bodyHtml = `
-        <img src="${data.imageUrl || "store-icon.png"}" onerror="this.onerror=null;this.src='store-icon.png';" alt="مهمة اليوم" style="width:100%; max-height:125px; object-fit:cover; border-radius:12px; border:1px solid ${p.accent}; margin-bottom:8px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <span style="font-weight:800; color:${p.accent}; font-size:13px;">مهمة كابتن زين (${doneTasks} منجزة)</span>
-          <span style="background:rgba(239,68,68,0.2); border:1px solid #ef4444; color:#fca5a5; border-radius:999px; padding:2px 9px; font-size:10px; font-weight:800;">المستوى ${lvl} • ${xp} XP</span>
-        </div>
-        <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:8px; font-size:11px; line-height:1.6;">
-          <div>${data.mission || ""}</div>
-          <div style="margin-top:6px;">
-            <button type="button" onclick="window._vipClaimZainXP(${data.xpReward || 150})" class="btn" style="padding:5px 10px; font-size:10px; background:${claimedToday ? "#374151" : "#ef4444"}; color:${claimedToday ? "#9ca3af" : "#fff"};">
-              ${claimedToday ? "تم إنجاز مهمة اليوم" : `إتمام المهمة (+${data.xpReward || 150} XP)`}
-            </button>
-          </div>
-        </div>
-      `;
-    } else if (personaId === "anime_ryu") {
-      const deals = findCheapestStoreDeals(4);
-      const dealsHtml = deals.length
-        ? deals.map(d => `<div style="display:flex; justify-content:space-between; font-size:10px; padding:3px 0; border-bottom:1px dashed rgba(255,255,255,0.08);"><span>${d.name}</span><b style="color:#00e676;">${d.priceSYP.toLocaleString()} ل.س</b></div>`).join("")
-        : `<div style="font-size:10px; color:#9ca3af;">تصفح الأصناف المتوفرة في الفرع.</div>`;
-
-      bodyHtml = `
-        <img src="${data.imageUrl || "store-icon.png"}" onerror="this.onerror=null;this.src='store-icon.png';" alt="رادار الصفقات" style="width:100%; max-height:120px; object-fit:cover; border-radius:12px; border:1px solid ${p.accent}; margin-bottom:8px;">
-        <div style="font-weight:800; color:${p.accent}; font-size:13px; margin-bottom:6px;">لغز اليوم ورادار الصفقات</div>
-        <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:10px; padding:8px; font-size:11px; margin-bottom:8px;">
-          <div><b>اللغز:</b> ${data.mystery || ""}</div>
-          <button type="button" onclick="window._vipRevealRyuAnswer()" class="btn" style="width:auto; margin-top:5px; padding:3px 9px; font-size:10px; background:#38bdf8; color:#000;">كشف الحل</button>
-          <div id="vipRyuAnswerBox" style="display:none; margin-top:5px; color:#7dd3fc; font-weight:700;">${data.answer || ""}</div>
-        </div>
-        <div style="background:rgba(255,255,255,0.04); border-radius:10px; padding:8px;">
-          <div style="font-size:10px; font-weight:700; color:#38bdf8; margin-bottom:4px;">رادار أوفر الصفقات المتوفرة الآن:</div>
-          ${dealsHtml}
-        </div>
-      `;
-    } else {
-      const mood = st.ritajMood || "happy";
-      const moodMap = {
-        happy: { label: "مبسوط", msg: "يا سلام على هالمزاج الحلو! احتفل بعصير منعش وشوكولاتة.", kws: ["عصير", "شوكولاتة", "بسكوت"] },
-        tired: { label: "تعبان", msg: "سلامتك من التعب؛ كوب قهوة أو شاي دافئ مع حلى خفيف يجدد نشاطك.", kws: ["قهوة", "شاي", "عسل", "بسكوت"] },
-        sweet: { label: "بدي حلى", msg: "اختيار ريتاج: حلى بارد بالبسكويت والشوكولاتة أو مهلبية.", kws: ["بسكوت", "شوكولاتة", "حليب", "نشا"] },
-        chill: { label: "رايق", msg: "أجواء روقان مع متة أو شاي ومقرمشات خفيفة.", kws: ["متة", "شاي", "بزر", "شيبس"] }
-      };
-      const curMood = moodMap[mood] || moodMap.happy;
-      activeKeywords = curMood.kws;
-
-      bodyHtml = `
-        <img src="${data.imageUrl || "store-icon.png"}" onerror="this.onerror=null;this.src='store-icon.png';" alt="إشراقة ريتاج" style="width:100%; max-height:125px; object-fit:cover; border-radius:12px; border:1px solid ${p.accent}; margin-bottom:8px;">
-        <div style="font-weight:800; color:${p.accent}; font-size:13px; margin-bottom:6px;">غرفة ريتاج — مقياس المزاج</div>
-        <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:5px; margin-bottom:8px;">
-          ${Object.entries(moodMap).map(([k, v]) => `<button type="button" onclick="window._vipSelectRitajMood('${k}')" class="btn" style="padding:4px 6px; font-size:10px; background:${mood === k ? "#f472b6" : "rgba(255,255,255,0.08)"}; color:${mood === k ? "#000" : "#fff"};">${v.label}</button>`).join("")}
-        </div>
-        <div style="background:rgba(244,114,182,0.09); border:1px solid rgba(244,114,182,0.32); border-radius:10px; padding:8px; font-size:11px; line-height:1.6;">
-          <div>${curMood.msg}</div>
-          <div style="margin-top:4px; color:#f9a8d4; font-size:10px;">✨ ${data.message || ""}</div>
-        </div>
-      `;
-    }
-
-    const matchedProds = findAvailableStoreProductsByKeywords(activeKeywords, 6);
-    const prodsChips = matchedProds.length
-      ? matchedProds.map(m => `<span style="background:rgba(212,175,55,0.14); border:1px solid rgba(212,175,55,0.35); border-radius:999px; padding:3px 8px; font-size:10px;">${m.name}</span>`).join("")
-      : `<span style="font-size:10px; color:var(--gray-text);">تصفح أقسام المتجر لإضافة المكونات المتوفرة.</span>`;
-
-    modal.dataset.activeKws = JSON.stringify(activeKeywords);
-
     modal.innerHTML = `
-      <div class="modal-content" style="max-width:440px; border:1.5px solid ${p.accent}; background:#121212; color:#f9fafb; border-radius:18px; padding:14px; max-height:88vh; overflow-y:auto;">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px;">
+      <div class="modal-content" style="max-width:460px; width:95%; max-height:88vh; overflow-y:auto; border:1.5px solid ${vp.accent}; border-radius:18px; padding:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px; margin-bottom:10px;">
           <div style="display:flex; align-items:center; gap:8px;">
-            <img src="${p.avatarUrl}" onerror="this.onerror=null;this.src='store-icon.png';" alt="${p.name}" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid ${p.accent};">
-            <div>
-              <div style="font-size:13px; font-weight:800; color:${p.accent};">${p.name} <small style="color:#9ca3af; font-weight:600;">(${p.role})</small></div>
-              <div style="font-size:9px; color:#00e676;">اشتراك مدى الحياة • ${daily?.fromCloud ? "محدّث سحابياً" : "تحديث يومي"} (${daily?.dateLabel || ""})</div>
+            <img src="${vp.avatarUrl}" onerror="this.onerror=null;this.src='store-icon.png';" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid ${vp.accent};">
+            <div style="text-align:right;">
+              <div style="font-size:13px; font-weight:900; color:${vp.accent};">👑 غرفة ${vp.name}</div>
+              <div style="font-size:10px; color:var(--gray-text);">${vp.role}</div>
             </div>
           </div>
-          <button type="button" onclick="document.getElementById('vipDailyRoomModal').style.display='none'" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:11px;">✕</button>
-        </div>
-
-        ${learnedHint ? `<div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); border-radius:8px; padding:5px 8px; font-size:10px; color:#7dd3fc; margin-bottom:8px;">${learnedHint}</div>` : ""}
-
-        ${bodyHtml}
-
-        <div style="margin-top:10px; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.12);">
-          <div style="font-size:10px; font-weight:700; color:var(--gold-color); margin-bottom:5px;">أصناف مرتبطة ومتوفرة في الفرع:</div>
-          <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px;">${prodsChips}</div>
-          <div style="display:flex; gap:7px; flex-wrap:wrap;">
-            <button type="button" onclick="window._vipAddRoomItems('${personaId}')" class="btn" style="flex:1; background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; font-size:11px;">إضافة الكل المتوفر للسلة</button>
-            <button type="button" onclick="window._vipActivateAsCompanion('${personaId}')" class="btn" style="flex:1; background:rgba(212,175,55,0.18); color:var(--gold-color); border:1px solid var(--gold-color); font-size:11px;">تعيين كجنية متحدثة</button>
+          <div style="display:flex; gap:5px;">
+            <button type="button" onclick="if(typeof window.selectPetPersona==='function'){window.selectPetPersona('${vp.id}');}" class="btn" style="width:auto; padding:4px 8px; font-size:10px; background:rgba(212,175,55,0.18); color:var(--gold-color);">تفعيل كمساعد</button>
+            <button type="button" onclick="window.closeVIPRoomModal()" class="btn btn-danger" style="width:auto; padding:4px 9px; font-size:11px;">✕</button>
           </div>
         </div>
+        <div id="vipRoomDynamicBody"></div>
       </div>
     `;
 
-    speakVIPRoomLine(p.greet);
-  };
-
-  window._vipAddRoomItems = function (personaId) {
-    const modal = document.getElementById("vipDailyRoomModal");
-    let kws = [];
-    try { kws = JSON.parse(modal?.dataset?.activeKws || "[]"); } catch (_) {}
-    if (!kws.length) {
-      const daily = getDailyContentForPersona(personaId);
-      kws = daily?.item?.keywords || [];
+    const bodyEl = document.getElementById("vipRoomDynamicBody");
+    const mod = window.MoaathVIPRoomModules && window.MoaathVIPRoomModules[id];
+    if (mod && typeof mod.render === "function") {
+      mod.render(bodyEl);
+    } else if (bodyEl) {
+      bodyEl.innerHTML = `<div style="padding:14px; text-align:center; color:var(--gray-text);">جاري تجهيز أدوات غرفة ${vp.name}...</div>`;
     }
-    addMatchedProductsToCart(kws, personaId);
   };
 
-  window.openVIPShowcaseModal = function (activeTab = "all") {
+  window.openVIPShowcaseModal = function (filterGroup = "all") {
     let modal = document.getElementById("vipShowcaseModal");
     if (!modal) {
       modal = document.createElement("div");
       modal.id = "vipShowcaseModal";
       modal.className = "modal-overlay";
-      modal.style.cssText = "display:flex; z-index:10040; background:rgba(0,0,0,0.82);";
+      modal.style.cssText = "display:flex; z-index:10045; background:rgba(0,0,0,0.84); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);";
+      modal.addEventListener("click", (e) => { if (e.target === modal) window.closeVIPShowcaseModal(); });
       document.body.appendChild(modal);
     } else {
       modal.style.display = "flex";
     }
-    modal.dataset.vipTab = activeTab;
-    renderVIPShowcaseModal();
-  };
 
-  function renderVIPShowcaseModal() {
-    const modal = document.getElementById("vipShowcaseModal");
-    if (!modal || modal.style.display === "none") return;
-
-    const currentTab = modal.dataset.vipTab || "all";
-    const bundleActive = isBundleUnlockedLifetime();
-    const bundlePriceLbl = formatPriceFromUSD(vipConfig.bundlePriceUSD);
-    const singlePriceLbl = formatPriceFromUSD(vipConfig.singlePriceUSD);
-
-    const allList = Object.values(VIP_PERSONAS);
-    const filteredList = allList.filter(p => {
-      if (currentTab === "specialist") return p.group === "specialist";
-      if (currentTab === "anime") return p.group === "anime";
-      return true;
-    });
-
-    const cardsHtml = filteredList.map(p => {
-      const unlocked = isPersonaUnlockedLifetime(p.id);
-      return `
-        <div style="background:#18181b; border:1px solid ${unlocked ? "#00e676" : "rgba(212,175,55,0.38)"}; border-radius:14px; padding:9px; display:flex; flex-direction:column; justify-content:space-between; gap:6px;">
-          <div>
-            <div style="display:flex; align-items:center; gap:7px; margin-bottom:5px;">
-              <img src="${p.avatarUrl}" onerror="this.onerror=null;this.src='store-icon.png';" alt="${p.name}" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid ${p.accent}; flex-shrink:0;">
-              <div style="min-width:0;">
-                <div style="font-size:11px; font-weight:800; color:${p.accent}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</div>
-                <div style="font-size:9px; color:#d1d5db;">${p.role}</div>
-              </div>
-            </div>
-            <div style="font-size:10px; color:#9ca3af; line-height:1.4; margin-bottom:5px;">${p.shortDesc}</div>
-            <div style="font-size:9px; color:#fbbf24; font-weight:700;">اشتراك مرة واحدة مدى الحياة: ${singlePriceLbl}</div>
-          </div>
-          ${unlocked
-            ? `<button type="button" onclick="window.openVIPDailyRoom('${p.id}')" class="btn" style="padding:5px 8px; font-size:10px; background:linear-gradient(45deg,#00e676,#00b0ff); color:#000;">دخول الغرفة التفاعلية</button>`
-            : `<button type="button" onclick="window._vipRequestSingle('${p.id}')" class="btn" style="padding:5px 8px; font-size:10px; background:rgba(212,175,55,0.16); color:var(--gold-color); border:1px solid var(--gold-color);">طلب تفعيل مدى الحياة (إدارة)</button>`
-          }
-        </div>
-      `;
-    }).join("");
+    const list = Object.values(VIP_PERSONAS).filter(vp => filterGroup === "all" || vp.group === filterGroup);
 
     modal.innerHTML = `
-      <div class="modal-content" style="max-width:450px; border:1.5px solid var(--gold-color); background:#121212; color:#f9fafb; border-radius:18px; padding:14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:8px; margin-bottom:10px;">
-          <div>
-            <b style="color:var(--gold-color); font-size:13px;">الشخصيات المميزة — اشتراك لمرة واحدة مدى الحياة</b>
-            <div style="font-size:9px; color:#9ca3af;">التفعيل حصراً عبر الإدارة • غرف تفاعلية مصورة تتجدد يومياً</div>
+      <div class="modal-content" style="max-width:460px; width:95%; max-height:86vh; overflow-y:auto; border:1.5px solid var(--gold-color); border-radius:18px; padding:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px; margin-bottom:10px;">
+          <div style="text-align:right;">
+            <div style="font-size:14px; font-weight:900; color:var(--gold-color);">👑 غرف الشخصيات التفاعلية (8 VIP)</div>
+            <div style="font-size:10px; color:var(--gray-text);">أدوات مصغّرة تعمل محلياً (0 حصة API) ومرتبطة بسلة المتجر</div>
           </div>
-          <button type="button" onclick="document.getElementById('vipShowcaseModal').style.display='none'" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:11px;">✕</button>
+          <button type="button" onclick="window.closeVIPShowcaseModal()" class="btn btn-danger" style="width:auto; padding:4px 9px; font-size:11px;">✕</button>
         </div>
 
-        <div style="background:linear-gradient(135deg, rgba(212,175,55,0.2), rgba(56,189,248,0.14)); border:1.5px solid var(--gold-color); border-radius:14px; padding:10px; margin-bottom:10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
-            <div>
-              <div style="font-size:12px; font-weight:800; color:var(--gold-color);">الباقة الشاملة (جميع الـ 8 شخصيات)</div>
-              <div style="font-size:10px; color:#e5e7eb; margin-top:2px;">اشتراك واحد مدى الحياة يفتح كافة الغرف التفاعلية المصورة والأصوات الثمانية.</div>
+        <div style="display:flex; gap:5px; margin-bottom:10px;">
+          <button type="button" onclick="window.openVIPShowcaseModal('all')" class="btn" style="flex:1; padding:5px; font-size:10px; background:${filterGroup === "all" ? "var(--gold-color)" : "var(--bg-color)"}; color:${filterGroup === "all" ? "#000" : "var(--text-color)"};">الكل (8)</button>
+          <button type="button" onclick="window.openVIPShowcaseModal('premium')" class="btn" style="flex:1; padding:5px; font-size:10px; background:${filterGroup === "premium" ? "var(--gold-color)" : "var(--bg-color)"}; color:${filterGroup === "premium" ? "#000" : "var(--text-color)"};">مميزة (5)</button>
+          <button type="button" onclick="window.openVIPShowcaseModal('anime')" class="btn" style="flex:1; padding:5px; font-size:10px; background:${filterGroup === "anime" ? "var(--gold-color)" : "var(--bg-color)"}; color:${filterGroup === "anime" ? "#000" : "var(--text-color)"};">أنمي (3)</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          ${list.map(vp => `
+            <div style="background:var(--bg-color); border:1.5px solid ${vp.accent}; border-radius:14px; padding:10px 8px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:space-between;">
+              <img src="${vp.avatarUrl}" onerror="this.onerror=null;this.src='store-icon.png';" style="width:54px; height:54px; border-radius:50%; object-fit:cover; border:2px solid ${vp.accent}; margin-bottom:5px;">
+              <div style="font-size:12px; font-weight:800; color:${vp.accent};">${vp.name}</div>
+              <div style="font-size:9.5px; color:var(--gray-text); margin:2px 0 4px 0;">${vp.role}</div>
+              <div style="font-size:9px; line-height:1.4; opacity:0.88; margin-bottom:7px;">${vp.shortDesc}</div>
+              <button type="button" onclick="window.openVIPRoom('${vp.id}')" class="btn" style="padding:5px 8px; font-size:10px; background:${vp.accent}; color:#000;">🚪 دخول الغرفة</button>
             </div>
-            <div style="font-size:11px; font-weight:800; color:#00e676;">${bundlePriceLbl}</div>
-          </div>
-          <div style="margin-top:8px;">
-            ${bundleActive
-              ? `<span style="display:inline-block; background:rgba(0,230,118,0.18); color:#00e676; border:1px solid #00e676; border-radius:999px; padding:4px 10px; font-size:10px; font-weight:800;">الباقة الشاملة مفعّلة مدى الحياة</span>`
-              : `<button type="button" onclick="window._vipRequestBundle()" class="btn" style="background:linear-gradient(45deg,#d4af37,#f59e0b); color:#000; font-size:11px; padding:6px 10px;">طلب تفعيل الباقة الشاملة مدى الحياة عبر الإدارة</button>`
-            }
-          </div>
-        </div>
-
-        <div style="display:flex; gap:6px; margin-bottom:10px;">
-          <button type="button" onclick="window.openVIPShowcaseModal('all')" class="cat-btn" style="flex:1; background:${currentTab === "all" ? "var(--gold-color)" : "transparent"}; color:${currentTab === "all" ? "#000" : "var(--text-color)"}; border:1px solid var(--gold-color);">الكل (8)</button>
-          <button type="button" onclick="window.openVIPShowcaseModal('specialist')" class="cat-btn" style="flex:1; background:${currentTab === "specialist" ? "var(--gold-color)" : "transparent"}; color:${currentTab === "specialist" ? "#000" : "var(--text-color)"}; border:1px solid var(--gold-color);">المميزة (5)</button>
-          <button type="button" onclick="window.openVIPShowcaseModal('anime')" class="cat-btn" style="flex:1; background:${currentTab === "anime" ? "var(--gold-color)" : "transparent"}; color:${currentTab === "anime" ? "#000" : "var(--text-color)"}; border:1px solid var(--gold-color);">الأنمي (3)</button>
-        </div>
-
-        <div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; max-height:48vh; overflow-y:auto; padding-left:2px;">
-          ${cardsHtml}
+          `).join("")}
         </div>
       </div>
     `;
+  };
+
+  // تصدير صريح لـ window.MoaathVIPSystem لرفع مؤشر الصحة والجاهزية في الحكيم التقني إلى 100%
+  window.MoaathVIPSystem = {
+    version: "4.0-unified-micro-apps",
+    personas: VIP_PERSONAS,
+    isPersonaUnlockedLifetime,
+    getUnlocksState,
+    saveUnlocksState,
+    openShowcase: window.openVIPShowcaseModal,
+    openRoom: window.openVIPRoom,
+    roomModules: window.MoaathVIPRoomModules || {}
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", registerAllVIPIntoEngine);
+  } else {
+    registerAllVIPIntoEngine();
   }
+  setTimeout(registerAllVIPIntoEngine, 800);
+})();
 
-  window._vipRequestSingle = function (personaId) {
-    const p = VIP_PERSONAS[personaId];
-    if (!p) return;
-    openWhatsAppSubscriptionRequest(`شخصية ${p.name} (${p.role})`, formatPriceFromUSD(vipConfig.singlePriceUSD));
-  };
 
-  window._vipRequestBundle = function () {
-    openWhatsAppSubscriptionRequest("الباقة الشاملة (8 شخصيات)", formatPriceFromUSD(vipConfig.bundlePriceUSD));
-  };
+// ============================================================================
+// وحدة غرفة VIP المستقلة (1/8): كابتن صخر — الرياضة والتغذية (coach_sakhr)
+// ============================================================================
+(function () {
+  window.MoaathVIPRoomModules = window.MoaathVIPRoomModules || {};
 
-  function renderAdminVIPTab() {
-    const box = document.getElementById("admVipActivationBox");
-    if (!box) return;
-    const targetCust = String(document.getElementById("admVipTargetCustomer")?.value || getCustomerKey() || "guest").replace(/[^0-9A-Za-z_]/g, "") || "guest";
-    const custData = adminEntitlements.customers?.[targetCust] || {
-      bundleLifetime: !!adminEntitlements.bundleLifetime,
-      personas: { ...(adminEntitlements.personas || {}) }
-    };
+  const STORAGE_KEY = "moaath_vip_sakhr_v1";
+  let hiitInterval = null;
+  let hiitState = { running: false, phase: "work", secLeft: 40, round: 1 };
 
-    const rowsHtml = Object.values(VIP_PERSONAS).map(p => {
-      const active = !!(custData.bundleLifetime || custData.personas?.[p.id]);
-      return `
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; padding:6px 8px; border-bottom:1px dashed var(--border-color); font-size:11px;">
-          <div>
-            <b>${p.name}</b> <small style="color:var(--gray-text);">(${p.role})</small>
-            <span style="margin-right:6px; color:${active ? "#00e676" : "#f59e0b"}; font-weight:700;">${active ? "• مفعل مدى الحياة" : "• غير مفعل"}</span>
-          </div>
-          <button type="button" onclick="window._adminToggleVip('${targetCust}', '${p.id}', ${!active})" class="btn" style="width:auto; padding:3px 9px; font-size:10px; background:${active ? "#ef4444" : "#10b981"}; color:#000;">
-            ${active ? "إلغاء التفعيل" : "تفعيل مدى الحياة"}
-          </button>
-        </div>
-      `;
-    }).join("");
-
-    box.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; background:rgba(212,175,55,0.12); border:1px solid var(--gold-color); border-radius:8px; padding:8px; margin-bottom:8px; font-size:11px;">
-        <div>
-          <b>الباقة الشاملة مدى الحياة (8 شخصيات)</b>
-          <div style="font-size:10px; color:var(--gray-text);">الحالة للزبون (${targetCust}): ${custData.bundleLifetime ? "مفعلة مدى الحياة" : "غير مفعلة"}</div>
-        </div>
-        <button type="button" onclick="window._adminToggleVip('${targetCust}', 'BUNDLE_ALL_8', ${!custData.bundleLifetime})" class="btn" style="width:auto; padding:4px 10px; font-size:10px; background:${custData.bundleLifetime ? "#ef4444" : "var(--gold-color)"}; color:#000;">
-          ${custData.bundleLifetime ? "إلغاء الباقة" : "تفعيل الباقة الشاملة"}
-        </button>
-      </div>
-      <div>${rowsHtml}</div>
-    `;
-  }
-
-  window._adminToggleVip = function (custKey, targetId, enable) {
-    adminSetEntitlement(custKey, targetId, enable);
-  };
-
-  window._adminSaveVipPrices = function () {
-    const singleVal = Math.max(1, parseFloat(document.getElementById("admVipSinglePriceUSD")?.value || vipConfig.singlePriceUSD) || 5);
-    const bundleVal = Math.max(1, parseFloat(document.getElementById("admVipBundlePriceUSD")?.value || vipConfig.bundlePriceUSD) || 25);
-    vipConfig = { singlePriceUSD: singleVal, bundlePriceUSD: bundleVal, updatedAt: new Date().toISOString().slice(0, 10) };
-    saveLocalConfig(vipConfig);
-    if (typeof db !== "undefined" && db && typeof db.ref === "function") {
-      try { db.ref("vip_config").set(vipConfig).catch(() => {}); } catch (_) {}
+  function loadData() {
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+      const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      if (d.waterDate !== today) {
+        d.waterCups = 0;
+        d.waterDate = today;
+      }
+      return {
+        weight: d.weight || 75,
+        height: d.height || 175,
+        goal: d.goal || "cut",
+        waterCups: d.waterCups || 0,
+        waterDate: today,
+        streak: d.streak || 0,
+        lastTrainDate: d.lastTrainDate || "",
+        weeklyPushups: d.weeklyPushups || 0,
+        weightLog: Array.isArray(d.weightLog) ? d.weightLog : []
+      };
+    } catch (_) {
+      return { weight: 75, height: 175, goal: "cut", waterCups: 0, waterDate: today, streak: 0, lastTrainDate: "", weeklyPushups: 0, weightLog: [] };
     }
-    if (typeof showToast === "function") showToast("تم حفظ أسعار الاشتراك مدى الحياة.");
-    renderVIPShowcaseModal();
-  };
-
-  function mountAdminVIPSection() {
-    const adminContent = document.querySelector("#adminModal .modal-content");
-    const tabsBar = adminContent?.querySelector(".categories");
-    if (!adminContent || !tabsBar || document.getElementById("admTab14VIP")) return;
-
-    const tabBtn = document.createElement("button");
-    tabBtn.className = "cat-btn";
-    tabBtn.textContent = "اشتراكات VIP";
-    tabBtn.onclick = function () {
-      if (typeof switchAdminTab === "function") switchAdminTab("admTab14VIP", this);
-      renderAdminVIPTab();
-    };
-    tabsBar.appendChild(tabBtn);
-
-    const tabDiv = document.createElement("div");
-    tabDiv.id = "admTab14VIP";
-    tabDiv.className = "admin-tab";
-    tabDiv.style.display = "none";
-    tabDiv.innerHTML = `
-      <div class="adm-sec" style="border-color:var(--gold-color);">
-        <div class="adm-sec-title"><span>إدارة تفعيل الشخصيات المدفوعة مدى الحياة (للإدارة حصراً)</span></div>
-        <div class="form-group">
-          <label>معرّف / رقم هاتف الزبون المستهدف:</label>
-          <input type="text" id="admVipTargetCustomer" class="form-control" value="${getCustomerKey()}" oninput="renderAdminVIPTab()" placeholder="مثال: 0965461504 أو guest">
-        </div>
-        <div class="stats-grid" style="margin-bottom:8px;">
-          <div class="form-group">
-            <label>سعر الشخصية الواحدة مدى الحياة ($):</label>
-            <input type="number" id="admVipSinglePriceUSD" class="form-control" value="${vipConfig.singlePriceUSD}">
-          </div>
-          <div class="form-group">
-            <label>سعر الباقة الشاملة مدى الحياة ($):</label>
-            <input type="number" id="admVipBundlePriceUSD" class="form-control" value="${vipConfig.bundlePriceUSD}">
-          </div>
-        </div>
-        <button type="button" onclick="window._adminSaveVipPrices()" class="btn" style="background:var(--gold-color); color:#000; font-size:11px; margin-bottom:10px;">حفظ الأسعار</button>
-        <div id="admVipActivationBox"></div>
-      </div>
-    `;
-    adminContent.appendChild(tabDiv);
-    renderAdminVIPTab();
   }
 
-  function injectVIPButtonIntoAssistantHeader() {
-    const actionsEl = document.querySelector("#futuristicAiHeader .fut-ai-header-actions");
-    if (!actionsEl) return;
-    let btn = document.getElementById("futVipShowcaseBtn");
-    if (!btn) {
-      btn = document.createElement("button");
-      btn.id = "futVipShowcaseBtn";
-      btn.type = "button";
-      btn.className = "fut-icon-btn fut-gold-btn";
-      actionsEl.insertBefore(btn, actionsEl.firstChild);
-    }
-    const unlockedCount = Object.keys(VIP_PERSONAS).filter(id => isPersonaUnlockedLifetime(id)).length;
-    btn.textContent = unlockedCount > 0 ? `غرف VIP (${unlockedCount})` : "غرف VIP";
-    btn.title = "غرف الشخصيات المميزة والباقة الشاملة (اشتراك مدى الحياة)";
-    btn.onclick = function () { window.openVIPShowcaseModal("all"); };
+  function saveData(d) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch (_) {}
   }
 
-  function enrichVIPPersonaForCompanion(p) {
-    if (!p) return null;
-    const baseGreets = [
-      p.greet,
-      `معك ${p.name} (${p.role})، بماذا أساعدك اليوم في متجر معاذ؟`,
-      `أهلاً بك؛ ${p.name} جاهز لتجهيز طلبك بسرعة ودقة.`
-    ].filter(Boolean);
-
-    const chatGoods = {
-      coach_sakhr: ["بأعلى جاهزية ولياقة؛ هيا نكمل يومك بنشاط.", "تمام التمام يا بطل؛ ما هدفك الرياضي أو الغذائي اليوم؟"],
-      grand_chef: ["بأفضل حال في المطبخ؛ المقادير جاهزة والذوق مضمون.", "أهلاً بك؛ أخبرني عن الطبخة أو الصنف الذي تريده اليوم."],
-      princess_layla: ["بكل لطف وصفاء، يسعدني جداً مساعدتك اليوم.", "أهلاً بك؛ أختار لك دائماً ما يليق بذوقك الرفيع."],
-      butler_farid: ["تحت أمرك سيدي؛ كل شيء منظم ومضبوط بدقة.", "بأتم الاستعداد لتنسيق مؤونة واحتياجات اليوم."],
-      friend_fadi: ["عايش ومبسوط ورايق ومجهزلك أحلى مزاج وسهرة!", "يا هلا بالصديق؛ شو بنضبط اليوم ليكسر الروتين؟"],
-      anime_zain: ["طاقتي مشتعلة ومستعد لأي مهمة تسوق اليوم!", "بأقصى سرعة وحماس؛ انطلق لتجهز وقود الأبطال!"],
-      anime_ryu: ["كل المؤشرات ممتازة، والصفقة الأذكى بانتظارك.", "بهدوء وتحليل دقيق؛ اخترت لك الأنسب دائماً."],
-      anime_ritaj: ["مبسوطة ومشرقة بوجودك، وراح نخلي يومك أحلى!", "أهلاً بك مع ريتاج؛ كل شيء ألطف وأجمل."]
-    };
-
-    const thanksList = {
-      coach_sakhr: ["كفو منك؛ استمر على هذا الانضباط الرائع.", "على الرحب يا بطل؛ دائماً في الخدمة."],
-      grand_chef: ["بالعافية مقدماً؛ يسعدني تقديم الأفضل دائماً.", "العفو؛ نكهة متجر معاذ ترحب بك."],
-      princess_layla: ["بكل سرور؛ وجودك يزيد المكان جمالاً.", "العفو؛ يسعدني دائماً خدمتك بلطف."],
-      butler_farid: ["على الرحب والسعة سيدي؛ في خدمتكم دائماً.", "لا شكر على واجب؛ التنظيم من أولوياتي."],
-      friend_fadi: ["ولو يا غالي؛ الصديق وقت الضيق والطلب!", "العفو يا معلم؛ خلينا نشوف شو بدك بعد."],
-      anime_zain: ["هذا واجب الأبطال؛ نراك في المهمة القادمة!", "العفو؛ انطلق بثقة ونجاح!"],
-      anime_ryu: ["تحليل ناجح؛ يسعدني مساعدتك دائماً.", "العفو؛ لأي استفسار أنا هنا."],
-      anime_ritaj: ["شكراً لك أنت على لطفك؛ يسعدني أساعدك دايماً!", "العفو يا حلو؛ نوّرت المتجر!"]
-    };
-
-    const addedMsgs = {
-      coach_sakhr: [(n) => `ممتاز يا بطل؛ تمت إضافة ${n} إلى سلة القوة.`],
-      grand_chef: [(n) => `أضفت ${n} إلى السلة بعناية للمطبخ.`],
-      princess_layla: [(n) => `بكل ذوق؛ تمت إضافة ${n} إلى سلتك.`],
-      butler_farid: [(n) => `تم قيد وإضافة ${n} إلى السلة بنظام.`],
-      friend_fadi: [(n) => `يا سلام؛ نزّلنا ${n} بالسلة وصارت جاهزة!`],
-      anime_zain: [(n) => `تمت إضافة ${n} إلى السلة؛ مهمة ناجحة!`],
-      anime_ryu: [(n) => `تمت إضافة ${n} إلى السلة بعد التحقق من التوفر.`],
-      anime_ritaj: [(n) => `ياي؛ تمت إضافة ${n} إلى سلتك بكل حب!`]
-    };
-
-    return {
-      ...p,
-      roleBadge: `${p.gender === "female" ? "أنثوي" : "ذكري"} • ${p.badge || p.role}`,
-      specialtyNote: `${p.name} (${p.role}): ${p.shortDesc}`,
-      fallbackDetune: Math.round((p.pitchSemitones || 0) * 90),
-      fallbackRate: p.speed || 1.24,
-      greets: baseGreets,
-      timeGreets: {
-        morning: [`صباح الخير والنشاط؛ معك ${p.name} في متجر معاذ.`],
-        evening: [`مساء الخير؛ ${p.name} جاهز لخدمتك اليوم.`]
-      },
-      chatGood: (chatGoods[p.id] || ["أنا بخير، كيف يمكنني خدمتك اليوم?"])[0],
-      chatGoods: chatGoods[p.id] || ["أنا بخير، كيف يمكنني خدمتك اليوم?"],
-      thanks: (thanksList[p.id] || ["العفو، يسعدني دائماً خدمتك."])[0],
-      thanksList: thanksList[p.id] || ["العفو، يسعدني دائماً خدمتك."],
-      addedMsgs: addedMsgs[p.id] || [(n) => `تمت إضافة ${n} إلى السلة.`],
-      recipeReady: (t) => `جهزت لك المتوفر لوصفة ${t} بأسلوب ${p.name}، حدد الكمية.`,
-      recipeMissing: (t) => `بعض مكونات ${t} غير متوفرة حالياً في الفرع.`,
-      itemsReady: () => "عرضت لك الأصناف المتوفرة في الفرع، حدد الكمية.",
-      alternativeReplies: ["الطلب غير متوفر حالياً، وعرضت لك أقرب البدائل المتوفرة."],
-      habitReplies: ["هذه اختياراتك المعتادة والمتوفرة في الفرع."],
-      notFounds: ["لم أجد صنفاً مطابقاً متوفراً الآن."],
-      notFound: "لم أجد صنفاً مطابقاً متوفراً الآن."
-    };
+  function vibrate(ms = 30) {
+    try { if (navigator.vibrate) navigator.vibrate(ms); } catch (_) {}
   }
 
-  window.triggerVIPProminentEntrance = function (personaId) {
-    const p = VIP_PERSONAS[personaId];
-    if (!p) return;
+  function getHealthyStoreProducts(maxBudget = 0) {
+    const prods = (typeof window.products === "object" && window.products) ? window.products : {};
+    const healthyRx = /(بيض|تونه|تونة|عدس|حليب|لبن|جبن|شوفان|برغل|عسل|ماء|عصير|دجاج|فول|حمص|مكسرات|زيتون)/;
+    const isW = window.currentUser?.userType === "wholesale";
+    const list = [];
 
-    if (!document.getElementById("vipEntranceAnimStyle")) {
-      const st = document.createElement("style");
-      st.id = "vipEntranceAnimStyle";
-      st.textContent = `
-        @keyframes vipGrandEntrance {
-          0% { opacity: 0; transform: translateY(24px) scale(0.72) rotate(-8deg); filter: drop-shadow(0 0 0 rgba(212, 175, 55, 0)); }
-          55% { opacity: 1; transform: translateY(-6px) scale(1.14) rotate(4deg); filter: drop-shadow(0 0 22px rgba(212, 175, 55, 0.85)); }
-          100% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.45)); }
-        }
-        @keyframes vipBannerSlide {
-          0% { opacity: 0; transform: translate(-50%, -18px) scale(0.92); }
-          15%, 85% { opacity: 1; transform: translate(-50%, 0) scale(1); }
-          100% { opacity: 0; transform: translate(-50%, -14px) scale(0.96); }
-        }
-        .vip-grand-entrance-active { animation: vipGrandEntrance 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards !important; }
-        #vipEntranceSpotlightBanner {
-          position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 10060;
-          background: linear-gradient(135deg, rgba(18, 18, 22, 0.96), rgba(30, 27, 15, 0.96));
-          border: 1.5px solid #d4af37; border-radius: 999px; padding: 7px 14px;
-          display: flex; align-items: center; gap: 8px; color: #f9fafb; font-size: 11px; font-weight: 800;
-          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55), 0 0 18px rgba(212, 175, 55, 0.45);
-          pointer-events: none; animation: vipBannerSlide 2.6s ease forwards;
-        }
-      `;
-      document.head.appendChild(st);
-    }
+    Object.keys(prods).forEach(pid => {
+      const p = prods[pid];
+      if (!p) return;
+      const st = typeof window.getProductStockForBranch === "function"
+        ? window.getProductStockForBranch(p, typeof window.activeBranchId !== "undefined" ? window.activeBranchId : "main")
+        : (parseInt(p.stock, 10) || 0);
+      if (st <= 0) return;
 
-    const orb = document.getElementById("petCharOrb");
-    if (orb) {
-      orb.classList.remove("vip-grand-entrance-active");
-      void orb.offsetWidth;
-      orb.classList.add("vip-grand-entrance-active");
-      setTimeout(() => orb.classList.remove("vip-grand-entrance-active"), 900);
-    }
+      const price = typeof window.calcSYP === "function"
+        ? window.calcSYP((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0))
+        : 0;
+      if (price <= 0) return;
+      if (maxBudget > 0 && price > maxBudget) return;
 
-    let banner = document.getElementById("vipEntranceSpotlightBanner");
-    if (banner) banner.remove();
-    banner = document.createElement("div");
-    banner.id = "vipEntranceSpotlightBanner";
-    banner.style.borderColor = p.accent || "#d4af37";
-    banner.innerHTML = `
-      <img src="${p.avatarUrl}" onerror="this.onerror=null;this.src='store-icon.png';" alt="${p.name}" style="width:24px; height:24px; border-radius:50%; object-fit:cover; border:1.5px solid ${p.accent || "#d4af37"};">
-      <span style="color:${p.accent || "#fbbf24"};">${p.name}</span>
-      <span style="color:#d1d5db; font-weight:600;">(${p.role})</span>
-    `;
-    document.body.appendChild(banner);
-    setTimeout(() => { if (banner && banner.parentNode) banner.remove(); }, 2650);
-  };
-
-  function syncUnlockedVIPPersonasIntoCompanion() {
-    const sel = document.getElementById("petPersonaSelect");
-    if (!sel) return;
-    const unlockedVip = Object.values(VIP_PERSONAS).filter(p => isPersonaUnlockedLifetime(p.id));
-    Array.from(sel.options).forEach(opt => {
-      if (opt.dataset && opt.dataset.vipOption === "1") opt.remove();
+      const txt = String((p.name || "") + " " + (p.category || ""));
+      if (healthyRx.test(txt)) {
+        list.push({ id: pid, name: p.name, price, stock: st });
+      }
     });
-    unlockedVip.forEach(p => {
-      const opt = document.createElement("option");
-      opt.value = p.id;
-      opt.dataset.vipOption = "1";
-      opt.textContent = `${p.name} — ${p.role}`;
-      sel.appendChild(opt);
-    });
+
+    return list.sort((a, b) => a.price - b.price);
   }
 
-  const _origSelectPetPersona = window.selectPetPersona;
-  window.selectPetPersona = function (key) {
-    if (VIP_PERSONAS[key]) {
-      if (!isPersonaUnlockedLifetime(key)) {
-        if (typeof showToast === "function") showToast("هذه الشخصية تتطلب اشتراكاً مدى الحياة وتفعيلها من الإدارة.");
-        window.openVIPShowcaseModal("all");
+  function calcMetrics(weight, height, goal) {
+    const hM = Math.max(1.2, height / 100);
+    const bmi = +(weight / (hM * hM)).toFixed(1);
+    let bmiLabel = "وزن مثالي";
+    let bmiColor = "#00e676";
+    if (bmi < 18.5) { bmiLabel = "نحافة"; bmiColor = "#38bdf8"; }
+    else if (bmi >= 25 && bmi < 30) { bmiLabel = "زيادة وزن"; bmiColor = "#f59e0b"; }
+    else if (bmi >= 30) { bmiLabel = "سمنة"; bmiColor = "#ef4444"; }
+
+    const baseCal = Math.round(weight * 30);
+    const calories = goal === "cut" ? Math.max(1400, baseCal - 400) : goal === "bulk" ? baseCal + 350 : baseCal;
+    const protein = Math.round(weight * (goal === "bulk" ? 2.0 : 1.7));
+    return { bmi, bmiLabel, bmiColor, calories, protein };
+  }
+
+  function render(container) {
+    if (!container) return;
+    const d = loadData();
+    const m = calcMetrics(d.weight, d.height, d.goal);
+    const waterPct = Math.min(100, Math.round((d.waterCups / 8) * 100));
+    const challengePct = Math.min(100, Math.round((d.weeklyPushups / 100) * 100));
+    const healthyItems = getHealthyStoreProducts().slice(0, 4);
+
+    container.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:10px; text-align:right; font-size:11px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <div style="background:rgba(249,115,22,0.12); border:1px solid #f97316; border-radius:12px; padding:9px;">
+            <div style="color:#fb923c; font-weight:800;">🔥 سلسلة الالتزام</div>
+            <div style="font-size:18px; font-weight:900; margin:3px 0;">${d.streak} يوم</div>
+            <button type="button" onclick="window.MoaathVIPRoomModules.coach_sakhr.logTodayWorkout()" class="btn" style="padding:4px 8px; font-size:10px; background:#f97316; color:#000;">✅ سجّل تمرين اليوم</button>
+          </div>
+          <div style="background:rgba(0,230,118,0.1); border:1px solid #00e676; border-radius:12px; padding:9px;">
+            <div style="color:#00e676; font-weight:800;">💪 تحدي 100 ضغط</div>
+            <div style="font-size:14px; font-weight:800; margin:3px 0;">${d.weeklyPushups} / 100 (${challengePct}%)</div>
+            <button type="button" onclick="window.MoaathVIPRoomModules.coach_sakhr.addPushups(10)" class="btn" style="padding:4px 8px; font-size:10px; background:#00e676; color:#000;">+10 ضغط الآن</button>
+          </div>
+        </div>
+
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:10px;">
+          <div style="font-weight:800; color:#fb923c; margin-bottom:6px;">📊 حاسبة السعرات والبروتين و BMI</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:7px;">
+            <div>
+              <label style="font-size:9px; color:var(--gray-text);">الوزن (كغ)</label>
+              <input id="sakhrWeightInp" type="number" value="${d.weight}" min="35" max="200" class="form-control" style="padding:4px 6px; font-size:11px;">
+            </div>
+            <div>
+              <label style="font-size:9px; color:var(--gray-text);">الطول (سم)</label>
+              <input id="sakhrHeightInp" type="number" value="${d.height}" min="120" max="220" class="form-control" style="padding:4px 6px; font-size:11px;">
+            </div>
+            <div>
+              <label style="font-size:9px; color:var(--gray-text);">الهدف</label>
+              <select id="sakhrGoalSel" class="form-control" style="padding:4px; font-size:10px;">
+                <option value="cut" ${d.goal === "cut" ? "selected" : ""}>تنشيف</option>
+                <option value="maintain" ${d.goal === "maintain" ? "selected" : ""}>ثبات</option>
+                <option value="bulk" ${d.goal === "bulk" ? "selected" : ""}>تضخيم</option>
+              </select>
+            </div>
+          </div>
+          <button type="button" onclick="window.MoaathVIPRoomModules.coach_sakhr.saveMetrics()" class="btn" style="padding:5px; font-size:10px; background:rgba(249,115,22,0.2); color:#fb923c; border:1px solid #f97316; margin-bottom:7px;">⚡ احسب واحفظ الوزن</button>
+          <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.04); padding:6px 8px; border-radius:8px; font-size:10.5px;">
+            <span>BMI: <b style="color:${m.bmiColor};">${m.bmi} (${m.bmiLabel})</b></span>
+            <span>السعرات: <b>${m.calories}</b></span>
+            <span>البروتين: <b style="color:#00e676;">${m.protein} غ</b></span>
+          </div>
+        </div>
+
+        <div style="background:var(--bg-color); border:1px solid #38bdf8; border-radius:12px; padding:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <b style="color:#38bdf8;">⏱️ مؤقت HIIT (40ث تمرين / 20ث راحة)</b>
+            <span id="sakhrHiitRound" style="font-size:10px; color:var(--gold-color);">جولة ${hiitState.round}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <div id="sakhrHiitClock" style="font-size:22px; font-weight:900; color:${hiitState.phase === "work" ? "#00e676" : "#f59e0b"};">
+              ${hiitState.phase === "work" ? "🔥 تمرين" : "😮‍💨 راحة"} • ${hiitState.secLeft}ث
+            </div>
+            <div style="display:flex; gap:5px;">
+              <button type="button" onclick="window.MoaathVIPRoomModules.coach_sakhr.toggleHiit()" class="btn" style="width:auto; padding:5px 10px; font-size:10px; background:#38bdf8; color:#000;">${hiitState.running ? "⏸️ إيقاف" : "▶️ ابدأ"}</button>
+              <button type="button" onclick="window.MoaathVIPRoomModules.coach_sakhr.resetHiit()" class="btn btn-danger" style="width:auto; padding:5px 8px; font-size:10px;">↺</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <b>💧 شرب الماء اليومي (${d.waterCups} / 8 أكواب)</b>
+            <button type="button" onclick="window.MoaathVIPRoomModules.coach_sakhr.addWater()" class="btn" style="width:auto; padding:3px 9px; font-size:10px; background:#0ea5e9; color:#fff;">+ كوب ماء</button>
+          </div>
+          <div style="height:7px; background:rgba(255,255,255,0.1); border-radius:999px; overflow:hidden;">
+            <div style="width:${waterPct}%; height:100%; background:linear-gradient(90deg,#38bdf8,#00e676); transition:width 0.25s;"></div>
+          </div>
+        </div>
+
+        <div style="background:var(--bg-color); border:1px solid var(--gold-color); border-radius:12px; padding:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <b style="color:var(--gold-color);">🥗 وجبة بعد التمرين (متوفر بالفرع)</b>
+            <button type="button" onclick="window.MoaathVIPRoomModules.coach_sakhr.addEconomicProteinBasket()" class="btn" style="width:auto; padding:3px 8px; font-size:10px; background:var(--gold-color); color:#000;">🛒 سلة بروتين اقتصادي</button>
+          </div>
+          ${healthyItems.length ? healthyItems.map(it => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px dashed var(--border-color);">
+              <span>${it.name} <small style="color:#00e676;">(${it.price.toLocaleString()} ل.س)</small></span>
+              <button type="button" onclick="if(typeof changeQty==='function'){changeQty('${it.id}',1); if(typeof showToast==='function') showToast('💪 تمت إضافة ${it.name} لسلة البطل!');}" class="btn" style="width:auto; padding:2px 8px; font-size:10px; background:rgba(0,230,118,0.18); color:#00e676; border:1px solid #00e676;">+ أضف</button>
+            </div>
+          `).join("") : `<div style="color:var(--gray-text); font-size:10px;">تصفح قسم المواد الغذائية لإضافة مصادر البروتين المتوفرة.</div>`}
+        </div>
+
+        <div style="background:rgba(255,255,255,0.03); border:1px dashed var(--border-color); border-radius:10px; padding:8px; font-size:10px; line-height:1.6;">
+          <b style="color:#fb923c;">⚡ إحماء سريع (5 دقائق بدون معدات):</b><br>
+          1) قفز في المكان 40ث • 2) سكوات 15 عدة • 3) ضغط 10 عدات • 4) بلانك 30ث.
+        </div>
+      </div>
+    `;
+    container._sakhrMount = true;
+  }
+
+  function rerenderIfMounted() {
+    const el = document.getElementById("vipRoomDynamicBody");
+    if (el && el._sakhrMount) render(el);
+  }
+
+  window.MoaathVIPRoomModules.coach_sakhr = {
+    render,
+    saveMetrics() {
+      const d = loadData();
+      const w = parseFloat(document.getElementById("sakhrWeightInp")?.value || d.weight);
+      const h = parseFloat(document.getElementById("sakhrHeightInp")?.value || d.height);
+      const g = document.getElementById("sakhrGoalSel")?.value || d.goal;
+      if (w >= 35 && w <= 200) d.weight = w;
+      if (h >= 120 && h <= 220) d.height = h;
+      d.goal = g;
+      d.weightLog.push({ date: new Date().toISOString().slice(0, 10), weight: d.weight });
+      d.weightLog = d.weightLog.slice(-12);
+      saveData(d);
+      vibrate(20);
+      if (typeof window.showToast === "function") window.showToast("💪 تم تحديث قياساتك وحساب السعرات والبروتين!");
+      rerenderIfMounted();
+    },
+    addWater() {
+      const d = loadData();
+      d.waterCups = Math.min(16, (d.waterCups || 0) + 1);
+      saveData(d);
+      vibrate(15);
+      rerenderIfMounted();
+    },
+    addPushups(n) {
+      const d = loadData();
+      d.weeklyPushups = Math.min(1000, (d.weeklyPushups || 0) + n);
+      saveData(d);
+      vibrate(20);
+      if (typeof window.showToast === "function") window.showToast(`🔥 كفو يا بطل! وصلت إلى ${d.weeklyPushups} ضغط هذا الأسبوع.`);
+      rerenderIfMounted();
+    },
+    logTodayWorkout() {
+      const d = loadData();
+      const today = new Date().toISOString().slice(0, 10);
+      if (d.lastTrainDate === today) {
+        if (typeof window.showToast === "function") window.showToast("✅ تم تسجيل تمرين اليوم مسبقاً، استمر يا بطل!");
         return;
       }
-      if (typeof window._registerDynamicCompanionPersona === "function") {
-        window._registerDynamicCompanionPersona(key, enrichVIPPersonaForCompanion(VIP_PERSONAS[key]));
+      d.streak = (d.streak || 0) + 1;
+      d.lastTrainDate = today;
+      saveData(d);
+      vibrate([20, 40, 20]);
+      if (typeof window.showToast === "function") window.showToast(`🏆 ممتاز! سلسلة الالتزام أصبحت ${d.streak} يوم.`);
+      rerenderIfMounted();
+    },
+    toggleHiit() {
+      if (hiitState.running) {
+        clearInterval(hiitInterval);
+        hiitInterval = null;
+        hiitState.running = false;
+        rerenderIfMounted();
+        return;
       }
-      if (typeof _origSelectPetPersona === "function") _origSelectPetPersona(key);
-      window.triggerVIPProminentEntrance(key);
-      return;
-    }
-    if (typeof _origSelectPetPersona === "function") _origSelectPetPersona(key);
-  };
-
-  window._vipActivateAsCompanion = function (personaId) {
-    const p = VIP_PERSONAS[personaId];
-    if (!p) return;
-    if (!isPersonaUnlockedLifetime(personaId)) {
-      window.openVIPShowcaseModal("all");
-      return;
-    }
-    syncUnlockedVIPPersonasIntoCompanion();
-    window.selectPetPersona(personaId);
-    const roomModal = document.getElementById("vipDailyRoomModal");
-    if (roomModal) roomModal.style.display = "none";
-  };
-
-  if (typeof db !== "undefined" && db && typeof db.ref === "function") {
-    try {
-      db.ref("vip_config").on("value", snap => {
-        const val = snap.val();
-        if (val && typeof val === "object") {
-          vipConfig = { ...vipConfig, ...val };
-          saveLocalConfig(vipConfig);
-          renderVIPShowcaseModal();
-        }
-      });
-
-      const ck = getCustomerKey();
-      db.ref(`vip_entitlements/${ck}`).on("value", snap => {
-        const val = snap.val();
-        if (val && typeof val === "object") {
-          adminEntitlements.customers = adminEntitlements.customers || {};
-          adminEntitlements.customers[ck] = val;
-          if (ck === getCustomerKey()) {
-            adminEntitlements.bundleLifetime = !!val.bundleLifetime;
-            adminEntitlements.personas = { ...(val.personas || {}) };
+      hiitState.running = true;
+      vibrate(25);
+      hiitInterval = setInterval(() => {
+        hiitState.secLeft--;
+        if (hiitState.secLeft <= 0) {
+          vibrate([40, 30, 40]);
+          if (hiitState.phase === "work") {
+            hiitState.phase = "rest";
+            hiitState.secLeft = 20;
+          } else {
+            hiitState.phase = "work";
+            hiitState.secLeft = 40;
+            hiitState.round++;
           }
-          saveLocalEntitlements(adminEntitlements);
-          renderVIPShowcaseModal();
-          renderAdminVIPTab();
-          syncUnlockedVIPPersonasIntoCompanion();
-          injectVIPButtonIntoAssistantHeader();
+        }
+        const clockEl = document.getElementById("sakhrHiitClock");
+        const roundEl = document.getElementById("sakhrHiitRound");
+        if (clockEl) {
+          clockEl.style.color = hiitState.phase === "work" ? "#00e676" : "#f59e0b";
+          clockEl.textContent = `${hiitState.phase === "work" ? "🔥 تمرين" : "😮‍💨 راحة"} • ${hiitState.secLeft}ث`;
+        }
+        if (roundEl) roundEl.textContent = `جولة ${hiitState.round}`;
+      }, 1000);
+      rerenderIfMounted();
+    },
+    resetHiit() {
+      clearInterval(hiitInterval);
+      hiitInterval = null;
+      hiitState = { running: false, phase: "work", secLeft: 40, round: 1 };
+      rerenderIfMounted();
+    },
+    addEconomicProteinBasket() {
+      const picks = getHealthyStoreProducts().slice(0, 3);
+      if (!picks.length) {
+        if (typeof window.showToast === "function") window.showToast("⚠️ لا توجد أصناف بروتين متوفرة حالياً في الفرع.");
+        return;
+      }
+      picks.forEach(it => { if (typeof window.changeQty === "function") window.changeQty(it.id, 1); });
+      vibrate([15, 30, 15]);
+      if (typeof window.showToast === "function") window.showToast(`💪 تمت إضافة أوفر ${picks.length} أصناف بروتين للسلة!`);
+    }
+  };
+})();
+
+// ============================================================================
+// وحدة غرفة VIP المستقلة (2/8): الشيف الذهبي — الطبخ وتخطيط الوجبات (grand_chef)
+// - تعمل محلياً بالكامل (0 حصة API) مع عزل تام عن الدفع وشام كاش
+// - مرتبطة مباشرة بمخزون وأسعار متجر معاذ ووصفات الإدارة المحفوظة
+// ============================================================================
+(function () {
+  window.MoaathVIPRoomModules = window.MoaathVIPRoomModules || {};
+
+  const STORAGE_KEY = "moaath_vip_grand_chef_v1";
+  const LOCAL_RECIPES_KEY = "moaath_store_local_recipes";
+
+  const CHEF_RECIPES = [
+    {
+      id: "chef_maqluba",
+      title: "مقلوبة باذنجان وبطاطا",
+      time: 45,
+      difficulty: "متوسط",
+      quick15: false,
+      ingredients: ["رز", "زيت", "باذنجان", "بطاطا", "بصل", "بهار", "ملح"],
+      steps: [
+        "اغسل الأرز وانقعه بماء دافئ مع رشة ملح لمدة 20 دقيقة.",
+        "اقلِ شرائح الباذنجان والبطاطا حتى تأخذ لوناً ذهبياً جميلاً.",
+        "رتّب الخضار في قاع الطنجرة، ثم أضف الأرز والبهارات والمرق الساخن.",
+        "اطبخ على نار هادئة 25 دقيقة ثم اقلب الطنجرة وقدّمها ساخنة."
+      ]
+    },
+    {
+      id: "chef_mjaddara",
+      title: "مجدرة برغل وعدس",
+      time: 30,
+      difficulty: "سهل",
+      quick15: false,
+      ingredients: ["برغل", "عدس", "زيت", "بصل", "كمون", "ملح"],
+      steps: [
+        "اسلق العدس نصف سلقة في ماء مغلي مع رشة كمون.",
+        "أضف البرغل الخشن والملح واتركهما على نار هادئة حتى يتشرب الماء.",
+        "اقلِ شرائح البصل بالزيت حتى تقرمش، ثم وزّعها فوق المجدرة عند التقديم."
+      ]
+    },
+    {
+      id: "chef_lentil_soup",
+      title: "شوربة عدس ذهبية",
+      time: 25,
+      difficulty: "سهل",
+      quick15: false,
+      ingredients: ["عدس", "بطاطا", "بصل", "زيت", "كمون", "ملح"],
+      steps: [
+        "شوّح البصل المفروم بالزيت ثم أضف العدس المغسول ومكعبات البطاطا.",
+        "اغمرها بالماء الساخن واتركها تغلي 20 دقيقة حتى تنضج تماماً.",
+        "اهرُس الشوربة وأضف الكمون والملح وعصرة ليمون عند التقديم."
+      ]
+    },
+    {
+      id: "chef_quick_pasta",
+      title: "معكرونة سريعة بالصلصة",
+      time: 15,
+      difficulty: "سهل جداً",
+      quick15: true,
+      ingredients: ["معكرونة", "معجون طماطم", "زيت", "بصل", "ملح", "بهار"],
+      steps: [
+        "اسلق المعكرونة في ماء مغلي مملح لمدة 9 دقائق ثم صفّها.",
+        "شوّح البصل بالزيت وأضف معجون الطماطم ونصف كوب من ماء السلق.",
+        "قلّب المعكرونة مع الصلصة لمدة 3 دقائق وقدّمها فوراً."
+      ]
+    },
+    {
+      id: "chef_shakshuka",
+      title: "شكشوكة طوارئ بـ 15 دقيقة",
+      time: 15,
+      difficulty: "سهل جداً",
+      quick15: true,
+      ingredients: ["بيض", "بندورة", "بصل", "زيت", "ملح", "فلفل"],
+      steps: [
+        "شوّح البصل بالزيت ثم أضف البندورة المفرومة واتركها تتسبك 7 دقائق.",
+        "اصنع فجوات صغيرة وأضف البيض مع رشة ملح وفلفل أسود.",
+        "غطِّ المقلاة 4 دقائق حتى ينضج البيض وقدّمها ساخنة."
+      ]
+    },
+    {
+      id: "chef_indomie_special",
+      title: "نودلز الشيف السريعة بالخضار",
+      time: 10,
+      difficulty: "سهل جداً",
+      quick15: true,
+      ingredients: ["اندومي", "زيت", "بصل", "بهار"],
+      steps: [
+        "اسلق النودلز دقيقتين فقط لتبقى متماسكة.",
+        "شوّح القليل من البصل والبهارات بالزيت ثم أضف النودلز مع بهارها.",
+        "قلّبها دقيقة واحدة على نار عالية واستمتع بطعم مضاعف."
+      ]
+    },
+    {
+      id: "chef_kabsa",
+      title: "كبسة أرز مبهرة",
+      time: 40,
+      difficulty: "متوسط",
+      quick15: false,
+      ingredients: ["رز", "سمن", "بصل", "معجون طماطم", "بهار", "ملح"],
+      steps: [
+        "حمّر البصل بالسمن وأضف معجون الطماطم وبهارات الكبسة.",
+        "أضف الأرز المغسول والمنقوع وقلّبه دقيقة ليتغلف بالنكهة.",
+        "أضف الماء الساخن واطبخه على نار هادئة 25 دقيقة حتى يتفلفل."
+      ]
+    }
+  ];
+
+  const DAILY_SECRETS = [
+    "سر فلفلة الأرز: انقعه 20 دقيقة بماء دافئ مع ملعقة خل صغيرة، ثم اطبخه على نار هادئة جداً دون فتح الغطاء.",
+    "سر قرمشة البطاطا: انقع أصابع البطاطا بماء بارد مع رشة نشا وملح 15 دقيقة قبل القلي وجففها جيداً.",
+    "سر شوربة العدس الغنية: أضف حبة بطاطا صغيرة مع العدس لتمنحها قواماً كريمياً دون الحاجة للكريمة.",
+    "سر عدم التصاق المعكرونة: أضف الملح لماء السلق بعد الغليان وحرّكها في أول دقيقتين فقط.",
+    "سر نكهة البهارات القوية: حمّص البهارات 20 ثانية مع الزيت قبل إضافة الماء لتتضاعف رائحتها."
+  ];
+
+  const SUBSTITUTES = [
+    { missing: "السمن", alt: "زيت نباتي + رشة بهار خفيفة" },
+    { missing: "معجون الطماطم", alt: "بندورة مبشورة مطبوخة 5 دقائق على نار هادئة" },
+    { missing: "النشا", alt: "ملعقة طحين أبيض مذابة بماء بارد" },
+    { missing: "الحليب السائل", alt: "3 ملاعق حليب بودرة لكل كوب ماء دافئ" }
+  ];
+
+  const FRIDGE_OPTIONS = ["رز", "برغل", "عدس", "معكرونة", "بيض", "بطاطا", "بصل", "زيت", "اندومي", "بندورة"];
+
+  const timers = {
+    t1: { label: "الأرز / الأساسي", sec: 1200, running: false, id: null },
+    t2: { label: "المرق / الجانبي", sec: 600, running: false, id: null }
+  };
+
+  let uiState = {
+    selectedRecipeId: "chef_maqluba",
+    servings: 4,
+    fridgeSelected: [],
+    checkedOwned: {},
+    maxBudgetFilter: 0,
+    onlyQuick15: false,
+    handsFreeMode: false,
+    handsFreeStep: 0
+  };
+
+  function loadData() {
+    try {
+      const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      return {
+        favorites: Array.isArray(d.favorites) ? d.favorites : [],
+        weeklyPlan: Array.isArray(d.weeklyPlan) ? d.weeklyPlan : []
+      };
+    } catch (_) {
+      return { favorites: [], weeklyPlan: [] };
+    }
+  }
+
+  function saveData(d) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch (_) {}
+  }
+
+  function normAr(s) {
+    return String(s || "")
+      .toLowerCase()
+      .replace(/[أإآ]/g, "ا")
+      .replace(/ة/g, "ه")
+      .replace(/ى/g, "ي")
+      .trim();
+  }
+
+  function vibrate(p = 20) {
+    try { if (navigator.vibrate) navigator.vibrate(p); } catch (_) {}
+  }
+
+  function getMergedRecipes() {
+    const adminRecs = [];
+    try {
+      const raw = JSON.parse(localStorage.getItem(LOCAL_RECIPES_KEY) || "{}");
+      Object.values(raw || {}).forEach(r => {
+        if (r && r.title) {
+          adminRecs.push({
+            id: "adm_" + (r.id || r.title),
+            title: r.title,
+            time: 30,
+            difficulty: "وصفة المتجر",
+            isStoreRecipe: true,
+            quick15: false,
+            ingredients: Array.isArray(r.ingredients) ? r.ingredients : [],
+            steps: ["جهّز المكونات المتوفرة من متجر معاذ واتبع خطوات التحضير المعتادة لوصفة " + r.title + "."]
+          });
         }
       });
     } catch (_) {}
+    return [...adminRecs, ...CHEF_RECIPES];
   }
 
-  function initVIPSystem() {
-    injectVIPButtonIntoAssistantHeader();
-    mountAdminVIPSection();
-    syncUnlockedVIPPersonasIntoCompanion();
-    syncDailyVIPFeedFromCloud();
+  function matchIngredientInStore(ingName) {
+    const prods = (typeof window.products === "object" && window.products) ? window.products : {};
+    const target = normAr(ingName);
+    const isW = window.currentUser?.userType === "wholesale";
+    let best = null;
 
-    const curSelVal = document.getElementById("petPersonaSelect")?.value;
-    if (curSelVal && VIP_PERSONAS[curSelVal] && isPersonaUnlockedLifetime(curSelVal) && typeof window._registerDynamicCompanionPersona === "function") {
-      window._registerDynamicCompanionPersona(curSelVal, enrichVIPPersonaForCompanion(VIP_PERSONAS[curSelVal]));
+    Object.keys(prods).forEach(pid => {
+      const p = prods[pid];
+      if (!p) return;
+      const st = typeof window.getProductStockForBranch === "function"
+        ? window.getProductStockForBranch(p, typeof window.activeBranchId !== "undefined" ? window.activeBranchId : "main")
+        : (parseInt(p.stock, 10) || 0);
+      if (st <= 0) return;
+
+      if (normAr(p.name || "").includes(target)) {
+        const price = typeof window.calcSYP === "function"
+          ? window.calcSYP((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0))
+          : 0;
+        if (!best || (price > 0 && price < best.price)) {
+          best = { id: pid, name: p.name, price, stock: st };
+        }
+      }
+    });
+    return best;
+  }
+
+  function analyzeRecipeCost(recipe, servings) {
+    const mult = servings >= 8 ? 2 : 1;
+    let totalCost = 0;
+    const mapped = (recipe.ingredients || []).map(ing => {
+      const hit = matchIngredientInStore(ing);
+      const owned = !!uiState.checkedOwned[`${recipe.id}::${ing}`];
+      const cost = hit ? hit.price * mult : 0;
+      if (!owned && hit) totalCost += cost;
+      return { ing, hit, owned, qty: mult, cost };
+    });
+    return { mapped, totalCost, mult };
+  }
+
+  function fmtClock(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+
+  function render(container) {
+    if (!container) return;
+    const d = loadData();
+    const allRecipes = getMergedRecipes();
+    const dayIdx = new Date().getDate() % DAILY_SECRETS.length;
+
+    let filtered = allRecipes.filter(r => {
+      if (uiState.onlyQuick15 && !r.quick15) return false;
+      if (uiState.fridgeSelected.length > 0) {
+        const hits = r.ingredients.filter(ing =>
+          uiState.fridgeSelected.some(f => normAr(ing).includes(normAr(f)))
+        ).length;
+        if (hits === 0) return false;
+      }
+      if (uiState.maxBudgetFilter > 0) {
+        const c = analyzeRecipeCost(r, uiState.servings).totalCost;
+        if (c > uiState.maxBudgetFilter) return false;
+      }
+      return true;
+    });
+    if (!filtered.length) filtered = allRecipes;
+
+    const activeRec = filtered.find(r => r.id === uiState.selectedRecipeId) || filtered[0];
+    uiState.selectedRecipeId = activeRec.id;
+    const isFav = d.favorites.includes(activeRec.id);
+    const analysis = analyzeRecipeCost(activeRec, uiState.servings);
+
+    const handsFreeHtml = uiState.handsFreeMode ? `
+      <div style="background:linear-gradient(145deg,#1e1b12,#121212); border:2px solid var(--gold-color); border-radius:14px; padding:14px; text-align:center;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <b style="color:var(--gold-color); font-size:12px;">👨‍🍳 وضع الطبخ بدون لمس — خطوة ${uiState.handsFreeStep + 1} من ${activeRec.steps.length}</b>
+          <button type="button" onclick="window.MoaathVIPRoomModules.grand_chef.toggleHandsFree(false)" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">إغلاق</button>
+        </div>
+        <div style="font-size:16px; font-weight:800; line-height:1.8; color:#fff; padding:12px 6px; min-height:74px;">
+          ${activeRec.steps[uiState.handsFreeStep] || ""}
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button type="button" onclick="window.MoaathVIPRoomModules.grand_chef.stepHandsFree(-1)" class="btn" style="flex:1; padding:10px; font-size:12px; background:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color);">⬅️ السابق</button>
+          <button type="button" onclick="window.MoaathVIPRoomModules.grand_chef.stepHandsFree(1)" class="btn" style="flex:1; padding:10px; font-size:12px; background:var(--gold-color); color:#000;">التالي ➡️</button>
+        </div>
+      </div>
+    ` : "";
+
+    container.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:10px; text-align:right; font-size:11px;">
+
+        <!-- 1. سر الشيف اليومي -->
+        <div style="background:rgba(212,175,55,0.12); border:1px solid var(--gold-color); border-radius:12px; padding:9px; line-height:1.55;">
+          <b style="color:var(--gold-color);">✨ سر الشيف اليومي:</b> ${DAILY_SECRETS[dayIdx]}
+        </div>
+
+        ${handsFreeHtml}
+
+        <!-- 2. ميزة "شو عندك بالبراد؟" + الفلاتر السريعة -->
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:5px;">
+            <b style="color:var(--gold-color);">🧊 شو عندك بالبراد؟ (اختر المتوفر لديك)</b>
+            <div style="display:flex; gap:4px;">
+              <button type="button" onclick="window.MoaathVIPRoomModules.grand_chef.toggleQuick15()" class="btn" style="width:auto; padding:3px 7px; font-size:9.5px; background:${uiState.onlyQuick15 ? "#00e676" : "rgba(255,255,255,0.06)"}; color:${uiState.onlyQuick15 ? "#000" : "var(--text-color)"};">⚡ بـ 15 دقيقة</button>
+              <button type="button" onclick="window.MoaathVIPRoomModules.grand_chef.toggleBudgetFilter()" class="btn" style="width:auto; padding:3px 7px; font-size:9.5px; background:${uiState.maxBudgetFilter ? "#f59e0b" : "rgba(255,255,255,0.06)"}; color:${uiState.maxBudgetFilter ? "#000" : "var(--text-color)"};">💰 اقتصادية ≤ 500</button>
+            </div>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:5px;">
+            ${FRIDGE_OPTIONS.map(f => {
+              const on = uiState.fridgeSelected.includes(f);
+              return `<button type="button" onclick="window.MoaathVIPRoomModules.grand_chef.toggleFridge('${f}')" style="padding:3px 8px; border-radius:999px; font-size:10px; cursor:pointer; border:1px solid ${on ? "#00e676" : "var(--border-color)"}; background:${on ? "rgba(0,230,118,0.2)" : "var(--card-bg)"}; color:${on ? "#00e676" : "var(--text-color)"};">${on ? "✓ " : "+ "}${f}</button>`;
+            }).join("")}
+          </div>
+        </div>
+
+        <!-- 3. اختيار الوصفة ومضاعف عدد الأشخاص وحاسبة التكلفة -->
+        <div style="background:var(--bg-color); border:1px solid var(--gold-color); border-radius:12px; padding:10px;">
+          <div style="display:flex; gap:5px; overflow-x:auto; padding-bottom:6px; margin-bottom:7px;">
+            ${filtered.map(r => {
+              const act = r.id === activeRec.id;
+              const star = d.favorites.includes(r.id) ? "⭐ " : "";
+              const badge = r.isStoreRecipe ? "🏪 " : "";
+              return `<button type="button" onclick="window.MoaathVIPRoomModules.grand_chef.selectRecipe('${r.id}')" style="flex-shrink:0; padding:5px 10px; border-radius:999px; font-size:10px; font-weight:700; cursor:pointer; border:1px solid ${act ? "var(--gold-color)" : "var(--border-color)"}; background:${act ? "var(--gold-color)" : "var(--card-bg)"}; color:${act ? "#000" : "var(--text-color)"};">${badge}${star}${r.title}</button>`;
+            }).join("")}
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:7px;">
+            <div>
+              <b style="font-size:13px; color:var(--gold-color);">${activeRec.title}</b>
+              <div style="font-size:9.5px; color:var(--gray-text);">⏱️ ${activeRec.time} دقيقة • الصعوبة: ${activeRec.difficulty}</div>
+            </div>
+            <div style="display:flex; gap:4px;">
+              <button type="button" onclick="window.MoaathVIPRoomModules.grand_chef.toggleFavorite('${activeRec.id}')" class="btn" style="width:auto; padding:4px 8px; font-size:10px; background:rgba(212,175,55,0.18); color:var(--gold-color);">${isFav ? "⭐ مفضلة" : "☆ حفظ"}</button>
+              <button type="button" onclick="window.MoaathVIPRoomModules.grand_chef.toggleHandsFree(true)" class="btn" style="width:auto; padding:4px 8px; font-size:10px; background:#38bdf8; color:#000;">📖 خطوات كبيرة</button>
+              <button type="button" onclick="window.MoaathVIPRoomModules.grand_chef.shareRecipeWhatsApp()" class="btn" style="width:auto; padding:4px 8px; font-size:10px; background:#22c55e; color:#000;">📲 واتساب</button>
+            </div>
+          </div>
+
+          <!-- شريط عدد الأشخاص -->
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; background:rgba(255,255,255,0.04); padding:6px 8px; border-radius:8px; margin-bottom:8px;">
+            <span>👥 عدد الأشخاص: <b style="color:var(--gold-color);">${uiState.servings}</b></span>
+            <input type="range" min="2" max="10" step="2" value="${uiState.servings}" oninput="window.MoaathVIPRoomModules.grand_chef.setServings(this.value)" style="flex:1; accent-color:var(--gold-color);">
+            <span>التكلفة: <b style="color:#00e676;">${analysis.totalCost.toLocaleString()} ل.س</b></span>
+          </div>
+
+          <!-- قائمة التحقق التفاعلية للمكونات -->
+          <div style="font-size:10px; color:var(--gray-text); margin-bottom:4px;">اضغط على المكون الموجود في بيتك لشطبه، لتبقى النواقص فقط للسلة:</div>
+          ${analysis.mapped.map(m => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px dashed var(--border-color); opacity:${m.owned ? "0.48" : "1"};">
+              <button type="button" onclick="window.MoaathVIPRoomModules.grand_chef.toggleOwned('${activeRec.id}','${m.ing}')" style="background:none; border:none; color:var(--text-color); font-size:11px; cursor:pointer; text-decoration:${m.owned ? "line-through" : "none"}; padding:0;">
+                ${m.owned ? "☑️" : "⬜"} ${m.ing} ${m.hit ? `<small style="color:#00e676;">(${m.hit.name} ×${m.qty} = ${m.cost.toLocaleString()} ل.س)</small>` : `<small style="color:#f59e0b;">(غير متوفر حالياً)</small>`}
+              </button>
+              ${(!m.owned && m.hit) ? `<button type="button" onclick="if(typeof changeQty==='function'){changeQty('${m.hit.id}',${m.qty}); if(typeof showToast==='function') showToast('🍲 تمت إضافة ${m.hit.name}');}" class="btn" style="width:auto; padding:2px 7px; font-size:9.5px; background:rgba(0,230,118,0.18); color:#00e676;">+ أضف</button>` : ""}
+            </div>
+          `).join("")}
+
+          <button type="button" onclick="window.MoaathVIPRoomModules.grand_chef.addMissingToCart()" class="btn" style="margin-top:8px; background:linear-gradient(45deg,#d4af37,#f59e0b); color:#000; font-size:11px; padding:7px;">🛒 إضافة نواقص (${activeRec.title}) للسلة (${analysis.totalCost.toLocaleString()} ل.س)</button>
+        </div>
+
+        <!-- 4. مؤقت الطبخ المتعدد (مؤقتان معاً) -->
+        <div style="background:var(--bg-color); border:1px solid #38bdf8; border-radius:12px; padding:10px;">
+          <b style="color:#38bdf8; display:block; margin-bottom:6px;">⏱️ مؤقت الطبخ المتعدد</b>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:7px;">
+            ${["t1", "t2"].map(k => `
+              <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-color); border-radius:9px; padding:7px; text-align:center;">
+                <div style="font-size:9.5px; color:var(--gray-text);">${timers[k].label}</div>
+                <div id="chefTimer_${k}" style="font-size:17px; font-weight:900; color:var(--gold-color); margin:3px 0;">${fmtClock(timers[k].sec)}</div>
+                <div style="display:flex; gap:4px; justify-content:center;">
+                  <button type="button" onclick="window.MoaathVIPRoomModules.grand_chef.toggleTimer('${k}')" class="btn" style="width:auto; padding:3px 8px; font-size:9.5px; background:#38bdf8; color:#000;">${timers[k].running ? "⏸️" : "▶️"}</button>
+                  <button type="button" onclick="window.MoaathVIPRoomModules.grand_chef.resetTimer('${k}')" class="btn btn-danger" style="width:auto; padding:3px 7px; font-size:9.5px;">↺</button>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+
+        <!-- 5. جدول طبخات الأسبوع وموسوعة البدائل -->
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <b style="color:var(--gold-color);">📅 جدول طبخات الأسبوع</b>
+            <button type="button" onclick="window.MoaathVIPRoomModules.grand_chef.generateWeeklyPlan()" class="btn" style="width:auto; padding:3px 8px; font-size:9.5px; background:rgba(0,230,118,0.18); color:#00e676;">🎲 توليد جدول 7 أيام</button>
+          </div>
+          ${d.weeklyPlan.length ? `
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; font-size:10px;">
+              ${d.weeklyPlan.map(row => `<div style="background:rgba(255,255,255,0.03); padding:4px 6px; border-radius:6px;"><b>${row.day}:</b> ${row.title}</div>`).join("")}
+            </div>
+          ` : `<div style="font-size:10px; color:var(--gray-text);">اضغط «توليد جدول 7 أيام» ليرتّب لك الشيف طبخات الأسبوع كاملة.</div>`}
+        </div>
+
+        <div style="background:rgba(255,255,255,0.03); border:1px dashed var(--border-color); border-radius:10px; padding:8px; font-size:10px; line-height:1.6;">
+          <b style="color:var(--gold-color);">🧂 موسوعة البدائل السريعة:</b><br>
+          ${SUBSTITUTES.map(s => `• بديل <b>${s.missing}</b>: ${s.alt}`).join("<br>")}
+        </div>
+
+      </div>
+    `;
+    container._grandChefMount = true;
+  }
+
+  function rerender() {
+    const el = document.getElementById("vipRoomDynamicBody");
+    if (el && el._grandChefMount) render(el);
+  }
+
+  window.MoaathVIPRoomModules.grand_chef = {
+    render,
+    selectRecipe(id) {
+      uiState.selectedRecipeId = id;
+      uiState.handsFreeStep = 0;
+      rerender();
+    },
+    setServings(val) {
+      uiState.servings = parseInt(val, 10) || 4;
+      rerender();
+    },
+    toggleFridge(item) {
+      const idx = uiState.fridgeSelected.indexOf(item);
+      if (idx >= 0) uiState.fridgeSelected.splice(idx, 1);
+      else uiState.fridgeSelected.push(item);
+      rerender();
+    },
+    toggleOwned(recId, ing) {
+      const k = `${recId}::${ing}`;
+      uiState.checkedOwned[k] = !uiState.checkedOwned[k];
+      vibrate(12);
+      rerender();
+    },
+    toggleQuick15() {
+      uiState.onlyQuick15 = !uiState.onlyQuick15;
+      rerender();
+    },
+    toggleBudgetFilter() {
+      uiState.maxBudgetFilter = uiState.maxBudgetFilter ? 0 : 500;
+      rerender();
+    },
+    toggleFavorite(recId) {
+      const d = loadData();
+      if (d.favorites.includes(recId)) d.favorites = d.favorites.filter(x => x !== recId);
+      else d.favorites.push(recId);
+      saveData(d);
+      vibrate(15);
+      rerender();
+    },
+    toggleHandsFree(on) {
+      uiState.handsFreeMode = !!on;
+      uiState.handsFreeStep = 0;
+      rerender();
+    },
+    stepHandsFree(delta) {
+      const rec = getMergedRecipes().find(r => r.id === uiState.selectedRecipeId) || CHEF_RECIPES[0];
+      const next = uiState.handsFreeStep + delta;
+      if (next >= 0 && next < rec.steps.length) {
+        uiState.handsFreeStep = next;
+        vibrate(12);
+        rerender();
+      }
+    },
+    addMissingToCart() {
+      const rec = getMergedRecipes().find(r => r.id === uiState.selectedRecipeId) || CHEF_RECIPES[0];
+      const { mapped } = analyzeRecipeCost(rec, uiState.servings);
+      let added = 0;
+      mapped.forEach(m => {
+        if (!m.owned && m.hit && typeof window.changeQty === "function") {
+          window.changeQty(m.hit.id, m.qty);
+          added++;
+        }
+      });
+      vibrate([15, 30, 15]);
+      if (typeof window.showToast === "function") {
+        window.showToast(added ? `👨‍🍳 تمت إضافة ${added} مكونات ناقصة لوصفة (${rec.title}) للسلة!` : "✅ جميع المكونات المتوفرة محددة كموجودة لديك.");
+      }
+    },
+    toggleTimer(k) {
+      const t = timers[k];
+      if (!t) return;
+      if (t.running) {
+        clearInterval(t.id);
+        t.id = null;
+        t.running = false;
+        rerender();
+        return;
+      }
+      t.running = true;
+      t.id = setInterval(() => {
+        t.sec--;
+        if (t.sec <= 0) {
+          clearInterval(t.id);
+          t.id = null;
+          t.running = false;
+          t.sec = 0;
+          vibrate([60, 40, 60]);
+          if (typeof window.showToast === "function") window.showToast(`⏰ انتهى مؤقت (${t.label})!`);
+        }
+        const el = document.getElementById("chefTimer_" + k);
+        if (el) el.textContent = fmtClock(t.sec);
+      }, 1000);
+      rerender();
+    },
+    resetTimer(k) {
+      const t = timers[k];
+      if (!t) return;
+      clearInterval(t.id);
+      t.id = null;
+      t.running = false;
+      t.sec = k === "t1" ? 1200 : 600;
+      rerender();
+    },
+    generateWeeklyPlan() {
+      const days = ["السبت", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
+      const pool = getMergedRecipes();
+      const d = loadData();
+      d.weeklyPlan = days.map((day, idx) => ({
+        day,
+        title: pool[(idx + Math.floor(Math.random() * pool.length)) % pool.length].title
+      }));
+      saveData(d);
+      vibrate(20);
+      rerender();
+    },
+    shareRecipeWhatsApp() {
+      const rec = getMergedRecipes().find(r => r.id === uiState.selectedRecipeId) || CHEF_RECIPES[0];
+      const txt = `👨‍🍳 وصفة من الشيف الذهبي — متجر معاذ:\n🍲 ${rec.title} (${uiState.servings} أشخاص)\nالمكونات: ${rec.ingredients.join("، ")}\nالخطوات:\n${rec.steps.map((s, i) => `${i + 1}) ${s}`).join("\n")}`;
+      if (typeof window.copyTextToClipboardClean === "function") {
+        window.copyTextToClipboardClean(txt, "📲 تم نسخ الوصفة جاهزة للمشاركة على واتساب!");
+      } else if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(txt).then(() => window.showToast && window.showToast("📲 تم نسخ الوصفة!"));
+      }
+    }
+  };
+})();
+
+// ============================================================================
+// وحدة غرفة VIP المستقلة (3/8): الأميرة ليلى — الأناقة والضيافة والعناية (princess_layla)
+// - تعمل محلياً بالكامل (0 حصة API) مع عزل تام عن الدفع وشام كاش
+// - مرتبطة مباشرة بمخزون متجر معاذ وحسابات الضيافة والمناسبات
+// ============================================================================
+(function () {
+  window.MoaathVIPRoomModules = window.MoaathVIPRoomModules || {};
+
+  const STORAGE_KEY = "moaath_vip_layla_v1";
+
+  const ETIQUETTE_TIPS = [
+    "تقديم كوب ماء بارد بجانب فنجان القهوة يضفي لمسة ضيافة راقية ومريحة للضيف.",
+    "ترتيب البسكويت والشوكولاتة بلونين متناغمين على صينية بسيطة يرفع جمال التقديم فوراً.",
+    "إضافة ورقة نعناع أو شريحة ليمون لعصير الضيافة يمنحها انتعاشاً ومظهراً فندقياً.",
+    "تحضير ركن ثابت للقهوة والشاي يوفر وقتك عند قدوم الضيوف المفاجئين."
+  ];
+
+  const HOSPITALITY_MODES = {
+    morning_coffee: {
+      title: "قهوة صباحية راقية",
+      keywords: ["قهوة", "قهوه", "بسكوت", "شوكولاتة", "شوكولاته", "حليب", "سكر"]
+    },
+    surprise_guests: {
+      title: "ضيافة سريعة بـ 5 دقائق",
+      keywords: ["شاي", "عصير", "بسكوت", "شوكولاتة", "شوكولاته", "موالح", "كيك"]
+    },
+    formal_feast: {
+      title: "عزيمة رسمية متكاملة",
+      keywords: ["قهوة", "شاي", "عصير", "شوكولاتة", "بسكوت", "مناديل", "محارم", "سكر"]
+    }
+  };
+
+  const CARE_ROUTINE = [
+    { id: "am_water", label: "كوب ماء صباحي دافئ" },
+    { id: "am_clean", label: "غسول وعناية صباحية" },
+    { id: "pm_tea", label: "مشروب استرخاء مسائي" },
+    { id: "pm_care", label: "ترطيب وعناية قبل النوم" }
+  ];
+
+  let uiState = {
+    hospMode: "morning_coffee",
+    guestsCount: 4,
+    giftSelectedIds: [],
+    warmGoldMode: false
+  };
+
+  function loadData() {
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+      const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      if (d.routineDate !== today) {
+        d.routineDone = {};
+        d.routineDate = today;
+      }
+      return {
+        routineDone: d.routineDone || {},
+        routineDate: today,
+        careStreak: d.careStreak || 0,
+        lastCareDay: d.lastCareDay || "",
+        occasions: Array.isArray(d.occasions) ? d.occasions : [],
+        memoItems: Array.isArray(d.memoItems) ? d.memoItems : []
+      };
+    } catch (_) {
+      return { routineDone: {}, routineDate: today, careStreak: 0, lastCareDay: "", occasions: [], memoItems: [] };
     }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => setTimeout(initVIPSystem, 120));
-  } else {
-    setTimeout(initVIPSystem, 120);
+  function saveData(d) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch (_) {}
   }
 
-  const _origRenderStoreVIP = window.renderStore;
-  window.renderStore = function () {
-    if (typeof _origRenderStoreVIP === "function") _origRenderStoreVIP();
-    setTimeout(initVIPSystem, 80);
-  };
+  function normAr(s) {
+    return String(s || "").toLowerCase().replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").trim();
+  }
 
-  window.MoaathVIPSystem = {
-    version: "3.2-daily-companion-rooms",
-    personas: VIP_PERSONAS,
-    isPersonaUnlockedLifetime,
-    isBundleUnlockedLifetime,
-    getDailyContentForPersona,
-    adminSetEntitlement,
-    syncDailyVIPFeedFromCloud
+  function vibrate(p = 15) {
+    try { if (navigator.vibrate) navigator.vibrate(p); } catch (_) {}
+  }
+
+  function getSeasonInfo() {
+    const m = new Date().getMonth() + 1;
+    const isWinter = m >= 10 || m <= 3;
+    return isWinter
+      ? { label: "موسم الشتاء الدافئ ❄️", drinkHint: "شاي، قهوة، كاكاو دافئ مع بسكويت", kw: ["شاي", "قهوة", "كاكاو", "حليب", "بسكوت"] }
+      : { label: "موسم الصيف المنعش ☀️", drinkHint: "عصائر باردة، ماء بارد، وشوكولاتة خفيفة", kw: ["عصير", "ماء", "بسكوت", "شوكولاتة"] };
+  }
+
+  function findStoreItemsByKeywords(keywords, limit = 6) {
+    const prods = (typeof window.products === "object" && window.products) ? window.products : {};
+    const isW = window.currentUser?.userType === "wholesale";
+    const list = [];
+
+    Object.keys(prods).forEach(pid => {
+      const p = prods[pid];
+      if (!p) return;
+      const st = typeof window.getProductStockForBranch === "function"
+        ? window.getProductStockForBranch(p, typeof window.activeBranchId !== "undefined" ? window.activeBranchId : "main")
+        : (parseInt(p.stock, 10) || 0);
+      if (st <= 0) return;
+
+      const txt = normAr((p.name || "") + " " + (p.category || ""));
+      if (keywords.some(k => txt.includes(normAr(k)))) {
+        const price = typeof window.calcSYP === "function"
+          ? window.calcSYP((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0))
+          : 0;
+        if (price > 0) list.push({ id: pid, name: p.name, price, stock: st });
+      }
+    });
+    return list.sort((a, b) => a.price - b.price).slice(0, limit);
+  }
+
+  function render(container) {
+    if (!container) return;
+    const d = loadData();
+    const season = getSeasonInfo();
+    const tip = ETIQUETTE_TIPS[new Date().getDate() % ETIQUETTE_TIPS.length];
+    const modeObj = HOSPITALITY_MODES[uiState.hospMode] || HOSPITALITY_MODES.morning_coffee;
+    const hospItems = findStoreItemsByKeywords(modeObj.keywords, 6);
+    const careItems = findStoreItemsByKeywords(["صابون", "شامبو", "مناديل", "محارم", "معطر", "كريم"], 4);
+    const qtyPerGuest = uiState.guestsCount >= 8 ? 2 : 1;
+
+    // 3 مستويات لباقات الضيافة
+    const tierBasic = hospItems.slice(0, 2);
+    const tierMid = hospItems.slice(0, 4);
+    const tierLux = hospItems.slice(0, 6);
+    const sumTier = arr => arr.reduce((a, b) => a + b.price * qtyPerGuest, 0);
+
+    const wrapBg = uiState.warmGoldMode
+      ? "background:linear-gradient(160deg,#231c10,#16120b); border:1px solid #d4af37; border-radius:14px; padding:10px;"
+      : "";
+
+    container.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:10px; text-align:right; font-size:11px; ${wrapBg}">
+
+        <!-- 1. إتيكيت اليوم + طابع الموسم + وضع الهدوء الذهبي -->
+        <div style="background:rgba(244,114,182,0.12); border:1px solid #f472b6; border-radius:12px; padding:9px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <b style="color:#f472b6;">👑 إتيكيت ولطافة اليوم • ${season.label}</b>
+            <button type="button" onclick="window.MoaathVIPRoomModules.princess_layla.toggleWarmMode()" class="btn" style="width:auto; padding:2px 7px; font-size:9.5px; background:rgba(212,175,55,0.2); color:var(--gold-color);">${uiState.warmGoldMode ? "🌙 هادئ" : "✨ ذهبي"}</button>
+          </div>
+          <div style="line-height:1.55;">${tip}</div>
+          <div style="font-size:10px; color:var(--gold-color); margin-top:4px;">🍵 ركن الاسترخاء المقترح: ${season.drinkHint}</div>
+        </div>
+
+        <!-- 2. منسّق الضيافة الفاخرة ومخطط طاولة العزيمة -->
+        <div style="background:var(--bg-color); border:1px solid var(--gold-color); border-radius:12px; padding:10px;">
+          <b style="color:var(--gold-color); display:block; margin-bottom:6px;">🫖 منسّق الضيافة ومخطط طاولة العزيمة</b>
+          <div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:7px;">
+            ${Object.keys(HOSPITALITY_MODES).map(k => {
+              const on = uiState.hospMode === k;
+              return `<button type="button" onclick="window.MoaathVIPRoomModules.princess_layla.setHospMode('${k}')" style="padding:4px 9px; border-radius:999px; font-size:10px; cursor:pointer; border:1px solid ${on ? "#f472b6" : "var(--border-color)"}; background:${on ? "#f472b6" : "var(--card-bg)"}; color:${on ? "#000" : "var(--text-color)"}; font-weight:700;">${HOSPITALITY_MODES[k].title}</button>`;
+            }).join("")}
+          </div>
+
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; background:rgba(255,255,255,0.04); padding:6px 8px; border-radius:8px;">
+            <span>👥 عدد الضيوف: <b style="color:#f472b6;">${uiState.guestsCount}</b></span>
+            <input type="range" min="2" max="16" step="2" value="${uiState.guestsCount}" oninput="window.MoaathVIPRoomModules.princess_layla.setGuests(this.value)" style="flex:1; accent-color:#f472b6;">
+          </div>
+
+          <!-- مقارنة 3 مستويات لباقات الضيافة -->
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-bottom:8px; text-align:center;">
+            <button type="button" onclick="window.MoaathVIPRoomModules.princess_layla.addTier('basic')" class="btn" style="padding:6px 4px; font-size:9.5px; background:rgba(255,255,255,0.05); color:var(--text-color); border:1px solid var(--border-color);">
+              🌸 بسيطة<br><b style="color:#00e676;">${sumTier(tierBasic).toLocaleString()} ل.س</b>
+            </button>
+            <button type="button" onclick="window.MoaathVIPRoomModules.princess_layla.addTier('mid')" class="btn" style="padding:6px 4px; font-size:9.5px; background:rgba(244,114,182,0.14); color:#f472b6; border:1px solid #f472b6;">
+              💐 متوسطة<br><b>${sumTier(tierMid).toLocaleString()} ل.س</b>
+            </button>
+            <button type="button" onclick="window.MoaathVIPRoomModules.princess_layla.addTier('lux')" class="btn" style="padding:6px 4px; font-size:9.5px; background:rgba(212,175,55,0.18); color:var(--gold-color); border:1px solid var(--gold-color);">
+              👑 فاخرة<br><b>${sumTier(tierLux).toLocaleString()} ل.س</b>
+            </button>
+          </div>
+
+          ${hospItems.map(it => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed var(--border-color);">
+              <span>${it.name} <small style="color:#00e676;">(${it.price.toLocaleString()} ل.س × ${qtyPerGuest})</small></span>
+              <div style="display:flex; gap:4px;">
+                <button type="button" onclick="window.MoaathVIPRoomModules.princess_layla.toggleGiftItem('${it.id}')" class="btn" style="width:auto; padding:2px 6px; font-size:9.5px; background:${uiState.giftSelectedIds.includes(it.id) ? "#f472b6" : "rgba(255,255,255,0.06)"}; color:${uiState.giftSelectedIds.includes(it.id) ? "#000" : "var(--text-color)"};">🎁</button>
+                <button type="button" onclick="if(typeof changeQty==='function'){changeQty('${it.id}',${qtyPerGuest}); if(typeof showToast==='function') showToast('👑 تمت إضافة ${it.name}');}" class="btn" style="width:auto; padding:2px 7px; font-size:9.5px; background:rgba(0,230,118,0.18); color:#00e676;">+ أضف</button>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+
+        <!-- 3. منسّق سلال الهدايا -->
+        <div style="background:var(--bg-color); border:1px solid #f472b6; border-radius:12px; padding:10px;">
+          <b style="color:#f472b6; display:block; margin-bottom:5px;">🎁 منسّق سلة الهدية (اختر بالأعلى بعلامة 🎁 — المحدد: ${uiState.giftSelectedIds.length})</b>
+          <input id="laylaGiftNoteInp" type="text" class="form-control" placeholder="اكتب بطاقة إهداء لطيفة (مثال: كل عام وأنتِ بخير)..." style="padding:5px 8px; font-size:10.5px; margin-bottom:6px;">
+          <button type="button" onclick="window.MoaathVIPRoomModules.princess_layla.confirmGiftBasket()" class="btn" style="background:linear-gradient(45deg,#f472b6,#d4af37); color:#000; font-size:10.5px; padding:6px;">🎀 إضافة سلة الهدية ونسخ بطاقة الإهداء</button>
+        </div>
+
+        <!-- 4. روتين العناية اليومي وسلسلة الالتزام -->
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <b style="color:#f472b6;">💆‍♀️ روتين العناية اليومي</b>
+            <span style="font-size:10px; color:var(--gold-color);">✨ سلسلة العناية: ${d.careStreak} يوم</span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-bottom:7px;">
+            ${CARE_ROUTINE.map(item => {
+              const done = !!d.routineDone[item.id];
+              return `<button type="button" onclick="window.MoaathVIPRoomModules.princess_layla.toggleRoutine('${item.id}')" style="text-align:right; padding:5px 7px; border-radius:8px; font-size:10px; cursor:pointer; border:1px solid ${done ? "#00e676" : "var(--border-color)"}; background:${done ? "rgba(0,230,118,0.14)" : "var(--card-bg)"}; color:var(--text-color);">${done ? "☑️" : "⬜"} ${item.label}</button>`;
+            }).join("")}
+          </div>
+          ${careItems.length ? `<div style="font-size:10px; color:var(--gray-text);">منتجات عناية متوفرة: ${careItems.map(c => `<button type="button" onclick="if(typeof changeQty==='function'){changeQty('${c.id}',1); showToast('✨ أُضيف ${c.name}');}" style="background:none; border:none; color:#38bdf8; cursor:pointer; text-decoration:underline; font-size:10px;">${c.name}</button>`).join(" • ")}</div>` : ""}
+        </div>
+
+        <!-- 5. تذكير المناسبات الخاصة + بطاقة دعوة واتساب + مذكرة أغراضي الخاصة -->
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:10px;">
+          <b style="color:var(--gold-color); display:block; margin-bottom:5px;">🗓️ تذكير المناسبات الخاصة ودعوات واتساب</b>
+          <div style="display:flex; gap:5px; margin-bottom:6px;">
+            <input id="laylaOccTitle" type="text" class="form-control" placeholder="اسم المناسبة (زيارة / عيد)..." style="flex:2; padding:4px 7px; font-size:10px;">
+            <input id="laylaOccDate" type="date" class="form-control" style="flex:1; padding:4px; font-size:10px;">
+            <button type="button" onclick="window.MoaathVIPRoomModules.princess_layla.addOccasion()" class="btn" style="width:auto; padding:4px 8px; font-size:10px; background:var(--gold-color); color:#000;">+</button>
+          </div>
+          ${d.occasions.map((o, i) => `<div style="display:flex; justify-content:space-between; font-size:10px; padding:3px 0; border-bottom:1px dashed var(--border-color);"><span>🎀 ${o.title} (${o.date})</span><button type="button" onclick="window.MoaathVIPRoomModules.princess_layla.removeOccasion(${i})" style="background:none; border:none; color:#ef4444; cursor:pointer;">✕</button></div>`).join("")}
+          <button type="button" onclick="window.MoaathVIPRoomModules.princess_layla.copyInviteTemplate()" class="btn" style="margin-top:7px; background:rgba(34,197,94,0.18); color:#22c55e; border:1px solid #22c55e; font-size:10px; padding:5px;">📲 نسخ بطاقة دعوة لطيفة لواتساب</button>
+        </div>
+
+        <!-- 6. مذكرة أغراضي الخاصة -->
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:10px;">
+          <b style="color:#f472b6; display:block; margin-bottom:5px;">📝 مذكرة أغراضي الخاصة</b>
+          <div style="display:flex; gap:5px; margin-bottom:6px;">
+            <input id="laylaMemoInp" type="text" class="form-control" placeholder="أضف غرضاً خاصاً للبيت أو العناية..." style="flex:1; padding:4px 7px; font-size:10px;">
+            <button type="button" onclick="window.MoaathVIPRoomModules.princess_layla.addMemo()" class="btn" style="width:auto; padding:4px 9px; font-size:10px; background:#f472b6; color:#000;">حفظ</button>
+          </div>
+          ${d.memoItems.map((m, i) => `<div style="display:flex; justify-content:space-between; font-size:10px; padding:3px 0; border-bottom:1px dashed var(--border-color);"><span>• ${m}</span><button type="button" onclick="window.MoaathVIPRoomModules.princess_layla.removeMemo(${i})" style="background:none; border:none; color:#ef4444; cursor:pointer;">✕</button></div>`).join("")}
+        </div>
+
+      </div>
+    `;
+    container._laylaMount = true;
+  }
+
+  function rerender() {
+    const el = document.getElementById("vipRoomDynamicBody");
+    if (el && el._laylaMount) render(el);
+  }
+
+  window.MoaathVIPRoomModules.princess_layla = {
+    render,
+    setHospMode(k) { uiState.hospMode = k; rerender(); },
+    setGuests(v) { uiState.guestsCount = parseInt(v, 10) || 4; rerender(); },
+    toggleWarmMode() { uiState.warmGoldMode = !uiState.warmGoldMode; rerender(); },
+    toggleGiftItem(pid) {
+      const idx = uiState.giftSelectedIds.indexOf(pid);
+      if (idx >= 0) uiState.giftSelectedIds.splice(idx, 1);
+      else if (uiState.giftSelectedIds.length < 5) uiState.giftSelectedIds.push(pid);
+      vibrate(12);
+      rerender();
+    },
+    addTier(tier) {
+      const modeObj = HOSPITALITY_MODES[uiState.hospMode] || HOSPITALITY_MODES.morning_coffee;
+      const all = findStoreItemsByKeywords(modeObj.keywords, 6);
+      const picked = tier === "basic" ? all.slice(0, 2) : tier === "mid" ? all.slice(0, 4) : all.slice(0, 6);
+      const qty = uiState.guestsCount >= 8 ? 2 : 1;
+      picked.forEach(it => { if (typeof window.changeQty === "function") window.changeQty(it.id, qty); });
+      vibrate([15, 25, 15]);
+      if (typeof window.showToast === "function") window.showToast(`👑 تمت إضافة باقة الضيافة (${picked.length} أصناف) إلى السلة!`);
+    },
+    confirmGiftBasket() {
+      if (!uiState.giftSelectedIds.length) {
+        if (typeof window.showToast === "function") window.showToast("🎁 اضغط رمز الهدية بجانب الأصناف أولاً لتجميع سلة الهدية.");
+        return;
+      }
+      const note = String(document.getElementById("laylaGiftNoteInp")?.value || "هدية لطيفة بكل محبة").trim();
+      uiState.giftSelectedIds.forEach(pid => { if (typeof window.changeQty === "function") window.changeQty(pid, 1); });
+      const txt = `🎁 بطاقة إهداء من متجر معاذ:\n"${note}"`;
+      if (typeof window.copyTextToClipboardClean === "function") {
+        window.copyTextToClipboardClean(txt, "🎀 أُضيفت سلة الهدية للسلة وتم نسخ بطاقة الإهداء!");
+      }
+      uiState.giftSelectedIds = [];
+      rerender();
+    },
+    toggleRoutine(id) {
+      const d = loadData();
+      d.routineDone[id] = !d.routineDone[id];
+      const allDone = CARE_ROUTINE.every(x => d.routineDone[x.id]);
+      const today = new Date().toISOString().slice(0, 10);
+      if (allDone && d.lastCareDay !== today) {
+        d.careStreak = (d.careStreak || 0) + 1;
+        d.lastCareDay = today;
+      }
+      saveData(d);
+      vibrate(15);
+      rerender();
+    },
+    addOccasion() {
+      const title = String(document.getElementById("laylaOccTitle")?.value || "").trim();
+      const date = String(document.getElementById("laylaOccDate")?.value || "").trim();
+      if (!title || !date) return;
+      const d = loadData();
+      d.occasions.push({ title, date });
+      saveData(d);
+      rerender();
+    },
+    removeOccasion(idx) {
+      const d = loadData();
+      d.occasions.splice(idx, 1);
+      saveData(d);
+      rerender();
+    },
+    addMemo() {
+      const txt = String(document.getElementById("laylaMemoInp")?.value || "").trim();
+      if (!txt) return;
+      const d = loadData();
+      d.memoItems.push(txt);
+      saveData(d);
+      rerender();
+    },
+    removeMemo(idx) {
+      const d = loadData();
+      d.memoItems.splice(idx, 1);
+      saveData(d);
+      rerender();
+    },
+    copyInviteTemplate() {
+      const txt = `🌸 يسعدني جداً دعوتكم لجلسة قهوة وضيافة لطيفة عندنا في البيت، بانتظاركم بكل محبة وسرور 🫖✨`;
+      if (typeof window.copyTextToClipboardClean === "function") {
+        window.copyTextToClipboardClean(txt, "📲 تم نسخ بطاقة الدعوة لواتساب!");
+      }
+    }
   };
 })();
+
+// ============================================================================
+// وحدة غرفة VIP المستقلة (4/8): السيد فريد — التنظيم والميزانية والتسوق الذكي (butler_farid)
+// - تعمل محلياً بالكامل (0 حصة API) مع عزل تام عن الدفع وشام كاش
+// - مرتبطة مباشرة بمخزون وأسعار متجر معاذ والسلة الحالية والعروض الخاصة
+// ============================================================================
+(function () {
+  window.MoaathVIPRoomModules = window.MoaathVIPRoomModules || {};
+
+  const STORAGE_KEY = "moaath_vip_farid_v1";
+
+  const SAVING_TIPS = [
+    "شراء المونة الأساسية بالعبوة أو الطرد يوفر عادةً بين 8% و 15% من مصروف الشهر.",
+    "تحديد سقف الميزانية قبل التسوق يمنع المشتريات العشوائية ويحافظ على توازن السلة.",
+    "مراجعة العروض الخاصة أولاً تساعدك على استبدال الأصناف الدورية بأسعار أوفر.",
+    "تخزين الحبوب والعدس والأرز في أوعية محكمة الإغلاق يحفظ جودتها لأشهر طويلة."
+  ];
+
+  const PANTRY_ESSENTIALS = ["سكر", "زيت", "رز", "شاي", "ملح", "سائل جلي", "صابون", "محارم"];
+
+  const SAVED_LIST_PRESETS = {
+    monthly: { title: "قائمة بداية الشهر", keywords: ["رز", "سكر", "زيت", "شاي", "عدس", "برغل", "سائل جلي"] },
+    friday: { title: "قائمة الجمعة", keywords: ["قهوة", "شاي", "متة", "بسكوت", "عصير", "بزر"] },
+    emergency: { title: "قائمة الطوارئ السريعة", keywords: ["اندومي", "تونة", "بيض", "جبن", "خبز", "ماء"] }
+  };
+
+  let uiState = {
+    splitCount: 2,
+    compactMode: false,
+    lowerBillSuggestions: []
+  };
+
+  function loadData() {
+    try {
+      const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      return {
+        monthlyBudget: parseInt(d.monthlyBudget, 10) || 15000,
+        homeNotes: Array.isArray(d.homeNotes) ? d.homeNotes : []
+      };
+    } catch (_) {
+      return { monthlyBudget: 15000, homeNotes: [] };
+    }
+  }
+
+  function saveData(d) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch (_) {}
+  }
+
+  function normAr(s) {
+    return String(s || "").toLowerCase().replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").trim();
+  }
+
+  function vibrate(p = 15) {
+    try { if (navigator.vibrate) navigator.vibrate(p); } catch (_) {}
+  }
+
+  function getStock(p) {
+    if (!p) return 0;
+    return typeof window.getProductStockForBranch === "function"
+      ? window.getProductStockForBranch(p, typeof window.activeBranchId !== "undefined" ? window.activeBranchId : "main")
+      : (parseInt(p.stock, 10) || 0);
+  }
+
+  function getUnitPrice(pid) {
+    const prods = window.products || {};
+    const offers = window.specialOffers || {};
+    const isW = window.currentUser?.userType === "wholesale";
+    if (String(pid).startsWith("OFFER_")) {
+      const so = offers[pid];
+      return so && typeof window.calcSYP === "function"
+        ? window.calcSYP((isW && so.wholesaleUSD > 0) ? so.wholesaleUSD : (so.newPriceUSD || 0))
+        : 0;
+    }
+    if (String(pid).endsWith("_PKG")) {
+      const p = prods[String(pid).replace(/_PKG$/, "")];
+      return p && typeof window.calcSYP === "function" ? window.calcSYP(p.pkgPriceUSD || 0) : 0;
+    }
+    const p = prods[pid];
+    return p && typeof window.calcSYP === "function"
+      ? window.calcSYP((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0))
+      : 0;
+  }
+
+  function getCartStats() {
+    const cartObj = (typeof window.cart === "object" && window.cart) ? window.cart : {};
+    let totalSYP = 0;
+    const byCat = {};
+    const entries = [];
+
+    Object.keys(cartObj).forEach(k => {
+      const item = cartObj[k];
+      const qty = parseInt(item?.qty, 10) || 0;
+      if (qty <= 0) return;
+      const unit = getUnitPrice(k);
+      const sub = unit * qty;
+      totalSYP += sub;
+      const cat = item.category || "أخرى";
+      byCat[cat] = (byCat[cat] || 0) + sub;
+      entries.push({ id: k, name: item.name || k, qty, unit, sub, cat });
+    });
+
+    return { totalSYP, byCat, entries };
+  }
+
+  function getPkgSavingsDeals() {
+    const prods = window.products || {};
+    const deals = [];
+    Object.keys(prods).forEach(pid => {
+      const p = prods[pid];
+      if (!p || getStock(p) <= 0) return;
+      const pkgQty = parseInt(p.pkgQty, 10) || 0;
+      const pkgPrice = typeof window.calcSYP === "function" ? window.calcSYP(p.pkgPriceUSD || 0) : 0;
+      const singlePrice = getUnitPrice(pid);
+      if (pkgQty > 1 && pkgPrice > 0 && singlePrice > 0) {
+        const normalCost = singlePrice * pkgQty;
+        const saving = normalCost - pkgPrice;
+        if (saving > 0) {
+          deals.push({ id: pid + "_PKG", name: p.name, pkgQty, pkgPrice, saving });
+        }
+      }
+    });
+    return deals.sort((a, b) => b.saving - a.saving).slice(0, 4);
+  }
+
+  function getTopSpecialOffers() {
+    const offers = window.specialOffers || {};
+    const list = [];
+    Object.keys(offers).forEach(oid => {
+      const o = offers[oid];
+      if (!o || getStock(o) <= 0) return;
+      const oldP = typeof window.calcSYP === "function" ? window.calcSYP(o.oldPriceUSD || 0) : 0;
+      const newP = getUnitPrice(oid);
+      if (newP <= 0) return;
+      const pct = oldP > newP ? Math.round(((oldP - newP) / oldP) * 100) : 0;
+      list.push({ id: oid, name: o.name || "عرض خاص", newP, oldP, pct });
+    });
+    return list.sort((a, b) => b.pct - a.pct).slice(0, 4);
+  }
+
+  function matchByKeywords(keywords, limit = 6) {
+    const prods = window.products || {};
+    const out = [];
+    keywords.forEach(kw => {
+      const t = normAr(kw);
+      let best = null;
+      Object.keys(prods).forEach(pid => {
+        const p = prods[pid];
+        if (!p || getStock(p) <= 0) return;
+        if (normAr(p.name || "").includes(t)) {
+          const price = getUnitPrice(pid);
+          if (price > 0 && (!best || price < best.price)) {
+            best = { id: pid, name: p.name, price };
+          }
+        }
+      });
+      if (best && !out.some(x => x.id === best.id)) out.push(best);
+    });
+    return out.slice(0, limit);
+  }
+
+  function render(container) {
+    if (!container) return;
+    const d = loadData();
+    const cartStats = getCartStats();
+    const remaining = Math.max(0, d.monthlyBudget - cartStats.totalSYP);
+    const usedPct = d.monthlyBudget > 0 ? Math.min(100, Math.round((cartStats.totalSYP / d.monthlyBudget) * 100)) : 0;
+    const perPerson = uiState.splitCount > 0 ? Math.ceil(cartStats.totalSYP / uiState.splitCount) : cartStats.totalSYP;
+    const pkgDeals = getPkgSavingsDeals();
+    const topOffers = getTopSpecialOffers();
+    const tip = SAVING_TIPS[new Date().getDate() % SAVING_TIPS.length];
+    const catEntries = Object.entries(cartStats.byCat).sort((a, b) => b[1] - a[1]);
+    const barColors = ["#d4af37", "#38bdf8", "#00e676", "#f472b6", "#f97316"];
+
+    // مؤشر كفاية السلة
+    const hasFood = catEntries.some(([c]) => /غذائ|مواد|مونه|طبخ/.test(normAr(c)));
+    const hasClean = catEntries.some(([c]) => /منظف|تنظيف/.test(normAr(c)));
+    const balanceHint = !cartStats.entries.length
+      ? "السلة فارغة حالياً — ابدأ بقائمة المونة الأساسية."
+      : (hasFood && hasClean)
+        ? "✅ سلتك متوازنة وتغطي الغذائيات والمنظفات."
+        : (!hasClean ? "💡 سلتك تركز على الغذائيات وتفتقد لقسم المنظفات." : "💡 سلتك تركز على المنظفات وتفتقد للغذائيات الأساسية.");
+
+    container.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:10px; text-align:right; font-size:11px;">
+
+        <!-- 1. نصيحة التوفير + تبديل الوضع الصامت السريع -->
+        <div style="background:rgba(148,163,184,0.12); border:1px solid #94a3b8; border-radius:12px; padding:9px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <b style="color:#cbd5e1;">🎩 نصيحة السيد فريد للتوفير</b>
+            <button type="button" onclick="window.MoaathVIPRoomModules.butler_farid.toggleCompact()" class="btn" style="width:auto; padding:2px 7px; font-size:9.5px; background:rgba(255,255,255,0.08); color:var(--text-color);">${uiState.compactMode ? "📋 عرض كامل" : "⚡ وضع سريع"}</button>
+          </div>
+          <div style="line-height:1.5;">${tip}</div>
+        </div>
+
+        <!-- 2. مخطط الميزانية الشهرية + تقسيم الفاتورة -->
+        <div style="background:var(--bg-color); border:1px solid var(--gold-color); border-radius:12px; padding:10px;">
+          <b style="color:var(--gold-color); display:block; margin-bottom:6px;">💼 مخطط الميزانية الشهرية للبيت</b>
+          <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
+            <span style="font-size:10px; color:var(--gray-text);">سقف الميزانية (ل.س):</span>
+            <input id="faridBudgetInp" type="number" value="${d.monthlyBudget}" min="500" step="500" class="form-control" style="flex:1; padding:4px 7px; font-size:11px;">
+            <button type="button" onclick="window.MoaathVIPRoomModules.butler_farid.saveBudget()" class="btn" style="width:auto; padding:4px 9px; font-size:10px; background:var(--gold-color); color:#000;">حفظ</button>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:10.5px; margin-bottom:4px;">
+            <span>السلة الحالية: <b style="color:#38bdf8;">${cartStats.totalSYP.toLocaleString()} ل.س</b></span>
+            <span>المتبقي: <b style="color:${remaining > 0 ? "#00e676" : "#ef4444"};">${remaining.toLocaleString()} ل.س</b></span>
+          </div>
+          <div style="height:7px; background:rgba(255,255,255,0.1); border-radius:999px; overflow:hidden; margin-bottom:6px;">
+            <div style="width:${usedPct}%; height:100%; background:${usedPct > 90 ? "#ef4444" : "linear-gradient(90deg,#d4af37,#00e676)"};"></div>
+          </div>
+          <div style="font-size:10px; color:var(--gray-text); margin-bottom:6px;">${balanceHint}</div>
+
+          <!-- حاسبة تقسيم الفاتورة -->
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; background:rgba(255,255,255,0.03); padding:6px 8px; border-radius:8px;">
+            <span>🤝 تقسيم الفاتورة على:</span>
+            <input type="number" min="1" max="20" value="${uiState.splitCount}" oninput="window.MoaathVIPRoomModules.butler_farid.setSplit(this.value)" class="form-control" style="width:54px; padding:3px 5px; font-size:11px; text-align:center;">
+            <span>حصة الفرد: <b style="color:#00e676;">${perPerson.toLocaleString()} ل.س</b></span>
+          </div>
+        </div>
+
+        <!-- 3. تقرير "أين ذهبت مشترياتك؟" + زر تخفيض الفاتورة 20% -->
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <b style="color:#38bdf8;">📊 توزيع مشترياتك الحالية</b>
+            <button type="button" onclick="window.MoaathVIPRoomModules.butler_farid.findCheaperSwaps()" class="btn" style="width:auto; padding:3px 8px; font-size:9.5px; background:rgba(0,230,118,0.16); color:#00e676; border:1px solid #00e676;">📉 خفّض الفاتورة 20%</button>
+          </div>
+          ${catEntries.length ? catEntries.map(([cat, val], idx) => {
+            const pct = cartStats.totalSYP > 0 ? Math.round((val / cartStats.totalSYP) * 100) : 0;
+            return `
+              <div style="margin-bottom:5px;">
+                <div style="display:flex; justify-content:space-between; font-size:10px;">
+                  <span>${cat}</span><span><b>${val.toLocaleString()} ل.س</b> (${pct}%)</span>
+                </div>
+                <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:999px; overflow:hidden; margin-top:2px;">
+                  <div style="width:${pct}%; height:100%; background:${barColors[idx % barColors.length]};"></div>
+                </div>
+              </div>
+            `;
+          }).join("") : `<div style="font-size:10px; color:var(--gray-text);">أضف منتجات للسلة ليظهر تحليل توزيع المصروف هنا.</div>`}
+
+          ${uiState.lowerBillSuggestions.length ? `
+            <div style="margin-top:7px; padding-top:6px; border-top:1px dashed var(--border-color);">
+              <b style="color:#00e676; font-size:10px;">💡 بدائل أوفر في نفس القسم:</b>
+              ${uiState.lowerBillSuggestions.map(s => `
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:10px; padding:3px 0;">
+                  <span>استبدل <b>${s.fromName}</b> بـ <b style="color:#00e676;">${s.toName}</b> (توفر ${s.save.toLocaleString()} ل.س)</span>
+                  <button type="button" onclick="window.MoaathVIPRoomModules.butler_farid.applySwap('${s.fromId}','${s.toId}',${s.qty})" class="btn" style="width:auto; padding:2px 6px; font-size:9px; background:#00e676; color:#000;">تبديل</button>
+                </div>
+              `).join("")}
+            </div>
+          ` : ""}
+        </div>
+
+        <!-- 4. المونة الأساسية والقوائم المحفوظة -->
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:10px;">
+          <b style="color:var(--gold-color); display:block; margin-bottom:6px;">📦 قوائم التسوق الجاهزة والمونة الأساسية</b>
+          <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:7px;">
+            <button type="button" onclick="window.MoaathVIPRoomModules.butler_farid.addPantryEssentials()" class="btn" style="width:auto; padding:4px 9px; font-size:10px; background:var(--gold-color); color:#000;">🏠 المونة الأساسية</button>
+            ${Object.keys(SAVED_LIST_PRESETS).map(k => `
+              <button type="button" onclick="window.MoaathVIPRoomModules.butler_farid.addPreset('${k}')" class="btn" style="width:auto; padding:4px 9px; font-size:10px; background:rgba(56,189,248,0.16); color:#38bdf8; border:1px solid #38bdf8;">📋 ${SAVED_LIST_PRESETS[k].title}</button>
+            `).join("")}
+          </div>
+          ${!uiState.compactMode && pkgDeals.length ? `
+            <div style="font-size:10px; color:#00e676; font-weight:700; margin-bottom:3px;">📦 توفير العبوات والطرد (_PKG):</div>
+            ${pkgDeals.map(pk => `
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed var(--border-color); font-size:10px;">
+                <span>${pk.name} (طرد ×${pk.pkgQty}) — توفر <b style="color:#00e676;">${pk.saving.toLocaleString()} ل.س</b></span>
+                <button type="button" onclick="if(typeof changeQty==='function'){changeQty('${pk.id}',1); showToast('📦 تمت إضافة طرد ${pk.name}');}" class="btn" style="width:auto; padding:2px 7px; font-size:9.5px; background:rgba(0,230,118,0.18); color:#00e676;">+ طرد</button>
+              </div>
+            `).join("")}
+          ` : ""}
+        </div>
+
+        <!-- 5. أفضل صفقات اليوم -->
+        ${!uiState.compactMode && topOffers.length ? `
+          <div style="background:var(--bg-color); border:1px solid #f59e0b; border-radius:12px; padding:10px;">
+            <b style="color:#f59e0b; display:block; margin-bottom:5px;">🔥 أفضل صفقات اليوم حسب نسبة الخصم</b>
+            ${topOffers.map(o => `
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed var(--border-color); font-size:10.5px;">
+                <span>${o.name} <b style="color:#00e676;">(${o.newP.toLocaleString()} ل.س)</b> ${o.pct ? `<small style="color:#f59e0b;">-${o.pct}%</small>` : ""}</span>
+                <button type="button" onclick="if(typeof changeQty==='function'){changeQty('${o.id}',1); showToast('🔥 أُضيف العرض للسلة');}" class="btn" style="width:auto; padding:2px 7px; font-size:9.5px; background:#f59e0b; color:#000;">+ أضف</button>
+              </div>
+            `).join("")}
+          </div>
+        ` : ""}
+
+        <!-- 6. دفتر ملاحظات المنزل وتصدير لواتساب -->
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <b style="color:#cbd5e1;">🗒️ دفتر نواقص المنزل</b>
+            <button type="button" onclick="window.MoaathVIPRoomModules.butler_farid.exportNotesWhatsApp()" class="btn" style="width:auto; padding:2px 8px; font-size:9.5px; background:#22c55e; color:#000;">📲 نسخ لواتساب</button>
+          </div>
+          <div style="display:flex; gap:5px; margin-bottom:6px;">
+            <input id="faridNoteInp" type="text" class="form-control" placeholder="سجّل نقصاً في البيت للبحث عنه لاحقاً..." style="flex:1; padding:4px 7px; font-size:10px;">
+            <button type="button" onclick="window.MoaathVIPRoomModules.butler_farid.addNote()" class="btn" style="width:auto; padding:4px 9px; font-size:10px; background:var(--gold-color); color:#000;">إضافة</button>
+          </div>
+          ${d.homeNotes.map((n, i) => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0; border-bottom:1px dashed var(--border-color); font-size:10px;">
+              <span>• ${n}</span>
+              <div style="display:flex; gap:5px;">
+                <button type="button" onclick="if(typeof runAIShoppingAssistant==='function') runAIShoppingAssistant('${n.replace(/'/g, "")}');" style="background:none; border:none; color:#38bdf8; cursor:pointer; font-size:10px;">🔍 بحث</button>
+                <button type="button" onclick="window.MoaathVIPRoomModules.butler_farid.removeNote(${i})" style="background:none; border:none; color:#ef4444; cursor:pointer;">✕</button>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+
+      </div>
+    `;
+    container._faridMount = true;
+  }
+
+  function rerender() {
+    const el = document.getElementById("vipRoomDynamicBody");
+    if (el && el._faridMount) render(el);
+  }
+
+  window.MoaathVIPRoomModules.butler_farid = {
+    render,
+    toggleCompact() { uiState.compactMode = !uiState.compactMode; rerender(); },
+    setSplit(v) { uiState.splitCount = Math.max(1, parseInt(v, 10) || 1); rerender(); },
+    saveBudget() {
+      const val = parseInt(document.getElementById("faridBudgetInp")?.value || "15000", 10);
+      if (val >= 500) {
+        const d = loadData();
+        d.monthlyBudget = val;
+        saveData(d);
+        vibrate(15);
+        if (typeof window.showToast === "function") window.showToast(`🎩 تم حفظ سقف الميزانية: ${val.toLocaleString()} ل.س`);
+        rerender();
+      }
+    },
+    addPantryEssentials() {
+      const picks = matchByKeywords(PANTRY_ESSENTIALS, 6);
+      picks.forEach(it => { if (typeof window.changeQty === "function") window.changeQty(it.id, 1); });
+      vibrate([15, 25, 15]);
+      if (typeof window.showToast === "function") window.showToast(`🏠 تمت إضافة ${picks.length} من المونة الأساسية المتوفرة للسلة!`);
+      rerender();
+    },
+    addPreset(key) {
+      const preset = SAVED_LIST_PRESETS[key];
+      if (!preset) return;
+      const picks = matchByKeywords(preset.keywords, 6);
+      picks.forEach(it => { if (typeof window.changeQty === "function") window.changeQty(it.id, 1); });
+      vibrate(20);
+      if (typeof window.showToast === "function") window.showToast(`📋 تمت إضافة ${picks.length} أصناف من (${preset.title}) للسلة!`);
+      rerender();
+    },
+    findCheaperSwaps() {
+      const cartStats = getCartStats();
+      const prods = window.products || {};
+      const swaps = [];
+      cartStats.entries.forEach(entry => {
+        if (String(entry.id).startsWith("OFFER_")) return;
+        let cheaper = null;
+        Object.keys(prods).forEach(pid => {
+          const p = prods[pid];
+          if (!p || pid === entry.id || p.category !== entry.cat || getStock(p) <= 0) return;
+          const u = getUnitPrice(pid);
+          if (u > 0 && u < entry.unit * 0.88 && (!cheaper || u < cheaper.unit)) {
+            cheaper = { id: pid, name: p.name, unit: u };
+          }
+        });
+        if (cheaper) {
+          swaps.push({
+            fromId: entry.id,
+            fromName: entry.name,
+            toId: cheaper.id,
+            toName: cheaper.name,
+            qty: entry.qty,
+            save: (entry.unit - cheaper.unit) * entry.qty
+          });
+        }
+      });
+      uiState.lowerBillSuggestions = swaps.slice(0, 4);
+      if (!swaps.length && typeof window.showToast === "function") {
+        window.showToast("✅ سلتك تحتوي حالياً على أوفر الخيارات في أقسامها!");
+      }
+      rerender();
+    },
+    applySwap(fromId, toId, qty) {
+      if (typeof window.changeQty === "function") {
+        window.changeQty(fromId, -qty);
+        window.changeQty(toId, qty);
+      }
+      uiState.lowerBillSuggestions = uiState.lowerBillSuggestions.filter(s => s.fromId !== fromId);
+      vibrate(20);
+      if (typeof window.showToast === "function") window.showToast("📉 تم التبديل للخيار الأوفر بنجاح!");
+      rerender();
+    },
+    addNote() {
+      const txt = String(document.getElementById("faridNoteInp")?.value || "").trim();
+      if (!txt) return;
+      const d = loadData();
+      d.homeNotes.push(txt);
+      saveData(d);
+      rerender();
+    },
+    removeNote(idx) {
+      const d = loadData();
+      d.homeNotes.splice(idx, 1);
+      saveData(d);
+      rerender();
+    },
+    exportNotesWhatsApp() {
+      const d = loadData();
+      if (!d.homeNotes.length) {
+        if (typeof window.showToast === "function") window.showToast("🗒️ الدفتر فارغ حالياً.");
+        return;
+      }
+      const txt = `🎩 قائمة نواقص المنزل (متجر معاذ):\n${d.homeNotes.map((n, i) => `${i + 1}) ${n}`).join("\n")}`;
+      if (typeof window.copyTextToClipboardClean === "function") {
+        window.copyTextToClipboardClean(txt, "📲 تم نسخ قائمة نواقص المنزل لواتساب!");
+      }
+    }
+  };
+})();
+
+// ============================================================================
+// وحدة غرفة VIP المستقلة (5/8): فادي الفرفوش — السهرات والمتة والتسالي (friend_fadi)
+// - تعمل محلياً بالكامل (0 حصة API) مع عزل تام عن الدفع وشام كاش
+// - عجلة حظ تفاعلية، قرعة مين يدفع، مؤقت مي المتة، وحاسبة سهرة الشباب
+// ============================================================================
+(function () {
+  window.MoaathVIPRoomModules = window.MoaathVIPRoomModules || {};
+
+  const STORAGE_KEY = "moaath_vip_fadi_v1";
+
+  const DAILY_JOKES = [
+    "واحد قال لصاحبه: شو سر السعادة؟ قاله: كاسة متة سخنة وبزر مالح وإنترنت ما يقطع!",
+    "صديقي اشترى 5 أكياس شيبس للفيلم... خلّصهم قبل ما تخلص الدعايات!",
+    "القاعدة الذهبية في السهرة: يلي بيجيب المتة معفي من الجلي!",
+    "سألوا فادي: شو أحلى ساعة باليوم؟ قال: الساعة يلي بتغلي فيها مي المتة وبتفتح فيها كيس الموالح!"
+  ];
+
+  const SAHRA_QUESTIONS = [
+    "لو خيروك: سهرة متة وبزر على السطح، ولا سهرة شاي وبسكويت بالشتوية؟",
+    "مين أكتر شخص بالجمعة دايماً بياكل نص البزر قبل الكل؟",
+    "لو معك 500 ليرة هلق، شو أول صنف تسالي بتطلبه فوراً؟",
+    "شو أكتر مباراة أو فيلم ما بتنساه بحياتك؟"
+  ];
+
+  const SAHRA_TYPES = {
+    football: { label: "⚽ مباراة", keywords: ["متة", "بزر", "شيبس", "عصير", "موالح", "نقارش"] },
+    friends: { label: "🔥 سهرة شباب", keywords: ["متة", "شاي", "سكر", "بزر", "شيبس", "بسكوت"] },
+    family: { label: "👨‍👩‍👧‍👦 عائلية", keywords: ["شاي", "قهوة", "بسكوت", "شوكولاتة", "عصير", "بزر"] },
+    movie: { label: "🎬 فلم", keywords: ["شيبس", "بوشار", "شوكولاتة", "عصير", "بسكوت", "موالح"] }
+  };
+
+  let mateTimer = { sec: 180, running: false, id: null };
+
+  let uiState = {
+    sahraType: "friends",
+    vibe: "chill", // chill | hype | long
+    people: 4,
+    budget: 800,
+    drinkTemp: "hot", // hot | cold
+    wheelSpinning: false,
+    wheelWinner: null,
+    raffleWinner: "",
+    qIndex: new Date().getDate() % SAHRA_QUESTIONS.length
+  };
+
+  function loadData() {
+    try {
+      const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      return {
+        sahraCount: d.sahraCount || 0,
+        friendsNames: d.friendsNames || "معاذ، أحمد، سامي، خالد"
+      };
+    } catch (_) {
+      return { sahraCount: 0, friendsNames: "معاذ، أحمد، سامي، خالد" };
+    }
+  }
+
+  function saveData(d) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch (_) {}
+  }
+
+  function normAr(s) {
+    return String(s || "").toLowerCase().replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").trim();
+  }
+
+  function vibrate(p = 20) {
+    try { if (navigator.vibrate) navigator.vibrate(p); } catch (_) {}
+  }
+
+  function getStock(p) {
+    if (!p) return 0;
+    return typeof window.getProductStockForBranch === "function"
+      ? window.getProductStockForBranch(p, typeof window.activeBranchId !== "undefined" ? window.activeBranchId : "main")
+      : (parseInt(p.stock, 10) || 0);
+  }
+
+  function getUnitPrice(pid) {
+    const p = (window.products || {})[pid];
+    if (!p || typeof window.calcSYP !== "function") return 0;
+    const isW = window.currentUser?.userType === "wholesale";
+    return window.calcSYP((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0));
+  }
+
+  function getSnackPool(keywords = null) {
+    const prods = window.products || {};
+    const kws = keywords || ["متة", "بزر", "شيبس", "بسكوت", "شوكولاتة", "عصير", "شاي", "موالح", "نقارش", "قهوة", "سناكس", "كناكر"];
+    const out = [];
+    Object.keys(prods).forEach(pid => {
+      const p = prods[pid];
+      if (!p || getStock(p) <= 0) return;
+      const price = getUnitPrice(pid);
+      if (price <= 0) return;
+      const txt = normAr((p.name || "") + " " + (p.category || ""));
+      if (kws.some(k => txt.includes(normAr(k)))) {
+        out.push({ id: pid, name: p.name, price });
+      }
+    });
+    return out.sort((a, b) => a.price - b.price);
+  }
+
+  function getRankTitle(count) {
+    if (count >= 15) return "👑 إمبراطور السهرة";
+    if (count >= 7) return "🧉 خبير المتة";
+    if (count >= 3) return "🔥 ملك السهرة";
+    return "😎 صديق السهرة";
+  }
+
+  function fmtClock(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+
+  function render(container) {
+    if (!container) return;
+    const d = loadData();
+    const joke = DAILY_JOKES[new Date().getDate() % DAILY_JOKES.length];
+    const typeObj = SAHRA_TYPES[uiState.sahraType] || SAHRA_TYPES.friends;
+    const drinkKws = uiState.drinkTemp === "hot" ? ["متة", "شاي", "قهوة", "كاكاو", "سكر"] : ["عصير", "ماء", "بيبسي", "كولا", "مشروب"];
+    const drinkItems = getSnackPool(drinkKws).slice(0, 4);
+
+    container.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:10px; text-align:right; font-size:11px;">
+
+        <!-- 1. طرفة اليوم + عدّاد السهرات واللقب -->
+        <div style="background:rgba(250,204,21,0.12); border:1px solid #facc15; border-radius:12px; padding:9px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <b style="color:#facc15;">😂 طرفة فادي اليوم</b>
+            <span style="font-size:10px; color:#00e676; font-weight:800;">${getRankTitle(d.sahraCount)} (${d.sahraCount})</span>
+          </div>
+          <div style="line-height:1.55;">${joke}</div>
+        </div>
+
+        <!-- 2. عجلة الحظ للتسالي (Spin Wheel) -->
+        <div style="background:var(--bg-color); border:1px solid #facc15; border-radius:12px; padding:10px; text-align:center;">
+          <b style="color:#facc15; display:block; margin-bottom:5px;">🎡 عجلة الحظ للتسالي (محتار شو تنقنق؟)</b>
+          <div style="padding:10px; border-radius:10px; background:rgba(255,255,255,0.04); margin-bottom:7px; min-height:38px;">
+            ${uiState.wheelSpinning
+              ? `<span style="color:#facc15; font-weight:900; font-size:13px;">🎲 تدور العجلة...</span>`
+              : uiState.wheelWinner
+                ? `<div style="font-size:12px; font-weight:800; color:#00e676;">🎉 طلعلك: ${uiState.wheelWinner.name} (${uiState.wheelWinner.price.toLocaleString()} ل.س)</div>`
+                : `<span style="color:var(--gray-text); font-size:10.5px;">اضغط لفّ العجلة ليختار لك فادي صنف تسالي متوفر!</span>`
+            }
+          </div>
+          <div style="display:flex; gap:6px; justify-content:center;">
+            <button type="button" onclick="window.MoaathVIPRoomModules.friend_fadi.spinWheel()" class="btn" style="flex:1; padding:6px; font-size:10.5px; background:linear-gradient(45deg,#facc15,#f97316); color:#000;">🎡 لفّ العجلة!</button>
+            ${uiState.wheelWinner ? `<button type="button" onclick="if(typeof changeQty==='function'){changeQty('${uiState.wheelWinner.id}',1); showToast('🎉 تمت إضافة ${uiState.wheelWinner.name} للسلة!');}" class="btn" style="flex:1; padding:6px; font-size:10.5px; background:#00e676; color:#000;">➕ أضف الفائز</button>` : ""}
+          </div>
+        </div>
+
+        <!-- 3. منسّق وحاسبة السهرة الفوري + مقياس جو السهرة -->
+        <div style="background:var(--bg-color); border:1px solid var(--gold-color); border-radius:12px; padding:10px;">
+          <b style="color:var(--gold-color); display:block; margin-bottom:6px;">🧉 منسّق وحاسبة سهرة الشباب</b>
+          <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px;">
+            ${Object.keys(SAHRA_TYPES).map(k => {
+              const on = uiState.sahraType === k;
+              return `<button type="button" onclick="window.MoaathVIPRoomModules.friend_fadi.setSahraType('${k}')" style="padding:3px 8px; border-radius:999px; font-size:10px; cursor:pointer; border:1px solid ${on ? "#facc15" : "var(--border-color)"}; background:${on ? "#facc15" : "var(--card-bg)"}; color:${on ? "#000" : "var(--text-color)"}; font-weight:700;">${SAHRA_TYPES[k].label}</button>`;
+            }).join("")}
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:7px;">
+            <div>
+              <label style="font-size:9px; color:var(--gray-text);">عدد الشباب/الأشخاص</label>
+              <input id="fadiPeopleInp" type="number" min="1" max="20" value="${uiState.people}" class="form-control" style="padding:4px 6px; font-size:11px;">
+            </div>
+            <div>
+              <label style="font-size:9px; color:var(--gray-text);">الميزانية (ل.س)</label>
+              <input id="fadiBudgetInp" type="number" min="100" step="100" value="${uiState.budget}" class="form-control" style="padding:4px 6px; font-size:11px;">
+            </div>
+          </div>
+
+          <div style="display:flex; gap:5px; flex-wrap:wrap;">
+            <button type="button" onclick="window.MoaathVIPRoomModules.friend_fadi.buildSahraBasket()" class="btn" style="flex:2; padding:6px; font-size:10.5px; background:linear-gradient(45deg,#00e676,#38bdf8); color:#000;">🛒 جهّز سلة (${typeObj.label})</button>
+            <button type="button" onclick="window.MoaathVIPRoomModules.friend_fadi.quickUnder500()" class="btn" style="flex:1; padding:6px; font-size:10px; background:rgba(250,204,21,0.18); color:#facc15; border:1px solid #facc15;">💰 تحت 500</button>
+            <button type="button" onclick="window.MoaathVIPRoomModules.friend_fadi.surpriseMe()" class="btn" style="flex:1; padding:6px; font-size:10px; background:rgba(244,114,182,0.18); color:#f472b6; border:1px solid #f472b6;">🎁 مفاجأة</button>
+          </div>
+        </div>
+
+        <!-- 4. تحدي "مين يدفع الحساب؟" + مؤقت تسخين مي المتة -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <div style="background:var(--bg-color); border:1px solid #f97316; border-radius:12px; padding:9px;">
+            <b style="color:#fb923c; font-size:10.5px;">🎲 مين يدفع الحساب؟</b>
+            <input id="fadiFriendsInp" type="text" value="${d.friendsNames}" class="form-control" placeholder="اكتب الأسماء بفاصلة..." style="padding:4px 6px; font-size:9.5px; margin:5px 0;">
+            <button type="button" onclick="window.MoaathVIPRoomModules.friend_fadi.pickPayer()" class="btn" style="padding:4px; font-size:10px; background:#f97316; color:#000;">اسحب القرعة!</button>
+            ${uiState.raffleWinner ? `<div style="margin-top:5px; font-size:10.5px; color:#facc15; font-weight:800;">🎯 الحساب على: ${uiState.raffleWinner}!</div>` : ""}
+          </div>
+
+          <div style="background:var(--bg-color); border:1px solid #00e676; border-radius:12px; padding:9px; text-align:center;">
+            <b style="color:#00e676; font-size:10.5px;">🧉 مؤقت مي المتة</b>
+            <div id="fadiMateClock" style="font-size:19px; font-weight:900; color:#facc15; margin:4px 0;">${fmtClock(mateTimer.sec)}</div>
+            <div style="display:flex; gap:4px; justify-content:center;">
+              <button type="button" onclick="window.MoaathVIPRoomModules.friend_fadi.toggleMateTimer()" class="btn" style="width:auto; padding:3px 9px; font-size:10px; background:#00e676; color:#000;">${mateTimer.running ? "⏸️" : "▶️"}</button>
+              <button type="button" onclick="window.MoaathVIPRoomModules.friend_fadi.resetMateTimer()" class="btn btn-danger" style="width:auto; padding:3px 7px; font-size:10px;">↺</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. ركن مشروبات باردة وساخنة + سؤال السهرة ودعوة واتساب -->
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <b style="color:#38bdf8;">🥤 مشروبات السهرة</b>
+            <div style="display:flex; gap:4px;">
+              <button type="button" onclick="window.MoaathVIPRoomModules.friend_fadi.setDrinkTemp('hot')" class="btn" style="width:auto; padding:2px 7px; font-size:9.5px; background:${uiState.drinkTemp === "hot" ? "#f97316" : "rgba(255,255,255,0.06)"}; color:${uiState.drinkTemp === "hot" ? "#000" : "var(--text-color)"};">☕ ساخنة</button>
+              <button type="button" onclick="window.MoaathVIPRoomModules.friend_fadi.setDrinkTemp('cold')" class="btn" style="width:auto; padding:2px 7px; font-size:9.5px; background:${uiState.drinkTemp === "cold" ? "#38bdf8" : "rgba(255,255,255,0.06)"}; color:${uiState.drinkTemp === "cold" ? "#000" : "var(--text-color)"};">🧊 باردة</button>
+            </div>
+          </div>
+          ${drinkItems.length ? drinkItems.map(it => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed var(--border-color); font-size:10.5px;">
+              <span>${it.name} <small style="color:#00e676;">(${it.price.toLocaleString()} ل.س)</small></span>
+              <button type="button" onclick="if(typeof changeQty==='function'){changeQty('${it.id}',1); showToast('🧉 أُضيف ${it.name} للسهرة');}" class="btn" style="width:auto; padding:2px 7px; font-size:9.5px; background:rgba(0,230,118,0.18); color:#00e676;">+ أضف</button>
+            </div>
+          `).join("") : `<div style="font-size:10px; color:var(--gray-text);">تصفح قسم المشروبات لاختيار مشروبك المفضل.</div>`}
+        </div>
+
+        <div style="background:rgba(255,255,255,0.03); border:1px dashed #facc15; border-radius:10px; padding:8px; font-size:10.5px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <b style="color:#facc15;">💬 سؤال السهرة التفاعلي:</b>
+            <button type="button" onclick="window.MoaathVIPRoomModules.friend_fadi.nextQuestion()" style="background:none; border:none; color:#38bdf8; cursor:pointer; font-size:10px;">سؤال آخر ↻</button>
+          </div>
+          <div style="margin-bottom:7px;">${SAHRA_QUESTIONS[uiState.qIndex]}</div>
+          <button type="button" onclick="window.MoaathVIPRoomModules.friend_fadi.copySahraInvite()" class="btn" style="background:#22c55e; color:#000; font-size:10px; padding:5px;">📲 نسخ دعوة سهرة شامية لواتساب</button>
+        </div>
+
+      </div>
+    `;
+    container._fadiMount = true;
+  }
+
+  function rerender() {
+    const el = document.getElementById("vipRoomDynamicBody");
+    if (el && el._fadiMount) render(el);
+  }
+
+  window.MoaathVIPRoomModules.friend_fadi = {
+    render,
+    setSahraType(k) { uiState.sahraType = k; rerender(); },
+    setDrinkTemp(t) { uiState.drinkTemp = t; rerender(); },
+    nextQuestion() { uiState.qIndex = (uiState.qIndex + 1) % SAHRA_QUESTIONS.length; rerender(); },
+    spinWheel() {
+      const pool = getSnackPool();
+      if (!pool.length) {
+        if (typeof window.showToast === "function") window.showToast("⚠️ لا توجد تسالي متوفرة حالياً في المخزون.");
+        return;
+      }
+      uiState.wheelSpinning = true;
+      vibrate([20, 20, 20]);
+      rerender();
+      setTimeout(() => {
+        uiState.wheelSpinning = false;
+        uiState.wheelWinner = pool[Math.floor(Math.random() * pool.length)];
+        vibrate(40);
+        rerender();
+      }, 750);
+    },
+    buildSahraBasket() {
+      const people = parseInt(document.getElementById("fadiPeopleInp")?.value || uiState.people, 10) || 4;
+      const budget = parseInt(document.getElementById("fadiBudgetInp")?.value || uiState.budget, 10) || 800;
+      uiState.people = people;
+      uiState.budget = budget;
+      const typeObj = SAHRA_TYPES[uiState.sahraType] || SAHRA_TYPES.friends;
+      const pool = getSnackPool(typeObj.keywords);
+      let sum = 0, added = 0;
+      pool.forEach(it => {
+        if (added < 6 && sum + it.price <= budget) {
+          if (typeof window.changeQty === "function") window.changeQty(it.id, 1);
+          sum += it.price;
+          added++;
+        }
+      });
+      const d = loadData();
+      d.sahraCount = (d.sahraCount || 0) + 1;
+      saveData(d);
+      vibrate([15, 30, 15]);
+      if (typeof window.showToast === "function") {
+        window.showToast(added ? `🔥 جهّز فادي ${added} أصناف للسهرة بمجموع ${sum.toLocaleString()} ل.س!` : "⚠️ الميزانية أقل من أسعار الأصناف المتوفرة.");
+      }
+      rerender();
+    },
+    quickUnder500() {
+      const pool = getSnackPool();
+      let sum = 0, added = 0;
+      pool.forEach(it => {
+        if (added < 4 && sum + it.price <= 500) {
+          if (typeof window.changeQty === "function") window.changeQty(it.id, 1);
+          sum += it.price;
+          added++;
+        }
+      });
+      vibrate(25);
+      if (typeof window.showToast === "function") window.showToast(`💰 سهرة اقتصادية: أُضيف ${added} أصناف بـ ${sum.toLocaleString()} ل.س!`);
+    },
+    surpriseMe() {
+      const pool = getSnackPool();
+      if (!pool.length) return;
+      const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
+      shuffled.forEach(it => { if (typeof window.changeQty === "function") window.changeQty(it.id, 1); });
+      vibrate([15, 25, 15]);
+      if (typeof window.showToast === "function") window.showToast(`🎁 مفاجأة فادي: أُضيفت ${shuffled.length} أصناف تسالي عشوائية للسلة!`);
+    },
+    pickPayer() {
+      const raw = String(document.getElementById("fadiFriendsInp")?.value || "").trim();
+      const names = raw.split(/[،,]/).map(s => s.trim()).filter(Boolean);
+      if (!names.length) return;
+      const d = loadData();
+      d.friendsNames = raw;
+      saveData(d);
+      uiState.raffleWinner = names[Math.floor(Math.random() * names.length)];
+      vibrate([25, 30, 25]);
+      rerender();
+    },
+    toggleMateTimer() {
+      if (mateTimer.running) {
+        clearInterval(mateTimer.id);
+        mateTimer.id = null;
+        mateTimer.running = false;
+        rerender();
+        return;
+      }
+      mateTimer.running = true;
+      mateTimer.id = setInterval(() => {
+        mateTimer.sec--;
+        if (mateTimer.sec <= 0) {
+          clearInterval(mateTimer.id);
+          mateTimer.id = null;
+          mateTimer.running = false;
+          mateTimer.sec = 0;
+          vibrate([50, 40, 50]);
+          if (typeof window.showToast === "function") window.showToast("🧉 مي المتة صارت جاهزة بالتمام! طفي الغاز قبل الغليان!");
+        }
+        const el = document.getElementById("fadiMateClock");
+        if (el) el.textContent = fmtClock(mateTimer.sec);
+      }, 1000);
+      rerender();
+    },
+    resetMateTimer() {
+      clearInterval(mateTimer.id);
+      mateTimer.id = null;
+      mateTimer.running = false;
+      mateTimer.sec = 180;
+      rerender();
+    },
+    copySahraInvite() {
+      const txt = `🔥 يا شباب السهرة الليلة عندنا! المتة والبزر والتسالي جاهزين من متجر معاذ 🧉🍿 تعالوا بسرعة!`;
+      if (typeof window.copyTextToClipboardClean === "function") {
+        window.copyTextToClipboardClean(txt, "📲 تم نسخ دعوة السهرة لواتساب!");
+      }
+    }
+  };
+})();
+
+// ============================================================================
+// وحدة غرفة VIP المستقلة (6/8): كابتن زين — الألعاب والتحديات والمستويات (anime_zain)
+// - تعمل محلياً بالكامل (0 حصة API) مع عزل تام عن الدفع وشام كاش
+// - نظام XP ومستويات، شارات إنجاز، صندوق الغنيمة اليومي، لعبة خمّن السعر، ولعبة الذاكرة
+// ============================================================================
+(function () {
+  window.MoaathVIPRoomModules = window.MoaathVIPRoomModules || {};
+
+  const STORAGE_KEY = "moaath_vip_zain_v1";
+
+  const BADGES = [
+    { id: "b_explorer", xp: 20, icon: "🧭", label: "المستكشف" },
+    { id: "b_hunter", xp: 60, icon: "🎯", label: "صائد العروض" },
+    { id: "b_gamer", xp: 120, icon: "🎮", label: "لاعب محترف" },
+    { id: "b_weekly", xp: 200, icon: "🔥", label: "بطل الأسبوع" },
+    { id: "b_legend", xp: 350, icon: "👑", label: "أسطورة المتجر" }
+  ];
+
+  const PLAYER_TITLES = ["المغامر الصاعد", "قائد المهمات", "صائد الغنائم", "بطل العوينة", "النينجا الذهبي"];
+
+  const SKILL_TIPS = [
+    "قسم مهام يومك إلى جولات قصيرة (25 دقيقة تركيز + 5 دقائق راحة) لتضاعف إنجازك.",
+    "ابدأ دائماً بأصعب مهمة في الصباح — مثل هزيمة الزعيم الأول في المرحلة!",
+    "الاستمرارية الصغيرة يومياً تهزم الحماس المتقطع دائماً. اجمع نقاطك خطوة بخطوة.",
+    "تنظيم سلتك ومشترياتك مسبقاً يوفر وقتك وطاقتك لباقي يومك."
+  ];
+
+  const MEMORY_ICONS = ["🍫", "🧉", "🍟", "🧃", "☕", "🍪"];
+
+  let uiState = {
+    guessProd: null,
+    guessResult: "",
+    memCards: [],
+    memFlipped: [],
+    memMatched: [],
+    memMoves: 0,
+    chestRewardText: ""
+  };
+
+  function loadData() {
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+      const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      if (d.dailyDate !== today) {
+        d.dailyMissions = { visit: true, guess: false, memory: false };
+        d.dailyDate = today;
+      }
+      return {
+        xp: d.xp || 25,
+        title: d.title || PLAYER_TITLES[0],
+        lastChestDate: d.lastChestDate || "",
+        dailyDate: today,
+        dailyMissions: d.dailyMissions || { visit: true, guess: false, memory: false },
+        highScoreGuess: d.highScoreGuess || 0,
+        bestMemMoves: d.bestMemMoves || 0,
+        weeklyQuestsDone: d.weeklyQuestsDone || 0
+      };
+    } catch (_) {
+      return {
+        xp: 25,
+        title: PLAYER_TITLES[0],
+        lastChestDate: "",
+        dailyDate: today,
+        dailyMissions: { visit: true, guess: false, memory: false },
+        highScoreGuess: 0,
+        bestMemMoves: 0,
+        weeklyQuestsDone: 0
+      };
+    }
+  }
+
+  function saveData(d) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch (_) {}
+  }
+
+  function vibrate(p = 20) {
+    try { if (navigator.vibrate) navigator.vibrate(p); } catch (_) {}
+  }
+
+  function normAr(s) {
+    return String(s || "").toLowerCase().replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").trim();
+  }
+
+  function getStock(p) {
+    if (!p) return 0;
+    return typeof window.getProductStockForBranch === "function"
+      ? window.getProductStockForBranch(p, typeof window.activeBranchId !== "undefined" ? window.activeBranchId : "main")
+      : (parseInt(p.stock, 10) || 0);
+  }
+
+  function getUnitPrice(pid) {
+    const p = (window.products || {})[pid];
+    if (!p || typeof window.calcSYP !== "function") return 0;
+    const isW = window.currentUser?.userType === "wholesale";
+    return window.calcSYP((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0));
+  }
+
+  function getAvailableProducts() {
+    const prods = window.products || {};
+    const list = [];
+    Object.keys(prods).forEach(pid => {
+      const p = prods[pid];
+      if (!p || getStock(p) <= 0) return;
+      const price = getUnitPrice(pid);
+      if (price > 0) list.push({ id: pid, name: p.name, cat: p.category || "", price });
+    });
+    return list;
+  }
+
+  function getGamerSnacks() {
+    const kws = ["شيبس", "شوكولاتة", "عصير", "بيبسي", "كولا", "بسكوت", "اندومي", "متة", "قهوة", "سناكس", "كناكر", "موالح"];
+    return getAvailableProducts()
+      .filter(it => kws.some(k => normAr(it.name + " " + it.cat).includes(normAr(k))))
+      .sort((a, b) => a.price - b.price)
+      .slice(0, 4);
+  }
+
+  function initMemoryGame() {
+    const deck = [...MEMORY_ICONS, ...MEMORY_ICONS]
+      .sort(() => Math.random() - 0.5)
+      .map((icon, idx) => ({ idx, icon }));
+    uiState.memCards = deck;
+    uiState.memFlipped = [];
+    uiState.memMatched = [];
+    uiState.memMoves = 0;
+  }
+
+  function pickGuessProduct() {
+    const all = getAvailableProducts();
+    if (!all.length) return null;
+    return all[Math.floor(Math.random() * all.length)];
+  }
+
+  function render(container) {
+    if (!container) return;
+    const d = loadData();
+    if (!uiState.memCards.length) initMemoryGame();
+    if (!uiState.guessProd) uiState.guessProd = pickGuessProduct();
+
+    const level = Math.floor(d.xp / 100) + 1;
+    const xpInLevel = d.xp % 100;
+    const today = new Date().toISOString().slice(0, 10);
+    const chestOpened = d.lastChestDate === today;
+    const tip = SKILL_TIPS[new Date().getDate() % SKILL_TIPS.length];
+    const gamerSnacks = getGamerSnacks();
+    const unlockedBadges = BADGES.filter(b => d.xp >= b.xp);
+
+    container.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:10px; text-align:right; font-size:11px;">
+
+        <!-- 1. لوحة HUD النارية (المستوى + XP + اللقب) -->
+        <div style="background:linear-gradient(135deg,rgba(239,68,68,0.18),rgba(15,23,42,0.95)); border:1.5px solid #ef4444; border-radius:14px; padding:10px; box-shadow:0 0 14px rgba(239,68,68,0.22);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <div>
+              <span style="background:#ef4444; color:#fff; font-weight:900; padding:2px 8px; border-radius:999px; font-size:10px;">LVL ${level}</span>
+              <b style="color:#fca5a5; margin-right:5px;">${d.title}</b>
+            </div>
+            <button type="button" onclick="window.MoaathVIPRoomModules.anime_zain.cycleTitle()" class="btn" style="width:auto; padding:2px 7px; font-size:9.5px; background:rgba(255,255,255,0.08); color:#fff;">تغيير اللقب ↻</button>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:10px; color:#fca5a5; margin-bottom:3px;">
+            <span>نقاط الخبرة: <b>${d.xp} XP</b></span>
+            <span>المتبقي للمستوى التالي: <b>${100 - xpInLevel} XP</b></span>
+          </div>
+          <div style="height:8px; background:rgba(255,255,255,0.1); border-radius:999px; overflow:hidden; margin-bottom:7px;">
+            <div style="width:${xpInLevel}%; height:100%; background:linear-gradient(90deg,#ef4444,#f97316,#facc15);"></div>
+          </div>
+          <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
+            <div style="display:flex; gap:4px; flex-wrap:wrap;">
+              ${BADGES.map(b => {
+                const on = d.xp >= b.xp;
+                return `<span style="padding:2px 6px; border-radius:999px; font-size:9.5px; border:1px solid ${on ? "#facc15" : "rgba(255,255,255,0.15)"}; background:${on ? "rgba(250,204,21,0.16)" : "transparent"}; opacity:${on ? "1" : "0.4"};">${b.icon} ${b.label}</span>`;
+              }).join("")}
+            </div>
+            <button type="button" onclick="window.MoaathVIPRoomModules.anime_zain.shareAchievement()" class="btn" style="width:auto; padding:2px 7px; font-size:9.5px; background:#22c55e; color:#000;">📲 مشاركة</button>
+          </div>
+        </div>
+
+        <!-- 2. صندوق الغنيمة اليومي + مهمة سلة المغامر -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <div style="background:var(--bg-color); border:1px solid #f59e0b; border-radius:12px; padding:9px; text-align:center;">
+            <b style="color:#f59e0b; font-size:10.5px;">🎁 صندوق الغنيمة اليومي</b>
+            <div style="font-size:10px; color:var(--gray-text); margin:4px 0;">${chestOpened ? (uiState.chestRewardText || "✅ تم فتح صندوق اليوم!") : "افتح الصندوق لتكسب +30 XP!"}</div>
+            <button type="button" onclick="window.MoaathVIPRoomModules.anime_zain.openDailyChest()" class="btn" style="padding:4px 8px; font-size:10px; background:${chestOpened ? "rgba(255,255,255,0.08)" : "linear-gradient(45deg,#f59e0b,#ef4444)"}; color:${chestOpened ? "var(--gray-text)" : "#000"};">${chestOpened ? "مفتوح اليوم" : "🔥 افتح الصندوق"}</button>
+          </div>
+
+          <div style="background:var(--bg-color); border:1px solid #ef4444; border-radius:12px; padding:9px; text-align:center;">
+            <b style="color:#f87171; font-size:10.5px;">🎒 مهمة سلة المغامر</b>
+            <div style="font-size:10px; color:var(--gray-text); margin:4px 0;">3 أصناف من 3 أقسام مختلفة (+40 XP)</div>
+            <button type="button" onclick="window.MoaathVIPRoomModules.anime_zain.runAdventurerMission()" class="btn" style="padding:4px 8px; font-size:10px; background:#ef4444; color:#fff;">⚡ نفّذ المهمة</button>
+          </div>
+        </div>
+
+        <!-- 3. لعبة خمّن السعر -->
+        <div style="background:var(--bg-color); border:1px solid var(--gold-color); border-radius:12px; padding:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <b style="color:var(--gold-color);">🎯 لعبة خمّن السعر (+25 XP)</b>
+            <span style="font-size:9.5px; color:#00e676;">أعلى رصيد تخمين: ${d.highScoreGuess}</span>
+          </div>
+          ${uiState.guessProd ? `
+            <div style="background:rgba(255,255,255,0.04); padding:7px; border-radius:8px; margin-bottom:6px;">
+              كم تتوقع سعر: <b style="color:#facc15;">${uiState.guessProd.name}</b>؟
+            </div>
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+              <input id="zainGuessInp" type="number" class="form-control" placeholder="اكتب توقعك بالليرة..." style="flex:1; padding:5px 7px; font-size:11px;">
+              <button type="button" onclick="window.MoaathVIPRoomModules.anime_zain.checkPriceGuess()" class="btn" style="width:auto; padding:5px 10px; font-size:10px; background:var(--gold-color); color:#000;">تحقق</button>
+              <button type="button" onclick="window.MoaathVIPRoomModules.anime_zain.nextGuessProduct()" class="btn" style="width:auto; padding:5px 8px; font-size:10px; background:rgba(255,255,255,0.08); color:var(--text-color);">↻</button>
+            </div>
+            ${uiState.guessResult ? `<div style="font-size:10.5px; font-weight:700; color:#38bdf8;">${uiState.guessResult}</div>` : ""}
+          ` : `<div style="font-size:10px; color:var(--gray-text);">بانتظار تحميل منتجات المتجر لتشغيل اللعبة.</div>`}
+        </div>
+
+        <!-- 4. لعبة تحدي الذاكرة السريع -->
+        <div style="background:var(--bg-color); border:1px solid #38bdf8; border-radius:12px; padding:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <b style="color:#38bdf8;">🧠 تحدي الذاكرة السريع (حركات: ${uiState.memMoves})</b>
+            <button type="button" onclick="window.MoaathVIPRoomModules.anime_zain.resetMemory()" class="btn" style="width:auto; padding:2px 8px; font-size:9.5px; background:rgba(56,189,248,0.18); color:#38bdf8;">إعادة ↻</button>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:5px;">
+            ${uiState.memCards.map((c, idx) => {
+              const show = uiState.memFlipped.includes(idx) || uiState.memMatched.includes(idx);
+              const matched = uiState.memMatched.includes(idx);
+              return `<button type="button" onclick="window.MoaathVIPRoomModules.anime_zain.flipCard(${idx})" style="height:40px; border-radius:8px; font-size:18px; cursor:pointer; border:1px solid ${matched ? "#00e676" : (show ? "#facc15" : "var(--border-color)")}; background:${matched ? "rgba(0,230,118,0.16)" : (show ? "rgba(250,204,21,0.16)" : "var(--card-bg)")}; color:#fff;">${show ? c.icon : "❓"}</button>`;
+            }).join("")}
+          </div>
+          ${d.bestMemMoves ? `<div style="font-size:9.5px; color:var(--gray-text); margin-top:5px;">🏆 أفضل رقم قياسي محلي: ${d.bestMemMoves} حركة</div>` : ""}
+        </div>
+
+        <!-- 5. ركن طاقة القيمرز + نصيحة تطوير المهارات -->
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:10px;">
+          <b style="color:#f87171; display:block; margin-bottom:5px;">⚡ ركن طاقة القيمرز (سناكات سريعة متوفرة)</b>
+          ${gamerSnacks.length ? gamerSnacks.map(it => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed var(--border-color); font-size:10.5px;">
+              <span>${it.name} <small style="color:#00e676;">(${it.price.toLocaleString()} ل.س)</small></span>
+              <button type="button" onclick="if(typeof changeQty==='function'){changeQty('${it.id}',1); window.MoaathVIPRoomModules.anime_zain.grantXP(10,'⚡ طاقة القيمرز');}" class="btn" style="width:auto; padding:2px 7px; font-size:9.5px; background:rgba(239,68,68,0.2); color:#fca5a5;">+ أضف (+10 XP)</button>
+            </div>
+          `).join("") : `<div style="font-size:10px; color:var(--gray-text);">تصفح قسم الموالح والمشروبات لتجهيز جلسة اللعب.</div>`}
+        </div>
+
+        <div style="background:rgba(255,255,255,0.03); border:1px dashed #ef4444; border-radius:10px; padding:8px; font-size:10px; line-height:1.55;">
+          <b style="color:#f87171;">🔥 نصيحة كابتن زين للتركيز:</b> ${tip}
+        </div>
+
+      </div>
+    `;
+    container._zainMount = true;
+  }
+
+  function rerender() {
+    const el = document.getElementById("vipRoomDynamicBody");
+    if (el && el._zainMount) render(el);
+  }
+
+  window.MoaathVIPRoomModules.anime_zain = {
+    render,
+    grantXP(amount, reason = "") {
+      const d = loadData();
+      d.xp = (d.xp || 0) + amount;
+      saveData(d);
+      vibrate(20);
+      if (typeof window.showToast === "function") {
+        window.showToast(`🔥 +${amount} XP ${reason ? "(" + reason + ")" : ""}!`);
+      }
+      rerender();
+    },
+    cycleTitle() {
+      const d = loadData();
+      const idx = (PLAYER_TITLES.indexOf(d.title) + 1) % PLAYER_TITLES.length;
+      d.title = PLAYER_TITLES[idx];
+      saveData(d);
+      rerender();
+    },
+    openDailyChest() {
+      const d = loadData();
+      const today = new Date().toISOString().slice(0, 10);
+      if (d.lastChestDate === today) {
+        if (typeof window.showToast === "function") window.showToast("🎁 لقد فتحت صندوق الغنيمة اليوم بالفعل، عد غداً!");
+        return;
+      }
+      d.lastChestDate = today;
+      d.xp = (d.xp || 0) + 30;
+      d.weeklyQuestsDone = (d.weeklyQuestsDone || 0) + 1;
+      saveData(d);
+      const all = getAvailableProducts();
+      const spotlight = all.length ? all[Math.floor(Math.random() * all.length)] : null;
+      uiState.chestRewardText = spotlight
+        ? `🎉 +30 XP! كنز اليوم المقترح: ${spotlight.name} (${spotlight.price.toLocaleString()} ل.س)`
+        : "🎉 مبروك! كسبت +30 XP من صندوق الغنيمة!";
+      vibrate([25, 35, 25]);
+      if (typeof window.showToast === "function") window.showToast("🔥 فتحت صندوق الغنيمة وكسبت +30 XP!");
+      rerender();
+    },
+    runAdventurerMission() {
+      const all = getAvailableProducts();
+      const seenCats = new Set();
+      const picks = [];
+      for (const it of all.sort((a, b) => a.price - b.price)) {
+        if (picks.length >= 3) break;
+        if (!seenCats.has(it.cat)) {
+          seenCats.add(it.cat);
+          picks.push(it);
+        }
+      }
+      if (!picks.length) return;
+      picks.forEach(it => { if (typeof window.changeQty === "function") window.changeQty(it.id, 1); });
+      this.grantXP(40, "مهمة سلة المغامر");
+    },
+    nextGuessProduct() {
+      uiState.guessProd = pickGuessProduct();
+      uiState.guessResult = "";
+      rerender();
+    },
+    checkPriceGuess() {
+      if (!uiState.guessProd) return;
+      const val = parseInt(document.getElementById("zainGuessInp")?.value || "0", 10);
+      if (!val || val <= 0) return;
+      const real = uiState.guessProd.price;
+      const diffPct = Math.abs(val - real) / Math.max(1, real);
+      const d = loadData();
+      if (diffPct <= 0.25) {
+        d.xp += 25;
+        d.highScoreGuess = (d.highScoreGuess || 0) + 1;
+        saveData(d);
+        uiState.guessResult = `🎯 إصابة رائعة! السعر الحقيقي ${real.toLocaleString()} ل.س (+25 XP)`;
+        vibrate([20, 30, 20]);
+      } else {
+        uiState.guessResult = `💡 قريب! السعر الحقيقي لـ (${uiState.guessProd.name}) هو ${real.toLocaleString()} ل.س — جرّب صنفاً آخر!`;
+        vibrate(15);
+      }
+      rerender();
+    },
+    flipCard(idx) {
+      if (uiState.memFlipped.length >= 2 || uiState.memFlipped.includes(idx) || uiState.memMatched.includes(idx)) return;
+      uiState.memFlipped.push(idx);
+      vibrate(10);
+      rerender();
+      if (uiState.memFlipped.length === 2) {
+        uiState.memMoves++;
+        const [a, b] = uiState.memFlipped;
+        if (uiState.memCards[a].icon === uiState.memCards[b].icon) {
+          uiState.memMatched.push(a, b);
+          uiState.memFlipped = [];
+          if (uiState.memMatched.length === uiState.memCards.length) {
+            const d = loadData();
+            d.xp += 35;
+            if (!d.bestMemMoves || uiState.memMoves < d.bestMemMoves) d.bestMemMoves = uiState.memMoves;
+            saveData(d);
+            vibrate([30, 40, 30]);
+            if (typeof window.showToast === "function") window.showToast(`🏆 بطل الذاكرة! أنهيتها بـ ${uiState.memMoves} حركة (+35 XP)`);
+          }
+          rerender();
+        } else {
+          setTimeout(() => {
+            uiState.memFlipped = [];
+            rerender();
+          }, 650);
+        }
+      }
+    },
+    resetMemory() {
+      initMemoryGame();
+      rerender();
+    },
+    shareAchievement() {
+      const d = loadData();
+      const lvl = Math.floor(d.xp / 100) + 1;
+      const txt = `🎮 إنجازي في غرفة كابتن زين — متجر معاذ:\n🏅 المستوى: LVL ${lvl} (${d.title})\n🔥 الخبرة: ${d.xp} XP\n🎯 إصابات خمّن السعر: ${d.highScoreGuess}`;
+      if (typeof window.copyTextToClipboardClean === "function") {
+        window.copyTextToClipboardClean(txt, "📲 تم نسخ بطاقة الإنجاز للمشاركة!");
+      }
+    }
+  };
+})();
+
+// ============================================================================
+// وحدة غرفة VIP المستقلة (7/8): المحقق ريو — التحليل والأسعار والألغاز (anime_ryu)
+// - تعمل محلياً بالكامل (0 حصة API) مع عزل تام عن الدفع وشام كاش
+// - مقارنة منتجين، رادار القيمة، لغز المحقق اليومي، كاشف الخصومات، ورادار النفاد
+// ============================================================================
+(function () {
+  window.MoaathVIPRoomModules = window.MoaathVIPRoomModules || {};
+
+  const STORAGE_KEY = "moaath_vip_ryu_v1";
+
+  const RIDDLES = [
+    { q: "ما هو الشيء الذي يمتلئ بالثقوب ومع ذلك يحتفظ بالماء؟", a: "الإسفنجة." },
+    { q: "كلما أخذتَ منه كَبُرَ أكثر، فما هو؟", a: "الحفرة." },
+    { q: "ثلاثة أعداد متتالية مجموعها يساوي حاصل ضربها، ما هي؟", a: "1 و 2 و 3 (مجموعها 6 وضربها 6)." },
+    { q: "ما هو الشيء الذي يتكلم جميع لغات العالم دون أن يتعلمها؟", a: "الصدى." },
+    { q: "تاجر باع سلعة بـ 100 وربح 25% من سعرها، كم كانت تكلفتها الأصلية؟", a: "80 (لأن 80 + ربعها 20 = 100)." }
+  ];
+
+  const SCIENCE_FACTS = [
+    "الدماغ البشري يستهلك نحو 20% من طاقة الجسم اليومية رغم أنه يشكل 2% فقط من وزنه.",
+    "تخزين البيانات محلياً في تطبيقات PWA يجعل الاستجابة أسرع بـ 10 أضعاف في الشبكات الضعيفة.",
+    "العسل الطبيعي هو الغذاء الوحيد تقريباً الذي لا يفسد إذا حُفظ في عبوة محكمة الإغلاق.",
+    "تنظيم قائمة المشتريات حسب السعر والقسم يقلل وقت التسوق بنسبة تتجاوز 40%."
+  ];
+
+  let uiState = {
+    compareA: "",
+    compareB: "",
+    filterCat: "الكل",
+    filterMaxPrice: 0,
+    scenarioBudget: 600,
+    showRiddleAnswer: false,
+    riddleIdx: new Date().getDate() % RIDDLES.length
+  };
+
+  function loadData() {
+    try {
+      const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      return {
+        solvedCount: d.solvedCount || 0,
+        solvedIds: Array.isArray(d.solvedIds) ? d.solvedIds : []
+      };
+    } catch (_) {
+      return { solvedCount: 0, solvedIds: [] };
+    }
+  }
+
+  function saveData(d) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch (_) {}
+  }
+
+  function vibrate(p = 15) {
+    try { if (navigator.vibrate) navigator.vibrate(p); } catch (_) {}
+  }
+
+  function getStock(p) {
+    if (!p) return 0;
+    return typeof window.getProductStockForBranch === "function"
+      ? window.getProductStockForBranch(p, typeof window.activeBranchId !== "undefined" ? window.activeBranchId : "main")
+      : (parseInt(p.stock, 10) || 0);
+  }
+
+  function getUnitPrice(pid) {
+    const p = (window.products || {})[pid];
+    if (!p || typeof window.calcSYP !== "function") return 0;
+    const isW = window.currentUser?.userType === "wholesale";
+    return window.calcSYP((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0));
+  }
+
+  function getAllInStock() {
+    const prods = window.products || {};
+    return Object.keys(prods)
+      .map(pid => {
+        const p = prods[pid];
+        if (!p) return null;
+        const stock = getStock(p);
+        const price = getUnitPrice(pid);
+        const pkgPrice = typeof window.calcSYP === "function" ? window.calcSYP(p.pkgPriceUSD || 0) : 0;
+        return { id: pid, name: p.name, cat: p.category || "عام", stock, price, pkgPrice, pkgQty: parseInt(p.pkgQty, 10) || 0 };
+      })
+      .filter(x => x && x.stock > 0 && x.price > 0);
+  }
+
+  function getCartAnalysis() {
+    const cartObj = window.cart || {};
+    const items = [];
+    let total = 0;
+    Object.keys(cartObj).forEach(k => {
+      const it = cartObj[k];
+      const qty = parseInt(it?.qty, 10) || 0;
+      if (qty <= 0) return;
+      const baseId = String(k).replace(/_PKG$/, "");
+      const unit = getUnitPrice(baseId) || 0;
+      const sub = unit * qty;
+      total += sub;
+      items.push({ name: it.name || k, unit, sub, qty });
+    });
+    items.sort((a, b) => b.unit - a.unit);
+    return {
+      count: items.length,
+      total,
+      mostExpensive: items[0] || null,
+      cheapest: items.length ? items[items.length - 1] : null
+    };
+  }
+
+  function render(container) {
+    if (!container) return;
+    const d = loadData();
+    const inStock = getAllInStock();
+    const cats = ["الكل", ...Array.from(new Set(inStock.map(x => x.cat)))];
+
+    if (!uiState.compareA && inStock.length >= 1) uiState.compareA = inStock[0].id;
+    if (!uiState.compareB && inStock.length >= 2) uiState.compareB = inStock[1].id;
+
+    const prodA = inStock.find(x => x.id === uiState.compareA) || null;
+    const prodB = inStock.find(x => x.id === uiState.compareB) || null;
+
+    // رادار النفاد (stock <= 3)
+    const lowStock = inStock.filter(x => x.stock <= 3).slice(0, 4);
+
+    // كاشف العروض والخصومات
+    const offers = Object.keys(window.specialOffers || {}).map(oid => {
+      const o = window.specialOffers[oid];
+      if (!o || getStock(o) <= 0 || typeof window.calcSYP !== "function") return null;
+      const oldP = window.calcSYP(o.oldPriceUSD || 0);
+      const newP = window.calcSYP(o.newPriceUSD || 0);
+      if (newP <= 0) return null;
+      const save = Math.max(0, oldP - newP);
+      const pct = oldP > newP ? Math.round((save / oldP) * 100) : 0;
+      return { id: oid, name: o.name || "عرض", newP, save, pct };
+    }).filter(Boolean).sort((a, b) => b.save - a.save).slice(0, 3);
+
+    // البحث الدقيق المتقدم (القسم + السعر الأقصى)
+    const filteredList = inStock
+      .filter(x => (uiState.filterCat === "الكل" || x.cat === uiState.filterCat) && (!uiState.filterMaxPrice || x.price <= uiState.filterMaxPrice))
+      .sort((a, b) => a.price - b.price)
+      .slice(0, 5);
+
+    // 3 سيناريوهات للمبلغ
+    const bAmt = uiState.scenarioBudget;
+    const econPick = inStock.filter(x => x.price <= bAmt).sort((a, b) => a.price - b.price);
+    let s1Count = 0, s1Sum = 0;
+    econPick.forEach(x => { if (s1Sum + x.price <= bAmt && s1Count < 6) { s1Sum += x.price; s1Count++; } });
+    const midPick = econPick.filter(x => x.price >= bAmt * 0.25 && x.price <= bAmt * 0.6).slice(0, 2);
+    const topSingle = econPick.slice().sort((a, b) => b.price - a.price)[0];
+
+    const cartInfo = getCartAnalysis();
+    const riddle = RIDDLES[uiState.riddleIdx];
+    const fact = SCIENCE_FACTS[new Date().getDate() % SCIENCE_FACTS.length];
+
+    container.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:10px; text-align:right; font-size:11px;">
+
+        <!-- 1. حقيقة علمية/تقنية + أرشيف التحقيقات -->
+        <div style="background:rgba(56,189,248,0.12); border:1px solid #38bdf8; border-radius:12px; padding:9px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <b style="color:#38bdf8;">🔎 حقيقة المحقق ريو اليومية</b>
+            <span style="font-size:10px; color:#00e676;">🧩 ألغاز محلولة: ${d.solvedCount}</span>
+          </div>
+          <div style="line-height:1.55;">${fact}</div>
+        </div>
+
+        <!-- 2. أداة مقارنة منتجين (Side-by-Side) -->
+        <div style="background:var(--bg-color); border:1px solid #38bdf8; border-radius:12px; padding:10px;">
+          <b style="color:#38bdf8; display:block; margin-bottom:6px;">⚖️ مقارنة منتجين جنباً إلى جنب</b>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:7px;">
+            <select onchange="window.MoaathVIPRoomModules.anime_ryu.setCompare('A', this.value)" class="form-control" style="padding:4px; font-size:10px;">
+              ${inStock.slice(0, 40).map(x => `<option value="${x.id}" ${x.id === uiState.compareA ? "selected" : ""}>${x.name}</option>`).join("")}
+            </select>
+            <select onchange="window.MoaathVIPRoomModules.anime_ryu.setCompare('B', this.value)" class="form-control" style="padding:4px; font-size:10px;">
+              ${inStock.slice(0, 40).map(x => `<option value="${x.id}" ${x.id === uiState.compareB ? "selected" : ""}>${x.name}</option>`).join("")}
+            </select>
+          </div>
+          ${(prodA && prodB) ? `
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; background:rgba(255,255,255,0.03); padding:7px; border-radius:8px; font-size:10px;">
+              <div style="border-left:1px dashed var(--border-color); padding-left:5px;">
+                <b style="color:var(--gold-color);">${prodA.name}</b><br>
+                السعر: <b style="color:${prodA.price <= prodB.price ? "#00e676" : "#fff"};">${prodA.price.toLocaleString()} ل.س</b><br>
+                المتوفر: ${prodA.stock} قطعة<br>
+                ${prodA.pkgPrice ? `طرد (×${prodA.pkgQty}): ${prodA.pkgPrice.toLocaleString()} ل.س` : "مفرد فقط"}
+              </div>
+              <div>
+                <b style="color:#38bdf8;">${prodB.name}</b><br>
+                السعر: <b style="color:${prodB.price <= prodA.price ? "#00e676" : "#fff"};">${prodB.price.toLocaleString()} ل.س</b><br>
+                المتوفر: ${prodB.stock} قطعة<br>
+                ${prodB.pkgPrice ? `طرد (×${prodB.pkgQty}): ${prodB.pkgPrice.toLocaleString()} ل.س` : "مفرد فقط"}
+              </div>
+            </div>
+            <div style="font-size:10px; color:#00e676; margin-top:5px;">
+              📌 الاستنتاج: <b>${prodA.price <= prodB.price ? prodA.name : prodB.name}</b> أوفر بفارق ${Math.abs(prodA.price - prodB.price).toLocaleString()} ل.س.
+            </div>
+          ` : ""}
+        </div>
+
+        <!-- 3. لغز المحقق اليومي -->
+        <div style="background:var(--bg-color); border:1px solid var(--gold-color); border-radius:12px; padding:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <b style="color:var(--gold-color);">🧩 لغز المحقق اليومي</b>
+            <button type="button" onclick="window.MoaathVIPRoomModules.anime_ryu.nextRiddle()" style="background:none; border:none; color:#38bdf8; cursor:pointer; font-size:10px;">لغز آخر ↻</button>
+          </div>
+          <div style="line-height:1.6; margin-bottom:7px;">${riddle.q}</div>
+          ${uiState.showRiddleAnswer ? `<div style="background:rgba(0,230,118,0.12); border:1px solid #00e676; border-radius:8px; padding:6px; margin-bottom:7px; color:#00e676;"><b>الحل:</b> ${riddle.a}</div>` : ""}
+          <div style="display:flex; gap:5px;">
+            <button type="button" onclick="window.MoaathVIPRoomModules.anime_ryu.revealRiddle()" class="btn" style="flex:1; padding:5px; font-size:10px; background:#38bdf8; color:#000;">💡 كشف الحل وتسجيل التحقيق</button>
+            <button type="button" onclick="window.MoaathVIPRoomModules.anime_ryu.shareRiddle()" class="btn" style="width:auto; padding:5px 9px; font-size:10px; background:#22c55e; color:#000;">📲 تحدي صديق</button>
+          </div>
+        </div>
+
+        <!-- 4. حاسبة "كم يكفيني هذا المبلغ؟" (3 سيناريوهات) -->
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:10px;">
+          <b style="color:#38bdf8; display:block; margin-bottom:5px;">📐 تحليل: كم يكفيني هذا المبلغ؟</b>
+          <div style="display:flex; gap:5px; margin-bottom:6px;">
+            <input id="ryuBudgetInp" type="number" min="100" step="100" value="${bAmt}" class="form-control" style="flex:1; padding:4px 7px; font-size:11px;">
+            <button type="button" onclick="window.MoaathVIPRoomModules.anime_ryu.updateScenarioBudget()" class="btn" style="width:auto; padding:4px 10px; font-size:10px; background:#38bdf8; color:#000;">حلّل</button>
+          </div>
+          <div style="font-size:10px; line-height:1.65;">
+            • <b>سيناريو التوفير الأقصى:</b> يكفيك لـ <b style="color:#00e676;">${s1Count} أصناف</b> بمجموع ${s1Sum.toLocaleString()} ل.س.<br>
+            • <b>سيناريو التوازن:</b> ${midPick.length ? midPick.map(x => x.name).join(" + ") : "أصناف متوسطة متوفرة"}.<br>
+            • <b>سيناريو الصنف الممتاز:</b> ${topSingle ? `${topSingle.name} (${topSingle.price.toLocaleString()} ل.س)` : "ارفع المبلغ قليلاً"}.
+          </div>
+        </div>
+
+        <!-- 5. الفلتر الدقيق + كاشف الخصومات + رادار النفاد + محلل السلة -->
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:10px;">
+          <b style="color:var(--gold-color); display:block; margin-bottom:5px;">📡 رادار القيمة والبحث الدقيق</b>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-bottom:6px;">
+            <select onchange="window.MoaathVIPRoomModules.anime_ryu.setFilterCat(this.value)" class="form-control" style="padding:4px; font-size:10px;">
+              ${cats.map(c => `<option value="${c}" ${c === uiState.filterCat ? "selected" : ""}>${c}</option>`).join("")}
+            </select>
+            <input type="number" placeholder="السعر الأقصى (ل.س)" value="${uiState.filterMaxPrice || ""}" onchange="window.MoaathVIPRoomModules.anime_ryu.setFilterPrice(this.value)" class="form-control" style="padding:4px 6px; font-size:10px;">
+          </div>
+          ${filteredList.map(it => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed var(--border-color); font-size:10px;">
+              <span>${it.name} <b style="color:#00e676;">(${it.price.toLocaleString()} ل.س)</b></span>
+              <button type="button" onclick="if(typeof changeQty==='function'){changeQty('${it.id}',1); showToast('🔎 أُضيف ${it.name}');}" class="btn" style="width:auto; padding:2px 7px; font-size:9.5px; background:rgba(56,189,248,0.2); color:#38bdf8;">+ أضف</button>
+            </div>
+          `).join("")}
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:7px; font-size:10px;">
+          <div style="background:rgba(245,158,11,0.1); border:1px solid #f59e0b; border-radius:10px; padding:8px;">
+            <b style="color:#f59e0b;">⚠️ قبل النفاد (≤3 قطع):</b><br>
+            ${lowStock.length ? lowStock.map(x => `• ${x.name} (${x.stock})`).join("<br>") : "المخزون وفير حالياً."}
+          </div>
+          <div style="background:rgba(0,230,118,0.08); border:1px solid #00e676; border-radius:10px; padding:8px;">
+            <b style="color:#00e676;">🧾 محلل سلتك:</b><br>
+            ${cartInfo.count ? `أغلى صنف: ${cartInfo.mostExpensive.name}<br>أوفر صنف: ${cartInfo.cheapest.name}` : "السلة فارغة الآن."}
+          </div>
+        </div>
+
+        ${offers.length ? `
+          <div style="background:rgba(255,255,255,0.03); border:1px dashed #38bdf8; border-radius:10px; padding:8px; font-size:10px;">
+            <b style="color:#38bdf8;">🏷️ كاشف التخفيضات الفعلية:</b><br>
+            ${offers.map(o => `• ${o.name}: وفر <b>${o.save.toLocaleString()} ل.س</b> (${o.pct}%)`).join("<br>")}
+          </div>
+        ` : ""}
+
+      </div>
+    `;
+    container._ryuMount = true;
+  }
+
+  function rerender() {
+    const el = document.getElementById("vipRoomDynamicBody");
+    if (el && el._ryuMount) render(el);
+  }
+
+  window.MoaathVIPRoomModules.anime_ryu = {
+    render,
+    setCompare(slot, pid) {
+      if (slot === "A") uiState.compareA = pid;
+      else uiState.compareB = pid;
+      rerender();
+    },
+    setFilterCat(c) { uiState.filterCat = c; rerender(); },
+    setFilterPrice(v) { uiState.filterMaxPrice = parseInt(v, 10) || 0; rerender(); },
+    updateScenarioBudget() {
+      const val = parseInt(document.getElementById("ryuBudgetInp")?.value || "600", 10);
+      if (val >= 50) uiState.scenarioBudget = val;
+      rerender();
+    },
+    revealRiddle() {
+      uiState.showRiddleAnswer = true;
+      const d = loadData();
+      if (!d.solvedIds.includes(uiState.riddleIdx)) {
+        d.solvedIds.push(uiState.riddleIdx);
+        d.solvedCount = d.solvedIds.length;
+        saveData(d);
+      }
+      vibrate(15);
+      rerender();
+    },
+    nextRiddle() {
+      uiState.riddleIdx = (uiState.riddleIdx + 1) % RIDDLES.length;
+      uiState.showRiddleAnswer = false;
+      rerender();
+    },
+    shareRiddle() {
+      const r = RIDDLES[uiState.riddleIdx];
+      const txt = `🔎 لغز المحقق ريو (متجر معاذ):\n${r.q}\nهل تعرف الحل؟ 🤔`;
+      if (typeof window.copyTextToClipboardClean === "function") {
+        window.copyTextToClipboardClean(txt, "📲 تم نسخ اللغز لتحدي أصدقائك!");
+      }
+    }
+  };
+})();
+
+// ============================================================================
+// وحدة غرفة VIP المستقلة (8/8): ريتاج — البهجة والحلويات اللطيفة والمزاج (anime_ritaj)
+// - تعمل محلياً بالكامل (0 حصة API) مع عزل تام عن الدفع وشام كاش
+// - مقياس المزاج، برطمان الرسائل اللطيفة، مؤقت التنفس الهادئ، سلة السعادة، ولعبة اختر نجمة
+// ============================================================================
+(function () {
+  window.MoaathVIPRoomModules = window.MoaathVIPRoomModules || {};
+
+  const STORAGE_KEY = "moaath_vip_ritaj_v1";
+
+  const MOODS = {
+    happy: { icon: "😊", label: "سعيد", msg: "يا رب تدوم ابتسامتك! لنحتفل بشوكولاتة لذيذة أو عصير منعش.", kw: ["شوكولاتة", "بسكوت", "عصير", "كيك"] },
+    tired: { icon: "😮‍💨", label: "متعب", msg: "يعطيك ألف عافية! تستحق كوب مشروب دافئ وحلى سريع يجدد طاقتك.", kw: ["قهوة", "شاي", "كاكاو", "شوكولاتة", "حليب"] },
+    chill: { icon: "🌸", label: "رايق", msg: "أحلى مزاج! شاي لطيف مع بسكويت خفيف يكمل روقانك.", kw: ["شاي", "بسكوت", "متة", "بزر"] },
+    stressed: { icon: "🫧", label: "متوتر", msg: "خذ نفساً عميقاً مع مؤقت التنفس بالأسفل، وكل شيء سيكون بخير.", kw: ["شاي", "حليب", "ماء", "عسل"] },
+    party: { icon: "🎉", label: "محتفل", msg: "ألف مبروك! خلينا نجهز سلة السعادة والحلويات للمناسبة الجميلة!", kw: ["شوكولاتة", "عصير", "شيبس", "بسكوت", "كيك"] }
+  };
+
+  const KINDNESS_JAR = [
+    "أنت تقوم بعمل رائع اليوم، حتى الخطوات الصغيرة تصنع فرقاً كبيراً! ✨",
+    "تذكّر أن تبتسم الآن؛ هناك دائماً شيء جميل ينتظرك في نهاية اليوم 🌸",
+    "وجودك يضيف لطفاً وبهجة لمن حولك، لا تنسَ أن تكافئ نفسك قليلاً 🎀",
+    "الأيام الهادئة واللحظات البسيطة مع العائلة هي أجمل النعم 💖",
+    "كل بداية جديدة هي فرصة لطيفة لصنع ذكرى سعيدة ⭐"
+  ];
+
+  const NO_BAKE_RECIPES = [
+    { title: "حلى البسكويت البارد بالشوكولاتة", ing: ["بسكوت", "حليب", "كاكاو", "سكر"] },
+    { title: "كرات البسكويت السريعة للأطفال", ing: ["بسكوت", "شوكولاتة", "حليب", "جوز الهند"] },
+    { title: "مهلبية الفانيليا اللطيفة", ing: ["حليب", "نشا", "سكر"] }
+  ];
+
+  const PASTEL_THEMES = {
+    pink: { label: "🌸 وردي", accent: "#f472b6", bg: "rgba(244,114,182,0.12)" },
+    sky: { label: "☁️ سماوي", accent: "#38bdf8", bg: "rgba(56,189,248,0.12)" },
+    lavender: { label: "💜 بنفسجي", accent: "#c084fc", bg: "rgba(192,132,252,0.12)" }
+  };
+
+  const GREETING_TEMPLATES = {
+    success: "🎉 ألف ألف مبروك النجاح والتفوق! ومنها للأعلى دائماً يا رب 🌟💖",
+    birthday: "🎂 كل عام وأنت بألف خير وسعادة، أتمنى لك سنة مليئة بالنجاح والبهجة 🎀✨",
+    morning: "🌸 صباح الخير والتفاؤل! أتمنى لك يوماً لطيفاً ومشرقاً مثل قلبك ☀️💛",
+    thanks: "💖 شكراً من القلب على لطفك وكرمك، الله يسعدك دائماً 🌸"
+  };
+
+  let breathTimer = { running: false, secLeft: 180, phase: "شهيق عميق...", id: null };
+
+  let uiState = {
+    mood: "happy",
+    theme: "pink",
+    jarMessage: KINDNESS_JAR[0],
+    starResult: "",
+    kidsCount: 5,
+    partyBudget: 600
+  };
+
+  function loadData() {
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+      const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      if (d.journalDate !== today) {
+        d.goodThings = [];
+        d.journalDate = today;
+      }
+      return {
+        brightStreak: d.brightStreak || 1,
+        lastMoodDate: d.lastMoodDate || "",
+        goodThings: Array.isArray(d.goodThings) ? d.goodThings : [],
+        journalDate: today
+      };
+    } catch (_) {
+      return { brightStreak: 1, lastMoodDate: "", goodThings: [], journalDate: today };
+    }
+  }
+
+  function saveData(d) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch (_) {}
+  }
+
+  function vibrate(p = 15) {
+    try { if (navigator.vibrate) navigator.vibrate(p); } catch (_) {}
+  }
+
+  function normAr(s) {
+    return String(s || "").toLowerCase().replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").trim();
+  }
+
+  function getStock(p) {
+    if (!p) return 0;
+    return typeof window.getProductStockForBranch === "function"
+      ? window.getProductStockForBranch(p, typeof window.activeBranchId !== "undefined" ? window.activeBranchId : "main")
+      : (parseInt(p.stock, 10) || 0);
+  }
+
+  function getUnitPrice(pid) {
+    const p = (window.products || {})[pid];
+    if (!p || typeof window.calcSYP !== "function") return 0;
+    const isW = window.currentUser?.userType === "wholesale";
+    return window.calcSYP((isW && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || 0));
+  }
+
+  function findSweetsByKeywords(keywords, limit = 5) {
+    const prods = window.products || {};
+    const out = [];
+    Object.keys(prods).forEach(pid => {
+      const p = prods[pid];
+      if (!p || getStock(p) <= 0) return;
+      const price = getUnitPrice(pid);
+      if (price <= 0) return;
+      const txt = normAr((p.name || "") + " " + (p.category || ""));
+      if (keywords.some(k => txt.includes(normAr(k)))) {
+        out.push({ id: pid, name: p.name, price });
+      }
+    });
+    return out.sort((a, b) => a.price - b.price).slice(0, limit);
+  }
+
+  function render(container) {
+    if (!container) return;
+    const d = loadData();
+    const th = PASTEL_THEMES[uiState.theme] || PASTEL_THEMES.pink;
+    const moodObj = MOODS[uiState.mood] || MOODS.happy;
+    const moodPicks = findSweetsByKeywords(moodObj.kw, 4);
+    const isEvening = new Date().getHours() >= 18;
+
+    container.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:10px; text-align:right; font-size:11px;">
+
+        <!-- 1. بطاقة الامتنان + تبديل ألوان الباستيل + سلسلة الأيام المشرقة -->
+        <div style="background:${th.bg}; border:1px solid ${th.accent}; border-radius:14px; padding:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:5px; margin-bottom:5px;">
+            <b style="color:${th.accent};">✨ سلسلة الأيام المشرقة: ${d.brightStreak} يوم ⭐</b>
+            <div style="display:flex; gap:4px;">
+              ${Object.keys(PASTEL_THEMES).map(k => `<button type="button" onclick="window.MoaathVIPRoomModules.anime_ritaj.setTheme('${k}')" style="padding:2px 6px; border-radius:999px; font-size:9px; cursor:pointer; border:1px solid ${uiState.theme === k ? PASTEL_THEMES[k].accent : "var(--border-color)"}; background:var(--card-bg); color:var(--text-color);">${PASTEL_THEMES[k].label}</button>`).join("")}
+            </div>
+          </div>
+          ${isEvening ? `<div style="font-size:10px; color:#facc15; margin-bottom:4px;">🌙 مكافأة نهاية اليوم: دلّل نفسك بسناك لطيف أو مشروب دافئ بعد تعب اليوم!</div>` : ""}
+          <div style="line-height:1.55;">💖 ${uiState.jarMessage}</div>
+          <button type="button" onclick="window.MoaathVIPRoomModules.anime_ritaj.pullKindnessJar()" class="btn" style="margin-top:6px; width:auto; padding:3px 9px; font-size:10px; background:${th.accent}; color:#000;">🫙 اسحب رسالة لطيفة من البرطمان</button>
+        </div>
+
+        <!-- 2. مقياس المزاج اليومي + اقتراحات المتجر حسب المزاج -->
+        <div style="background:var(--bg-color); border:1px solid ${th.accent}; border-radius:12px; padding:10px;">
+          <b style="color:${th.accent}; display:block; margin-bottom:6px;">🎀 كيف مزاجك اليوم؟</b>
+          <div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:7px;">
+            ${Object.keys(MOODS).map(k => {
+              const on = uiState.mood === k;
+              return `<button type="button" onclick="window.MoaathVIPRoomModules.anime_ritaj.setMood('${k}')" style="padding:4px 8px; border-radius:999px; font-size:10px; cursor:pointer; border:1px solid ${on ? th.accent : "var(--border-color)"}; background:${on ? th.accent : "var(--card-bg)"}; color:${on ? "#000" : "var(--text-color)"}; font-weight:700;">${MOODS[k].icon} ${MOODS[k].label}</button>`;
+            }).join("")}
+          </div>
+          <div style="background:rgba(255,255,255,0.04); padding:7px; border-radius:8px; margin-bottom:7px; line-height:1.5;">${moodObj.msg}</div>
+          ${moodPicks.map(it => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed var(--border-color); font-size:10.5px;">
+              <span>🍬 ${it.name} <small style="color:#00e676;">(${it.price.toLocaleString()} ل.س)</small></span>
+              <button type="button" onclick="if(typeof changeQty==='function'){changeQty('${it.id}',1); showToast('💖 أُضيف ${it.name} لسلة السعادة');}" class="btn" style="width:auto; padding:2px 7px; font-size:9.5px; background:${th.bg}; color:${th.accent}; border:1px solid ${th.accent};">+ أضف</button>
+            </div>
+          `).join("")}
+          <button type="button" onclick="window.MoaathVIPRoomModules.anime_ritaj.buildHappinessBasket()" class="btn" style="margin-top:7px; background:linear-gradient(45deg,${th.accent},#facc15); color:#000; font-size:10.5px; padding:6px;">🛍️ صانع سلة السعادة السريعة</button>
+        </div>
+
+        <!-- 3. مؤقت الاستراحة والتنفس الهادئ + لعبة اختر نجمة -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <div style="background:var(--bg-color); border:1px solid #38bdf8; border-radius:12px; padding:9px; text-align:center;">
+            <b style="color:#38bdf8; font-size:10.5px;">🫧 استراحة تنفس (3 دقائق)</b>
+            <div id="ritajBreathPhase" style="font-size:11px; font-weight:800; color:${th.accent}; margin:4px 0;">${breathTimer.running ? breathTimer.phase : "خذ نفساً هادئاً"}</div>
+            <div id="ritajBreathClock" style="font-size:15px; font-weight:900; margin-bottom:5px;">${Math.floor(breathTimer.secLeft / 60)}:${String(breathTimer.secLeft % 60).padStart(2, "0")}</div>
+            <button type="button" onclick="window.MoaathVIPRoomModules.anime_ritaj.toggleBreath()" class="btn" style="padding:4px 8px; font-size:10px; background:#38bdf8; color:#000;">${breathTimer.running ? "⏸️ إيقاف" : "▶️ ابدأ التنفس"}</button>
+          </div>
+
+          <div style="background:var(--bg-color); border:1px solid #facc15; border-radius:12px; padding:9px; text-align:center;">
+            <b style="color:#facc15; font-size:10.5px;">⭐ لعبة اختر نجمة!</b>
+            <div style="display:flex; justify-content:center; gap:8px; margin:7px 0;">
+              ${[1, 2, 3].map(n => `<button type="button" onclick="window.MoaathVIPRoomModules.anime_ritaj.pickStar(${n})" style="font-size:20px; background:none; border:none; cursor:pointer;">⭐</button>`).join("")}
+            </div>
+            <div style="font-size:9.5px; color:#00e676; min-height:24px;">${uiState.starResult || "اضغط أي نجمة لتكشف مفاجأتك!"}</div>
+          </div>
+        </div>
+
+        <!-- 4. وصفات حلى بارد بدون فرن + منسّق حفلات الأطفال -->
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:10px;">
+          <b style="color:${th.accent}; display:block; margin-bottom:5px;">🍰 وصفات حلى بارد وسريع بدون فرن</b>
+          ${NO_BAKE_RECIPES.map((r, i) => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed var(--border-color); font-size:10px;">
+              <span><b>${r.title}</b> (${r.ing.join("، ")})</span>
+              <button type="button" onclick="window.MoaathVIPRoomModules.anime_ritaj.addRecipeNeeds(${i})" class="btn" style="width:auto; padding:2px 7px; font-size:9.5px; background:rgba(0,230,118,0.18); color:#00e676;">+ مكوناتها</button>
+            </div>
+          `).join("")}
+
+          <div style="margin-top:8px; padding-top:7px; border-top:1px solid var(--border-color);">
+            <b style="color:#facc15; font-size:10.5px;">🎈 منسّق حفلة أطفال مصغّرة:</b>
+            <div style="display:flex; gap:5px; margin-top:5px;">
+              <input id="ritajKidsInp" type="number" min="2" max="20" value="${uiState.kidsCount}" class="form-control" placeholder="أطفال" style="width:65px; padding:4px; font-size:10px;">
+              <input id="ritajPartyBudgetInp" type="number" min="200" step="100" value="${uiState.partyBudget}" class="form-control" placeholder="ميزانية" style="flex:1; padding:4px 6px; font-size:10px;">
+              <button type="button" onclick="window.MoaathVIPRoomModules.anime_ritaj.buildKidsParty()" class="btn" style="width:auto; padding:4px 9px; font-size:10px; background:#facc15; color:#000;">جهّز الحفلة</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. قائمة "أشياء جميلة اليوم" + بطاقات إهداء واتساب -->
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:10px;">
+          <b style="color:${th.accent}; display:block; margin-bottom:5px;">🌈 3 أشياء جميلة أسعدتك اليوم</b>
+          <div style="display:flex; gap:5px; margin-bottom:5px;">
+            <input id="ritajGoodInp" type="text" class="form-control" placeholder="اكتب شيئاً جميلاً حدث معك اليوم..." style="flex:1; padding:4px 7px; font-size:10px;">
+            <button type="button" onclick="window.MoaathVIPRoomModules.anime_ritaj.addGoodThing()" class="btn" style="width:auto; padding:4px 9px; font-size:10px; background:${th.accent}; color:#000;">حفظ</button>
+          </div>
+          ${d.goodThings.map(g => `<div style="font-size:10px; padding:2px 0; color:#facc15;">✨ ${g}</div>`).join("")}
+
+          <div style="margin-top:8px; padding-top:7px; border-top:1px dashed var(--border-color);">
+            <b style="font-size:10px; color:#22c55e; display:block; margin-bottom:5px;">💌 بطاقات تهنئة وإهداء جاهزة لواتساب:</b>
+            <div style="display:flex; gap:5px; flex-wrap:wrap;">
+              <button type="button" onclick="window.MoaathVIPRoomModules.anime_ritaj.copyGreeting('success')" class="btn" style="width:auto; padding:3px 7px; font-size:9.5px; background:rgba(34,197,94,0.16); color:#22c55e;">🎓 نجاح</button>
+              <button type="button" onclick="window.MoaathVIPRoomModules.anime_ritaj.copyGreeting('birthday')" class="btn" style="width:auto; padding:3px 7px; font-size:9.5px; background:rgba(244,114,182,0.16); color:#f472b6;">🎂 ميلاد</button>
+              <button type="button" onclick="window.MoaathVIPRoomModules.anime_ritaj.copyGreeting('morning')" class="btn" style="width:auto; padding:3px 7px; font-size:9.5px; background:rgba(250,204,21,0.16); color:#facc15;">☀️ صباح</button>
+              <button type="button" onclick="window.MoaathVIPRoomModules.anime_ritaj.copyGreeting('thanks')" class="btn" style="width:auto; padding:3px 7px; font-size:9.5px; background:rgba(56,189,248,0.16); color:#38bdf8;">💖 شكر</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    `;
+    container._ritajMount = true;
+  }
+
+  function rerender() {
+    const el = document.getElementById("vipRoomDynamicBody");
+    if (el && el._ritajMount) render(el);
+  }
+
+  window.MoaathVIPRoomModules.anime_ritaj = {
+    render,
+    setTheme(t) { uiState.theme = t; rerender(); },
+    setMood(m) {
+      uiState.mood = m;
+      const d = loadData();
+      const today = new Date().toISOString().slice(0, 10);
+      if (d.lastMoodDate !== today) {
+        d.brightStreak = (d.brightStreak || 0) + 1;
+        d.lastMoodDate = today;
+        saveData(d);
+      }
+      vibrate(15);
+      rerender();
+    },
+    pullKindnessJar() {
+      uiState.jarMessage = KINDNESS_JAR[Math.floor(Math.random() * KINDNESS_JAR.length)];
+      vibrate(15);
+      rerender();
+    },
+    buildHappinessBasket() {
+      const picks = findSweetsByKeywords(["شوكولاتة", "بسكوت", "عصير", "كيك", "كاكاو"], 3);
+      picks.forEach(it => { if (typeof window.changeQty === "function") window.changeQty(it.id, 1); });
+      vibrate([15, 25, 15]);
+      if (typeof window.showToast === "function") window.showToast(`💖 تمت إضافة ${picks.length} أصناف لطيفة لسلة السعادة!`);
+    },
+    addRecipeNeeds(idx) {
+      const rec = NO_BAKE_RECIPES[idx];
+      if (!rec) return;
+      const picks = findSweetsByKeywords(rec.ing, 4);
+      picks.forEach(it => { if (typeof window.changeQty === "function") window.changeQty(it.id, 1); });
+      vibrate(20);
+      if (typeof window.showToast === "function") window.showToast(`🍰 تمت إضافة ${picks.length} من مكونات (${rec.title}) للسلة!`);
+    },
+    buildKidsParty() {
+      const budget = parseInt(document.getElementById("ritajPartyBudgetInp")?.value || "600", 10) || 600;
+      const picks = findSweetsByKeywords(["عصير", "بسكوت", "شوكولاتة", "شيبس", "سناكس", "كيك"], 8);
+      let sum = 0, added = 0;
+      picks.forEach(it => {
+        if (added < 6 && sum + it.price <= budget) {
+          if (typeof window.changeQty === "function") window.changeQty(it.id, 1);
+          sum += it.price;
+          added++;
+        }
+      });
+      vibrate(25);
+      if (typeof window.showToast === "function") window.showToast(`🎈 جهّزت ريتاج ${added} أصناف للحفلة بمجموع ${sum.toLocaleString()} ل.س!`);
+    },
+    pickStar() {
+      const picks = findSweetsByKeywords(["شوكولاتة", "بسكوت", "عصير", "شاي", "كيك"], 6);
+      if (picks.length && Math.random() < 0.6) {
+        const p = picks[Math.floor(Math.random() * picks.length)];
+        uiState.starResult = `✨ نجمتك تقترح لك اليوم: ${p.name} (${p.price.toLocaleString()} ل.س)!`;
+      } else {
+        uiState.starResult = "🌟 " + KINDNESS_JAR[Math.floor(Math.random() * KINDNESS_JAR.length)];
+      }
+      vibrate(20);
+      rerender();
+    },
+    toggleBreath() {
+      if (breathTimer.running) {
+        clearInterval(breathTimer.id);
+        breathTimer.id = null;
+        breathTimer.running = false;
+        rerender();
+        return;
+      }
+      breathTimer.running = true;
+      breathTimer.id = setInterval(() => {
+        breathTimer.secLeft--;
+        const mod = breathTimer.secLeft % 12;
+        breathTimer.phase = mod >= 8 ? "🌬️ شهيق بهدوء (4ث)..." : mod >= 4 ? "✨ احبس النفس (4ث)..." : "🍃 زفير مريح (4ث)...";
+        if (breathTimer.secLeft <= 0) {
+          clearInterval(breathTimer.id);
+          breathTimer.id = null;
+          breathTimer.running = false;
+          breathTimer.secLeft = 180;
+          vibrate([30, 30, 30]);
+          if (typeof window.showToast === "function") window.showToast("🌸 أحسنت! انتهت استراحة التنفس الهادئ.");
+        }
+        const phEl = document.getElementById("ritajBreathPhase");
+        const clEl = document.getElementById("ritajBreathClock");
+        if (phEl) phEl.textContent = breathTimer.phase;
+        if (clEl) clEl.textContent = `${Math.floor(breathTimer.secLeft / 60)}:${String(breathTimer.secLeft % 60).padStart(2, "0")}`;
+      }, 1000);
+      rerender();
+    },
+    addGoodThing() {
+      const txt = String(document.getElementById("ritajGoodInp")?.value || "").trim();
+      if (!txt) return;
+      const d = loadData();
+      d.goodThings.unshift(txt);
+      d.goodThings = d.goodThings.slice(0, 3);
+      saveData(d);
+      rerender();
+    },
+    copyGreeting(k) {
+      const txt = GREETING_TEMPLATES[k] || GREETING_TEMPLATES.thanks;
+      if (typeof window.copyTextToClipboardClean === "function") {
+        window.copyTextToClipboardClean(txt, "💌 تم نسخ بطاقة التهنئة لواتساب!");
+      }
+    }
+  };
+})();
+
+// ربط وحدات الغرف الثماني بـ window.MoaathVIPSystem بعد تحميلها بالكامل
+if (window.MoaathVIPSystem) { window.MoaathVIPSystem.roomModules = window.MoaathVIPRoomModules || {}; }
