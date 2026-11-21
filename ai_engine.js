@@ -83,7 +83,9 @@
     lastAddedIds: [],
     lastSpokenText: "",
     lastTtsSource: "",
-    lastGeminiError: ""
+    lastGeminiError: "",
+    pendingDialog: null,
+    conversationHistory: []
   };
 
   let customRecipesDB = {};
@@ -1637,6 +1639,185 @@
     return null;
   }
 
+  // ==========================================================================
+  // [محرك الحوار المتتابع الذكي (Multi-Turn Dialog) — يعمل محلياً بـ 0 حصة API]
+  // ==========================================================================
+  const DIALOG_PLAN_TOPICS = [
+    {
+      key: "sahra",
+      title: "سهرة ومتة",
+      regex: /(تنظيم|تجهيز|جهزلي|جهز|رتبلي|حضرلي|اعمل|بدي|اريد).*(سهره|سهرة|مته|متة|تسالي|جمعه|جمعة)/,
+      keywords: ["متة", "مته", "بزر", "شيبس", "بسكوت", "شوكولاتة", "شوكولاته", "عصير", "شاي", "قهوة", "موالح", "نقارش"]
+    },
+    {
+      key: "breakfast",
+      title: "فطور صباحي",
+      regex: /(تنظيم|تجهيز|جهزلي|جهز|رتبلي|حضرلي|بدي|اريد).*(فطور|افطار|إفطار|صباحي)/,
+      keywords: ["بيض", "جبن", "لبنة", "لبنه", "حليب", "خبز", "حلاوة", "حلاوه", "زيتون", "شاي", "زعتر", "مربى", "عسل"]
+    },
+    {
+      key: "hospitality",
+      title: "ضيافة وحلويات",
+      regex: /(تنظيم|تجهيز|جهزلي|جهز|رتبلي|حضرلي|بدي|اريد).*(ضيافه|ضيافة|ضيوف|عزيمه|عزيمة|حلى|حلويات)/,
+      keywords: ["قهوة", "قهوه", "شاي", "بسكوت", "شوكولاتة", "شوكولاته", "عصير", "حليب", "كيك", "سميد", "سكر", "نشا"]
+    },
+    {
+      key: "cleaning",
+      title: "تنظيف ومنظفات",
+      regex: /(تنظيم|تجهيز|جهزلي|جهز|رتبلي|حضرلي|بدي|اريد).*(تنظيف|منظفات|غسيل|جلي)/,
+      keywords: ["سائل جلي", "جلي", "مسحوق غسيل", "كلور", "صابون", "شامبو", "مناديل", "محارم", "معقم", "ليف", "اسفنج"]
+    }
+  ];
+
+  function extractBudgetNumber(normText) {
+    const clean = String(normText || "").replace(/[,،]/g, "").trim();
+    // رقم صرف مثل "500" أو "ب 500" أو "ميزانيتي 500" أو "500 ليرة"
+    const pureMatch = clean.match(/^(?:ب|بـ|حوالي|تقريبا|تقريباً|حدود|ميزانيه|ميزانية|ميزانيتي|مبلغ)?\s*(\d{2,7})\s*(?:ليره|ليرة|ل\s*س|سوري|فقط)?$/);
+    if (pureMatch) return parseInt(pureMatch[1], 10);
+    const inlineMatch = clean.match(/(?:ب|بـ|بميزانيه|بميزانية|ميزانيه|ميزانية|مبلغ|حدود|اقل\s*من|أقل\s*من|تحت)\s*(\d{2,7})/);
+    if (inlineMatch) return parseInt(inlineMatch[1], 10);
+    return null;
+  }
+
+  function buildBudgetBasket(budgetSYP, keywords, topicTitle) {
+    const allAvail = Object.keys(products || {})
+      .filter(pid => getBranchAvail(pid) > 0 && getUnitSYP(pid) > 0 && getUnitSYP(pid) <= budgetSYP)
+      .map(pid => {
+        const p = products[pid];
+        const pNorm = cleanArabicNorm((p.name || "") + " " + (p.category || ""));
+        const kwScore = (keywords || []).reduce((acc, kw) => acc + (pNorm.includes(cleanArabicNorm(kw)) ? 10 : 0), 0);
+        return {
+          id: pid,
+          name: p.name,
+          price: getUnitSYP(pid),
+          kwScore
+        };
+      });
+
+    // أولوية للأصناف المرتبطة بالموضوع، ثم إكمال بأوفر المتوفر ضمن الميزانية
+    const matched = allAvail.filter(x => x.kwScore > 0).sort((a, b) => (b.kwScore - a.kwScore) || (a.price - b.price));
+    const pool = matched.length >= 2 ? matched : [...matched, ...allAvail.filter(x => x.kwScore === 0).sort((a, b) => a.price - b.price)];
+
+    const picked = [];
+    let runningTotal = 0;
+    for (const item of pool) {
+      if (picked.length >= 8) break;
+      if (runningTotal + item.price <= budgetSYP) {
+        picked.push({
+          id: item.id,
+          name: item.name,
+          suggestedQty: 1,
+          reason: `ضمن ميزانية ${budgetSYP.toLocaleString()} ل.س (${item.price.toLocaleString()} ل.س)`
+        });
+        runningTotal += item.price;
+      }
+    }
+    return { picked, runningTotal };
+  }
+
+  function handleMultiTurnDialog(normText, persona) {
+    const now = Date.now();
+    const pending = sessionCtx.pendingDialog && sessionCtx.pendingDialog.expiresAt > now
+      ? sessionCtx.pendingDialog
+      : null;
+
+    // 1) إذا كان هناك حوار مفتوح ينتظر الميزانية وردّ الزبون برقم (مثل "500")
+    const budgetVal = extractBudgetNumber(normText);
+    if (pending && pending.type === "awaiting_budget" && budgetVal) {
+      const { picked, runningTotal } = buildBudgetBasket(budgetVal, pending.keywords, pending.title);
+      sessionCtx.pendingDialog = null;
+      if (picked.length > 0) {
+        openZeroDefaultModal(
+          `🎯 تجهيز (${pending.title}) بميزانية ${budgetVal.toLocaleString()} ل.س:`,
+          picked,
+          `budget_${pending.key}_${budgetVal}`,
+          `المجموع المقترح: ${runningTotal.toLocaleString()} ل.س من أصل ${budgetVal.toLocaleString()} ل.س — اضغط «تحديد المتوفر» أو (+)`
+        );
+        const reply = `جهزتلك تشكيلة (${pending.title}) ضمن ميزانية ${budgetVal.toLocaleString()} ليرة، المجموع ${runningTotal.toLocaleString()} ليرة.`;
+        setOrbEmotion("choice", reply, true);
+        setTxt("aiShoppingStatusText", `🎯 ${reply}`);
+        return true;
+      } else {
+        const lowMsg = `ميزانية ${budgetVal.toLocaleString()} ليرة أقل من أسعار الأصناف المتوفرة حالياً لـ (${pending.title})، جرّب رفع الميزانية قليلاً.`;
+        setOrbEmotion("idle", lowMsg, true);
+        setTxt("aiShoppingStatusText", `💡 ${lowMsg}`);
+        return true;
+      }
+    }
+
+    // 2) إذا كتب الزبون رقماً فقط (مثل "500") دون حوار معلق لكن لديه سياق سابق أو يريد تجهيز سلة بميزانية
+    if (!pending && budgetVal && /^\s*(?:ب|بـ|ميزانيه|ميزانية|ميزانيتي)?\s*\d{2,7}\s*(?:ليره|ليرة|ل\s*س)?\s*$/.test(normText)) {
+      const ctxTitle = sessionCtx.lastModalTitle ? "تشكيلة حسب طلبك السابق" : "تشكيلة متوفرة";
+      const ctxKws = sessionCtx.lastQuery ? [sessionCtx.lastQuery] : [];
+      const { picked, runningTotal } = buildBudgetBasket(budgetVal, ctxKws, ctxTitle);
+      if (picked.length > 0) {
+        openZeroDefaultModal(
+          `💰 ${ctxTitle} ضمن ميزانية ${budgetVal.toLocaleString()} ل.س:`,
+          picked,
+          `budget_quick_${budgetVal}`,
+          `المجموع المقترح: ${runningTotal.toLocaleString()} ل.س — اضغط «تحديد المتوفر» أو (+)`
+        );
+        const reply = `رتبتلك أفضل الأصناف المتوفرة ضمن ميزانية ${budgetVal.toLocaleString()} ليرة، المجموع ${runningTotal.toLocaleString()} ليرة.`;
+        setOrbEmotion("choice", reply, true);
+        setTxt("aiShoppingStatusText", `💰 ${reply}`);
+        return true;
+      }
+    }
+
+    // 3) ردود الموافقة والمتابعة ("موافق"، "تمام"، "نعم"، "أوكي"، "ماشي"، "أضفهم")
+    if (/^(موافق|تمام|نعم|اوكي|أوكي|ماشي|ايه|أيوه|ايوه|طيب|ممتاز|اكمل|أكمل|اضفهم|أضفهم)$/.test(normText)) {
+      if (pending && pending.type === "awaiting_budget") {
+        const askAgain = `ممتاز! اكتب رقم الميزانية بالليرة (مثلاً 500 أو 1000) لأجهزلك (${pending.title}) فوراً.`;
+        setOrbEmotion("greet", askAgain, true);
+        setTxt("aiShoppingStatusText", `💬 ${askAgain}`);
+        return true;
+      }
+      if (sessionCtx.lastModalItems.length > 0) {
+        openZeroDefaultModal(sessionCtx.lastModalTitle, sessionCtx.lastModalItems, sessionCtx.lastModalIntent, sessionCtx.lastModalSubtitle);
+        window.selectAllZeroDefaultSuggestions();
+        const msg = "تم تحديد الأصناف المتوفرة لك، اضغط «إضافة للسلة» للتأكيد.";
+        setOrbEmotion("happy", msg, true);
+        setTxt("aiShoppingStatusText", `✅ ${msg}`);
+        return true;
+      }
+    }
+
+    // 4) التقاط طلب تنظيم/تجهيز مناسبة (مثل "تنظيم سهرة") بدون ميزانية -> يفتح حواراً متتابعاً ذكياً
+    for (const topic of DIALOG_PLAN_TOPICS) {
+      if (topic.regex.test(normText)) {
+        if (budgetVal) {
+          const { picked, runningTotal } = buildBudgetBasket(budgetVal, topic.keywords, topic.title);
+          if (picked.length > 0) {
+            openZeroDefaultModal(
+              `🎯 تجهيز (${topic.title}) بميزانية ${budgetVal.toLocaleString()} ل.س:`,
+              picked,
+              `budget_${topic.key}_${budgetVal}`,
+              `المجموع المقترح: ${runningTotal.toLocaleString()} ل.س — اضغط «تحديد المتوفر» أو (+)`
+            );
+            const reply = `جهزتلك (${topic.title}) ضمن ${budgetVal.toLocaleString()} ليرة، المجموع ${runningTotal.toLocaleString()} ليرة.`;
+            setOrbEmotion("choice", reply, true);
+            setTxt("aiShoppingStatusText", `🎯 ${reply}`);
+            return true;
+          }
+        } else {
+          sessionCtx.pendingDialog = {
+            type: "awaiting_budget",
+            key: topic.key,
+            title: topic.title,
+            keywords: topic.keywords,
+            expiresAt: now + 5 * 60 * 1000
+          };
+          const askMsg = `على عيني! كم الميزانية التي تحب أن أجهز بها (${topic.title})؟ اكتب الرقم فقط مثل 500 أو 1000.`;
+          setOrbEmotion("greet", askMsg, true);
+          setTxt("aiShoppingStatusText", `💬 ${askMsg}`);
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   function handleSessionFollowUp(normText) {
     if (/^(اعد|كرر|افتح)\s*(اخر)?\s*(اقتراح|قائمه|نافذه)/.test(normText) && sessionCtx.lastModalItems.length > 0) {
       openZeroDefaultModal(sessionCtx.lastModalTitle, sessionCtx.lastModalItems, sessionCtx.lastModalIntent, sessionCtx.lastModalSubtitle);
@@ -2133,6 +2314,8 @@
     }
 
     const norm = cleanArabicNorm(promptTxt);
+
+    if (handleMultiTurnDialog(norm, persona)) return;
 
     const chatReply = matchCasualChat(norm, persona);
     if (chatReply) {
@@ -2719,6 +2902,17 @@
     const st = document.createElement("style");
     st.id = "futuristicUiMasterStyle";
     st.textContent = `
+
+      html, body {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+        width: 100% !important;
+      }
+      .container, .main-content, .page-wrapper {
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+      }
+
       /* =====================================================================
          [تحسينات واجهة المتجر الكاملة + المساعد الذكي المستقبلي القابل للطي]
          ===================================================================== */
@@ -2791,12 +2985,19 @@
         padding: 6px 9px !important;
         border-radius: 999px !important;
       }
+      .fut-ai-dock, #aiSmartAssistantBox {
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+      }
       .fut-ai-header {
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
         gap: 6px !important;
-        flex-wrap: nowrap !important;
+        flex-wrap: wrap !important;
+        max-width: 100% !important;
       }
       .fut-ai-pill-btn {
         display: inline-flex !important;
@@ -2864,8 +3065,8 @@
         border-color: rgba(56, 189, 248, 0.35) !important;
       }
       .fut-show-fairy-btn {
-        display: inline-flex !important;
-        align-items: center !important;
+        display: inline-flex;
+        align-items: center;
         background: var(--gold-color) !important;
         color: #000 !important;
         border: none !important;
@@ -3178,10 +3379,7 @@
         </button>
         <div class="fut-ai-header-actions">
           <button id="futVipShowcaseBtn" type="button" onclick="if(typeof window.openVIPShowcaseModal==='function'){window.openVIPShowcaseModal('all');}else{showToast('يرجى التأكد من رفع ملف ai_vip_personas.js وربطه في index.html');}" class="fut-icon-btn fut-gold-btn" title="غرف الشخصيات المميزة والباقة الشاملة">👑 غرف VIP</button>
-          <span id="petConnStatusBadge" onclick="showVoiceDiagnosticOnPhone()" class="fut-status-badge" title="اضغط لعرض سبب الخطأ وعدد المقاطع المحفوظة">🟢 جاهز</span>
           <button id="petDirectMicBtn" type="button" onclick="startVoiceShoppingInput()" class="fut-icon-btn fut-mic-btn" title="تحدّث الآن">🎙️</button>
-          <button type="button" onclick="replayLastCompanionSpeech()" class="fut-icon-btn fut-gold-btn" title="إعادة الاستماع">🔁</button>
-          <button type="button" onclick="toggleCompanionVoice()" class="fut-icon-btn fut-blue-btn" title="تفعيل أو كتم الصوت">🗣️ صوت</button>
           <button id="petShowCharBtn" type="button" onclick="setPetHidden(false)" class="fut-show-fairy-btn" style="display:none;">إظهار</button>
         </div>
       `;
@@ -3196,6 +3394,19 @@
 
       assistBox.appendChild(futHeader);
       assistBox.appendChild(futBody);
+
+      const voiceBar = document.createElement("div");
+      voiceBar.id = "futVoiceSubControls";
+      voiceBar.style.cssText = "display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:6px; flex-wrap:wrap;";
+      voiceBar.innerHTML = `
+        <span id="petConnStatusBadge" onclick="showVoiceDiagnosticOnPhone()" class="fut-status-badge" title="اضغط لعرض سبب الخطأ وعدد المقاطع المحفوظة">🟢 جاهز</span>
+        <div style="display:flex; gap:5px; align-items:center;">
+          <button type="button" onclick="replayLastCompanionSpeech()" class="fut-icon-btn fut-gold-btn" title="إعادة الاستماع">🔁 إعادة</button>
+          <button type="button" onclick="toggleCompanionVoice()" class="fut-icon-btn fut-blue-btn" title="تفعيل أو كتم الصوت">🗣️ صوت</button>
+        </div>
+      `;
+      futBody.insertBefore(voiceBar, futBody.firstChild);
+
     }
 
     const futBodyTarget = $("futuristicAiBody") || assistBox;
@@ -3286,7 +3497,7 @@
           transition: right 1.15s cubic-bezier(0.22, 1, 0.36, 1), bottom 1.15s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
         }
         #petCharOrb {
-          width: 62px; height: 62px; border-radius: 50%; border: 2.5px solid ${p.accent};
+          width: 52px; height: 52px; border-radius: 50%; border: 2.5px solid ${p.accent};
           position: relative; overflow: hidden;
           display: flex; align-items: center; justify-content: center;
           cursor: grab; -webkit-touch-callout: none; user-select: none;
@@ -3531,7 +3742,7 @@
 
       const root = document.createElement("div");
       root.id = "petCharRoot";
-      root.style.cssText = "position:fixed; bottom:88px; right:14px; z-index:98;";
+      root.style.cssText = "position:fixed; bottom:96px; left:12px; z-index:98;";
       root.innerHTML = `
         <div id="petMiniBubble"></div>
         <div style="position:relative;">
@@ -3548,6 +3759,7 @@
     organizeAdminAndExportUI();
     enhanceCustomerCartCheckoutUX();
     syncVisuals();
+    syncFuturisticCollapseUI();
     startRoamLoop();
   }
 
