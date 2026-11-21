@@ -2933,15 +2933,13 @@
     st.id = "futuristicUiMasterStyle";
     st.textContent = `
 
-      html {
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch;
+      html, body {
+        overflow-y: visible !important;
+        height: auto !important;
       }
       body {
         overflow-x: clip !important;
-        overflow-y: auto !important;
         max-width: 100% !important;
-        touch-action: pan-y;
       }
 
       /* =====================================================================
