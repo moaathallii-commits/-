@@ -78,8 +78,7 @@
     lastAddedIds: [],
     lastSpokenText: "",
     lastTtsSource: "",
-    lastGeminiError: "",
-    lastEdgeCache: ""
+    lastGeminiError: ""
   };
 
   let customRecipesDB = {};
@@ -147,6 +146,86 @@
       .replace(/\s+/g, " ")
       .trim();
   }
+
+  const COLLAPSE_KEY = "moaath_store_ai_collapsed";
+  const CHIPS_COLLAPSE_KEY = "moaath_store_chips_collapsed";
+
+  function isAssistantCollapsed() {
+    try {
+      const raw = localStorage.getItem(COLLAPSE_KEY);
+      if (raw === null) return true; // مطوي بشكل افتراضي لجمالية وأناقة وسرعة تصفح
+      return raw === "1" || raw === "true";
+    } catch (_) {
+      return true;
+    }
+  }
+
+  function setAssistantCollapsed(val) {
+    try {
+      localStorage.setItem(COLLAPSE_KEY, val ? "1" : "0");
+    } catch (_) {}
+  }
+
+  function isChipsCollapsed() {
+    try {
+      const raw = localStorage.getItem(CHIPS_COLLAPSE_KEY);
+      if (raw === null) return false;
+      return raw === "1" || raw === "true";
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function setChipsCollapsed(val) {
+    try {
+      localStorage.setItem(CHIPS_COLLAPSE_KEY, val ? "1" : "0");
+    } catch (_) {}
+  }
+
+  function syncFuturisticCollapseUI() {
+    const collapsed = isAssistantCollapsed();
+    const chipsCollapsed = isChipsCollapsed();
+    const bodyEl = $("futuristicAiBody");
+    const chipsEl = $("petQuickPromptChips");
+    const toggleBtn = $("futuristicAiToggleBtn");
+    const chipsToggleBtn = $("futuristicChipsToggleBtn");
+    const dockEl = $("aiSmartAssistantBox");
+
+    if (bodyEl) {
+      bodyEl.classList.toggle("is-collapsed", collapsed);
+    }
+    if (dockEl) {
+      dockEl.classList.toggle("is-dock-collapsed", collapsed);
+    }
+    if (toggleBtn) {
+      toggleBtn.innerHTML = collapsed
+        ? `<span class="fut-dot"></span><span>فتح المساعد والبحث</span><span class="fut-chev">▾</span>`
+        : `<span class="fut-dot"></span><span>طي المساعد</span><span class="fut-chev">▴</span>`;
+      toggleBtn.setAttribute("aria-expanded", String(!collapsed));
+    }
+    if (chipsEl) {
+      chipsEl.classList.toggle("is-chips-collapsed", chipsCollapsed || collapsed);
+    }
+    if (chipsToggleBtn) {
+      chipsToggleBtn.textContent = chipsCollapsed ? "إظهار الاختصارات ▾" : "طي الاختصارات ▴";
+    }
+  }
+
+  window.toggleFuturisticAssistantPanel = function (forceState = null) {
+    haptic(12);
+    unlockEmbeddedVoice();
+    pauseRoaming(8000);
+    const next = typeof forceState === "boolean" ? forceState : !isAssistantCollapsed();
+    setAssistantCollapsed(next);
+    syncFuturisticCollapseUI();
+  };
+
+  window.toggleFuturisticChipsPanel = function (forceState = null) {
+    haptic(10);
+    const next = typeof forceState === "boolean" ? forceState : !isChipsCollapsed();
+    setChipsCollapsed(next);
+    syncFuturisticCollapseUI();
+  };
 
   function getPrefs() {
     try {
@@ -428,9 +507,6 @@
 
   const PERSISTENT_TTS_CACHE_NAME = "moaath_store_tts_human";
   const GEMINI_COOLDOWN_KEY = "moaath_store_gemini_cooldown_until";
-  let prewarmStarted = false;
-  let prewarmQuotaHit = false;
-
   function getGeminiCooldownRemainingSec() {
     try {
       const until = parseInt(localStorage.getItem(GEMINI_COOLDOWN_KEY) || "0", 10);
@@ -440,17 +516,16 @@
       return 0;
     }
   }
-
   function setGeminiCooldown(seconds = 900) {
     try {
       const sec = Math.max(60, Math.min(3600, parseInt(seconds, 10) || 900));
       localStorage.setItem(GEMINI_COOLDOWN_KEY, String(Date.now() + sec * 1000));
     } catch (_) {}
   }
-
   function clearGeminiCooldown() {
     try { localStorage.removeItem(GEMINI_COOLDOWN_KEY); } catch (_) {}
   }
+
 
   const missingLocalClips = new Set();
 
@@ -595,14 +670,17 @@
       }
     };
 
+    // 1) التحقق أولاً من ملفات الصوت الثابتة في مستودع GitHub (sounds/<id>_greet.mp3)
     const playedLocal = await tryLocalRepoClip(persona, spokenText, mySeq, cacheKey);
     if (playedLocal) return;
 
+    // 2) التحقق من الكاش في الذاكرة الحالية
     if (ttsAudioCache.has(cacheKey)) {
       await playEntry(ttsAudioCache.get(cacheKey));
       return;
     }
 
+    // 3) التحقق من الكاش الدائم في الهاتف (Cache API) لتجنب استهلاك الحصة
     const persistedUrl = await readPersistentHumanCache(cacheKey);
     if (persistedUrl && mySeq === ttsRequestSeq) {
       const pEntry = { url: persistedUrl, rawBuffer: null, source: "persistent_cache", geminiError: "" };
@@ -625,7 +703,6 @@
     }
 
     updateVoiceSourceBadge("⏳ يجهّز...", "#ffd54f", "جاري تجهيز الصوت");
-    const inCooldown = getGeminiCooldownRemainingSec() > 0;
 
     try {
       const res = await fetch(workerUrl, {
@@ -639,18 +716,10 @@
           toneTag: persona.toneTag || "",
           dialectMode: persona.dialectMode || "shami_friendly",
           pitchSemitones: typeof persona.pitchSemitones === "number" ? persona.pitchSemitones : 0,
-          styleHint: persona.styleHint || "",
-          skipGemini: inCooldown
+          styleHint: persona.styleHint || ""
         })
       });
       const json = await res.json();
-      if (json?.edgeCache) sessionCtx.lastEdgeCache = json.edgeCache;
-      if (json?.cooldownActive || (json?.geminiError && /429|RESOURCE_EXHAUSTED|QUOTA|COOLDOWN/i.test(json.geminiError))) {
-        setGeminiCooldown(json.retryAfterSec || 900);
-        prewarmQuotaHit = true;
-      } else if (json?.source === "gemini_tts" && json?.edgeCache !== "HIT") {
-        clearGeminiCooldown();
-      }
       if (mySeq !== ttsRequestSeq) return;
 
       if (!res.ok || !json?.ok || !json?.audioBase64) {
@@ -683,6 +752,7 @@
         geminiError: json.geminiError || ""
       };
 
+      // حفظ الصوت البشري الأصلي فقط في الكاش الدائم على الهاتف (لا نحفظ البديل دائماً حتى يُستبدل بالبشري فور تجدد الحصة)
       if (entry.source === "gemini_tts" && audioBlob) {
         writePersistentHumanCache(cacheKey, audioBlob);
       }
@@ -702,12 +772,15 @@
     }
   }
 
+
+  // ==========================================================================
+  // [التحميل التدريجي الذكي في الخلفية — 10 مقاطع أساسية لكل شخصية دون حرق الحصة]
+  // ==========================================================================
+  let prewarmStarted = false;
+  let prewarmQuotaHit = false;
+
   async function runDripFeedPrewarm() {
     if (prewarmStarted || prewarmQuotaHit || navigator.onLine === false) return;
-    if (getGeminiCooldownRemainingSec() > 0) {
-      prewarmQuotaHit = true;
-      return;
-    }
     const workerUrl = resolveWorkerEndpoint();
     if (!workerUrl) return;
     prewarmStarted = true;
@@ -725,6 +798,7 @@
       if (!spokenText) continue;
       const cacheKey = `${persona.id}::${voiceName}::${spokenText}`;
 
+      // تخطي إذا كان موجوداً في الكاش الدائم أو الذاكرة
       if (ttsAudioCache.has(cacheKey)) continue;
       const existing = await readPersistentHumanCache(cacheKey);
       if (existing) {
@@ -732,8 +806,9 @@
         continue;
       }
 
+      // انتظار 10 ثوانٍ بين كل طلب لحماية الحصة المجانية
       await new Promise(r => setTimeout(r, 10000));
-      if (prewarmQuotaHit || navigator.onLine === false || getGeminiCooldownRemainingSec() > 0) break;
+      if (prewarmQuotaHit || navigator.onLine === false) break;
 
       try {
         const res = await fetch(workerUrl, {
@@ -751,8 +826,7 @@
           })
         });
         const json = await res.json();
-        if (json?.cooldownActive || (json?.geminiError && /429|RESOURCE_EXHAUSTED|QUOTA|COOLDOWN/i.test(json.geminiError))) {
-          setGeminiCooldown(json.retryAfterSec || 900);
+        if (json?.geminiError && /429|RESOURCE_EXHAUSTED|QUOTA/i.test(json.geminiError)) {
           prewarmQuotaHit = true;
           break;
         }
@@ -869,6 +943,7 @@
     pauseRoaming(7500);
     setPrefs({ persona: key });
     syncVisuals();
+    syncFuturisticCollapseUI();
     const p = PERSONAS[key];
     const greetLine = (window.MoaathAIPersonas && typeof window.MoaathAIPersonas.getTimeGreet === "function")
       ? window.MoaathAIPersonas.getTimeGreet(p.id)
@@ -1011,6 +1086,7 @@
     const curR = parseInt(root.style.right || "12", 10);
     const curB = parseInt(root.style.bottom || "96", 10);
 
+    // حصر التجوال على الحواف الجانبية فقط (يمين أو يسار) لتجنب تغطية أزرار الشراء
     const stickLeft = curR > window.innerWidth / 2;
     const nextR = stickLeft ? maxR : 12;
     const nextB = Math.round(Math.max(minB, Math.min(maxB, curB + (Math.random() - 0.5) * 120)));
@@ -1854,6 +1930,7 @@
       return;
     }
 
+    // إلغاء تدخل الذكاء الاصطناعي في الدفع أو شام كاش تماماً
     if (guardAgainstPaymentAI(promptTxt)) {
       const guardMsg = "التحقق من الدفع وشام كاش ملغى من الذكاء الاصطناعي ويتم يدوياً بالكامل.";
       setOrbEmotion("idle", guardMsg, false);
@@ -1892,6 +1969,7 @@
     const peopleCount = parsePeopleCount(norm);
     const suggestedPerItem = peopleCount && peopleCount >= 5 ? Math.min(4, Math.ceil(peopleCount / 3)) : 1;
 
+    // دعم طلبات الرياضة والصحة (خاصة مع البطل الرياضي أو أي شخصية)
     if (/(رياضه|رياضة|صحي|صحه|صحة|دايت|بروتين|تمرين|لياقه|لياقة|طاقة)/.test(norm)) {
       const healthyKw = /(عدس|مجدره|مجدرة|شوربه|شوربة|حليب|لبن|بيض|رز|ارز|برغل|شوفان|عسل|ماء|عصير|خضار|فواكه|تونه|تونة)/;
       const healthyItems = Object.keys(products || {})
@@ -1919,6 +1997,7 @@
       }
     }
 
+    // دعم طلبات وصفات الطعام (الطباخ الماهر) أو الحلويات (صانعة الحلويات)
     if (/(وصفه|وصفة|اكله|أكلة|طبخه|طبخة|غداء|عشاء)/.test(norm) && !matchRecipeOrSweet(norm)) {
       const allRecs = getAllMergedRecipes();
       const wantsSweets = persona.id === "pastry" || /(حلى|حلويات|حلو|كيك|بسبوسه|بسبوسة|مهلبيه|مهلبية)/.test(norm);
@@ -1983,6 +2062,7 @@
       return;
     }
 
+    // خيار أخير: استدعاء الذكاء الاصطناعي التفاعلي (companion_shop) مع حظر تام لأي أمر دفع
     const workerUrl = resolveWorkerEndpoint();
     if (workerUrl && navigator.onLine !== false) {
       setOrbEmotion("thinking", "جاري البحث الذكي في أصناف المتجر...", false);
@@ -2389,7 +2469,6 @@
     const srcNow = sessionCtx.lastTtsSource || "لم يتم النطق بعد";
     const errNow = sessionCtx.lastGeminiError || "لا يوجد خطأ مسجل";
     const netNow = navigator.onLine !== false ? "متصل" : "غير متصل";
-    const cdSec = getGeminiCooldownRemainingSec();
 
     let box = document.getElementById("moaathVoiceDiagModal");
     if (!box) {
@@ -2410,11 +2489,10 @@
         <div>• <b>المصدر الحالي:</b> ${escTxt(srcNow)}</div>
         <div>• <b>سبب فشل Gemini TTS:</b> <span style="color:#38bdf8;">${escTxt(errNow)}</span></div>
         <div>• <b>المقاطع البشرية المحفوظة:</b> ${cachedCount}</div>
-        <div>• <b>كاش Cloudflare السحابي:</b> ${escTxt(sessionCtx.lastEdgeCache || "-")}</div>
-        <div>• <b>التبريد التلقائي (Cooldown):</b> ${cdSec > 0 ? Math.ceil(cdSec / 60) + " دقيقة متبقية" : "غير نشط (جاهز)"}</div>
         <div>• <b>رابط Worker:</b> <span style="word-break:break-all; color:#a7f3d0;">${escTxt(wUrl)}</span></div>
         <div>• <b>الاتصال:</b> ${escTxt(netNow)}</div>
-        <div style="margin-top:12px; text-align:left;">
+        <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <button type="button" onclick="window.resetVoiceCooldownNow()" style="background:#f59e0b; color:#000; font-weight:bold; border:none; border-radius:8px; padding:6px 10px; font-size:11px; cursor:pointer;">إلغاء التبريد</button>
           <button type="button" onclick="document.getElementById('moaathVoiceDiagModal').style.display='none'" style="background:#10b981; color:#000; font-weight:bold; border:none; border-radius:8px; padding:6px 14px; font-size:12px; cursor:pointer;">حسناً</button>
         </div>
       </div>
@@ -2430,7 +2508,6 @@
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
       lastGeminiError: sessionCtx.lastGeminiError || "none",
-      lastEdgeCache: sessionCtx.lastEdgeCache || "none",
       fairiesCount: Object.keys(PERSONAS).length,
       productsLoaded: Object.keys(products || {}).length,
       categoriesLoaded: Array.isArray(categories) ? categories.length : 0,
@@ -2449,39 +2526,69 @@
     const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
     const assistBox = $("aiSmartAssistantBox");
 
-    if (assistBox && !$("petPersonaBar")) {
+    if (assistBox && !$("futuristicAiHeader")) {
+      assistBox.classList.add("fut-ai-dock");
+
+      const futHeader = document.createElement("div");
+      futHeader.id = "futuristicAiHeader";
+      futHeader.className = "fut-ai-header";
+      futHeader.innerHTML = `
+        <button id="futuristicAiToggleBtn" type="button" class="fut-ai-pill-btn" onclick="toggleFuturisticAssistantPanel()" aria-expanded="false">
+          <span class="fut-dot"></span>
+          <span>فتح المساعد والبحث</span>
+          <span class="fut-chev">▾</span>
+        </button>
+        <div class="fut-ai-header-actions">
+          <span id="petConnStatusBadge" onclick="showVoiceDiagnosticOnPhone()" class="fut-status-badge" title="اضغط لعرض سبب الخطأ وعدد المقاطع المحفوظة">🟢 جاهز</span>
+          <button id="petDirectMicBtn" type="button" onclick="startVoiceShoppingInput()" class="fut-icon-btn fut-mic-btn" title="تحدّث الآن">🎙️</button>
+          <button type="button" onclick="replayLastCompanionSpeech()" class="fut-icon-btn fut-gold-btn" title="إعادة الاستماع">🔁</button>
+          <button type="button" onclick="toggleCompanionVoice()" class="fut-icon-btn fut-blue-btn" title="تفعيل أو كتم الصوت">🗣️ صوت</button>
+          <button id="petShowCharBtn" type="button" onclick="setPetHidden(false)" class="fut-show-fairy-btn" style="display:none;">إظهار</button>
+        </div>
+      `;
+
+      const futBody = document.createElement("div");
+      futBody.id = "futuristicAiBody";
+      futBody.className = "fut-ai-body";
+
+      // نقل العناصر الموجودة داخل صندوق المساعد إلى الجسم القابل للطي
+      const existingChildren = Array.from(assistBox.children);
+      existingChildren.forEach(ch => futBody.appendChild(ch));
+
+      assistBox.appendChild(futHeader);
+      assistBox.appendChild(futBody);
+    }
+
+    const futBodyTarget = $("futuristicAiBody") || assistBox;
+
+    if (futBodyTarget && !$("petPersonaBar")) {
       const bar = document.createElement("div");
       bar.id = "petPersonaBar";
-      bar.style.cssText = "display:flex; align-items:center; justify-content:space-between; gap:5px; flex-wrap:wrap; margin-bottom:6px; font-size:10px;";
+      bar.className = "fut-persona-bar";
       const opts = Object.values(PERSONAS).map(per =>
         `<option value="${per.id}">${per.name} — ${per.roleBadge}</option>`
       ).join("");
       bar.innerHTML = `
-        <div style="display:flex; align-items:center; gap:4px; flex:1; min-width:155px;">
-          <img id="fairyBarThumb" alt="${p.name}" style="width:22px; height:22px; border-radius:50%; object-fit:cover; border:1.5px solid ${p.accent}; flex-shrink:0;">
-          <span style="color:var(--gold-color); font-weight:bold;">الجنية:</span>
-          <select id="petPersonaSelect" class="form-control" onchange="selectPetPersona(this.value)" style="padding:3px 6px; font-size:10px; flex:1;">${opts}</select>
+        <div class="fut-persona-select-wrap">
+          <img id="fairyBarThumb" alt="${p.name}" style="width:24px; height:24px; border-radius:50%; object-fit:cover; border:1.5px solid ${p.accent}; flex-shrink:0;">
+          <span style="color:var(--gold-color); font-weight:bold;">الشخصية:</span>
+          <select id="petPersonaSelect" class="form-control fut-select" onchange="selectPetPersona(this.value)">${opts}</select>
         </div>
-        <div style="display:flex; align-items:center; gap:4px;">
-          <span id="petConnStatusBadge" onclick="showVoiceDiagnosticOnPhone()" style="font-size:9px; font-weight:bold; cursor:pointer; text-decoration:underline;" title="اضغط لعرض سبب الخطأ وعدد المقاطع المحفوظة">🟢 جاهز</span>
-          <button id="petDirectMicBtn" type="button" onclick="startVoiceShoppingInput()" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:rgba(0,230,118,0.16); color:#00e676;" title="تحدّث الآن">🎙️</button>
-          <button type="button" onclick="replayLastCompanionSpeech()" class="btn" style="width:auto; padding:3px 6px; font-size:10px; background:rgba(212,175,55,0.16); color:var(--gold-color);" title="إعادة الاستماع">🔁</button>
-          <button type="button" onclick="toggleCompanionVoice()" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:rgba(0,176,255,0.16); color:#00b0ff;" title="تفعيل أو كتم الصوت">🗣️ صوت</button>
-          <button id="petShowCharBtn" type="button" onclick="setPetHidden(false)" style="display:none; align-items:center; gap:3px; background:var(--gold-color); color:#000; border:none; border-radius:6px; padding:3px 8px; font-size:10px; font-weight:bold; cursor:pointer;">إظهار</button>
-        </div>`;
-      assistBox.insertBefore(bar, assistBox.firstChild);
+        <button id="futuristicChipsToggleBtn" type="button" class="fut-sub-toggle-btn" onclick="toggleFuturisticChipsPanel()">طي الاختصارات ▴</button>
+      `;
+      futBodyTarget.insertBefore(bar, futBodyTarget.firstChild);
 
       const specNote = document.createElement("div");
       specNote.id = "fairySpecialtyNote";
-      specNote.style.cssText = "font-size:10px; color:var(--gray-text); margin-bottom:5px; line-height:1.35;";
+      specNote.className = "fut-specialty-note";
       specNote.textContent = p.specialtyNote || "";
       bar.insertAdjacentElement("afterend", specNote);
     }
 
-    if (assistBox && !$("petQuickPromptChips")) {
+    if (futBodyTarget && !$("petQuickPromptChips")) {
       const chips = document.createElement("div");
       chips.id = "petQuickPromptChips";
-      chips.style.cssText = "display:flex; gap:5px; overflow-x:auto; padding:5px 0 2px 0; margin-top:4px; scrollbar-width:none;";
+      chips.className = "fut-quick-chips";
       const quickItems = [
         { label: "🍲 مقلوبة", q: "مقلوبة" },
         { label: "🍰 حلى سريع", q: "حلى بارد" },
@@ -2493,11 +2600,12 @@
         { label: "🔁 كرر طلبي", q: "كرر طلبي السابق" }
       ];
       chips.innerHTML = quickItems.map(it =>
-        `<button type="button" onclick="runAIShoppingAssistant('${it.q}')" style="flex-shrink:0; background:var(--bg-color); color:var(--text-color); border:1px solid var(--border-color); border-radius:14px; padding:4px 9px; font-size:10px; font-weight:bold; cursor:pointer;">${it.label}</button>`
+        `<button type="button" onclick="runAIShoppingAssistant('${it.q}')" class="fut-chip-btn">${it.label}</button>`
       ).join("");
-      assistBox.appendChild(chips);
+      futBodyTarget.appendChild(chips);
     }
 
+    // احترام هدوء الزبون عند التركيز على حقول البحث أو الكتابة
     if (!window.__MOAATH_QUIET_HOOK__) {
       window.__MOAATH_QUIET_HOOK__ = true;
       document.addEventListener("focusin", (e) => {
@@ -2573,7 +2681,214 @@
           border-radius: 10px; padding: 6px 9px; font-size: 11px; line-height: 1.4;
           box-shadow: 0 8px 20px rgba(0,0,0,0.45); pointer-events: none;
         }`;
-      document.head.appendChild(styleTag);
+      styleTag.textContent += `
+
+        .fut-ai-dock {
+          position: relative;
+          border-radius: 18px !important;
+          border: 1px solid rgba(212, 175, 55, 0.38) !important;
+          background: linear-gradient(145deg, rgba(16, 24, 42, 0.88), rgba(10, 15, 28, 0.94)) !important;
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35), 0 0 18px rgba(0, 176, 255, 0.08) !important;
+          padding: 8px 10px !important;
+          transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        body.light-mode .fut-ai-dock {
+          background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(241, 245, 249, 0.96)) !important;
+          border: 1px solid rgba(180, 140, 20, 0.32) !important;
+          box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08) !important;
+        }
+        .fut-ai-dock.is-dock-collapsed {
+          padding: 6px 8px !important;
+          border-radius: 22px !important;
+        }
+        .fut-ai-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 6px;
+          flex-wrap: wrap;
+        }
+        .fut-ai-pill-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          background: linear-gradient(90deg, rgba(0, 176, 255, 0.16), rgba(212, 175, 55, 0.18));
+          color: var(--text-color);
+          border: 1px solid rgba(212, 175, 55, 0.55);
+          border-radius: 999px;
+          padding: 5px 11px;
+          font-size: 11px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .fut-ai-pill-btn:hover {
+          border-color: #38bdf8;
+          box-shadow: 0 0 12px rgba(56, 189, 248, 0.28);
+          transform: translateY(-1px);
+        }
+        .fut-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #00e676;
+          box-shadow: 0 0 8px #00e676;
+          flex-shrink: 0;
+        }
+        .fut-chev {
+          font-size: 11px;
+          color: var(--gold-color);
+        }
+        .fut-ai-header-actions {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          flex-wrap: wrap;
+        }
+        .fut-status-badge {
+          font-size: 9px;
+          font-weight: 700;
+          cursor: pointer;
+          text-decoration: underline;
+          padding: 2px 5px;
+        }
+        .fut-icon-btn {
+          width: auto !important;
+          padding: 4px 8px !important;
+          font-size: 10px !important;
+          border-radius: 999px !important;
+          font-weight: 700 !important;
+          line-height: 1.2 !important;
+          cursor: pointer;
+          border: 1px solid transparent;
+          transition: transform 0.18s ease, opacity 0.18s ease;
+        }
+        .fut-icon-btn:active {
+          transform: scale(0.95);
+        }
+        .fut-mic-btn {
+          background: rgba(0, 230, 118, 0.15) !important;
+          color: #00e676 !important;
+          border-color: rgba(0, 230, 118, 0.35) !important;
+        }
+        .fut-gold-btn {
+          background: rgba(212, 175, 55, 0.15) !important;
+          color: var(--gold-color) !important;
+          border-color: rgba(212, 175, 55, 0.35) !important;
+        }
+        .fut-blue-btn {
+          background: rgba(0, 176, 255, 0.15) !important;
+          color: #38bdf8 !important;
+          border-color: rgba(56, 189, 248, 0.35) !important;
+        }
+        .fut-show-fairy-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
+          background: var(--gold-color);
+          color: #000;
+          border: none;
+          border-radius: 999px;
+          padding: 4px 9px;
+          font-size: 10px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+        .fut-ai-body {
+          max-height: 520px;
+          opacity: 1;
+          overflow: hidden;
+          margin-top: 8px;
+          transition: max-height 0.34s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease, margin-top 0.28s ease;
+        }
+        .fut-ai-body.is-collapsed {
+          max-height: 0 !important;
+          opacity: 0 !important;
+          margin-top: 0 !important;
+          pointer-events: none;
+        }
+        .fut-persona-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 6px;
+          flex-wrap: wrap;
+          margin-bottom: 6px;
+          font-size: 10px;
+        }
+        .fut-persona-select-wrap {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          flex: 1;
+          min-width: 165px;
+        }
+        .fut-select {
+          padding: 4px 8px !important;
+          font-size: 10px !important;
+          border-radius: 10px !important;
+          flex: 1;
+        }
+        .fut-sub-toggle-btn {
+          background: rgba(255, 255, 255, 0.06);
+          color: var(--gold-color);
+          border: 1px solid rgba(212, 175, 55, 0.35);
+          border-radius: 999px;
+          padding: 3px 8px;
+          font-size: 9px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+        .fut-specialty-note {
+          font-size: 10px;
+          color: var(--gray-text);
+          margin-bottom: 6px;
+          line-height: 1.4;
+        }
+        .fut-quick-chips {
+          display: flex;
+          gap: 6px;
+          overflow-x: auto;
+          padding: 6px 2px 2px 2px;
+          margin-top: 6px;
+          max-height: 56px;
+          opacity: 1;
+          scrollbar-width: none;
+          transition: max-height 0.28s ease, opacity 0.22s ease, margin-top 0.24s ease;
+        }
+        .fut-quick-chips.is-chips-collapsed {
+          max-height: 0 !important;
+          opacity: 0 !important;
+          margin-top: 0 !important;
+          padding-top: 0 !important;
+          padding-bottom: 0 !important;
+          pointer-events: none;
+        }
+        .fut-chip-btn {
+          flex-shrink: 0;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+          color: var(--text-color);
+          border: 1px solid rgba(212, 175, 55, 0.35);
+          border-radius: 999px;
+          padding: 5px 10px;
+          font-size: 10px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: transform 0.16s ease, border-color 0.18s ease, background 0.18s ease;
+        }
+        .fut-chip-btn:hover {
+          border-color: #38bdf8;
+          transform: translateY(-1px);
+        }
+        body.light-mode .fut-chip-btn {
+          background: #ffffff;
+          border-color: rgba(15, 23, 42, 0.14);
+        }
+
+`;
+            document.head.appendChild(styleTag);
 
       const root = document.createElement("div");
       root.id = "petCharRoot";
