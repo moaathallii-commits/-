@@ -2719,6 +2719,17 @@
     const st = document.createElement("style");
     st.id = "futuristicUiMasterStyle";
     st.textContent = `
+
+      html, body {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+        width: 100% !important;
+      }
+      .container, .main-content, .page-wrapper {
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+      }
+
       /* =====================================================================
          [تحسينات واجهة المتجر الكاملة + المساعد الذكي المستقبلي القابل للطي]
          ===================================================================== */
@@ -2864,8 +2875,8 @@
         border-color: rgba(56, 189, 248, 0.35) !important;
       }
       .fut-show-fairy-btn {
-        display: inline-flex !important;
-        align-items: center !important;
+        display: inline-flex;
+        align-items: center;
         background: var(--gold-color) !important;
         color: #000 !important;
         border: none !important;
@@ -3178,10 +3189,7 @@
         </button>
         <div class="fut-ai-header-actions">
           <button id="futVipShowcaseBtn" type="button" onclick="if(typeof window.openVIPShowcaseModal==='function'){window.openVIPShowcaseModal('all');}else{showToast('يرجى التأكد من رفع ملف ai_vip_personas.js وربطه في index.html');}" class="fut-icon-btn fut-gold-btn" title="غرف الشخصيات المميزة والباقة الشاملة">👑 غرف VIP</button>
-          <span id="petConnStatusBadge" onclick="showVoiceDiagnosticOnPhone()" class="fut-status-badge" title="اضغط لعرض سبب الخطأ وعدد المقاطع المحفوظة">🟢 جاهز</span>
           <button id="petDirectMicBtn" type="button" onclick="startVoiceShoppingInput()" class="fut-icon-btn fut-mic-btn" title="تحدّث الآن">🎙️</button>
-          <button type="button" onclick="replayLastCompanionSpeech()" class="fut-icon-btn fut-gold-btn" title="إعادة الاستماع">🔁</button>
-          <button type="button" onclick="toggleCompanionVoice()" class="fut-icon-btn fut-blue-btn" title="تفعيل أو كتم الصوت">🗣️ صوت</button>
           <button id="petShowCharBtn" type="button" onclick="setPetHidden(false)" class="fut-show-fairy-btn" style="display:none;">إظهار</button>
         </div>
       `;
@@ -3196,6 +3204,19 @@
 
       assistBox.appendChild(futHeader);
       assistBox.appendChild(futBody);
+
+      const voiceBar = document.createElement("div");
+      voiceBar.id = "futVoiceSubControls";
+      voiceBar.style.cssText = "display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:6px; flex-wrap:wrap;";
+      voiceBar.innerHTML = `
+        <span id="petConnStatusBadge" onclick="showVoiceDiagnosticOnPhone()" class="fut-status-badge" title="اضغط لعرض سبب الخطأ وعدد المقاطع المحفوظة">🟢 جاهز</span>
+        <div style="display:flex; gap:5px; align-items:center;">
+          <button type="button" onclick="replayLastCompanionSpeech()" class="fut-icon-btn fut-gold-btn" title="إعادة الاستماع">🔁 إعادة</button>
+          <button type="button" onclick="toggleCompanionVoice()" class="fut-icon-btn fut-blue-btn" title="تفعيل أو كتم الصوت">🗣️ صوت</button>
+        </div>
+      `;
+      futBody.insertBefore(voiceBar, futBody.firstChild);
+
     }
 
     const futBodyTarget = $("futuristicAiBody") || assistBox;
@@ -3286,7 +3307,7 @@
           transition: right 1.15s cubic-bezier(0.22, 1, 0.36, 1), bottom 1.15s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
         }
         #petCharOrb {
-          width: 62px; height: 62px; border-radius: 50%; border: 2.5px solid ${p.accent};
+          width: 52px; height: 52px; border-radius: 50%; border: 2.5px solid ${p.accent};
           position: relative; overflow: hidden;
           display: flex; align-items: center; justify-content: center;
           cursor: grab; -webkit-touch-callout: none; user-select: none;
@@ -3531,7 +3552,7 @@
 
       const root = document.createElement("div");
       root.id = "petCharRoot";
-      root.style.cssText = "position:fixed; bottom:88px; right:14px; z-index:98;";
+      root.style.cssText = "position:fixed; bottom:96px; left:12px; z-index:98;";
       root.innerHTML = `
         <div id="petMiniBubble"></div>
         <div style="position:relative;">
@@ -3548,6 +3569,7 @@
     organizeAdminAndExportUI();
     enhanceCustomerCartCheckoutUX();
     syncVisuals();
+    syncFuturisticCollapseUI();
     startRoamLoop();
   }
 
