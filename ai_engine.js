@@ -60,6 +60,171 @@
     return Array.isArray(list) && list.length ? list[0] : "";
   }
 
+  // ==========================================================================
+  // [محرك التراكيب اللانهائي للجمل + مانع التكرار + حماية حصة الصوت البشري]
+  // - يولّد مئات التراكيب المتجددة لكل شخصية (10 أساسية + 8 VIP) بـ 0 حصة API
+  // - يمنع تكرار آخر 12 جملة ظهرت للزبون
+  // - يربط النية الصوتية بملفات sounds/ المحفوظة لحماية الحصة المجانية
+  // ==========================================================================
+  const PHRASE_HIST_KEY = "moaath_phrase_anti_repeat_v1";
+
+  function getPhraseHistory() {
+    try {
+      const d = JSON.parse(localStorage.getItem(PHRASE_HIST_KEY) || "{}");
+      return d && typeof d === "object" ? d : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function savePhraseHistory(hist) {
+    try { localStorage.setItem(PHRASE_HIST_KEY, JSON.stringify(hist)); } catch (_) {}
+  }
+
+  function getPersonaStyleGroup(persona) {
+    const id = String(persona?.id || "buddy");
+    if (/coach_sakhr|anime_zain|athlete/.test(id)) return "energetic";
+    if (/grand_chef|princess_layla|butler_farid|anime_ryu/.test(id)) return "formal";
+    if (/friend_fadi/.test(id)) return "playful";
+    if (/anime_ritaj|lolo|pastry/.test(id)) return "sweet";
+    return "friendly";
+  }
+
+  function getCustomerFirstName() {
+    try {
+      const raw = String(currentUser?.name || $("customerNameInput")?.value || "").trim();
+      if (!raw || raw === "زبون" || raw === "زائر") return "";
+      return raw.split(/\s+/)[0].slice(0, 18);
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function getTimeGreetingWord() {
+    const h = new Date().getHours();
+    if (h >= 5 && h < 12) return { word: "صباح الخير", clipKey: "greetMorning" };
+    if (h >= 18 || h < 5) return { word: "مساء الخير", clipKey: "greetEvening" };
+    return { word: "أهلاً بك", clipKey: "greet" };
+  }
+
+  const INFINITE_BANKS = {
+    greet: {
+      friendly: {
+        a: ["أهلاً وسهلاً", "يا هلا ومرحبا", "نورت متجر معاذ", "حياك الله", "أهلاً بك دائماً", "يا مية هلا"],
+        b: ["اليوم الأجواء جميلة للتسوق", "كل الأصناف الطازجة بانتظارك", "يسعدني جداً خدمتك الآن", "المتجر منور بوجودك", "جاهز أساعدك بأي طلب"],
+        c: ["ماذا تحب أن نجهّز لك اليوم؟", "اخبرني بطلبك وسأرتبه لك فوراً.", "بماذا نبدأ سلتك الآن؟", "اطلب ما تحب أو جرّب طبخة اليوم!", "أنا هنا لتسهيل تسوقك."]
+      },
+      energetic: {
+        a: ["أهلاً بالبطل", "يا هلا بالطاقة والهمة", "حيا الله الأبطال", "انطلاقة موفقة", "جاهزية كاملة"],
+        b: ["يوم جديد يعني إنجاز جديد", "وقودك وطاقتك جاهزة في المتجر", "خلينا نضبط خياراتك بأسرع وقت", "الهمة عالية والطلب جاهز"],
+        c: ["ما هدفك أو طلبك اليوم؟", "انطلق واذكر ما تحتاجه الآن!", "هيا نجهز سلة القوة والنشاط!", "بماذا نبدأ مهمتنا اليوم؟"]
+      },
+      formal: {
+        a: ["أهلاً بك سيدي الكريم", "مرحباً بك بكل رقي", "يسعدني تشريفك لمتجر معاذ", "تحية طيبة وراقية لك", "أهلاً بك في جناحك الخاص"],
+        b: ["كل شيء مرتب ومُعد بعناية لأجلك", "نحرص دائماً على أدق التفاصيل وأفضل الخيارات", "خدمتك بدقة وأناقة هي أولويتي", "الأصناف المختارة جاهزة بين يديك"],
+        c: ["بماذا أتشرف بخدمتك اليوم؟", "أخبرني بما ترغب وسأنسّقه لك فوراً.", "كيف يمكنني تنظيم طلبك الآن؟", "ما الذي تفضل أن نبدأ به؟"]
+      },
+      playful: {
+        a: ["ولك هلا بالغالي", "يا هلا بالصديق الوفي", "نورت الشاشة والمتجر", "أهلاً بأحلى زبون", "يا سيدي هلا ومية غلا"],
+        b: ["خلينا نكسر الروتين ونضبط المزاج", "السهرة والمتة والتسالي كلها ناطرتك", "اليوم رح نطلع بأحلى سلة", "الجو بده كاسة متة وشي طيب"],
+        c: ["شو عبالك نطلب اليوم؟", "خبرني شو ناقصك وخلّي الباقي عليّ!", "نبدأ بالسهرة ولا بطبخة مرتبة؟", "سمّي بالله واطلب يلي ببالك!"]
+      },
+      sweet: {
+        a: ["أهلاً يا حلو", "نورت عالمنا المشرق", "يا أهلاً باللطف كله", "أهلاً بك بابتسامة جميلة", "سعيدة جداً بوجودك"],
+        b: ["يومك رح يكون ألطف وأحلى معنا", "جهزتلك أشهى الأفكار والحلويات", "كل شيء هنا يرحب بك بكل حب", "خلينا نخلي تسوقك ممتع ومريح"],
+        c: ["شو حابب نختار اليوم؟", "بدك حلى لطيف ولا أغراض البيت؟", "خبرني بمزاجك وأنا أساعدك فوراً!", "بشو نبدأ رحلتنا الحلوة؟"]
+      }
+    },
+    chatGood: {
+      default: {
+        a: ["أنا بأفضل حال والحمد لله", "بخير وعافية بسؤالك اللطيف", "تمام التمام وبأعلى جاهزية", "بألف خير ونعمة", "الحمد لله، كلي نشاط وحيوية"],
+        b: ["وجودك يسعدني دائماً", "وأتمنى لك يوماً رائعاً ومليئاً بالخير", "ومستعد أساعدك بكل سرور", "وشكراً على سؤالك الجميل"],
+        c: ["كيف يمكنني خدمتك الآن؟", "بماذا أساعدك في طلبك اليوم؟", "أخبرني ما الذي تبحث عنه.", "جاهز لأي طلب أو وصفة!"]
+      }
+    },
+    thanks: {
+      default: {
+        a: ["العفو يا غالي", "ولو، هذا واجبي بكل سرور", "على الرحب والسعة دائماً", "تكرم عينك", "لا شكر على واجب أبداً"],
+        b: ["يسعدني دائماً أن أكون عند حسن ظنك", "خدمتك شرف وسعادة لي", "نحن هنا دائماً لراحتك في متجر معاذ", "بالعافية مقدماً على كل اختياراتك"],
+        c: ["إذا احتجت أي شيء آخر أنا هنا!", "هل تحب أن نضيف شيئاً آخر للسلة؟", "أتمنى لك يوماً سعيداً!", "دائماً في خدمتك."]
+      }
+    },
+    added: {
+      default: {
+        a: ["ممتاز!", "اختيار موفق!", "يا سلام!", "تمت المهمة بنجاح!", "رائع جداً!"],
+        b: ["أضفت لك {item} إلى السلة بنجاح", "صار {item} جاهزاً داخل سلتك", "تم وضع {item} في سلة مشترياتك"],
+        c: ["هل نكمل بباقي الاحتياجات؟", "يمكنك المراجعة أو إضافة المزيد متى شئت.", "سلتك أصبحت أجمل الآن!", "بماذا نكمل؟"]
+      }
+    },
+    itemsReady: {
+      default: {
+        a: ["تفضل،", "جهزت لك القائمة،", "بكل سرور،", "إليك المختار،", "وجدت لك المطلوب،"],
+        b: ["هذه هي الأصناف المتوفرة في الفرع الآن", "رتّبت لك أفضل المتوفر حسب طلبك", "عرضت لك الأصناف المتوفرة بدقة"],
+        c: ["حدد الكمية المناسبة بالضغط على (+).", "اختر ما يناسبك وأضفه للسلة.", "اضغط «تحديد المتوفر» للإضافة السريعة."]
+      }
+    },
+    notFound: {
+      default: {
+        a: ["عذراً منك،", "بحثت جيداً،", "يبدو أنه حالياً", "للأسف الآن"],
+        b: ["لم أجد صنفاً مطابقاً متوفراً في المخزون", "هذا الصنف غير متوفر في الفرع حالياً", "لم تظهر نتيجة مطابقة تماماً"],
+        c: ["جرّب كتابة اسم أقرب أو تصفح الأقسام.", "يمكنك طلب الصنف من زر «طلب صنف» أو تجربة بديل.", "أخبرني بنوع آخر وسأساعدك فوراً."]
+      }
+    }
+  };
+
+  function composeInfinitePhrase(intent, persona, extraCtx = {}) {
+    const p = persona || PERSONAS.buddy || FALLBACK_BUDDY;
+    const style = getPersonaStyleGroup(p);
+    const bankRoot = INFINITE_BANKS[intent] || INFINITE_BANKS.greet;
+    const parts = bankRoot[style] || bankRoot.friendly || bankRoot.default;
+
+    const hist = getPhraseHistory();
+    const hKey = `${p.id}_${intent}`;
+    const recent = Array.isArray(hist[hKey]) ? hist[hKey] : [];
+
+    const custName = getCustomerFirstName();
+    const timeInfo = getTimeGreetingWord();
+
+    // ربط النية الصوتية بملف sounds/ الثابت لحماية الحصة المجانية (الخيار الأول)
+    sessionCtx.lastIntentClipKey = intent === "greet" ? timeInfo.clipKey : intent;
+
+    let chosen = "";
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const pA = parts.a[Math.floor(Math.random() * parts.a.length)];
+      const pB = parts.b[Math.floor(Math.random() * parts.b.length)];
+      const pC = parts.c[Math.floor(Math.random() * parts.c.length)];
+
+      let opener = pA;
+      if (intent === "greet" && Math.random() < 0.45) {
+        opener = `${timeInfo.word}${custName ? " يا " + custName : ""}`;
+      } else if (intent === "greet" && custName && Math.random() < 0.5) {
+        opener = `${pA} يا ${custName}`;
+      }
+
+      let mid = pB;
+      if (extraCtx.itemLabel) {
+        mid = mid.replace("{item}", extraCtx.itemLabel);
+      }
+
+      const candidate = `${opener}، ${mid}. ${pC}`.replace(/\s+/g, " ").trim();
+      if (!recent.includes(candidate)) {
+        chosen = candidate;
+        break;
+      }
+      chosen = candidate;
+    }
+
+    recent.unshift(chosen);
+    hist[hKey] = recent.slice(0, 12);
+    savePhraseHistory(hist);
+    return chosen;
+  }
+
+  window.MoaathPhraseComposer = {
+    version: "1.0-infinite-combinatorial",
+    compose: composeInfinitePhrase
+  };
+
   const DEFAULT_RECIPES = [
     { id: "DEF_1", title: "مقلوبة", category: "طبخ", keywords: ["مقلوبه", "مقلوبة"], ingredients: ["رز", "ارز", "زيت", "سمن", "باذنجان", "بطاطا", "بندوره", "بصل", "بهار", "ملح"] },
     { id: "DEF_2", title: "كبسة", category: "طبخ", keywords: ["كبسه", "كبسة"], ingredients: ["رز", "ارز", "زيت", "سمن", "بصل", "معجون طماطم", "بهار", "ملح"] },
@@ -603,6 +768,13 @@
       addCandidate("itemsReady");
     }
 
+    // دعم الخيار الأول: تشغيل المقطع البشري المحفوظ المطابق للنية عند توليد نص مركّب لانهائي
+    if (sessionCtx.lastIntentClipKey) {
+      addCandidate(sessionCtx.lastIntentClipKey);
+      if (sessionCtx.lastIntentClipKey === "greetMorning" || sessionCtx.lastIntentClipKey === "greetEvening") {
+        addCandidate("greet");
+      }
+    }
     return candidates;
   }
 
@@ -1046,9 +1218,7 @@
     syncVisuals();
     syncFuturisticCollapseUI();
     const p = PERSONAS[key];
-    const greetLine = (window.MoaathAIPersonas && typeof window.MoaathAIPersonas.getTimeGreet === "function")
-      ? window.MoaathAIPersonas.getTimeGreet(p.id)
-      : pickPhrase(p.greets || [p.greet], `greet_${p.id}`);
+    const greetLine = composeInfinitePhrase("greet", p);
     const specEl = $("fairySpecialtyNote");
     if (specEl) specEl.textContent = p.specialtyNote || "";
     showBubble(`🧚 ${greetLine}`, 3800);
@@ -1949,10 +2119,10 @@
   }
 
   function matchCasualChat(normText, persona) {
-    if (/^(ال)?سلام\s*عليكم|السلام/.test(normText)) return pickPhrase(persona.greets || [persona.greet], `greet_${persona.id}`);
-    if (/^(مرحبا|اهلا|هلا|هاي|صباح\s*الخير|مساء\s*الخير)/.test(normText)) return pickPhrase(persona.greets || [persona.greet], `greet_${persona.id}`);
-    if (/كيف\s*حالك|شلونك|كيفك|شو\s*اخبارك|اخبارك/.test(normText)) return pickPhrase(persona.chatGoods || [persona.chatGood], `good_${persona.id}`);
-    if (/شكرا|مشكور|يعطيك\s*العافيه|يسلمو/.test(normText)) return pickPhrase(persona.thanksList || [persona.thanks], `thanks_${persona.id}`);
+    if (/^(ال)?سلام\s*عليكم|السلام/.test(normText)) return composeInfinitePhrase("greet", persona);
+    if (/^(مرحبا|اهلا|هلا|هاي|صباح\s*الخير|مساء\s*الخير)/.test(normText)) return composeInfinitePhrase("greet", persona);
+    if (/كيف\s*حالك|شلونك|كيفك|شو\s*اخبارك|اخبارك/.test(normText)) return composeInfinitePhrase("chatGood", persona);
+    if (/شكرا|مشكور|يعطيك\s*العافيه|يسلمو/.test(normText)) return composeInfinitePhrase("thanks", persona);
     return null;
   }
 
@@ -2242,9 +2412,7 @@
       const prefs = getPrefs();
       const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
       const countLabel = addedTotal === 1 ? "صنف واحد" : (addedTotal === 2 ? "صنفين" : `${addedTotal} أصناف`);
-      const msg = (window.MoaathAIPersonas && typeof window.MoaathAIPersonas.getAddedReaction === "function")
-        ? window.MoaathAIPersonas.getAddedReaction(persona.id, countLabel)
-        : `تمت إضافة ${countLabel} إلى السلة.`;
+      const msg = composeInfinitePhrase("added", persona, { itemLabel: countLabel });
       setOrbEmotion("happy", msg, true);
       setTxt("aiShoppingStatusText", `✅ ${msg}`);
       showToast(`✅ ${msg}`);
@@ -2519,9 +2687,7 @@
       } catch (_) {}
     }
 
-    const nfLine = (window.MoaathAIPersonas && typeof window.MoaathAIPersonas.getNotFoundReaction === "function")
-      ? window.MoaathAIPersonas.getNotFoundReaction(persona.id)
-      : pickPhrase(persona.notFounds || [persona.notFound], `nf_${persona.id}`);
+    const nfLine = composeInfinitePhrase("notFound", persona);
     setOrbEmotion("idle", nfLine, true);
     setTxt("aiShoppingStatusText", `⚠️ ${nfLine}`);
   };
