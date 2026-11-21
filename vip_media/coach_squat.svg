@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="320" viewBox="0 0 640 320">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#121622"/>
+      <stop offset="100%" stop-color="#0a0d14"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="320" rx="22" fill="url(#bg)"/>
+  <rect x="10" y="10" width="620" height="300" rx="18" fill="none" stroke="#10b981" stroke-width="3" stroke-opacity="0.7"/>
+  <circle cx="540" cy="160" r="64" fill="#10b981" fill-opacity="0.14" stroke="#10b981" stroke-width="2.5"/>
+  <text x="540" y="178" font-size="52" text-anchor="middle">🦵</text>
+  <text x="445" y="135" fill="#10b981" font-family="sans-serif" font-size="28" font-weight="bold" text-anchor="end">تمرين السكوات (Squat)</text>
+  <text x="445" y="185" fill="#e5e7eb" font-family="sans-serif" font-size="18" text-anchor="end">نزول متوازن للأرجل • 4×15 تكرار</text>
+  <text x="445" y="245" fill="#9ca3af" font-family="sans-serif" font-size="13" text-anchor="end">متجر معاذ • غرف VIP اليومية</text>
+</svg>
