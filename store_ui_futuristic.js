@@ -1,7 +1,7 @@
-/* store_ui_futuristic.js — v5.8 (Step 4: Safe MutationObserver + Clean Search Sync + Zero Duplicate Containers + All 15 Store UI & 10 AI Enhancements) */
+/* store_ui_futuristic.js — v5.9 (Step 4: Safe MutationObserver + Clean Search Sync + Zero Duplicate Containers + All 15 Store UI & 10 AI Enhancements) */
 (function () {
-  if (window.__MOAATH_STORE_UI_V58__) return;
-  window.__MOAATH_STORE_UI_V58__ = true;
+  if (window.__MOAATH_STORE_UI_V59__) return;
+  window.__MOAATH_STORE_UI_V59__ = true;
   window.__MOAATH_STORE_UI_V56__ = true;
   window.__MOAATH_STORE_UI_V55__ = true;
   window.__MOAATH_STORE_UI_V54__ = true;
@@ -113,9 +113,10 @@
 
       /* Floating Dock & BackToTop */
       "body.moaath-ai-expanded #petCharRoot, body.moaath-search-focused #petCharRoot { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; transform: scale(0.75) !important; }",
-      ".cart-bar, .bottom-cart-bar, .fixed-cart-bar, #bottomCartBar { left: 8px !important; right: 8px !important; bottom: 8px !important; width: auto !important; border-radius: 18px !important; background: rgba(15, 20, 30, 0.92) !important; backdrop-filter: blur(14px) !important; -webkit-backdrop-filter: blur(14px) !important; border: 1px solid rgba(212, 175, 55, 0.42) !important; box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5) !important; }",
+      "body { padding-bottom: 132px !important; }",
+      ".cart-bar, .bottom-cart-bar, .fixed-cart-bar, #bottomCartBar { left: 8px !important; right: 8px !important; bottom: 62px !important; width: auto !important; z-index: 120 !important; border-radius: 18px !important; background: rgba(15, 20, 30, 0.94) !important; backdrop-filter: blur(14px) !important; -webkit-backdrop-filter: blur(14px) !important; border: 1px solid rgba(212, 175, 55, 0.48) !important; box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55) !important; }",
       "#moaathCartCountBadge { display: inline-flex !important; align-items: center !important; justify-content: center !important; min-width: 19px !important; height: 19px !important; padding: 0 5px !important; border-radius: 999px !important; background: #D4AF37 !important; color: #000 !important; font-size: 10px !important; font-weight: 900 !important; margin-right: 5px !important; }",
-      "#moaathBackToTopBtn { position: fixed; bottom: 82px; left: 14px; z-index: 95; width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(212, 175, 55, 0.65); background: rgba(15, 20, 30, 0.92); color: #D4AF37; font-size: 16px; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; pointer-events: none; transform: translateY(10px); transition: opacity 0.25s ease, transform 0.25s ease; }",
+      "#moaathBackToTopBtn { position: fixed; bottom: 134px; left: 14px; z-index: 95; width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(212, 175, 55, 0.65); background: rgba(15, 20, 30, 0.92); color: #D4AF37; font-size: 16px; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; pointer-events: none; transform: translateY(10px); transition: opacity 0.25s ease, transform 0.25s ease; }",
       "#moaathBackToTopBtn.is-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }",
 
       /* Futuristic Clean Cart Modal */
@@ -907,7 +908,7 @@
   }
 
   if (window.MoaathSystemRegistry && typeof window.MoaathSystemRegistry.register === "function") {
-    window.MoaathSystemRegistry.register("store_ui", "5.8");
+    window.MoaathSystemRegistry.register("store_ui", "5.9");
   }
 
   if (document.readyState === "loading") {
