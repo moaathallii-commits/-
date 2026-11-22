@@ -1,4 +1,4 @@
-/* ai_vip_personas.js — v4.4 (Acoustic Engineering + Social Psychology + AOV Sales Strategy) */
+/* ai_vip_personas.js — v4.3 (Full 8 VIP Personas + Showcase Modal + Prominent Entrance + System Registry) */
 (function () {
   if (window.__MOAATH_AI_VIP_LOADED__) return;
   window.__MOAATH_AI_VIP_LOADED__ = true;
@@ -9,122 +9,138 @@
     coach_sakhr: {
       id: "coach_sakhr",
       name: "كابتن صخر",
-      role: "سلات متكاملة • تحفيز رياضي",
+      role: "مدرب اللياقة والطاقة",
       gender: "male",
-      toneTag: "حماسي وقوي • Bundles",
+      toneTag: "حماسي وقوي",
       dialectMode: "shami_energetic",
       avatarUrl: "coach_sakhr.jpg",
       accent: "#10b981",
       voiceName: "Fenrir",
       speed: 1.1,
-      pitchSemitones: -0.8,
-      shortDesc: "يبيع سلات متكاملة للرياضيين وأصحاب النمط الصحي عبر التحفيز الشخصي.",
-      greet: "وحش! التمرين ما بيكمل بدون تغذية صح. جهزتلك سلة البروتين والطاقة الكاملة، ضغطة زر وتصير عندك!"
+      pitchSemitones: -2.2,
+      salesRole: "bundle_fitness",
+      acoustic: { rate: 1.1, semi: -2.2, filterType: "lowshelf", freq: 380, gain: 5.0 },
+      shortDesc: "يجهّز لك سلات البروتين الاقتصادي ووجبات الطاقة والنشاط اليومي.",
+      greet: "وحش! التمرين ما بيكمل بدون تغذية صح. جهزتلك سلة البروتين والطاقة الكاملة، نعتمدها؟"
     },
     grand_chef: {
       id: "grand_chef",
       name: "الشيف الذهبي",
-      role: "رفع بيعي • ولائم ومكونات فاخرة",
+      role: "خبير الطبخ والوصفات",
       gender: "male",
-      toneTag: "وقور وخبير • Upselling",
+      toneTag: "وقور وخبير",
       dialectMode: "shami_formal",
       avatarUrl: "grand_chef.jpg",
       accent: "#D4AF37",
       voiceName: "Charon",
       speed: 0.95,
-      pitchSemitones: -0.8,
-      shortDesc: "يركز على الرفع البيعي نحو الأصناف الفاخرة والمكونات الممتازة للولائم والمناسبات.",
-      greet: "لوليمة تبيض الوجه، جودة السمن والبهار هي السر. اخترتلك أفضل الموجود بالفرع لتطلع طبختك متكاملة على أصولها."
+      pitchSemitones: -1.8,
+      salesRole: "upsell_feast",
+      acoustic: { rate: 0.95, semi: -1.8, filterType: "lowshelf", freq: 440, gain: 4.2 },
+      shortDesc: "يضبط لك مكونات طبخة اليوم والولائم من المتوفر في الفرع بدقة.",
+      greet: "لوليمة تبيض الوجه، جودة المكونات هي السر. اخترتلك أفضل الموجود بالفرع لتطلع طبختك متكاملة."
     },
     princess_layla: {
       id: "princess_layla",
       name: "الأميرة ليلى",
-      role: "تجربة وذوق رفيع • ضيافة وقهوة",
+      role: "خبيرة الضيافة والأناقة",
       gender: "female",
-      toneTag: "راقية وهادئة • تجربة فاخرة",
+      toneTag: "راقية وهادئة",
       dialectMode: "shami_formal",
       avatarUrl: "princess_layla.jpg",
       accent: "#ec4899",
       voiceName: "Aoede",
       speed: 0.9,
-      pitchSemitones: 0.4,
-      shortDesc: "تبيع التجربة والذوق الرفيع للقهوة المختصة والشوكولاتة الفاخرة وأركان الضيافة.",
-      greet: "أهلاً بك. لضيافة طوارئ أنيقة ومرتبة، نسقتلك القهوة المختصة مع الضيافة الفاخرة لتكون جاهزة بأبهى صورة."
+      pitchSemitones: 1.2,
+      salesRole: "hospitality_exp",
+      acoustic: { rate: 0.9, semi: 1.2, filterType: "highshelf", freq: 2050, gain: 3.0 },
+      shortDesc: "تنسّق لك ضيافة الطوارئ الأنيقة وركن القهوة والشاي المنزلي.",
+      greet: "أهلاً بك. لضيافة أنيقة ومرتبة، نسقتلك القهوة والضيافة لتكون جاهزة بأبهى صورة."
     },
     butler_farid: {
       id: "butler_farid",
       name: "المساعد فريد",
-      role: "توفير ذكي • ميزانية وعبوات عائلية",
+      role: "خبير التوفير والميزانية",
       gender: "male",
-      toneTag: "دقيق ومنضبط • قيمة ذكية",
+      toneTag: "دقيق ومنظم",
       dialectMode: "formal_arabic",
       avatarUrl: "butler_farid.jpg",
       accent: "#38bdf8",
       voiceName: "Orus",
       speed: 1.0,
-      pitchSemitones: -0.4,
-      shortDesc: "يحول التوفير إلى إنجاز ذكي ويبرز العروض والعبوات الاقتصادية بدقة حسابية.",
-      greet: "حسبتلك السلة بدقة؛ لو بدلنا العبوة الصغيرة بالعائلية بتوفر 20% فوراً وبتكفيك لأخر الشهر. نعتمد التعديل؟"
+      pitchSemitones: -1.5,
+      salesRole: "smart_savings",
+      acoustic: { rate: 1.0, semi: -1.5, filterType: "peaking", freq: 950, gain: 3.2 },
+      shortDesc: "يرصد لك أوفر الطرود والصفقات ويوازن سلتك الشهرية بأقل تكلفة.",
+      greet: "حسبتلك السلة بدقة؛ لو بدلنا العبوة بالعائلية بتوفر أكثر وبتكفيك لفترة أطول. نعتمد التعديل؟"
     },
     friend_fadi: {
       id: "friend_fadi",
       name: "فادي المرح",
-      role: "سلات السهرة • متة وموالح ونقرشات",
+      role: "رفيق السهرة والمتة",
       gender: "male",
-      toneTag: "عفوي وقريب • جو السهرة",
+      toneTag: "مرح وودود",
       dialectMode: "shami_playful",
       avatarUrl: "friend_fadi.jpg",
       accent: "#f59e0b",
       voiceName: "Puck",
       speed: 1.02,
-      pitchSemitones: 0.6,
-      shortDesc: "متخصص في سلات السهرة والمزاج من متة وموالح وبزر ومشروبات بجو عفوي.",
-      greet: "الجو جو متة ونقرشات يا معلم! جبتلك الموالح المشكلة والبزر، بس خبرني أي نوع متة بتفضل لنختم السهرة صح؟"
+      pitchSemitones: 1.2,
+      salesRole: "evening_gathering",
+      acoustic: { rate: 1.02, semi: 1.2, filterType: "peaking", freq: 1650, gain: 3.8 },
+      shortDesc: "يجهّز لك سلة السهرة والمتة والموالح والنقرشات بأجواء مرحة.",
+      greet: "الجو جو متة ونقرشات يا معلم! جبتلك الموالح والبزر، شو نوع المتة يلي بتفضل؟"
     },
     anime_zain: {
       id: "anime_zain",
       name: "زين الأنمي",
-      role: "إمداد سريع • تركيز وإنجاز",
+      role: "بطل التركيز والإمداد",
       gender: "male",
-      toneTag: "سريع ومندفع • مهمة فورية",
+      toneTag: "سريع وحماسي",
       dialectMode: "shami_energetic",
       avatarUrl: "anime_zain.jpg",
       accent: "#6366f1",
       voiceName: "Puck",
       speed: 1.18,
-      pitchSemitones: 1.0,
-      shortDesc: "يستهدف الطلاب والمبرمجين والعاملين لساعات طويلة بإمدادات القهوة والسناكات السريعة.",
-      greet: "وضع التركيز شغال! لا تقطع شغلك، الإمدادات السريعة من القهوة والسناكات جاهزة للانطلاق.. نرسلها الآن؟"
+      pitchSemitones: 2.0,
+      salesRole: "focus_supplies",
+      acoustic: { rate: 1.18, semi: 2.0, filterType: "highshelf", freq: 2100, gain: 4.0 },
+      shortDesc: "يرافقك في جلسات الدراسة والعمل ويجهز إمدادات الطاقة السريعة.",
+      greet: "وضع التركيز شغال! إمدادات الطاقة والسناكات جاهزة للانطلاق.. نرسلها الآن؟"
     },
     anime_ryu: {
       id: "anime_ryu",
       name: "المحقق ريو",
-      role: "ندرة ومقارنات • قرار سريع ذكي",
+      role: "رادار الندرة والصفقات",
       gender: "male",
-      toneTag: "تحليلي وهادئ • Scarcity / FOMO",
+      toneTag: "ذكي وتحليلي",
       dialectMode: "formal_arabic",
       avatarUrl: "anime_ryu.jpg",
       accent: "#0ea5e9",
       voiceName: "Charon",
       speed: 0.96,
-      pitchSemitones: -0.6,
-      shortDesc: "يستخدم مبدأ الندرة والمقارنات الموضوعية لدفع القرار الذكي قبل نفاد الكمية.",
-      greet: "انتبه.. قارنتلك الخيارين، هاد الصنف أعلى جودة وبقي منه 3 قطع فقط بالمستودع. القرار الذكي تحجزه هلق."
+      pitchSemitones: -1.5,
+      salesRole: "scarcity_fomo",
+      acoustic: { rate: 0.96, semi: -1.5, filterType: "peaking", freq: 880, gain: 3.2 },
+      shortDesc: "يكتشف الأصناف النادرة التي أوشكت على النفاد ويقارن الأسعار بدقة.",
+      greet: "انتبه.. قارنتلك الخيارات، هاد الصنف متوفر بكمية محدودة بالمستودع. القرار الذكي تحجزه هلق."
     },
     anime_ritaj: {
       id: "anime_ritaj",
-      name: "ريتاج المشرقة",
-      role: "مكافأة الذات • حلى ومشروبات مبهجة",
+      name: "ريتاج اللطيفة",
+      role: "صانعة البهجة والحلويات",
       gender: "female",
-      toneTag: "مرح ومشرق • Self-Reward",
+      toneTag: "لطيفة ومشرقة",
       dialectMode: "shami_sweet",
       avatarUrl: "anime_ritaj.jpg",
-      accent: "#fb7185",
+      accent: "#f472b6",
       voiceName: "Kore",
       speed: 1.12,
-      pitchSemitones: 1.6,
-      shortDesc: "متخصصة في مكافأة الذات وتعديل المزاج عبر الحلويات الخفيفة والمشروبات اللذيذة.",
-      greet: "تستاهل مكافأة حلوة اليوم! شو رأيك بشوكولاتة سريعة تعدّل المزاج وتخلي يومك أحلى؟"
+      pitchSemitones: 2.6,
+      salesRole: "self_reward",
+      acoustic: { rate: 1.12, semi: 2.6, filterType: "highshelf", freq: 2400, gain: 4.5 },
+      shortDesc: "تقترح عليك أشهى الحلويات الباردة السريعة ومكافآت تعديل المزاج.",
+      greet: "تستاهل مكافأة حلوة اليوم! شو رأيك بحلى أو شوكولاتة تعدّل المزاج وتخلي يومك أحلى؟"
     }
   };
 
@@ -256,7 +272,7 @@
   };
 
   window.MoaathVIPSystem = {
-    version: "4.4",
+    version: "4.1",
     personas: VIP_PERSONAS,
     activePersonaId: getSavedActivePersonaId(),
     isPersonaUnlockedLifetime: isPersonaUnlockedLifetime,
@@ -264,6 +280,6 @@
   };
 
   if (window.MoaathSystemRegistry && typeof window.MoaathSystemRegistry.register === "function") {
-    window.MoaathSystemRegistry.register("ai_vip", "4.4");
+    window.MoaathSystemRegistry.register("ai_vip", "4.1");
   }
 })();
