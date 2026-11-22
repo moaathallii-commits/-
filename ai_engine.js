@@ -25,10 +25,10 @@
     avatarUrl: "buddy.jpg",
     accent: "#00b0ff",
     voiceName: "Puck",
-    speed: 1.32,
-    pitchSemitones: 1.3,
-    fallbackDetune: 75,
-    fallbackRate: 1.32,
+    speed: 1.0,
+    pitchSemitones: 0.6,
+    fallbackDetune: 60,
+    fallbackRate: 1.0,
     styleHint: "صوت ذكري شاب ودود ومبتسم بالعربية الفصحى المبسطة بسرعة إلقاء مضبوطة 1.32",
     greet: "أهلاً بك، نورت متجر معاذ. ماذا تحب أن أجهز لك اليوم؟",
     greets: ["أهلاً بك، نورت متجر معاذ. ماذا تحب أن أجهز لك اليوم؟"],
@@ -133,25 +133,11 @@
 
   function getPersonaStyleGroup(persona) {
     const id = String(persona?.id || "buddy");
-    const mapById = {
-      buddy: "buddy_icebreaker",
-      lolo: "lolo_daily_fast",
-      noor: "noor_warm_calm",
-      chef: "chef_cross_sell",
-      pastry: "pastry_sensory",
-      athlete: "athlete_staccato",
-      sheikh: "sheikh_banter",
-      friend_saad: "saad_trust",
-      coach_sakhr: "sakhr_bundle",
-      grand_chef: "grand_chef_upsell",
-      princess_layla: "layla_experience",
-      butler_farid: "farid_smart_value",
-      friend_fadi: "fadi_sahra",
-      anime_zain: "zain_focus_sprint",
-      anime_ryu: "ryu_scarcity",
-      anime_ritaj: "ritaj_reward"
-    };
-    return mapById[id] || "buddy_icebreaker";
+    if (/coach_sakhr|anime_zain|athlete/.test(id)) return "energetic";
+    if (/grand_chef|princess_layla|butler_farid|anime_ryu/.test(id)) return "formal";
+    if (/friend_fadi/.test(id)) return "playful";
+    if (/anime_ritaj|lolo|pastry/.test(id)) return "sweet";
+    return "friendly";
   }
 
   function getCustomerFirstName() {
@@ -192,11 +178,6 @@
         a: ["ولك هلا بالغالي", "يا هلا بالصديق الوفي", "نورت الشاشة والمتجر", "أهلاً بأحلى زبون", "يا سيدي هلا ومية غلا"],
         b: ["خلينا نكسر الروتين ونضبط المزاج", "السهرة والمتة والتسالي كلها ناطرتك", "اليوم رح نطلع بأحلى سلة", "الجو بده كاسة متة وشي طيب"],
         c: ["شو عبالك نطلب اليوم؟", "خبرني شو ناقصك وخلّي الباقي عليّ!", "نبدأ بالسهرة ولا بطبخة مرتبة؟", "سمّي بالله واطلب يلي ببالك!"]
-      },
-      bright_joy: {
-        a: ["يا أهلاً ومرحباً بإشراقتك الجميلة", "أهلاً وسهلاً يا حلو، يومك مشرق معنا", "يا هلا بالبهجة والسرور", "أهلاً بك بروح مشرقة وجميلة", "يا أهلاً باللطف والبهجة"],
-        b: ["المتجر منور بوجودك والاختيارات حلوة", "جهزتلك أحلى ما لدينا بكل فرح", "كل شيء هنا يرحب بك بابتسامة مشرقة", "خلينا نرتب سلتك ببهجة وحيوية"],
-        c: ["شو حابب نختار اليوم بكل فرح؟", "خبرني بطلبك لأرتبه لك فوراً!", "نبدأ بأي صنف يسعدك اليوم؟", "بشو نبدأ سلتنا المبهجة الآن؟"]
       },
       sweet: {
         a: ["أهلاً يا حلو", "نورت عالمنا المشرق", "يا أهلاً باللطف كله", "أهلاً بك بابتسامة جميلة", "سعيدة جداً بوجودك"],
@@ -738,34 +719,37 @@
   }
 
   const PERSONA_VOICE_PROFILES = {
-    buddy:          { rate: 1.00, semi:  0.4, filterType: "peaking",  freq: 2600, gain:  2.2 },
-    lolo:           { rate: 1.10, semi:  1.4, filterType: "highshelf",freq: 2200, gain:  3.0 },
-    noor:           { rate: 0.98, semi:  0.6, filterType: "lowshelf", freq:  450, gain:  2.5 },
-    chef:           { rate: 1.05, semi: -0.4, filterType: "peaking",  freq: 1400, gain:  2.0 },
-    pastry:         { rate: 0.95, semi:  1.0, filterType: "lowshelf", freq:  500, gain:  2.5 },
-    athlete:        { rate: 1.15, semi:  0.4, filterType: "peaking",  freq: 1800, gain:  3.0 },
-    sheikh:         { rate: 1.06, semi:  0.8, filterType: "peaking",  freq: 1700, gain:  2.8 },
-    friend_saad:    { rate: 0.92, semi: -0.4, filterType: "lowshelf", freq:  420, gain:  2.5 },
-    coach_sakhr:    { rate: 1.10, semi: -0.8, filterType: "lowshelf", freq:  320, gain:  4.0 },
-    grand_chef:     { rate: 0.95, semi: -0.8, filterType: "lowshelf", freq:  360, gain:  3.5 },
-    princess_layla: { rate: 0.90, semi:  0.4, filterType: "highshelf",freq: 2600, gain: -2.0 },
-    butler_farid:   { rate: 1.00, semi: -0.4, filterType: "peaking",  freq: 1200, gain:  2.5 },
-    friend_fadi:    { rate: 1.02, semi:  0.6, filterType: "lowshelf", freq:  480, gain:  2.0 },
-    anime_zain:     { rate: 1.18, semi:  1.0, filterType: "highshelf",freq: 2100, gain:  3.2 },
-    anime_ryu:      { rate: 0.96, semi: -0.6, filterType: "peaking",  freq:  950, gain:  2.0 },
-    anime_ritaj:    { rate: 1.12, semi:  1.6, filterType: "highshelf",freq: 2300, gain:  3.5 }
+    buddy:          { rate: 1.00, semi:  0.6, filterType: "peaking",  freq: 2600, gain:  3.2 },
+    lolo:           { rate: 1.10, semi:  2.2, filterType: "highshelf",freq: 2100, gain:  4.0 },
+    noor:           { rate: 0.98, semi:  1.4, filterType: "lowshelf", freq:  520, gain:  3.5 },
+    chef:           { rate: 1.05, semi: -1.2, filterType: "lowshelf", freq:  440, gain:  3.8 },
+    pastry:         { rate: 0.95, semi:  1.8, filterType: "highshelf",freq: 2250, gain:  3.5 },
+    athlete:        { rate: 1.15, semi:  0.4, filterType: "peaking",  freq: 1700, gain:  3.5 },
+    sheikh:         { rate: 1.10, semi:  1.6, filterType: "peaking",  freq: 1850, gain:  4.0 },
+    friend_saad:    { rate: 0.92, semi: -2.0, filterType: "lowshelf", freq:  390, gain:  4.0 },
+    coach_sakhr:    { rate: 1.10, semi: -2.2, filterType: "lowshelf", freq:  380, gain:  5.0 },
+    grand_chef:     { rate: 0.95, semi: -1.8, filterType: "lowshelf", freq:  440, gain:  4.2 },
+    princess_layla: { rate: 0.90, semi:  1.2, filterType: "highshelf",freq: 2050, gain:  3.0 },
+    butler_farid:   { rate: 1.00, semi: -1.5, filterType: "peaking",  freq:  950, gain:  3.2 },
+    friend_fadi:    { rate: 1.02, semi:  1.2, filterType: "peaking",  freq: 1650, gain:  3.8 },
+    anime_zain:     { rate: 1.18, semi:  2.0, filterType: "highshelf",freq: 2100, gain:  4.0 },
+    anime_ryu:      { rate: 0.96, semi: -1.5, filterType: "peaking",  freq:  880, gain:  3.2 },
+    anime_ritaj:    { rate: 1.12, semi:  2.6, filterType: "highshelf",freq: 2400, gain:  4.5 }
   };
 
   function getPersonaProfile(persona) {
+    if (persona && persona.acoustic && typeof persona.acoustic.rate === "number") {
+      return persona.acoustic;
+    }
     const id = persona?.id || "buddy";
     if (PERSONA_VOICE_PROFILES[id]) return PERSONA_VOICE_PROFILES[id];
     const semi = typeof persona?.pitchSemitones === "number" ? persona.pitchSemitones : 0;
     return {
-      rate: persona?.speed || 1.0,
+      rate: persona?.speed ? Math.max(0.85, Math.min(1.22, persona.speed / 1.2)) : 1.0,
       semi,
       filterType: semi >= 0 ? "highshelf" : "lowshelf",
       freq: semi >= 0 ? 2000 : 420,
-      gain: 2.0
+      gain: 3.5
     };
   }
 
@@ -781,8 +765,9 @@
   async function playClipWithPersonaCharacter(entry, persona, mySeq) {
     if (mySeq !== ttsRequestSeq) return;
     stopWebAudioGraph();
-    const prof = getPersonaProfile(persona);
-    const isPreRecorded = entry && (entry.source === "local_repo" || entry.source === "persistent_cache");
+
+    // تشغيل المقاطع البشرية (Edge-TTS Neural / Gemini TTS) بنقاء 100% بدون detune أو فلاتر تشوّه الصوت البشري
+    const isPreRecorded = entry && (entry.source === "local_repo" || entry.source === "persistent_cache" || entry.source === "gemini_tts");
     const player = ensureAudioPlayer();
     player.pause();
     player.src = entry.url;
@@ -790,7 +775,7 @@
     player.preservesPitch = true;
     player.mozPreservesPitch = true;
     player.webkitPreservesPitch = true;
-    player.playbackRate = isPreRecorded ? 1.0 : (persona.speed || prof.rate || 1.0);
+    player.playbackRate = isPreRecorded ? 1.0 : Math.max(0.92, Math.min(1.18, persona?.speed || 1.05));
     const p = player.play();
     if (p && typeof p.catch === "function") {
       p.catch(() => {
