@@ -16,25 +16,25 @@ MANIFEST_PATH = "sounds_manifest.json"
 FORCE_REGEN = os.environ.get("FORCE_REGEN", "0") == "1"
 CONCURRENCY = 5
 
-# توزيع أصوات Neural سورية وشامية وعربية متميزة لكل شخصية
+# توزيع أصوات Neural متنوعة وسورية وشامية وعربية مع نبرة وسرعة مميزة لكل شخصية
 PERSONA_VOICES = {
     # الشخصيات الأساسية
-    "buddy":          {"voice": "ar-SY-LaithNeural",   "rate": "+8%",  "pitch": "+2Hz",  "style": "friendly"},
-    "lolo":           {"voice": "ar-SY-AmanyNeural",   "rate": "+8%",  "pitch": "+4Hz",  "style": "sweet"},
-    "chef":           {"voice": "ar-LB-RamiNeural",    "rate": "+5%",  "pitch": "-2Hz",  "style": "formal"},
-    "pastry":         {"voice": "ar-LB-LaylaNeural",   "rate": "+8%",  "pitch": "+4Hz",  "style": "sweet"},
-    "athlete":        {"voice": "ar-JO-TaimNeural",    "rate": "+12%", "pitch": "+0Hz",  "style": "energetic"},
-    "sheikh":         {"voice": "ar-SA-HamedNeural",   "rate": "+0%",  "pitch": "-4Hz",  "style": "formal"},
-    "friend_saad":    {"voice": "ar-SY-LaithNeural",   "rate": "+2%",  "pitch": "-4Hz",  "style": "formal"},
+    "buddy":          {"voice": "ar-SY-LaithNeural",   "rate": "+12%", "pitch": "+5Hz",  "style": "friendly"},
+    "lolo":           {"voice": "ar-SY-AmanyNeural",   "rate": "+10%", "pitch": "+7Hz",  "style": "sweet"},
+    "chef":           {"voice": "ar-LB-RamiNeural",    "rate": "+4%",  "pitch": "-5Hz",  "style": "formal"},
+    "pastry":         {"voice": "ar-LB-LaylaNeural",   "rate": "+12%", "pitch": "+6Hz",  "style": "sweet"},
+    "athlete":        {"voice": "ar-JO-TaimNeural",    "rate": "+18%", "pitch": "+2Hz",  "style": "energetic"},
+    "sheikh":         {"voice": "ar-SA-HamedNeural",   "rate": "-6%",  "pitch": "-8Hz",  "style": "formal"},
+    "friend_saad":    {"voice": "ar-QA-MoazNeural",    "rate": "-2%",  "pitch": "-6Hz",  "style": "formal"},
     # شخصيات VIP الثماني
-    "coach_sakhr":    {"voice": "ar-JO-TaimNeural",    "rate": "+12%", "pitch": "-3Hz",  "style": "energetic"},
-    "grand_chef":     {"voice": "ar-LB-RamiNeural",    "rate": "+6%",  "pitch": "-3Hz",  "style": "formal"},
-    "princess_layla": {"voice": "ar-LB-LaylaNeural",   "rate": "+5%",  "pitch": "+2Hz",  "style": "formal"},
-    "butler_farid":   {"voice": "ar-SA-HamedNeural",   "rate": "+4%",  "pitch": "-3Hz",  "style": "formal"},
-    "friend_fadi":    {"voice": "ar-SY-LaithNeural",   "rate": "+12%", "pitch": "+4Hz",  "style": "playful"},
-    "anime_zain":     {"voice": "ar-AE-HamdanNeural",  "rate": "+14%", "pitch": "+3Hz",  "style": "energetic"},
-    "anime_ryu":      {"voice": "ar-EG-ShakirNeural",  "rate": "+8%",  "pitch": "-2Hz",  "style": "formal"},
-    "anime_ritaj":    {"voice": "ar-SY-AmanyNeural",   "rate": "+10%", "pitch": "+5Hz",  "style": "sweet"},
+    "coach_sakhr":    {"voice": "ar-IQ-BasselNeural",  "rate": "+16%", "pitch": "-6Hz",  "style": "energetic"},
+    "grand_chef":     {"voice": "ar-EG-ShakirNeural",  "rate": "+2%",  "pitch": "-5Hz",  "style": "formal"},
+    "princess_layla": {"voice": "ar-AE-HamdaNeural",   "rate": "+4%",  "pitch": "+3Hz",  "style": "formal"},
+    "butler_farid":   {"voice": "ar-KW-FahedNeural",   "rate": "+0%",  "pitch": "-5Hz",  "style": "formal"},
+    "friend_fadi":    {"voice": "ar-SY-LaithNeural",   "rate": "+18%", "pitch": "+8Hz",  "style": "playful"},
+    "anime_zain":     {"voice": "ar-AE-HamdanNeural",  "rate": "+20%", "pitch": "+6Hz",  "style": "energetic"},
+    "anime_ryu":      {"voice": "ar-OM-AbdullahNeural","rate": "+6%",  "pitch": "-4Hz",  "style": "formal"},
+    "anime_ritaj":    {"voice": "ar-EG-SalmaNeural",   "rate": "+15%", "pitch": "+8Hz",  "style": "sweet"},
 }
 
 # بنك الجمل المتنوعة لكل أسلوب (24 جملة لكل شخصية × 15 شخصية = 360+ جملة، ومع الجمل الخاصة لكل شخصية = 405+ مقطع)
@@ -350,9 +350,33 @@ async def main():
         bank = STYLE_BANKS.get(style, STYLE_BANKS["friendly"])
         manifest["personas"][pid] = {}
 
+        persona_tags = {
+            "buddy": ("بندق: ", "، يلا نضبط سلتك."),
+            "lolo": ("لولو: ", "، بكل حب ولطف."),
+            "chef": ("الشيف: ", "، المكونات جاهزة."),
+            "pastry": ("الحلويات: ", "، حلى يشهي."),
+            "athlete": ("البطل: ", "، طاقة وأداء عالي."),
+            "sheikh": ("الشيخ: ", "، بارك الله فيك."),
+            "friend_saad": ("سعد: ", "، الله يبارك بوقتك."),
+            "coach_sakhr": ("كابتن صخر: ", "، هيا يا وحش!"),
+            "grand_chef": ("الشيف الذهبي: ", "، بإتقان واحتراف."),
+            "princess_layla": ("الأميرة ليلى: ", "، بكل رقي وأناقة."),
+            "butler_farid": ("فريد: ", "، بدقة وتوفير."),
+            "friend_fadi": ("فادي: ", "، ولك أحلى سهرة!"),
+            "anime_zain": ("زين: ", "، تركيز وانطلاقة!"),
+            "anime_ryu": ("ريو: ", "، بدقة وتحليل."),
+            "anime_ritaj": ("ريتاج: ", "، بهجة وحلاوة!")
+        }
+        p_pre, p_suf = persona_tags.get(pid, ("", ""))
+
         for intent, phrases in bank.items():
             manifest["personas"][pid][intent] = []
-            for idx, text in enumerate(phrases, start=1):
+            for idx, base_text in enumerate(phrases, start=1):
+                text = base_text
+                if idx == 2 and p_pre:
+                    text = p_pre + base_text
+                elif idx == 3 and p_suf:
+                    text = base_text.rstrip(".؟!") + p_suf
                 fname = f"{pid}_{intent}_{idx}.mp3"
                 rel_path = f"{OUT_DIR}/{fname}"
                 manifest["personas"][pid][intent].append({"text": text, "file": rel_path})
