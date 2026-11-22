@@ -16,26 +16,26 @@ MANIFEST_PATH = "sounds_manifest.json"
 FORCE_REGEN = os.environ.get("FORCE_REGEN", "0") == "1"
 CONCURRENCY = 5
 
-# توزيع أصوات Neural المعايرة (16 شخصية: 8 أساسية + 8 VIP) حسب التحليل الصوتي والتسويقي
+# توزيع أصوات Neural بشرية طبيعية 100% (16 شخصية) بدون تشويه pitch
 PERSONA_VOICES = {
     # 8 شخصيات أساسية
-    "buddy":          {"voice": "ar-SY-LaithNeural",   "rate": "+0%",  "pitch": "+1Hz",  "style": "friendly"},
-    "lolo":           {"voice": "ar-SY-AmanyNeural",   "rate": "+10%", "pitch": "+4Hz",  "style": "sweet"},
-    "noor":           {"voice": "ar-LB-LaylaNeural",   "rate": "-2%",  "pitch": "+2Hz",  "style": "sweet"},
-    "chef":           {"voice": "ar-LB-RamiNeural",    "rate": "+5%",  "pitch": "-2Hz",  "style": "formal"},
-    "pastry":         {"voice": "ar-EG-SalmaNeural",   "rate": "-5%",  "pitch": "+3Hz",  "style": "sweet"},
-    "athlete":        {"voice": "ar-JO-TaimNeural",    "rate": "+15%", "pitch": "+1Hz",  "style": "energetic"},
-    "sheikh":         {"voice": "ar-SY-LaithNeural",   "rate": "+10%", "pitch": "+3Hz",  "style": "playful"},
-    "friend_saad":    {"voice": "ar-SA-HamedNeural",   "rate": "-8%",  "pitch": "-4Hz",  "style": "formal"},
+    "buddy":          {"voice": "ar-SY-LaithNeural",   "rate": "+2%",  "pitch": "+0Hz", "style": "friendly"},
+    "lolo":           {"voice": "ar-SY-AmanyNeural",   "rate": "+8%",  "pitch": "+0Hz", "style": "sweet"},
+    "noor":           {"voice": "ar-LB-LaylaNeural",   "rate": "+0%",  "pitch": "+0Hz", "style": "sweet"},
+    "chef":           {"voice": "ar-LB-RamiNeural",    "rate": "+4%",  "pitch": "+0Hz", "style": "formal"},
+    "pastry":         {"voice": "ar-EG-SalmaNeural",   "rate": "-2%",  "pitch": "+0Hz", "style": "sweet"},
+    "athlete":        {"voice": "ar-JO-TaimNeural",    "rate": "+12%", "pitch": "+0Hz", "style": "energetic"},
+    "sheikh":         {"voice": "ar-JO-TaimNeural",    "rate": "+6%",  "pitch": "+0Hz", "style": "playful"},
+    "friend_saad":    {"voice": "ar-SA-HamedNeural",   "rate": "-4%",  "pitch": "+0Hz", "style": "formal"},
     # 8 شخصيات VIP
-    "coach_sakhr":    {"voice": "ar-IQ-BasselNeural",  "rate": "+10%", "pitch": "-4Hz",  "style": "energetic"},
-    "grand_chef":     {"voice": "ar-EG-ShakirNeural",  "rate": "-5%",  "pitch": "-3Hz",  "style": "formal"},
-    "princess_layla": {"voice": "ar-AE-HamdaNeural",   "rate": "-10%", "pitch": "+2Hz",  "style": "formal"},
-    "butler_farid":   {"voice": "ar-KW-FahedNeural",   "rate": "+0%",  "pitch": "-3Hz",  "style": "formal"},
-    "friend_fadi":    {"voice": "ar-SY-LaithNeural",   "rate": "+2%",  "pitch": "+2Hz",  "style": "playful"},
-    "anime_zain":     {"voice": "ar-AE-HamdanNeural",  "rate": "+18%", "pitch": "+4Hz",  "style": "energetic"},
-    "anime_ryu":      {"voice": "ar-OM-AbdullahNeural","rate": "-4%",  "pitch": "-3Hz",  "style": "formal"},
-    "anime_ritaj":    {"voice": "ar-SY-AmanyNeural",   "rate": "+12%", "pitch": "+5Hz",  "style": "sweet"},
+    "coach_sakhr":    {"voice": "ar-IQ-BasselNeural",  "rate": "+8%",  "pitch": "+0Hz", "style": "energetic"},
+    "grand_chef":     {"voice": "ar-EG-ShakirNeural",  "rate": "-2%",  "pitch": "+0Hz", "style": "formal"},
+    "princess_layla": {"voice": "ar-AE-HamdaNeural",   "rate": "-4%",  "pitch": "+0Hz", "style": "formal"},
+    "butler_farid":   {"voice": "ar-KW-FahedNeural",   "rate": "+0%",  "pitch": "+0Hz", "style": "formal"},
+    "friend_fadi":    {"voice": "ar-SY-LaithNeural",   "rate": "+4%",  "pitch": "+0Hz", "style": "playful"},
+    "anime_zain":     {"voice": "ar-AE-HamdanNeural",  "rate": "+12%", "pitch": "+0Hz", "style": "energetic"},
+    "anime_ryu":      {"voice": "ar-OM-AbdullahNeural","rate": "-2%",  "pitch": "+0Hz", "style": "formal"},
+    "anime_ritaj":    {"voice": "ar-JO-SanaNeural",    "rate": "+8%",  "pitch": "+0Hz", "style": "sweet"},
 }
 
 # بنك الجمل المتنوعة لكل أسلوب (24 جملة لكل شخصية × 15 شخصية = 360+ جملة، ومع الجمل الخاصة لكل شخصية = 405+ مقطع)
