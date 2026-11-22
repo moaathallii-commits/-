@@ -215,21 +215,24 @@
 
   function mountQAButtonInAdmin() {
     if (document.getElementById("moaathOpenQABtn")) return;
-    const target =
-      document.getElementById("admArchActionsRow") ||
-      document.getElementById("admTab13Export") ||
-      document.querySelector("#adminModal .modal-content");
-    if (!target) return;
+    const adminContent = document.querySelector("#adminModal .modal-content");
+    if (!adminContent) return;
 
     const btn = document.createElement("button");
     btn.id = "moaathOpenQABtn";
     btn.type = "button";
     btn.className = "btn";
     btn.style.cssText =
-      "margin:6px 0; background:linear-gradient(45deg,#10b981,#D4AF37); color:#000; font-size:11px; padding:7px 10px;";
+      "display:block; width:100%; margin:6px 0 8px 0; background:linear-gradient(45deg,#10b981,#D4AF37); color:#000; font-weight:900; font-size:11.5px; padding:8px 10px; border-radius:10px; box-shadow:0 4px 12px rgba(16,185,129,0.28);";
     btn.textContent = "🛡️ فتح لوحة الفحص الشامل والاعتماد (QA Self-Check 100%)";
     btn.onclick = window.openMoaathQAModal;
-    target.insertBefore(btn, target.firstChild);
+
+    const tabsBar = adminContent.querySelector(".categories");
+    if (tabsBar && tabsBar.parentNode) {
+      tabsBar.parentNode.insertBefore(btn, tabsBar);
+    } else {
+      adminContent.insertBefore(btn, adminContent.firstChild);
+    }
   }
 
   window.MoaathQARunner = {
@@ -258,5 +261,11 @@
   } else {
     mountQAButtonInAdmin();
   }
-  setTimeout(mountQAButtonInAdmin, 1600);
+  setTimeout(mountQAButtonInAdmin, 1200);
+  setTimeout(mountQAButtonInAdmin, 3000);
+  document.addEventListener("click", () => {
+    if (!document.getElementById("moaathOpenQABtn") && document.querySelector("#adminModal .modal-content")) {
+      mountQAButtonInAdmin();
+    }
+  }, { passive: true });
 })();
