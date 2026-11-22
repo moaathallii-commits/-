@@ -1,6 +1,7 @@
-/* store_ui_futuristic.js — v5.6 (Offers Slider Restored + Collapsible User Bar + Futuristic Clean Cart Modal + Segmented Payment Pills | Event-Driven, Zero-Friction) */
+/* store_ui_futuristic.js — v5.8 (Step 4: Safe MutationObserver + Clean Search Sync + Zero Duplicate Containers + All 15 Store UI & 10 AI Enhancements) */
 (function () {
-  if (window.__MOAATH_STORE_UI_V56__) return;
+  if (window.__MOAATH_STORE_UI_V58__) return;
+  window.__MOAATH_STORE_UI_V58__ = true;
   window.__MOAATH_STORE_UI_V56__ = true;
   window.__MOAATH_STORE_UI_V55__ = true;
   window.__MOAATH_STORE_UI_V54__ = true;
@@ -8,7 +9,9 @@
   var COLLAPSE_KEY = "moaath_store_ai_collapsed";
   var USERBAR_COLLAPSE_KEY = "moaath_store_userbar_collapsed";
   var isSelfMutating = false;
+  var isSearchSyncing = false;
   var obsTimer = null;
+  var observer = null;
 
   function $(id) {
     return document.getElementById(id);
@@ -16,8 +19,13 @@
 
   function withSelfMutationGuard(fn) {
     isSelfMutating = true;
-    try { fn(); } catch (_) {}
-    setTimeout(function () { isSelfMutating = false; }, 16);
+    try {
+      fn();
+    } finally {
+      setTimeout(function () {
+        isSelfMutating = false;
+      }, 25);
+    }
   }
 
   function injectStoreFuturisticCSS() {
@@ -49,7 +57,7 @@
       ".moaath-glass-circle-btn { min-width: 34px !important; height: 34px !important; padding: 0 10px !important; border-radius: 999px !important; border: 1px solid rgba(212, 175, 55, 0.36) !important; background: rgba(255, 255, 255, 0.06) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; color: var(--text-color) !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 4px !important; font-size: 12px !important; cursor: pointer !important; margin: 0 !important; text-decoration: none !important; }",
       ".moaath-glass-icon-only { width: 34px !important; min-width: 34px !important; padding: 0 !important; border-radius: 50% !important; }",
 
-      /* Restored Horizontal Offers Slider */
+      /* Horizontal Offers Slider */
       ".moaath-offers-track { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: stretch !important; grid-template-columns: none !important; overflow-x: auto !important; overflow-y: hidden !important; scroll-snap-type: x mandatory !important; gap: 10px !important; padding: 3px 2px 6px 2px !important; margin: 4px 0 2px 0 !important; scrollbar-width: none !important; -webkit-overflow-scrolling: touch !important; touch-action: pan-x pan-y !important; width: 100% !important; box-sizing: border-box !important; }",
       ".moaath-offers-track::-webkit-scrollbar { display: none !important; }",
       ".moaath-offers-track > div, .moaath-offers-track > article, .moaath-offer-card-slide { flex: 0 0 84vw !important; width: 84vw !important; min-width: 240px !important; max-width: 310px !important; scroll-snap-align: start !important; box-sizing: border-box !important; margin: 0 !important; padding: 7px 10px !important; border-radius: 15px !important; border: 1px solid rgba(212, 175, 55, 0.36) !important; }",
@@ -76,6 +84,16 @@
       "#aiSmartAssistantBox.is-ai-collapsed #petQuickPromptChips { display: none !important; }",
       "#aiSmartAssistantBox .fut-chip-btn { flex-shrink: 0 !important; background: rgba(255, 255, 255, 0.045) !important; color: var(--text-color) !important; border: 1px solid rgba(212, 175, 55, 0.3) !important; border-radius: 999px !important; padding: 3px 9px !important; font-size: 10px !important; font-weight: 700 !important; cursor: pointer !important; }",
 
+      /* Anti-Crowding Layout for #aiSmartAssistantBox across store_ui + learning_hub + vip_daily */
+      "#aiSmartAssistantBox #futuristicAiHeader { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 5px !important; flex-wrap: wrap !important; width: 100% !important; box-sizing: border-box !important; }",
+      "#aiSmartAssistantBox #moaathRestorePersonaBtn { flex: 1 1 auto !important; min-width: 0 !important; max-width: 156px !important; height: 28px !important; padding: 2px 8px 2px 4px !important; gap: 5px !important; box-sizing: border-box !important; }",
+      "#aiSmartAssistantBox #moaathRestorePersonaName { font-size: 10px !important; font-weight: 800 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }",
+      "#aiSmartAssistantBox .fut-ai-header-actions { display: flex !important; align-items: center !important; gap: 4px !important; flex-wrap: nowrap !important; flex-shrink: 0 !important; }",
+      "#aiSmartAssistantBox #moaathLearningHubHeaderBtn { width: 28px !important; height: 28px !important; min-width: 28px !important; padding: 0 !important; font-size: 12px !important; flex-shrink: 0 !important; }",
+      "#aiSmartAssistantBox #futVipShowcaseBtn, #aiSmartAssistantBox #futuristicAiToggleBtn { height: 28px !important; padding: 3px 8px !important; font-size: 10px !important; white-space: nowrap !important; flex-shrink: 0 !important; }",
+      "#aiSmartAssistantBox #petQuickPromptChips { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; gap: 5px !important; overflow-x: auto !important; overflow-y: hidden !important; max-width: 100% !important; box-sizing: border-box !important; }",
+      "#aiSmartAssistantBox #moaathLearningHubChipBtn, #aiSmartAssistantBox #moaathVIPDailyOverviewBtn { flex-shrink: 0 !important; white-space: nowrap !important; height: 26px !important; display: inline-flex !important; align-items: center !important; }",
+
       /* Sticky Categories & Product Cards */
       ".categories { position: sticky !important; top: 0 !important; z-index: 45 !important; background: rgba(15, 20, 30, 0.94) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; border-radius: 14px !important; padding: 6px !important; scrollbar-width: none !important; }",
       "body.light-mode .categories { background: rgba(248, 250, 252, 0.95) !important; }",
@@ -100,7 +118,7 @@
       "#moaathBackToTopBtn { position: fixed; bottom: 82px; left: 14px; z-index: 95; width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(212, 175, 55, 0.65); background: rgba(15, 20, 30, 0.92); color: #D4AF37; font-size: 16px; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; pointer-events: none; transform: translateY(10px); transition: opacity 0.25s ease, transform 0.25s ease; }",
       "#moaathBackToTopBtn.is-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }",
 
-      /* === Futuristic Clean Cart Modal (v5.6 Bottom-Sheet Redesign) === */
+      /* Futuristic Clean Cart Modal */
       "#cartModal { align-items: flex-end !important; padding: 0 !important; }",
       "#cartModal .modal-content { width: 100% !important; max-width: 480px !important; max-height: 90vh !important; overflow-y: auto !important; border-radius: 22px 22px 0 0 !important; border: 1.5px solid rgba(212, 175, 55, 0.48) !important; border-bottom: none !important; padding: 10px 13px 14px 13px !important; background: linear-gradient(170deg, #131a27, #0b1019) !important; box-shadow: 0 -14px 40px rgba(0,0,0,0.65) !important; }",
       "body.light-mode #cartModal .modal-content { background: #ffffff !important; }",
@@ -110,27 +128,43 @@
       ".moaath-cart-top-actions { display: flex; align-items: center; gap: 5px; }",
       ".moaath-cart-mini-btn { padding: 4px 8px; border-radius: 999px; font-size: 10px; font-weight: 800; border: 1px solid rgba(212, 175, 55, 0.35); background: rgba(255, 255, 255, 0.05); color: var(--text-color); cursor: pointer; }",
       ".moaath-cart-close-x { width: 28px; height: 28px; padding: 0; border-radius: 50%; border: 1px solid rgba(239, 68, 68, 0.45); background: rgba(239, 68, 68, 0.16); color: #fca5a5; font-size: 13px; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }",
-      /* Remove duplicated summary card & non-interactive stepper & giant bottom close button */
       "#cartModal #cleanCheckoutSummaryCard, #cartModal #cartCheckoutStepper, #cartModal .moaath-cart-hidden-close { display: none !important; }",
-      /* Compact GPS Location Box */
-      "#cartModal .moaath-compact-gps { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 6px !important; padding: 6px 9px !important; margin: 6px 0 !important; border-radius: 12px !important; background: rgba(56, 189, 248, 0.09) !important; border: 1px solid rgba(56, 189, 248, 0.32) !important; font-size: 10.5px !important; }",
-      /* Compact Collapsible Recommendations */
       "#moaathCartRecsToggle { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 6px 9px; margin: 6px 0; border-radius: 12px; background: rgba(56, 189, 248, 0.08); border: 1px dashed rgba(56, 189, 248, 0.38); color: #38bdf8; font-size: 10.5px; font-weight: 800; cursor: pointer; }",
       "#aiCartRecommendationsBox.moaath-recs-collapsed { display: none !important; }",
-      /* Segmented Payment Pills */
       "#moaathPaymentPillsWrap { display: flex; gap: 6px; margin: 6px 0 8px 0; width: 100%; }",
       ".moaath-pay-pill { flex: 1; padding: 8px 6px; border-radius: 12px; border: 1px solid rgba(212, 175, 55, 0.32); background: rgba(255, 255, 255, 0.04); color: var(--text-color); font-size: 11px; font-weight: 800; cursor: pointer; text-align: center; transition: all 0.18s ease; }",
       ".moaath-pay-pill.is-active { background: linear-gradient(135deg, rgba(212, 175, 55, 0.28), rgba(16, 185, 129, 0.22)) !important; border-color: #D4AF37 !important; color: #D4AF37 !important; box-shadow: 0 0 12px rgba(212, 175, 55, 0.25); }",
       "body.light-mode .moaath-pay-pill { background: #f8fafc; }",
-      /* Collapsible Notes Toggle */
       "#moaathCartNotesToggle { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; margin: 4px 0 6px 0; border-radius: 999px; border: 1px dashed rgba(212, 175, 55, 0.4); background: transparent; color: var(--gray-text); font-size: 10.5px; font-weight: 700; cursor: pointer; }",
       ".moaath-notes-hidden { display: none !important; }",
-      /* Sticky Submit Button inside Cart */
       "#cartModal #submitOrderUnifiedBtn { position: sticky !important; bottom: 0 !important; z-index: 20 !important; margin-top: 8px !important; padding: 11px 12px !important; border-radius: 14px !important; font-size: 12.5px !important; font-weight: 900 !important; box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.55) !important; }"
     ].join(" ");
   }
 
-  /* === 1. Restored Collapsible User Bar === */
+  /* Deduplicate dynamic containers & buttons if any script ever mounted twice */
+  function deduplicateDynamicContainers() {
+    var idsToDedupe = [
+      "moaathUnifiedSmartBar",
+      "moaathOffersSliderTrack",
+      "moaathOffersDots",
+      "moaathCartTopBar",
+      "moaathCartDragHandle",
+      "moaathCartRecsToggle",
+      "moaathCartNotesToggle",
+      "moaathPaymentPillsWrap",
+      "moaathBackToTopBtn"
+    ];
+    idsToDedupe.forEach(function (id) {
+      var matches = document.querySelectorAll("#" + id);
+      if (matches.length > 1) {
+        for (var i = 1; i < matches.length; i++) {
+          if (matches[i] && matches[i].parentNode) matches[i].parentNode.removeChild(matches[i]);
+        }
+      }
+    });
+  }
+
+  /* === 1. Collapsible User Bar === */
   function stripIconBracketsInUserBar(container) {
     if (!container) return;
     var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
@@ -203,7 +237,7 @@
     if (sumEl) sumEl.textContent = summaryBits.join(" • ");
   }
 
-  /* === 2. Restored Horizontal Slider for Special Offers === */
+  /* === 2. Horizontal Slider for Special Offers === */
   function findOfferCards() {
     var raw = [];
     var seen = new Set();
@@ -323,7 +357,6 @@
     var paySel = $("cartPaymentMethod");
     if (!paySel || !paySel.parentNode) return;
 
-    // إخفاء القائمة المنسدلة الأصلية مع بقائها متزامنة بالكامل
     paySel.style.display = "none";
 
     var wrap = $("moaathPaymentPillsWrap");
@@ -336,7 +369,6 @@
     var allowDebt = isUserClassifiedForDebt();
     var options = Array.prototype.slice.call(paySel.options || []);
 
-    // تصفية الخيارات: "بالدين / آجل" لا يظهر إلا لمن يُصنّف زبون دين بالفعل
     var visibleOpts = options.filter(function (opt) {
       if (opt.disabled || opt.hidden) return false;
       var txt = String(opt.textContent || opt.value || "");
@@ -345,7 +377,6 @@
       return true;
     });
 
-    // تعيين تسميات نظيفة ومختصرة (من المحفظة | شام كاش | بالدين) مع الحفاظ على القيم الأصلية
     function formatPillLabel(rawText) {
       if (/شام\s*كاش|شامكاش/i.test(rawText)) return "💳 شام كاش";
       if (/محفظ|رصيد/i.test(rawText)) return "👛 من المحفظة";
@@ -380,7 +411,6 @@
     var modalContent = cartModal.querySelector(".modal-content");
     if (!modalContent) return;
 
-    // 1) مقبض السحب العلوي + الرأس النظيف مع أزرار (إفراغ، حفظ قائمة، إغلاق ✕)
     if (!$("moaathCartDragHandle")) {
       var handle = document.createElement("div");
       handle.id = "moaathCartDragHandle";
@@ -401,7 +431,6 @@
       if (handleEl && handleEl.nextSibling) modalContent.insertBefore(topBar, handleEl.nextSibling);
       else modalContent.insertBefore(topBar, modalContent.firstChild);
 
-      // إخفاء العنوان المكرر الأصلي إن وجد
       Array.prototype.forEach.call(modalContent.children, function (ch) {
         if (ch.id === "moaathCartTopBar" || ch.id === "moaathCartDragHandle") return;
         if (/سلة\s*المشتريات\s*وإتمام\s*الطلب/.test(ch.textContent || "") && ch.offsetHeight < 70) {
@@ -433,7 +462,6 @@
       };
     }
 
-    // 2) إخفاء زر "إغلاق" الأحمر الضخم بالأسفل لأن ✕ العلوي يكفي
     modalContent.querySelectorAll("button").forEach(function (b) {
       if (b.id === "moaathCartTopCloseBtn" || b.id === "submitOrderUnifiedBtn") return;
       if (/^إغلاق$|^اغلاق$/.test((b.textContent || "").trim())) {
@@ -441,7 +469,6 @@
       }
     });
 
-    // 3) جعل صندوق "مقترحات مصورة تكمل سلتك" قابلاً للطي ومضغوطاً افتراضياً
     var recsBox = $("aiCartRecommendationsBox");
     if (recsBox && recsBox.innerHTML.trim() && !$("moaathCartRecsToggle")) {
       var recsBtn = document.createElement("button");
@@ -457,7 +484,6 @@
       recsBox.parentNode.insertBefore(recsBtn, recsBox);
     }
 
-    // 4) إخفاء حقل الملاحظات خلف زر صغير (+ إضافة ملاحظة) إذا كان فارغاً
     var notesInp = modalContent.querySelector("input[placeholder*='ملاحظات'], textarea[placeholder*='ملاحظات']");
     if (notesInp && !$("moaathCartNotesToggle")) {
       var notesToggle = document.createElement("button");
@@ -472,13 +498,30 @@
       notesInp.parentNode.insertBefore(notesToggle, notesInp);
     }
 
-    // 5) تحويل اختيار طريقة الدفع إلى أزرار لمس سريعة (Segmented Pills)
     buildPaymentSegmentedPills(modalContent);
   }
 
-  /* === 4. Unified Smart Search + Clear ✕ === */
+  /* === 4. Unified Smart Search + Loop-Safe Sync === */
+  function applySearchValueDirectly(origSearch, val) {
+    if (!origSearch || isSearchSyncing) return;
+    isSearchSyncing = true;
+    try {
+      if (origSearch.value !== val) {
+        origSearch.value = val;
+      }
+      if (typeof window.renderStore === "function") {
+        window.renderStore();
+      } else {
+        origSearch.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+    } finally {
+      setTimeout(function () {
+        isSearchSyncing = false;
+      }, 30);
+    }
+  }
+
   function buildUnifiedSmartSearchBar() {
-    if ($("moaathUnifiedSmartBar")) return;
     var assistBox = $("aiSmartAssistantBox");
     if (!assistBox || !assistBox.parentNode) return;
 
@@ -490,73 +533,79 @@
       }
     });
 
-    var pill = document.createElement("div");
-    pill.id = "moaathUnifiedSmartBar";
-    pill.className = "moaath-unified-pill-bar";
+    var pill = $("moaathUnifiedSmartBar");
+    if (!pill) {
+      pill = document.createElement("div");
+      pill.id = "moaathUnifiedSmartBar";
+      pill.className = "moaath-unified-pill-bar";
 
-    var inp = document.createElement("input");
-    inp.type = "text";
-    inp.id = "moaathUnifiedSearchInput";
-    inp.className = "moaath-unified-pill-input";
-    inp.placeholder = "🔍 ابحث عن صنف أو اطلب من المساعد...";
+      var inp = document.createElement("input");
+      inp.type = "text";
+      inp.id = "moaathUnifiedSearchInput";
+      inp.className = "moaath-unified-pill-input";
+      inp.placeholder = "🔍 ابحث عن صنف أو اطلب من المساعد...";
 
-    var clearBtn = document.createElement("button");
-    clearBtn.type = "button";
-    clearBtn.id = "moaathUnifiedClearBtn";
-    clearBtn.className = "moaath-pill-clear";
-    clearBtn.title = "مسح البحث";
-    clearBtn.textContent = "✕";
+      var clearBtn = document.createElement("button");
+      clearBtn.type = "button";
+      clearBtn.id = "moaathUnifiedClearBtn";
+      clearBtn.className = "moaath-pill-clear";
+      clearBtn.title = "مسح البحث";
+      clearBtn.textContent = "✕";
 
-    function syncClearBtn() { clearBtn.classList.toggle("is-visible", inp.value.length > 0); }
-
-    clearBtn.onclick = function () {
-      inp.value = "";
-      syncClearBtn();
-      if (origSearch) {
-        origSearch.value = "";
-        origSearch.dispatchEvent(new Event("input", { bubbles: true }));
+      function syncClearBtn() {
+        clearBtn.classList.toggle("is-visible", inp.value.length > 0);
       }
-      inp.focus();
-    };
 
-    var searchDebounce = null;
-    inp.addEventListener("input", function () {
-      syncClearBtn();
-      clearTimeout(searchDebounce);
-      searchDebounce = setTimeout(function () {
-        if (origSearch) {
-          origSearch.value = inp.value;
-          origSearch.dispatchEvent(new Event("input", { bubbles: true }));
+      clearBtn.onclick = function () {
+        inp.value = "";
+        syncClearBtn();
+        applySearchValueDirectly(origSearch, "");
+        inp.focus();
+      };
+
+      var searchDebounce = null;
+      inp.addEventListener("input", function () {
+        syncClearBtn();
+        var nextVal = inp.value;
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(function () {
+          applySearchValueDirectly(origSearch, nextVal);
+        }, 160);
+      });
+
+      inp.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && inp.value.trim() && typeof window.runAIShoppingAssistant === "function") {
+          window.runAIShoppingAssistant(inp.value.trim());
         }
-      }, 120);
-    });
+      });
+      inp.addEventListener("focus", function () { document.body.classList.add("moaath-search-focused"); });
+      inp.addEventListener("blur", function () { setTimeout(function () { document.body.classList.remove("moaath-search-focused"); }, 220); });
 
-    inp.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" && inp.value.trim() && typeof window.runAIShoppingAssistant === "function") {
-        window.runAIShoppingAssistant(inp.value.trim());
+      var micBtn = document.createElement("button");
+      micBtn.type = "button";
+      micBtn.className = "moaath-pill-action moaath-pill-mic";
+      micBtn.title = "بحث صوتي";
+      micBtn.textContent = "🎙️";
+      micBtn.onclick = function () { if (typeof window.startVoiceShoppingInput === "function") window.startVoiceShoppingInput(); };
+
+      pill.appendChild(inp);
+      pill.appendChild(clearBtn);
+      pill.appendChild(micBtn);
+
+      if (reqProductBtn) {
+        var reqBtn = document.createElement("button");
+        reqBtn.type = "button";
+        reqBtn.id = "moaathUnifiedReqItemBtn";
+        reqBtn.className = "moaath-pill-action";
+        reqBtn.textContent = "📝 طلب صنف";
+        reqBtn.onclick = function () { reqProductBtn.click(); };
+        pill.appendChild(reqBtn);
       }
-    });
-    inp.addEventListener("focus", function () { document.body.classList.add("moaath-search-focused"); });
-    inp.addEventListener("blur", function () { setTimeout(function () { document.body.classList.remove("moaath-search-focused"); }, 220); });
 
-    var micBtn = document.createElement("button");
-    micBtn.type = "button";
-    micBtn.className = "moaath-pill-action moaath-pill-mic";
-    micBtn.title = "بحث صوتي";
-    micBtn.textContent = "🎙️";
-    micBtn.onclick = function () { if (typeof window.startVoiceShoppingInput === "function") window.startVoiceShoppingInput(); };
-
-    pill.appendChild(inp);
-    pill.appendChild(clearBtn);
-    pill.appendChild(micBtn);
+      assistBox.parentNode.insertBefore(pill, assistBox);
+    }
 
     if (reqProductBtn) {
-      var reqBtn = document.createElement("button");
-      reqBtn.type = "button";
-      reqBtn.className = "moaath-pill-action";
-      reqBtn.textContent = "📝 طلب صنف";
-      reqBtn.onclick = function () { reqProductBtn.click(); };
-      pill.appendChild(reqBtn);
       reqProductBtn.style.display = "none";
       if (reqProductBtn.parentElement && reqProductBtn.parentElement.children.length === 1 && reqProductBtn.parentElement.tagName === "DIV") {
         reqProductBtn.parentElement.style.display = "none";
@@ -566,12 +615,16 @@
     if (origSearch) {
       var origWrap = origSearch.closest(".search-box, .search-bar, .form-group") || origSearch;
       if (origWrap && !origWrap.closest("#aiSmartAssistantBox")) origWrap.style.display = "none";
+      var unifiedInp = $("moaathUnifiedSearchInput");
+      if (unifiedInp && document.activeElement !== unifiedInp && unifiedInp.value !== origSearch.value) {
+        unifiedInp.value = origSearch.value || "";
+        var clr = $("moaathUnifiedClearBtn");
+        if (clr) clr.classList.toggle("is-visible", unifiedInp.value.length > 0);
+      }
     }
-
-    assistBox.parentNode.insertBefore(pill, assistBox);
   }
 
-  /* === 5. Product & Offer Cards (Lazy + Real Stock + Inline Stepper) === */
+  /* === 5. Product & Offer Cards === */
   function enhanceProductAndOfferCards() {
     var cartObj = (typeof window.cart === "object" && window.cart) ? window.cart : {};
     var prods = (typeof window.products === "object" && window.products) ? window.products : {};
@@ -728,8 +781,8 @@
 
   function bindToggleButtonDirect() {
     var btn = $("futuristicAiToggleBtn");
-    if (!btn || btn.dataset.v56Bound) return;
-    btn.dataset.v56Bound = "1";
+    if (!btn || btn.dataset.v57Bound) return;
+    btn.dataset.v57Bound = "1";
     btn.onclick = function (e) {
       if (e && e.preventDefault) e.preventDefault();
       window.toggleFuturisticAssistantPanel();
@@ -800,8 +853,10 @@
   }
 
   function runAll() {
+    if (isSearchSyncing) return;
     withSelfMutationGuard(function () {
       injectStoreFuturisticCSS();
+      deduplicateDynamicContainers();
       enhanceCollapsibleUserBar();
       applyOffersHorizontalSlider();
       buildUnifiedSmartSearchBar();
@@ -816,18 +871,43 @@
     });
   }
 
+  function isRelevantMutation(mutations) {
+    if (!Array.isArray(mutations) || !mutations.length) return false;
+    for (var i = 0; i < mutations.length; i++) {
+      var m = mutations[i];
+      var target = m.target && m.target.nodeType === 1 ? m.target : (m.target && m.target.parentElement);
+      if (target && target.closest && target.closest("#moaathUnifiedSmartBar, #moaathOffersDots, #moaathCartTopBar, #moaathBackToTopBtn")) {
+        continue;
+      }
+      if (m.type === "childList" && (m.addedNodes.length > 0 || m.removedNodes.length > 0)) {
+        return true;
+      }
+      if (m.type === "attributes" && target && target.matches && target.matches(".modal-overlay, #cartModal, #adminModal")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   function start() {
     runAll();
-    var obs = new MutationObserver(function () {
-      if (isSelfMutating) return;
+    if (observer) return;
+    observer = new MutationObserver(function (mutations) {
+      if (isSelfMutating || isSearchSyncing) return;
+      if (!isRelevantMutation(mutations)) return;
       clearTimeout(obsTimer);
-      obsTimer = setTimeout(runAll, 220);
+      obsTimer = setTimeout(runAll, 260);
     });
-    obs.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["style", "class"]
+    });
   }
 
   if (window.MoaathSystemRegistry && typeof window.MoaathSystemRegistry.register === "function") {
-    window.MoaathSystemRegistry.register("store_ui", "5.6");
+    window.MoaathSystemRegistry.register("store_ui", "5.8");
   }
 
   if (document.readyState === "loading") {
