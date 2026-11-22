@@ -1,7 +1,7 @@
-/* store_ui_futuristic.js - v5.2 (Mobile-Safe, Zero-SyntaxError, All 15 Enhancements) */
+/* store_ui_futuristic.js - v5.3 (Mobile-Safe, Zero-Flicker Offers Slider, All 15 Enhancements) */
 (function () {
-  if (window.__MOAATH_STORE_UI_V52__) return;
-  window.__MOAATH_STORE_UI_V52__ = true;
+  if (window.__MOAATH_STORE_UI_V53__) return;
+  window.__MOAATH_STORE_UI_V53__ = true;
 
   var COLLAPSE_KEY = "moaath_store_ai_collapsed";
   var USERBAR_COLLAPSE_KEY = "moaath_store_userbar_collapsed";
@@ -42,7 +42,7 @@
 
       ".moaath-offers-track { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: stretch !important; grid-template-columns: none !important; overflow-x: auto !important; overflow-y: hidden !important; scroll-snap-type: x mandatory !important; gap: 10px !important; padding: 3px 2px 6px 2px !important; margin: 4px 0 2px 0 !important; scrollbar-width: none !important; -webkit-overflow-scrolling: touch !important; touch-action: pan-x pan-y !important; width: 100% !important; box-sizing: border-box !important; }",
       ".moaath-offers-track::-webkit-scrollbar { display: none !important; }",
-      ".moaath-offers-track > .moaath-offer-card-slide, .moaath-offer-card-slide { flex: 0 0 84vw !important; width: 84vw !important; min-width: 240px !important; max-width: 310px !important; scroll-snap-align: start !important; box-sizing: border-box !important; margin: 0 !important; padding: 7px 10px !important; border-radius: 15px !important; border: 1px solid rgba(212, 175, 55, 0.36) !important; }",
+      ".moaath-offers-track > div, .moaath-offers-track > article, .moaath-offers-track > .moaath-offer-card-slide, .moaath-offer-card-slide { flex: 0 0 84vw !important; width: 84vw !important; min-width: 240px !important; max-width: 310px !important; scroll-snap-align: start !important; box-sizing: border-box !important; margin: 0 !important; padding: 7px 10px !important; border-radius: 15px !important; border: 1px solid rgba(212, 175, 55, 0.36) !important; }",
       "#moaathOffersDots { display: flex !important; justify-content: center !important; align-items: center !important; gap: 5px !important; margin: 2px 0 7px 0 !important; }",
       ".moaath-offer-dot { width: 6px !important; height: 6px !important; border-radius: 999px !important; background: rgba(212, 175, 55, 0.28) !important; transition: width 0.22s ease, background 0.22s ease !important; }",
       ".moaath-offer-dot.is-active { width: 16px !important; background: #D4AF37 !important; }",
@@ -443,7 +443,7 @@
         fab.onclick = function (e) {
           if (e) e.stopPropagation();
           if (typeof window.changeQty === "function") window.changeQty(pid, 1);
-          setTimeout(enhanceProductAndOfferCards, 40);
+          setTimeout(enhanceProductAndOfferCards, 30);
         };
         card.appendChild(fab);
       }
@@ -462,12 +462,12 @@
           stepper.querySelector(".moaath-step-minus").onclick = function (e) {
             if (e) e.stopPropagation();
             if (typeof window.changeQty === "function") window.changeQty(pid, -1);
-            setTimeout(enhanceProductAndOfferCards, 40);
+            setTimeout(enhanceProductAndOfferCards, 30);
           };
           stepper.querySelector(".moaath-step-plus").onclick = function (e) {
             if (e) e.stopPropagation();
             if (typeof window.changeQty === "function") window.changeQty(pid, 1);
-            setTimeout(enhanceProductAndOfferCards, 40);
+            setTimeout(enhanceProductAndOfferCards, 30);
           };
 
           btn.parentNode.insertBefore(stepper, btn.nextSibling);
@@ -681,7 +681,7 @@
     runAll();
     var obs = new MutationObserver(function () {
       clearTimeout(timer);
-      timer = setTimeout(runAll, 200);
+      timer = setTimeout(runAll, 30);
     });
     obs.observe(document.body, { childList: true, subtree: true });
   }
