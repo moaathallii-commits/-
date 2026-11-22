@@ -1,27 +1,28 @@
 // ============================================================================
-// طبقة تحسين واجهة متجر معاذ المستقبلية (store_ui_futuristic.js — v1.0)
-// - ضغط الهيدر العلوي وشريط المستخدم لتوفير مساحة الشاشة الأولى
-// - تحويل العروض الخاصة تلقائياً إلى شريط سحب أفقي مضغوط (Horizontal Slider)
-// - إخفاء الجنية العائمة تلقائياً عند فتح المساعد الذكي لمنع أي تداخل
-// - تثبيت شريط التصنيفات + شريط السلة الزجاجي + زر العودة للأعلى الذكي
+// طبقة تحسين واجهة متجر معاذ المستقبلية (store_ui_futuristic.js — v1.1)
+// - اكتشاف ذكي تلقائي لبطاقات العروض (حتى بدون كلاس offer-card) وتحويلها لسحب أفقي
+// - ضمان عمل زر فتح/طي المساعد الذكي وإخفاء الجنية العائمة تلقائياً عند الفتح
+// - ضغط الهيدر وشريط المستخدم + تثبيت التصنيفات + زر العودة للأعلى
 // - عزل تام عن الدفع وشام كاش وبدون أي تعديل على وظائف index.html
 // ============================================================================
 (function () {
-  if (window.__MOAATH_STORE_UI_V1__) return;
-  window.__MOAATH_STORE_UI_V1__ = true;
+  if (window.__MOAATH_STORE_UI_V11__) return;
+  window.__MOAATH_STORE_UI_V11__ = true;
 
   function injectStoreFuturisticCSS() {
-    if (document.getElementById("moaathStoreFuturisticCSS")) return;
-    const style = document.createElement("style");
-    style.id = "moaathStoreFuturisticCSS";
+    let style = document.getElementById("moaathStoreFuturisticCSS");
+    if (!style) {
+      style = document.createElement("style");
+      style.id = "moaathStoreFuturisticCSS";
+      document.head.appendChild(style);
+    }
     style.textContent = `
-      /* 1. حماية التمرير العمودي ومنع الانزياح الأفقي */
       body {
         overflow-x: clip !important;
         max-width: 100% !important;
       }
 
-      /* 2. ضغط الهيدر العلوي بمظهر زجاجي أنيق */
+      /* ضغط الهيدر العلوي */
       header, .store-header, .top-bar {
         padding: 7px 11px !important;
         margin-bottom: 6px !important;
@@ -30,67 +31,37 @@
         -webkit-backdrop-filter: blur(12px) !important;
       }
 
-      /* 3. ضغط وتنظيم شريط المستخدم */
-      .user-bar, .user-info-bar, #userInfoBar, [class*="user-bar"] {
-        border-radius: 14px !important;
-        padding: 6px 9px !important;
-        margin: 5px 0 7px 0 !important;
-        font-size: 11px !important;
-        line-height: 1.45 !important;
-        background: rgba(255, 255, 255, 0.035) !important;
-        border: 1px solid rgba(212, 175, 55, 0.24) !important;
-      }
-      body.light-mode .user-bar,
-      body.light-mode .user-info-bar,
-      body.light-mode #userInfoBar {
-        background: rgba(255, 255, 255, 0.92) !important;
-        border-color: rgba(180, 140, 20, 0.28) !important;
-      }
-
-      /* 4. تحويل العروض الخاصة إلى شريط سحب أفقي مضغوط (Slider) */
-      .moaath-offers-slider,
-      #specialOffersSection,
-      #offersSection,
-      .offers-grid,
-      .offers-container,
-      .special-offers-list {
+      /* حاوية السحب الأفقي للعروض (تُضاف تلقائياً عبر JS) */
+      .moaath-offers-slider {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         overflow-x: auto !important;
+        overflow-y: hidden !important;
         scroll-snap-type: x mandatory !important;
-        gap: 9px !important;
-        padding: 4px 2px 8px 2px !important;
-        margin-bottom: 6px !important;
+        gap: 10px !important;
+        padding: 4px 2px 10px 2px !important;
+        margin: 4px 0 8px 0 !important;
         scrollbar-width: none !important;
         -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-x pan-y !important;
       }
-      .moaath-offers-slider::-webkit-scrollbar,
-      #specialOffersSection::-webkit-scrollbar,
-      #offersSection::-webkit-scrollbar,
-      .offers-grid::-webkit-scrollbar,
-      .offers-container::-webkit-scrollbar {
+      .moaath-offers-slider::-webkit-scrollbar {
         display: none !important;
       }
-      .offer-card, [class*="offer-card"] {
-        min-width: 248px !important;
-        max-width: 272px !important;
+      .moaath-offer-slide-item {
+        min-width: 82vw !important;
+        max-width: 290px !important;
+        width: 82vw !important;
         flex: 0 0 auto !important;
         scroll-snap-align: start !important;
-        padding: 9px 10px !important;
         margin: 0 !important;
+        padding: 9px 10px !important;
         border-radius: 15px !important;
-        background: linear-gradient(155deg, rgba(22, 30, 46, 0.94), rgba(12, 17, 28, 0.98)) !important;
-        border: 1px solid rgba(212, 175, 55, 0.38) !important;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28) !important;
-      }
-      body.light-mode .offer-card,
-      body.light-mode [class*="offer-card"] {
-        background: #ffffff !important;
-        border-color: rgba(180, 140, 20, 0.32) !important;
+        box-sizing: border-box !important;
       }
 
-      /* 5. تثبيت شريط التصنيفات العلوي أثناء التمرير */
+      /* تثبيت شريط التصنيفات */
       .categories {
         position: sticky !important;
         top: 0 !important;
@@ -100,30 +71,27 @@
         -webkit-backdrop-filter: blur(12px) !important;
         border-radius: 14px !important;
         padding: 6px !important;
-        margin: 4px 0 8px 0 !important;
         scrollbar-width: none !important;
       }
       body.light-mode .categories {
         background: rgba(248, 250, 252, 0.94) !important;
       }
 
-      /* 6. شريط إتمام الطلب السفلي الزجاجي */
-      .cart-bar, .bottom-cart-bar, .fixed-cart-bar, #bottomCartBar {
-        border-radius: 18px !important;
-        backdrop-filter: blur(14px) !important;
-        -webkit-backdrop-filter: blur(14px) !important;
-        border: 1px solid rgba(212, 175, 55, 0.35) !important;
-        box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.45) !important;
-      }
-
-      /* 7. إخفاء الجنية العائمة تلقائياً عند فتح المساعد الذكي */
+      /* إخفاء الجنية العائمة تماماً عند فتح المساعد الذكي */
       body.moaath-ai-open #petCharRoot {
         opacity: 0 !important;
-        transform: scale(0.75) !important;
+        visibility: hidden !important;
         pointer-events: none !important;
       }
 
-      /* 8. زر العودة للأعلى الذكي */
+      /* ضمان طي وفتح جسم المساعد بسلاسة */
+      #futuristicAiBody.is-collapsed {
+        display: none !important;
+        max-height: 0 !important;
+        opacity: 0 !important;
+      }
+
+      /* زر العودة للأعلى */
       #moaathBackToTopBtn {
         position: fixed;
         bottom: 86px;
@@ -145,9 +113,6 @@
         pointer-events: none;
         transform: translateY(10px);
         transition: opacity 0.25s ease, transform 0.25s ease;
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
       }
       #moaathBackToTopBtn.is-visible {
         opacity: 1;
@@ -155,38 +120,84 @@
         transform: translateY(0);
       }
     `;
-    document.head.appendChild(style);
   }
 
-  // اكتشاف حاوية بطاقات العروض تلقائياً مهما كان اسمها وتفعيل السحب الأفقي عليها
+  // اكتشاف بطاقات العروض تلقائياً من النص أو أزرار OFFER_ مهما كان اسم الكلاس في index.html
   function enhanceOffersContainer() {
-    const offerCards = document.querySelectorAll(".offer-card, [class*='offer-card']");
-    if (offerCards.length < 2) return;
-    const parent = offerCards[0].parentElement;
-    if (parent && !parent.classList.contains("moaath-offers-slider")) {
-      parent.classList.add("moaath-offers-slider");
+    const candidates = new Set();
+
+    // 1) البحث عبر الكلاسات المعروفة
+    document.querySelectorAll(".offer-card, [class*='offer-card']").forEach(el => candidates.add(el));
+
+    // 2) البحث الذكي عبر أزرار OFFER_ أو عبارة "عرض خاص"
+    if (candidates.size < 2) {
+      const allBtns = document.querySelectorAll("button[onclick*='OFFER_'], [data-offer-id]");
+      allBtns.forEach(btn => {
+        const card = btn.closest("div[style*='border'], .card, .offer-card, div");
+        if (card && card.parentElement && card.parentElement !== document.body) {
+          candidates.add(card);
+        }
+      });
+    }
+
+    if (candidates.size < 2) {
+      const divs = document.querySelectorAll("div");
+      divs.forEach(div => {
+        if (div.children.length > 0 && div.children.length <= 6 && /عرض\s*خاص/.test(div.textContent || "")) {
+          const style = window.getComputedStyle(div);
+          if (style.borderStyle !== "none" && div.offsetHeight > 70 && div.offsetHeight < 320) {
+            candidates.add(div);
+          }
+        }
+      });
+    }
+
+    const cardsArr = Array.from(candidates);
+    if (cardsArr.length < 2) return;
+
+    // إيجاد الأب المشترك المباشر لبطاقات العروض
+    const parentCount = new Map();
+    cardsArr.forEach(c => {
+      if (c.parentElement && c.parentElement !== document.body) {
+        parentCount.set(c.parentElement, (parentCount.get(c.parentElement) || 0) + 1);
+      }
+    });
+
+    let bestParent = null;
+    let bestCount = 0;
+    parentCount.forEach((cnt, p) => {
+      if (cnt > bestCount) {
+        bestCount = cnt;
+        bestParent = p;
+      }
+    });
+
+    if (bestParent && bestCount >= 2) {
+      bestParent.classList.add("moaath-offers-slider");
+      Array.from(bestParent.children).forEach(ch => {
+        if (ch.tagName === "DIV") ch.classList.add("moaath-offer-slide-item");
+      });
     }
   }
 
-  // مراقبة حالة فتح/طي المساعد الذكي لإخفاء الجنية العائمة تلقائياً
+  // مزامنة إخفاء الجنية + ضمان عمل زر فتح/طي المساعد
   function syncFairyVisibilityWithAssistant() {
     const bodyEl = document.getElementById("futuristicAiBody");
     const dockEl = document.getElementById("aiSmartAssistantBox");
-    const isOpen = (bodyEl && !bodyEl.classList.contains("is-collapsed")) ||
-                   (dockEl && !dockEl.classList.contains("is-dock-collapsed"));
-    document.body.classList.toggle("moaath-ai-open", !!isOpen);
+    if (!bodyEl || !dockEl) return;
+    const isCollapsed = bodyEl.classList.contains("is-collapsed") || dockEl.classList.contains("is-dock-collapsed");
+    document.body.classList.toggle("moaath-ai-open", !isCollapsed);
   }
 
-  function watchAssistantToggle() {
-    syncFairyVisibilityWithAssistant();
-    const target = document.getElementById("aiSmartAssistantBox");
-    if (!target || target.dataset.uiWatched) return;
-    target.dataset.uiWatched = "1";
-    const obs = new MutationObserver(syncFairyVisibilityWithAssistant);
-    obs.observe(target, { attributes: true, subtree: true, attributeFilter: ["class"] });
+  function bindAssistantToggleSafety() {
+    const btn = document.getElementById("futuristicAiToggleBtn");
+    if (!btn || btn.dataset.safeToggleBound) return;
+    btn.dataset.safeToggleBound = "1";
+    btn.addEventListener("click", () => {
+      setTimeout(syncFairyVisibilityWithAssistant, 40);
+    });
   }
 
-  // زر العودة للأعلى الذكي
   function mountBackToTop() {
     if (document.getElementById("moaathBackToTopBtn")) return;
     const btn = document.createElement("button");
@@ -202,20 +213,27 @@
     }, { passive: true });
   }
 
-  function initAll() {
+  let debounceTimer = null;
+  function runAll() {
     injectStoreFuturisticCSS();
     enhanceOffersContainer();
-    watchAssistantToggle();
+    bindAssistantToggleSafety();
+    syncFairyVisibilityWithAssistant();
     mountBackToTop();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initAll);
-  } else {
-    initAll();
+  function initObserver() {
+    runAll();
+    const obs = new MutationObserver(() => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(runAll, 250);
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
   }
 
-  // إعادة فحص العروض بعد تحميل بيانات Firebase
-  setTimeout(initAll, 1200);
-  setTimeout(enhanceOffersContainer, 2800);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initObserver);
+  } else {
+    initObserver();
+  }
 })();
