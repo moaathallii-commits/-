@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v73 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v74 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -90,10 +90,28 @@
     });
   }
 
+  const MANIFEST_LOCAL_KEY = "moaath_sounds_manifest_cache_v1";
+  let manifestPreloadRunning = false;
+
   function loadSoundsManifest() {
+    // قراءة النسخة المحفوظة محلياً فوراً للعمل بدون إنترنت نهائياً
+    try {
+      const cached = JSON.parse(localStorage.getItem(MANIFEST_LOCAL_KEY) || "null");
+      if (cached && cached.personas) indexSoundsManifest(cached);
+    } catch (_) {}
+
+    if (navigator.onLine === false) return;
     fetch("sounds_manifest.json", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => { if (data) indexSoundsManifest(data); })
+      .then((data) => {
+        if (data && data.personas) {
+          indexSoundsManifest(data);
+          try { localStorage.setItem(MANIFEST_LOCAL_KEY, JSON.stringify(data)); } catch (_) {}
+          setTimeout(() => {
+            if (typeof runManifestBackgroundPreload === "function") runManifestBackgroundPreload();
+          }, 3500);
+        }
+      })
       .catch(() => {});
   }
   loadSoundsManifest();
@@ -839,13 +857,26 @@
 
     if (ttsAudioCache.has(cacheKey)) {
       const cached = ttsAudioCache.get(cacheKey);
-      if (cached?.source === "local_repo") {
-        sessionCtx.lastTtsSource = "local_repo";
+      if (cached?.source === "local_repo" || cached?.source === "persistent_cache") {
+        sessionCtx.lastTtsSource = cached.source;
         updateVoiceSourceBadge("💾 محفوظ", "#00e676", cached.relUrl || "ملف صوتي محلي");
         playViaHtmlAudio(cached, persona, mySeq);
         return true;
       }
     }
+
+    // قراءة فورية من الكاش الدائم على الهاتف (تعمل حتى بدون إنترنت نهائياً)
+    const persistedLocalUrl = await readPersistentHumanCache(cacheKey);
+    if (persistedLocalUrl && mySeq === ttsRequestSeq) {
+      const pEntry = { url: persistedLocalUrl, rawBuffer: null, source: "local_repo", relUrl: relUrlsToTry[0] || "cache", geminiError: "" };
+      ttsAudioCache.set(cacheKey, pEntry);
+      sessionCtx.lastTtsSource = "local_repo";
+      updateVoiceSourceBadge("💾 محفوظ", "#00e676", "كاش دائم بدون إنترنت");
+      playViaHtmlAudio(pEntry, persona, mySeq);
+      return true;
+    }
+
+    if (navigator.onLine === false) return false;
 
     for (const relUrl of relUrlsToTry) {
       if (missingLocalClips.has(relUrl)) continue;
@@ -865,6 +896,8 @@
           missingLocalClips.add(relUrl);
           continue;
         }
+        // حفظ دائم للمقطع في Cache API على هاتف الزبون بعد أول تحميل
+        writePersistentHumanCache(cacheKey, blob);
         if (mySeq !== ttsRequestSeq) return true;
         const blobUrl = URL.createObjectURL(blob);
         const entry = { url: blobUrl, rawBuffer: null, source: "local_repo", relUrl, geminiError: "" };
@@ -922,7 +955,7 @@
     try {
       const cache = await caches.open(PERSISTENT_TTS_CACHE_NAME);
       const keys = await cache.keys();
-      if (keys.length >= 150) {
+      if (keys.length >= 450) {
         await cache.delete(keys[0]);
       }
       const reqUrl = "https://moaath-tts.local/" + encodeURIComponent(cacheKey);
@@ -1153,8 +1186,55 @@
     }
   }
 
+  async function runManifestBackgroundPreload(targetPersonaId = null) {
+    if (manifestPreloadRunning || navigator.onLine === false || typeof caches === "undefined") return;
+    if (!soundsManifestData || !soundsManifestData.personas) return;
+    manifestPreloadRunning = true;
+    try {
+      const prefs = getPrefs();
+      const pid = targetPersonaId || prefs.persona || "buddy";
+      const persona = PERSONAS[pid] || PERSONAS.buddy;
+      const voiceName = persona.voiceName || "Puck";
+      const pBank = soundsManifestData.personas[pid];
+      if (!pBank) return;
+
+      const itemsToCache = [];
+      Object.keys(pBank).forEach((intent) => {
+        const arr = Array.isArray(pBank[intent]) ? pBank[intent] : [];
+        arr.forEach((it) => { if (it && it.text && it.file) itemsToCache.push(it); });
+      });
+
+      const cache = await caches.open(PERSISTENT_TTS_CACHE_NAME);
+      for (const it of itemsToCache) {
+        if (navigator.onLine === false) break;
+        const spokenText = normalizeTextForArabicSpeech(it.text);
+        if (!spokenText) continue;
+        const cacheKey = `${pid}::${voiceName}::${spokenText}`;
+        const reqUrl = "https://moaath-tts.local/" + encodeURIComponent(cacheKey);
+        const already = await cache.match(reqUrl);
+        if (already) continue;
+
+        try {
+          const res = await fetch(it.file, { method: "GET", cache: "default" });
+          if (res.ok && !/text\/html/i.test(res.headers.get("content-type") || "")) {
+            const blob = await res.blob();
+            if (blob && blob.size >= 400) {
+              await writePersistentHumanCache(cacheKey, blob);
+            }
+          }
+        } catch (_) {}
+
+        // تحميل تدريجي هادئ (مقطع كل 1.6 ثانية) بدون التأثير على سرعة التصفح
+        await new Promise((r) => setTimeout(r, 1600));
+      }
+    } finally {
+      manifestPreloadRunning = false;
+    }
+  }
+
   window.addEventListener("load", () => {
-    setTimeout(() => { runDripFeedPrewarm(); }, 6000);
+    setTimeout(() => { runManifestBackgroundPreload(); }, 4500);
+    setTimeout(() => { runDripFeedPrewarm(); }, 12000);
   });
 
   window.toggleCompanionVoice = function () {
@@ -1281,6 +1361,7 @@
     if (specEl) specEl.textContent = p.specialtyNote || "";
     showBubble(`🧚 ${greetLine}`, 3800);
     speakOutLoud(greetLine, true);
+    setTimeout(() => { if (typeof runManifestBackgroundPreload === "function") runManifestBackgroundPreload(key); }, 2500);
   };
 
   window.closeFairyGalleryModal = function () {
@@ -1969,4 +2050,2138 @@
       if (val >= 10) return val;
     }
 
-    // 2) أرقام منطوقة بالعربية (للصوت أو الك
+    // 2) أرقام منطوقة بالعربية (للصوت أو الكتابة)
+    const spokenMap = [
+      [/عشر\s*الاف|عشره\s*الاف/, 10000],
+      [/خمس\s*الاف|خمسه\s*الاف/, 5000],
+      [/اربع\s*الاف|اربعه\s*الاف/, 4000],
+      [/تلت\s*الاف|ثلاث\s*الاف|ثلاثه\s*الاف/, 3000],
+      [/الفين/, 2000],
+      [/الف\s*ونص/, 1500],
+      [/\bالف\b/, 1000],
+      [/تسعميه|تسع\s*ميه|تسعمائه|تسعمئه/, 900],
+      [/تمنميه|تمن\s*ميه|ثمانميه|ثمان\s*ميه/, 800],
+      [/سبعميه|سبع\s*ميه|سبعمئه/, 700],
+      [/ستميه|ست\s*ميه|ستمئه/, 600],
+      [/خمسميه|خمس\s*ميه|خمسمئه|خمسمائه/, 500],
+      [/اربعميه|اربع\s*ميه|اربعمئه/, 400],
+      [/تلتميه|تلت\s*ميه|ثلاثميه|ثلاث\s*ميه|ثلاثمئه/, 300],
+      [/ميتين|مائتين|مئتين/, 200],
+      [/ميه\s*ونص/, 150],
+      [/\b(ميه|مئه|مائه)\b/, 100],
+      [/\bخمسين\b/, 50]
+    ];
+    for (const [rx, val] of spokenMap) {
+      if (rx.test(clean)) return val;
+    }
+    return null;
+  }
+
+  function buildBudgetBasket(budgetSYP, keywords, topicTitle) {
+    const allAvail = Object.keys(products || {})
+      .filter(pid => getBranchAvail(pid) > 0 && getUnitSYP(pid) > 0 && getUnitSYP(pid) <= budgetSYP)
+      .map(pid => {
+        const p = products[pid];
+        const pNorm = cleanArabicNorm((p.name || "") + " " + (p.category || ""));
+        const kwScore = (keywords || []).reduce((acc, kw) => acc + (pNorm.includes(cleanArabicNorm(kw)) ? 10 : 0), 0);
+        return {
+          id: pid,
+          name: p.name,
+          price: getUnitSYP(pid),
+          kwScore
+        };
+      });
+
+    const matched = allAvail.filter(x => x.kwScore > 0).sort((a, b) => (b.kwScore - a.kwScore) || (a.price - b.price));
+    const pool = matched.length >= 2 ? matched : [...matched, ...allAvail.filter(x => x.kwScore === 0).sort((a, b) => a.price - b.price)];
+
+    const picked = [];
+    let runningTotal = 0;
+    for (const item of pool) {
+      if (picked.length >= 8) break;
+      if (runningTotal + item.price <= budgetSYP) {
+        picked.push({
+          id: item.id,
+          name: item.name,
+          suggestedQty: 1,
+          reason: `ضمن ميزانية ${budgetSYP.toLocaleString()} ل.س (${item.price.toLocaleString()} ل.س)`
+        });
+        runningTotal += item.price;
+      }
+    }
+    return { picked, runningTotal };
+  }
+
+  function handleMultiTurnDialog(normText, persona) {
+    const now = Date.now();
+    const pending = loadPendingDialog();
+    const budgetVal = extractBudgetNumber(normText);
+
+    // 1) إذا كان هناك حوار مفتوح ينتظر الميزانية وردّ الزبون برقم (مثل "500" أو "٥٠٠" أو "خمسمية")
+    if (pending && pending.type === "awaiting_budget" && budgetVal) {
+      const { picked, runningTotal } = buildBudgetBasket(budgetVal, pending.keywords, pending.title);
+      savePendingDialog(null);
+      setVal("aiShoppingPromptInput", "");
+      if (picked.length > 0) {
+        openZeroDefaultModal(
+          `🎯 تجهيز (${pending.title}) بميزانية ${budgetVal.toLocaleString()} ل.س:`,
+          picked,
+          `budget_${pending.key}_${budgetVal}`,
+          `المجموع المقترح: ${runningTotal.toLocaleString()} ل.س من أصل ${budgetVal.toLocaleString()} ل.س — اضغط «تحديد المتوفر» أو (+)`
+        );
+        const reply = `جهزتلك تشكيلة (${pending.title}) ضمن ميزانية ${budgetVal.toLocaleString()} ليرة، المجموع ${runningTotal.toLocaleString()} ليرة.`;
+        setOrbEmotion("choice", reply, true);
+        setTxt("aiShoppingStatusText", `🎯 ${reply}`);
+        return true;
+      } else {
+        const lowMsg = `ميزانية ${budgetVal.toLocaleString()} ليرة أقل من أسعار الأصناف المتوفرة حالياً لـ (${pending.title})، جرّب رفع الميزانية قليلاً.`;
+        setOrbEmotion("idle", lowMsg, true);
+        setTxt("aiShoppingStatusText", `💡 ${lowMsg}`);
+        return true;
+      }
+    }
+
+    // 2) إذا كتب الزبون رقماً فقط (مثل "500" أو "٥٠٠" أو "ب 500") دون حوار معلق -> يجهز له سلة فورية ضمن الميزانية
+    if (!pending && budgetVal && /^(?:ب|حوالي|تقريبا|حدود|ميزانيه|ميزانيتي|مبلغ)?\s*(?:\d{2,7}|خمسميه|خمس\s*ميه|الف|الفين|ميه|ميتين|تلتميه|اربعميه|ستميه|سبعميه|تمنميه|تسعميه)\s*(?:ليره|ل\s*س|سوري|فقط)?$/.test(normText)) {
+      const ctxTitle = sessionCtx.lastModalTitle ? "تشكيلة حسب طلبك السابق" : "تشكيلة متوفرة";
+      const ctxKws = sessionCtx.lastQuery ? [sessionCtx.lastQuery] : [];
+      const { picked, runningTotal } = buildBudgetBasket(budgetVal, ctxKws, ctxTitle);
+      setVal("aiShoppingPromptInput", "");
+      if (picked.length > 0) {
+        openZeroDefaultModal(
+          `💰 ${ctxTitle} ضمن ميزانية ${budgetVal.toLocaleString()} ل.س:`,
+          picked,
+          `budget_quick_${budgetVal}`,
+          `المجموع المقترح: ${runningTotal.toLocaleString()} ل.س — اضغط «تحديد المتوفر» أو (+)`
+        );
+        const reply = `رتبتلك أفضل الأصناف المتوفرة ضمن ميزانية ${budgetVal.toLocaleString()} ليرة، المجموع ${runningTotal.toLocaleString()} ليرة.`;
+        setOrbEmotion("choice", reply, true);
+        setTxt("aiShoppingStatusText", `💰 ${reply}`);
+        return true;
+      }
+    }
+
+    // 3) ردود الموافقة والمتابعة ("موافق"، "تمام"، "نعم"، "أوكي"، "ماشي"، "أضفهم")
+    if (/^(موافق|تمام|نعم|اوكي|ماشي|ايه|ايوه|طيب|ممتاز|اكمل|اضفهم)$/.test(normText)) {
+      setVal("aiShoppingPromptInput", "");
+      if (pending && pending.type === "awaiting_budget") {
+        const askAgain = `ممتاز! اكتب رقم الميزانية بالليرة (مثلاً 500 أو 1000) لأجهزلك (${pending.title}) فوراً.`;
+        setOrbEmotion("greet", askAgain, true);
+        setTxt("aiShoppingStatusText", `💬 ${askAgain}`);
+        return true;
+      }
+      if (sessionCtx.lastModalItems.length > 0) {
+        openZeroDefaultModal(sessionCtx.lastModalTitle, sessionCtx.lastModalItems, sessionCtx.lastModalIntent, sessionCtx.lastModalSubtitle);
+        window.selectAllZeroDefaultSuggestions();
+        const msg = "تم تحديد الأصناف المتوفرة لك، اضغط «إضافة للسلة» للتأكيد.";
+        setOrbEmotion("happy", msg, true);
+        setTxt("aiShoppingStatusText", `✅ ${msg}`);
+        return true;
+      }
+    }
+
+    // 4) التقاط طلب تنظيم/تجهيز مناسبة (مثل "تنظيم سهرة" أو "نظم لي سهرة")
+    for (const topic of DIALOG_PLAN_TOPICS) {
+      if (topic.regex.test(normText)) {
+        setVal("aiShoppingPromptInput", "");
+        if (budgetVal) {
+          const { picked, runningTotal } = buildBudgetBasket(budgetVal, topic.keywords, topic.title);
+          if (picked.length > 0) {
+            openZeroDefaultModal(
+              `🎯 تجهيز (${topic.title}) بميزانية ${budgetVal.toLocaleString()} ل.س:`,
+              picked,
+              `budget_${topic.key}_${budgetVal}`,
+              `المجموع المقترح: ${runningTotal.toLocaleString()} ل.س — اضغط «تحديد المتوفر» أو (+)`
+            );
+            const reply = `جهزتلك (${topic.title}) ضمن ${budgetVal.toLocaleString()} ليرة، المجموع ${runningTotal.toLocaleString()} ليرة.`;
+            setOrbEmotion("choice", reply, true);
+            setTxt("aiShoppingStatusText", `🎯 ${reply}`);
+            return true;
+          }
+        } else {
+          savePendingDialog({
+            type: "awaiting_budget",
+            key: topic.key,
+            title: topic.title,
+            keywords: topic.keywords,
+            expiresAt: now + 10 * 60 * 1000
+          });
+          const askMsg = `على عيني! كم الميزانية التي تحب أن أجهز بها (${topic.title})؟ اكتب الرقم فقط مثل 500 أو 1000.`;
+          setOrbEmotion("greet", askMsg, true);
+          setTxt("aiShoppingStatusText", `💬 ${askMsg}`);
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  function handleSessionFollowUp(normText) {
+    if (/^(اعد|كرر|افتح)\s*(اخر)?\s*(اقتراح|قائمه|نافذه)/.test(normText) && sessionCtx.lastModalItems.length > 0) {
+      openZeroDefaultModal(sessionCtx.lastModalTitle, sessionCtx.lastModalItems, sessionCtx.lastModalIntent, sessionCtx.lastModalSubtitle);
+      return "أعدت فتح آخر قائمة اقتراحات لك.";
+    }
+    if (/^(زد|زود|حبه ثانيه|واحد ثاني)/.test(normText) && sessionCtx.lastAddedIds.length > 0) {
+      const lastId = sessionCtx.lastAddedIds[sessionCtx.lastAddedIds.length - 1];
+      const avail = getBranchAvail(lastId);
+      const cur = cart[lastId] ? (parseInt(cart[lastId].qty) || 0) : 0;
+      if (avail > cur) {
+        changeQty(lastId, 1);
+        return "زدت حبة إضافية في سلتك.";
+      }
+      return "وصلت للحد الأقصى المتوفر من هذا الصنف في الفرع.";
+    }
+    return null;
+  }
+
+  function getAllMergedRecipes() {
+    const adminList = Object.keys(customRecipesDB || {}).map(k => {
+      const r = customRecipesDB[k];
+      if (!r || !r.title) return null;
+      const kws = Array.isArray(r.keywords) && r.keywords.length ? r.keywords : [r.title];
+      return {
+        id: k,
+        title: r.title,
+        category: r.category || "طبخ",
+        keywords: kws,
+        productIds: Array.isArray(r.productIds) ? r.productIds : [],
+        ingredients: Array.isArray(r.ingredients) ? r.ingredients : []
+      };
+    }).filter(Boolean);
+
+    const bank250 = (window.MoaathAIRecipes && Array.isArray(window.MoaathAIRecipes.recipes))
+      ? window.MoaathAIRecipes.recipes
+      : [];
+
+    return [...adminList, ...bank250, ...DEFAULT_RECIPES];
+  }
+
+  function matchRecipeOrSweet(normText) {
+    const allRecipes = getAllMergedRecipes();
+    const matched = allRecipes.find(r => {
+      const tNorm = cleanArabicNorm(r.title);
+      if (tNorm && (normText.includes(tNorm) || (normText.length >= 3 && tNorm.includes(normText)))) return true;
+      return (r.keywords || []).some(kw => {
+        const kNorm = cleanArabicNorm(kw);
+        return kNorm.length >= 2 && normText.includes(kNorm);
+      });
+    });
+
+    if (!matched) return null;
+
+    const learned = getLearnedMap()[`recipe_${matched.title}`] || {};
+    const availableItems = [];
+    const missingIngredients = [];
+
+    (matched.productIds || []).forEach(pid => {
+      const p = products?.[pid];
+      if (!p) return;
+      if (getBranchAvail(pid) > 0) {
+        availableItems.push({ id: pid, name: p.name, reason: `من احتياجات (${matched.title})`, score: (learned[pid] || 0) + 15 });
+      } else {
+        missingIngredients.push(p.name);
+      }
+    });
+
+    const prodEntries = Object.keys(products || {}).map(pid => {
+      const p = products[pid];
+      if (!p) return null;
+      return { pid, p, st: getBranchAvail(pid), pNorm: cleanArabicNorm(p.name || "") };
+    }).filter(Boolean);
+
+    (matched.ingredients || []).forEach(ing => {
+      const iNorm = cleanArabicNorm(ing);
+      if (!iNorm) return;
+      const found = prodEntries.find(x => x.pNorm.includes(iNorm) && x.st > 0);
+      if (found) {
+        if (!availableItems.some(a => a.id === found.pid)) {
+          availableItems.push({ id: found.pid, name: found.p.name, reason: `متوفر للوصفة (${ing})`, score: learned[found.pid] || 0 });
+        }
+      } else {
+        missingIngredients.push(ing);
+      }
+    });
+
+    availableItems.sort((a, b) => b.score - a.score);
+    if (window.MoaathAIBrain) {
+      if (typeof window.MoaathAIBrain.recordRecipeUsage === "function") {
+        window.MoaathAIBrain.recordRecipeUsage(matched.title);
+      }
+      if (typeof window.MoaathAIBrain.getPreferredQty === "function") {
+        availableItems.forEach(it => {
+          it.suggestedQty = window.MoaathAIBrain.getPreferredQty(it.id, 1);
+        });
+      }
+    }
+    return { recipe: matched, availableItems: availableItems.slice(0, 8), missingIngredients };
+  }
+
+  function matchCasualChat(normText, persona) {
+    if (/^(ال)?سلام\s*عليكم|السلام/.test(normText)) return composeInfinitePhrase("greet", persona);
+    if (/^(مرحبا|اهلا|هلا|هاي|صباح\s*الخير|مساء\s*الخير)/.test(normText)) return composeInfinitePhrase("greet", persona);
+    if (/كيف\s*حالك|شلونك|كيفك|شو\s*اخبارك|اخبارك/.test(normText)) return composeInfinitePhrase("chatGood", persona);
+    if (/شكرا|مشكور|يعطيك\s*العافيه|يسلمو/.test(normText)) return composeInfinitePhrase("thanks", persona);
+    return null;
+  }
+
+  function parsePeopleCount(normText) {
+    const m = normText.match(/(?:ل|لـ|حق|عدد)?\s*(\d{1,2})\s*(اشخاص|أشخاص|افراد|أفراد|شخص|نفرات|انفار|نفر)/);
+    if (!m) return null;
+    const n = parseInt(m[1], 10);
+    return n >= 1 && n <= 30 ? n : null;
+  }
+
+  function handleCartComplementRequest(normText, persona) {
+    if (!/(ناقصني|كمل\s*سلت|كمّل\s*سلت|مكملات|اضيف\s*عليها|كملها|شو\s*ناقص)/.test(normText)) return false;
+    const keys = Object.keys(cart || {});
+    if (!keys.length) {
+      const msg = "سلتك فاضية هلق، خبرني بطلبك أو اختر من الاقتراحات السريعة!";
+      setOrbEmotion("idle", msg, true);
+      setTxt("aiShoppingStatusText", `🛒 ${msg}`);
+      return true;
+    }
+    const inCart = new Set(keys.map(k => cart[k]?.origId || String(k).replace(/_PKG$/, "")));
+    const cats = new Set(keys.map(k => cart[k]?.category).filter(Boolean));
+    const picks = Object.keys(products || {})
+      .filter(pid => !inCart.has(pid) && getBranchAvail(pid) > 0)
+      .map(pid => ({
+        id: pid,
+        name: products[pid].name,
+        reason: cats.has(products[pid].category) ? `يكمل قسم (${products[pid].category})` : "مقترح متوفر",
+        score: cats.has(products[pid].category) ? 10 : 1
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8);
+    if (picks.length) {
+      openZeroDefaultModal("🛒 مكملات متوفرة تناسب سلتك الحالية:", picks, "cart_complement");
+      const msg = "جهزتلك مكملات متوفرة تناسب سلتك بدون تكرار.";
+      setOrbEmotion("choice", msg, true);
+      setTxt("aiShoppingStatusText", `🛒 ${msg}`);
+      return true;
+    }
+    return false;
+  }
+
+  function handleCheapestAvailableRequest(normText, persona) {
+    if (!/(ارخص|أرخص|اوفر|أوفر|عروض\s*توفير|رخيص)/.test(normText)) return false;
+    const picks = Object.keys(products || {})
+      .filter(pid => getBranchAvail(pid) > 0 && getUnitSYP(pid) > 0)
+      .map(pid => ({
+        id: pid,
+        name: products[pid].name,
+        price: getUnitSYP(pid),
+        reason: `سعر موفر: ${getUnitSYP(pid).toLocaleString()} ل.س`
+      }))
+      .sort((a, b) => a.price - b.price)
+      .slice(0, 8);
+    if (picks.length) {
+      openZeroDefaultModal("💰 أوفر الأصناف المتوفرة في الفرع:", picks, "cheapest_picks");
+      const msg = "رتبتلك أوفر الأصناف المتوفرة حالياً، حدد الكمية.";
+      setOrbEmotion("choice", msg, true);
+      setTxt("aiShoppingStatusText", `💰 ${msg}`);
+      return true;
+    }
+    return false;
+  }
+
+  function handlePersonalHabitsRequest(normText) {
+    if (!/(مفضلاتي|عادات|معتاد|المعتادة|توقعات|اعاده\s*طلب|إعادة\s*طلب|مقترحاتي)/.test(normText)) return false;
+    if (window.MoaathAIBrain && typeof window.MoaathAIBrain.getPersonalHabitSuggestions === "function") {
+      const habitPicks = window.MoaathAIBrain.getPersonalHabitSuggestions(products || {}, getBranchAvail, 6);
+      const predictivePicks = typeof window.MoaathAIBrain.getPredictiveReorderSuggestions === "function"
+        ? window.MoaathAIBrain.getPredictiveReorderSuggestions(products || {}, getBranchAvail, 4)
+        : [];
+      const merged = [...habitPicks];
+      predictivePicks.forEach(pp => {
+        if (!merged.some(m => m.id === pp.id)) merged.push(pp);
+      });
+      if (merged.length > 0) {
+        openZeroDefaultModal("⭐ مفضلاتك وتوقعات التعلم الذاتي المتوفرة:", merged.slice(0, 8), "personal_habits");
+        const prefs = getPrefs();
+        const msg = (window.MoaathAIPersonas && typeof window.MoaathAIPersonas.getHabitReaction === "function")
+          ? window.MoaathAIPersonas.getHabitReaction(prefs.persona)
+          : "عرضت لك الأصناف التي تعتاد اختيارها وتوقعات التعلم الذاتي، حدد الكمية.";
+        setOrbEmotion("happy", msg, true);
+        setTxt("aiShoppingStatusText", `⭐ ${msg}`);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function handleRepeatPreviousOrder(normText, persona) {
+    if (!/(كرر\s*طلبي|طلبي\s*السابق|اخر\s*طلب|آخر\s*طلب)/.test(normText)) return false;
+    if (sessionCtx.lastModalItems.length > 0) {
+      openZeroDefaultModal(sessionCtx.lastModalTitle, sessionCtx.lastModalItems, sessionCtx.lastModalIntent, sessionCtx.lastModalSubtitle);
+      const msg = "فتحتلك آخر قائمة اقتراحات لك بنقرة واحدة.";
+      setOrbEmotion("happy", msg, true);
+      setTxt("aiShoppingStatusText", `🔁 ${msg}`);
+      return true;
+    }
+    const histList = Object.values(completedOrdersHistory || {});
+    const lastOrd = histList.length ? histList[histList.length - 1] : null;
+    if (lastOrd && Array.isArray(lastOrd.items) && lastOrd.items.length) {
+      const items = lastOrd.items
+        .map(it => {
+          const pid = it.origId || String(it.id || "").replace(/_PKG$/, "");
+          if (!pid || !products?.[pid] || getBranchAvail(pid) <= 0) return null;
+          return { id: pid, name: products[pid].name, suggestedQty: parseInt(it.qty, 10) || 1, reason: `من طلبك السابق (الكمية: ${it.qty || 1})` };
+        })
+        .filter(Boolean)
+        .slice(0, 8);
+      if (items.length) {
+        openZeroDefaultModal("🔁 تكرار أصناف طلبك السابق المتوفرة:", items, "repeat_last_order");
+        const msg = "جبتلك الأصناف المتوفرة من طلبك السابق، اضغط تحديد المتوفر أو زائد.";
+        setOrbEmotion("happy", msg, true);
+        setTxt("aiShoppingStatusText", `🔁 ${msg}`);
+        return true;
+      }
+    }
+    const msg = "ما في طلب سابق محفوظ بعد، جرّب طبخة اليوم أو سهرة ومتة!";
+    setOrbEmotion("idle", msg, true);
+    setTxt("aiShoppingStatusText", `🔁 ${msg}`);
+    return true;
+  }
+
+  function openZeroDefaultModal(title, items, intentKey = "general", subtitleNote = "") {
+    const cappedItems = items.slice(0, 8);
+    sessionCtx.lastModalTitle = title;
+    sessionCtx.lastModalItems = cappedItems;
+    sessionCtx.lastModalIntent = intentKey;
+    sessionCtx.lastModalSubtitle = subtitleNote;
+
+    modalItemsState = cappedItems.map(it => ({
+      id: it.id,
+      name: it.name,
+      qty: 0,
+      suggestedQty: Math.max(1, parseInt(it.suggestedQty, 10) || 1),
+      unitPrice: getUnitSYP(it.id),
+      thumb: getThumb(it.id),
+      reason: it.reason || ""
+    }));
+    window._currentIntentKey = intentKey;
+
+    let modal = $("petSuggestionsFloatingModal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "petSuggestionsFloatingModal";
+      modal.className = "modal-overlay";
+      modal.style.cssText = "display:flex; z-index:10030; background:rgba(0,0,0,0.78);";
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width:440px; border-color:var(--gold-color);">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px; margin-bottom:6px;">
+            <b id="petSugModalTitle" style="color:var(--gold-color); font-size:13px;"></b>
+            <div style="display:flex; gap:4px;">
+              <button type="button" onclick="selectAllZeroDefaultSuggestions()" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:rgba(0,230,118,0.16); color:#00e676; border:1px solid #00e676;">تحديد المتوفر</button>
+              <button type="button" onclick="resetZeroDefaultSuggestions()" class="btn" style="width:auto; padding:3px 7px; font-size:10px; background:var(--bg-color); color:var(--text-color); border:1px solid var(--border-color);">تصفير</button>
+              <button type="button" onclick="closePetSuggestionsModal()" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:11px;">✕</button>
+            </div>
+          </div>
+          <div id="petSugModalSubtitle" style="font-size:10px; color:var(--gray-text); margin-bottom:8px;"></div>
+          <div id="petSugModalList" style="max-height:52vh; overflow-y:auto; margin-bottom:10px;"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; margin-bottom:10px; padding:6px 8px; background:var(--bg-color); border-radius:6px;">
+            <span>إجمالي ما اخترته:</span>
+            <strong id="petSugModalTotal" style="color:#00e676; font-size:14px;">0 ل.س</strong>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" onclick="confirmFloatingSuggestions()" class="btn" style="flex:2; background:linear-gradient(45deg,#00e676,#00b0ff); color:#000;">✅ إضافة للسلة</button>
+            <button type="button" onclick="closePetSuggestionsModal()" class="btn btn-danger" style="flex:1;">إلغاء</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+    } else {
+      modal.style.display = "flex";
+    }
+
+    setTxt("petSugModalTitle", title);
+    setTxt("petSugModalSubtitle", subtitleNote || "الكمية الافتراضية 0 — اضغط (+) لزيادة الكمية المطلوبة من الأصناف المتوفرة:");
+    renderZeroDefaultList();
+  }
+
+  window.selectAllZeroDefaultSuggestions = function () {
+    modalItemsState.forEach(it => {
+      const maxAvail = getBranchAvail(it.id);
+      if (maxAvail > 0) it.qty = Math.min(maxAvail, it.suggestedQty || 1);
+    });
+    haptic(12);
+    renderZeroDefaultList();
+  };
+
+  window.resetZeroDefaultSuggestions = function () {
+    modalItemsState.forEach(it => { it.qty = 0; });
+    haptic(10);
+    renderZeroDefaultList();
+  };
+
+  function renderZeroDefaultList() {
+    const listEl = $("petSugModalList");
+    if (!listEl) return;
+    let total = 0;
+
+    listEl.innerHTML = modalItemsState.map((it, idx) => {
+      const lineTotal = it.unitPrice * it.qty;
+      total += lineTotal;
+      const isSelected = it.qty > 0;
+      return `
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--bg-color); border:1px solid ${isSelected ? "var(--gold-color)" : "var(--border-color)"}; border-radius:8px; padding:7px; margin-bottom:7px;">
+          <img src="${esc(it.thumb)}" onerror="this.onerror=null;this.src='store-icon.png';" style="width:42px; height:42px; border-radius:6px; object-fit:cover; flex-shrink:0;">
+          <div style="flex:1; min-width:0; text-align:right;">
+            <div style="font-size:12px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(it.name)}</div>
+            <div style="font-size:10px; color:var(--gold-color);">${it.unitPrice.toLocaleString()} ل.س ${isSelected ? `× ${it.qty} = <b>${lineTotal.toLocaleString()} ل.س</b>` : ""}</div>
+            ${it.reason ? `<div style="font-size:9px; color:#00e676;">${esc(it.reason)}</div>` : ""}
+          </div>
+          <div style="display:flex; align-items:center; gap:5px;">
+            <button type="button" onclick="adjustSuggestionQty(${idx}, -1)" class="mini-btn" style="background:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color);">-</button>
+            <span style="font-size:13px; font-weight:bold; min-width:20px; text-align:center; color:${isSelected ? "#00e676" : "var(--gray-text)"};">${it.qty}</span>
+            <button type="button" onclick="adjustSuggestionQty(${idx}, 1)" class="mini-btn" style="background:var(--gold-color); color:#000;">+</button>
+          </div>
+        </div>`;
+    }).join("");
+
+    setTxt("petSugModalTotal", total.toLocaleString() + " ل.س");
+  }
+
+  window.adjustSuggestionQty = function (idx, delta) {
+    const it = modalItemsState[idx];
+    if (!it) return;
+    const maxAvail = getBranchAvail(it.id);
+    it.qty = Math.max(0, Math.min(Math.max(0, maxAvail), it.qty + delta));
+    haptic(10);
+    renderZeroDefaultList();
+  };
+
+  window.closePetSuggestionsModal = function (wasConfirmed = false) {
+    if (!wasConfirmed && Array.isArray(modalItemsState) && modalItemsState.length) {
+      const ignoredIds = modalItemsState.filter(x => (x.qty || 0) === 0).map(x => x.id);
+      if (ignoredIds.length && window.MoaathAIBrain && typeof window.MoaathAIBrain.recordIgnoredSuggestions === "function") {
+        window.MoaathAIBrain.recordIgnoredSuggestions(ignoredIds);
+      }
+    }
+    const m = $("petSuggestionsFloatingModal");
+    if (m) m.style.display = "none";
+  };
+
+  window.confirmFloatingSuggestions = function () {
+    const chosen = modalItemsState.filter(x => x.qty > 0);
+    const intentKey = window._currentIntentKey || "general";
+    if (!chosen.length) {
+      showToast("⚠️ حدد كمية 1 على الأقل بالضغط على (+)", true);
+      return;
+    }
+
+    let addedTotal = 0;
+    const addedIds = [];
+    chosen.forEach(it => {
+      const avail = getBranchAvail(it.id);
+      const cur = cart[it.id] ? (parseInt(cart[it.id].qty) || 0) : 0;
+      const toAdd = Math.min(it.qty, Math.max(0, avail - cur));
+      if (toAdd > 0) {
+        changeQty(it.id, toAdd);
+        addedTotal += toAdd;
+        addedIds.push(it.id);
+        if (!sessionCtx.lastAddedIds.includes(it.id)) sessionCtx.lastAddedIds.push(it.id);
+      }
+    });
+
+    if (addedIds.length) {
+      recordPracticeLearning(intentKey, addedIds, 2);
+      if (window.MoaathAIBrain) {
+        if (typeof window.MoaathAIBrain.recordCustomerChoice === "function") {
+          chosen.forEach(it => {
+            const baseId = String(it.id || "").replace(/_PKG$/, "");
+            const cat = products?.[baseId]?.category || specialOffers?.[it.id]?.category || "";
+            window.MoaathAIBrain.recordCustomerChoice(it.id, cat, it.qty, sessionCtx.lastQuery || "");
+          });
+        }
+        if (typeof window.MoaathAIBrain.recordBasketCoOccurrence === "function") {
+          const allBasketIds = Array.from(new Set([...Object.keys(cart || {}), ...addedIds]));
+          window.MoaathAIBrain.recordBasketCoOccurrence(allBasketIds);
+        }
+        if (typeof window.MoaathAIBrain.recordIgnoredSuggestions === "function") {
+          const unchosenIds = modalItemsState.filter(x => (x.qty || 0) === 0).map(x => x.id);
+          if (unchosenIds.length) window.MoaathAIBrain.recordIgnoredSuggestions(unchosenIds);
+        }
+      }
+    }
+    window.closePetSuggestionsModal(true);
+
+    if (addedTotal > 0) {
+      haptic([15, 35, 15]);
+      const prefs = getPrefs();
+      const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
+      const countLabel = addedTotal === 1 ? "صنف واحد" : (addedTotal === 2 ? "صنفين" : `${addedTotal} أصناف`);
+      const msg = composeInfinitePhrase("added", persona, { itemLabel: countLabel });
+      setOrbEmotion("happy", msg, true);
+      setTxt("aiShoppingStatusText", `✅ ${msg}`);
+      showToast(`✅ ${msg}`);
+    }
+  };
+
+  function matchCategoriesAndProducts(normText) {
+    if (window.MoaathAIBrain && typeof window.MoaathAIBrain.smartSearch === "function") {
+      const activeCartIds = Object.keys(cart || {}).map(k => cart[k]?.origId || String(k).replace(/_PKG$/, ""));
+      return window.MoaathAIBrain.smartSearch(
+        sessionCtx.lastQuery || normText,
+        products || {},
+        categories || [],
+        getBranchAvail,
+        getUnitSYP,
+        activeCartIds
+      );
+    }
+
+    const storeCats = (Array.isArray(categories) ? categories : []).filter(c => c && c !== "الكل");
+    const budgetMatch = normText.match(/(\d{2,7})/);
+    const maxBudget = budgetMatch ? parseInt(budgetMatch[1], 10) : null;
+
+    const words = normText
+      .replace(/\b(تجهيز|فاتوره|طلب|اريد|بدي|ابغى|ابي|مواد|اغراض|وصفه|وصفة|حلى|حلويات|طبخ|بـ|ب|\d+)\b/g, " ")
+      .split(/\s+/)
+      .filter(w => w.length >= 2);
+
+    const matchedCategories = storeCats.filter(catName => {
+      const cNorm = cleanArabicNorm(catName);
+      return words.some(w => cNorm.includes(w) || w.includes(cNorm));
+    });
+
+    const learned = getLearnedMap();
+    const availableResults = [];
+    let outOfStockCategory = null;
+
+    Object.keys(products || {}).forEach(pid => {
+      const p = products[pid];
+      if (!p) return;
+      const st = getBranchAvail(pid);
+      const price = getUnitSYP(pid);
+      const pNameNorm = cleanArabicNorm(p.name || "");
+      const pCat = p.category || "";
+      const inCat = matchedCategories.includes(pCat);
+      const hitName = words.some(w => pNameNorm.includes(w));
+
+      if (inCat || hitName) {
+        if (st <= 0) {
+          outOfStockCategory = outOfStockCategory || pCat;
+          return;
+        }
+        if (maxBudget && price > maxBudget) return;
+        availableResults.push({
+          id: pid,
+          name: p.name,
+          reason: inCat ? `قسم: ${pCat}` : "متوفر في الفرع",
+          score: (hitName ? 20 : 0) + (inCat ? 10 : 0) + (learned[pCat]?.[pid] || 0)
+        });
+      }
+    });
+
+    if (!availableResults.length && outOfStockCategory) {
+      Object.keys(products || {}).forEach(pid => {
+        const p = products[pid];
+        if (!p || p.category !== outOfStockCategory || getBranchAvail(pid) <= 0) return;
+        availableResults.push({
+          id: pid,
+          name: p.name,
+          reason: `بديل متوفر في قسم (${outOfStockCategory})`,
+          score: 5
+        });
+      });
+    }
+
+    availableResults.sort((a, b) => b.score - a.score);
+    return { matchedCategories, items: availableResults.slice(0, 8), usedAlternative: !!outOfStockCategory };
+  }
+
+  window.runAIShoppingAssistant = async function (overridePrompt = null) {
+    const promptTxt = String(overridePrompt ?? ($("aiShoppingPromptInput")?.value || "")).trim();
+    sessionCtx.lastQuery = promptTxt;
+    const prefs = getPrefs();
+    const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
+
+    if (!promptTxt) {
+      setOrbEmotion("idle", `${persona.name}: اضغط مطوّلاً وتحدّث بطلبك.`, true);
+      return;
+    }
+
+    // إلغاء تدخل الذكاء الاصطناعي في الدفع أو شام كاش تماماً
+    if (guardAgainstPaymentAI(promptTxt)) {
+      const guardMsg = "التحقق من الدفع وشام كاش ملغى من الذكاء الاصطناعي ويتم يدوياً بالكامل.";
+      setOrbEmotion("idle", guardMsg, false);
+      setTxt("aiShoppingStatusText", `🔒 ${guardMsg}`);
+      return;
+    }
+
+    const norm = cleanArabicNorm(promptTxt);
+
+    if (handleMultiTurnDialog(norm, persona)) return;
+
+    const chatReply = matchCasualChat(norm, persona);
+    if (chatReply) {
+      setOrbEmotion("greet", chatReply, true);
+      setTxt("aiShoppingStatusText", `🧚 ${chatReply}`);
+      return;
+    }
+
+    const followUpReply = handleSessionFollowUp(norm);
+    if (followUpReply) {
+      setOrbEmotion("happy", followUpReply, true);
+      setTxt("aiShoppingStatusText", `🔄 ${followUpReply}`);
+      return;
+    }
+
+    const liveReply = answerLiveStoreQueries(norm);
+    if (liveReply) {
+      setOrbEmotion("greet", liveReply, true);
+      setTxt("aiShoppingStatusText", `⏰ ${liveReply}`);
+      return;
+    }
+
+    if (handleCartComplementRequest(norm, persona)) return;
+    if (handleCheapestAvailableRequest(norm, persona)) return;
+    if (handlePersonalHabitsRequest(norm)) return;
+    if (handleRepeatPreviousOrder(norm, persona)) return;
+
+    const peopleCount = parsePeopleCount(norm);
+    const suggestedPerItem = peopleCount && peopleCount >= 5 ? Math.min(4, Math.ceil(peopleCount / 3)) : 1;
+
+    // دعم طلبات الرياضة والصحة (خاصة مع البطل الرياضي أو أي شخصية)
+    if (/(رياضه|رياضة|صحي|صحه|صحة|دايت|بروتين|تمرين|لياقه|لياقة|طاقة)/.test(norm)) {
+      const healthyKw = /(عدس|مجدره|مجدرة|شوربه|شوربة|حليب|لبن|بيض|رز|ارز|برغل|شوفان|عسل|ماء|عصير|خضار|فواكه|تونه|تونة)/;
+      const healthyItems = Object.keys(products || {})
+        .filter(pid => {
+          const p = products[pid];
+          if (!p || getBranchAvail(pid) <= 0) return false;
+          const txt = cleanArabicNorm((p.name || "") + " " + (p.category || ""));
+          return healthyKw.test(txt);
+        })
+        .slice(0, 8)
+        .map(pid => ({
+          id: pid,
+          name: products[pid].name,
+          suggestedQty: suggestedPerItem,
+          reason: "خيار صحي ومناسب للرياضة والنشاط"
+        }));
+      if (healthyItems.length > 0) {
+        openZeroDefaultModal("🏋️ خيارات صحية ومغذية للرياضة والنشاط:", healthyItems, "sports_health");
+        const msg = persona.id === "athlete"
+          ? "يا بطل، جهزتلك خيارات صحية ومغذية تعطي طاقة، حدد الكمية."
+          : "جهزتلك خيارات صحية مناسبة للرياضة والنشاط، حدد الكمية.";
+        setOrbEmotion("choice", msg, true);
+        setTxt("aiShoppingStatusText", `🏋️ ${msg}`);
+        return;
+      }
+    }
+
+    // دعم طلبات وصفات الطعام (الطباخ الماهر) أو الحلويات (صانعة الحلويات)
+    if (/(وصفه|وصفة|اكله|أكلة|طبخه|طبخة|غداء|عشاء)/.test(norm) && !matchRecipeOrSweet(norm)) {
+      const allRecs = getAllMergedRecipes();
+      const wantsSweets = persona.id === "pastry" || /(حلى|حلويات|حلو|كيك|بسبوسه|بسبوسة|مهلبيه|مهلبية)/.test(norm);
+      const filteredRecs = allRecs.filter(r => {
+        const isSweet = r.category === "حلويات";
+        return wantsSweets ? isSweet : (!isSweet && r.category !== "تنظيف");
+      });
+      if (filteredRecs.length > 0) {
+        const sampleTitles = filteredRecs.slice(0, 5).map(r => r.title).join("، ");
+        const msg = wantsSweets
+          ? `من حلويات الإدارة عندنا: ${sampleTitles}. اذكر اسم الحلى وأجهز المتوفر!`
+          : `من وصفات الطعام عندنا: ${sampleTitles}. اذكر اسم الطبخة وأجهز مكوناتها!`;
+        setOrbEmotion("choice", msg, true);
+        setTxt("aiShoppingStatusText", `🍲 ${msg}`);
+        return;
+      }
+    }
+
+    const recipeRes = matchRecipeOrSweet(norm);
+    if (recipeRes) {
+      if (recipeRes.availableItems.length > 0) {
+        const enrichedItems = recipeRes.availableItems.map(it => ({
+          ...it,
+          suggestedQty: suggestedPerItem,
+          reason: peopleCount ? `${it.reason} • مقترح لـ ${peopleCount} أشخاص: ${suggestedPerItem}` : it.reason
+        }));
+        const missingNote = recipeRes.missingIngredients.length
+          ? ` | غير متوفر حالياً: ${recipeRes.missingIngredients.slice(0, 4).join("، ")}`
+          : " | جميع المكونات الأساسية متوفرة";
+        const peopleNote = peopleCount ? ` (لـ ${peopleCount} أشخاص)` : "";
+        openZeroDefaultModal(
+          `🍲 ${recipeRes.recipe.title}${peopleNote} — المتوفر في الفرع:`,
+          enrichedItems,
+          `recipe_${recipeRes.recipe.title}`,
+          `الكمية الافتراضية 0 — اضغط (+) أو «تحديد المتوفر»${missingNote}`
+        );
+        const msg = persona.recipeReady(recipeRes.recipe.title);
+        setOrbEmotion("choice", msg, true);
+        setTxt("aiShoppingStatusText", `✅ ${msg}`);
+        return;
+      } else {
+        const noStockMsg = persona.recipeMissing(recipeRes.recipe.title);
+        setOrbEmotion("idle", noStockMsg, true);
+        setTxt("aiShoppingStatusText", `⚠️ ${noStockMsg}`);
+        return;
+      }
+    }
+
+    const { matchedCategories, items, usedAlternative, usedFuzzy, usedSynonym } = matchCategoriesAndProducts(norm);
+    if (items.length > 0) {
+      const title = usedAlternative
+        ? "🔁 الصنف المطلوب نافد — إليك أقرب البدائل المتوفرة:"
+        : matchedCategories.length
+          ? `🛍️ أصناف قسم (${matchedCategories.join("، ")}) — حدد الكمية:`
+          : "🛍️ الأصناف المتوفرة المطابقة — حدد الكمية:";
+      openZeroDefaultModal(title, items, matchedCategories[0] || `q_${norm.slice(0, 18)}`);
+      const msg = (window.MoaathAIPersonas && typeof window.MoaathAIPersonas.getSearchReaction === "function")
+        ? window.MoaathAIPersonas.getSearchReaction(persona.id, { matchedCategories, usedAlternative, usedFuzzy, usedSynonym })
+        : (usedAlternative ? "الصنف غير متوفر حالياً، عرضت لك أقرب البدائل المتوفرة." : persona.itemsReady(matchedCategories.join(" و")));
+      setOrbEmotion("choice", msg, true);
+      setTxt("aiShoppingStatusText", `💡 ${msg}`);
+      return;
+    }
+
+    // خيار أخير: استدعاء الذكاء الاصطناعي التفاعلي (companion_shop) مع حظر تام لأي أمر دفع
+    const workerUrl = resolveWorkerEndpoint();
+    if (workerUrl && navigator.onLine !== false) {
+      setOrbEmotion("thinking", "جاري البحث الذكي في أصناف المتجر...", false);
+      try {
+        const catalogSummary = Object.keys(products || {})
+          .filter(pid => getBranchAvail(pid) > 0)
+          .slice(0, 85)
+          .map(pid => ({ id: pid, name: products[pid].name, cat: products[pid].category || "", price: getUnitSYP(pid) }));
+        const currentCartSummary = Object.keys(cart || {}).map(k => ({ id: k, name: cart[k]?.name || "", qty: cart[k]?.qty || 0 }));
+        const aiRes = await fetch(workerUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mode: "companion_shop",
+            prompt: promptTxt,
+            catalog: catalogSummary,
+            currentCart: currentCartSummary,
+            storeMeta: { persona: persona.name, dialectMode: persona.dialectMode || "shami_friendly", branch: typeof activeBranchId !== "undefined" ? activeBranchId : "main" }
+          })
+        });
+        const aiJson = await aiRes.json();
+        const aiData = aiJson?.data || {};
+        const aiItems = [];
+        (Array.isArray(aiData.items) ? aiData.items : []).forEach(it => {
+          if (it?.id && products?.[it.id] && getBranchAvail(it.id) > 0) {
+            aiItems.push({ id: it.id, name: products[it.id].name, reason: it.reason || "اقتراح ذكي" });
+          }
+        });
+        (Array.isArray(aiData.choices) ? aiData.choices : []).forEach(ch => {
+          if (ch?.id && products?.[ch.id] && getBranchAvail(ch.id) > 0 && !aiItems.some(x => x.id === ch.id)) {
+            aiItems.push({ id: ch.id, name: products[ch.id].name, reason: ch.reason || "خيار مقترح" });
+          }
+        });
+
+        if (aiItems.length > 0) {
+          const replyTxt = String(aiData.reply || persona.itemsReady("")).trim();
+          openZeroDefaultModal("✨ اقتراحات المساعد الذكي — حدد الكمية:", aiItems, `ai_${norm.slice(0, 16)}`);
+          setOrbEmotion("choice", replyTxt, true);
+          setTxt("aiShoppingStatusText", `✨ ${replyTxt}`);
+          return;
+        }
+        if (aiData.reply) {
+          setOrbEmotion("greet", aiData.reply, true);
+          setTxt("aiShoppingStatusText", `🧚 ${aiData.reply}`);
+          return;
+        }
+      } catch (_) {}
+    }
+
+    const nfLine = composeInfinitePhrase("notFound", persona);
+    setOrbEmotion("idle", nfLine, true);
+    setTxt("aiShoppingStatusText", `⚠️ ${nfLine}`);
+  };
+
+  function beginLongPressVoice() {
+    unlockEmbeddedVoice();
+    stopEmbeddedVoice();
+    pauseRoaming(12000);
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      showBubble("المتصفح لا يدعم الميكروفون، اكتب طلبك أو وصفتك في الخانة.", 3600);
+      return;
+    }
+    if (activeRecognizer) {
+      try { activeRecognizer.stop(); } catch (_) {}
+      activeRecognizer = null;
+    }
+
+    isHoldingSpeak = true;
+    haptic(25);
+    updateVoiceSourceBadge("🎙️ يستمع...", "#00e676", "الميكروفون نشط الآن");
+    const directMic = $("petDirectMicBtn");
+    if (directMic) directMic.classList.add("mic-listening-pulse");
+    setOrbEmotion("listening", "تحدّث الآن... أسمعك بوضوح", false);
+
+    const rec = new SR();
+    activeRecognizer = rec;
+    rec.lang = "ar-SY";
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+
+    rec.onresult = ev => {
+      const heard = String(ev?.results?.[0]?.[0]?.transcript || "").trim();
+      if (!heard) {
+        setOrbEmotion("idle", "لم أسمع صوتاً واضحاً، جرّب النقر المطوّل مرة أخرى.", true);
+        return;
+      }
+      setVal("aiShoppingPromptInput", heard);
+      window.runAIShoppingAssistant(heard);
+    };
+
+    rec.onerror = () => setOrbEmotion("idle", "تعذر التقاط الصوت، تأكد من إذن الميكروفون.", true);
+    rec.onend = () => {
+      isHoldingSpeak = false;
+      activeRecognizer = null;
+      const r = $("petListenRing");
+      if (r) r.style.display = "none";
+      const directMic = $("petDirectMicBtn");
+      if (directMic) directMic.classList.remove("mic-listening-pulse");
+      updateVoiceSourceBadge("🟢 جاهز", "#00e676", "جاهز");
+    };
+
+    rec.start();
+  }
+
+  function endLongPressVoice() {
+    if (!isHoldingSpeak) return;
+    isHoldingSpeak = false;
+    if (activeRecognizer) {
+      setTimeout(() => { try { activeRecognizer && activeRecognizer.stop(); } catch (_) {} }, 350);
+    }
+  }
+
+  window.startVoiceShoppingInput = function () {
+    beginLongPressVoice();
+    setTimeout(endLongPressVoice, 4500);
+  };
+
+  function bindOrbInteractions(orb, root) {
+    if (!orb || !root || orb.dataset.orbBound) return;
+    orb.dataset.orbBound = "1";
+
+    ensureGroundShadow(root);
+
+    let down = false, dragging = false, holdFired = false, holdTimer = null;
+    let sx = 0, sy = 0, r0 = 14, b0 = 88;
+
+    const onDown = e => {
+      unlockEmbeddedVoice();
+      pauseRoaming(9500);
+      orb.classList.remove("is-roaming");
+      const pt = e.touches ? e.touches[0] : e;
+      down = true; dragging = false; holdFired = false;
+      sx = pt.clientX; sy = pt.clientY;
+      r0 = parseInt(root.style.right || "14", 10);
+      b0 = parseInt(root.style.bottom || "88", 10);
+      orb.style.transform = "scale(1.08)";
+
+      clearTimeout(holdTimer);
+      holdTimer = setTimeout(() => {
+        if (down && !dragging) {
+          holdFired = true;
+          beginLongPressVoice();
+        }
+      }, 550);
+    };
+
+    const onMove = e => {
+      if (!down) return;
+      const pt = e.touches ? e.touches[0] : e;
+      const dx = pt.clientX - sx, dy = pt.clientY - sy;
+
+      if (!dragging && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+        dragging = true;
+        clearTimeout(holdTimer);
+        if (holdFired) endLongPressVoice();
+      }
+
+      if (dragging) {
+        const nr = Math.max(8, Math.min(Math.max(8, window.innerWidth - 76), r0 - dx));
+        const nb = Math.max(84, Math.min(Math.max(84, window.innerHeight - 98), b0 - dy));
+        root.style.right = nr + "px";
+        root.style.bottom = nb + "px";
+        orb.style.transform = `scale(1.06) rotateX(${Math.max(-14, Math.min(14, -dy * 0.25))}deg) rotateY(${Math.max(-14, Math.min(14, dx * 0.25))}deg)`;
+      }
+    };
+
+    const onUp = () => {
+      if (!down) return;
+      down = false;
+      clearTimeout(holdTimer);
+      orb.style.transform = "";
+      orb.classList.add("is-roaming");
+
+      if (holdFired) {
+        endLongPressVoice();
+        return;
+      }
+
+      if (dragging) {
+        dragging = false;
+        const curR = parseInt(root.style.right || "14", 10);
+        const curB = parseInt(root.style.bottom || "88", 10);
+        const snapR = (window.innerWidth - curR - 30) >= window.innerWidth / 2 ? 12 : Math.max(12, window.innerWidth - 76);
+        root.style.transition = "right 0.25s ease, bottom 0.25s ease";
+        root.style.right = snapR + "px";
+        setTimeout(() => {
+          root.style.transition = "right 1.15s cubic-bezier(0.22, 1, 0.36, 1), bottom 1.15s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease";
+        }, 260);
+        savePos(snapR, curB);
+        haptic(12);
+        return;
+      }
+
+      const prefs = getPrefs();
+      const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
+      const phrase = sessionCtx.lastSpokenText || persona.greet;
+      showBubble(`🧚 ${phrase}`, 4000);
+      speakOutLoud(phrase, true);
+    };
+
+    orb.addEventListener("contextmenu", e => e.preventDefault());
+    orb.addEventListener("touchstart", onDown, { passive: true });
+    window.addEventListener("touchmove", onMove, { passive: true });
+    window.addEventListener("touchend", onUp);
+    orb.addEventListener("mousedown", onDown);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+
+    window.addEventListener("scroll", () => {
+      if (isHoldingSpeak) return;
+      pauseRoaming(4500);
+      root.style.opacity = "0.48";
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => { root.style.opacity = "1"; }, 550);
+    }, { passive: true });
+  }
+
+  window.toggleRecipeProductTag = function (pid) {
+    if (!pid) return;
+    if (selectedRecipeProductIds.has(pid)) selectedRecipeProductIds.delete(pid);
+    else selectedRecipeProductIds.add(pid);
+    renderRecipeProductPicker();
+  };
+
+  function renderRecipeProductPicker() {
+    const box = $("admRecipeProductsPicker");
+    if (!box) return;
+    const q = cleanArabicNorm($("admRecipeProdSearch")?.value || "");
+    const keys = Object.keys(products || {}).filter(pid => {
+      const p = products[pid];
+      if (!p) return false;
+      if (!q) return true;
+      return cleanArabicNorm(p.name || "").includes(q);
+    }).slice(0, 30);
+
+    box.innerHTML = keys.map(pid => {
+      const p = products[pid];
+      const active = selectedRecipeProductIds.has(pid);
+      return `<button type="button" onclick="toggleRecipeProductTag('${pid}')" style="padding:4px 8px; border-radius:12px; font-size:10px; cursor:pointer; border:1px solid ${active ? "#00e676" : "var(--border-color)"}; background:${active ? "rgba(0,230,118,0.2)" : "var(--bg-color)"}; color:${active ? "#00e676" : "var(--text-color)"}; font-weight:${active ? "bold" : "normal"};">${active ? "✓ " : "+ "}${esc(p.name)}</button>`;
+    }).join("");
+  }
+
+  const LOCAL_RECIPES_KEY = "moaath_store_local_recipes";
+
+  function loadLocalRecipesFallback() {
+    try {
+      const d = JSON.parse(localStorage.getItem(LOCAL_RECIPES_KEY) || "{}");
+      return d && typeof d === "object" ? d : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function saveLocalRecipeFallback(recipeObj) {
+    const cur = loadLocalRecipesFallback();
+    cur[recipeObj.id] = recipeObj;
+    localStorage.setItem(LOCAL_RECIPES_KEY, JSON.stringify(cur));
+    customRecipesDB = { ...loadLocalRecipesFallback(), ...(customRecipesDB || {}), [recipeObj.id]: recipeObj };
+  }
+
+  function deleteLocalRecipeFallback(rId) {
+    const cur = loadLocalRecipesFallback();
+    if (cur[rId]) {
+      delete cur[rId];
+      localStorage.setItem(LOCAL_RECIPES_KEY, JSON.stringify(cur));
+    }
+    if (customRecipesDB && customRecipesDB[rId]) {
+      delete customRecipesDB[rId];
+    }
+  }
+
+  window.saveAdminRecipe = function () {
+    const editId = ($("admRecipeEditId")?.value || "").trim();
+    const title = ($("admRecipeTitle")?.value || "").trim();
+    const category = $("admRecipeCategory")?.value || "طبخ";
+    const kwRaw = ($("admRecipeKeywords")?.value || "").trim();
+    const ingRaw = ($("admRecipeIngredients")?.value || "").trim();
+
+    if (!title) return alert("⚠️ يرجى إدخال اسم الوصفة أولاً.");
+    const keywords = kwRaw ? kwRaw.split(/[،,]/).map(s => s.trim()).filter(Boolean) : [title];
+    if (!keywords.includes(title)) keywords.unshift(title);
+    const ingredients = ingRaw ? ingRaw.split(/[،,]/).map(s => s.trim()).filter(Boolean) : [];
+    const productIds = Array.from(selectedRecipeProductIds);
+
+    if (!ingredients.length && !productIds.length) {
+      return alert("⚠️ يرجى تحديد احتياجات الوصفة من منتجات المتجر أو كتابة أسماء المكونات.");
+    }
+
+    const rId = editId || ("REC_" + Date.now());
+    const payload = {
+      id: rId,
+      title,
+      category,
+      keywords,
+      ingredients,
+      productIds,
+      updatedAt: new Date().toISOString()
+    };
+
+    const finishLocalSave = (noteToast) => {
+      saveLocalRecipeFallback(payload);
+      resetAdminRecipeForm();
+      if (typeof window.renderAdminRecipesList === "function") window.renderAdminRecipesList();
+      showToast(noteToast);
+    };
+
+    if (typeof db === "undefined" || !db || typeof db.ref !== "function") {
+      finishLocalSave(`✅ تم حفظ وصفة (${title}) محلياً على الجهاز!`);
+      return;
+    }
+
+    db.ref(`recipes/${rId}`).set(payload).then(() => {
+      saveLocalRecipeFallback(payload);
+      resetAdminRecipeForm();
+      if (typeof window.renderAdminRecipesList === "function") window.renderAdminRecipesList();
+      showToast(`✅ تم حفظ وصفة (${title}) بنجاح!`);
+    }).catch(err => {
+      const msg = String(err?.message || err || "");
+      if (/permission_denied/i.test(msg)) {
+        finishLocalSave(`✅ تم حفظ وصفة (${title}) محلياً (صلاحيات Firebase على المسار recipes مغلقة).`);
+      } else {
+        finishLocalSave(`✅ تم حفظ وصفة (${title}) محلياً بعد تعذر الحفظ السحابي.`);
+      }
+    });
+  };
+
+  window.editAdminRecipe = function (rId) {
+    const r = customRecipesDB?.[rId];
+    if (!r) return;
+    setVal("admRecipeEditId", rId);
+    setVal("admRecipeTitle", r.title || "");
+    setVal("admRecipeCategory", r.category || "طبخ");
+    setVal("admRecipeKeywords", (r.keywords || []).join("، "));
+    setVal("admRecipeIngredients", (r.ingredients || []).join("، "));
+    selectedRecipeProductIds = new Set(Array.isArray(r.productIds) ? r.productIds : []);
+    renderRecipeProductPicker();
+    showToast(`✏️ تم جلب وصفة (${r.title}) للتعديل`);
+  };
+
+  window.deleteAdminRecipe = function (rId) {
+    const r = customRecipesDB?.[rId];
+    if (!r || !confirm(`هل تريد حذف وصفة (${r.title}) نهائياً؟`)) return;
+    deleteLocalRecipeFallback(rId);
+    if (typeof window.renderAdminRecipesList === "function") window.renderAdminRecipesList();
+    if (typeof db !== "undefined" && db && typeof db.ref === "function") {
+      db.ref(`recipes/${rId}`).set(null).then(() => showToast("🗑️ تم حذف الوصفة")).catch(() => showToast("🗑️ تم حذف الوصفة محلياً"));
+    } else {
+      showToast("🗑️ تم حذف الوصفة محلياً");
+    }
+  };
+
+  window.resetAdminRecipeForm = function () {
+    ["admRecipeEditId", "admRecipeTitle", "admRecipeKeywords", "admRecipeIngredients", "admRecipeProdSearch"].forEach(k => setVal(k, ""));
+    setVal("admRecipeCategory", "طبخ");
+    selectedRecipeProductIds = new Set();
+    renderRecipeProductPicker();
+  };
+
+  window.renderAdminRecipesList = function () {
+    const box = $("admRecipesSavedList");
+    if (!box) return;
+    const filterQ = cleanArabicNorm($("admRecipeListFilter")?.value || "");
+    const list = Object.values(customRecipesDB || {}).filter(r => {
+      if (!r || !r.title) return false;
+      if (!filterQ) return true;
+      return cleanArabicNorm(r.title + " " + (r.category || "")).includes(filterQ);
+    });
+
+    if (!list.length) {
+      box.innerHTML = `<div style="font-size:11px; color:var(--gray-text); text-align:center; padding:8px;">لا توجد وصفات مطابقة (الوصفات الافتراضية تعمل تلقائياً).</div>`;
+      return;
+    }
+    box.innerHTML = list.map(r => {
+      const linkedNames = (r.productIds || []).map(pid => products?.[pid]?.name).filter(Boolean);
+      const totalNeedsCount = linkedNames.length + (r.ingredients || []).length;
+      const allNeeds = [...linkedNames, ...(r.ingredients || [])].join("، ");
+      return `<div class="adm-card" style="border-color:var(--gold-color);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <b style="color:var(--gold-color);">🍲 ${esc(r.title)} <small style="color:#00e676;">[${esc(r.category || "طبخ")} • ${totalNeedsCount} مكونات]</small></b>
+          <div style="display:flex; gap:4px;">
+            <button type="button" onclick="editAdminRecipe('${r.id}')" class="btn" style="width:auto; padding:3px 8px; font-size:10px;">✏️</button>
+            <button type="button" onclick="deleteAdminRecipe('${r.id}')" class="btn btn-danger" style="width:auto; padding:3px 8px; font-size:10px;">🗑️</button>
+          </div>
+        </div>
+        <div style="font-size:11px; color:var(--text-color);">الاحتياجات: ${esc(allNeeds || "-")}</div>
+      </div>`;
+    }).join("");
+  };
+
+  window.showVoiceDiagnosticOnPhone = async function () {
+    let cachedCount = 0;
+    try {
+      if (typeof caches !== "undefined") {
+        const cache = await caches.open(PERSISTENT_TTS_CACHE_NAME);
+        const keys = await cache.keys();
+        cachedCount = keys.length;
+      }
+    } catch (_) {}
+
+    const wUrl = resolveWorkerEndpoint() || "غير مضبوط";
+    const srcNow = sessionCtx.lastTtsSource || "لم يتم النطق بعد";
+    const errNow = sessionCtx.lastGeminiError || "لا يوجد خطأ مسجل";
+    const netNow = navigator.onLine !== false ? "متصل" : "غير متصل";
+
+    let box = document.getElementById("moaathVoiceDiagModal");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "moaathVoiceDiagModal";
+      box.style.cssText = "position:fixed; inset:0; z-index:20000; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; padding:14px;";
+      document.body.appendChild(box);
+    }
+
+    const escTxt = (s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    box.innerHTML = `
+      <div style="background:#111827; color:#f9fafb; border:1.5px solid #d4af37; border-radius:12px; max-width:380px; width:100%; padding:14px; font-size:12px; line-height:1.7; text-align:right; box-shadow:0 12px 30px rgba(0,0,0,0.6);">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #374151; padding-bottom:8px; margin-bottom:10px;">
+          <b style="color:#fbbf24; font-size:13px;">📊 تشخيص الصوت البشري</b>
+          <button type="button" onclick="document.getElementById('moaathVoiceDiagModal').style.display='none'" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:2px 9px; font-size:12px; cursor:pointer;">✕</button>
+        </div>
+        <div>• <b>المصدر الحالي:</b> ${escTxt(srcNow)}</div>
+        <div>• <b>سبب فشل Gemini TTS:</b> <span style="color:#38bdf8;">${escTxt(errNow)}</span></div>
+        <div>• <b>المقاطع البشرية المحفوظة:</b> ${cachedCount}</div>
+        <div>• <b>رابط Worker:</b> <span style="word-break:break-all; color:#a7f3d0;">${escTxt(wUrl)}</span></div>
+        <div>• <b>الاتصال:</b> ${escTxt(netNow)}</div>
+        <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <button type="button" onclick="window.resetVoiceCooldownNow()" style="background:#f59e0b; color:#000; font-weight:bold; border:none; border-radius:8px; padding:6px 10px; font-size:11px; cursor:pointer;">إلغاء التبريد</button>
+          <button type="button" onclick="document.getElementById('moaathVoiceDiagModal').style.display='none'" style="background:#10b981; color:#000; font-weight:bold; border:none; border-radius:8px; padding:6px 14px; font-size:12px; cursor:pointer;">حسناً</button>
+        </div>
+      </div>
+    `;
+    box.style.display = "flex";
+    try { if (typeof showToast === "function") showToast(`المصدر: ${srcNow} | الخطأ: ${errNow}`); } catch (_) {}
+  };
+
+  window.runAssistantQACheck = function () {
+    const report = {
+      version: "v74",
+      shamCashPaymentAI: "COMPLETELY_DISABLED",
+      resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
+      lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
+      lastGeminiError: sessionCtx.lastGeminiError || "none",
+      fairiesCount: Object.keys(PERSONAS).length,
+      productsLoaded: Object.keys(products || {}).length,
+      categoriesLoaded: Array.isArray(categories) ? categories.length : 0,
+      recipesAvailable: getAllMergedRecipes().length,
+      webAudioSupported: !!(window.AudioContext || window.webkitAudioContext),
+      speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
+      online: navigator.onLine !== false
+    };
+    console.info("[QA Assistant Diagnostic v70]", report);
+    return report;
+  };
+
+  function ensureFuturisticStylesInjected() {
+    if ($("futuristicUiMasterStyle")) return;
+    const st = document.createElement("style");
+    st.id = "futuristicUiMasterStyle";
+    st.textContent = `
+
+      html, body {
+        overflow-y: visible !important;
+        height: auto !important;
+      }
+      body {
+        overflow-x: clip !important;
+        max-width: 100% !important;
+      }
+
+      /* =====================================================================
+         [تحسينات واجهة المتجر الكاملة + المساعد الذكي المستقبلي القابل للطي]
+         ===================================================================== */
+      :root {
+        --moaath-radius-lg: 16px;
+        --moaath-radius-md: 12px;
+        --moaath-radius-pill: 999px;
+      }
+      body {
+        letter-spacing: 0;
+        -webkit-font-smoothing: antialiased;
+      }
+      /* تناسق البطاقات والأقسام في واجهة المتجر */
+      .product-card, .offer-card, .adm-card, .adm-sec {
+        border-radius: var(--moaath-radius-lg) !important;
+        transition: transform 0.2s ease, box-shadow 0.22s ease, border-color 0.22s ease !important;
+      }
+      .product-card:hover, .offer-card:hover {
+        border-color: rgba(212, 175, 55, 0.65) !important;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28) !important;
+      }
+      /* تهذيب شريط التصنيفات الأفقي */
+      .categories {
+        gap: 6px !important;
+        padding: 6px 2px !important;
+        scrollbar-width: none !important;
+      }
+      .categories::-webkit-scrollbar,
+      .fut-quick-chips::-webkit-scrollbar {
+        display: none !important;
+      }
+      .cat-btn {
+        border-radius: var(--moaath-radius-pill) !important;
+        padding: 6px 13px !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        transition: all 0.18s ease !important;
+      }
+      /* توحيد أزرار المتجر الرئيسية */
+      .btn {
+        border-radius: var(--moaath-radius-md) !important;
+        font-weight: 700 !important;
+        transition: transform 0.16s ease, filter 0.18s ease !important;
+      }
+      .btn:active {
+        transform: scale(0.97) !important;
+      }
+      .form-control {
+        border-radius: var(--moaath-radius-md) !important;
+      }
+      /* حاوية المساعد والبحث المستقبلية */
+      .fut-ai-dock {
+        position: relative !important;
+        border-radius: 18px !important;
+        border: 1px solid rgba(56, 189, 248, 0.35) !important;
+        background: linear-gradient(155deg, rgba(15, 23, 42, 0.92), rgba(9, 13, 24, 0.97)) !important;
+        backdrop-filter: blur(14px) !important;
+        -webkit-backdrop-filter: blur(14px) !important;
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+        padding: 8px 10px !important;
+        margin: 8px 0 10px 0 !important;
+        transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1) !important;
+      }
+      body.light-mode .fut-ai-dock {
+        background: linear-gradient(155deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.98)) !important;
+        border: 1px solid rgba(2, 132, 199, 0.25) !important;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.07) !important;
+      }
+      .fut-ai-dock.is-dock-collapsed {
+        padding: 6px 9px !important;
+        border-radius: 999px !important;
+      }
+      .fut-ai-dock, #aiSmartAssistantBox {
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+      }
+      .fut-ai-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+        max-width: 100% !important;
+      }
+      .fut-ai-pill-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        background: linear-gradient(90deg, rgba(56, 189, 248, 0.16), rgba(212, 175, 55, 0.18)) !important;
+        color: var(--text-color) !important;
+        border: 1px solid rgba(212, 175, 55, 0.48) !important;
+        border-radius: 999px !important;
+        padding: 5px 11px !important;
+        font-size: 11px !important;
+        font-weight: 800 !important;
+        cursor: pointer !important;
+        white-space: nowrap !important;
+      }
+      .fut-dot {
+        width: 7px !important;
+        height: 7px !important;
+        border-radius: 50% !important;
+        background: #00e676 !important;
+        box-shadow: 0 0 8px #00e676 !important;
+        flex-shrink: 0 !important;
+      }
+      .fut-chev {
+        font-size: 10px !important;
+        color: var(--gold-color) !important;
+      }
+      .fut-ai-header-actions {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        flex-shrink: 0 !important;
+      }
+      .fut-status-badge {
+        font-size: 9px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+        padding: 2px 5px !important;
+        border-radius: 999px !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+      }
+      .fut-icon-btn {
+        width: auto !important;
+        padding: 4px 8px !important;
+        font-size: 10px !important;
+        border-radius: 999px !important;
+        font-weight: 700 !important;
+        line-height: 1.2 !important;
+        cursor: pointer !important;
+        border: 1px solid transparent !important;
+      }
+      .fut-mic-btn {
+        background: rgba(0, 230, 118, 0.15) !important;
+        color: #00e676 !important;
+        border-color: rgba(0, 230, 118, 0.35) !important;
+      }
+      .fut-gold-btn {
+        background: rgba(212, 175, 55, 0.15) !important;
+        color: var(--gold-color) !important;
+        border-color: rgba(212, 175, 55, 0.35) !important;
+      }
+      .fut-blue-btn {
+        background: rgba(56, 189, 248, 0.15) !important;
+        color: #38bdf8 !important;
+        border-color: rgba(56, 189, 248, 0.35) !important;
+      }
+      .fut-show-fairy-btn {
+        display: inline-flex;
+        align-items: center;
+        background: var(--gold-color) !important;
+        color: #000 !important;
+        border: none !important;
+        border-radius: 999px !important;
+        padding: 4px 8px !important;
+        font-size: 10px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+      }
+      .fut-ai-body {
+        max-height: 480px !important;
+        opacity: 1 !important;
+        overflow: hidden !important;
+        margin-top: 8px !important;
+        transition: max-height 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease, margin-top 0.25s ease !important;
+      }
+      .fut-ai-body.is-collapsed {
+        max-height: 0 !important;
+        opacity: 0 !important;
+        margin-top: 0 !important;
+        pointer-events: none !important;
+      }
+      .fut-persona-bar {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 6px !important;
+        margin-bottom: 5px !important;
+        font-size: 10px !important;
+      }
+      .fut-persona-select-wrap {
+        display: flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+      }
+      .fut-select {
+        padding: 4px 8px !important;
+        font-size: 10px !important;
+        border-radius: 10px !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+      }
+      .fut-sub-toggle-btn {
+        background: rgba(56, 189, 248, 0.12) !important;
+        color: #38bdf8 !important;
+        border: 1px solid rgba(56, 189, 248, 0.32) !important;
+        border-radius: 999px !important;
+        padding: 3px 8px !important;
+        font-size: 9px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+        white-space: nowrap !important;
+      }
+      .fut-specialty-note {
+        font-size: 10px !important;
+        color: var(--gray-text) !important;
+        margin-bottom: 6px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+      .fut-quick-chips {
+        display: flex !important;
+        gap: 5px !important;
+        overflow-x: auto !important;
+        padding: 5px 1px 2px 1px !important;
+        margin-top: 5px !important;
+        max-height: 46px !important;
+        opacity: 1 !important;
+        scrollbar-width: none !important;
+        transition: max-height 0.26s ease, opacity 0.2s ease, margin-top 0.22s ease !important;
+      }
+      .fut-quick-chips.is-chips-collapsed {
+        max-height: 0 !important;
+        opacity: 0 !important;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        pointer-events: none !important;
+      }
+      .fut-chip-btn {
+        flex-shrink: 0 !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        color: var(--text-color) !important;
+        border: 1px solid rgba(212, 175, 55, 0.32) !important;
+        border-radius: 999px !important;
+        padding: 4px 10px !important;
+        font-size: 10px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+      }
+      body.light-mode .fut-chip-btn {
+        background: #ffffff !important;
+        border-color: rgba(15, 23, 42, 0.14) !important;
+      }
+      .fut-search-collapsed {
+        display: none !important;
+      }
+
+      /* نافذة اختيار الجنيات المنبثقة الأنيقة */
+      .fairy-picker-trigger {
+        display: flex !important;
+        align-items: center !important;
+        gap: 7px !important;
+        width: 100% !important;
+        background: linear-gradient(135deg, rgba(212, 175, 55, 0.12), rgba(56, 189, 248, 0.08)) !important;
+        border: 1px solid rgba(212, 175, 55, 0.45) !important;
+        border-radius: 999px !important;
+        padding: 4px 10px 4px 10px !important;
+        cursor: pointer !important;
+        font-size: 11px !important;
+        transition: border-color 0.2s ease, transform 0.16s ease !important;
+      }
+      .fairy-picker-trigger:active {
+        transform: scale(0.98) !important;
+      }
+      .fairy-gal-modal {
+        max-width: 450px !important;
+        width: 94% !important;
+        background: linear-gradient(160deg, #141824, #0d1018) !important;
+        border: 1.5px solid rgba(212, 175, 55, 0.65) !important;
+        border-radius: 20px !important;
+        padding: 14px !important;
+        color: #f9fafb !important;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 26px rgba(212, 175, 55, 0.16) !important;
+      }
+      body.light-mode .fairy-gal-modal {
+        background: linear-gradient(160deg, #ffffff, #f8fafc) !important;
+        color: #0f172a !important;
+      }
+      .fairy-gal-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.22) !important;
+        padding-bottom: 9px !important;
+        margin-bottom: 11px !important;
+      }
+      .fairy-gal-title {
+        font-size: 14px !important;
+        font-weight: 800 !important;
+        color: var(--gold-color) !important;
+      }
+      .fairy-gal-sub {
+        font-size: 10px !important;
+        color: var(--gray-text) !important;
+        margin-top: 2px !important;
+      }
+      .fairy-gal-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 9px !important;
+        max-height: 56vh !important;
+        overflow-y: auto !important;
+        padding: 2px !important;
+      }
+      .fairy-gal-card {
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        background: rgba(255, 255, 255, 0.04) !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 16px !important;
+        padding: 11px 8px 10px 8px !important;
+        cursor: pointer !important;
+        color: inherit !important;
+        transition: transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+      }
+      body.light-mode .fairy-gal-card {
+        background: #ffffff !important;
+        border-color: rgba(15, 23, 42, 0.1) !important;
+      }
+      .fairy-gal-card:hover,
+      .fairy-gal-card.is-active {
+        border-color: var(--f-accent, #d4af37) !important;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35), 0 0 14px color-mix(in srgb, var(--f-accent, #d4af37) 35%, transparent) !important;
+        transform: translateY(-2px) !important;
+      }
+      .fairy-gal-active-pill {
+        position: absolute !important;
+        top: 6px !important;
+        left: 6px !important;
+        background: #00e676 !important;
+        color: #000 !important;
+        font-size: 9px !important;
+        font-weight: 800 !important;
+        padding: 2px 6px !important;
+        border-radius: 999px !important;
+      }
+      .fairy-gal-avatar-wrap {
+        width: 58px !important;
+        height: 58px !important;
+        border-radius: 50% !important;
+        padding: 2px !important;
+        border: 2px solid var(--f-accent, #d4af37) !important;
+        box-shadow: 0 0 14px color-mix(in srgb, var(--f-accent, #d4af37) 40%, transparent) !important;
+        margin-bottom: 6px !important;
+        overflow: hidden !important;
+      }
+      .fairy-gal-avatar {
+        width: 100% !important;
+        height: 100% !important;
+        border-radius: 50% !important;
+        object-fit: cover !important;
+        display: block !important;
+      }
+      .fairy-gal-name {
+        font-size: 12px !important;
+        font-weight: 800 !important;
+        color: var(--f-accent, #d4af37) !important;
+        margin-bottom: 2px !important;
+      }
+      .fairy-gal-badge {
+        font-size: 9px !important;
+        color: var(--gray-text) !important;
+        margin-bottom: 4px !important;
+      }
+      .fairy-gal-desc {
+        font-size: 9.5px !important;
+        line-height: 1.4 !important;
+        color: var(--text-color) !important;
+        opacity: 0.88 !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+      }
+
+      /* إخفاء الأزرار الزائدة داخل جسم المساعد لتجنب التكرار مع الشريط العلوي */
+      #futuristicAiBody button[onclick*="startVoiceShoppingInput"] {
+        display: none !important;
+      }
+    `;
+    document.head.appendChild(st);
+  }
+
+  function wrapCustomerSearchBarCollapsible() {
+    // البحث عن حقل البحث الأساسي للمنتجات في الواجهة لجعله قابلاً للطي مع اللوحة المستقبلية
+    const searchInput = document.querySelector("#searchInput, #productSearchInput, #storeSearchInput, input[placeholder*='ابحث عن']");
+    if (!searchInput) return;
+    const searchRow = searchInput.closest(".search-box, .search-bar, .form-group, div") || searchInput.parentElement;
+    if (!searchRow || searchRow.id === "futuristicAiBody" || searchRow.closest("#aiSmartAssistantBox") || searchRow.closest(".modal-overlay")) return;
+    searchRow.dataset.futSearchRow = "1";
+  }
+
+  function polishStoreHeaderLayout() {
+    const header = document.querySelector("header, .store-header, .top-bar");
+    if (!header || header.dataset.moaathHeaderPolished) return;
+    header.dataset.moaathHeaderPolished = "1";
+    header.style.borderRadius = "0 0 18px 18px";
+  }
+
+  function purgeShamCashPaymentAIDOM() {
+    ["shamCashOcrResult", "shamCashOcrBox", "shamCashReceiptBox", "shamCashAiCheckBtn", "shamCashPriceAiBox"].forEach(id => {
+      const el = $(id);
+      if (el) {
+        el.innerHTML = "";
+        el.style.display = "none";
+      }
+    });
+    // إخفاء أي صندوق يحتوي على "فحص مبدئي لإشعار شام كاش" أو حقل رفع إشعار مرتبط بـ analyzeShamCashReceiptOCR داخل سلة المشتريات
+    const cartModal = $("cartModal") || document.body;
+    if (cartModal) {
+      cartModal.querySelectorAll("input[type='file']").forEach(inp => {
+        const onchg = String(inp.getAttribute("onchange") || "");
+        const idStr = String(inp.id || "");
+        if (/analyzeShamCash|shamCash/i.test(onchg) || /shamCash|ocr/i.test(idStr)) {
+          const box = inp.closest("div[style*='dashed'], .form-group, div") || inp.parentElement;
+          if (box && box.id !== "cartModal") {
+            box.style.display = "none";
+          }
+        }
+      });
+      cartModal.querySelectorAll("div, section, label").forEach(el => {
+        if (el.children.length <= 4 && /فحص\s*مبدئي\s*لإشعار\s*شام\s*كاش/.test(el.textContent || "")) {
+          const container = el.closest("div[style*='dashed']") || el;
+          if (container && container.id !== "cartModal") {
+            container.style.display = "none";
+          }
+        }
+      });
+    }
+  }
+
+  function mountAssistant() {
+    ensureFuturisticStylesInjected();
+    polishStoreHeaderLayout();
+    wrapCustomerSearchBarCollapsible();
+    window.analyzeShamCashReceiptOCR();
+    purgeShamCashPaymentAIDOM();
+    const prefs = getPrefs();
+    const p = PERSONAS[prefs.persona] || PERSONAS.buddy;
+    const assistBox = $("aiSmartAssistantBox");
+
+    if (assistBox && !$("futuristicAiHeader")) {
+      assistBox.classList.add("fut-ai-dock");
+
+      const futHeader = document.createElement("div");
+      futHeader.id = "futuristicAiHeader";
+      futHeader.className = "fut-ai-header";
+      futHeader.innerHTML = `
+        <button id="futuristicAiToggleBtn" type="button" class="fut-ai-pill-btn" onclick="toggleFuturisticAssistantPanel()" aria-expanded="false">
+          <span class="fut-dot"></span>
+          <span>فتح المساعد والبحث</span>
+          <span class="fut-chev">▾</span>
+        </button>
+        <div class="fut-ai-header-actions">
+          <button id="futVipShowcaseBtn" type="button" onclick="if(typeof window.openVIPShowcaseModal==='function'){window.openVIPShowcaseModal('all');}else{showToast('يرجى التأكد من رفع ملف ai_vip_personas.js وربطه في index.html');}" class="fut-icon-btn fut-gold-btn" title="غرف الشخصيات المميزة والباقة الشاملة">👑 غرف VIP</button>
+          <button id="petDirectMicBtn" type="button" onclick="startVoiceShoppingInput()" class="fut-icon-btn fut-mic-btn" title="تحدّث الآن">🎙️</button>
+          <button id="petShowCharBtn" type="button" onclick="setPetHidden(false)" class="fut-show-fairy-btn" style="display:none;">إظهار</button>
+        </div>
+      `;
+
+      const futBody = document.createElement("div");
+      futBody.id = "futuristicAiBody";
+      futBody.className = "fut-ai-body";
+
+      // نقل العناصر الموجودة داخل صندوق المساعد إلى الجسم القابل للطي
+      const existingChildren = Array.from(assistBox.children);
+      existingChildren.forEach(ch => futBody.appendChild(ch));
+
+      assistBox.appendChild(futHeader);
+      assistBox.appendChild(futBody);
+
+      const voiceBar = document.createElement("div");
+      voiceBar.id = "futVoiceSubControls";
+      voiceBar.style.cssText = "display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:6px; flex-wrap:wrap;";
+      voiceBar.innerHTML = `
+        <span id="petConnStatusBadge" onclick="showVoiceDiagnosticOnPhone()" class="fut-status-badge" title="اضغط لعرض سبب الخطأ وعدد المقاطع المحفوظة">🟢 جاهز</span>
+        <div style="display:flex; gap:5px; align-items:center;">
+          <button type="button" onclick="replayLastCompanionSpeech()" class="fut-icon-btn fut-gold-btn" title="إعادة الاستماع">🔁 إعادة</button>
+          <button type="button" onclick="toggleCompanionVoice()" class="fut-icon-btn fut-blue-btn" title="تفعيل أو كتم الصوت">🗣️ صوت</button>
+        </div>
+      `;
+      futBody.insertBefore(voiceBar, futBody.firstChild);
+
+    }
+
+    const futBodyTarget = $("futuristicAiBody") || assistBox;
+
+    if (futBodyTarget && !$("petPersonaBar")) {
+      const bar = document.createElement("div");
+      bar.id = "petPersonaBar";
+      bar.className = "fut-persona-bar";
+      const opts = Object.values(PERSONAS).map(per =>
+        `<option value="${per.id}">${per.name} — ${per.roleBadge}</option>`
+      ).join("");
+      bar.innerHTML = `
+        <div class="fut-persona-select-wrap">
+          <button type="button" id="fairyGalleryTriggerBtn" class="fairy-picker-trigger" onclick="openFairyGalleryModal()">
+            <img id="fairyBarThumb" alt="${p.name}" style="width:24px; height:24px; border-radius:50%; object-fit:cover; border:1.5px solid ${p.accent}; flex-shrink:0;">
+            <span id="fairyBarActiveName" style="font-weight:800; color:var(--text-color);">${esc(p.name)}</span>
+            <span style="font-size:9px; color:var(--gold-color); margin-right:auto;">تغيير الجنية ▾</span>
+          </button>
+          <select id="petPersonaSelect" class="form-control fut-select" onchange="selectPetPersona(this.value)" style="display:none;">${opts}</select>
+        </div>
+        <button id="futuristicChipsToggleBtn" type="button" class="fut-sub-toggle-btn" onclick="toggleFuturisticChipsPanel()">طي الاختصارات ▴</button>
+      `;
+      futBodyTarget.insertBefore(bar, futBodyTarget.firstChild);
+
+      const specNote = document.createElement("div");
+      specNote.id = "fairySpecialtyNote";
+      specNote.className = "fut-specialty-note";
+      specNote.textContent = p.specialtyNote || "";
+      bar.insertAdjacentElement("afterend", specNote);
+    }
+
+    if (futBodyTarget && !$("petQuickPromptChips")) {
+      const chips = document.createElement("div");
+      chips.id = "petQuickPromptChips";
+      chips.className = "fut-quick-chips";
+      const quickItems = [
+        { label: "🍲 طبخة اليوم", q: "مقلوبة" },
+        { label: "🍰 حلى سريع", q: "حلى بارد" },
+        { label: "🔥 سهرة ومتة", q: "سهرة ومتة" },
+        { label: "💰 أوفر المتوفر", q: "أوفر المتوفر" },
+        { label: "🛒 كمّل سلتي", q: "شو ناقصني كمّل سلتي" }
+      ];
+      chips.innerHTML = quickItems.map(it =>
+        `<button type="button" onclick="runAIShoppingAssistant('${it.q}')" class="fut-chip-btn">${it.label}</button>`
+      ).join("");
+      futBodyTarget.appendChild(chips);
+    }
+
+    // احترام هدوء الزبون عند التركيز على حقول البحث أو الكتابة
+    if (!window.__MOAATH_QUIET_HOOK__) {
+      window.__MOAATH_QUIET_HOOK__ = true;
+      document.addEventListener("focusin", (e) => {
+        if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) {
+          pauseRoaming(12000);
+          const b = $("petMiniBubble");
+          if (b && !isHoldingSpeak) b.style.display = "none";
+        }
+      });
+    }
+
+    if (!$("petCharRoot")) {
+      const styleTag = document.createElement("style");
+      styleTag.id = "petCharStyle";
+      styleTag.textContent = `
+        @keyframes fairyHover3D {
+          0%, 100% { transform: translateY(0px) rotateX(4deg) rotateY(-4deg) scale(1); }
+          50% { transform: translateY(-7px) rotateX(-5deg) rotateY(6deg) scale(1.04); }
+        }
+        @keyframes fairyShadow3D {
+          0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.42; }
+          50% { transform: translateX(-50%) scale(0.75); opacity: 0.22; }
+        }
+        @keyframes fairyRing {
+          0% { transform: scale(1); opacity: 0.9; }
+          100% { transform: scale(1.38); opacity: 0; }
+        }
+        @keyframes micPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
+          50% { box-shadow: 0 0 0 7px rgba(0, 230, 118, 0); }
+        }
+        .mic-listening-pulse {
+          animation: micPulse 1s infinite !important;
+          background: rgba(0, 230, 118, 0.35) !important;
+        }
+        #petCharRoot {
+          perspective: 760px;
+          transform-style: preserve-3d;
+          transition: right 1.15s cubic-bezier(0.22, 1, 0.36, 1), bottom 1.15s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+        }
+        #petCharOrb {
+          width: 52px; height: 52px; border-radius: 50%; border: 2.5px solid ${p.accent};
+          position: relative; overflow: hidden;
+          display: flex; align-items: center; justify-content: center;
+          cursor: grab; -webkit-touch-callout: none; user-select: none;
+          transform-style: preserve-3d;
+          transition: transform 0.28s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+        #petCharOrb.is-roaming {
+          animation: fairyHover3D 2.2s ease-in-out infinite;
+        }
+        #fairyCharImg {
+          width: 100%; height: 100%; object-fit: cover; border-radius: 50%; pointer-events: none;
+        }
+        #fairyStateBadge {
+          position: absolute; bottom: -2px; left: -2px;
+          background: var(--card-bg); border: 1px solid var(--gold-color);
+          border-radius: 50%; width: 20px; height: 20px; font-size: 11px;
+          display: flex; align-items: center; justify-content: center; pointer-events: none;
+        }
+        #pet3DGroundShadow {
+          position: absolute; left: 50%; bottom: -8px; width: 42px; height: 9px;
+          border-radius: 50%; background: rgba(0, 0, 0, 0.45); filter: blur(2px);
+          pointer-events: none; animation: fairyShadow3D 2.2s ease-in-out infinite;
+        }
+        #petListenRing {
+          display: none; position: absolute; inset: -6px; border-radius: 50%;
+          border: 2.5px solid #00e676; pointer-events: none; animation: fairyRing 1.1s infinite;
+        }
+        #petMiniBubble {
+          display: none; position: absolute; bottom: 72px; right: 0; max-width: 235px; width: max-content;
+          background: var(--card-bg); color: var(--text-color); border: 1px solid var(--gold-color);
+          border-radius: 10px; padding: 6px 9px; font-size: 11px; line-height: 1.4;
+          box-shadow: 0 8px 20px rgba(0,0,0,0.45); pointer-events: none;
+        }`;
+      styleTag.textContent += `
+
+        .fut-ai-dock {
+          position: relative;
+          border-radius: 18px !important;
+          border: 1px solid rgba(212, 175, 55, 0.38) !important;
+          background: linear-gradient(145deg, rgba(16, 24, 42, 0.88), rgba(10, 15, 28, 0.94)) !important;
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35), 0 0 18px rgba(0, 176, 255, 0.08) !important;
+          padding: 8px 10px !important;
+          transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        body.light-mode .fut-ai-dock {
+          background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(241, 245, 249, 0.96)) !important;
+          border: 1px solid rgba(180, 140, 20, 0.32) !important;
+          box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08) !important;
+        }
+        .fut-ai-dock.is-dock-collapsed {
+          padding: 6px 8px !important;
+          border-radius: 22px !important;
+        }
+        .fut-ai-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 6px;
+          flex-wrap: wrap;
+        }
+        .fut-ai-pill-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          background: linear-gradient(90deg, rgba(0, 176, 255, 0.16), rgba(212, 175, 55, 0.18));
+          color: var(--text-color);
+          border: 1px solid rgba(212, 175, 55, 0.55);
+          border-radius: 999px;
+          padding: 5px 11px;
+          font-size: 11px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .fut-ai-pill-btn:hover {
+          border-color: #38bdf8;
+          box-shadow: 0 0 12px rgba(56, 189, 248, 0.28);
+          transform: translateY(-1px);
+        }
+        .fut-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #00e676;
+          box-shadow: 0 0 8px #00e676;
+          flex-shrink: 0;
+        }
+        .fut-chev {
+          font-size: 11px;
+          color: var(--gold-color);
+        }
+        .fut-ai-header-actions {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          flex-wrap: wrap;
+        }
+        .fut-status-badge {
+          font-size: 9px;
+          font-weight: 700;
+          cursor: pointer;
+          text-decoration: underline;
+          padding: 2px 5px;
+        }
+        .fut-icon-btn {
+          width: auto !important;
+          padding: 4px 8px !important;
+          font-size: 10px !important;
+          border-radius: 999px !important;
+          font-weight: 700 !important;
+          line-height: 1.2 !important;
+          cursor: pointer;
+          border: 1px solid transparent;
+          transition: transform 0.18s ease, opacity 0.18s ease;
+        }
+        .fut-icon-btn:active {
+          transform: scale(0.95);
+        }
+        .fut-mic-btn {
+          background: rgba(0, 230, 118, 0.15) !important;
+          color: #00e676 !important;
+          border-color: rgba(0, 230, 118, 0.35) !important;
+        }
+        .fut-gold-btn {
+          background: rgba(212, 175, 55, 0.15) !important;
+          color: var(--gold-color) !important;
+          border-color: rgba(212, 175, 55, 0.35) !important;
+        }
+        .fut-blue-btn {
+          background: rgba(0, 176, 255, 0.15) !important;
+          color: #38bdf8 !important;
+          border-color: rgba(56, 189, 248, 0.35) !important;
+        }
+        .fut-show-fairy-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
+          background: var(--gold-color);
+          color: #000;
+          border: none;
+          border-radius: 999px;
+          padding: 4px 9px;
+          font-size: 10px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+        .fut-ai-body {
+          max-height: 520px;
+          opacity: 1;
+          overflow: hidden;
+          margin-top: 8px;
+          transition: max-height 0.34s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease, margin-top 0.28s ease;
+        }
+        .fut-ai-body.is-collapsed {
+          max-height: 0 !important;
+          opacity: 0 !important;
+          margin-top: 0 !important;
+          pointer-events: none;
+        }
+        .fut-persona-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 6px;
+          flex-wrap: wrap;
+          margin-bottom: 6px;
+          font-size: 10px;
+        }
+        .fut-persona-select-wrap {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          flex: 1;
+          min-width: 165px;
+        }
+        .fut-select {
+          padding: 4px 8px !important;
+          font-size: 10px !important;
+          border-radius: 10px !important;
+          flex: 1;
+        }
+        .fut-sub-toggle-btn {
+          background: rgba(255, 255, 255, 0.06);
+          color: var(--gold-color);
+          border: 1px solid rgba(212, 175, 55, 0.35);
+          border-radius: 999px;
+          padding: 3px 8px;
+          font-size: 9px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+        .fut-specialty-note {
+          font-size: 10px;
+          color: var(--gray-text);
+          margin-bottom: 6px;
+          line-height: 1.4;
+        }
+        .fut-quick-chips {
+          display: flex;
+          gap: 6px;
+          overflow-x: auto;
+          padding: 6px 2px 2px 2px;
+          margin-top: 6px;
+          max-height: 56px;
+          opacity: 1;
+          scrollbar-width: none;
+          transition: max-height 0.28s ease, opacity 0.22s ease, margin-top 0.24s ease;
+        }
+        .fut-quick-chips.is-chips-collapsed {
+          max-height: 0 !important;
+          opacity: 0 !important;
+          margin-top: 0 !important;
+          padding-top: 0 !important;
+          padding-bottom: 0 !important;
+          pointer-events: none;
+        }
+        .fut-chip-btn {
+          flex-shrink: 0;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+          color: var(--text-color);
+          border: 1px solid rgba(212, 175, 55, 0.35);
+          border-radius: 999px;
+          padding: 5px 10px;
+          font-size: 10px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: transform 0.16s ease, border-color 0.18s ease, background 0.18s ease;
+        }
+        .fut-chip-btn:hover {
+          border-color: #38bdf8;
+          transform: translateY(-1px);
+        }
+        body.light-mode .fut-chip-btn {
+          background: #ffffff;
+          border-color: rgba(15, 23, 42, 0.14);
+        }
+
+`;
+            document.head.appendChild(styleTag);
+
+      const root = document.createElement("div");
+      root.id = "petCharRoot";
+      root.style.cssText = "position:fixed; bottom:96px; left:12px; z-index:98;";
+      root.innerHTML = `
+        <div id="petMiniBubble"></div>
+        <div style="position:relative;">
+          <div id="petListenRing"></div>
+          <div id="petCharOrb" class="is-roaming" role="button" aria-label="جنية المساعد الذكي">
+            <img id="fairyCharImg" alt="${p.name}">
+          </div>
+          <div id="fairyStateBadge">🧚</div>
+        </div>`;
+      document.body.appendChild(root);
+      bindOrbInteractions($("petCharOrb"), root);
+    }
+
+    organizeAdminAndExportUI();
+    enhanceCustomerCartCheckoutUX();
+    syncVisuals();
+    syncFuturisticCollapseUI();
+    startRoamLoop();
+  }
+
+  const _origRenderStore = window.renderStore;
+  window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountAssistant(); };
+
+  const _origRenderCart = window.renderCartModalItems;
+  window.renderCartModalItems = function () {
+    pauseRoaming(15000);
+    const b = $("petMiniBubble");
+    if (b) b.style.display = "none";
+    if (typeof _origRenderCart === "function") _origRenderCart();
+    enhanceCustomerCartCheckoutUX();
+    purgeShamCashPaymentAIDOM();
+    const paySel = $("cartPaymentMethod");
+    if (paySel && !paySel.dataset.purgeHooked) {
+      paySel.dataset.purgeHooked = "1";
+      paySel.addEventListener("change", () => setTimeout(purgeShamCashPaymentAIDOM, 30));
+    }
+    renderSmartCartRecommendations();
+  };
+
+  const _origToggleTheme = window.toggleTheme;
+  window.toggleTheme = function () { if (typeof _origToggleTheme === "function") _origToggleTheme(); setTimeout(syncVisuals, 60); };
+
+  window.addEventListener("online", syncConnectivityBadge);
+  window.addEventListener("offline", syncConnectivityBadge);
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountAssistant);
+  else mountAssistant();
+})();
