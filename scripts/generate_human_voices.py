@@ -16,25 +16,29 @@ MANIFEST_PATH = "sounds_manifest.json"
 FORCE_REGEN = os.environ.get("FORCE_REGEN", "0") == "1"
 CONCURRENCY = 5
 
-# توزيع أصوات Neural متنوعة وسورية وشامية وعربية مع نبرة وسرعة وأسلوب مضبوط بدقة لكل شخصية
+# توزيع أصوات Neural المحسّنة من منظور تجربة المستخدم (UX)
+# - نور، لولو، وريتاج مضبوطة بأعلى قدر من الإشراق والبهجة والصفاء
+# - الشخصيات الهادئة والوقورة متزنة وواضحة دون غلظة مفرطة
+# - الشخصيات السريعة والحماسية نشيطة ومريحة للأذن
 PERSONA_VOICES = {
     # الشخصيات الأساسية
-    "buddy":          {"voice": "ar-SY-LaithNeural",   "rate": "+10%", "pitch": "+4Hz",  "style": "friendly"},
-    "lolo":           {"voice": "ar-SY-AmanyNeural",   "rate": "+8%",  "pitch": "+7Hz",  "style": "sweet"},
-    "chef":           {"voice": "ar-LB-RamiNeural",    "rate": "+3%",  "pitch": "-5Hz",  "style": "formal"},
-    "pastry":         {"voice": "ar-LB-LaylaNeural",   "rate": "+12%", "pitch": "+6Hz",  "style": "sweet"},
-    "athlete":        {"voice": "ar-JO-TaimNeural",    "rate": "+18%", "pitch": "+2Hz",  "style": "energetic"},
-    "sheikh":         {"voice": "ar-SA-HamedNeural",   "rate": "-6%",  "pitch": "-8Hz",  "style": "formal"},
-    "friend_saad":    {"voice": "ar-QA-MoazNeural",    "rate": "-2%",  "pitch": "-6Hz",  "style": "formal"},
+    "buddy":          {"voice": "ar-SY-LaithNeural",   "rate": "+7%",  "pitch": "+2Hz",  "style": "friendly"},
+    "lolo":           {"voice": "ar-SY-AmanyNeural",   "rate": "+11%", "pitch": "+8Hz",  "style": "bright_joy"},
+    "noor":           {"voice": "ar-LB-LaylaNeural",   "rate": "+12%", "pitch": "+9Hz",  "style": "bright_joy"},
+    "chef":           {"voice": "ar-LB-RamiNeural",    "rate": "+2%",  "pitch": "-3Hz",  "style": "formal"},
+    "pastry":         {"voice": "ar-LB-LaylaNeural",   "rate": "+10%", "pitch": "+6Hz",  "style": "sweet"},
+    "athlete":        {"voice": "ar-JO-TaimNeural",    "rate": "+12%", "pitch": "+1Hz",  "style": "energetic"},
+    "sheikh":         {"voice": "ar-SA-HamedNeural",   "rate": "-4%",  "pitch": "-5Hz",  "style": "formal"},
+    "friend_saad":    {"voice": "ar-SY-LaithNeural",   "rate": "-1%",  "pitch": "-3Hz",  "style": "formal"},
     # شخصيات VIP الثماني
-    "coach_sakhr":    {"voice": "ar-IQ-BasselNeural",  "rate": "+16%", "pitch": "-6Hz",  "style": "energetic"},
-    "grand_chef":     {"voice": "ar-EG-ShakirNeural",  "rate": "+2%",  "pitch": "-5Hz",  "style": "formal"},
-    "princess_layla": {"voice": "ar-AE-HamdaNeural",   "rate": "+4%",  "pitch": "+3Hz",  "style": "formal"},
-    "butler_farid":   {"voice": "ar-KW-FahedNeural",   "rate": "+0%",  "pitch": "-5Hz",  "style": "formal"},
-    "friend_fadi":    {"voice": "ar-SY-LaithNeural",   "rate": "+18%", "pitch": "+8Hz",  "style": "playful"},
-    "anime_zain":     {"voice": "ar-AE-HamdanNeural",  "rate": "+20%", "pitch": "+6Hz",  "style": "energetic"},
-    "anime_ryu":      {"voice": "ar-OM-AbdullahNeural","rate": "+6%",  "pitch": "-4Hz",  "style": "formal"},
-    "anime_ritaj":    {"voice": "ar-EG-SalmaNeural",   "rate": "+15%", "pitch": "+8Hz",  "style": "sweet"},
+    "coach_sakhr":    {"voice": "ar-IQ-BasselNeural",  "rate": "+11%", "pitch": "-3Hz",  "style": "energetic"},
+    "grand_chef":     {"voice": "ar-EG-ShakirNeural",  "rate": "+2%",  "pitch": "-3Hz",  "style": "formal"},
+    "princess_layla": {"voice": "ar-AE-HamdaNeural",   "rate": "+5%",  "pitch": "+4Hz",  "style": "formal"},
+    "butler_farid":   {"voice": "ar-KW-FahedNeural",   "rate": "+1%",  "pitch": "-2Hz",  "style": "formal"},
+    "friend_fadi":    {"voice": "ar-SY-LaithNeural",   "rate": "+12%", "pitch": "+5Hz",  "style": "playful"},
+    "anime_zain":     {"voice": "ar-AE-HamdanNeural",  "rate": "+13%", "pitch": "+4Hz",  "style": "energetic"},
+    "anime_ryu":      {"voice": "ar-SY-LaithNeural",   "rate": "+3%",  "pitch": "-2Hz",  "style": "formal"},
+    "anime_ritaj":    {"voice": "ar-EG-SalmaNeural",   "rate": "+13%", "pitch": "+9Hz",  "style": "bright_joy"},
 }
 
 # بنك الجمل المتنوعة لكل أسلوب (24 جملة لكل شخصية × 15 شخصية = 360+ جملة، ومع الجمل الخاصة لكل شخصية = 405+ مقطع)
@@ -223,6 +227,52 @@ STYLE_BANKS = {
             "خالص من الرف حالياً، اطلبه من زر طلب صنف ومنجيبه."
         ]
     },
+    "bright_joy": {
+        "greet": [
+            "يا أهلاً ومرحباً بإشراقتك الجميلة، نورت متجر معاذ! شو حابب نجهزلك اليوم بكل فرح؟",
+            "أهلاً وسهلاً يا حلو، يومك مشرق ومبهج معنا! أخبرني بطلبك لأرتبه لك بابتسامة.",
+            "يا هلا بالبهجة والسرور، المتجر منور بوجودك! بماذا نبدأ سلتك المبهجة اليوم؟",
+            "أهلاً بك بروح مشرقة، كل الأصناف الحلوة جاهزة لتسعدك! شو عبالك نختار؟"
+        ],
+        "greetMorning": [
+            "صباح النور والبهجة والإشراق، صباحك مليان خير وطاقة حلوة!",
+            "صباح السعادة والابتسامة، لنبدأ يومنا بأجمل اختيارات من متجر معاذ!"
+        ],
+        "greetEvening": [
+            "مساء الورد والبهجة، مساء جميل ومريح لعيونك! شو حابب نجهز للسهرة؟",
+            "مساء الإشراق والسرور، أخبرني بما يسعدك لأحضره لك فوراً!"
+        ],
+        "chatGood": [
+            "أنا بأحلى حال ومشرقة بسؤالك اللطيف! كيف أساعدك اليوم بكل فرح؟",
+            "تمام التمام ومليانة بهجة، أخبرني شو بتحب نختار الآن!"
+        ],
+        "thanks": [
+            "العفو يا غالي، وجودك وإسعادك هو أحلى شيء! بالعافية ومية صحة.",
+            "ولو بكل حب وبهجة، دائماً يسعدني أكون معك وأخدمك!"
+        ],
+        "added": [
+            "يا سلام، تمت الإضافة للسلة بكل فرح وبهجة! شو نضيف كمان؟",
+            "اختيار يجنن ويفرح القلب، صار في السلة جاهز!",
+            "ممتاز جداً، أضفته للسلة بابتسامة، لنكمل سلتك الجميلة!"
+        ],
+        "itemsReady": [
+            "تفضل بكل بهجة، جهزتلك أحلى الأصناف المتوفرة الآن، حدد الكمية!",
+            "إليك الخيارات المشرقة المتوفرة في الفرع، اضغط زائد لتفرح سلتك!",
+            "رتبتلك القائمة بكل حب، اختر الكمية المناسبة وأضفها فوراً!"
+        ],
+        "alternative": [
+            "هاد الصنف خالص هلق، بس جبتلك بدائل مشرقة وطيبة وموجودة فوراً!",
+            "ما لقيت نفس الصنف حالياً، واخترتلك بدائل مبهجة ومتوفرة بالفرع!"
+        ],
+        "habit": [
+            "جبتلك مفضلاتك المشرقة يلي بتحبها دايماً، جاهزة بلمسة واحدة!",
+            "تذكرت اختياراتك المبهجة وجهزتلك المتوفر منها بكل سرور!"
+        ],
+        "notFound": [
+            "دورتلك بكل حب بس ما لقيت هاد الصنف هلق، جرب اسماً أقرب أو اطلبه من زر طلب صنف!",
+            "غير متوفر حالياً، خبرني بشي بديل مبهج نجهزه لك فوراً!"
+        ]
+    },
     "sweet": {
         "greet": [
             "أهلاً يا حلو، نورت عالمنا المشرق. شو حابب نختار اليوم؟",
@@ -273,6 +323,11 @@ STYLE_BANKS = {
 
 # جمل إضافية خاصة بكل شخصية (3 جمل لكل شخصية = 45 جملة إضافية)
 EXTRA_PERSONA_CLIPS = {
+    "noor": [
+        ("special_1", "إشراقتك تفتح النفس، خلينا نختارلك شي طيب ومبهج اليوم!"),
+        ("special_2", "البهجة في التفاصيل الصغيرة، حدد الكمية وخلّي سلتك منورة!"),
+        ("special_3", "أحلى تحية مشرقة من متجر معاذ، بأي صنف نبدأ الآن؟")
+    ],
     "grand_chef": [
         ("special_1", "جهزت لك مكونات طبخة اليوم من المتوفر في الفرع، بالعافية."),
         ("special_2", "السر في الطبخة الطيبة هو المكونات الطازجة والبهارات المتوازنة."),
@@ -352,7 +407,8 @@ async def main():
 
         persona_tags = {
             "buddy": ("بندق: ", "، يلا نضبط سلتك."),
-            "lolo": ("لولو: ", "، بكل حب ولطف."),
+            "lolo": ("لولو: ", "، بكل إشراق وبهجة!"),
+            "noor": ("نور: ", "، يا أحلى بهجة!"),
             "chef": ("الشيف: ", "، المكونات جاهزة."),
             "pastry": ("الحلويات: ", "، حلى يشهي."),
             "athlete": ("البطل: ", "، طاقة وأداء عالي."),
@@ -365,7 +421,7 @@ async def main():
             "friend_fadi": ("فادي: ", "، ولك أحلى سهرة!"),
             "anime_zain": ("زين: ", "، تركيز وانطلاقة!"),
             "anime_ryu": ("ريو: ", "، بدقة وتحليل."),
-            "anime_ritaj": ("ريتاج: ", "، بهجة وحلاوة!")
+            "anime_ritaj": ("ريتاج: ", "، إشراقة وفرحة حلوة!")
         }
         p_pre, p_suf = persona_tags.get(pid, ("", ""))
 
