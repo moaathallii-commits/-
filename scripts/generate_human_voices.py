@@ -16,12 +16,12 @@ MANIFEST_PATH = "sounds_manifest.json"
 FORCE_REGEN = os.environ.get("FORCE_REGEN", "0") == "1"
 CONCURRENCY = 5
 
-# توزيع أصوات Neural متنوعة وسورية وشامية وعربية مع نبرة وسرعة مميزة لكل شخصية
+# توزيع أصوات Neural متنوعة وسورية وشامية وعربية مع نبرة وسرعة وأسلوب مضبوط بدقة لكل شخصية
 PERSONA_VOICES = {
     # الشخصيات الأساسية
-    "buddy":          {"voice": "ar-SY-LaithNeural",   "rate": "+12%", "pitch": "+5Hz",  "style": "friendly"},
-    "lolo":           {"voice": "ar-SY-AmanyNeural",   "rate": "+10%", "pitch": "+7Hz",  "style": "sweet"},
-    "chef":           {"voice": "ar-LB-RamiNeural",    "rate": "+4%",  "pitch": "-5Hz",  "style": "formal"},
+    "buddy":          {"voice": "ar-SY-LaithNeural",   "rate": "+10%", "pitch": "+4Hz",  "style": "friendly"},
+    "lolo":           {"voice": "ar-SY-AmanyNeural",   "rate": "+8%",  "pitch": "+7Hz",  "style": "sweet"},
+    "chef":           {"voice": "ar-LB-RamiNeural",    "rate": "+3%",  "pitch": "-5Hz",  "style": "formal"},
     "pastry":         {"voice": "ar-LB-LaylaNeural",   "rate": "+12%", "pitch": "+6Hz",  "style": "sweet"},
     "athlete":        {"voice": "ar-JO-TaimNeural",    "rate": "+18%", "pitch": "+2Hz",  "style": "energetic"},
     "sheikh":         {"voice": "ar-SA-HamedNeural",   "rate": "-6%",  "pitch": "-8Hz",  "style": "formal"},
