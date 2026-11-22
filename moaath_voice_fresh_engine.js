@@ -1,12 +1,13 @@
 // ============================================================================
-// محرك تحديث المقاطع الصوتية السريع ومنع التكرار (moaath_voice_fresh_engine.js — v1.1)
-// - استجابة فورية بدون انتظار طويل أو تردد في الطلبات
-// - كاش محلي فوري للمقاطع المولّدة لتسريع التشغيل في المرات اللاحقة
-// - منع تام لتكرار نفس المقطع مرتين متتاليتين مع تنويع ديناميكي فوري
-// - يعمل بـ 0 حصة إضافية مع عزل أمني تام عن الدفع وشام كاش
+// محرك تحديث المقاطع الصوتية ومطابقة النص المرئي مع الصوت (moaath_voice_fresh_engine.js — v1.2)
+// - يطابق الصوت المنطوق مع النص الظاهر فعلياً على فقاعة الشخصية أو رد المساعد
+// - يراقب تلقائياً أي نص يظهر في فقاعة الشخصية أو رد المساعد وينطقه بنفس المعنى دون تناقض
+// - يمنع تكرار نفس المقطع مرتين متتاليتين مع تنويع سلس واستجابة سريعة (0 حصة API)
+// - عزل أمني تام عن الدفع وشام كاش
 // ============================================================================
 (function () {
-  if (window.__MOAATH_VOICE_FRESH_ENGINE_V11__) return;
+  if (window.__MOAATH_VOICE_FRESH_ENGINE_V12__) return;
+  window.__MOAATH_VOICE_FRESH_ENGINE_V12__ = true;
   window.__MOAATH_VOICE_FRESH_ENGINE_V11__ = true;
   window.__MOAATH_VOICE_FRESH_ENGINE_V1__ = true;
 
@@ -14,6 +15,8 @@
   const AUDIO_MEM_CACHE = new Map();
   let currentAudioEl = null;
   let voicesReadyList = [];
+  let lastBubbleTextSpoken = "";
+  let lastBubbleSpeakTs = 0;
 
   function initLocalVoices() {
     try {
@@ -45,12 +48,16 @@
     try { localStorage.setItem(key, JSON.stringify(val)); } catch (_) {}
   }
 
-  function makeFingerprint(str) {
+  function cleanSpeakableText(str) {
     return String(str || "")
       .replace(/[\u{1F300}-\u{1FAFF}﴿﴾۝]/gu, " ")
       .replace(/\s+/g, " ")
       .trim()
-      .toLowerCase();
+      .slice(0, 220);
+  }
+
+  function makeFingerprint(str) {
+    return cleanSpeakableText(str).toLowerCase();
   }
 
   function wasSpokenRecently(text) {
@@ -69,44 +76,13 @@
     writeJSON(RECENT_VOICES_KEY, recent);
   }
 
-  const FRESH_LINES_BY_PERSONA = {
-    friend_saad: [
-      "أهلاً بك يا رفيق الخير.. اجعل لصلاتك نصيباً من الطمأنينة، وابدأ يومك بذكر الله والرزق الحلال.",
-      "الكلمة الطيبة صدقة، والصدق في القول والعمل يطرح البركة في الوقت والرزق؛ لا تنسَ أذكارك.",
-      "حاسب نفسك قبل النوم برفق، واستغفر الله؛ فبالاستغفار تُفتح الأبواب وتهدأ القلوب.",
-      "من لزم الاستغفار جعل الله له من كل هم فرجاً، ومن كل ضيق مخرجاً، ورزقه من حيث لا يحتسب."
-    ],
-    friend_fadi: [
-      "يا هلا والله! السهرة ما بتحلى إلا بالمتة والضحكة الحلوة والنقرشة الخفيفة.",
-      "شو رأيك نغيّر جو شوي؟ كاسة متة مرتّبة مع شوية موالح أو شيبس بتعدّل المزاج فوراً!",
-      "خلي الابتسامة حاضرة اليوم، والروقان بيبدأ من أبسط التفاصيل!",
-      "أحلى لمّة هي لمّة الأصحاب على راحة البال ولقمة طيبة!"
-    ],
-    grand_chef: [
-      "أهلاً بك في المطبخ! اختر مكوناتك الطازجة من المتجر وسنحضّر وجبة شهية وسريعة.",
-      "سر الطبخة الناجحة في ترتيب المكونات والبهارات الموزونة؛ جرب وصفة اليوم وبالعافية!",
-      "وجبة بيتية دافئة بمكونات متوفرة توفر عليك وتفرح العائلة كلها.",
-      "أبسط المكونات ممكن تطلع منها أشهى طبخة إذا انعملت بحب وترتيب!"
-    ],
-    coach_sakhr: [
-      "يلا يا بطل! خطوة صغيرة يومياً في الرياضة والتغذية تصنع فرقاً كبيراً في صحتك وطاقتك.",
-      "اشرب حصتك من الماء وركّز على البروتين المفيد؛ الاستمرارية هي سر النتيجة.",
-      "تمرين سريع اليوم يمنحك نشاطاً وتركيزاً أفضل طوال بقية يومك.",
-      "قوة الجسم تبدأ من قرار صغير اليوم واهتمام مستمر بنفسك!"
-    ],
-    anime_ritaj: [
-      "مرحباً بك! خذ نفساً عميقاً وابتسم؛ يومك يستحق لحظة لطيفة وحلوى تبهج القلب.",
-      "الهدوء واللطف مع النفس يجددان طاقتك؛ جرّب وصفة حلى باردة وسريعة اليوم.",
-      "أجمل اللحظات هي البسيطة والهادئة؛ كافئ نفسك بشيء تحبه.",
-      "ابتسامتك وهدوؤك يصنعان فرقاً جميلاً في يومك كله!"
-    ],
-    default: [
-      "أهلاً بك في متجر معاذ! أساعدك لتصل إلى أغراضك بسرعة وتوفّر وقتك وجهدك.",
-      "تسوّقك صار أسهل وأسرع؛ اختر ما يناسبك وسأكون جاهزاً لأي مساعدة.",
-      "كل جديد ومتوفر في الفرع أمامك بلمسة واحدة؛ أتمنى لك تسوقاً موفقاً.",
-      "خياراتك جاهزة وأسعارنا واضحة لنوفر عليك الوقت والمشوار!"
-    ]
-  };
+  function getActivePersonaId() {
+    try {
+      const prefs = JSON.parse(localStorage.getItem("moaath_store_pet_prefs") || "{}");
+      if (prefs && prefs.persona) return String(prefs.persona).trim();
+    } catch (_) {}
+    return "buddy";
+  }
 
   function getPersonaVoiceConfig(personaId) {
     const map = {
@@ -123,28 +99,28 @@
     return map[personaId] || { voiceName: "Puck", gender: "male", rate: 1.12, pitch: 1.0, toneTag: "مساعد متجر ودود" };
   }
 
-  function pickNonRepeatedText(personaId, candidateText) {
-    const base = String(candidateText || "").trim();
-    const pool = FRESH_LINES_BY_PERSONA[personaId] || FRESH_LINES_BY_PERSONA.default;
-    const seed = (Date.now() % 1000) + Math.floor(Math.random() * 97);
-
-    if (base && !wasSpokenRecently(base)) {
-      return base;
-    }
-
-    for (let i = 0; i < pool.length; i++) {
-      const candidate = pool[(seed + i) % pool.length];
-      if (!wasSpokenRecently(candidate) && makeFingerprint(candidate) !== makeFingerprint(base)) {
-        return candidate;
+  // الأولوية المطلقة للنص المعروض فعلياً حتى يتطابق الصوت مع ما يقرأه المستخدم
+  function resolveAlignedText(personaId, candidateText) {
+    const exact = cleanSpeakableText(candidateText);
+    if (exact) {
+      if (!wasSpokenRecently(exact)) return exact;
+      // إذا تكرر نفس النص تماماً في وقت قصير، نضيف تنويعاً خفيفاً مع الإبقاء على نفس المعنى والنص الظاهر
+      const variations = [
+        exact + "، أهلاً بك.",
+        exact + "، يسعدني مساعدتك.",
+        exact + "، تفضل."
+      ];
+      for (const v of variations) {
+        if (!wasSpokenRecently(v)) return v;
       }
+      return exact;
     }
 
-    const tags = [
-      " (تحديث الآن)",
-      " — بالتوفيق دائماً.",
-      " — يسعدني خدمتك."
+    const fallbackPool = [
+      "أهلاً بك في متجر معاذ! كيف يمكنني مساعدتك اليوم؟",
+      "تسوّقك أسهل وأسرع هنا؛ أخبرني بما تحتاج."
     ];
-    return (base || pool[seed % pool.length]) + tags[seed % tags.length];
+    return fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
   }
 
   function stopCurrentSpeech() {
@@ -170,7 +146,7 @@
       const voices = voicesReadyList.length ? voicesReadyList : (window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : []);
       const arVoices = voices.filter((v) => /ar/i.test(v.lang || ""));
       if (arVoices.length > 0) {
-        u.voice = arVoices[Math.floor(Math.random() * arVoices.length)];
+        u.voice = arVoices[0];
       }
       window.speechSynthesis.speak(u);
     } catch (_) {}
@@ -189,22 +165,19 @@
     });
   }
 
-  async function speakFresh(rawText, personaId = "buddy") {
-    const cfg = getPersonaVoiceConfig(personaId);
-    const chosen = pickNonRepeatedText(personaId, rawText)
-      .replace(/[\u{1F300}-\u{1FAFF}﴿﴾۝]/gu, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 220);
+  async function speakFresh(rawText, personaId = null) {
+    const pid = personaId || getActivePersonaId();
+    const cfg = getPersonaVoiceConfig(pid);
+    const aligned = resolveAlignedText(pid, rawText);
+    if (!aligned) return "";
 
-    if (!chosen) return "";
-    markSpoken(chosen);
+    markSpoken(aligned);
     stopCurrentSpeech();
 
-    const cacheKey = `${cfg.voiceName}::${chosen}`;
+    const cacheKey = `${cfg.voiceName}::${aligned}`;
     if (AUDIO_MEM_CACHE.has(cacheKey)) {
-      playAudioSrc(AUDIO_MEM_CACHE.get(cacheKey), cfg.rate, () => speakLocally(chosen, cfg));
-      return chosen;
+      playAudioSrc(AUDIO_MEM_CACHE.get(cacheKey), cfg.rate, () => speakLocally(aligned, cfg));
+      return aligned;
     }
 
     let workerUrl = "";
@@ -215,11 +188,10 @@
     } catch (_) {}
 
     if (!workerUrl || navigator.onLine === false) {
-      speakLocally(chosen, cfg);
-      return chosen;
+      speakLocally(aligned, cfg);
+      return aligned;
     }
 
-    // مهلة سريعة (2.2 ثانية) لتفادي أي بطء في الشبكة والانتقال الفوري للنطق المحلي
     const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
     const timeoutId = controller ? setTimeout(() => controller.abort(), 2200) : null;
 
@@ -230,7 +202,7 @@
         signal: controller ? controller.signal : undefined,
         body: JSON.stringify({
           mode: "tts",
-          text: chosen,
+          text: aligned,
           voiceName: cfg.voiceName,
           gender: cfg.gender,
           toneTag: cfg.toneTag,
@@ -242,15 +214,38 @@
       if (res.ok && json?.ok && json?.audioBase64 && !/pcm|L16/i.test(json.mimeType || "")) {
         const dataUri = `data:${json.mimeType || "audio/mpeg"};base64,${json.audioBase64}`;
         AUDIO_MEM_CACHE.set(cacheKey, dataUri);
-        playAudioSrc(dataUri, cfg.rate, () => speakLocally(chosen, cfg));
-        return chosen;
+        playAudioSrc(dataUri, cfg.rate, () => speakLocally(aligned, cfg));
+        return aligned;
       }
-      speakLocally(chosen, cfg);
+      speakLocally(aligned, cfg);
     } catch (_) {
       if (timeoutId) clearTimeout(timeoutId);
-      speakLocally(chosen, cfg);
+      speakLocally(aligned, cfg);
     }
-    return chosen;
+    return aligned;
+  }
+
+  // مطابقة النطق تلقائياً مع النص الفعلي الظاهر في فقاعة الشخصية عند تغيّرها
+  function watchVisibleCharacterBubble() {
+    const checkBubble = () => {
+      const bubble =
+        document.getElementById("petBubbleText") ||
+        document.getElementById("fairyBubbleText") ||
+        document.querySelector("#petCharRoot .pet-bubble, #petCharRoot [class*='bubble'], #petCharRoot p");
+      if (!bubble) return;
+      const txt = cleanSpeakableText(bubble.textContent || "");
+      if (!txt || txt.length < 3) return;
+      if (txt !== lastBubbleTextSpoken && (Date.now() - lastBubbleSpeakTs) > 600) {
+        lastBubbleTextSpoken = txt;
+        lastBubbleSpeakTs = Date.now();
+        // قراءة النص الظاهر مباشرة دون استبداله بجملة أخرى
+        speakLocally(txt, getPersonaVoiceConfig(getActivePersonaId()));
+      }
+    };
+
+    const obs = new MutationObserver(checkBubble);
+    obs.observe(document.body, { childList: true, characterData: true, subtree: true });
+    setInterval(checkBubble, 800);
   }
 
   function hookLegacySpeechFunctions() {
@@ -259,13 +254,12 @@
       const orig = window[fnName];
       if (typeof orig === "function" && !orig.__moaathFreshVoiceHooked) {
         const wrapped = function (txt, ...rest) {
-          let pid = "buddy";
-          try {
-            pid = JSON.parse(localStorage.getItem("moaath_store_pet_prefs") || "{}").persona || "buddy";
-          } catch (_) {}
-          const freshTxt = pickNonRepeatedText(pid, txt);
-          markSpoken(freshTxt);
-          return orig.call(this, freshTxt, ...rest);
+          const pid = getActivePersonaId();
+          const aligned = resolveAlignedText(pid, txt);
+          lastBubbleTextSpoken = aligned;
+          lastBubbleSpeakTs = Date.now();
+          markSpoken(aligned);
+          return orig.call(this, aligned, ...rest);
         };
         wrapped.__moaathFreshVoiceHooked = true;
         window[fnName] = wrapped;
@@ -274,17 +268,19 @@
   }
 
   window.MoaathVoiceFreshEngine = {
-    version: "1.1",
+    version: "1.2",
     speak: speakFresh,
-    pickFresh: pickNonRepeatedText,
+    pickFresh: resolveAlignedText,
     stop: stopCurrentSpeech,
     clearCache: () => AUDIO_MEM_CACHE.clear()
   };
 
   if (window.MoaathSystemRegistry && typeof window.MoaathSystemRegistry.register === "function") {
-    window.MoaathSystemRegistry.register("voice_fresh_engine", "1.1");
+    window.MoaathSystemRegistry.register("voice_fresh_engine", "1.2");
   }
 
-  setTimeout(hookLegacySpeechFunctions, 500);
-  setTimeout(hookLegacySpeechFunctions, 1600);
+  setTimeout(() => {
+    hookLegacySpeechFunctions();
+    watchVisibleCharacterBubble();
+  }, 600);
 })();
