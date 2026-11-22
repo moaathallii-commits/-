@@ -1,10 +1,10 @@
 // ============================================================================
-// مركز التعلم الذاتي الموحّد لمتجر معاذ (moaath_learning_hub.js — v1.0)
+// مركز التعلم الذاتي الموحّد لمتجر معاذ (moaath_learning_hub.js — v1.1)
 // 1) الذاكرة المشتركة بين جميع الشخصيات والغرف (Cross-Persona Shared Brain)
 // 2) مقياس دقة التوقعات الحي (Suggestion Hit-Rate %) ومستوى الألفة لكل شخصية
 // 3) التعلم التلقائي للمرادفات عند تصحيح الزبون (Zero-Click Synonym Learning)
 // 4) لوحة «ماذا تعلّمتُ عنك؟» المرئية القابلة للتحكم والحذف (0 حصة API)
-// 5) إصلاح فوري لظهور زر اختيار وتبديل الشخصية المساعدة داخل شريط المساعد الذكي
+// 5) إصلاح فوري ومزامنة حيّة لزر اختيار وتبديل الشخصية المساعدة داخل شريط المساعد الذكي
 // - عزل أمني تام عن الدفع وشام كاش
 // ============================================================================
 (function () {
@@ -178,7 +178,6 @@
   }
 
   function hookLearningSignals() {
-    // التقاط الإضافة للسلة لتسجيل وقت التسوق وتعلم المرادفات التلقائي
     if (typeof window.changeQty === "function" && !window.changeQty.__moaathLearnHooked) {
       const orig = window.changeQty;
       const wrapped = function (id, delta) {
@@ -199,7 +198,6 @@
       window.changeQty = wrapped;
     }
 
-    // التقاط إغلاق نافذة الاقتراحات دون تأكيد لحساب الدقة الفعلية
     if (typeof window.closePetSuggestionsModal === "function" && !window.closePetSuggestionsModal.__moaathLearnHooked) {
       const origClose = window.closePetSuggestionsModal;
       const wrappedClose = function (wasConfirmed) {
@@ -210,7 +208,6 @@
       window.closePetSuggestionsModal = wrappedClose;
     }
 
-    // التقاط الاستعلامات غير المطابقة لربطها بالتعلم التلقائي للمرادفات
     const statusEl = document.getElementById("aiShoppingStatusText");
     if (statusEl && !statusEl.dataset.learnWatched) {
       statusEl.dataset.learnWatched = "1";
@@ -261,7 +258,6 @@
           <button type="button" onclick="window.closeMoaathLearningHubModal()" class="btn btn-danger" style="width:auto; padding:4px 9px; font-size:11px;">✕</button>
         </div>
 
-        <!-- مقياس دقة التوقعات ومستوى الألفة -->
         <div style="background:rgba(56,189,248,0.1); border:1px solid #38bdf8; border-radius:12px; padding:10px; margin-bottom:10px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
             <b style="color:#38bdf8;">🎯 دقة توقعات المساعد لك:</b>
@@ -276,7 +272,6 @@
           </div>
         </div>
 
-        <!-- الذاكرة المشتركة بين الغرف -->
         <div style="background:var(--bg-color); border:1px solid var(--gold-color); border-radius:12px; padding:9px; margin-bottom:10px;">
           <b style="color:var(--gold-color); display:block; margin-bottom:5px;">🔗 الذاكرة المشتركة النشطة بين الغرف:</b>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; font-size:10px;">
@@ -287,7 +282,6 @@
           </div>
         </div>
 
-        <!-- سجل ما تعلمه المساعد عنك (قابل للحذف) -->
         <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:9px; margin-bottom:10px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
             <b style="color:#10b981;">📌 عادات وحقائق متعلَّمة (${prof.facts.length}):</b>
@@ -305,13 +299,37 @@
   };
 
   // ==========================================================================
-  // 4) إصلاح اختفاء زر اختيار الشخصية المساعدة + إضافة زر لوحة التعلم في الشريط
+  // 4) مزامنة حيّة لزر اختيار الشخصية المساعدة (صورة + اسم) + زر لوحة التعلم
   // ==========================================================================
+  function syncActivePersonaButton() {
+    const dstImg = document.getElementById("moaathRestorePersonaImg");
+    const dstName = document.getElementById("moaathRestorePersonaName");
+    if (!dstImg || !dstName) return;
+
+    const pid = getActivePersonaId();
+    const vipObj = window.MoaathVIPSystem?.personas?.[pid] || window.MoaathAIPersonas?.PERSONAS?.[pid] || null;
+
+    // 1) الصورة: الأولوية للصورة الظاهرة فعلياً على الشخصية العائمة ثم الشريط ثم تعريف الشخصية
+    const floatImg = document.querySelector("#petCharRoot img") || document.getElementById("fairyCharImg");
+    const barImg = document.getElementById("fairyBarThumb");
+    const targetSrc = (floatImg && floatImg.src) || (barImg && barImg.src) || (vipObj && vipObj.img) || "";
+    if (targetSrc && dstImg.src !== targetSrc) {
+      dstImg.src = targetSrc;
+    }
+
+    // 2) الاسم: الأولوية لاسم الشخصية النشطة في الشريط أو في سجل الشخصيات
+    const barNameEl = document.getElementById("fairyBarActiveName");
+    const barName = barNameEl ? barNameEl.textContent.trim() : "";
+    const resolvedName = (vipObj && vipObj.name) || barName || "";
+    if (resolvedName && dstName.textContent !== resolvedName) {
+      dstName.textContent = resolvedName;
+    }
+  }
+
   function restorePersonaPickerAndMountHubBtn() {
     const header = document.getElementById("futuristicAiHeader");
     if (!header) return;
 
-    // 1) زر اختيار وتبديل الشخصية المساعدة المدمج داخل شريط المساعد العلوي
     let personaBtn = document.getElementById("moaathRestorePersonaBtn");
     if (!personaBtn) {
       personaBtn = document.createElement("button");
@@ -336,18 +354,8 @@
       header.insertBefore(personaBtn, header.firstChild);
     }
 
-    // مزامنة صورة واسم الشخصية النشطة حالياً
-    const srcImg = document.getElementById("fairyBarThumb") || document.getElementById("fairyCharImg");
-    const dstImg = document.getElementById("moaathRestorePersonaImg");
-    if (srcImg && dstImg && srcImg.src && dstImg.src !== srcImg.src) dstImg.src = srcImg.src;
+    syncActivePersonaButton();
 
-    const srcName = document.getElementById("fairyBarActiveName");
-    const dstName = document.getElementById("moaathRestorePersonaName");
-    if (srcName && dstName && srcName.textContent.trim()) {
-      dstName.textContent = srcName.textContent.trim();
-    }
-
-    // 2) زر أيقونة سريع (🧠) في الشريط العلوي للمساعد للوصول الفوري بدون تمرير
     const actions = header.querySelector(".fut-ai-header-actions");
     if (actions && !document.getElementById("moaathLearningHubHeaderBtn")) {
       const hBtn = document.createElement("button");
@@ -363,7 +371,6 @@
       actions.insertBefore(hBtn, actions.firstChild);
     }
 
-    // 3) وضع زر «🧠 ماذا تعلّمتُ عنك؟» في مقدمة شريط الاختصارات (يظهر فوراً دون الحاجة للتمرير لليسار)
     const chips = document.getElementById("petQuickPromptChips");
     if (chips && !document.getElementById("moaathLearningHubChipBtn")) {
       const hubBtn = document.createElement("button");
@@ -383,9 +390,10 @@
   }
 
   window.MoaathLearningHub = {
-    version: "1.0",
+    version: "1.1",
     getSharedProfile,
     addLearnedFact,
+    syncPersonaButton: syncActivePersonaButton,
     openModal: window.openMoaathLearningHubModal,
     deleteFact(id) {
       const m = loadMetrics();
@@ -401,7 +409,7 @@
   };
 
   if (window.MoaathSystemRegistry && typeof window.MoaathSystemRegistry.register === "function") {
-    window.MoaathSystemRegistry.register("learning_hub", "1.0");
+    window.MoaathSystemRegistry.register("learning_hub", "1.1");
   }
 
   function init() {
@@ -416,4 +424,6 @@
   }
   setTimeout(init, 900);
   setTimeout(init, 2200);
+  // مزامنة تلقائية خفيفة لتحديث صورة واسم الزر فور تغيير الشخصية
+  setInterval(syncActivePersonaButton, 700);
 })();
