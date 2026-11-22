@@ -1,11 +1,7 @@
-// ============================================================================
-// store_ui_futuristic.js - v5.0 (النسخة الشاملة: الدفعة 1 + الدفعة 2 + الدفعة 3)
-// تطبيق التحسينات الـ 15 بالكامل لواجهة متجر معاذ المستقبلية الذكية والبسيطة
-// - يعمل محلياً بـ 0 حصة API | معزول تماماً عن الدفع وشام كاش
-// ============================================================================
+/* store_ui_futuristic.js - v5.2 (Mobile-Safe, Zero-SyntaxError, All 15 Enhancements) */
 (function () {
-  if (window.__MOAATH_STORE_UI_V50__) return;
-  window.__MOAATH_STORE_UI_V50__ = true;
+  if (window.__MOAATH_STORE_UI_V52__) return;
+  window.__MOAATH_STORE_UI_V52__ = true;
 
   var COLLAPSE_KEY = "moaath_store_ai_collapsed";
   var USERBAR_COLLAPSE_KEY = "moaath_store_userbar_collapsed";
@@ -14,9 +10,6 @@
     return document.getElementById(id);
   }
 
-  // ==========================================================================
-  // 1. حقن الأنماط المستقبلية الموحدة (Color Discipline + Glassmorphism + Skeleton)
-  // ==========================================================================
   function injectStoreFuturisticCSS() {
     var style = $("moaathStoreFuturisticCSS");
     if (!style) {
@@ -26,473 +19,99 @@
     }
 
     style.textContent = [
-      "/* #9 توحيد لوحة الألوان (3 درجات: داكن #0f141e + ذهبي #D4AF37 + زمردي/سماوي) */",
-      ":root {",
-      "  --moaath-bg-deep: #0f141e;",
-      "  --moaath-gold: #D4AF37;",
-      "  --moaath-emerald: #10b981;",
-      "  --moaath-sky: #38bdf8;",
-      "}",
+      ":root { --moaath-bg-deep: #0f141e; --moaath-gold: #D4AF37; --moaath-emerald: #10b981; --moaath-sky: #38bdf8; }",
       "html, body { max-width: 100% !important; overflow-x: clip !important; }",
       "body:not(.light-mode) { background-color: #0f141e !important; }",
+      "body:not(.light-mode) .product-card, body:not(.light-mode) .offer-card, body:not(.light-mode) .moaath-offer-card-slide { background: linear-gradient(155deg, rgba(22, 30, 46, 0.96), rgba(15, 20, 30, 0.98)) !important; border-color: rgba(212, 175, 55, 0.3) !important; }",
+      "body:not(.light-mode) .cat-btn.active { background: #D4AF37 !important; color: #0f141e !important; border-color: #D4AF37 !important; }",
 
-      "/* #12 تبسيط الهيدر العلوي (سطر واحد مضغوط ونقل الهاتف للتذييل) */",
-      "header, .store-header, .top-bar {",
-      "  padding: 6px 11px !important;",
-      "  margin-bottom: 5px !important;",
-      "  border-radius: 0 0 18px 18px !important;",
-      "  background: rgba(15, 20, 30, 0.94) !important;",
-      "  border-bottom: 1px solid rgba(212, 175, 55, 0.3) !important;",
-      "  backdrop-filter: blur(12px) !important;",
-      "  -webkit-backdrop-filter: blur(12px) !important;",
-      "}",
-      "body.light-mode header, body.light-mode .store-header, body.light-mode .top-bar {",
-      "  background: rgba(255, 255, 255, 0.95) !important;",
-      "}",
+      "header, .store-header, .top-bar { padding: 6px 11px !important; margin-bottom: 5px !important; border-radius: 0 0 18px 18px !important; background: rgba(15, 20, 30, 0.95) !important; border-bottom: 1px solid rgba(212, 175, 55, 0.32) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; }",
+      "body.light-mode header, body.light-mode .store-header, body.light-mode .top-bar { background: rgba(255, 255, 255, 0.95) !important; }",
       ".moaath-header-phone-hidden { display: none !important; }",
-      "#moaathFooterContactBar {",
-      "  margin: 14px 0 84px 0 !important;",
-      "  padding: 10px 12px !important;",
-      "  border-radius: 14px !important;",
-      "  background: rgba(255, 255, 255, 0.03) !important;",
-      "  border: 1px solid rgba(212, 175, 55, 0.22) !important;",
-      "  text-align: center !important;",
-      "  font-size: 11px !important;",
-      "  color: var(--gray-text, #94a3b8) !important;",
-      "}",
+      "#moaathFooterContactBar { margin: 14px 8px 92px 8px !important; padding: 10px 12px !important; border-radius: 14px !important; background: rgba(255, 255, 255, 0.03) !important; border: 1px solid rgba(212, 175, 55, 0.24) !important; text-align: center !important; font-size: 11px !important; color: var(--gray-text, #94a3b8) !important; }",
 
-      "/* #2 + #3 بطاقة حساب الزبون القابلة للطي + أزرار دائرية زجاجية بدون أقواس */",
-      ".moaath-userbar-shell {",
-      "  border-radius: 16px !important;",
-      "  padding: 6px 10px !important;",
-      "  margin: 4px 0 6px 0 !important;",
-      "  border: 1px solid rgba(212, 175, 55, 0.32) !important;",
-      "  background: rgba(255, 255, 255, 0.035) !important;",
-      "  backdrop-filter: blur(10px) !important;",
-      "}",
+      ".moaath-userbar-shell { border-radius: 16px !important; padding: 6px 10px !important; margin: 4px 0 6px 0 !important; border: 1px solid rgba(212, 175, 55, 0.32) !important; background: rgba(255, 255, 255, 0.035) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; }",
       "body.light-mode .moaath-userbar-shell { background: #ffffff !important; }",
-      ".moaath-userbar-toggle-row {",
-      "  display: flex !important;",
-      "  align-items: center !important;",
-      "  justify-content: space-between !important;",
-      "  gap: 8px !important;",
-      "  cursor: pointer !important;",
-      "  font-size: 11px !important;",
-      "  font-weight: 800 !important;",
-      "  user-select: none !important;",
-      "}",
-      ".moaath-userbar-summary {",
-      "  display: flex !important;",
-      "  align-items: center !important;",
-      "  gap: 6px !important;",
-      "  min-width: 0 !important;",
-      "  overflow: hidden !important;",
-      "  white-space: nowrap !important;",
-      "  text-overflow: ellipsis !important;",
-      "  color: var(--text-color) !important;",
-      "}",
-      ".moaath-userbar-menu-btn {",
-      "  width: 30px !important;",
-      "  height: 30px !important;",
-      "  border-radius: 50% !important;",
-      "  border: 1px solid rgba(212, 175, 55, 0.45) !important;",
-      "  background: rgba(212, 175, 55, 0.14) !important;",
-      "  color: #D4AF37 !important;",
-      "  font-size: 13px !important;",
-      "  display: inline-flex !important;",
-      "  align-items: center !important;",
-      "  justify-content: center !important;",
-      "  flex-shrink: 0 !important;",
-      "}",
-      ".moaath-userbar-body {",
-      "  margin-top: 7px !important;",
-      "  padding-top: 7px !important;",
-      "  border-top: 1px dashed rgba(212, 175, 55, 0.24) !important;",
-      "  display: flex !important;",
-      "  flex-wrap: wrap !important;",
-      "  align-items: center !important;",
-      "  gap: 6px !important;",
-      "}",
-      ".moaath-userbar-shell.is-collapsed .moaath-userbar-body {",
-      "  display: none !important;",
-      "}",
-      ".moaath-glass-circle-btn {",
-      "  min-width: 34px !important;",
-      "  height: 34px !important;",
-      "  padding: 0 9px !important;",
-      "  border-radius: 999px !important;",
-      "  border: 1px solid rgba(212, 175, 55, 0.36) !important;",
-      "  background: rgba(255, 255, 255, 0.06) !important;",
-      "  backdrop-filter: blur(8px) !important;",
-      "  -webkit-backdrop-filter: blur(8px) !important;",
-      "  color: var(--text-color) !important;",
-      "  display: inline-flex !important;",
-      "  align-items: center !important;",
-      "  justify-content: center !important;",
-      "  gap: 4px !important;",
-      "  font-size: 12px !important;",
-      "  cursor: pointer !important;",
-      "  margin: 0 !important;",
-      "}",
+      ".moaath-userbar-toggle-row { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 8px !important; cursor: pointer !important; font-size: 11px !important; font-weight: 800 !important; user-select: none !important; }",
+      ".moaath-userbar-summary { display: flex !important; align-items: center !important; gap: 6px !important; min-width: 0 !important; overflow: hidden !important; white-space: nowrap !important; text-overflow: ellipsis !important; color: var(--text-color) !important; }",
+      ".moaath-userbar-menu-btn { width: 30px !important; height: 30px !important; border-radius: 50% !important; border: 1px solid rgba(212, 175, 55, 0.48) !important; background: rgba(212, 175, 55, 0.14) !important; color: #D4AF37 !important; font-size: 13px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; flex-shrink: 0 !important; }",
+      ".moaath-userbar-body { margin-top: 7px !important; padding-top: 7px !important; border-top: 1px dashed rgba(212, 175, 55, 0.24) !important; display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 6px !important; }",
+      ".moaath-userbar-shell.is-collapsed .moaath-userbar-body { display: none !important; }",
+      ".moaath-glass-circle-btn { min-width: 34px !important; height: 34px !important; padding: 0 10px !important; border-radius: 999px !important; border: 1px solid rgba(212, 175, 55, 0.36) !important; background: rgba(255, 255, 255, 0.06) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; color: var(--text-color) !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 4px !important; font-size: 12px !important; cursor: pointer !important; margin: 0 !important; text-decoration: none !important; }",
+      ".moaath-glass-icon-only { width: 34px !important; min-width: 34px !important; padding: 0 !important; border-radius: 50% !important; }",
 
-      "/* #1 شريط العروض الأفقي المضغوط + مؤشر النقاط */",
-      ".moaath-offers-track {",
-      "  display: flex !important;",
-      "  flex-direction: row !important;",
-      "  flex-wrap: nowrap !important;",
-      "  align-items: stretch !important;",
-      "  grid-template-columns: none !important;",
-      "  overflow-x: auto !important;",
-      "  overflow-y: hidden !important;",
-      "  scroll-snap-type: x mandatory !important;",
-      "  gap: 10px !important;",
-      "  padding: 3px 2px 6px 2px !important;",
-      "  margin: 4px 0 2px 0 !important;",
-      "  scrollbar-width: none !important;",
-      "  -webkit-overflow-scrolling: touch !important;",
-      "  touch-action: pan-x pan-y !important;",
-      "  width: 100% !important;",
-      "  box-sizing: border-box !important;",
-      "}",
+      ".moaath-offers-track { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: stretch !important; grid-template-columns: none !important; overflow-x: auto !important; overflow-y: hidden !important; scroll-snap-type: x mandatory !important; gap: 10px !important; padding: 3px 2px 6px 2px !important; margin: 4px 0 2px 0 !important; scrollbar-width: none !important; -webkit-overflow-scrolling: touch !important; touch-action: pan-x pan-y !important; width: 100% !important; box-sizing: border-box !important; }",
       ".moaath-offers-track::-webkit-scrollbar { display: none !important; }",
-      ".moaath-offers-track > .moaath-offer-card-slide,",
-      ".moaath-offer-card-slide {",
-      "  flex: 0 0 84vw !important;",
-      "  width: 84vw !important;",
-      "  min-width: 240px !important;",
-      "  max-width: 310px !important;",
-      "  scroll-snap-align: start !important;",
-      "  box-sizing: border-box !important;",
-      "  margin: 0 !important;",
-      "  padding: 7px 10px !important;",
-      "  border-radius: 15px !important;",
-      "  border: 1px solid rgba(212, 175, 55, 0.36) !important;",
-      "}",
-      "#moaathOffersDots {",
-      "  display: flex !important;",
-      "  justify-content: center !important;",
-      "  align-items: center !important;",
-      "  gap: 5px !important;",
-      "  margin: 2px 0 7px 0 !important;",
-      "}",
-      ".moaath-offer-dot {",
-      "  width: 6px !important;",
-      "  height: 6px !important;",
-      "  border-radius: 999px !important;",
-      "  background: rgba(212, 175, 55, 0.28) !important;",
-      "  transition: width 0.22s ease, background 0.22s ease !important;",
-      "}",
-      ".moaath-offer-dot.is-active {",
-      "  width: 16px !important;",
-      "  background: #D4AF37 !important;",
-      "}",
+      ".moaath-offers-track > .moaath-offer-card-slide, .moaath-offer-card-slide { flex: 0 0 84vw !important; width: 84vw !important; min-width: 240px !important; max-width: 310px !important; scroll-snap-align: start !important; box-sizing: border-box !important; margin: 0 !important; padding: 7px 10px !important; border-radius: 15px !important; border: 1px solid rgba(212, 175, 55, 0.36) !important; }",
+      "#moaathOffersDots { display: flex !important; justify-content: center !important; align-items: center !important; gap: 5px !important; margin: 2px 0 7px 0 !important; }",
+      ".moaath-offer-dot { width: 6px !important; height: 6px !important; border-radius: 999px !important; background: rgba(212, 175, 55, 0.28) !important; transition: width 0.22s ease, background 0.22s ease !important; }",
+      ".moaath-offer-dot.is-active { width: 16px !important; background: #D4AF37 !important; }",
 
-      "/* #4 شريط البحث الموحّد والذكي (Unified Smart Pill Bar) */",
-      ".moaath-unified-pill-bar {",
-      "  display: flex !important;",
-      "  align-items: center !important;",
-      "  gap: 5px !important;",
-      "  width: 100% !important;",
-      "  border-radius: 999px !important;",
-      "  padding: 4px 6px !important;",
-      "  margin: 5px 0 8px 0 !important;",
-      "  background: rgba(255, 255, 255, 0.045) !important;",
-      "  border: 1px solid rgba(212, 175, 55, 0.42) !important;",
-      "  backdrop-filter: blur(12px) !important;",
-      "  box-sizing: border-box !important;",
-      "}",
+      ".moaath-unified-pill-bar { display: flex !important; align-items: center !important; gap: 5px !important; width: 100% !important; border-radius: 999px !important; padding: 4px 6px !important; margin: 5px 0 8px 0 !important; background: rgba(255, 255, 255, 0.045) !important; border: 1px solid rgba(212, 175, 55, 0.42) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; box-sizing: border-box !important; }",
       "body.light-mode .moaath-unified-pill-bar { background: #ffffff !important; }",
-      ".moaath-unified-pill-input {",
-      "  flex: 1 !important;",
-      "  min-width: 0 !important;",
-      "  border: none !important;",
-      "  background: transparent !important;",
-      "  color: var(--text-color) !important;",
-      "  font-size: 11px !important;",
-      "  padding: 4px 8px !important;",
-      "  outline: none !important;",
-      "}",
-      ".moaath-pill-action {",
-      "  border-radius: 999px !important;",
-      "  padding: 4px 9px !important;",
-      "  font-size: 10px !important;",
-      "  font-weight: 800 !important;",
-      "  border: 1px solid rgba(212, 175, 55, 0.38) !important;",
-      "  background: rgba(212, 175, 55, 0.14) !important;",
-      "  color: #D4AF37 !important;",
-      "  cursor: pointer !important;",
-      "  white-space: nowrap !important;",
-      "  flex-shrink: 0 !important;",
-      "}",
-      ".moaath-pill-mic {",
-      "  width: 28px !important;",
-      "  height: 28px !important;",
-      "  padding: 0 !important;",
-      "  border-radius: 50% !important;",
-      "  background: rgba(16, 185, 129, 0.16) !important;",
-      "  border-color: rgba(16, 185, 129, 0.42) !important;",
-      "  color: #10b981 !important;",
-      "  display: inline-flex !important;",
-      "  align-items: center !important;",
-      "  justify-content: center !important;",
-      "}",
+      ".moaath-unified-pill-input { flex: 1 !important; min-width: 0 !important; border: none !important; background: transparent !important; color: var(--text-color) !important; font-size: 11px !important; padding: 4px 8px !important; outline: none !important; }",
+      ".moaath-pill-action { border-radius: 999px !important; padding: 4px 9px !important; font-size: 10px !important; font-weight: 800 !important; border: 1px solid rgba(212, 175, 55, 0.38) !important; background: rgba(212, 175, 55, 0.14) !important; color: #D4AF37 !important; cursor: pointer !important; white-space: nowrap !important; flex-shrink: 0 !important; }",
+      ".moaath-pill-mic { width: 28px !important; height: 28px !important; padding: 0 !important; border-radius: 50% !important; background: rgba(16, 185, 129, 0.16) !important; border-color: rgba(16, 185, 129, 0.42) !important; color: #10b981 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; }",
 
-      "/* #10 شريط إعادة الطلب السريع */",
-      "#moaathQuickReorderBar {",
-      "  margin: 4px 0 8px 0 !important;",
-      "  padding: 6px 9px !important;",
-      "  border-radius: 14px !important;",
-      "  border: 1px solid rgba(16, 185, 129, 0.3) !important;",
-      "  background: rgba(16, 185, 129, 0.06) !important;",
-      "}",
-      ".moaath-reorder-head {",
-      "  display: flex !important;",
-      "  justify-content: space-between !important;",
-      "  align-items: center !important;",
-      "  font-size: 10px !important;",
-      "  font-weight: 800 !important;",
-      "  color: #10b981 !important;",
-      "  margin-bottom: 5px !important;",
-      "}",
-      ".moaath-reorder-track {",
-      "  display: flex !important;",
-      "  gap: 7px !important;",
-      "  overflow-x: auto !important;",
-      "  scrollbar-width: none !important;",
-      "}",
+      "#moaathQuickReorderBar { margin: 4px 0 8px 0 !important; padding: 6px 9px !important; border-radius: 14px !important; border: 1px solid rgba(16, 185, 129, 0.3) !important; background: rgba(16, 185, 129, 0.06) !important; }",
+      ".moaath-reorder-head { display: flex !important; justify-content: space-between !important; align-items: center !important; font-size: 10px !important; font-weight: 800 !important; color: #10b981 !important; margin-bottom: 5px !important; }",
+      ".moaath-reorder-track { display: flex !important; gap: 7px !important; overflow-x: auto !important; scrollbar-width: none !important; }",
       ".moaath-reorder-track::-webkit-scrollbar { display: none !important; }",
-      ".moaath-reorder-chip {",
-      "  flex: 0 0 auto !important;",
-      "  display: flex !important;",
-      "  align-items: center !important;",
-      "  gap: 6px !important;",
-      "  background: #0f141e !important;",
-      "  border: 1px solid rgba(212, 175, 55, 0.35) !important;",
-      "  border-radius: 999px !important;",
-      "  padding: 3px 6px 3px 4px !important;",
-      "}",
+      ".moaath-reorder-chip { flex: 0 0 auto !important; display: flex !important; align-items: center !important; gap: 6px !important; background: #0f141e !important; border: 1px solid rgba(212, 175, 55, 0.35) !important; border-radius: 999px !important; padding: 3px 6px 3px 4px !important; }",
       "body.light-mode .moaath-reorder-chip { background: #f8fafc !important; }",
-      ".moaath-reorder-chip img {",
-      "  width: 24px !important;",
-      "  height: 24px !important;",
-      "  border-radius: 50% !important;",
-      "  object-fit: cover !important;",
-      "}",
-      ".moaath-reorder-name {",
-      "  font-size: 10px !important;",
-      "  font-weight: 700 !important;",
-      "  max-width: 92px !important;",
-      "  white-space: nowrap !important;",
-      "  overflow: hidden !important;",
-      "  text-overflow: ellipsis !important;",
-      "}",
-      ".moaath-reorder-add {",
-      "  width: 22px !important;",
-      "  height: 22px !important;",
-      "  border-radius: 50% !important;",
-      "  border: none !important;",
-      "  background: #10b981 !important;",
-      "  color: #000 !important;",
-      "  font-weight: 900 !important;",
-      "  cursor: pointer !important;",
-      "}",
+      ".moaath-reorder-chip img { width: 24px !important; height: 24px !important; border-radius: 50% !important; object-fit: cover !important; }",
+      ".moaath-reorder-name { font-size: 10px !important; font-weight: 700 !important; max-width: 92px !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }",
+      ".moaath-reorder-add { width: 22px !important; height: 22px !important; border-radius: 50% !important; border: none !important; background: #10b981 !important; color: #000 !important; font-weight: 900 !important; cursor: pointer !important; }",
 
-      "/* #5 تثبيت شريط التصنيفات عند التمرير */",
-      ".categories {",
-      "  position: sticky !important;",
-      "  top: 0 !important;",
-      "  z-index: 45 !important;",
-      "  background: rgba(15, 20, 30, 0.93) !important;",
-      "  backdrop-filter: blur(12px) !important;",
-      "  -webkit-backdrop-filter: blur(12px) !important;",
-      "  border-radius: 14px !important;",
-      "  padding: 6px !important;",
-      "  scrollbar-width: none !important;",
-      "}",
+      ".categories { position: sticky !important; top: 0 !important; z-index: 45 !important; background: rgba(15, 20, 30, 0.94) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; border-radius: 14px !important; padding: 6px !important; scrollbar-width: none !important; }",
       "body.light-mode .categories { background: rgba(248, 250, 252, 0.95) !important; }",
 
-      "/* #6 + #7 بطاقات منتجات مستقبلية موحدة + زر + عائم + عداد (- 1 +) متوهج */",
-      ".product-card {",
-      "  position: relative !important;",
-      "  display: flex !important;",
-      "  flex-direction: column !important;",
-      "  justify-content: space-between !important;",
-      "  height: 100% !important;",
-      "  border-radius: 16px !important;",
-      "  border: 1px solid rgba(212, 175, 55, 0.25) !important;",
-      "  box-sizing: border-box !important;",
-      "}",
-      ".moaath-card-fab-add {",
-      "  position: absolute !important;",
-      "  top: 8px !important;",
-      "  left: 8px !important;",
-      "  z-index: 12 !important;",
-      "  width: 32px !important;",
-      "  height: 32px !important;",
-      "  border-radius: 50% !important;",
-      "  border: 1.5px solid #D4AF37 !important;",
-      "  background: rgba(15, 20, 30, 0.88) !important;",
-      "  color: #D4AF37 !important;",
-      "  font-size: 18px !important;",
-      "  font-weight: 900 !important;",
-      "  display: inline-flex !important;",
-      "  align-items: center !important;",
-      "  justify-content: center !important;",
-      "  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45) !important;",
-      "  cursor: pointer !important;",
-      "}",
-      ".moaath-inline-stepper {",
-      "  display: flex !important;",
-      "  align-items: center !important;",
-      "  justify-content: space-between !important;",
-      "  gap: 6px !important;",
-      "  width: 100% !important;",
-      "  background: rgba(212, 175, 55, 0.12) !important;",
-      "  border: 1.5px solid #D4AF37 !important;",
-      "  box-shadow: 0 0 12px rgba(212, 175, 55, 0.28) !important;",
-      "  border-radius: 12px !important;",
-      "  padding: 3px 6px !important;",
-      "  box-sizing: border-box !important;",
-      "  margin-top: 4px !important;",
-      "}",
-      ".moaath-step-btn {",
-      "  width: 28px !important;",
-      "  height: 26px !important;",
-      "  border-radius: 8px !important;",
-      "  border: none !important;",
-      "  font-size: 16px !important;",
-      "  font-weight: 900 !important;",
-      "  cursor: pointer !important;",
-      "  display: inline-flex !important;",
-      "  align-items: center !important;",
-      "  justify-content: center !important;",
-      "}",
+      ".product-card { position: relative !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; height: 100% !important; border-radius: 16px !important; border: 1px solid rgba(212, 175, 55, 0.25) !important; box-sizing: border-box !important; }",
+      ".moaath-card-fab-add { position: absolute !important; top: 8px !important; left: 8px !important; z-index: 12 !important; width: 32px !important; height: 32px !important; border-radius: 50% !important; border: 1.5px solid #D4AF37 !important; background: rgba(15, 20, 30, 0.88) !important; color: #D4AF37 !important; font-size: 18px !important; font-weight: 900 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45) !important; cursor: pointer !important; }",
+      ".moaath-inline-stepper { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 6px !important; width: 100% !important; background: rgba(212, 175, 55, 0.12) !important; border: 1.5px solid #D4AF37 !important; box-shadow: 0 0 12px rgba(212, 175, 55, 0.28) !important; border-radius: 12px !important; padding: 3px 6px !important; box-sizing: border-box !important; margin-top: 4px !important; }",
+      ".moaath-step-btn { width: 28px !important; height: 26px !important; border-radius: 8px !important; border: none !important; font-size: 16px !important; font-weight: 900 !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; }",
       ".moaath-step-minus { background: rgba(255, 255, 255, 0.1) !important; color: var(--text-color) !important; }",
       ".moaath-step-plus { background: #D4AF37 !important; color: #000 !important; }",
       ".moaath-step-qty { font-size: 13px !important; font-weight: 900 !important; color: #10b981 !important; }",
 
-      "/* #11 إبراز حالة «غير متوفر / نفد مؤقتاً» بذكاء */",
-      ".moaath-out-of-stock-card {",
-      "  opacity: 0.64 !important;",
-      "  filter: grayscale(0.25) !important;",
-      "}",
-      ".moaath-out-badge {",
-      "  position: absolute !important;",
-      "  top: 8px !important;",
-      "  right: 8px !important;",
-      "  z-index: 12 !important;",
-      "  background: rgba(15, 20, 30, 0.88) !important;",
-      "  color: #D4AF37 !important;",
-      "  border: 1px solid rgba(212, 175, 55, 0.45) !important;",
-      "  border-radius: 999px !important;",
-      "  padding: 2px 8px !important;",
-      "  font-size: 9.5px !important;",
-      "  font-weight: 800 !important;",
-      "}",
-      ".moaath-compact-notify-btn {",
-      "  padding: 5px 8px !important;",
-      "  font-size: 10px !important;",
-      "  background: rgba(56, 189, 248, 0.14) !important;",
-      "  color: #38bdf8 !important;",
-      "  border: 1px solid rgba(56, 189, 248, 0.38) !important;",
-      "}",
+      ".moaath-out-of-stock-card { opacity: 0.7 !important; }",
+      ".moaath-out-of-stock-card img { filter: grayscale(0.45) brightness(0.85) !important; }",
+      ".moaath-out-badge { position: absolute !important; top: 8px !important; right: 8px !important; z-index: 14 !important; background: rgba(15, 20, 30, 0.92) !important; color: #D4AF37 !important; border: 1px solid rgba(212, 175, 55, 0.55) !important; border-radius: 999px !important; padding: 2px 8px !important; font-size: 9.5px !important; font-weight: 800 !important; pointer-events: none !important; }",
+      ".moaath-compact-notify-btn { padding: 5px 8px !important; font-size: 10px !important; background: rgba(56, 189, 248, 0.14) !important; background-image: none !important; color: #38bdf8 !important; border: 1px solid rgba(56, 189, 248, 0.42) !important; box-shadow: none !important; }",
 
-      "/* #14 تأثيرات التحميل الناعمة (Skeleton Loading) للصور */",
-      "@keyframes moaathSkeletonShimmer {",
-      "  0% { background-position: -200% 0; }",
-      "  100% { background-position: 200% 0; }",
-      "}",
-      ".moaath-img-skeleton {",
-      "  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(212,175,55,0.14) 50%, rgba(255,255,255,0.04) 75%) !important;",
-      "  background-size: 200% 100% !important;",
-      "  animation: moaathSkeletonShimmer 1.35s infinite linear !important;",
-      "}",
+      "@keyframes moaathSkeletonShimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }",
+      ".moaath-img-skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(212,175,55,0.16) 50%, rgba(255,255,255,0.05) 75%) !important; background-size: 200% 100% !important; animation: moaathSkeletonShimmer 1.3s infinite linear !important; min-height: 95px !important; }",
 
-      "/* #8 منع تداخل الجنية العائمة مع المساعد أو البحث */",
-      "#aiSmartAssistantBox.is-ai-collapsed #futuristicAiBody, #futuristicAiBody.is-collapsed {",
-      "  display: none !important;",
-      "}",
-      "body.moaath-ai-expanded #petCharRoot,",
-      "body.moaath-search-focused #petCharRoot {",
-      "  opacity: 0 !important;",
-      "  visibility: hidden !important;",
-      "  pointer-events: none !important;",
-      "  transform: scale(0.75) !important;",
-      "}",
+      "#aiSmartAssistantBox.is-ai-collapsed #futuristicAiBody, #futuristicAiBody.is-collapsed { display: none !important; }",
+      "body.moaath-ai-expanded #petCharRoot, body.moaath-search-focused #petCharRoot { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; transform: scale(0.75) !important; }",
 
-      "/* #13 شريط إتمام الطلب السفلي الزجاجي العائم + شارة عدد القطع */",
-      ".cart-bar, .bottom-cart-bar, .fixed-cart-bar, #bottomCartBar {",
-      "  left: 8px !important;",
-      "  right: 8px !important;",
-      "  bottom: 8px !important;",
-      "  width: auto !important;",
-      "  border-radius: 18px !important;",
-      "  background: rgba(15, 20, 30, 0.9) !important;",
-      "  backdrop-filter: blur(14px) !important;",
-      "  -webkit-backdrop-filter: blur(14px) !important;",
-      "  border: 1px solid rgba(212, 175, 55, 0.42) !important;",
-      "  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5) !important;",
-      "}",
-      "#moaathCartCountBadge {",
-      "  display: inline-flex !important;",
-      "  align-items: center !important;",
-      "  justify-content: center !important;",
-      "  min-width: 19px !important;",
-      "  height: 19px !important;",
-      "  padding: 0 5px !important;",
-      "  border-radius: 999px !important;",
-      "  background: #D4AF37 !important;",
-      "  color: #000 !important;",
-      "  font-size: 10px !important;",
-      "  font-weight: 900 !important;",
-      "  margin-right: 5px !important;",
-      "}",
+      ".cart-bar, .bottom-cart-bar, .fixed-cart-bar, #bottomCartBar { left: 8px !important; right: 8px !important; bottom: 8px !important; width: auto !important; border-radius: 18px !important; background: rgba(15, 20, 30, 0.92) !important; backdrop-filter: blur(14px) !important; -webkit-backdrop-filter: blur(14px) !important; border: 1px solid rgba(212, 175, 55, 0.42) !important; box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5) !important; }",
+      "#moaathCartCountBadge { display: inline-flex !important; align-items: center !important; justify-content: center !important; min-width: 19px !important; height: 19px !important; padding: 0 5px !important; border-radius: 999px !important; background: #D4AF37 !important; color: #000 !important; font-size: 10px !important; font-weight: 900 !important; margin-right: 5px !important; }",
 
-      "/* #15 زر العودة للأعلى الذكي */",
-      "#moaathBackToTopBtn {",
-      "  position: fixed;",
-      "  bottom: 82px;",
-      "  left: 14px;",
-      "  z-index: 95;",
-      "  width: 38px;",
-      "  height: 38px;",
-      "  border-radius: 50%;",
-      "  border: 1px solid rgba(212, 175, 55, 0.65);",
-      "  background: rgba(15, 20, 30, 0.92);",
-      "  color: #D4AF37;",
-      "  font-size: 16px;",
-      "  font-weight: 900;",
-      "  display: flex;",
-      "  align-items: center;",
-      "  justify-content: center;",
-      "  cursor: pointer;",
-      "  opacity: 0;",
-      "  pointer-events: none;",
-      "  transform: translateY(10px);",
-      "  transition: opacity 0.25s ease, transform 0.25s ease;",
-      "}",
-      "#moaathBackToTopBtn.is-visible {",
-      "  opacity: 1;",
-      "  pointer-events: auto;",
-      "  transform: translateY(0);",
-      "}"
-    ].join("
-");
+      "#moaathBackToTopBtn { position: fixed; bottom: 82px; left: 14px; z-index: 95; width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(212, 175, 55, 0.65); background: rgba(15, 20, 30, 0.92); color: #D4AF37; font-size: 16px; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; pointer-events: none; transform: translateY(10px); transition: opacity 0.25s ease, transform 0.25s ease; }",
+      "#moaathBackToTopBtn.is-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }"
+    ].join(" ");
   }
 
-  // ==========================================================================
-  // #12 تبسيط الهيدر العلوي ونقل الهاتف للتذييل
-  // ==========================================================================
   function simplifyHeaderAndFooter() {
     var header = document.querySelector("header, .store-header, .top-bar");
     if (!header) return;
 
     var phoneText = "";
+    var candidates = [];
     header.querySelectorAll("div, span, p, small, a").forEach(function (el) {
-      if (el.children.length > 0) return;
       var txt = (el.textContent || "").trim();
-      if (/963\d{7,}|09\d{8}/.test(txt)) {
-        phoneText = txt;
+      if (/963\d{7,}|09\d{8}/.test(txt) && !/متجر\s*معاذ/.test(txt)) {
+        candidates.push(el);
+      }
+    });
+
+    candidates.forEach(function (el) {
+      var hasChildMatch = candidates.some(function (other) {
+        return other !== el && el.contains(other);
+      });
+      if (!hasChildMatch) {
+        phoneText = (el.textContent || "").trim();
         el.classList.add("moaath-header-phone-hidden");
       }
     });
@@ -500,32 +119,36 @@
     if (phoneText && !$("moaathFooterContactBar")) {
       var footer = document.createElement("div");
       footer.id = "moaathFooterContactBar";
-      footer.innerHTML = "📍 <b>متجر معاذ</b> — قرية العوينة | للتواصل المباشر: <b style='color:#D4AF37; direction:ltr; display:inline-block;'>" + phoneText + "</b>";
+      footer.innerHTML = "📍 <b>متجر معاذ</b> — قرية العوينة | للتواصل: <b style=\"color:#D4AF37; direction:ltr; display:inline-block;\">" + phoneText.replace(/</g, "&lt;") + "</b>";
       document.body.appendChild(footer);
     }
   }
 
-  // ==========================================================================
-  // #2 + #3 بطاقة الحساب القابلة للطي + إزالة الأقواس حول الأيقونات
-  // ==========================================================================
   function stripIconBracketsInUserBar(container) {
     if (!container) return;
-    // إزالة الأقواس النصية المحيطة بالأيقونات مثل (⚙️) أو (📋) أو (🚪)
+
     var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
     var node;
     while ((node = walker.nextNode())) {
-      if (node.nodeValue && /[()]/.test(node.nodeValue)) {
-        var cleaned = node.nodeValue.replace(/\(\s*([^\w؀-ۿ\s]{1,3})\s*\)/g, "$1");
-        if (cleaned !== node.nodeValue) node.nodeValue = cleaned;
-      }
+      var v = node.nodeValue || "";
+      if (!/[()]/.test(v)) continue;
+      var cleaned = v.replace(/\(\s*([^\w\u0600-\u06FF\s]{1,4})\s*\)/g, "$1");
+      if (/^[\s()]+$/.test(cleaned)) cleaned = " ";
+      if (cleaned !== v) node.nodeValue = cleaned;
     }
 
-    container.querySelectorAll("button, a").forEach(function (btn) {
+    container.querySelectorAll("button, a, span[onclick]").forEach(function (btn) {
       if (btn.classList.contains("moaath-userbar-menu-btn")) return;
       var t = (btn.textContent || "").trim();
-      if (/^\(?.{1,3}\)?$/.test(t) || t.length <= 14) {
-        btn.textContent = t.replace(/^\(|\)$/g, "");
+      var stripped = t.replace(/^\(\s*|\s*\)$/g, "").trim();
+      if (stripped !== t && !/[\u0600-\u06FF]{3,}/.test(stripped)) {
+        btn.textContent = stripped;
+      }
+      if (stripped.length > 0 && stripped.length <= 16) {
         btn.classList.add("moaath-glass-circle-btn");
+        if (!/[\u0600-\u06FFA-Za-z0-9]/.test(stripped)) {
+          btn.classList.add("moaath-glass-icon-only");
+        }
       }
     });
   }
@@ -554,9 +177,7 @@
 
       var toggleRow = document.createElement("div");
       toggleRow.className = "moaath-userbar-toggle-row";
-      toggleRow.innerHTML =
-        '<div id="moaathUserBarSummaryTxt" class="moaath-userbar-summary"></div>' +
-        '<span id="moaathUserBarMenuBtn" class="moaath-userbar-menu-btn" title="خيارات الحساب">☰</span>';
+      toggleRow.innerHTML = '<div id="moaathUserBarSummaryTxt" class="moaath-userbar-summary"></div><span id="moaathUserBarMenuBtn" class="moaath-userbar-menu-btn" title="خيارات الحساب">☰</span>';
 
       toggleRow.onclick = function () {
         var nextCollapsed = !bar.classList.contains("is-collapsed");
@@ -585,9 +206,6 @@
     if (sumEl) sumEl.textContent = summaryBits.join(" • ");
   }
 
-  // ==========================================================================
-  // #1 شريط العروض الأفقي + مؤشر النقاط الصغير
-  // ==========================================================================
   function findOfferCards() {
     var raw = [];
     var seen = new Set();
@@ -694,19 +312,15 @@
     renderOfferDots(track, groupCards.length);
   }
 
-  // ==========================================================================
-  // #4 شريط البحث الموحّد والذكي (Unified Smart Pill Bar)
-  // ==========================================================================
   function buildUnifiedSmartSearchBar() {
     if ($("moaathUnifiedSmartBar")) return;
     var assistBox = $("aiSmartAssistantBox");
     if (!assistBox || !assistBox.parentNode) return;
 
-    // البحث عن حقل البحث الأصلي وزر "طلب صنف" لدمجهما في شريط Pill واحد
     var origSearch = document.querySelector("#searchInput, #productSearchInput, #storeSearchInput, input[placeholder*='ابحث']");
     var reqProductBtn = null;
-    document.querySelectorAll("button").forEach(function (b) {
-      if (!reqProductBtn && /طلب\s*صنف/.test(b.textContent || "") && !b.closest(".modal-overlay")) {
+    document.querySelectorAll("button, a, div[onclick]").forEach(function (b) {
+      if (!reqProductBtn && /طلب\s*صنف/.test(b.textContent || "") && !b.closest(".modal-overlay") && (b.textContent || "").trim().length < 25) {
         reqProductBtn = b;
       }
     });
@@ -761,6 +375,9 @@
     if (reqProductBtn) {
       pill.appendChild(reqBtn);
       reqProductBtn.style.display = "none";
+      if (reqProductBtn.parentElement && reqProductBtn.parentElement.children.length === 1 && reqProductBtn.parentElement.tagName === "DIV") {
+        reqProductBtn.parentElement.style.display = "none";
+      }
     }
     if (origSearch) {
       var origWrap = origSearch.closest(".search-box, .search-bar, .form-group") || origSearch;
@@ -772,24 +389,19 @@
     assistBox.parentNode.insertBefore(pill, assistBox);
   }
 
-  // ==========================================================================
-  // #6 + #7 + #11 + #14 بطاقات المنتجات الموحدة + FAB + عداد + نفد + Skeleton
-  // ==========================================================================
   function enhanceProductAndOfferCards() {
     var cartObj = (typeof window.cart === "object" && window.cart) ? window.cart : {};
 
-    // #14 Skeleton Loading للصور
     document.querySelectorAll(".product-card img, .offer-card img, .moaath-offer-card-slide img").forEach(function (img) {
       if (img.dataset.skelBound) return;
       img.dataset.skelBound = "1";
-      if (!img.complete) {
+      if (!img.complete || img.naturalWidth === 0) {
         img.classList.add("moaath-img-skeleton");
         img.addEventListener("load", function () { img.classList.remove("moaath-img-skeleton"); }, { once: true });
         img.addEventListener("error", function () { img.classList.remove("moaath-img-skeleton"); }, { once: true });
       }
     });
 
-    // #11 إبراز حالة «غير متوفر / نفد مؤقتاً» بذكاء في العروض والمنتجات
     document.querySelectorAll(".product-card, .offer-card, .moaath-offer-card-slide").forEach(function (card) {
       var txt = card.textContent || "";
       var isOut = /سيتم\s*إعلامك|أعلمني\s*عند|نفد|غير\s*متوفر/.test(txt);
@@ -811,7 +423,6 @@
       }
     });
 
-    // #6 زر + عائم في زاوية صورة المنتج + #7 عداد الكمية المباشر (- 1 +)
     var buttons = document.querySelectorAll(".product-card button[onclick*='changeQty']");
     buttons.forEach(function (btn) {
       if (btn.classList.contains("moaath-step-btn") || btn.classList.contains("moaath-card-fab-add")) return;
@@ -823,7 +434,6 @@
       var card = btn.closest(".product-card");
       if (!card) return;
 
-      // إضافة زر + العائم في زاوية البطاقة لتقليل الطول وسرعة الإضافة
       if (!card.querySelector(".moaath-card-fab-add")) {
         var fab = document.createElement("button");
         fab.type = "button";
@@ -847,10 +457,7 @@
         if (!hasStepper) {
           var stepper = document.createElement("div");
           stepper.className = "moaath-inline-stepper";
-          stepper.innerHTML =
-            '<button type="button" class="moaath-step-btn moaath-step-minus" aria-label="إنقاص">−</button>' +
-            '<span class="moaath-step-qty">' + qty + "</span>" +
-            '<button type="button" class="moaath-step-btn moaath-step-plus" aria-label="زيادة">+</button>';
+          stepper.innerHTML = '<button type="button" class="moaath-step-btn moaath-step-minus" aria-label="إنقاص">−</button><span class="moaath-step-qty">' + qty + '</span><button type="button" class="moaath-step-btn moaath-step-plus" aria-label="زيادة">+</button>';
 
           stepper.querySelector(".moaath-step-minus").onclick = function (e) {
             if (e) e.stopPropagation();
@@ -875,9 +482,6 @@
     });
   }
 
-  // ==========================================================================
-  // #10 شريط إعادة الطلب السريع
-  // ==========================================================================
   function renderQuickReorderBar() {
     var prods = (typeof window.products === "object" && window.products) ? window.products : {};
     var hist = (typeof window.completedOrdersHistory === "object" && window.completedOrdersHistory) ? window.completedOrdersHistory : {};
@@ -921,27 +525,45 @@
     if (bar.dataset.sig === signature) return;
     bar.dataset.sig = signature;
 
-    bar.innerHTML =
-      '<div class="moaath-reorder-head"><span>⚡ أكثر ما تطلبه (إعادة طلب سريعة)</span><span>بنقرة واحدة</span></div>' +
-      '<div class="moaath-reorder-track">' +
-      picks.map(function (pid) {
-        var p = prods[pid];
-        var img = p.thumb || p.image || p.img || "store-icon.png";
-        var safeName = String(p.name || "").replace(/</g, "&lt;");
-        return (
-          '<div class="moaath-reorder-chip">' +
-          '<img src="' + img + '" onerror="this.onerror=null;this.src='store-icon.png';" alt="' + safeName + '">' +
-          '<span class="moaath-reorder-name" title="' + safeName + '">' + safeName + "</span>" +
-          '<button type="button" class="moaath-reorder-add" onclick="if(typeof changeQty==='function'){changeQty('' + pid + '',1);}">+</button>' +
-          "</div>"
-        );
-      }).join("") +
-      "</div>";
+    bar.innerHTML = "";
+    var head = document.createElement("div");
+    head.className = "moaath-reorder-head";
+    head.innerHTML = "<span>⚡ أكثر ما تطلبه (إعادة طلب سريعة)</span><span>بنقرة واحدة</span>";
+    bar.appendChild(head);
+
+    var track = document.createElement("div");
+    track.className = "moaath-reorder-track";
+    picks.forEach(function (pid) {
+      var p = prods[pid];
+      var chip = document.createElement("div");
+      chip.className = "moaath-reorder-chip";
+
+      var img = document.createElement("img");
+      img.src = p.thumb || p.image || p.img || "store-icon.png";
+      img.alt = p.name || "";
+      img.onerror = function () { this.onerror = null; this.src = "store-icon.png"; };
+
+      var nameSpan = document.createElement("span");
+      nameSpan.className = "moaath-reorder-name";
+      nameSpan.title = p.name || "";
+      nameSpan.textContent = p.name || "";
+
+      var addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "moaath-reorder-add";
+      addBtn.textContent = "+";
+      addBtn.onclick = function () {
+        if (typeof window.changeQty === "function") window.changeQty(pid, 1);
+      };
+
+      chip.appendChild(img);
+      chip.appendChild(nameSpan);
+      chip.appendChild(addBtn);
+      track.appendChild(chip);
+    });
+    bar.appendChild(track);
   }
 
-  // ==========================================================================
-  // #13 شارة عدد القطع في الشريط السفلي الزجاجي العائم
-  // ==========================================================================
   function syncFloatingCartBadge() {
     var cartObj = (typeof window.cart === "object" && window.cart) ? window.cart : {};
     var totalPieces = 0;
@@ -967,9 +589,6 @@
     }
   }
 
-  // ==========================================================================
-  // #8 + #15 المساعد الذكي وزر العودة للأعلى
-  // ==========================================================================
   function readCollapsedPref() {
     try {
       var v = localStorage.getItem(COLLAPSE_KEY);
@@ -1040,17 +659,22 @@
 
   var timer = null;
   function runAll() {
-    injectStoreFuturisticCSS();
-    simplifyHeaderAndFooter();
-    enhanceCollapsibleUserBar();
-    applyOffersHorizontalSlider();
-    buildUnifiedSmartSearchBar();
-    renderQuickReorderBar();
-    enhanceProductAndOfferCards();
-    syncFloatingCartBadge();
-    bindToggleButtonDirect();
-    syncAssistantState();
-    mountBackToTop();
+    var tasks = [
+      injectStoreFuturisticCSS,
+      simplifyHeaderAndFooter,
+      enhanceCollapsibleUserBar,
+      applyOffersHorizontalSlider,
+      buildUnifiedSmartSearchBar,
+      renderQuickReorderBar,
+      enhanceProductAndOfferCards,
+      syncFloatingCartBadge,
+      bindToggleButtonDirect,
+      syncAssistantState,
+      mountBackToTop
+    ];
+    tasks.forEach(function (fn) {
+      try { fn(); } catch (_) {}
+    });
   }
 
   function start() {
