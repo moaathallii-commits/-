@@ -1,7 +1,14 @@
-
+// ============================================================================
+// طبقة تحسين واجهة متجر معاذ المستقبلية (store_ui_futuristic.js — v3.0)
+// - ضغط الهيدر العلوي وشريط المستخدم لتوفير مساحة الشاشة الأولى
+// - تحويل العروض الخاصة تلقائياً إلى شريط سحب أفقي مضغوط (84vw بحد أقصى 300px)
+// - إخفاء الجنية العائمة (#petCharRoot) تلقائياً عند فتح المساعد الذكي
+// - ضمان عمل زر فتح/طي المساعد الذكي + تثبيت شريط التصنيفات + زر العودة للأعلى
+// - عزل تام عن الدفع وشام كاش وبدون أي تعديل على وظائف index.html
+// ============================================================================
 (function () {
-  if (window.__MOAATH_STORE_UI_V2__) return;
-  window.__MOAATH_STORE_UI_V2__ = true;
+  if (window.__MOAATH_STORE_UI_V3__) return;
+  window.__MOAATH_STORE_UI_V3__ = true;
 
   var COLLAPSE_KEY = "moaath_store_ai_collapsed";
 
@@ -9,28 +16,145 @@
     return document.getElementById(id);
   }
 
-  function injectStyles() {
-    var style = $("moaathStoreUiV2Style");
+  function injectStoreFuturisticCSS() {
+    var style = $("moaathStoreFuturisticCSS");
     if (!style) {
       style = document.createElement("style");
-      style.id = "moaathStoreUiV2Style";
+      style.id = "moaathStoreFuturisticCSS";
       document.head.appendChild(style);
     }
 
     style.textContent = [
+      "/* 1. منع الانزياح الأفقي والحفاظ على سلاسة التمرير العمودي */",
       "html, body { max-width: 100%; overflow-x: clip; }",
-      "header, .store-header, .top-bar { padding: 7px 11px !important; border-radius: 0 0 18px 18px !important; }",
-      ".moaath-offers-track { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; overflow-x: auto !important; overflow-y: hidden !important; gap: 10px !important; padding: 4px 2px 10px 2px !important; margin: 4px 0 8px 0 !important; scroll-snap-type: x mandatory !important; -webkit-overflow-scrolling: touch !important; scrollbar-width: none !important; }",
+      "",
+      "/* 2. ضغط الهيدر العلوي بمظهر زجاجي مستقبلِي */",
+      "header, .store-header, .top-bar {",
+      "  padding: 6px 11px !important;",
+      "  margin-bottom: 5px !important;",
+      "  border-radius: 0 0 18px 18px !important;",
+      "  backdrop-filter: blur(12px) !important;",
+      "  -webkit-backdrop-filter: blur(12px) !important;",
+      "}",
+      "",
+      "/* 3. ضغط وتنظيم شريط المستخدم ليصبح أكثر أناقة وأقل ارتفاعاً */",
+      ".user-bar, .user-info-bar, #userInfoBar, [class*='user-bar'] {",
+      "  border-radius: 14px !important;",
+      "  padding: 6px 9px !important;",
+      "  margin: 4px 0 6px 0 !important;",
+      "  font-size: 11px !important;",
+      "  line-height: 1.4 !important;",
+      "  background: rgba(255, 255, 255, 0.035) !important;",
+      "  border: 1px solid rgba(212, 175, 55, 0.25) !important;",
+      "}",
+      "body.light-mode .user-bar, body.light-mode .user-info-bar, body.light-mode #userInfoBar {",
+      "  background: rgba(255, 255, 255, 0.94) !important;",
+      "  border-color: rgba(180, 140, 20, 0.3) !important;",
+      "}",
+      "",
+      "/* 4. تحويل العروض الخاصة إلى شريط سحب أفقي مضغوط (Slider) */",
+      ".moaath-offers-track {",
+      "  display: flex !important;",
+      "  flex-direction: row !important;",
+      "  flex-wrap: nowrap !important;",
+      "  overflow-x: auto !important;",
+      "  overflow-y: hidden !important;",
+      "  scroll-snap-type: x mandatory !important;",
+      "  gap: 10px !important;",
+      "  padding: 4px 2px 10px 2px !important;",
+      "  margin: 4px 0 8px 0 !important;",
+      "  scrollbar-width: none !important;",
+      "  -webkit-overflow-scrolling: touch !important;",
+      "  touch-action: pan-x pan-y !important;",
+      "}",
       ".moaath-offers-track::-webkit-scrollbar { display: none !important; }",
-      ".moaath-offer-card-slide { flex: 0 0 84vw !important; width: 84vw !important; min-width: 230px !important; max-width: 300px !important; scroll-snap-align: start !important; box-sizing: border-box !important; margin: 0 !important; }",
-      ".categories { position: sticky !important; top: 0 !important; z-index: 45 !important; border-radius: 14px !important; }",
-      "#aiSmartAssistantBox.is-ai-collapsed #futuristicAiBody { display: none !important; }",
-      "#aiSmartAssistantBox:not(.is-ai-collapsed) #futuristicAiBody { display: block !important; }",
-      "body.moaath-ai-expanded #petCharRoot { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }",
-      "#moaathBackToTopBtn { position: fixed; bottom: 86px; left: 14px; z-index: 95; width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(212,175,55,0.6); background: rgba(15,23,42,0.9); color: #d4af37; font-size: 16px; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }",
-      "#moaathBackToTopBtn.is-visible { opacity: 1; pointer-events: auto; }"
-    ].join("
-");
+      ".moaath-offer-card-slide {",
+      "  flex: 0 0 84vw !important;",
+      "  width: 84vw !important;",
+      "  min-width: 230px !important;",
+      "  max-width: 300px !important;",
+      "  scroll-snap-align: start !important;",
+      "  box-sizing: border-box !important;",
+      "  margin: 0 !important;",
+      "  padding: 9px 10px !important;",
+      "  border-radius: 15px !important;",
+      "  background: linear-gradient(155deg, rgba(22, 30, 46, 0.95), rgba(12, 17, 28, 0.98)) !important;",
+      "  border: 1px solid rgba(212, 175, 55, 0.38) !important;",
+      "  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28) !important;",
+      "}",
+      "body.light-mode .moaath-offer-card-slide {",
+      "  background: #ffffff !important;",
+      "  border-color: rgba(180, 140, 20, 0.32) !important;",
+      "}",
+      "",
+      "/* 5. تثبيت شريط التصنيفات العلوي أثناء التمرير */",
+      ".categories {",
+      "  position: sticky !important;",
+      "  top: 0 !important;",
+      "  z-index: 45 !important;",
+      "  background: rgba(12, 16, 24, 0.9) !important;",
+      "  backdrop-filter: blur(12px) !important;",
+      "  -webkit-backdrop-filter: blur(12px) !important;",
+      "  border-radius: 14px !important;",
+      "  padding: 6px !important;",
+      "  scrollbar-width: none !important;",
+      "}",
+      "body.light-mode .categories { background: rgba(248, 250, 252, 0.94) !important; }",
+      "",
+      "/* 6. ضمان فتح وطي المساعد الذكي وإخفاء الجنية العائمة عند الفتح */",
+      "#aiSmartAssistantBox.is-ai-collapsed #futuristicAiBody, #futuristicAiBody.is-collapsed {",
+      "  display: none !important;",
+      "  max-height: 0 !important;",
+      "  opacity: 0 !important;",
+      "}",
+      "#aiSmartAssistantBox:not(.is-ai-collapsed) #futuristicAiBody:not(.is-collapsed) {",
+      "  display: block !important;",
+      "}",
+      "body.moaath-ai-expanded #petCharRoot {",
+      "  opacity: 0 !important;",
+      "  visibility: hidden !important;",
+      "  pointer-events: none !important;",
+      "  transform: scale(0.75) !important;",
+      "}",
+      "",
+      "/* 7. شريط إتمام الطلب السفلي الزجاجي */",
+      ".cart-bar, .bottom-cart-bar, .fixed-cart-bar, #bottomCartBar {",
+      "  border-radius: 18px !important;",
+      "  backdrop-filter: blur(14px) !important;",
+      "  -webkit-backdrop-filter: blur(14px) !important;",
+      "  border: 1px solid rgba(212, 175, 55, 0.35) !important;",
+      "  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.45) !important;",
+      "}",
+      "",
+      "/* 8. زر العودة للأعلى الذكي */",
+      "#moaathBackToTopBtn {",
+      "  position: fixed;",
+      "  bottom: 86px;",
+      "  left: 14px;",
+      "  z-index: 95;",
+      "  width: 38px;",
+      "  height: 38px;",
+      "  border-radius: 50%;",
+      "  border: 1px solid rgba(212, 175, 55, 0.6);",
+      "  background: rgba(15, 23, 42, 0.9);",
+      "  color: #d4af37;",
+      "  font-size: 16px;",
+      "  font-weight: 900;",
+      "  display: flex;",
+      "  align-items: center;",
+      "  justify-content: center;",
+      "  cursor: pointer;",
+      "  opacity: 0;",
+      "  pointer-events: none;",
+      "  transform: translateY(10px);",
+      "  transition: opacity 0.25s ease, transform 0.25s ease;",
+      "}",
+      "#moaathBackToTopBtn.is-visible {",
+      "  opacity: 1;",
+      "  pointer-events: auto;",
+      "  transform: translateY(0);",
+      "}"
+    ].join("\n");
   }
 
   function applyOffersHorizontalSlider() {
@@ -169,26 +293,26 @@
   }
 
   var timer = null;
-  function runFixes() {
-    injectStyles();
+  function runAll() {
+    injectStoreFuturisticCSS();
     applyOffersHorizontalSlider();
     bindToggleButtonDirect();
     syncAssistantState();
     mountBackToTop();
   }
 
-  function start() {
-    runFixes();
-    var observer = new MutationObserver(function () {
+  function init() {
+    runAll();
+    var obs = new MutationObserver(function () {
       clearTimeout(timer);
-      timer = setTimeout(runFixes, 200);
+      timer = setTimeout(runAll, 200);
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+    obs.observe(document.body, { childList: true, subtree: true });
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", start);
+    document.addEventListener("DOMContentLoaded", init);
   } else {
-    start();
+    init();
   }
 })();
