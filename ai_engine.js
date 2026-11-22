@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v77 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v78 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -136,7 +136,8 @@
     if (/coach_sakhr|anime_zain|athlete/.test(id)) return "energetic";
     if (/grand_chef|princess_layla|butler_farid|anime_ryu/.test(id)) return "formal";
     if (/friend_fadi/.test(id)) return "playful";
-    if (/anime_ritaj|lolo|pastry/.test(id)) return "sweet";
+    if (/lolo|noor|anime_ritaj/.test(id)) return "bright_joy";
+    if (/pastry/.test(id)) return "sweet";
     return "friendly";
   }
 
@@ -178,6 +179,11 @@
         a: ["ولك هلا بالغالي", "يا هلا بالصديق الوفي", "نورت الشاشة والمتجر", "أهلاً بأحلى زبون", "يا سيدي هلا ومية غلا"],
         b: ["خلينا نكسر الروتين ونضبط المزاج", "السهرة والمتة والتسالي كلها ناطرتك", "اليوم رح نطلع بأحلى سلة", "الجو بده كاسة متة وشي طيب"],
         c: ["شو عبالك نطلب اليوم؟", "خبرني شو ناقصك وخلّي الباقي عليّ!", "نبدأ بالسهرة ولا بطبخة مرتبة؟", "سمّي بالله واطلب يلي ببالك!"]
+      },
+      bright_joy: {
+        a: ["يا أهلاً ومرحباً بإشراقتك الجميلة", "أهلاً وسهلاً يا حلو، يومك مشرق معنا", "يا هلا بالبهجة والسرور", "أهلاً بك بروح مشرقة وجميلة", "يا أهلاً باللطف والبهجة"],
+        b: ["المتجر منور بوجودك والاختيارات حلوة", "جهزتلك أحلى ما لدينا بكل فرح", "كل شيء هنا يرحب بك بابتسامة مشرقة", "خلينا نرتب سلتك ببهجة وحيوية"],
+        c: ["شو حابب نختار اليوم بكل فرح؟", "خبرني بطلبك لأرتبه لك فوراً!", "نبدأ بأي صنف يسعدك اليوم؟", "بشو نبدأ سلتنا المبهجة الآن؟"]
       },
       sweet: {
         a: ["أهلاً يا حلو", "نورت عالمنا المشرق", "يا أهلاً باللطف كله", "أهلاً بك بابتسامة جميلة", "سعيدة جداً بوجودك"],
@@ -719,21 +725,22 @@
   }
 
   const PERSONA_VOICE_PROFILES = {
-    buddy:          { rate: 1.04, semi:  1.2, filterType: "peaking",  freq: 1400, gain:  3.0 },
-    lolo:           { rate: 1.02, semi:  3.6, filterType: "highshelf",freq: 2200, gain:  4.5 },
-    chef:           { rate: 0.96, semi: -2.2, filterType: "lowshelf", freq:  420, gain:  4.5 },
-    pastry:         { rate: 1.06, semi:  3.0, filterType: "highshelf",freq: 2400, gain:  4.0 },
-    athlete:        { rate: 1.14, semi:  0.8, filterType: "peaking",  freq: 1600, gain:  3.5 },
-    sheikh:         { rate: 0.88, semi: -3.8, filterType: "lowshelf", freq:  360, gain:  6.0 },
-    friend_saad:    { rate: 0.94, semi: -2.6, filterType: "lowshelf", freq:  400, gain:  4.0 },
-    coach_sakhr:    { rate: 1.12, semi: -2.8, filterType: "lowshelf", freq:  380, gain:  5.0 },
-    grand_chef:     { rate: 0.95, semi: -2.0, filterType: "lowshelf", freq:  450, gain:  4.0 },
-    princess_layla: { rate: 0.98, semi:  2.8, filterType: "highshelf",freq: 2100, gain:  3.5 },
-    butler_farid:   { rate: 0.93, semi: -2.4, filterType: "peaking",  freq:  950, gain:  3.0 },
-    friend_fadi:    { rate: 1.14, semi:  3.2, filterType: "peaking",  freq: 1800, gain:  4.5 },
-    anime_zain:     { rate: 1.16, semi:  2.5, filterType: "highshelf",freq: 2000, gain:  4.0 },
-    anime_ryu:      { rate: 0.99, semi: -1.8, filterType: "peaking",  freq:  850, gain:  3.0 },
-    anime_ritaj:    { rate: 1.08, semi:  4.0, filterType: "highshelf",freq: 2500, gain:  5.0 }
+    buddy:          { rate: 1.02, semi:  0.6, filterType: "peaking",  freq: 1400, gain:  1.5 },
+    lolo:           { rate: 1.06, semi:  2.4, filterType: "highshelf",freq: 2200, gain:  3.5 },
+    noor:           { rate: 1.07, semi:  2.6, filterType: "highshelf",freq: 2300, gain:  4.0 },
+    chef:           { rate: 0.98, semi: -0.8, filterType: "lowshelf", freq:  450, gain:  2.0 },
+    pastry:         { rate: 1.05, semi:  1.8, filterType: "highshelf",freq: 2200, gain:  3.0 },
+    athlete:        { rate: 1.08, semi:  0.3, filterType: "peaking",  freq: 1500, gain:  2.0 },
+    sheikh:         { rate: 0.94, semi: -1.6, filterType: "lowshelf", freq:  400, gain:  2.5 },
+    friend_saad:    { rate: 0.97, semi: -0.9, filterType: "lowshelf", freq:  420, gain:  1.5 },
+    coach_sakhr:    { rate: 1.06, semi: -1.2, filterType: "peaking",  freq: 1200, gain:  2.5 },
+    grand_chef:     { rate: 0.98, semi: -1.0, filterType: "lowshelf", freq:  450, gain:  2.0 },
+    princess_layla: { rate: 1.02, semi:  1.5, filterType: "highshelf",freq: 2100, gain:  2.5 },
+    butler_farid:   { rate: 0.98, semi: -0.8, filterType: "peaking",  freq: 1100, gain:  1.5 },
+    friend_fadi:    { rate: 1.08, semi:  1.6, filterType: "highshelf",freq: 2100, gain:  3.0 },
+    anime_zain:     { rate: 1.09, semi:  1.4, filterType: "highshelf",freq: 2000, gain:  2.5 },
+    anime_ryu:      { rate: 1.00, semi: -0.7, filterType: "peaking",  freq: 1000, gain:  1.5 },
+    anime_ritaj:    { rate: 1.08, semi:  2.6, filterType: "highshelf",freq: 2400, gain:  4.0 }
   };
 
   function getPersonaProfile(persona) {
@@ -741,11 +748,11 @@
     if (PERSONA_VOICE_PROFILES[id]) return PERSONA_VOICE_PROFILES[id];
     const semi = typeof persona?.pitchSemitones === "number" ? persona.pitchSemitones : 0;
     return {
-      rate: persona?.speed ? Math.max(0.85, Math.min(1.22, persona.speed / 1.2)) : 1.0,
+      rate: 1.02,
       semi,
       filterType: semi >= 0 ? "highshelf" : "lowshelf",
-      freq: semi >= 0 ? 2000 : 420,
-      gain: 3.5
+      freq: semi >= 0 ? 2100 : 420,
+      gain: 2.0
     };
   }
 
@@ -763,50 +770,17 @@
     stopWebAudioGraph();
     const prof = getPersonaProfile(persona);
     const isPreRecorded = entry && (entry.source === "local_repo" || entry.source === "persistent_cache");
-    const targetRate = isPreRecorded ? prof.rate : (persona.speed || prof.rate);
 
-    const ctx = ensureWebAudioCtx();
-    if (ctx && entry?.url) {
-      try {
-        if (ctx.state === "suspended") await ctx.resume();
-        const resp = await fetch(entry.url);
-        const arrBuf = await resp.arrayBuffer();
-        if (mySeq !== ttsRequestSeq) return;
-        const decoded = await ctx.decodeAudioData(arrBuf);
-        if (mySeq !== ttsRequestSeq) return;
-
-        const src = ctx.createBufferSource();
-        src.buffer = decoded;
-        src.playbackRate.value = targetRate;
-        if (typeof src.detune !== "undefined") {
-          src.detune.value = Math.max(-450, Math.min(450, prof.semi * 100));
-        }
-        const filter = ctx.createBiquadFilter();
-        filter.type = prof.filterType || "peaking";
-        filter.frequency.value = prof.freq || 1200;
-        filter.gain.value = prof.gain || 0;
-
-        src.connect(filter);
-        filter.connect(ctx.destination);
-        activeAudioCtxGraph = { src, filter };
-        src.onended = () => {
-          if (activeAudioCtxGraph && activeAudioCtxGraph.src === src) {
-            activeAudioCtxGraph = null;
-          }
-        };
-        src.start(0);
-        return;
-      } catch (_) {}
-    }
-
+    // المقاطع المسجلة مسبقاً تُشغّل بنقائها الأصلي دون فلاتر تثقل الصوت أو تشوّهه
     const player = ensureAudioPlayer();
     player.pause();
     player.src = entry.url;
     player.load();
-    player.preservesPitch = false;
-    player.mozPreservesPitch = false;
-    player.webkitPreservesPitch = false;
-    player.playbackRate = targetRate;
+    player.preservesPitch = true;
+    player.mozPreservesPitch = true;
+    player.webkitPreservesPitch = true;
+    player.playbackRate = isPreRecorded ? 1.0 : (persona.speed || prof.rate || 1.15);
+
     const p = player.play();
     if (p && typeof p.catch === "function") {
       p.catch(() => {
@@ -3356,7 +3330,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v77",
+      version: "v78",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
