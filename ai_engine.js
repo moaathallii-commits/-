@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v76 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v77 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -237,7 +237,7 @@
 
     // الأولوية القصوى: اختيار جملة بشرية مسجّلة من sounds_manifest.json لتطابق النص مع الصوت 100%
     if (soundsManifestData && soundsManifestData.personas) {
-      const pBank = soundsManifestData.personas[p.id] || soundsManifestData.personas["buddy"];
+      const pBank = soundsManifestData.personas[p.id];
       if (pBank) {
         let pool = [];
         if (intent === "greet") {
@@ -606,6 +606,7 @@
   function stopEmbeddedVoice() {
     ttsRequestSeq++;
     try { if (typeof window.speechSynthesis !== "undefined") window.speechSynthesis.cancel(); } catch (_) {}
+    stopWebAudioGraph();
     if (activeBufferSource) {
       try { activeBufferSource.stop(); } catch (_) {}
       try { activeBufferSource.disconnect(); } catch (_) {}
@@ -717,24 +718,105 @@
     if (titleText) badge.title = titleText;
   }
 
-  function playViaHtmlAudio(entry, persona, mySeq) {
+  const PERSONA_VOICE_PROFILES = {
+    buddy:          { rate: 1.04, semi:  1.2, filterType: "peaking",  freq: 1400, gain:  3.0 },
+    lolo:           { rate: 1.02, semi:  3.6, filterType: "highshelf",freq: 2200, gain:  4.5 },
+    chef:           { rate: 0.96, semi: -2.2, filterType: "lowshelf", freq:  420, gain:  4.5 },
+    pastry:         { rate: 1.06, semi:  3.0, filterType: "highshelf",freq: 2400, gain:  4.0 },
+    athlete:        { rate: 1.14, semi:  0.8, filterType: "peaking",  freq: 1600, gain:  3.5 },
+    sheikh:         { rate: 0.88, semi: -3.8, filterType: "lowshelf", freq:  360, gain:  6.0 },
+    friend_saad:    { rate: 0.94, semi: -2.6, filterType: "lowshelf", freq:  400, gain:  4.0 },
+    coach_sakhr:    { rate: 1.12, semi: -2.8, filterType: "lowshelf", freq:  380, gain:  5.0 },
+    grand_chef:     { rate: 0.95, semi: -2.0, filterType: "lowshelf", freq:  450, gain:  4.0 },
+    princess_layla: { rate: 0.98, semi:  2.8, filterType: "highshelf",freq: 2100, gain:  3.5 },
+    butler_farid:   { rate: 0.93, semi: -2.4, filterType: "peaking",  freq:  950, gain:  3.0 },
+    friend_fadi:    { rate: 1.14, semi:  3.2, filterType: "peaking",  freq: 1800, gain:  4.5 },
+    anime_zain:     { rate: 1.16, semi:  2.5, filterType: "highshelf",freq: 2000, gain:  4.0 },
+    anime_ryu:      { rate: 0.99, semi: -1.8, filterType: "peaking",  freq:  850, gain:  3.0 },
+    anime_ritaj:    { rate: 1.08, semi:  4.0, filterType: "highshelf",freq: 2500, gain:  5.0 }
+  };
+
+  function getPersonaProfile(persona) {
+    const id = persona?.id || "buddy";
+    if (PERSONA_VOICE_PROFILES[id]) return PERSONA_VOICE_PROFILES[id];
+    const semi = typeof persona?.pitchSemitones === "number" ? persona.pitchSemitones : 0;
+    return {
+      rate: persona?.speed ? Math.max(0.85, Math.min(1.22, persona.speed / 1.2)) : 1.0,
+      semi,
+      filterType: semi >= 0 ? "highshelf" : "lowshelf",
+      freq: semi >= 0 ? 2000 : 420,
+      gain: 3.5
+    };
+  }
+
+  let activeAudioCtxGraph = null;
+  function stopWebAudioGraph() {
+    if (activeAudioCtxGraph) {
+      try { activeAudioCtxGraph.src.stop(); } catch (_) {}
+      try { activeAudioCtxGraph.src.disconnect(); } catch (_) {}
+      activeAudioCtxGraph = null;
+    }
+  }
+
+  async function playClipWithPersonaCharacter(entry, persona, mySeq) {
     if (mySeq !== ttsRequestSeq) return;
+    stopWebAudioGraph();
+    const prof = getPersonaProfile(persona);
+    const isPreRecorded = entry && (entry.source === "local_repo" || entry.source === "persistent_cache");
+    const targetRate = isPreRecorded ? prof.rate : (persona.speed || prof.rate);
+
+    const ctx = ensureWebAudioCtx();
+    if (ctx && entry?.url) {
+      try {
+        if (ctx.state === "suspended") await ctx.resume();
+        const resp = await fetch(entry.url);
+        const arrBuf = await resp.arrayBuffer();
+        if (mySeq !== ttsRequestSeq) return;
+        const decoded = await ctx.decodeAudioData(arrBuf);
+        if (mySeq !== ttsRequestSeq) return;
+
+        const src = ctx.createBufferSource();
+        src.buffer = decoded;
+        src.playbackRate.value = targetRate;
+        if (typeof src.detune !== "undefined") {
+          src.detune.value = Math.max(-450, Math.min(450, prof.semi * 100));
+        }
+        const filter = ctx.createBiquadFilter();
+        filter.type = prof.filterType || "peaking";
+        filter.frequency.value = prof.freq || 1200;
+        filter.gain.value = prof.gain || 0;
+
+        src.connect(filter);
+        filter.connect(ctx.destination);
+        activeAudioCtxGraph = { src, filter };
+        src.onended = () => {
+          if (activeAudioCtxGraph && activeAudioCtxGraph.src === src) {
+            activeAudioCtxGraph = null;
+          }
+        };
+        src.start(0);
+        return;
+      } catch (_) {}
+    }
+
     const player = ensureAudioPlayer();
     player.pause();
     player.src = entry.url;
     player.load();
-    player.preservesPitch = true;
-    player.mozPreservesPitch = true;
-    player.webkitPreservesPitch = true;
-    // المقاطع المسجّلة في sounds/ تحفظ سرعة ونبرة الشخصية الأصلية بداخله؛ نستخدم 1.0x لتجنب توحيد السرعة
-    const isPreRecorded = entry && (entry.source === "local_repo" || entry.source === "persistent_cache");
-    player.playbackRate = isPreRecorded ? 1.0 : (persona.speed || 1.25);
+    player.preservesPitch = false;
+    player.mozPreservesPitch = false;
+    player.webkitPreservesPitch = false;
+    player.playbackRate = targetRate;
     const p = player.play();
     if (p && typeof p.catch === "function") {
       p.catch(() => {
         showBubble("اضغط على الجنية لتشغيل الصوت", 2600);
       });
     }
+  }
+
+  function playViaHtmlAudio(entry, persona, mySeq) {
+    playClipWithPersonaCharacter(entry, persona, mySeq);
   }
 
   async function playFallbackWithDetune(arrayBuf, persona, mySeq) {
@@ -3274,7 +3356,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v76",
+      version: "v77",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
