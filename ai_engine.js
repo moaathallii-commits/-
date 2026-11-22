@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v74 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v75 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -726,7 +726,9 @@
     player.preservesPitch = true;
     player.mozPreservesPitch = true;
     player.webkitPreservesPitch = true;
-    player.playbackRate = persona.speed || 1.38;
+    // المقاطع المسجّلة في sounds/ تحفظ سرعة ونبرة الشخصية الأصلية بداخله؛ نستخدم 1.0x لتجنب توحيد السرعة
+    const isPreRecorded = entry && (entry.source === "local_repo" || entry.source === "persistent_cache");
+    player.playbackRate = isPreRecorded ? 1.0 : (persona.speed || 1.25);
     const p = player.play();
     if (p && typeof p.catch === "function") {
       p.catch(() => {
@@ -840,10 +842,7 @@
       if (!exactForPersona && sessionCtx.lastManifestClip && looseSpeechNorm(sessionCtx.lastManifestClip.text) === tLoose) {
         relUrlsToTry.push(sessionCtx.lastManifestClip.file);
       }
-      if (!relUrlsToTry.length) {
-        const fallbackBuddy = manifestTextToFile.get(`buddy::${tLoose}`);
-        if (fallbackBuddy) relUrlsToTry.push(fallbackBuddy);
-      }
+      // عدم استخدام صوت شخصية أخرى لضمان احتفاظ كل شخصية بصوتها الخاص
     }
 
     // 2) إضافة المقاطع الأساسية القديمة إن طابقت حرفياً
@@ -3275,7 +3274,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v74",
+      version: "v75",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
