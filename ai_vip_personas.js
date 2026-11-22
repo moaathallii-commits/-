@@ -1,4 +1,4 @@
-/* ai_vip_personas.js — v4.1 (Full 8 VIP Personas + Showcase Modal + Prominent Entrance + System Registry) */
+/* ai_vip_personas.js — v4.2 (Full 8 VIP Personas + Showcase Modal + Prominent Entrance + System Registry) */
 (function () {
   if (window.__MOAATH_AI_VIP_LOADED__) return;
   window.__MOAATH_AI_VIP_LOADED__ = true;
@@ -16,8 +16,8 @@
       avatarUrl: "coach_sakhr.jpg",
       accent: "#10b981",
       voiceName: "Fenrir",
-      speed: 1.35,
-      pitchSemitones: -1.5,
+      speed: 1.42,
+      pitchSemitones: -2.0,
       shortDesc: "يجهّز لك سلات البروتين الاقتصادي ووجبات الطاقة والنشاط اليومي.",
       greet: "أهلاً بالبطل، يوم جديد يعني إنجاز جديد. ما هدفك أو طلبك اليوم؟"
     },
@@ -31,8 +31,8 @@
       avatarUrl: "grand_chef.jpg",
       accent: "#D4AF37",
       voiceName: "Charon",
-      speed: 1.25,
-      pitchSemitones: -1.0,
+      speed: 1.22,
+      pitchSemitones: -1.6,
       shortDesc: "يضبط لك مكونات طبخة اليوم والولائم من المتوفر في الفرع بدقة.",
       greet: "أهلاً بك سيدي الكريم، يسعدني تشريفك لمتجر معاذ. بماذا أخدمك اليوم؟"
     },
@@ -46,8 +46,8 @@
       avatarUrl: "princess_layla.jpg",
       accent: "#ec4899",
       voiceName: "Aoede",
-      speed: 1.25,
-      pitchSemitones: 1.2,
+      speed: 1.24,
+      pitchSemitones: 1.0,
       shortDesc: "تنسّق لك ضيافة الطوارئ الأنيقة وركن القهوة والشاي المنزلي.",
       greet: "مرحباً بك بكل رقي، كل شيء مرتب ومعد بعناية لأجلك."
     },
@@ -61,8 +61,8 @@
       avatarUrl: "butler_farid.jpg",
       accent: "#38bdf8",
       voiceName: "Orus",
-      speed: 1.25,
-      pitchSemitones: -1.2,
+      speed: 1.2,
+      pitchSemitones: -1.6,
       shortDesc: "يرصد لك أوفر الطرود والصفقات ويوازن سلتك الشهرية بأقل تكلفة.",
       greet: "أهلاً بك في جناحك الخاص، خدمتك بدقة وأناقة هي أولويتي."
     },
@@ -76,8 +76,8 @@
       avatarUrl: "friend_fadi.jpg",
       accent: "#f59e0b",
       voiceName: "Puck",
-      speed: 1.38,
-      pitchSemitones: 1.0,
+      speed: 1.45,
+      pitchSemitones: 2.4,
       shortDesc: "يجهّز لك سلة السهرة والمتة والموالح والنقرشات بأجواء مرحة.",
       greet: "ولك هلا بالغالي، نورت الشاشة والمتجر. شو عبالك نطلب اليوم؟"
     },
@@ -91,8 +91,8 @@
       avatarUrl: "anime_zain.jpg",
       accent: "#6366f1",
       voiceName: "Puck",
-      speed: 1.4,
-      pitchSemitones: 1.5,
+      speed: 1.48,
+      pitchSemitones: 1.8,
       shortDesc: "يرافقك في جلسات الدراسة والعمل ويجهز إمدادات الطاقة السريعة.",
       greet: "حيا الله الأبطال، انطلق واذكر ما تحتاجه لأجهزه لك فوراً."
     },
@@ -106,8 +106,8 @@
       avatarUrl: "anime_ryu.jpg",
       accent: "#0ea5e9",
       voiceName: "Charon",
-      speed: 1.3,
-      pitchSemitones: -0.8,
+      speed: 1.28,
+      pitchSemitones: -1.3,
       shortDesc: "يكتشف الأصناف النادرة التي أوشكت على النفاد ويقارن الأسعار بدقة.",
       greet: "تحية طيبة وراقية لك، أخبرني بما ترغب وسأنسقه لك فوراً."
     },
@@ -121,8 +121,8 @@
       avatarUrl: "anime_ritaj.jpg",
       accent: "#f472b6",
       voiceName: "Kore",
-      speed: 1.32,
-      pitchSemitones: 2.0,
+      speed: 1.38,
+      pitchSemitones: 2.4,
       shortDesc: "تقترح عليك أشهى الحلويات الباردة السريعة ومكافآت تعديل المزاج.",
       greet: "أهلاً يا حلو، نورت عالمنا المشرق. شو حابب نختار اليوم؟"
     }
