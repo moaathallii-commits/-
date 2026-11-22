@@ -1665,19 +1665,17 @@
 
         function getProductStockForBranch(prodOrOffer, branchId = activeBranchId) {
             if (!prodOrOffer) return 0;
-            const bId = branchId || "main";
+            const bId = String(branchId || "main").trim() || "main";
             if (bId === "main") {
-                if (prodOrOffer.branchStock && prodOrOffer.branchStock.main !== undefined) {
-                    return Math.max(0, parseInt(prodOrOffer.branchStock.main) || 0);
+                if (prodOrOffer.branchStock && prodOrOffer.branchStock.main !== undefined && prodOrOffer.branchStock.main !== null) {
+                    return Math.max(0, parseInt(prodOrOffer.branchStock.main, 10) || 0);
                 }
-                return Math.max(0, parseInt(prodOrOffer.stock) || 0);
-            } else {
-                if (prodOrOffer.branchStock && prodOrOffer.branchStock[bId] !== undefined) {
-                    return Math.max(0, parseInt(prodOrOffer.branchStock[bId]) || 0);
-                }
-                // Fallback for special offers or items that don't have branchStock explicitly initialized yet: default to general stock or 0
-                return Math.max(0, parseInt(prodOrOffer.stock) || 0);
+                return Math.max(0, parseInt(prodOrOffer.stock, 10) || 0);
             }
+            if (prodOrOffer.branchStock && prodOrOffer.branchStock[bId] !== undefined && prodOrOffer.branchStock[bId] !== null) {
+                return Math.max(0, parseInt(prodOrOffer.branchStock[bId], 10) || 0);
+            }
+            return 0;
         }
 
         function detectNearestBranchForCustomer() {
@@ -3092,6 +3090,149 @@
         }
         // ================= END LOCAL AI ENGINE =================
 
+
+        // ================= STEP 2: DISPATCH TO DRIVER (outForDelivery) & INVENTORY GUARD =================
+        function applyLocalOutForDeliveryFallback(orderIds, reasonText = "") {
+            const ids = Array.isArray(orderIds) ? orderIds : Object.keys(readyOrders || {});
+            if (!ids.length) return 0;
+            let moved = 0;
+            ids.forEach(oid => {
+                const rOrd = readyOrders?.[oid];
+                if (!rOrd) return;
+                dispatchedOrders[oid] = {
+                    ...rOrd,
+                    status: "outForDelivery",
+                    dispatchedAt: new Date().toISOString(),
+                    localFallback: true
+                };
+                delete readyOrders[oid];
+                moved++;
+            });
+            if (moved > 0) {
+                if (typeof window.renderReadyOrders === "function") window.renderReadyOrders();
+                if (typeof window.renderDispatchedOrders === "function") window.renderDispatchedOrders();
+                if (typeof window.renderExportManagerOrders === "function") window.renderExportManagerOrders();
+                if (typeof window.renderCustomerTrackingBanner === "function") window.renderCustomerTrackingBanner();
+                showToast(`🛵 تم نقل ${moved} طلب إلى (outForDelivery) محلياً${reasonText ? " — " + reasonText : ""}`, false);
+            }
+            return moved;
+        }
+
+        let __dispatchLock = false;
+
+        function safeRefreshDispatchViews() {
+            try { if (typeof window.renderReadyOrders === "function") window.renderReadyOrders(); } catch (_) {}
+            try { if (typeof window.renderDispatchedOrders === "function") window.renderDispatchedOrders(); } catch (_) {}
+            try { if (typeof window.renderExportManagerOrders === "function") window.renderExportManagerOrders(); } catch (_) {}
+            try { if (typeof window.renderCustomerTrackingBanner === "function") window.renderCustomerTrackingBanner(); } catch (_) {}
+        }
+
+        async function dispatchSingleOrderToDriver(orderId) {
+            if (__dispatchLock) return;
+            const ord = readyOrders?.[orderId];
+            if (!ord) return alert("⚠️ الطلب غير موجود في قائمة المجهزة.");
+
+            __dispatchLock = true;
+            try {
+                const bId = String(ord.branchId || "main").trim() || "main";
+                const bMap = getAllBranchesMap();
+                const bObj = bMap[bId] || bMap.main;
+                const targetDriverPhone = formatWhatsAppPhone(bObj?.driverPhone || deliveryDriverPhone || adminWhatsAppNumber);
+
+                const payload = {
+                    ...ord,
+                    status: "outForDelivery",
+                    dispatchedAt: new Date().toISOString(),
+                    dispatchedBy: currentUser?.phone || "admin"
+                };
+
+                const updates = {};
+                updates[`outForDelivery/${orderId}`] = payload;
+                updates[`readyForDelivery/${orderId}`] = null;
+
+                await db.ref().update(updates);
+                delete readyOrders[orderId];
+                dispatchedOrders[orderId] = payload;
+                safeRefreshDispatchViews();
+                showToast(`🛵 تم إرسال الطلب #${String(orderId).slice(-6)} للسائق (outForDelivery)!`);
+
+                if (targetDriverPhone) {
+                    const summaryItems = (ord.items || []).map(i => `• ${i.name} (×${i.qty})`).join("\n");
+                    const driverMsg = `🛵 *طلب جاهز للتوصيل - متجر معاذ*\n🏬 الفرع: *${ord.branchName || getBranchName(bId)}*\n👤 الزبون: ${ord.customerName} (${ord.customerPhone})\n🏘️ المنطقة: ${ord.customerRegion}\n📍 العنوان: ${ord.customerAddress}\n${ord.mapsUrl ? `🗺️ الموقع: ${ord.mapsUrl}\n` : ""}──────────────\n${summaryItems}\n──────────────\n💰 الإجمالي: *${(ord.totalSaleSYP || 0).toLocaleString()} ل.س*`;
+                    window.open(`https://wa.me/${targetDriverPhone}?text=${encodeURIComponent(driverMsg)}`, "_blank", "noopener,noreferrer");
+                }
+            } catch (err) {
+                const msg = String(err?.message || err || "");
+                if (/PERMISSION_DENIED/i.test(msg)) {
+                    applyLocalOutForDeliveryFallback([orderId], "صلاحيات Firebase على outForDelivery تتطلب التحديث");
+                } else {
+                    alert("❌ تعذر إرسال الطلب للسائق: " + msg);
+                }
+            } finally {
+                setTimeout(() => { __dispatchLock = false; }, 1200);
+            }
+        }
+
+        async function sendBulkOrdersToDriver(branchFilterId = null) {
+            if (__dispatchLock) return;
+            const keys = Object.keys(readyOrders || {}).filter(oid => {
+                if (!branchFilterId || branchFilterId === "all") return true;
+                return (readyOrders[oid]?.branchId || "main") === branchFilterId;
+            });
+            if (!keys.length) return alert("ℹ️ لا توجد طلبات مجهزة للإرسال للسائق.");
+            if (!confirm(`هل تريد إرسال (${keys.length}) طلب إلى قائمة التوصيل (outForDelivery)؟`)) return;
+
+            __dispatchLock = true;
+            try {
+                const updates = {};
+                const nowISO = new Date().toISOString();
+                keys.forEach(oid => {
+                    const ord = readyOrders[oid];
+                    const nextOrd = { ...ord, status: "outForDelivery", dispatchedAt: nowISO, dispatchedBy: currentUser?.phone || "admin" };
+                    updates[`outForDelivery/${oid}`] = nextOrd;
+                    updates[`readyForDelivery/${oid}`] = null;
+                });
+
+                await db.ref().update(updates);
+                keys.forEach(oid => {
+                    dispatchedOrders[oid] = { ...readyOrders[oid], status: "outForDelivery", dispatchedAt: nowISO };
+                    delete readyOrders[oid];
+                });
+                safeRefreshDispatchViews();
+                showToast(`✅ تم إرسال ${keys.length} طلبات إلى (outForDelivery) بنجاح!`);
+            } catch (err) {
+                const msg = String(err?.message || err || "");
+                if (/PERMISSION_DENIED/i.test(msg)) {
+                    applyLocalOutForDeliveryFallback(keys, "عزل محلي لحين تحديث قواعد outForDelivery");
+                } else {
+                    alert("❌ خطأ أثناء الإرسال الجماعي: " + msg);
+                }
+            } finally {
+                setTimeout(() => { __dispatchLock = false; }, 1200);
+            }
+        }
+
+        function sendBranchOrdersPrompt() {
+            const bMap = getAllBranchesMap();
+            const branchList = Object.values(bMap);
+            const choice = prompt(
+                "اكتب رقم الفرع للإرسال:\n" +
+                branchList.map((b, idx) => `${idx + 1}. ${b.name} (${b.id})`).join("\n") +
+                "\nأو اتركه فارغاً لإرسال جميع الفروع:"
+            );
+            if (choice === null) return;
+            const trimmed = String(choice).trim();
+            if (!trimmed) return sendBulkOrdersToDriver("all");
+            const idxNum = parseInt(trimmed, 10) - 1;
+            const matched = branchList[idxNum] || branchList.find(b => b.id === trimmed || b.name.includes(trimmed));
+            if (!matched) return alert("⚠️ لم يتم العثور على الفرع المحدد.");
+            sendBulkOrdersToDriver(matched.id);
+        }
+
+        window.dispatchSingleOrderToDriver = dispatchSingleOrderToDriver;
+        window.sendBulkOrdersToDriver = sendBulkOrdersToDriver;
+        window.sendBranchOrdersPrompt = sendBranchOrdersPrompt;
+
         // ================= CLOUD AI ENGINE (VIA CLOUDFLARE WORKER PROXY) =================
         function getEffectiveAIWorkerUrl() {
             const fromInput = ($("aiWorkerUrlInput")?.value || "").trim();
@@ -3959,28 +4100,55 @@
 - سيتم عكس حركة الدين أو استرجاع رصيد المحفظة المسبقة.`)) return;
 
             const updates = {};
-            const ordBranch = o.branchId || "main";
+            const ordBranch = String(o.branchId || "main").trim() || "main";
+            const restoredBaseQty = {};
+            const restoredOfferQty = {};
+
             (o.items || []).forEach(i => {
-                if (i.id.startsWith("OFFER_") && specialOffers[i.id]) {
-                    const curStock = getProductStockForBranch(specialOffers[i.id], ordBranch);
-                    const nextSt = curStock + i.qty;
-                    if (ordBranch === "main") updates[`specialOffers/${i.id}/stock`] = nextSt;
-                    updates[`specialOffers/${i.id}/branchStock/${ordBranch}`] = nextSt;
-                } else if (i.isPackage || String(i.id || "").endsWith("_PKG")) {
-                    const origId = i.origId || String(i.id || "").replace(/_PKG$/, "");
-                    if (products[origId]) {
-                        const pkgUnits = parseInt(i.pkgCount) || parseInt(products[origId].pkgCount) || 10;
-                        const addQty = i.qty * pkgUnits;
-                        const curStock = getProductStockForBranch(products[origId], ordBranch);
-                        const nextSt = curStock + addQty;
-                        if (ordBranch === "main") updates[`products/${origId}/stock`] = nextSt;
-                        updates[`products/${origId}/branchStock/${ordBranch}`] = nextSt;
+                const itemQty = Math.max(0, parseInt(i.qty, 10) || 0);
+                if (itemQty <= 0) return;
+                const itemId = String(i.id || "");
+                if (itemId.startsWith("OFFER_")) {
+                    if (specialOffers[itemId]) {
+                        restoredOfferQty[itemId] = (restoredOfferQty[itemId] || 0) + itemQty;
                     }
-                } else if (products[i.id]) {
-                    const curStock = getProductStockForBranch(products[i.id], ordBranch);
-                    const nextSt = curStock + i.qty;
-                    if (ordBranch === "main") updates[`products/${i.id}/stock`] = nextSt;
-                    updates[`products/${i.id}/branchStock/${ordBranch}`] = nextSt;
+                } else {
+                    const isPkgItem = !!(i.isPackage || itemId.endsWith("_PKG"));
+                    const baseId = String(i.origId || itemId.replace(/_PKG$/, "")).trim();
+                    if (baseId && products[baseId]) {
+                        const pkgUnits = isPkgItem
+                            ? Math.max(1, parseInt(i.pkgCount, 10) || parseInt(products[baseId].pkgCount, 10) || 10)
+                            : 1;
+                        restoredBaseQty[baseId] = (restoredBaseQty[baseId] || 0) + (itemQty * pkgUnits);
+                    }
+                }
+            });
+
+            Object.keys(restoredOfferQty).forEach(offerId => {
+                const so = specialOffers[offerId];
+                if (!so) return;
+                const curBranchSt = getProductStockForBranch(so, ordBranch);
+                const nextBranchSt = curBranchSt + restoredOfferQty[offerId];
+                updates[`specialOffers/${offerId}/branchStock/${ordBranch}`] = nextBranchSt;
+                if (ordBranch === "main") {
+                    updates[`specialOffers/${offerId}/stock`] = nextBranchSt;
+                } else {
+                    const curMainSt = Math.max(0, parseInt(so.stock, 10) || 0);
+                    updates[`specialOffers/${offerId}/stock`] = curMainSt + restoredOfferQty[offerId];
+                }
+            });
+
+            Object.keys(restoredBaseQty).forEach(baseId => {
+                const p = products[baseId];
+                if (!p) return;
+                const curBranchSt = getProductStockForBranch(p, ordBranch);
+                const nextBranchSt = curBranchSt + restoredBaseQty[baseId];
+                updates[`products/${baseId}/branchStock/${ordBranch}`] = nextBranchSt;
+                if (ordBranch === "main") {
+                    updates[`products/${baseId}/stock`] = nextBranchSt;
+                } else {
+                    const curMainSt = Math.max(0, parseInt(p.stock, 10) || 0);
+                    updates[`products/${baseId}/stock`] = curMainSt + restoredBaseQty[baseId];
                 }
             });
 
@@ -6057,37 +6225,22 @@
         <div class="container" id="myOrdersListContainer"></div>
     </div>
           <script>window.renderAdminBrainUnmatchedList = window.renderAdminBrainUnmatchedList || function () {};</script>
-<script src="moaath_core_registry.js?v=1"></script>
-<script src="ai_personas.js"></script>
-<script src="ai_recipes.js"></script>
-<script src="ai_brain.js"></script>
-<script src="ai_engine.js"></script>
-<script src="moaath_assistant_skills.js?v=1"></script>
-<script src="ai_vip_personas.js?v=4"></script>
-    <script src="moaath_vip_saad.js?v=1"></script>
-    <script src="moaath_vip_daily_engine.js?v=1"></script>
-    <script src="moaath_express_nav.js?v=1"></script>
-    <script src="moaath_gps_pro.js?v=2"></script>
-    <script src="moaath_persona_skill_btn.js?v=2"></script>
-<script src="moaath_voice_fresh_engine.js?v=4"></script>
-   <script src="moaath_egg_onboarding.js?v=1"></script>
-    <script src="moaath_egg_and_dispatch_fix.js?v=1"></script>
-    
-        
-    <script>
-  window.__MOAATH_VIP_LOADED__ = true;
-  window.MoaathVIP = window.MoaathVIPSystem || window.MoaathVIP || { ready: true };
-    </script>
-    
-<script src="ai_admin_architect.js"></script>
-<script src="moaath_inventory_guard.js?v=1"></script>
-<script src="store_ui_futuristic.js?v=13"></script>
-<script src="moaath_qa_runner.js?v=1"></script>
-<script src="moaath_tech_sage_presence.js?v=2"></script>
-<script src="moaath_learning_hub.js?v=3"></script>
-    
-</body>
-</html>
-
+    <script src="moaath_security_guard.js?v=1"></script>
+    <script>window.renderAdminBrainUnmatchedList = window.renderAdminBrainUnmatchedList || function () {};</script>
+    <script src="ai_personas.js"></script>
+    <script src="ai_recipes.js"></script>
+    <script src="ai_brain.js"></script>
+    <script src="ai_engine.js?v=71"></script>
+    <script src="ai_vip_personas.js"></script>
+    <script src="ai_admin_architect.js"></script>
+    <script src="moaath_voice_fresh_engine.js?v=3"></script>
+    <script src="moaath_learning_hub.js"></script>
+    <script src="moaath_gps_pro.js"></script>
+    <script src="moaath_persona_skill_btn.js"></script>
+    <script src="moaath_express_nav.js"></script>
+    <script src="moaath_vip_daily_engine.js"></script>
+    <script src="moaath_egg_onboarding.js?v=2"></script>
+    <script src="moaath_egg_and_dispatch_fix.js?v=2"></script>
+    <script src="store_ui_futuristic.js?v=13"></script>
 </body>
 </html>
