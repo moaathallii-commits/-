@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v75 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v76 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -25,11 +25,11 @@
     avatarUrl: "buddy.jpg",
     accent: "#00b0ff",
     voiceName: "Puck",
-    speed: 1.5,
-    pitchSemitones: 1.2,
-    fallbackDetune: 90,
-    fallbackRate: 1.5,
-    styleHint: "صوت ذكري شاب ودود ومبتسم بالعربية الفصحى المبسطة بسرعة إلقاء 1.5",
+    speed: 1.32,
+    pitchSemitones: 1.3,
+    fallbackDetune: 75,
+    fallbackRate: 1.32,
+    styleHint: "صوت ذكري شاب ودود ومبتسم بالعربية الفصحى المبسطة بسرعة إلقاء مضبوطة 1.32",
     greet: "أهلاً بك، نورت متجر معاذ. ماذا تحب أن أجهز لك اليوم؟",
     greets: ["أهلاً بك، نورت متجر معاذ. ماذا تحب أن أجهز لك اليوم؟"],
     chatGood: "أنا بخير والحمد لله، كيف يمكنني خدمتك اليوم؟",
@@ -3274,7 +3274,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v75",
+      version: "v76",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
