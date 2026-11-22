@@ -347,17 +347,38 @@
       dstName.textContent = srcName.textContent.trim();
     }
 
-    // 2) زر لوحة «ماذا تعلّمتُ عنك؟» في شريط الاختصارات
+    // 2) زر أيقونة سريع (🧠) في الشريط العلوي للمساعد للوصول الفوري بدون تمرير
+    const actions = header.querySelector(".fut-ai-header-actions");
+    if (actions && !document.getElementById("moaathLearningHubHeaderBtn")) {
+      const hBtn = document.createElement("button");
+      hBtn.id = "moaathLearningHubHeaderBtn";
+      hBtn.type = "button";
+      hBtn.title = "ماذا تعلّمتُ عنك؟";
+      hBtn.style.cssText =
+        "width:28px; height:28px; padding:0; border-radius:50%; border:1px solid rgba(56,189,248,0.5); " +
+        "background:rgba(56,189,248,0.16); color:#38bdf8; font-size:13px; display:inline-flex; " +
+        "align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;";
+      hBtn.textContent = "🧠";
+      hBtn.onclick = window.openMoaathLearningHubModal;
+      actions.insertBefore(hBtn, actions.firstChild);
+    }
+
+    // 3) وضع زر «🧠 ماذا تعلّمتُ عنك؟» في مقدمة شريط الاختصارات (يظهر فوراً دون الحاجة للتمرير لليسار)
     const chips = document.getElementById("petQuickPromptChips");
     if (chips && !document.getElementById("moaathLearningHubChipBtn")) {
       const hubBtn = document.createElement("button");
       hubBtn.id = "moaathLearningHubChipBtn";
       hubBtn.type = "button";
       hubBtn.className = "fut-chip-btn";
-      hubBtn.style.cssText = "border:1px solid rgba(56,189,248,0.45); background:rgba(56,189,248,0.14); color:#38bdf8;";
+      hubBtn.style.cssText = "border:1px solid rgba(56,189,248,0.48); background:rgba(56,189,248,0.16); color:#38bdf8;";
       hubBtn.textContent = "🧠 ماذا تعلّمتُ عنك؟";
       hubBtn.onclick = window.openMoaathLearningHubModal;
-      chips.appendChild(hubBtn);
+      const voiceBtn = document.getElementById("moaathFreeVoiceChatBtn");
+      if (voiceBtn && voiceBtn.nextSibling) {
+        chips.insertBefore(hubBtn, voiceBtn.nextSibling);
+      } else {
+        chips.insertBefore(hubBtn, chips.firstChild);
+      }
     }
   }
 
