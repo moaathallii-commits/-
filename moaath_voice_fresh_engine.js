@@ -1,25 +1,38 @@
 // ============================================================================
 // محرك مطابقة النص المكتوب مع النطق ومنع تراكم الطابور الصوتي
-// (moaath_voice_fresh_engine.js — v1.3)
-// - يحل مشكلة توافق الصوت مع النص في البداية ثم عدم التوافق لاحقاً عبر:
-//   1) إلغاء أي نطق سابق متراكم فوراً قبل بدء نطق جديد (منع طابور الانتظار)
-//   2) رقم تسلسلي (speechSeqId) لإسقاط أي رد صوتي متأخر يعود لنص قديم لم يعد معروضاً
-//   3) قراءة النص الظاهر فعلياً في الفقاعة أو الرد مباشرة دون استبداله بنص آخر
+// (moaath_voice_fresh_engine.js — v1.5)
+// - يوحّد تسلسل النطق عبر رقم تسلسلي عالمي (window.__moaathSpeechSeq)
+// - يتزامن مع ai_engine.js عبر window.__moaathVoiceSync لمنع تكرار النطق أو تداخله
+// - يلغي فوراً أي نطق سابق (Audio + speechSynthesis) قبل بدء نطق جديد
 // - يعمل بـ 0 حصة إضافية مع عزل أمني تام عن الدفع وشام كاش
 // ============================================================================
 (function () {
-  if (window.__MOAATH_VOICE_FRESH_ENGINE_V13__) return;
+  if (window.__MOAATH_VOICE_FRESH_ENGINE_V15__) return;
+  window.__MOAATH_VOICE_FRESH_ENGINE_V15__ = true;
+  window.__MOAATH_VOICE_FRESH_ENGINE_V14__ = true;
   window.__MOAATH_VOICE_FRESH_ENGINE_V13__ = true;
   window.__MOAATH_VOICE_FRESH_ENGINE_V12__ = true;
   window.__MOAATH_VOICE_FRESH_ENGINE_V11__ = true;
   window.__MOAATH_VOICE_FRESH_ENGINE_V1__ = true;
 
+  if (typeof window.__moaathSpeechSeq !== "number") {
+    window.__moaathSpeechSeq = 0;
+  }
+
   const AUDIO_MEM_CACHE = new Map();
   let currentAudioEl = null;
   let voicesReadyList = [];
-  let speechSeqId = 0;
   let lastSpokenCleanText = "";
   let bubbleDebounceTimer = null;
+
+  function nextSeq() {
+    window.__moaathSpeechSeq = (window.__moaathSpeechSeq || 0) + 1;
+    return window.__moaathSpeechSeq;
+  }
+
+  function currentSeq() {
+    return window.__moaathSpeechSeq || 0;
+  }
 
   function initLocalVoices() {
     try {
@@ -39,6 +52,7 @@
   function cleanSpeakableText(str) {
     return String(str || "")
       .replace(/[\u{1F300}-\u{1FAFF}﴿﴾۝]/gu, " ")
+      .replace(/^(🧚|🤖|✅|⚠️|💡|🎯|🛒|🔁|⏰|💬|🔒)\s*/u, "")
       .replace(/\s+/g, " ")
       .trim()
       .slice(0, 220);
@@ -69,6 +83,11 @@
 
   function stopCurrentSpeech() {
     try {
+      if (typeof window.__moaathStopAiEngineVoice === "function") {
+        window.__moaathStopAiEngineVoice();
+      }
+    } catch (_) {}
+    try {
       if (typeof window.speechSynthesis !== "undefined") {
         window.speechSynthesis.cancel();
       }
@@ -84,8 +103,8 @@
   }
 
   function speakLocally(text, cfg, seq) {
-    if (seq !== speechSeqId) return;
-    if (typeof window.speechSynthesis === "undefined" || !text) return;
+    if (seq !== currentSeq() || !text) return;
+    if (typeof window.speechSynthesis === "undefined") return;
     try {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
@@ -97,39 +116,57 @@
       if (arVoices.length > 0) {
         u.voice = arVoices[0];
       }
-      if (seq === speechSeqId) {
+      if (seq === currentSeq()) {
         window.speechSynthesis.speak(u);
       }
     } catch (_) {}
   }
 
   function playAudioSrc(srcUrl, rate, seq, onFail) {
-    if (seq !== speechSeqId) return;
+    if (seq !== currentSeq()) return;
     if (!currentAudioEl) {
       currentAudioEl = new Audio();
       currentAudioEl.playsInline = true;
       currentAudioEl.preload = "auto";
     }
-    currentAudioEl.src = srcUrl;
-    currentAudioEl.playbackRate = rate || 1.12;
-    currentAudioEl.play().catch(() => {
-      if (seq === speechSeqId && typeof onFail === "function") onFail();
-    });
+    try {
+      currentAudioEl.pause();
+      currentAudioEl.currentTime = 0;
+      currentAudioEl.src = srcUrl;
+      currentAudioEl.preservesPitch = true;
+      currentAudioEl.mozPreservesPitch = true;
+      currentAudioEl.webkitPreservesPitch = true;
+      currentAudioEl.playbackRate = rate || 1.12;
+      currentAudioEl.onended = () => {
+        if (currentAudioEl) currentAudioEl.onended = null;
+      };
+      currentAudioEl.onerror = () => {
+        if (seq === currentSeq() && typeof onFail === "function") onFail();
+      };
+      const p = currentAudioEl.play();
+      if (p && typeof p.catch === "function") {
+        p.catch(() => {
+          if (seq === currentSeq() && typeof onFail === "function") onFail();
+        });
+      }
+    } catch (_) {
+      if (seq === currentSeq() && typeof onFail === "function") onFail();
+    }
   }
 
   async function speakFresh(rawText, personaId = null) {
     const clean = cleanSpeakableText(rawText);
     if (!clean) return "";
 
-    // إلغاء أي نطق سابق فوراً ورفع عداد التسلسل لمنع تداخل أو تأخر المقاطع
     stopCurrentSpeech();
-    const mySeq = ++speechSeqId;
+    const mySeq = nextSeq();
     lastSpokenCleanText = clean;
+    window.__moaathVoiceSync = { text: clean, ts: Date.now(), owner: "fresh_engine" };
 
     const pid = personaId || getActivePersonaId();
     const cfg = getPersonaVoiceConfig(pid);
+    const cacheKey = `${pid}::${cfg.voiceName}::${clean}`;
 
-    const cacheKey = `${cfg.voiceName}::${clean}`;
     if (AUDIO_MEM_CACHE.has(cacheKey)) {
       playAudioSrc(AUDIO_MEM_CACHE.get(cacheKey), cfg.rate, mySeq, () => speakLocally(clean, cfg, mySeq));
       return clean;
@@ -147,10 +184,9 @@
       return clean;
     }
 
-    // نبدأ النطق المحلي الفوري إذا لم يرد الخادم خلال 900ms، وإذا رد الخادم بصوت أوضح نحدّثه فقط إذا ما زلنا في نفس النص
     let localFallbackStarted = false;
     const quickLocalTimer = setTimeout(() => {
-      if (mySeq === speechSeqId && !localFallbackStarted) {
+      if (mySeq === currentSeq() && !localFallbackStarted) {
         localFallbackStarted = true;
         speakLocally(clean, cfg, mySeq);
       }
@@ -176,11 +212,10 @@
       if (abortTimer) clearTimeout(abortTimer);
       if (quickLocalTimer) clearTimeout(quickLocalTimer);
 
-      // إذا تغيّر النص المعروض أثناء الانتظار، نتجاهل هذا الرد القديم تماماً
-      if (mySeq !== speechSeqId) return clean;
+      if (mySeq !== currentSeq()) return clean;
 
       const json = await res.json();
-      if (mySeq !== speechSeqId) return clean;
+      if (mySeq !== currentSeq()) return clean;
 
       if (res.ok && json?.ok && json?.audioBase64 && !/pcm|L16/i.test(json.mimeType || "")) {
         const dataUri = `data:${json.mimeType || "audio/mpeg"};base64,${json.audioBase64}`;
@@ -194,19 +229,32 @@
     } catch (_) {
       if (abortTimer) clearTimeout(abortTimer);
       if (quickLocalTimer) clearTimeout(quickLocalTimer);
-      if (mySeq === speechSeqId && !localFallbackStarted) {
+      if (mySeq === currentSeq() && !localFallbackStarted) {
         speakLocally(clean, cfg, mySeq);
       }
     }
     return clean;
   }
 
+  function isAlreadySpokenByAiEngine(cleanTxt) {
+    const sync = window.__moaathVoiceSync;
+    if (!sync || sync.owner !== "ai_engine") return false;
+    if (Date.now() - (sync.ts || 0) > 2500) return false;
+    const a = cleanSpeakableText(sync.text || "");
+    const b = cleanSpeakableText(cleanTxt || "");
+    return !!(a && b && (a === b || a.includes(b.slice(0, 18)) || b.includes(a.slice(0, 18))));
+  }
+
   function getVisibleBubbleText() {
     const bubble =
+      document.getElementById("petMiniBubble") ||
       document.getElementById("petBubbleText") ||
       document.getElementById("fairyBubbleText") ||
       document.querySelector("#petCharRoot .pet-bubble, #petCharRoot [class*='bubble'], #petCharRoot p");
-    return bubble ? cleanSpeakableText(bubble.textContent || "") : "";
+    if (!bubble) return "";
+    const style = window.getComputedStyle(bubble);
+    if (style.display === "none" || style.visibility === "hidden") return "";
+    return cleanSpeakableText(bubble.textContent || "");
   }
 
   function watchVisibleCharacterBubble() {
@@ -216,8 +264,12 @@
         const txt = getVisibleBubbleText();
         if (!txt || txt.length < 3) return;
         if (txt === lastSpokenCleanText) return;
+        if (isAlreadySpokenByAiEngine(txt)) {
+          lastSpokenCleanText = txt;
+          return;
+        }
         speakFresh(txt, getActivePersonaId());
-      }, 250);
+      }, 280);
     };
 
     const obs = new MutationObserver(scheduleBubbleSync);
@@ -233,7 +285,7 @@
           const clean = cleanSpeakableText(txt);
           if (clean) {
             stopCurrentSpeech();
-            const mySeq = ++speechSeqId;
+            const mySeq = nextSeq();
             lastSpokenCleanText = clean;
             const cfg = getPersonaVoiceConfig(getActivePersonaId());
             if (fnName === "speakPetText" || fnName === "speakText") {
@@ -251,18 +303,18 @@
   }
 
   window.MoaathVoiceFreshEngine = {
-    version: "1.3",
+    version: "1.5",
     speak: speakFresh,
     pickFresh: (pid, txt) => cleanSpeakableText(txt),
     stop: () => {
-      speechSeqId++;
+      nextSeq();
       stopCurrentSpeech();
     },
     clearCache: () => AUDIO_MEM_CACHE.clear()
   };
 
   if (window.MoaathSystemRegistry && typeof window.MoaathSystemRegistry.register === "function") {
-    window.MoaathSystemRegistry.register("voice_fresh_engine", "1.3");
+    window.MoaathSystemRegistry.register("voice_fresh_engine", "1.5");
   }
 
   setTimeout(() => {
