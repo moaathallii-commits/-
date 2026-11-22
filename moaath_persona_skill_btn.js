@@ -1,18 +1,17 @@
 // ============================================================================
-// زر «⚡ استخدم المهارة» المتكيف تلقائياً مع جميع الشخصيات (moaath_persona_skill_btn.js — v1.0)
-// - يتعرف تلقائياً على الشخصية النشطة (الأساسية + الـ 9 VIP بما فيها سعد) ويغيّر عنوان الزر ومهارته فوراً
-// - تدوير ذكي للسيناريوهات (3 سيناريوهات لكل شخصية لمنع التكرار عند الضغط المتكرر)
-// - ربط مباشر بالمخزون الفعلي للفرع النشط (getProductStockForBranch) وبالأسعار الحية (calcSYP)
-// - عرض بطاقة تأكيد مستقبلية بالصور والأسعار قبل الإضافة للسلة (احتراماً لقرار الزبون)
-// - تكامل مع الذاكرة المشتركة (MoaathLearningHub) ومع غرفة سعد (MoaathSaadRoom)
-// - يعمل محلياً بالكامل (0 حصة API) مع عزل أمني تام عن الدفع وشام كاش
+// زر «⚡ استخدم المهارة» المتكيف تلقائياً مع جميع الشخصيات (moaath_persona_skill_btn.js — v1.1)
+// - قراءة دقيقة للشخصية النشطة من كافة المصادر (العائمة/الشريط/المعرض/localStorage)
+// - تحديث فوري لعنوان الزر ومهارته ونتيجته دون أي تأخير أو بقاء على مهارة قديمة
+// - تدوير ذكي للسيناريوهات + ربط مباشر بالمخزون الفعلي للفرع (0 حصة API)
+// - عزل أمني تام عن الدفع وشام كاش
 // ============================================================================
 (function () {
-  if (window.__MOAATH_PERSONA_SKILL_BTN_V1__) return;
+  if (window.__MOAATH_PERSONA_SKILL_BTN_V11__) return;
+  window.__MOAATH_PERSONA_SKILL_BTN_V11__ = true;
   window.__MOAATH_PERSONA_SKILL_BTN_V1__ = true;
 
   const ROTATION_KEY = "moaath_persona_skill_rotation_v1";
-  let lastRenderedPersonaId = null;
+  let lastRenderedSignature = "";
 
   const escHtml = (s) =>
     typeof window.moaathEscapeHtml === "function"
@@ -42,11 +41,44 @@
     try { if (navigator.vibrate) navigator.vibrate(p); } catch (_) {}
   }
 
-  function getActivePersonaId() {
+  // تحديد الشخصية النشطة بدقة عبر فحص السجل والواجهة الظاهرة والاسم
+  function resolveActivePersonaKey() {
+    let pid = "";
     try {
       const prefs = JSON.parse(localStorage.getItem("moaath_store_pet_prefs") || "{}");
-      if (prefs && prefs.persona) return String(prefs.persona).trim();
+      if (prefs && prefs.persona) pid = String(prefs.persona).trim();
     } catch (_) {}
+
+    if (window.MoaathVIPSystem && window.MoaathVIPSystem.activePersonaId) {
+      pid = String(window.MoaathVIPSystem.activePersonaId).trim();
+    } else if (window.activePetPersona) {
+      pid = String(window.activePetPersona).trim();
+    }
+
+    // فحص الاسم المعروض حالياً في الشريط أو زر الشخصية
+    const nameEl =
+      document.getElementById("moaathRestorePersonaName") ||
+      document.getElementById("fairyBarActiveName") ||
+      document.getElementById("petActiveName");
+    const visibleName = nameEl ? String(nameEl.textContent || "").trim() : "";
+
+    const byNameMap = [
+      { rx: /سعد/, id: "friend_saad" },
+      { rx: /شيف|الطهاة/, id: "grand_chef" },
+      { rx: /ريتاج/, id: "anime_ritaj" },
+      { rx: /صخر/, id: "coach_sakhr" },
+      { rx: /ليلى/, id: "princess_layla" },
+      { rx: /فريد/, id: "butler_farid" },
+      { rx: /فادي/, id: "friend_fadi" },
+      { rx: /زين/, id: "anime_zain" },
+      { rx: /ريو/, id: "anime_ryu" }
+    ];
+
+    for (const entry of byNameMap) {
+      if (entry.rx.test(visibleName)) return entry.id;
+    }
+
+    if (pid) return pid;
     return "buddy";
   }
 
@@ -119,9 +151,6 @@
     return cur % Math.max(1, count);
   }
 
-  // ==========================================================================
-  // 1) تعريف مهارات جميع الشخصيات (الأساسية + الـ 9 VIP) مع التدوير الذكي
-  // ==========================================================================
   const SKILL_DEFINITIONS = {
     grand_chef: {
       btnLabel: "⚡ طبخة بمكونات المتجر",
@@ -383,9 +412,6 @@
     return SKILL_DEFINITIONS[pid] || SKILL_DEFINITIONS.default;
   }
 
-  // ==========================================================================
-  // 2) عرض نافذة نتيجة المهارة الاحترافية (بالصور + التأكيد قبل الإضافة)
-  // ==========================================================================
   let currentSkillItems = [];
 
   function openSkillResultModal(personaId) {
@@ -462,14 +488,11 @@
     vibrate(15);
   }
 
-  // ==========================================================================
-  // 3) زر «⚡ استخدم المهارة» المتكيف تلقائياً داخل لوحة المساعد الشخصي
-  // ==========================================================================
-  function mountAndSyncSkillButton() {
-    const pid = getActivePersonaId();
+  function mountAndSyncSkillButton(force = false) {
+    const pid = resolveActivePersonaKey();
     const def = getSkillDefForPersona(pid);
+    const sig = `${pid}::${def.btnLabel}`;
 
-    // 1) وضعه كأول زر بارز في شريط الاختصارات (#petQuickPromptChips)
     const chips = document.getElementById("petQuickPromptChips");
     if (chips) {
       let chipBtn = document.getElementById("moaathUseSkillChipBtn");
@@ -481,7 +504,7 @@
         chipBtn.onclick = () => window.MoaathPersonaSkill.trigger();
         chips.insertBefore(chipBtn, chips.firstChild);
       }
-      if (lastRenderedPersonaId !== pid || !chipBtn.textContent) {
+      if (force || lastRenderedSignature !== sig || chipBtn.textContent !== def.btnLabel) {
         chipBtn.textContent = def.btnLabel;
         chipBtn.style.cssText =
           `border:1.5px solid ${def.accent} !important; ` +
@@ -490,7 +513,6 @@
       }
     }
 
-    // 2) وضعه أيضاً داخل جسم المساعد (#futuristicAiBody) ليكون مرئياً فوراً عند فتح اللوحة
     const aiBody = document.getElementById("futuristicAiBody");
     if (aiBody) {
       let bodyBtn = document.getElementById("moaathUseSkillBodyBtn");
@@ -504,7 +526,7 @@
         bodyBtn.onclick = () => window.MoaathPersonaSkill.trigger();
         aiBody.insertBefore(bodyBtn, aiBody.firstChild);
       }
-      if (lastRenderedPersonaId !== pid || !bodyBtn.dataset.boundLabel) {
+      if (force || lastRenderedSignature !== sig || bodyBtn.dataset.boundLabel !== def.btnLabel) {
         bodyBtn.dataset.boundLabel = def.btnLabel;
         bodyBtn.style.border = `1px solid ${def.accent}`;
         bodyBtn.style.background = `linear-gradient(135deg, rgba(212,175,55,0.16), rgba(15,20,30,0.85))`;
@@ -513,13 +535,14 @@
       }
     }
 
-    lastRenderedPersonaId = pid;
+    lastRenderedSignature = sig;
   }
 
   window.MoaathPersonaSkill = {
-    version: "1.0",
+    version: "1.1",
     trigger() {
-      openSkillResultModal(getActivePersonaId());
+      mountAndSyncSkillButton(true);
+      openSkillResultModal(resolveActivePersonaKey());
     },
     addAllToCart() {
       if (!currentSkillItems.length) return;
@@ -533,18 +556,18 @@
         window.showToast(`✅ تمت إضافة ${currentSkillItems.length} أصناف من مهارة المساعد إلى السلة!`);
       }
     },
-    sync: mountAndSyncSkillButton
+    sync: () => mountAndSyncSkillButton(true)
   };
 
   if (window.MoaathSystemRegistry && typeof window.MoaathSystemRegistry.register === "function") {
-    window.MoaathSystemRegistry.register("persona_skill_btn", "1.0");
+    window.MoaathSystemRegistry.register("persona_skill_btn", "1.1");
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", mountAndSyncSkillButton);
+    document.addEventListener("DOMContentLoaded", () => mountAndSyncSkillButton(true));
   } else {
-    mountAndSyncSkillButton();
+    mountAndSyncSkillButton(true);
   }
-  setTimeout(mountAndSyncSkillButton, 900);
-  setInterval(mountAndSyncSkillButton, 800);
+  setTimeout(() => mountAndSyncSkillButton(true), 800);
+  setInterval(() => mountAndSyncSkillButton(false), 450);
 })();
