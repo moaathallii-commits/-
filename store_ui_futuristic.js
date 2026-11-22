@@ -1,7 +1,7 @@
-/* store_ui_futuristic.js - v5.3 (Mobile-Safe, Zero-Flicker Offers Slider, All 15 Enhancements) */
+/* store_ui_futuristic.js - v5.4 (All 15 Store UI + All 10 AI Assistant Tab Enhancements | Mobile-Safe, Zero-Flicker) */
 (function () {
-  if (window.__MOAATH_STORE_UI_V53__) return;
-  window.__MOAATH_STORE_UI_V53__ = true;
+  if (window.__MOAATH_STORE_UI_V54__) return;
+  window.__MOAATH_STORE_UI_V54__ = true;
 
   var COLLAPSE_KEY = "moaath_store_ai_collapsed";
   var USERBAR_COLLAPSE_KEY = "moaath_store_userbar_collapsed";
@@ -47,12 +47,65 @@
       ".moaath-offer-dot { width: 6px !important; height: 6px !important; border-radius: 999px !important; background: rgba(212, 175, 55, 0.28) !important; transition: width 0.22s ease, background 0.22s ease !important; }",
       ".moaath-offer-dot.is-active { width: 16px !important; background: #D4AF37 !important; }",
 
-      ".moaath-unified-pill-bar { display: flex !important; align-items: center !important; gap: 5px !important; width: 100% !important; border-radius: 999px !important; padding: 4px 6px !important; margin: 5px 0 8px 0 !important; background: rgba(255, 255, 255, 0.045) !important; border: 1px solid rgba(212, 175, 55, 0.42) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; box-sizing: border-box !important; }",
+      ".moaath-unified-pill-bar { display: flex !important; align-items: center !important; gap: 5px !important; width: 100% !important; border-radius: 999px !important; padding: 4px 6px !important; margin: 5px 0 6px 0 !important; background: rgba(255, 255, 255, 0.045) !important; border: 1px solid rgba(212, 175, 55, 0.42) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; box-sizing: border-box !important; }",
       "body.light-mode .moaath-unified-pill-bar { background: #ffffff !important; }",
       ".moaath-unified-pill-input { flex: 1 !important; min-width: 0 !important; border: none !important; background: transparent !important; color: var(--text-color) !important; font-size: 11px !important; padding: 4px 8px !important; outline: none !important; }",
       ".moaath-pill-action { border-radius: 999px !important; padding: 4px 9px !important; font-size: 10px !important; font-weight: 800 !important; border: 1px solid rgba(212, 175, 55, 0.38) !important; background: rgba(212, 175, 55, 0.14) !important; color: #D4AF37 !important; cursor: pointer !important; white-space: nowrap !important; flex-shrink: 0 !important; }",
       ".moaath-pill-mic { width: 28px !important; height: 28px !important; padding: 0 !important; border-radius: 50% !important; background: rgba(16, 185, 129, 0.16) !important; border-color: rgba(16, 185, 129, 0.42) !important; color: #10b981 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; }",
 
+      /* === AI Assistant Tab v5.4: 10 Compact Futuristic Enhancements === */
+      "@keyframes moaathAiAmbientGlow { 0%, 100% { box-shadow: 0 0 12px rgba(56, 189, 248, 0.35), 0 0 22px rgba(212, 175, 55, 0.2); border-color: rgba(56, 189, 248, 0.75); } 50% { box-shadow: 0 0 18px rgba(212, 175, 55, 0.45), 0 0 28px rgba(56, 189, 248, 0.25); border-color: rgba(212, 175, 55, 0.85); } }",
+      "@keyframes moaathDotPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.35); opacity: 0.7; } }",
+
+      "#aiSmartAssistantBox.fut-ai-dock { padding: 6px 8px !important; margin: 4px 0 8px 0 !important; border-radius: 16px !important; background: linear-gradient(155deg, rgba(18, 25, 39, 0.94), rgba(15, 20, 30, 0.98)) !important; border: 1px solid rgba(212, 175, 55, 0.34) !important; transition: border-color 0.25s ease, box-shadow 0.25s ease !important; }",
+      "body.light-mode #aiSmartAssistantBox.fut-ai-dock { background: #ffffff !important; border-color: rgba(212, 175, 55, 0.4) !important; }",
+      "#aiSmartAssistantBox.moaath-ai-active-glow { animation: moaathAiAmbientGlow 1.6s ease-in-out infinite !important; }",
+
+      /* #1 + #3 + #6 Hide duplicate mic, static heading, long persona description, chips toggle, old voice bar */
+      "#aiSmartAssistantBox #petDirectMicBtn, #aiSmartAssistantBox #fairySpecialtyNote, #aiSmartAssistantBox #futuristicChipsToggleBtn, #aiSmartAssistantBox #futVoiceSubControls, #aiSmartAssistantBox #petPersonaBar, #aiSmartAssistantBox .moaath-ai-static-title-hidden { display: none !important; }",
+
+      /* #2 Unified Compact Single-Row Control Header */
+      "#aiSmartAssistantBox #futuristicAiHeader { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 5px !important; flex-wrap: nowrap !important; width: 100% !important; }",
+      "#moaathAiCompactPersonaBtn { display: inline-flex !important; align-items: center !important; gap: 6px !important; background: rgba(255, 255, 255, 0.045) !important; border: 1px solid rgba(212, 175, 55, 0.35) !important; border-radius: 999px !important; padding: 3px 9px 3px 4px !important; cursor: pointer !important; min-width: 0 !important; flex: 1 1 auto !important; max-width: 50% !important; color: var(--text-color) !important; }",
+      "#moaathAiCompactAvatarWrap { position: relative !important; width: 24px !important; height: 24px !important; flex-shrink: 0 !important; }",
+      "#moaathAiCompactAvatar { width: 24px !important; height: 24px !important; border-radius: 50% !important; object-fit: cover !important; border: 1.5px solid #D4AF37 !important; display: block !important; }",
+      /* #4 Live Status Dot on Persona Avatar */
+      "#moaathPersonaStatusDot { position: absolute !important; bottom: -1px !important; right: -1px !important; width: 8px !important; height: 8px !important; border-radius: 50% !important; background: #10b981 !important; border: 1.5px solid #0f141e !important; box-shadow: 0 0 6px #10b981 !important; }",
+      "#moaathPersonaStatusDot.is-busy { background: #38bdf8 !important; box-shadow: 0 0 8px #38bdf8 !important; animation: moaathDotPulse 0.9s infinite !important; }",
+      "#moaathPersonaStatusDot.is-offline { background: #f59e0b !important; box-shadow: 0 0 6px #f59e0b !important; }",
+      "#moaathAiCompactName { font-size: 10.5px !important; font-weight: 800 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; color: var(--text-color) !important; }",
+
+      "#aiSmartAssistantBox .fut-ai-header-actions { display: flex !important; align-items: center !important; gap: 4px !important; flex-shrink: 0 !important; }",
+      "#aiSmartAssistantBox .moaath-ai-mini-icon { width: 28px !important; height: 28px !important; padding: 0 !important; border-radius: 50% !important; border: 1px solid rgba(212, 175, 55, 0.34) !important; background: rgba(255, 255, 255, 0.05) !important; color: #D4AF37 !important; font-size: 12px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; flex-shrink: 0 !important; }",
+      "#aiSmartAssistantBox .moaath-ai-mini-icon.is-muted { opacity: 0.5 !important; color: #94a3b8 !important; }",
+      "#aiSmartAssistantBox #futVipShowcaseBtn { padding: 4px 8px !important; font-size: 10px !important; border-radius: 999px !important; background: rgba(212, 175, 55, 0.14) !important; color: #D4AF37 !important; border: 1px solid rgba(212, 175, 55, 0.42) !important; }",
+      "#aiSmartAssistantBox #futuristicAiToggleBtn { padding: 4px 9px !important; font-size: 10px !important; border-radius: 999px !important; background: rgba(255, 255, 255, 0.05) !important; color: var(--text-color) !important; border: 1px solid rgba(212, 175, 55, 0.38) !important; }",
+      "#aiSmartAssistantBox.is-ai-collapsed #moaathAiCompactVoiceBtn, #aiSmartAssistantBox.is-ai-collapsed #moaathAiCompactReplayBtn { display: none !important; }",
+
+      /* #5 Embedded Submit Button Inside Pill Prompt Input */
+      "#aiSmartAssistantBox #futuristicAiBody { margin-top: 6px !important; }",
+      "#moaathAiEmbeddedInputRow { position: relative !important; display: flex !important; align-items: center !important; width: 100% !important; border-radius: 999px !important; background: rgba(255, 255, 255, 0.05) !important; border: 1px solid rgba(212, 175, 55, 0.38) !important; padding: 2px 4px 2px 3px !important; box-sizing: border-box !important; margin-bottom: 5px !important; }",
+      "body.light-mode #moaathAiEmbeddedInputRow { background: #f8fafc !important; }",
+      "#moaathAiEmbeddedInputRow #aiShoppingPromptInput { flex: 1 !important; min-width: 0 !important; border: none !important; background: transparent !important; color: var(--text-color) !important; font-size: 11px !important; padding: 5px 10px !important; margin: 0 !important; outline: none !important; box-shadow: none !important; }",
+      "#moaathAiEmbeddedInputRow .moaath-ai-embedded-send { width: auto !important; min-width: 34px !important; height: 28px !important; padding: 0 10px !important; margin: 0 !important; border-radius: 999px !important; border: none !important; background: linear-gradient(135deg, #D4AF37, #10b981) !important; color: #0f141e !important; font-size: 11px !important; font-weight: 900 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 3px !important; cursor: pointer !important; flex-shrink: 0 !important; }",
+
+      /* #6 Always-Visible Slim One-Tap Chips Strip (Unified Palette) */
+      "#aiSmartAssistantBox #petQuickPromptChips { display: flex !important; flex-wrap: nowrap !important; gap: 5px !important; overflow-x: auto !important; scrollbar-width: none !important; padding: 2px 0 !important; margin: 3px 0 0 0 !important; max-height: 36px !important; opacity: 1 !important; pointer-events: auto !important; }",
+      "#aiSmartAssistantBox.is-ai-collapsed #petQuickPromptChips { display: none !important; }",
+      "#aiSmartAssistantBox .fut-chip-btn { flex-shrink: 0 !important; background: rgba(255, 255, 255, 0.045) !important; color: var(--text-color) !important; border: 1px solid rgba(212, 175, 55, 0.3) !important; border-radius: 999px !important; padding: 3px 9px !important; font-size: 10px !important; font-weight: 700 !important; cursor: pointer !important; }",
+
+      /* #7 Quick Budget Pills for Multi-Turn Dialog */
+      "#moaathAiBudgetQuickRow { display: none; align-items: center !important; gap: 5px !important; overflow-x: auto !important; scrollbar-width: none !important; margin: 5px 0 2px 0 !important; padding: 3px 0 !important; }",
+      "#moaathAiBudgetQuickRow.is-visible { display: flex !important; }",
+      ".moaath-ai-budget-pill { flex-shrink: 0 !important; padding: 3px 10px !important; border-radius: 999px !important; border: 1px solid rgba(16, 185, 129, 0.45) !important; background: rgba(16, 185, 129, 0.14) !important; color: #10b981 !important; font-size: 10px !important; font-weight: 800 !important; cursor: pointer !important; }",
+
+      /* #8 Dynamic Reply Line (Visible Only When Reply Exists) */
+      "#moaathAiDynamicReplyBar { display: none; align-items: center !important; justify-content: space-between !important; gap: 6px !important; margin-top: 5px !important; padding: 4px 8px !important; border-radius: 10px !important; background: rgba(56, 189, 248, 0.08) !important; border: 1px solid rgba(56, 189, 248, 0.28) !important; font-size: 10.5px !important; color: var(--text-color) !important; }",
+      "#moaathAiDynamicReplyBar.has-reply { display: flex !important; }",
+      "#moaathAiDynamicReplyBar #aiShoppingStatusText { flex: 1 !important; min-width: 0 !important; margin: 0 !important; padding: 0 !important; font-size: 10.5px !important; line-height: 1.4 !important; color: var(--text-color) !important; }",
+      ".moaath-reply-listen-btn { width: 24px !important; height: 24px !important; border-radius: 50% !important; border: 1px solid rgba(212, 175, 55, 0.4) !important; background: rgba(212, 175, 55, 0.14) !important; color: #D4AF37 !important; font-size: 11px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; flex-shrink: 0 !important; }",
+
+      /* Store Reorder, Categories, Cards, Out-of-Stock, Skeleton, Cart Dock, BackToTop */
       "#moaathQuickReorderBar { margin: 4px 0 8px 0 !important; padding: 6px 9px !important; border-radius: 14px !important; border: 1px solid rgba(16, 185, 129, 0.3) !important; background: rgba(16, 185, 129, 0.06) !important; }",
       ".moaath-reorder-head { display: flex !important; justify-content: space-between !important; align-items: center !important; font-size: 10px !important; font-weight: 800 !important; color: #10b981 !important; margin-bottom: 5px !important; }",
       ".moaath-reorder-track { display: flex !important; gap: 7px !important; overflow-x: auto !important; scrollbar-width: none !important; }",
@@ -93,6 +146,227 @@
     ].join(" ");
   }
 
+  /* === 10 AI Assistant Tab Enhancements === */
+  function enhanceCompactAIAssistantTab() {
+    var box = $("aiSmartAssistantBox");
+    var header = $("futuristicAiHeader");
+    var body = $("futuristicAiBody");
+    if (!box || !header || !body) return;
+
+    /* #1 Hide static heading "مساعد التسوق الذكي..." */
+    body.querySelectorAll("div, p, label, span, h3, h4").forEach(function (el) {
+      if (el.id === "aiShoppingStatusText" || el.closest("#moaathAiDynamicReplyBar")) return;
+      if (el.children.length <= 1 && /مساعد\s*التسوق\s*الذكي/.test(el.textContent || "")) {
+        el.classList.add("moaath-ai-static-title-hidden");
+      }
+    });
+
+    /* #2 + #4 Compact Persona Pill + Live Status Dot inside Header */
+    var compactPersonaBtn = $("moaathAiCompactPersonaBtn");
+    if (!compactPersonaBtn) {
+      compactPersonaBtn = document.createElement("button");
+      compactPersonaBtn.type = "button";
+      compactPersonaBtn.id = "moaathAiCompactPersonaBtn";
+      compactPersonaBtn.title = "تغيير الشخصية أو عرض التشخيص";
+      compactPersonaBtn.innerHTML =
+        '<span id="moaathAiCompactAvatarWrap">' +
+          '<img id="moaathAiCompactAvatar" src="buddy.jpg" onerror="this.onerror=null;this.src=\'store-icon.png\';" alt="المساعد">' +
+          '<span id="moaathPersonaStatusDot" title="جاهز"></span>' +
+        '</span>' +
+        '<span id="moaathAiCompactName">المساعد الذكي</span>';
+      compactPersonaBtn.onclick = function (e) {
+        if (e && e.target && e.target.id === "moaathPersonaStatusDot") {
+          e.stopPropagation();
+          if (typeof window.showVoiceDiagnosticOnPhone === "function") window.showVoiceDiagnosticOnPhone();
+          return;
+        }
+        if (typeof window.openFairyGalleryModal === "function") window.openFairyGalleryModal();
+      };
+      header.insertBefore(compactPersonaBtn, header.firstChild);
+    }
+
+    var srcAvatar = $("fairyBarThumb") || $("fairyCharImg");
+    var dstAvatar = $("moaathAiCompactAvatar");
+    if (srcAvatar && dstAvatar && srcAvatar.src && dstAvatar.src !== srcAvatar.src) {
+      dstAvatar.src = srcAvatar.src;
+    }
+    var srcName = $("fairyBarActiveName");
+    var dstName = $("moaathAiCompactName");
+    if (srcName && dstName && srcName.textContent) {
+      dstName.textContent = srcName.textContent.trim();
+    }
+
+    /* #2 Compact circular Voice & Replay icon buttons in Header Actions */
+    var actions = header.querySelector(".fut-ai-header-actions");
+    if (actions) {
+      if (!$("moaathAiCompactReplayBtn")) {
+        var repBtn = document.createElement("button");
+        repBtn.type = "button";
+        repBtn.id = "moaathAiCompactReplayBtn";
+        repBtn.className = "moaath-ai-mini-icon";
+        repBtn.title = "إعادة الاستماع";
+        repBtn.textContent = "🔁";
+        repBtn.onclick = function () {
+          if (typeof window.replayLastCompanionSpeech === "function") window.replayLastCompanionSpeech();
+        };
+        actions.insertBefore(repBtn, actions.firstChild);
+      }
+      if (!$("moaathAiCompactVoiceBtn")) {
+        var vBtn = document.createElement("button");
+        vBtn.type = "button";
+        vBtn.id = "moaathAiCompactVoiceBtn";
+        vBtn.className = "moaath-ai-mini-icon";
+        vBtn.title = "تفعيل أو كتم الصوت";
+        vBtn.textContent = "🔊";
+        vBtn.onclick = function () {
+          if (typeof window.toggleCompanionVoice === "function") window.toggleCompanionVoice();
+          setTimeout(syncCompactVoiceIcon, 50);
+        };
+        actions.insertBefore(vBtn, actions.firstChild);
+      }
+    }
+    syncCompactVoiceIcon();
+
+    /* #4 + #9 Live Status Dot & Ambient Glow */
+    var dot = $("moaathPersonaStatusDot");
+    var badge = $("petConnStatusBadge");
+    var badgeTxt = badge ? (badge.textContent || "") : "";
+    var isOffline = navigator.onLine === false || /محلي|محدود/.test(badgeTxt);
+    var isBusy = /يستمع|يجهز|تفكير|جاري/.test(badgeTxt) ||
+      (!!$("petDirectMicBtn") && $("petDirectMicBtn").classList.contains("mic-listening-pulse")) ||
+      (!!$("petListenRing") && $("petListenRing").style.display === "block");
+
+    if (dot) {
+      dot.classList.toggle("is-busy", isBusy);
+      dot.classList.toggle("is-offline", !isBusy && isOffline);
+      dot.title = isBusy ? "يستمع / يعالج..." : (isOffline ? "وضع محلي" : "جاهز");
+    }
+    box.classList.toggle("moaath-ai-active-glow", isBusy);
+
+    /* #5 Embed Submit Button inside Prompt Input Pill */
+    var promptInp = $("aiShoppingPromptInput");
+    if (promptInp && !$("moaathAiEmbeddedInputRow")) {
+      var origRow = promptInp.parentElement;
+      var sendBtn = null;
+      if (origRow) {
+        sendBtn = origRow.querySelector("button[onclick*='runAIShoppingAssistant'], button");
+      }
+      var wrap = document.createElement("div");
+      wrap.id = "moaathAiEmbeddedInputRow";
+      if (origRow && origRow.parentNode) {
+        origRow.parentNode.insertBefore(wrap, origRow);
+      } else {
+        body.insertBefore(wrap, body.firstChild);
+      }
+      wrap.appendChild(promptInp);
+      if (sendBtn) {
+        sendBtn.classList.add("moaath-ai-embedded-send");
+        sendBtn.innerHTML = "<span>✨</span><span>تعبئة</span>";
+        wrap.appendChild(sendBtn);
+      } else {
+        var newSend = document.createElement("button");
+        newSend.type = "button";
+        newSend.className = "moaath-ai-embedded-send";
+        newSend.innerHTML = "<span>✨</span><span>تعبئة</span>";
+        newSend.onclick = function () {
+          if (typeof window.runAIShoppingAssistant === "function") window.runAIShoppingAssistant();
+        };
+        wrap.appendChild(newSend);
+      }
+      if (origRow && origRow.children.length === 0) {
+        origRow.style.display = "none";
+      }
+    }
+
+    /* #6 Enhance One-Tap Horizontal Chips Strip (Ensure "كرر طلبي" is included) */
+    var chips = $("petQuickPromptChips");
+    if (chips) {
+      chips.classList.remove("is-chips-collapsed");
+      if (!chips.dataset.v54ChipsReady) {
+        chips.dataset.v54ChipsReady = "1";
+        var hasRepeat = Array.prototype.some.call(chips.children, function (c) {
+          return /كرر\s*طلبي/.test(c.textContent || "");
+        });
+        if (!hasRepeat) {
+          var repChip = document.createElement("button");
+          repChip.type = "button";
+          repChip.className = "fut-chip-btn";
+          repChip.textContent = "🔁 كرر طلبي";
+          repChip.onclick = function () {
+            if (typeof window.runAIShoppingAssistant === "function") window.runAIShoppingAssistant("كرر طلبي");
+          };
+          chips.appendChild(repChip);
+        }
+      }
+    }
+
+    /* #8 Dynamic Reply Bar (Visible only when reply exists) */
+    var statusEl = $("aiShoppingStatusText");
+    var replyBar = $("moaathAiDynamicReplyBar");
+    if (statusEl) {
+      if (!replyBar) {
+        replyBar = document.createElement("div");
+        replyBar.id = "moaathAiDynamicReplyBar";
+        if (statusEl.parentNode) {
+          statusEl.parentNode.insertBefore(replyBar, statusEl);
+        } else {
+          body.appendChild(replyBar);
+        }
+        replyBar.appendChild(statusEl);
+        var listenBtn = document.createElement("button");
+        listenBtn.type = "button";
+        listenBtn.className = "moaath-reply-listen-btn";
+        listenBtn.title = "استماع للرد";
+        listenBtn.textContent = "🔊";
+        listenBtn.onclick = function () {
+          if (typeof window.replayLastCompanionSpeech === "function") window.replayLastCompanionSpeech();
+        };
+        replyBar.appendChild(listenBtn);
+      }
+      var statusTxt = (statusEl.textContent || "").trim();
+      var hasActiveReply = statusTxt.length > 0 && !/^(جاهز|مساعد التسوق الذكي)$/.test(statusTxt);
+      replyBar.classList.toggle("has-reply", hasActiveReply);
+
+      /* #7 Quick Budget Pills when Multi-Turn Dialog asks for budget */
+      var budgetRow = $("moaathAiBudgetQuickRow");
+      if (!budgetRow) {
+        budgetRow = document.createElement("div");
+        budgetRow.id = "moaathAiBudgetQuickRow";
+        ["500", "1000", "2000", "5000"].forEach(function (amt) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "moaath-ai-budget-pill";
+          b.textContent = "💰 " + amt + " ل.س";
+          b.onclick = function () {
+            if (typeof window.runAIShoppingAssistant === "function") window.runAIShoppingAssistant(amt);
+          };
+          budgetRow.appendChild(b);
+        });
+        replyBar.parentNode.insertBefore(budgetRow, replyBar.nextSibling);
+      }
+      var pendingBudget = false;
+      try {
+        var pd = JSON.parse(sessionStorage.getItem("moaath_ai_pending_dialog_v2") || "null");
+        if (pd && pd.type === "awaiting_budget" && pd.expiresAt > Date.now()) pendingBudget = true;
+      } catch (_) {}
+      var asksBudget = pendingBudget || /كم\s*الميزانية|اكتب\s*رقم\s*الميزانية|اكتب\s*الرقم\s*فقط/.test(statusTxt);
+      budgetRow.classList.toggle("is-visible", asksBudget);
+    }
+  }
+
+  function syncCompactVoiceIcon() {
+    var vBtn = $("moaathAiCompactVoiceBtn");
+    if (!vBtn) return;
+    var enabled = true;
+    try {
+      var prefs = JSON.parse(localStorage.getItem("moaath_store_pet_prefs") || "{}");
+      if (prefs && prefs.voiceEnabled === false) enabled = false;
+    } catch (_) {}
+    vBtn.textContent = enabled ? "🔊" : "🔇";
+    vBtn.classList.toggle("is-muted", !enabled);
+  }
+
+  /* === Store UI Enhancements (v5.3 Preserved) === */
   function simplifyHeaderAndFooter() {
     var header = document.querySelector("header, .store-header, .top-bar");
     if (!header) return;
@@ -618,8 +892,8 @@
     if (btn) {
       btn.setAttribute("aria-expanded", String(!collapsed));
       btn.innerHTML = collapsed
-        ? '<span class="fut-dot"></span><span>فتح المساعد الذكي</span><span class="fut-chev">▾</span>'
-        : '<span class="fut-dot"></span><span>طي المساعد</span><span class="fut-chev">▴</span>';
+        ? '<span>المساعد</span><span class="fut-chev">▾</span>'
+        : '<span>طي</span><span class="fut-chev">▴</span>';
     }
 
     document.body.classList.toggle("moaath-ai-expanded", !collapsed);
@@ -665,6 +939,7 @@
       enhanceCollapsibleUserBar,
       applyOffersHorizontalSlider,
       buildUnifiedSmartSearchBar,
+      enhanceCompactAIAssistantTab,
       renderQuickReorderBar,
       enhanceProductAndOfferCards,
       syncFloatingCartBadge,
