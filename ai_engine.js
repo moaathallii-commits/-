@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v70 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v72 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -743,43 +743,11 @@
     const candidates = [];
     const addCandidate = (k) => { if (k && !candidates.includes(k)) candidates.push(k); };
 
-    // 1) مطابقة دقيقة أو مرنة مع العبارات الأساسية العشر
+    // مطابقة حرفية دقيقة 100% فقط مع العبارات المسجّلة في sounds/ لمنع اختلاف النص المكتوب عن النطق
     const core = getCoreClipPhrasesForPersona(persona);
     for (const c of core) {
-      if (tLoose === looseSpeechNorm(c.text)) addCandidate(c.key);
-    }
-
-    // 2) مطابقة جميع مصفوفات التحيات والردود البديلة لنفس الشخصية (لأن pickPhrase يدوّر بين عناصر المصفوفة)
-    const matchAny = (arr) => Array.isArray(arr) && arr.some(item => typeof item === "string" && looseSpeechNorm(item) === tLoose);
-    if (matchAny(persona.greets) || matchAny(persona.timeGreets?.afternoon)) addCandidate("greet");
-    if (matchAny(persona.timeGreets?.morning)) { addCandidate("greetMorning"); addCandidate("greet"); }
-    if (matchAny(persona.timeGreets?.evening)) { addCandidate("greetEvening"); addCandidate("greet"); }
-    if (matchAny(persona.chatGoods)) addCandidate("chatGood");
-    if (matchAny(persona.thanksList)) addCandidate("thanks");
-    if (matchAny(persona.alternativeReplies) || matchAny(persona.fuzzyReplies) || matchAny(persona.synonymReplies)) addCandidate("alternative");
-    if (matchAny(persona.habitReplies)) addCandidate("habit");
-    if (matchAny(persona.notFounds)) addCandidate("notFound");
-
-    // 3) مطابقة العبارات الديناميكية (إضافة للسلة / عرض الأصناف / جاهزية الوصفة)
-    if (Array.isArray(persona.addedMsgs) && persona.addedMsgs.some(fn => typeof fn === "function" && (
-      looseSpeechNorm(fn("صنف واحد")) === tLoose ||
-      looseSpeechNorm(fn("صنفين")) === tLoose ||
-      tLoose.includes("السله") || tLoose.includes("ضفتلك") || tLoose.includes("اضفت")
-    ))) {
-      addCandidate("added");
-    }
-    if (typeof persona.itemsReady === "function" && (
-      looseSpeechNorm(persona.itemsReady("")) === tLoose ||
-      tLoose.includes("المتوفر") || tLoose.includes("الكميه")
-    )) {
-      addCandidate("itemsReady");
-    }
-
-    // دعم الخيار الأول: تشغيل المقطع البشري المحفوظ المطابق للنية عند توليد نص مركّب لانهائي
-    if (sessionCtx.lastIntentClipKey) {
-      addCandidate(sessionCtx.lastIntentClipKey);
-      if (sessionCtx.lastIntentClipKey === "greetMorning" || sessionCtx.lastIntentClipKey === "greetEvening") {
-        addCandidate("greet");
+      if (tLoose === looseSpeechNorm(c.text)) {
+        addCandidate(c.key);
       }
     }
     return candidates;
@@ -3147,7 +3115,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v70",
+      version: "v72",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
