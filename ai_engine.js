@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v78 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v79 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -133,12 +133,25 @@
 
   function getPersonaStyleGroup(persona) {
     const id = String(persona?.id || "buddy");
-    if (/coach_sakhr|anime_zain|athlete/.test(id)) return "energetic";
-    if (/grand_chef|princess_layla|butler_farid|anime_ryu/.test(id)) return "formal";
-    if (/friend_fadi/.test(id)) return "playful";
-    if (/lolo|noor|anime_ritaj/.test(id)) return "bright_joy";
-    if (/pastry/.test(id)) return "sweet";
-    return "friendly";
+    const mapById = {
+      buddy: "buddy_icebreaker",
+      lolo: "lolo_daily_fast",
+      noor: "noor_warm_calm",
+      chef: "chef_cross_sell",
+      pastry: "pastry_sensory",
+      athlete: "athlete_staccato",
+      sheikh: "sheikh_banter",
+      friend_saad: "saad_trust",
+      coach_sakhr: "sakhr_bundle",
+      grand_chef: "grand_chef_upsell",
+      princess_layla: "layla_experience",
+      butler_farid: "farid_smart_value",
+      friend_fadi: "fadi_sahra",
+      anime_zain: "zain_focus_sprint",
+      anime_ryu: "ryu_scarcity",
+      anime_ritaj: "ritaj_reward"
+    };
+    return mapById[id] || "buddy_icebreaker";
   }
 
   function getCustomerFirstName() {
@@ -725,22 +738,22 @@
   }
 
   const PERSONA_VOICE_PROFILES = {
-    buddy:          { rate: 1.02, semi:  0.6, filterType: "peaking",  freq: 1400, gain:  1.5 },
-    lolo:           { rate: 1.06, semi:  2.4, filterType: "highshelf",freq: 2200, gain:  3.5 },
-    noor:           { rate: 1.07, semi:  2.6, filterType: "highshelf",freq: 2300, gain:  4.0 },
-    chef:           { rate: 0.98, semi: -0.8, filterType: "lowshelf", freq:  450, gain:  2.0 },
-    pastry:         { rate: 1.05, semi:  1.8, filterType: "highshelf",freq: 2200, gain:  3.0 },
-    athlete:        { rate: 1.08, semi:  0.3, filterType: "peaking",  freq: 1500, gain:  2.0 },
-    sheikh:         { rate: 0.94, semi: -1.6, filterType: "lowshelf", freq:  400, gain:  2.5 },
-    friend_saad:    { rate: 0.97, semi: -0.9, filterType: "lowshelf", freq:  420, gain:  1.5 },
-    coach_sakhr:    { rate: 1.06, semi: -1.2, filterType: "peaking",  freq: 1200, gain:  2.5 },
-    grand_chef:     { rate: 0.98, semi: -1.0, filterType: "lowshelf", freq:  450, gain:  2.0 },
-    princess_layla: { rate: 1.02, semi:  1.5, filterType: "highshelf",freq: 2100, gain:  2.5 },
-    butler_farid:   { rate: 0.98, semi: -0.8, filterType: "peaking",  freq: 1100, gain:  1.5 },
-    friend_fadi:    { rate: 1.08, semi:  1.6, filterType: "highshelf",freq: 2100, gain:  3.0 },
-    anime_zain:     { rate: 1.09, semi:  1.4, filterType: "highshelf",freq: 2000, gain:  2.5 },
-    anime_ryu:      { rate: 1.00, semi: -0.7, filterType: "peaking",  freq: 1000, gain:  1.5 },
-    anime_ritaj:    { rate: 1.08, semi:  2.6, filterType: "highshelf",freq: 2400, gain:  4.0 }
+    buddy:          { rate: 1.00, semi:  0.4, filterType: "peaking",  freq: 2600, gain:  2.2 },
+    lolo:           { rate: 1.10, semi:  1.4, filterType: "highshelf",freq: 2200, gain:  3.0 },
+    noor:           { rate: 0.98, semi:  0.6, filterType: "lowshelf", freq:  450, gain:  2.5 },
+    chef:           { rate: 1.05, semi: -0.4, filterType: "peaking",  freq: 1400, gain:  2.0 },
+    pastry:         { rate: 0.95, semi:  1.0, filterType: "lowshelf", freq:  500, gain:  2.5 },
+    athlete:        { rate: 1.15, semi:  0.4, filterType: "peaking",  freq: 1800, gain:  3.0 },
+    sheikh:         { rate: 1.06, semi:  0.8, filterType: "peaking",  freq: 1700, gain:  2.8 },
+    friend_saad:    { rate: 0.92, semi: -0.4, filterType: "lowshelf", freq:  420, gain:  2.5 },
+    coach_sakhr:    { rate: 1.10, semi: -0.8, filterType: "lowshelf", freq:  320, gain:  4.0 },
+    grand_chef:     { rate: 0.95, semi: -0.8, filterType: "lowshelf", freq:  360, gain:  3.5 },
+    princess_layla: { rate: 0.90, semi:  0.4, filterType: "highshelf",freq: 2600, gain: -2.0 },
+    butler_farid:   { rate: 1.00, semi: -0.4, filterType: "peaking",  freq: 1200, gain:  2.5 },
+    friend_fadi:    { rate: 1.02, semi:  0.6, filterType: "lowshelf", freq:  480, gain:  2.0 },
+    anime_zain:     { rate: 1.18, semi:  1.0, filterType: "highshelf",freq: 2100, gain:  3.2 },
+    anime_ryu:      { rate: 0.96, semi: -0.6, filterType: "peaking",  freq:  950, gain:  2.0 },
+    anime_ritaj:    { rate: 1.12, semi:  1.6, filterType: "highshelf",freq: 2300, gain:  3.5 }
   };
 
   function getPersonaProfile(persona) {
@@ -748,10 +761,10 @@
     if (PERSONA_VOICE_PROFILES[id]) return PERSONA_VOICE_PROFILES[id];
     const semi = typeof persona?.pitchSemitones === "number" ? persona.pitchSemitones : 0;
     return {
-      rate: 1.02,
+      rate: persona?.speed || 1.0,
       semi,
       filterType: semi >= 0 ? "highshelf" : "lowshelf",
-      freq: semi >= 0 ? 2100 : 420,
+      freq: semi >= 0 ? 2000 : 420,
       gain: 2.0
     };
   }
@@ -770,8 +783,6 @@
     stopWebAudioGraph();
     const prof = getPersonaProfile(persona);
     const isPreRecorded = entry && (entry.source === "local_repo" || entry.source === "persistent_cache");
-
-    // المقاطع المسجلة مسبقاً تُشغّل بنقائها الأصلي دون فلاتر تثقل الصوت أو تشوّهه
     const player = ensureAudioPlayer();
     player.pause();
     player.src = entry.url;
@@ -779,8 +790,7 @@
     player.preservesPitch = true;
     player.mozPreservesPitch = true;
     player.webkitPreservesPitch = true;
-    player.playbackRate = isPreRecorded ? 1.0 : (persona.speed || prof.rate || 1.15);
-
+    player.playbackRate = isPreRecorded ? 1.0 : (persona.speed || prof.rate || 1.0);
     const p = player.play();
     if (p && typeof p.catch === "function") {
       p.catch(() => {
@@ -3330,7 +3340,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v78",
+      version: "v79",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
