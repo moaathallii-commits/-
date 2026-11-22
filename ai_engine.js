@@ -526,6 +526,7 @@
   document.addEventListener("touchstart", unlockEmbeddedVoice, { once: true, passive: true });
   document.addEventListener("click", unlockEmbeddedVoice, { once: true });
 
+  window.__moaathStopAiEngineVoice = function () { stopEmbeddedVoice(); };
   function stopEmbeddedVoice() {
     ttsRequestSeq++;
     try { if (typeof window.speechSynthesis !== "undefined") window.speechSynthesis.cancel(); } catch (_) {}
@@ -889,6 +890,10 @@
     const spokenText = normalizeTextForArabicSpeech(rawText);
     if (!spokenText) return;
     sessionCtx.lastSpokenText = spokenText;
+    if (window.MoaathVoiceFreshEngine && typeof window.MoaathVoiceFreshEngine.stop === "function") {
+      window.MoaathVoiceFreshEngine.stop();
+    }
+    window.__moaathVoiceSync = { text: spokenText, ts: Date.now(), owner: "ai_engine" };
 
     stopEmbeddedVoice();
     const mySeq = ttsRequestSeq;
