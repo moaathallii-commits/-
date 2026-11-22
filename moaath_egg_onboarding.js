@@ -1,21 +1,20 @@
 // ============================================================================
 // وحدة «البيضة الإلكترونية» للزائر الجديد وتفقيس المساعدين بعد أول طلب ناجح
-// (moaath_egg_onboarding.js — v1.0)
-// - للزائر الجديد: إخفاء زحمة المساعدين وإظهار «البيضة الإلكترونية المتوهّجة» بلمسة مستقبلية
-// - عند الضغط على البيضة: نافذة مبهرة تشرح قدرات المساعدين (الشيف، فادي، صخر، ريتاج، سعد، فريد...)
+// (moaath_egg_onboarding.js — v1.1)
+// - للزائر الجديد: إخفاء زحمة المساعدين وإظهار «البيضة الإلكترونية المتوهجة» بلمسة مستقبلية
 // - للزبائن القدامى (لديهم طلب سابق أو نقاط أو رصيد): فتح تلقائي فوري بدون أي قيد
-// - لحظة إتمام أول طلب ناجح:
-//   1) مشهد تفقيس البيضة بوهج ذهبي + ترحيب شخصي باسم الزبون
-//   2) تحليل أصناف أول فاتورة لبناء «بصمة الذوق الأولى» وحقنها في MoaathLearningHub
-//   3) ترشيح وتفعيل أقرب شخصية مساعدة لذوق الزبون تلقائياً
+// - منع تكرار التفقيس أو فتح النوافذ الاحتفالية أكثر من مرة عبر قفل حالة موحّد
+// - تحليل أصناف أول فاتورة لبناء بصمة الذوق الأولى وحقنها في MoaathLearningHub
 // - يعمل محلياً بالكامل (0 حصة API) مع عزل أمني تام عن الدفع وشام كاش
 // ============================================================================
 (function () {
-  if (window.__MOAATH_EGG_ONBOARDING_V1__) return;
+  if (window.__MOAATH_EGG_ONBOARDING_V11__) return;
+  window.__MOAATH_EGG_ONBOARDING_V11__ = true;
   window.__MOAATH_EGG_ONBOARDING_V1__ = true;
 
   const HATCH_KEY = "moaath_egg_hatched_v1";
   const LAST_ORDER_KEY = "moaath_last_order_snapshot_v1";
+  let hatchInProgress = false;
 
   const escHtml = (s) =>
     typeof window.moaathEscapeHtml === "function"
@@ -56,20 +55,26 @@
   }
 
   // ==========================================================================
-  // 1) التحقق من حالة التفقيس (استثناء تلقائي للزبائن القدامى)
+  // (1) التحقق من حالة التفقيس (استثناء تلقائي للزبائن القدامى)
   // ==========================================================================
   function isEggHatched() {
     const saved = readJSON(HATCH_KEY, null);
     if (saved && saved.hatched) return true;
 
-    // استثناء الزبائن القدامى تلقائياً: وجود طلب سابق أو نقاط أو رصيد محفظة
     const lastOrder = readJSON(LAST_ORDER_KEY, null);
     const hasLastOrder = !!(lastOrder && Array.isArray(lastOrder.items) && lastOrder.items.length > 0);
+    const hasCompletedInHistory = !!(
+      window.currentUser?.phone &&
+      window.completedOrdersHistory &&
+      Object.values(window.completedOrdersHistory).some((o) => o && o.customerPhone === window.currentUser.phone)
+    );
     const hasHistory =
       hasLastOrder ||
+      hasCompletedInHistory ||
       (window.currentUser && (
         (parseInt(window.currentUser.points, 10) || 0) > 0 ||
         (parseFloat(window.currentUser.wallet) || 0) > 0 ||
+        (parseFloat(window.currentUser.prepaidBalanceUSD) || 0) > 0 ||
         (parseInt(window.currentUser.ordersCount, 10) || 0) > 0
       ));
 
@@ -81,10 +86,13 @@
   }
 
   // ==========================================================================
-  // 2) تحليل أصناف أول فاتورة لبناء «بصمة الذوق الأولى» وترشيح الشخصية الأنسب
+  // (2) تحليل أصناف أول فاتورة لبناء بصمة الذوق الأولى وترشيح الشخصية الأنسب
   // ==========================================================================
   function analyzeFirstOrderTaste(items) {
-    const names = (items || []).map((it) => String(it.name || "")).filter(Boolean);
+    const validItems = Array.isArray(items) && items.length
+      ? items
+      : [{ id: "default_item", name: "منتجات المتجر", qty: 1 }];
+    const names = validItems.map((it) => String(it.name || "")).filter(Boolean);
     const joined = names.join(" ");
     const firstItem = names[0] || "منتجات المتجر";
 
@@ -100,14 +108,14 @@
         id: "friend_fadi",
         name: "فادي الفرفوش",
         emoji: "🔥",
-        reason: "لاحظتُ حبك لأجواء السهرة والمتة والتسالي! سأجهز لك سهراتك بلمسة واحدة."
+        reason: "لاحظت حبك لأجواء السهرة والمتة والتسالي؛ سأجهّز لك سهراتك بلمسة واحدة."
       };
     } else if (/معكرون|مكرون|رز|ارز|عدس|برغل|بندور|زيت|سمن|بهار/.test(joined)) {
       recPersona = {
         id: "grand_chef",
         name: "الشيف الذهبي",
         emoji: "👨‍🍳",
-        reason: "أنت تحب الطبخ ومونة البيت! سأقترح عليك أشهى الوصفات من مكونات المتجر."
+        reason: "أنت تحب الطبخ ومونة البيت؛ سأقترح عليك أشهى الوصفات من مكونات المتجر."
       };
     } else if (/بيض|تونة|تونه|شوفان|حليب|لبن|فول/.test(joined)) {
       recPersona = {
@@ -121,36 +129,41 @@
         id: "anime_ritaj",
         name: "ريتاج",
         emoji: "🌸",
-        reason: "ذوقك لطيف ومبهج! جهّزت لك وصفات حلى بدون فرن ومكافآت لطيفة."
+        reason: "ذوقك لطيف ومبهج؛ جهزت لك وصفات حلى بدون فرن ومكافآت لطيفة."
       };
-    } else if (items.some((x) => String(x.id || "").endsWith("_PKG")) || /سائل جلي|مسحوق|كلور|صابون/.test(joined)) {
+    } else if (validItems.some((x) => String(x.id || "").endsWith("_PKG")) || /سائل جلي|مسحوق|كلور|صابون/.test(joined)) {
       recPersona = {
         id: "butler_farid",
         name: "السيد فريد",
         emoji: "🎩",
-        reason: "أنت تهتم بالتوفير وتنظيم ميزانية البيت! سأرصد لك أوفر الطرود دائماً."
+        reason: "أنت تهتم بالتوفير وتنظيم ميزانية البيت؛ سأرصد لك أوفر الطرود دائماً."
       };
     }
 
-    // حقن بصمة الذوق الأولى في الذاكرة المشتركة (MoaathLearningHub)
     if (window.MoaathLearningHub && typeof window.MoaathLearningHub.addLearnedFact === "function") {
       names.slice(0, 3).forEach((nm) => {
-        window.MoaathLearningHub.addLearnedFact(`بصمة الطلب الأول: يفضّل الزبون «${nm}»`);
+        if (nm && nm !== "منتجات المتجر") {
+          window.MoaathLearningHub.addLearnedFact(`بصمة الطلب الأول: يفضّل الزبون «${nm}»`);
+        }
       });
     }
 
-    // حفظ الشخصية المرشحة كشخصية مبدئية
     try {
       const prefs = JSON.parse(localStorage.getItem("moaath_store_pet_prefs") || "{}");
       prefs.persona = recPersona.id;
       localStorage.setItem("moaath_store_pet_prefs", JSON.stringify(prefs));
     } catch (_) {}
 
-    return { firstItem, recPersona, itemsCount: items.length };
+    if (window.MoaathVIPSystem) {
+      window.MoaathVIPSystem.activePersonaId = recPersona.id;
+    }
+    window.activePetPersona = recPersona.id;
+
+    return { firstItem, recPersona, itemsCount: validItems.length };
   }
 
   // ==========================================================================
-  // 3) تنسيقات البيضة الإلكترونية ومشهد التفقيس (CSS)
+  // (3) تنسيقات البيضة الإلكترونية ومشهد التفقيس (CSS)
   // ==========================================================================
   function injectEggCSS() {
     if (document.getElementById("moaathEggOnboardingCSS")) return;
@@ -173,7 +186,6 @@
         80% { transform: scale(1.22) rotate(12deg); }
         100% { transform: scale(1) rotate(0deg); }
       }
-      /* إخفاء واجهة المساعدين مؤقتاً للزائر الجديد مع إبقاء البحث والمنتجات 100% */
       body.moaath-egg-locked #aiSmartAssistantBox,
       body.moaath-egg-locked #futuristicAiHeader,
       body.moaath-egg-locked #futuristicAiBody,
@@ -186,7 +198,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 10px;
-        margin: 6px 0 8px 0;
+        margin: 6px 8px 0;
         padding: 9px 12px;
         border-radius: 16px;
         background: linear-gradient(135deg, rgba(15,23,42,0.92), rgba(30,41,59,0.88));
@@ -219,7 +231,7 @@
   }
 
   // ==========================================================================
-  // 4) نافذة شرح «البيضة الإلكترونية» المستقبلية عند الضغط عليها
+  // (4) نافذة شرح البيضة الإلكترونية المستقبلية عند الضغط عليها
   // ==========================================================================
   function openEggPreviewModal() {
     let modal = document.getElementById("moaathEggPreviewModal");
@@ -239,11 +251,10 @@
         <div style="display:flex; justify-content:center; margin-bottom:8px;">
           <div class="moaath-egg-orb" style="width:62px; height:70px; font-size:30px;">🥚</div>
         </div>
-        <div style="font-size:16px; font-weight:900; color:#D4AF37; margin-bottom:4px;">بيضتك الذكية بانتظارك! ✨</div>
+        <div style="font-size:16px; font-weight:900; color:#D4AF37; margin-bottom:4px;">بيضتك الذكية بانتظارك!</div>
         <div style="font-size:11px; color:#cbd5e1; line-height:1.65; margin-bottom:12px;">
-          بداخل هذه البيضة الإلكترونية عالمٌ كامل من <b>المساعدين الشخصيين الأذكياء</b> المصمّمين لخدمتك يومياً وتوفير وقتك ومالك.
+          بداخل هذه البيضة الإلكترونية عالم كامل من <b>المساعدين الشخصيين الأذكياء</b> المصمّمين لخدمتك يومياً وتوفير وقتك ومالك.
         </div>
-
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; text-align:right; margin-bottom:12px; font-size:10px;">
           <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(245,158,11,0.35); border-radius:11px; padding:7px;">
             <b style="color:#f59e0b;">👨‍🍳 الشيف الذهبي</b><br><span style="color:#94a3b8;">وصفات طبخ من المتجر</span>
@@ -255,22 +266,20 @@
             <b style="color:#10b981;">🕌 سعد الوقور</b><br><span style="color:#94a3b8;">الصلاة والأذكار والمسبحة</span>
           </div>
           <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(56,189,248,0.35); border-radius:11px; padding:7px;">
-            <b style="color:#38bdf8;">🎩 فريد وصخر وريتاج</b><br><span style="color:#94a3b8;">توفير ولياقة وحلويات</span>
+            <b style="color:#38bdf8;">🎯 فريد وصخر وريتاج</b><br><span style="color:#94a3b8;">توفير ولياقة وحلويات</span>
           </div>
         </div>
-
         <div style="background:rgba(16,185,129,0.12); border:1px dashed #10b981; border-radius:12px; padding:9px; margin-bottom:12px;">
-          <div style="font-size:11px; font-weight:900; color:#10b981; margin-bottom:4px;">🔓 كيف تفقس بيضتك الذكية؟</div>
+          <div style="font-size:11px; font-weight:900; color:#10b981; margin-bottom:4px;">كيف تفقس بيضتك الذكية؟</div>
           <div style="font-size:10.5px; color:#e2e8f0; line-height:1.55;">
-            أتمم <b>أول عملية شراء ناجحة</b> الآن — وستفقس البيضة فوراً، ويتعرّف مساعدك الشخصي على ذوقك المفضّل من أول طلب!
+            أتمم <b>أول عملية شراء ناجحة</b> الآن — وستفقس البيضة فوراً، ويتعرّف مساعدك الشخصي على ذوقك المفضل من أول طلب!
           </div>
           <div style="height:6px; background:rgba(255,255,255,0.12); border-radius:999px; overflow:hidden; margin-top:7px;">
-            <div style="width:35%; height:100%; background:linear-gradient(90deg,#D4AF37,#10b981);"></div>
+            <div style="width:35%; height:100%; background:linear-gradient(90deg, #D4AF37, #10b981);"></div>
           </div>
         </div>
-
-        <button type="button" onclick="document.getElementById('moaathEggPreviewModal').style.display='none'" class="btn" style="width:100%; padding:9px; font-size:12px; font-weight:900; background:linear-gradient(135deg,#D4AF37,#10b981); color:#000; border-radius:12px;">
-          🛒 ابدأ التسوق الآن لفتح البيضة
+        <button type="button" onclick="document.getElementById('moaathEggPreviewModal').style.display='none'" class="btn" style="width:100%; padding:9px; font-size:12px; font-weight:900; background:linear-gradient(135deg, #D4AF37, #10b981); color:#000; border-radius:12px;">
+          ابدأ التسوق الآن لفتح البيضة ✨
         </button>
       </div>
     `;
@@ -278,9 +287,10 @@
   }
 
   // ==========================================================================
-  // 5) مشهد تفقيس البيضة الاحتفالي بعد أول طلب ناجح
+  // (5) مشهد تفقيس البيضة الاحتفالي بعد أول طلب ناجح
   // ==========================================================================
   function showHatchingCelebrationModal(tasteInfo) {
+    if (document.getElementById("moaathEggHatchModal")?.style.display === "flex") return;
     const cust = getCustomerFirstName();
     const namePart = cust ? ` يا ${cust}` : "";
     const p = tasteInfo.recPersona;
@@ -302,8 +312,8 @@
           <div style="display:flex; justify-content:center; margin-bottom:10px;">
             <div class="moaath-egg-orb is-hatching" style="width:74px; height:84px; font-size:36px;">🥚</div>
           </div>
-          <div style="font-size:15px; font-weight:900; color:#D4AF37;">✨ بيضتك الإلكترونية تفقس الآن...</div>
-          <div style="font-size:11px; color:#94a3b8; margin-top:4px;">جاري تحليل بصمة ذوقك الأولى وتجهيز مساعدك الشخصي!</div>
+          <div style="font-size:15px; font-weight:900; color:#D4AF37;">بيضتك الإلكترونية تفقس الآن...</div>
+          <div style="font-size:11px; color:#94a3b8; margin-top:4px;">جاري تحليل بصمة ذوقك الأولى وتجهيز مساعدك الشخصي</div>
         </div>
       </div>
     `;
@@ -313,24 +323,24 @@
       const stage = document.getElementById("moaathHatchStage");
       if (!stage) return;
       stage.innerHTML = `
-        <div style="font-size:44px; margin-bottom:6px;">🎉 ${p.emoji} 🎉</div>
+        <div style="font-size:44px; margin-bottom:6px;">${p.emoji}</div>
         <div style="font-size:16px; font-weight:900; color:#10b981; margin-bottom:5px;">مبروك${escHtml(namePart)}! تم فتح عالم المساعدين وVIP</div>
         <div style="font-size:11.5px; color:#e2e8f0; line-height:1.6; margin-bottom:10px;">
-          أهلاً بك! أنا <b>${escHtml(p.name)}</b>، لاحظتُ من أول طلبك أنك تحب <b>«${escHtml(tasteInfo.firstItem)}»</b>.<br>
+          أهلاً بك! أنا <b style="color:#D4AF37;">${escHtml(p.name)}</b>، لاحظت من أول طلبك أنك تحب <b>${escHtml(tasteInfo.firstItem)}</b>.<br>
           ${escHtml(p.reason)}
         </div>
         <div style="background:rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.4); border-radius:12px; padding:8px; font-size:10px; color:#bae6fd; margin-bottom:12px;">
-          🧠 تم حفظ بصمة ذوقك الأولى في الذاكرة المشتركة لخدمتك أسرع في كل مرة!
+          ✨ تم حفظ بصمة ذوقك الأولى في الذاكرة المشتركة لخدمتك أسرع في كل مرة!
         </div>
-        <button type="button" onclick="document.getElementById('moaathEggHatchModal').style.display='none'" class="btn" style="width:100%; padding:10px; font-size:12px; font-weight:900; background:linear-gradient(135deg,#D4AF37,#10b981); color:#000; border-radius:12px;">
-          ✨ استكشف مساعدك الشخصي الآن
+        <button type="button" onclick="document.getElementById('moaathEggHatchModal').style.display='none'" class="btn" style="width:100%; padding:10px; font-size:12px; font-weight:900; background:linear-gradient(135deg, #D4AF37, #10b981); color:#000; border-radius:12px;">
+          استكشف مساعدك الشخصي الآن 🚀
         </button>
       `;
     }, 1450);
   }
 
   // ==========================================================================
-  // 6) تطبيق القفل أو الفتح على الواجهة وربط حدث أول طلب ناجح
+  // (6) تطبيق القفل أو الفتح على الواجهة وربط حدث أول طلب ناجح بشكل موحّد
   // ==========================================================================
   function applyEggLockState() {
     const hatched = isEggHatched();
@@ -339,15 +349,16 @@
     const existingBanner = document.getElementById("moaathDigitalEggBanner");
     if (hatched) {
       if (existingBanner) existingBanner.remove();
+      const previewModal = document.getElementById("moaathEggPreviewModal");
+      if (previewModal) previewModal.style.display = "none";
       const vipTab = document.getElementById("moaathTabVipBtn");
       if (vipTab && vipTab.dataset.eggIntercepted) {
         delete vipTab.dataset.eggIntercepted;
-        vipTab.innerHTML = `<span>✨</span><span>عالمي VIP</span>`;
+        vipTab.innerHTML = '<span>✨</span><span>عالمي VIP</span>';
       }
       return;
     }
 
-    // إظهار شريط البيضة الإلكترونية الأنيق أسفل شريط البحث مباشرة
     if (!existingBanner) {
       const searchBar = document.getElementById("moaathUnifiedSmartBar") || document.getElementById("aiSmartAssistantBox");
       if (searchBar && searchBar.parentNode) {
@@ -357,7 +368,7 @@
         banner.innerHTML = `
           <div class="moaath-egg-orb">🥚</div>
           <div style="flex:1; min-width:0; text-align:right;">
-            <div style="font-size:12px; font-weight:900; color:#D4AF37;">لديك بيضة ذكية بانتظار التفقيس! ✨</div>
+            <div style="font-size:12px; font-weight:900; color:#D4AF37;">لديك بيضة ذكية بانتظار التفقيس!</div>
             <div style="font-size:10px; color:var(--gray-text, #94a3b8);">اضغط لاكتشاف المساعدين الشخصيين (تُفتح بعد أول طلب)</div>
           </div>
           <span style="font-size:10px; font-weight:900; color:#10b981; background:rgba(16,185,129,0.16); padding:4px 8px; border-radius:999px; flex-shrink:0;">اكتشف ▾</span>
@@ -366,11 +377,10 @@
       }
     }
 
-    // تحويل زر التبويب السفلي «عالمي VIP» مؤقتاً لفتح نافذة البيضة للزائر الجديد
     const vipTab = document.getElementById("moaathTabVipBtn");
     if (vipTab && !vipTab.dataset.eggIntercepted) {
       vipTab.dataset.eggIntercepted = "1";
-      vipTab.innerHTML = `<span>🥚</span><span>البيضة الذكية</span>`;
+      vipTab.innerHTML = '<span>🥚</span><span>البيضة الذكية</span>';
       vipTab.addEventListener("click", (e) => {
         if (!isEggHatched()) {
           e.preventDefault();
@@ -381,61 +391,83 @@
     }
   }
 
+  function hatchWithItems(items, opts = {}) {
+    if (hatchInProgress || isEggHatched()) return false;
+    hatchInProgress = true;
+    try {
+      const tasteInfo = analyzeFirstOrderTaste(items);
+      writeJSON(HATCH_KEY, {
+        hatched: true,
+        hatchedAt: Date.now(),
+        source: opts.source || "order",
+        firstItem: tasteInfo.firstItem,
+        recommendedPersona: tasteInfo.recPersona.id
+      });
+      applyEggLockState();
+      if (window.MoaathLearningHub?.syncPersonaButton) window.MoaathLearningHub.syncPersonaButton();
+      if (window.MoaathPersonaSkill?.sync) window.MoaathPersonaSkill.sync();
+
+      if (opts.silentToast) {
+        if (typeof window.showToast === "function") {
+          window.showToast(`🎉 تمت الموافقة على طلبك وفقست بيضتك الذكية! مساعدك المقترح: ${tasteInfo.recPersona.name}`);
+        }
+      } else {
+        setTimeout(() => showHatchingCelebrationModal(tasteInfo), 450);
+      }
+      return true;
+    } finally {
+      setTimeout(() => { hatchInProgress = false; }, 1200);
+    }
+  }
+
   function triggerHatchFromCurrentCart() {
-    if (isEggHatched()) return;
+    if (isEggHatched()) return false;
     const cartObj = (typeof window.cart === "object" && window.cart) ? window.cart : {};
     const items = Object.keys(cartObj)
       .filter((k) => (parseInt(cartObj[k]?.qty, 10) || 0) > 0)
       .map((k) => ({ id: k, name: cartObj[k]?.name || k, qty: parseInt(cartObj[k]?.qty, 10) || 1 }));
-
-    if (!items.length) return;
-
-    const tasteInfo = analyzeFirstOrderTaste(items);
-    writeJSON(HATCH_KEY, {
-      hatched: true,
-      hatchedAt: Date.now(),
-      firstItem: tasteInfo.firstItem,
-      recommendedPersona: tasteInfo.recPersona.id
-    });
-
-    applyEggLockState();
-    if (window.MoaathLearningHub?.syncPersonaButton) window.MoaathLearningHub.syncPersonaButton();
-    if (window.MoaathPersonaSkill?.sync) window.MoaathPersonaSkill.sync();
-
-    setTimeout(() => showHatchingCelebrationModal(tasteInfo), 500);
+    if (!items.length) return false;
+    return hatchWithItems(items, { source: "cart_submit", silentToast: false });
   }
 
   function hookFirstOrderCompletion() {
     document.addEventListener("click", (e) => {
       const btn = e.target && e.target.closest ? e.target.closest("#submitOrderUnifiedBtn") : null;
-      if (!btn || btn.dataset.gpsBlocked === "1") return;
+      if (!btn || btn.dataset.gpsBlocked === "1" || btn.disabled) return;
       if (!isEggHatched()) {
         triggerHatchFromCurrentCart();
       }
     }, true);
   }
 
-  // واجهة برمجية للتحكم والتجربة
   window.MoaathEggOnboarding = {
-    version: "1.0",
+    version: "1.1",
     isHatched: isEggHatched,
     openPreview: openEggPreviewModal,
-    // للتجربة السريعة من قبل المدير: إعادة قفل البيضة أو تفقيسها فوراً
+    hatchFromItems: hatchWithItems,
+    refreshLockState: applyEggLockState,
     resetForTest() {
+      hatchInProgress = false;
       try { localStorage.removeItem(HATCH_KEY); } catch (_) {}
       applyEggLockState();
-      if (typeof window.showToast === "function") window.showToast("🥚 تم تفعيل وضع الزائر الجديد (البيضة الإلكترونية) للتجربة.");
+      if (typeof window.showToast === "function") {
+        window.showToast("🥚 تم تفعيل وضع الزائر الجديد (البيضة الإلكترونية) للتجربة.");
+      }
     },
     forceHatch() {
+      hatchInProgress = false;
+      try { localStorage.removeItem(HATCH_KEY); } catch (_) {}
       const taste = analyzeFirstOrderTaste([{ id: "demo", name: "متة وشيبس", qty: 1 }]);
       writeJSON(HATCH_KEY, { hatched: true, hatchedAt: Date.now(), manual: true });
       applyEggLockState();
+      if (window.MoaathLearningHub?.syncPersonaButton) window.MoaathLearningHub.syncPersonaButton();
+      if (window.MoaathPersonaSkill?.sync) window.MoaathPersonaSkill.sync();
       showHatchingCelebrationModal(taste);
     }
   };
 
   if (window.MoaathSystemRegistry && typeof window.MoaathSystemRegistry.register === "function") {
-    window.MoaathSystemRegistry.register("egg_onboarding", "1.0");
+    window.MoaathSystemRegistry.register("egg_onboarding", "1.1");
   }
 
   function init() {
