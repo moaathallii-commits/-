@@ -1,12 +1,11 @@
 // ============================================================================
-// store_ui_futuristic.js - v4.2 (الدفعة 1 + الدفعة 2: طبقة واجهة متجر معاذ)
-// الدفعة 1: شريط العروض الأفقي، ضغط الهيدر، تثبيت التصنيفات، طي المساعد وإخفاء الجنية
-// الدفعة 2: طي شريط حساب الزبون، توحيد بطاقات المنتجات + عداد (- 1 +)، شريط إعادة الطلب السريع
-// عزل أمني تام عن الدفع وشام كاش | يعمل محلياً بـ 0 حصة API
+// store_ui_futuristic.js - v5.0 (النسخة الشاملة: الدفعة 1 + الدفعة 2 + الدفعة 3)
+// تطبيق التحسينات الـ 15 بالكامل لواجهة متجر معاذ المستقبلية الذكية والبسيطة
+// - يعمل محلياً بـ 0 حصة API | معزول تماماً عن الدفع وشام كاش
 // ============================================================================
 (function () {
-  if (window.__MOAATH_STORE_UI_V42__) return;
-  window.__MOAATH_STORE_UI_V42__ = true;
+  if (window.__MOAATH_STORE_UI_V50__) return;
+  window.__MOAATH_STORE_UI_V50__ = true;
 
   var COLLAPSE_KEY = "moaath_store_ai_collapsed";
   var USERBAR_COLLAPSE_KEY = "moaath_store_userbar_collapsed";
@@ -15,6 +14,9 @@
     return document.getElementById(id);
   }
 
+  // ==========================================================================
+  // 1. حقن الأنماط المستقبلية الموحدة (Color Discipline + Glassmorphism + Skeleton)
+  // ==========================================================================
   function injectStoreFuturisticCSS() {
     var style = $("moaathStoreFuturisticCSS");
     if (!style) {
@@ -24,25 +26,49 @@
     }
 
     style.textContent = [
-      "/* 1. حماية التمرير العمودي ومنع الانزياح الأفقي */",
+      "/* #9 توحيد لوحة الألوان (3 درجات: داكن #0f141e + ذهبي #D4AF37 + زمردي/سماوي) */",
+      ":root {",
+      "  --moaath-bg-deep: #0f141e;",
+      "  --moaath-gold: #D4AF37;",
+      "  --moaath-emerald: #10b981;",
+      "  --moaath-sky: #38bdf8;",
+      "}",
       "html, body { max-width: 100% !important; overflow-x: clip !important; }",
+      "body:not(.light-mode) { background-color: #0f141e !important; }",
 
-      "/* 2. ضغط الهيدر العلوي بمظهر زجاجي مستقبلي */",
+      "/* #12 تبسيط الهيدر العلوي (سطر واحد مضغوط ونقل الهاتف للتذييل) */",
       "header, .store-header, .top-bar {",
       "  padding: 6px 11px !important;",
       "  margin-bottom: 5px !important;",
       "  border-radius: 0 0 18px 18px !important;",
+      "  background: rgba(15, 20, 30, 0.94) !important;",
+      "  border-bottom: 1px solid rgba(212, 175, 55, 0.3) !important;",
       "  backdrop-filter: blur(12px) !important;",
       "  -webkit-backdrop-filter: blur(12px) !important;",
       "}",
-
-      "/* 3. بطاقة حساب الزبون القابلة للطي (الدفعة 2) */",
-      ".moaath-userbar-shell {",
+      "body.light-mode header, body.light-mode .store-header, body.light-mode .top-bar {",
+      "  background: rgba(255, 255, 255, 0.95) !important;",
+      "}",
+      ".moaath-header-phone-hidden { display: none !important; }",
+      "#moaathFooterContactBar {",
+      "  margin: 14px 0 84px 0 !important;",
+      "  padding: 10px 12px !important;",
       "  border-radius: 14px !important;",
-      "  padding: 5px 9px !important;",
+      "  background: rgba(255, 255, 255, 0.03) !important;",
+      "  border: 1px solid rgba(212, 175, 55, 0.22) !important;",
+      "  text-align: center !important;",
+      "  font-size: 11px !important;",
+      "  color: var(--gray-text, #94a3b8) !important;",
+      "}",
+
+      "/* #2 + #3 بطاقة حساب الزبون القابلة للطي + أزرار دائرية زجاجية بدون أقواس */",
+      ".moaath-userbar-shell {",
+      "  border-radius: 16px !important;",
+      "  padding: 6px 10px !important;",
       "  margin: 4px 0 6px 0 !important;",
-      "  border: 1px solid rgba(212, 175, 55, 0.28) !important;",
+      "  border: 1px solid rgba(212, 175, 55, 0.32) !important;",
       "  background: rgba(255, 255, 255, 0.035) !important;",
+      "  backdrop-filter: blur(10px) !important;",
       "}",
       "body.light-mode .moaath-userbar-shell { background: #ffffff !important; }",
       ".moaath-userbar-toggle-row {",
@@ -65,25 +91,51 @@
       "  text-overflow: ellipsis !important;",
       "  color: var(--text-color) !important;",
       "}",
-      ".moaath-userbar-pill {",
-      "  background: rgba(212, 175, 55, 0.16) !important;",
-      "  color: var(--gold-color) !important;",
-      "  border: 1px solid rgba(212, 175, 55, 0.4) !important;",
-      "  border-radius: 999px !important;",
-      "  padding: 2px 8px !important;",
-      "  font-size: 10px !important;",
+      ".moaath-userbar-menu-btn {",
+      "  width: 30px !important;",
+      "  height: 30px !important;",
+      "  border-radius: 50% !important;",
+      "  border: 1px solid rgba(212, 175, 55, 0.45) !important;",
+      "  background: rgba(212, 175, 55, 0.14) !important;",
+      "  color: #D4AF37 !important;",
+      "  font-size: 13px !important;",
+      "  display: inline-flex !important;",
+      "  align-items: center !important;",
+      "  justify-content: center !important;",
       "  flex-shrink: 0 !important;",
       "}",
       ".moaath-userbar-body {",
-      "  margin-top: 6px !important;",
-      "  padding-top: 6px !important;",
-      "  border-top: 1px dashed rgba(212, 175, 55, 0.22) !important;",
+      "  margin-top: 7px !important;",
+      "  padding-top: 7px !important;",
+      "  border-top: 1px dashed rgba(212, 175, 55, 0.24) !important;",
+      "  display: flex !important;",
+      "  flex-wrap: wrap !important;",
+      "  align-items: center !important;",
+      "  gap: 6px !important;",
       "}",
       ".moaath-userbar-shell.is-collapsed .moaath-userbar-body {",
       "  display: none !important;",
       "}",
+      ".moaath-glass-circle-btn {",
+      "  min-width: 34px !important;",
+      "  height: 34px !important;",
+      "  padding: 0 9px !important;",
+      "  border-radius: 999px !important;",
+      "  border: 1px solid rgba(212, 175, 55, 0.36) !important;",
+      "  background: rgba(255, 255, 255, 0.06) !important;",
+      "  backdrop-filter: blur(8px) !important;",
+      "  -webkit-backdrop-filter: blur(8px) !important;",
+      "  color: var(--text-color) !important;",
+      "  display: inline-flex !important;",
+      "  align-items: center !important;",
+      "  justify-content: center !important;",
+      "  gap: 4px !important;",
+      "  font-size: 12px !important;",
+      "  cursor: pointer !important;",
+      "  margin: 0 !important;",
+      "}",
 
-      "/* 4. شريط السحب الأفقي المضغوط لبطاقات العروض الخاصة */",
+      "/* #1 شريط العروض الأفقي المضغوط + مؤشر النقاط */",
       ".moaath-offers-track {",
       "  display: flex !important;",
       "  flex-direction: row !important;",
@@ -94,8 +146,8 @@
       "  overflow-y: hidden !important;",
       "  scroll-snap-type: x mandatory !important;",
       "  gap: 10px !important;",
-      "  padding: 4px 2px 10px 2px !important;",
-      "  margin: 4px 0 8px 0 !important;",
+      "  padding: 3px 2px 6px 2px !important;",
+      "  margin: 4px 0 2px 0 !important;",
       "  scrollbar-width: none !important;",
       "  -webkit-overflow-scrolling: touch !important;",
       "  touch-action: pan-x pan-y !important;",
@@ -112,37 +164,101 @@
       "  scroll-snap-align: start !important;",
       "  box-sizing: border-box !important;",
       "  margin: 0 !important;",
-      "  padding: 9px 10px !important;",
+      "  padding: 7px 10px !important;",
       "  border-radius: 15px !important;",
+      "  border: 1px solid rgba(212, 175, 55, 0.36) !important;",
+      "}",
+      "#moaathOffersDots {",
+      "  display: flex !important;",
+      "  justify-content: center !important;",
+      "  align-items: center !important;",
+      "  gap: 5px !important;",
+      "  margin: 2px 0 7px 0 !important;",
+      "}",
+      ".moaath-offer-dot {",
+      "  width: 6px !important;",
+      "  height: 6px !important;",
+      "  border-radius: 999px !important;",
+      "  background: rgba(212, 175, 55, 0.28) !important;",
+      "  transition: width 0.22s ease, background 0.22s ease !important;",
+      "}",
+      ".moaath-offer-dot.is-active {",
+      "  width: 16px !important;",
+      "  background: #D4AF37 !important;",
       "}",
 
-      "/* 5. شريط إعادة الطلب السريع (الدفعة 2) */",
+      "/* #4 شريط البحث الموحّد والذكي (Unified Smart Pill Bar) */",
+      ".moaath-unified-pill-bar {",
+      "  display: flex !important;",
+      "  align-items: center !important;",
+      "  gap: 5px !important;",
+      "  width: 100% !important;",
+      "  border-radius: 999px !important;",
+      "  padding: 4px 6px !important;",
+      "  margin: 5px 0 8px 0 !important;",
+      "  background: rgba(255, 255, 255, 0.045) !important;",
+      "  border: 1px solid rgba(212, 175, 55, 0.42) !important;",
+      "  backdrop-filter: blur(12px) !important;",
+      "  box-sizing: border-box !important;",
+      "}",
+      "body.light-mode .moaath-unified-pill-bar { background: #ffffff !important; }",
+      ".moaath-unified-pill-input {",
+      "  flex: 1 !important;",
+      "  min-width: 0 !important;",
+      "  border: none !important;",
+      "  background: transparent !important;",
+      "  color: var(--text-color) !important;",
+      "  font-size: 11px !important;",
+      "  padding: 4px 8px !important;",
+      "  outline: none !important;",
+      "}",
+      ".moaath-pill-action {",
+      "  border-radius: 999px !important;",
+      "  padding: 4px 9px !important;",
+      "  font-size: 10px !important;",
+      "  font-weight: 800 !important;",
+      "  border: 1px solid rgba(212, 175, 55, 0.38) !important;",
+      "  background: rgba(212, 175, 55, 0.14) !important;",
+      "  color: #D4AF37 !important;",
+      "  cursor: pointer !important;",
+      "  white-space: nowrap !important;",
+      "  flex-shrink: 0 !important;",
+      "}",
+      ".moaath-pill-mic {",
+      "  width: 28px !important;",
+      "  height: 28px !important;",
+      "  padding: 0 !important;",
+      "  border-radius: 50% !important;",
+      "  background: rgba(16, 185, 129, 0.16) !important;",
+      "  border-color: rgba(16, 185, 129, 0.42) !important;",
+      "  color: #10b981 !important;",
+      "  display: inline-flex !important;",
+      "  align-items: center !important;",
+      "  justify-content: center !important;",
+      "}",
+
+      "/* #10 شريط إعادة الطلب السريع */",
       "#moaathQuickReorderBar {",
       "  margin: 4px 0 8px 0 !important;",
-      "  padding: 7px 9px !important;",
+      "  padding: 6px 9px !important;",
       "  border-radius: 14px !important;",
-      "  border: 1px solid rgba(0, 230, 118, 0.28) !important;",
-      "  background: linear-gradient(135deg, rgba(0, 230, 118, 0.07), rgba(15, 23, 42, 0.72)) !important;",
-      "}",
-      "body.light-mode #moaathQuickReorderBar {",
-      "  background: linear-gradient(135deg, rgba(0, 230, 118, 0.08), #ffffff) !important;",
+      "  border: 1px solid rgba(16, 185, 129, 0.3) !important;",
+      "  background: rgba(16, 185, 129, 0.06) !important;",
       "}",
       ".moaath-reorder-head {",
       "  display: flex !important;",
       "  justify-content: space-between !important;",
       "  align-items: center !important;",
-      "  font-size: 10.5px !important;",
+      "  font-size: 10px !important;",
       "  font-weight: 800 !important;",
-      "  color: #00e676 !important;",
-      "  margin-bottom: 6px !important;",
+      "  color: #10b981 !important;",
+      "  margin-bottom: 5px !important;",
       "}",
       ".moaath-reorder-track {",
       "  display: flex !important;",
       "  gap: 7px !important;",
       "  overflow-x: auto !important;",
       "  scrollbar-width: none !important;",
-      "  -webkit-overflow-scrolling: touch !important;",
-      "  padding-bottom: 2px !important;",
       "}",
       ".moaath-reorder-track::-webkit-scrollbar { display: none !important; }",
       ".moaath-reorder-chip {",
@@ -150,87 +266,43 @@
       "  display: flex !important;",
       "  align-items: center !important;",
       "  gap: 6px !important;",
-      "  background: var(--bg-color, #0f172a) !important;",
+      "  background: #0f141e !important;",
       "  border: 1px solid rgba(212, 175, 55, 0.35) !important;",
       "  border-radius: 999px !important;",
       "  padding: 3px 6px 3px 4px !important;",
-      "  max-width: 195px !important;",
       "}",
+      "body.light-mode .moaath-reorder-chip { background: #f8fafc !important; }",
       ".moaath-reorder-chip img {",
-      "  width: 26px !important;",
-      "  height: 26px !important;",
+      "  width: 24px !important;",
+      "  height: 24px !important;",
       "  border-radius: 50% !important;",
       "  object-fit: cover !important;",
-      "  flex-shrink: 0 !important;",
       "}",
       ".moaath-reorder-name {",
       "  font-size: 10px !important;",
       "  font-weight: 700 !important;",
-      "  color: var(--text-color) !important;",
+      "  max-width: 92px !important;",
       "  white-space: nowrap !important;",
       "  overflow: hidden !important;",
       "  text-overflow: ellipsis !important;",
-      "  max-width: 96px !important;",
       "}",
       ".moaath-reorder-add {",
-      "  width: 24px !important;",
-      "  height: 24px !important;",
+      "  width: 22px !important;",
+      "  height: 22px !important;",
       "  border-radius: 50% !important;",
       "  border: none !important;",
-      "  background: #00e676 !important;",
+      "  background: #10b981 !important;",
       "  color: #000 !important;",
-      "  font-size: 14px !important;",
       "  font-weight: 900 !important;",
       "  cursor: pointer !important;",
-      "  display: inline-flex !important;",
-      "  align-items: center !important;",
-      "  justify-content: center !important;",
-      "  flex-shrink: 0 !important;",
       "}",
 
-      "/* 6. توحيد ارتفاع بطاقات المنتجات + عداد الكمية المباشر (- 1 +) (الدفعة 2) */",
-      ".product-card {",
-      "  display: flex !important;",
-      "  flex-direction: column !important;",
-      "  justify-content: space-between !important;",
-      "  height: 100% !important;",
-      "  box-sizing: border-box !important;",
-      "}",
-      ".moaath-inline-stepper {",
-      "  display: flex !important;",
-      "  align-items: center !important;",
-      "  justify-content: space-between !important;",
-      "  gap: 6px !important;",
-      "  width: 100% !important;",
-      "  background: rgba(0, 230, 118, 0.12) !important;",
-      "  border: 1.5px solid #00e676 !important;",
-      "  border-radius: 12px !important;",
-      "  padding: 3px 5px !important;",
-      "  box-sizing: border-box !important;",
-      "  margin-top: 4px !important;",
-      "}",
-      ".moaath-step-btn {",
-      "  width: 30px !important;",
-      "  height: 28px !important;",
-      "  border-radius: 9px !important;",
-      "  border: none !important;",
-      "  font-size: 16px !important;",
-      "  font-weight: 900 !important;",
-      "  cursor: pointer !important;",
-      "  display: inline-flex !important;",
-      "  align-items: center !important;",
-      "  justify-content: center !important;",
-      "}",
-      ".moaath-step-minus { background: rgba(239, 68, 68, 0.22) !important; color: #f87171 !important; }",
-      ".moaath-step-plus { background: #00e676 !important; color: #000 !important; }",
-      ".moaath-step-qty { font-size: 13px !important; font-weight: 900 !important; color: #00e676 !important; min-width: 24px !important; text-align: center !important; }",
-
-      "/* 7. تثبيت شريط التصنيفات العلوي أثناء التمرير */",
+      "/* #5 تثبيت شريط التصنيفات عند التمرير */",
       ".categories {",
       "  position: sticky !important;",
       "  top: 0 !important;",
       "  z-index: 45 !important;",
-      "  background: rgba(12, 16, 24, 0.92) !important;",
+      "  background: rgba(15, 20, 30, 0.93) !important;",
       "  backdrop-filter: blur(12px) !important;",
       "  -webkit-backdrop-filter: blur(12px) !important;",
       "  border-radius: 14px !important;",
@@ -239,40 +311,155 @@
       "}",
       "body.light-mode .categories { background: rgba(248, 250, 252, 0.95) !important; }",
 
-      "/* 8. فتح وطي المساعد الذكي وإخفاء الجنية العائمة عند الفتح */",
+      "/* #6 + #7 بطاقات منتجات مستقبلية موحدة + زر + عائم + عداد (- 1 +) متوهج */",
+      ".product-card {",
+      "  position: relative !important;",
+      "  display: flex !important;",
+      "  flex-direction: column !important;",
+      "  justify-content: space-between !important;",
+      "  height: 100% !important;",
+      "  border-radius: 16px !important;",
+      "  border: 1px solid rgba(212, 175, 55, 0.25) !important;",
+      "  box-sizing: border-box !important;",
+      "}",
+      ".moaath-card-fab-add {",
+      "  position: absolute !important;",
+      "  top: 8px !important;",
+      "  left: 8px !important;",
+      "  z-index: 12 !important;",
+      "  width: 32px !important;",
+      "  height: 32px !important;",
+      "  border-radius: 50% !important;",
+      "  border: 1.5px solid #D4AF37 !important;",
+      "  background: rgba(15, 20, 30, 0.88) !important;",
+      "  color: #D4AF37 !important;",
+      "  font-size: 18px !important;",
+      "  font-weight: 900 !important;",
+      "  display: inline-flex !important;",
+      "  align-items: center !important;",
+      "  justify-content: center !important;",
+      "  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45) !important;",
+      "  cursor: pointer !important;",
+      "}",
+      ".moaath-inline-stepper {",
+      "  display: flex !important;",
+      "  align-items: center !important;",
+      "  justify-content: space-between !important;",
+      "  gap: 6px !important;",
+      "  width: 100% !important;",
+      "  background: rgba(212, 175, 55, 0.12) !important;",
+      "  border: 1.5px solid #D4AF37 !important;",
+      "  box-shadow: 0 0 12px rgba(212, 175, 55, 0.28) !important;",
+      "  border-radius: 12px !important;",
+      "  padding: 3px 6px !important;",
+      "  box-sizing: border-box !important;",
+      "  margin-top: 4px !important;",
+      "}",
+      ".moaath-step-btn {",
+      "  width: 28px !important;",
+      "  height: 26px !important;",
+      "  border-radius: 8px !important;",
+      "  border: none !important;",
+      "  font-size: 16px !important;",
+      "  font-weight: 900 !important;",
+      "  cursor: pointer !important;",
+      "  display: inline-flex !important;",
+      "  align-items: center !important;",
+      "  justify-content: center !important;",
+      "}",
+      ".moaath-step-minus { background: rgba(255, 255, 255, 0.1) !important; color: var(--text-color) !important; }",
+      ".moaath-step-plus { background: #D4AF37 !important; color: #000 !important; }",
+      ".moaath-step-qty { font-size: 13px !important; font-weight: 900 !important; color: #10b981 !important; }",
+
+      "/* #11 إبراز حالة «غير متوفر / نفد مؤقتاً» بذكاء */",
+      ".moaath-out-of-stock-card {",
+      "  opacity: 0.64 !important;",
+      "  filter: grayscale(0.25) !important;",
+      "}",
+      ".moaath-out-badge {",
+      "  position: absolute !important;",
+      "  top: 8px !important;",
+      "  right: 8px !important;",
+      "  z-index: 12 !important;",
+      "  background: rgba(15, 20, 30, 0.88) !important;",
+      "  color: #D4AF37 !important;",
+      "  border: 1px solid rgba(212, 175, 55, 0.45) !important;",
+      "  border-radius: 999px !important;",
+      "  padding: 2px 8px !important;",
+      "  font-size: 9.5px !important;",
+      "  font-weight: 800 !important;",
+      "}",
+      ".moaath-compact-notify-btn {",
+      "  padding: 5px 8px !important;",
+      "  font-size: 10px !important;",
+      "  background: rgba(56, 189, 248, 0.14) !important;",
+      "  color: #38bdf8 !important;",
+      "  border: 1px solid rgba(56, 189, 248, 0.38) !important;",
+      "}",
+
+      "/* #14 تأثيرات التحميل الناعمة (Skeleton Loading) للصور */",
+      "@keyframes moaathSkeletonShimmer {",
+      "  0% { background-position: -200% 0; }",
+      "  100% { background-position: 200% 0; }",
+      "}",
+      ".moaath-img-skeleton {",
+      "  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(212,175,55,0.14) 50%, rgba(255,255,255,0.04) 75%) !important;",
+      "  background-size: 200% 100% !important;",
+      "  animation: moaathSkeletonShimmer 1.35s infinite linear !important;",
+      "}",
+
+      "/* #8 منع تداخل الجنية العائمة مع المساعد أو البحث */",
       "#aiSmartAssistantBox.is-ai-collapsed #futuristicAiBody, #futuristicAiBody.is-collapsed {",
       "  display: none !important;",
-      "  max-height: 0 !important;",
-      "  opacity: 0 !important;",
       "}",
-      "#aiSmartAssistantBox:not(.is-ai-collapsed) #futuristicAiBody:not(.is-collapsed) {",
-      "  display: block !important;",
-      "}",
-      "body.moaath-ai-expanded #petCharRoot {",
+      "body.moaath-ai-expanded #petCharRoot,",
+      "body.moaath-search-focused #petCharRoot {",
       "  opacity: 0 !important;",
       "  visibility: hidden !important;",
       "  pointer-events: none !important;",
       "  transform: scale(0.75) !important;",
       "}",
 
-      "/* 9. شريط إتمام الطلب السفلي الزجاجي وزر العودة للأعلى */",
+      "/* #13 شريط إتمام الطلب السفلي الزجاجي العائم + شارة عدد القطع */",
       ".cart-bar, .bottom-cart-bar, .fixed-cart-bar, #bottomCartBar {",
+      "  left: 8px !important;",
+      "  right: 8px !important;",
+      "  bottom: 8px !important;",
+      "  width: auto !important;",
       "  border-radius: 18px !important;",
+      "  background: rgba(15, 20, 30, 0.9) !important;",
       "  backdrop-filter: blur(14px) !important;",
       "  -webkit-backdrop-filter: blur(14px) !important;",
-      "  border: 1px solid rgba(212, 175, 55, 0.35) !important;",
+      "  border: 1px solid rgba(212, 175, 55, 0.42) !important;",
+      "  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5) !important;",
       "}",
+      "#moaathCartCountBadge {",
+      "  display: inline-flex !important;",
+      "  align-items: center !important;",
+      "  justify-content: center !important;",
+      "  min-width: 19px !important;",
+      "  height: 19px !important;",
+      "  padding: 0 5px !important;",
+      "  border-radius: 999px !important;",
+      "  background: #D4AF37 !important;",
+      "  color: #000 !important;",
+      "  font-size: 10px !important;",
+      "  font-weight: 900 !important;",
+      "  margin-right: 5px !important;",
+      "}",
+
+      "/* #15 زر العودة للأعلى الذكي */",
       "#moaathBackToTopBtn {",
       "  position: fixed;",
-      "  bottom: 86px;",
+      "  bottom: 82px;",
       "  left: 14px;",
       "  z-index: 95;",
       "  width: 38px;",
       "  height: 38px;",
       "  border-radius: 50%;",
-      "  border: 1px solid rgba(212, 175, 55, 0.6);",
-      "  background: rgba(15, 23, 42, 0.9);",
-      "  color: #d4af37;",
+      "  border: 1px solid rgba(212, 175, 55, 0.65);",
+      "  background: rgba(15, 20, 30, 0.92);",
+      "  color: #D4AF37;",
       "  font-size: 16px;",
       "  font-weight: 900;",
       "  display: flex;",
@@ -289,18 +476,58 @@
       "  pointer-events: auto;",
       "  transform: translateY(0);",
       "}"
-    ].join("\n");
+    ].join("
+");
   }
 
-  // ---------- 1. بطاقة حساب الزبون القابلة للطي ----------
-  function readUserBarCollapsed() {
-    try {
-      var v = localStorage.getItem(USERBAR_COLLAPSE_KEY);
-      if (v === null) return true; // مطوية افتراضياً لتوفير المساحة
-      return v === "1" || v === "true";
-    } catch (_) {
-      return true;
+  // ==========================================================================
+  // #12 تبسيط الهيدر العلوي ونقل الهاتف للتذييل
+  // ==========================================================================
+  function simplifyHeaderAndFooter() {
+    var header = document.querySelector("header, .store-header, .top-bar");
+    if (!header) return;
+
+    var phoneText = "";
+    header.querySelectorAll("div, span, p, small, a").forEach(function (el) {
+      if (el.children.length > 0) return;
+      var txt = (el.textContent || "").trim();
+      if (/963\d{7,}|09\d{8}/.test(txt)) {
+        phoneText = txt;
+        el.classList.add("moaath-header-phone-hidden");
+      }
+    });
+
+    if (phoneText && !$("moaathFooterContactBar")) {
+      var footer = document.createElement("div");
+      footer.id = "moaathFooterContactBar";
+      footer.innerHTML = "📍 <b>متجر معاذ</b> — قرية العوينة | للتواصل المباشر: <b style='color:#D4AF37; direction:ltr; display:inline-block;'>" + phoneText + "</b>";
+      document.body.appendChild(footer);
     }
+  }
+
+  // ==========================================================================
+  // #2 + #3 بطاقة الحساب القابلة للطي + إزالة الأقواس حول الأيقونات
+  // ==========================================================================
+  function stripIconBracketsInUserBar(container) {
+    if (!container) return;
+    // إزالة الأقواس النصية المحيطة بالأيقونات مثل (⚙️) أو (📋) أو (🚪)
+    var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+    var node;
+    while ((node = walker.nextNode())) {
+      if (node.nodeValue && /[()]/.test(node.nodeValue)) {
+        var cleaned = node.nodeValue.replace(/\(\s*([^\w؀-ۿ\s]{1,3})\s*\)/g, "$1");
+        if (cleaned !== node.nodeValue) node.nodeValue = cleaned;
+      }
+    }
+
+    container.querySelectorAll("button, a").forEach(function (btn) {
+      if (btn.classList.contains("moaath-userbar-menu-btn")) return;
+      var t = (btn.textContent || "").trim();
+      if (/^\(?.{1,3}\)?$/.test(t) || t.length <= 14) {
+        btn.textContent = t.replace(/^\(|\)$/g, "");
+        btn.classList.add("moaath-glass-circle-btn");
+      }
+    });
   }
 
   function enhanceCollapsibleUserBar() {
@@ -308,8 +535,9 @@
     if (!bar || bar.closest(".modal-overlay")) return;
 
     var userName = (window.currentUser && window.currentUser.name) ? window.currentUser.name : "حسابي";
-    var ptsMatch = (bar.textContent || "").match(/نقاطي\s*:\s*[\d,]+/);
-    var balMatch = (bar.textContent || "").match(/رصيدي\s*:\s*[\d,]+\s*ل\.س/);
+    var fullTxt = bar.textContent || "";
+    var ptsMatch = fullTxt.match(/نقاطي\s*:\s*[\d,]+/);
+    var balMatch = fullTxt.match(/رصيدي\s*:\s*[\d,]+\s*ل\.س/);
     var summaryBits = ["👤 " + userName];
     if (balMatch) summaryBits.push("💳 " + balMatch[0]);
     if (ptsMatch) summaryBits.push("🎁 " + ptsMatch[0]);
@@ -328,30 +556,38 @@
       toggleRow.className = "moaath-userbar-toggle-row";
       toggleRow.innerHTML =
         '<div id="moaathUserBarSummaryTxt" class="moaath-userbar-summary"></div>' +
-        '<span id="moaathUserBarTogglePill" class="moaath-userbar-pill">تفاصيل الحساب ▾</span>';
+        '<span id="moaathUserBarMenuBtn" class="moaath-userbar-menu-btn" title="خيارات الحساب">☰</span>';
 
       toggleRow.onclick = function () {
         var nextCollapsed = !bar.classList.contains("is-collapsed");
         bar.classList.toggle("is-collapsed", nextCollapsed);
         try { localStorage.setItem(USERBAR_COLLAPSE_KEY, nextCollapsed ? "1" : "0"); } catch (_) {}
-        var pill = $("moaathUserBarTogglePill");
-        if (pill) pill.textContent = nextCollapsed ? "تفاصيل الحساب ▾" : "إخفاء ▴";
+        var menuBtn = $("moaathUserBarMenuBtn");
+        if (menuBtn) menuBtn.textContent = nextCollapsed ? "☰" : "✕";
       };
 
       bar.appendChild(toggleRow);
       bar.appendChild(bodyWrap);
 
-      var initCollapsed = readUserBarCollapsed();
+      var initCollapsed = true;
+      try {
+        var saved = localStorage.getItem(USERBAR_COLLAPSE_KEY);
+        if (saved !== null) initCollapsed = (saved === "1" || saved === "true");
+      } catch (_) {}
+
       bar.classList.toggle("is-collapsed", initCollapsed);
-      var initPill = $("moaathUserBarTogglePill");
-      if (initPill) initPill.textContent = initCollapsed ? "تفاصيل الحساب ▾" : "إخفاء ▴";
+      var initBtn = $("moaathUserBarMenuBtn");
+      if (initBtn) initBtn.textContent = initCollapsed ? "☰" : "✕";
     }
 
+    stripIconBracketsInUserBar(bar);
     var sumEl = $("moaathUserBarSummaryTxt");
     if (sumEl) sumEl.textContent = summaryBits.join(" • ");
   }
 
-  // ---------- 2. شريط العروض الأفقي ----------
+  // ==========================================================================
+  // #1 شريط العروض الأفقي + مؤشر النقاط الصغير
+  // ==========================================================================
   function findOfferCards() {
     var raw = [];
     var seen = new Set();
@@ -381,6 +617,36 @@
     });
   }
 
+  function renderOfferDots(track, count) {
+    if (!track || count < 2) return;
+    var dotsWrap = $("moaathOffersDots");
+    if (!dotsWrap) {
+      dotsWrap = document.createElement("div");
+      dotsWrap.id = "moaathOffersDots";
+      track.parentNode.insertBefore(dotsWrap, track.nextSibling);
+    }
+
+    if (dotsWrap.children.length !== count) {
+      var html = "";
+      for (var i = 0; i < count; i++) {
+        html += '<span class="moaath-offer-dot' + (i === 0 ? " is-active" : "") + '"></span>';
+      }
+      dotsWrap.innerHTML = html;
+    }
+
+    if (!track.dataset.dotsBound) {
+      track.dataset.dotsBound = "1";
+      track.addEventListener("scroll", function () {
+        var maxScroll = Math.max(1, track.scrollWidth - track.clientWidth);
+        var ratio = Math.min(1, Math.max(0, Math.abs(track.scrollLeft) / maxScroll));
+        var activeIdx = Math.round(ratio * (count - 1));
+        Array.prototype.forEach.call(dotsWrap.children, function (dot, idx) {
+          dot.classList.toggle("is-active", idx === activeIdx);
+        });
+      }, { passive: true });
+    }
+  }
+
   function applyOffersHorizontalSlider() {
     var cards = findOfferCards();
     if (cards.length < 2) return;
@@ -388,6 +654,7 @@
     var existingTrack = $("moaathOffersSliderTrack");
     if (existingTrack && cards.every(function (c) { return c.parentElement === existingTrack; })) {
       cards.forEach(function (c) { c.classList.add("moaath-offer-card-slide"); });
+      renderOfferDots(existingTrack, cards.length);
       return;
     }
 
@@ -408,7 +675,7 @@
 
     var groupCards = cards.filter(function (c) { return c.parentElement === bestParent; });
     var otherChildren = Array.prototype.filter.call(bestParent.children, function (ch) {
-      if (ch.tagName === "SCRIPT" || ch.tagName === "STYLE") return false;
+      if (ch.tagName === "SCRIPT" || ch.tagName === "STYLE" || ch.id === "moaathOffersDots") return false;
       return groupCards.indexOf(ch) === -1;
     });
 
@@ -424,20 +691,153 @@
     }
 
     groupCards.forEach(function (card) { card.classList.add("moaath-offer-card-slide"); });
+    renderOfferDots(track, groupCards.length);
   }
 
-  // ---------- 3. عداد الكمية المباشر (- 1 +) على بطاقات المنتجات ----------
-  function syncInlineProductSteppers() {
-    var cartObj = (typeof window.cart === "object" && window.cart) ? window.cart : {};
-    var buttons = document.querySelectorAll(".product-card button[onclick*='changeQty']");
+  // ==========================================================================
+  // #4 شريط البحث الموحّد والذكي (Unified Smart Pill Bar)
+  // ==========================================================================
+  function buildUnifiedSmartSearchBar() {
+    if ($("moaathUnifiedSmartBar")) return;
+    var assistBox = $("aiSmartAssistantBox");
+    if (!assistBox || !assistBox.parentNode) return;
 
+    // البحث عن حقل البحث الأصلي وزر "طلب صنف" لدمجهما في شريط Pill واحد
+    var origSearch = document.querySelector("#searchInput, #productSearchInput, #storeSearchInput, input[placeholder*='ابحث']");
+    var reqProductBtn = null;
+    document.querySelectorAll("button").forEach(function (b) {
+      if (!reqProductBtn && /طلب\s*صنف/.test(b.textContent || "") && !b.closest(".modal-overlay")) {
+        reqProductBtn = b;
+      }
+    });
+
+    var pill = document.createElement("div");
+    pill.id = "moaathUnifiedSmartBar";
+    pill.className = "moaath-unified-pill-bar";
+
+    var inp = document.createElement("input");
+    inp.type = "text";
+    inp.id = "moaathUnifiedSearchInput";
+    inp.className = "moaath-unified-pill-input";
+    inp.placeholder = "🔍 ابحث عن صنف أو اطلب من المساعد...";
+
+    inp.addEventListener("input", function () {
+      if (origSearch) {
+        origSearch.value = inp.value;
+        origSearch.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+    });
+    inp.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && inp.value.trim() && typeof window.runAIShoppingAssistant === "function") {
+        window.runAIShoppingAssistant(inp.value.trim());
+      }
+    });
+    inp.addEventListener("focus", function () {
+      document.body.classList.add("moaath-search-focused");
+    });
+    inp.addEventListener("blur", function () {
+      setTimeout(function () { document.body.classList.remove("moaath-search-focused"); }, 250);
+    });
+
+    var micBtn = document.createElement("button");
+    micBtn.type = "button";
+    micBtn.className = "moaath-pill-action moaath-pill-mic";
+    micBtn.title = "بحث صوتي";
+    micBtn.textContent = "🎙️";
+    micBtn.onclick = function () {
+      if (typeof window.startVoiceShoppingInput === "function") window.startVoiceShoppingInput();
+    };
+
+    var reqBtn = document.createElement("button");
+    reqBtn.type = "button";
+    reqBtn.className = "moaath-pill-action";
+    reqBtn.textContent = "📝 طلب صنف";
+    reqBtn.onclick = function () {
+      if (reqProductBtn) reqProductBtn.click();
+    };
+
+    pill.appendChild(inp);
+    pill.appendChild(micBtn);
+    if (reqProductBtn) {
+      pill.appendChild(reqBtn);
+      reqProductBtn.style.display = "none";
+    }
+    if (origSearch) {
+      var origWrap = origSearch.closest(".search-box, .search-bar, .form-group") || origSearch;
+      if (origWrap && !origWrap.closest("#aiSmartAssistantBox")) {
+        origWrap.style.display = "none";
+      }
+    }
+
+    assistBox.parentNode.insertBefore(pill, assistBox);
+  }
+
+  // ==========================================================================
+  // #6 + #7 + #11 + #14 بطاقات المنتجات الموحدة + FAB + عداد + نفد + Skeleton
+  // ==========================================================================
+  function enhanceProductAndOfferCards() {
+    var cartObj = (typeof window.cart === "object" && window.cart) ? window.cart : {};
+
+    // #14 Skeleton Loading للصور
+    document.querySelectorAll(".product-card img, .offer-card img, .moaath-offer-card-slide img").forEach(function (img) {
+      if (img.dataset.skelBound) return;
+      img.dataset.skelBound = "1";
+      if (!img.complete) {
+        img.classList.add("moaath-img-skeleton");
+        img.addEventListener("load", function () { img.classList.remove("moaath-img-skeleton"); }, { once: true });
+        img.addEventListener("error", function () { img.classList.remove("moaath-img-skeleton"); }, { once: true });
+      }
+    });
+
+    // #11 إبراز حالة «غير متوفر / نفد مؤقتاً» بذكاء في العروض والمنتجات
+    document.querySelectorAll(".product-card, .offer-card, .moaath-offer-card-slide").forEach(function (card) {
+      var txt = card.textContent || "";
+      var isOut = /سيتم\s*إعلامك|أعلمني\s*عند|نفد|غير\s*متوفر/.test(txt);
+      card.classList.toggle("moaath-out-of-stock-card", isOut);
+
+      if (isOut) {
+        if (!card.querySelector(".moaath-out-badge")) {
+          var badge = document.createElement("span");
+          badge.className = "moaath-out-badge";
+          badge.textContent = "نفد مؤقتاً";
+          card.style.position = "relative";
+          card.appendChild(badge);
+        }
+        card.querySelectorAll("button").forEach(function (b) {
+          if (/أعلمني|سيتم\s*إعلامك/.test(b.textContent || "")) {
+            b.classList.add("moaath-compact-notify-btn");
+          }
+        });
+      }
+    });
+
+    // #6 زر + عائم في زاوية صورة المنتج + #7 عداد الكمية المباشر (- 1 +)
+    var buttons = document.querySelectorAll(".product-card button[onclick*='changeQty']");
     buttons.forEach(function (btn) {
-      if (btn.classList.contains("moaath-step-btn")) return;
+      if (btn.classList.contains("moaath-step-btn") || btn.classList.contains("moaath-card-fab-add")) return;
       var onclk = btn.getAttribute("onclick") || "";
       var m = onclk.match(/changeQty\(\s*['"]([^'"]+)['"]\s*,\s*1\s*\)/);
       if (!m) return;
 
       var pid = m[1];
+      var card = btn.closest(".product-card");
+      if (!card) return;
+
+      // إضافة زر + العائم في زاوية البطاقة لتقليل الطول وسرعة الإضافة
+      if (!card.querySelector(".moaath-card-fab-add")) {
+        var fab = document.createElement("button");
+        fab.type = "button";
+        fab.className = "moaath-card-fab-add";
+        fab.title = "إضافة سريعة للسلة";
+        fab.textContent = "+";
+        fab.onclick = function (e) {
+          if (e) e.stopPropagation();
+          if (typeof window.changeQty === "function") window.changeQty(pid, 1);
+          setTimeout(enhanceProductAndOfferCards, 40);
+        };
+        card.appendChild(fab);
+      }
+
       var qty = (cartObj[pid] && parseInt(cartObj[pid].qty, 10)) ? parseInt(cartObj[pid].qty, 10) : 0;
       var nextEl = btn.nextElementSibling;
       var hasStepper = nextEl && nextEl.classList && nextEl.classList.contains("moaath-inline-stepper");
@@ -447,7 +847,6 @@
         if (!hasStepper) {
           var stepper = document.createElement("div");
           stepper.className = "moaath-inline-stepper";
-          stepper.dataset.pid = pid;
           stepper.innerHTML =
             '<button type="button" class="moaath-step-btn moaath-step-minus" aria-label="إنقاص">−</button>' +
             '<span class="moaath-step-qty">' + qty + "</span>" +
@@ -456,12 +855,12 @@
           stepper.querySelector(".moaath-step-minus").onclick = function (e) {
             if (e) e.stopPropagation();
             if (typeof window.changeQty === "function") window.changeQty(pid, -1);
-            setTimeout(syncInlineProductSteppers, 40);
+            setTimeout(enhanceProductAndOfferCards, 40);
           };
           stepper.querySelector(".moaath-step-plus").onclick = function (e) {
             if (e) e.stopPropagation();
             if (typeof window.changeQty === "function") window.changeQty(pid, 1);
-            setTimeout(syncInlineProductSteppers, 40);
+            setTimeout(enhanceProductAndOfferCards, 40);
           };
 
           btn.parentNode.insertBefore(stepper, btn.nextSibling);
@@ -476,7 +875,9 @@
     });
   }
 
-  // ---------- 4. شريط إعادة الطلب السريع ----------
+  // ==========================================================================
+  // #10 شريط إعادة الطلب السريع
+  // ==========================================================================
   function renderQuickReorderBar() {
     var prods = (typeof window.products === "object" && window.products) ? window.products : {};
     var hist = (typeof window.completedOrdersHistory === "object" && window.completedOrdersHistory) ? window.completedOrdersHistory : {};
@@ -521,7 +922,7 @@
     bar.dataset.sig = signature;
 
     bar.innerHTML =
-      '<div class="moaath-reorder-head"><span>⚡ إعادة الطلب السريع (مشترياتك المعتادة)</span><span>بنقرة واحدة</span></div>' +
+      '<div class="moaath-reorder-head"><span>⚡ أكثر ما تطلبه (إعادة طلب سريعة)</span><span>بنقرة واحدة</span></div>' +
       '<div class="moaath-reorder-track">' +
       picks.map(function (pid) {
         var p = prods[pid];
@@ -529,16 +930,46 @@
         var safeName = String(p.name || "").replace(/</g, "&lt;");
         return (
           '<div class="moaath-reorder-chip">' +
-          '<img src="' + img + '" onerror="this.onerror=null;this.src=\'store-icon.png\';" alt="' + safeName + '">' +
+          '<img src="' + img + '" onerror="this.onerror=null;this.src='store-icon.png';" alt="' + safeName + '">' +
           '<span class="moaath-reorder-name" title="' + safeName + '">' + safeName + "</span>" +
-          '<button type="button" class="moaath-reorder-add" onclick="if(typeof changeQty===\'function\'){changeQty(\'' + pid + '\',1);}">+</button>' +
+          '<button type="button" class="moaath-reorder-add" onclick="if(typeof changeQty==='function'){changeQty('' + pid + '',1);}">+</button>' +
           "</div>"
         );
       }).join("") +
       "</div>";
   }
 
-  // ---------- 5. المساعد الذكي وزر العودة للأعلى ----------
+  // ==========================================================================
+  // #13 شارة عدد القطع في الشريط السفلي الزجاجي العائم
+  // ==========================================================================
+  function syncFloatingCartBadge() {
+    var cartObj = (typeof window.cart === "object" && window.cart) ? window.cart : {};
+    var totalPieces = 0;
+    Object.keys(cartObj).forEach(function (k) {
+      totalPieces += (parseInt(cartObj[k] && cartObj[k].qty, 10) || 0);
+    });
+
+    var dock = document.querySelector(".cart-bar, .bottom-cart-bar, .fixed-cart-bar, #bottomCartBar");
+    if (!dock) return;
+    var checkoutBtn = dock.querySelector("button");
+    if (!checkoutBtn) return;
+
+    var badge = $("moaathCartCountBadge");
+    if (totalPieces > 0) {
+      if (!badge) {
+        badge = document.createElement("span");
+        badge.id = "moaathCartCountBadge";
+        checkoutBtn.appendChild(badge);
+      }
+      badge.textContent = String(totalPieces);
+    } else if (badge) {
+      badge.remove();
+    }
+  }
+
+  // ==========================================================================
+  // #8 + #15 المساعد الذكي وزر العودة للأعلى
+  // ==========================================================================
   function readCollapsedPref() {
     try {
       var v = localStorage.getItem(COLLAPSE_KEY);
@@ -568,7 +999,7 @@
     if (btn) {
       btn.setAttribute("aria-expanded", String(!collapsed));
       btn.innerHTML = collapsed
-        ? '<span class="fut-dot"></span><span>فتح المساعد والبحث</span><span class="fut-chev">▾</span>'
+        ? '<span class="fut-dot"></span><span>فتح المساعد الذكي</span><span class="fut-chev">▾</span>'
         : '<span class="fut-dot"></span><span>طي المساعد</span><span class="fut-chev">▴</span>';
     }
 
@@ -610,10 +1041,13 @@
   var timer = null;
   function runAll() {
     injectStoreFuturisticCSS();
+    simplifyHeaderAndFooter();
     enhanceCollapsibleUserBar();
     applyOffersHorizontalSlider();
+    buildUnifiedSmartSearchBar();
     renderQuickReorderBar();
-    syncInlineProductSteppers();
+    enhanceProductAndOfferCards();
+    syncFloatingCartBadge();
     bindToggleButtonDirect();
     syncAssistantState();
     mountBackToTop();
