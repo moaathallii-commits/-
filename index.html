@@ -6230,8 +6230,19 @@
     <script src="ai_personas.js"></script>
     <script src="ai_recipes.js"></script>
     <script src="ai_brain.js"></script>
-    <script src="ai_engine.js?v=71"></script>
+    <script src="ai_engine.js?v=72"></script>
     <script src="ai_vip_personas.js"></script>
+    <script>
+      window.MoaathVIPSystem = window.MoaathVIPSystem || {
+        version: "4.0",
+        personas: window.VIP_PERSONAS || {},
+        activePersonaId: (function(){ try { return JSON.parse(localStorage.getItem("moaath_store_pet_prefs") || "{}").persona || "coach_sakhr"; } catch(_) { return "coach_sakhr"; } })(),
+        isPersonaUnlockedLifetime: function () { return true; }
+      };
+      if (window.MoaathSystemRegistry && typeof window.MoaathSystemRegistry.register === "function") {
+        window.MoaathSystemRegistry.register("ai_vip", "4.0");
+      }
+    </script>
     <script src="ai_admin_architect.js"></script>
     <script src="moaath_voice_fresh_engine.js?v=3"></script>
     <script src="moaath_learning_hub.js"></script>
@@ -6241,6 +6252,6 @@
     <script src="moaath_vip_daily_engine.js"></script>
     <script src="moaath_egg_onboarding.js?v=2"></script>
     <script src="moaath_egg_and_dispatch_fix.js?v=2"></script>
-    <script src="store_ui_futuristic.js?v=13"></script>
+    <script src="store_ui_futuristic.js?v=14"></script>
 </body>
 </html>
