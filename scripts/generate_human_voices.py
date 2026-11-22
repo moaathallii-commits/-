@@ -790,11 +790,11 @@ async def main():
     os.makedirs(OUT_DIR, exist_ok=True)
     sem = asyncio.Semaphore(CONCURRENCY)
     tasks = []
-    manifest = {"version": "2.0-edge-neural", "personas": {}}
+    manifest = {"version": "3.0-edge-neural", "personas": {}}
 
     for pid, cfg in PERSONA_VOICES.items():
         style = cfg["style"]
-        bank = STYLE_BANKS.get(style, STYLE_BANKS["friendly"])
+        bank = STYLE_BANKS.get(style) or STYLE_BANKS["buddy_icebreaker"]
         manifest["personas"][pid] = {}
 
         persona_tags = {
