@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v94 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v95 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -2569,8 +2569,19 @@
   function extractBudgetNumber(normText) {
     const clean = toWesternDigits(String(normText || "")).replace(/[,،]/g, "").trim();
 
-    // 1) أرقام رقمية (مثل 500، ٥٠٠، ب 500، ميزانيتي 1000 ليرة)
-    const numMatch = clean.match(/(\d{2,7})/);
+    // إزالة عبارات عدد الأشخاص أولاً حتى لا يُقرأ رقم مثل "10 أشخاص" كميزانية
+    const withoutPeople = clean.replace(/(?:ل|لـ|حق|عدد)?\s*\d{1,2}\s*(?:اشخاص|أشخاص|افراد|أفراد|شخص|نفرات|انفار|نفر)/g, " ");
+
+    // 1) البحث أولاً عن رقم مرتبط صراحةً بكلمة ميزانية/بمبلغ/بـ/ليرة
+    const explicitMatch = withoutPeople.match(/(?:ميزانيه|ميزانيتي|بميزانيه|بميزانيتي|بمبلغ|مبلغ|حدود|بسعر|بـ|ب)\s*(\d{2,7})/) ||
+                          withoutPeople.match(/(\d{2,7})\s*(?:ليره|ليرة|ل\s*س|سوري)/);
+    if (explicitMatch) {
+      const val = parseInt(explicitMatch[1], 10);
+      if (val >= 10) return val;
+    }
+
+    // 2) أي رقم عام بعد استبعاد عدد الأشخاص
+    const numMatch = withoutPeople.match(/(\d{2,7})/);
     if (numMatch) {
       const val = parseInt(numMatch[1], 10);
       if (val >= 10) return val;
@@ -2667,8 +2678,9 @@
       }
     }
 
-    // 2) إذا ذكر الزبون ميزانية أو مبلغاً (مثل "500"، "فاجأني بميزانيتي 1000"، "ب 500") -> يجهز له سلة فورية ضمن الميزانية
-    if (!pending && budgetVal && (/(ميزان|ميزانيتي|ميزانيه|مبلغ|حدود|بميزانيه|بميزانيتي|فاجاني|فاجا)/.test(normText) || /^(?:ب|حوالي|تقريبا|حدود|ميزانيه|ميزانيتي|مبلغ)?\s*(?:\d{2,7}|خمسميه|خمس\s*ميه|الف|الفين|ميه|ميتين|تلتميه|اربعميه|ستميه|سبعميه|تمنميه|تسعميه)\s*(?:ليره|ل\s*س|سوري|فقط)?$/.test(normText))) {
+    // 2) إذا ذكر الزبون ميزانية عامة فقط (دون تحديد وجبة/مناسبة أو عدد أشخاص) -> يجهز له سلة فورية ضمن الميزانية
+    const hasPeopleOrOccasion = !!(parsePeopleCount(normText) || /(فطور|افطار|إفطار|صباح|سهره|سهرة|مته|متة|غداء|عشاء|طبخه|طبخة|حلى|حلويات|ضيافه|ضيافة|رياضه|رياضة|تنظيف)/.test(normText));
+    if (!pending && budgetVal && !hasPeopleOrOccasion && (/(ميزان|ميزانيتي|ميزانيه|مبلغ|حدود|بميزانيه|بميزانيتي|فاجاني|فاجا)/.test(normText) || /^(?:ب|حوالي|تقريبا|حدود|ميزانيه|ميزانيتي|مبلغ)?\s*(?:\d{2,7}|خمسميه|خمس\s*ميه|الف|الفين|ميه|ميتين|تلتميه|اربعميه|ستميه|سبعميه|تمنميه|تسعميه)\s*(?:ليره|ل\s*س|سوري|فقط)?$/.test(normText))) {
       const ctxTitle = sessionCtx.lastModalTitle ? "تشكيلة حسب طلبك السابق" : "تشكيلة متوفرة";
       const ctxKws = sessionCtx.lastQuery ? [sessionCtx.lastQuery] : [];
       const { picked, runningTotal } = buildBudgetBasket(budgetVal, ctxKws, ctxTitle);
@@ -3376,7 +3388,7 @@
   function buildCompoundBasketFromIntent(intentObj, rawPrompt) {
     const budget = intentObj.budgetSYP || null;
     const people = intentObj.peopleCount || 1;
-    const baseQty = people >= 5 ? Math.min(4, Math.ceil(people / 3)) : 1;
+    const targetQty = people >= 3 ? Math.min(5, Math.ceil(people / 2)) : 1;
 
     const topicKeywordsMap = {
       breakfast: ["بيض", "حليب", "لبنة", "لبنه", "جبن", "زعتر", "زيتون", "عسل", "مربى", "شاي"],
@@ -3407,19 +3419,25 @@
     let runningTotal = 0;
     for (const item of pool) {
       if (picked.length >= 8) break;
-      const qtyToSuggest = Math.max(1, Math.min(baseQty, getEffectiveProductStock(item.id)));
-      const lineCost = item.price * qtyToSuggest;
-      if (!budget || (runningTotal + lineCost <= budget)) {
-        picked.push({
-          id: item.id,
-          name: item.name,
-          suggestedQty: qtyToSuggest,
-          reason: budget
-            ? `ضمن ميزانية ${budget.toLocaleString()} ل.س (${item.price.toLocaleString()} ل.س)`
-            : (people > 1 ? `مقترح لـ ${people} أشخاص` : "متوفر في الفرع")
-        });
-        runningTotal += lineCost;
+      const maxStock = getEffectiveProductStock(item.id);
+      let chosenQty = Math.max(1, Math.min(targetQty, maxStock));
+      if (budget) {
+        const remaining = budget - runningTotal;
+        if (remaining < item.price) continue;
+        chosenQty = Math.min(chosenQty, Math.floor(remaining / item.price));
+        if (chosenQty < 1) continue;
       }
+      const lineCost = item.price * chosenQty;
+      const reasonParts = [];
+      if (people > 1) reasonParts.push(`مقترح لـ ${people} أشخاص: ×${chosenQty}`);
+      if (budget) reasonParts.push(`المجموع: ${lineCost.toLocaleString()} ل.س`);
+      picked.push({
+        id: item.id,
+        name: item.name,
+        suggestedQty: chosenQty,
+        reason: reasonParts.join(" • ") || "متوفر في الفرع"
+      });
+      runningTotal += lineCost;
     }
     return { picked, runningTotal };
   }
@@ -3597,13 +3615,18 @@
           `✨ تشكيلة مخصصة (${metaParts.join(" • ") || "حسب طلبك"}):`,
           picked,
           `compound_${norm.slice(0, 18)}`,
-          `المجموع المقترح: ${runningTotal.toLocaleString()} ل.س — اضغط «تحديد المتوفر» أو (+)`
+          `المجموع المقترح: ${runningTotal.toLocaleString()} ل.س${compoundIntent.budgetSYP ? ` من أصل ${compoundIntent.budgetSYP.toLocaleString()} ل.س` : ""} — اضغط «تحديد المتوفر» لتطبيق الكميات`
         );
         const prof = buildSmartCustomerProfile();
         const who = prof.firstName ? `يا ${prof.firstName}` : "يا غالي";
-        const msg = `رتبتلك تشكيلة متناسقة ${who}${compoundIntent.budgetSYP ? " ضمن ميزانيتك" : ""} والمجموع ${runningTotal.toLocaleString()} ليرة.`;
+        const msg = `رتبتلك تشكيلة${compoundIntent.peopleCount ? ` لـ ${compoundIntent.peopleCount} أشخاص` : ""} ${who}${compoundIntent.budgetSYP ? ` ضمن ميزانية ${compoundIntent.budgetSYP.toLocaleString()} ليرة` : ""}، المجموع ${runningTotal.toLocaleString()} ليرة.`;
         setOrbEmotion("choice", msg, true);
         setTxt("aiShoppingStatusText", `✨ ${msg}`);
+        return;
+      } else if (compoundIntent.budgetSYP) {
+        const lowMsg = `ميزانية ${compoundIntent.budgetSYP.toLocaleString()} ليرة أقل من أسعار الأصناف المتوفرة حالياً، جرّب رفع الميزانية قليلاً.`;
+        setOrbEmotion("idle", lowMsg, true);
+        setTxt("aiShoppingStatusText", `💡 ${lowMsg}`);
         return;
       }
     }
@@ -4265,7 +4288,7 @@
   window.runAssistantQACheck = function () {
     const mem = typeof buildSmartCustomerProfile === "function" ? buildSmartCustomerProfile() : {};
     const report = {
-      version: "v94",
+      version: "v95",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
