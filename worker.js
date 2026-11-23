@@ -25,7 +25,8 @@ function getRotatedGeminiKeys(env) {
   const keys = [
     env.GEMINI_API_KEY_1,
     env.GEMINI_API_KEY,
-    env.GEMINI_API_KEY_2
+    env.GEMINI_API_KEY_2,
+    env.GEMINI_API_KEY_3
   ]
     .map(k => String(k || "").trim())
     .filter(Boolean);
@@ -349,7 +350,9 @@ export default {
       }
 
       const promptText = String(body.prompt || "").trim();
-      const catalogSummary = Array.isArray(body.catalog) ? body.catalog.slice(0, 70) : [];
+      const catalogSummary = Array.isArray(body.catalog)
+        ? body.catalog.slice(0, 70).map(p => ({ id: p.id, n: p.name, p: p.price }))
+        : [];
       const currentCart = Array.isArray(body.currentCart) ? body.currentCart : [];
       const storeMeta = body.storeMeta || {};
       const imageBase64 = body.imageBase64 || null;
@@ -426,7 +429,7 @@ export default {
       const geminiPayload = {
         systemInstruction: { parts: [{ text: systemInstruction }] },
         contents: [{ role: "user", parts: userParts }],
-        generationConfig: { temperature: 0.35, responseMimeType: "application/json" }
+        generationConfig: { temperature: 0.35, maxOutputTokens: 320, responseMimeType: "application/json" }
       };
 
       let gemData = null;
@@ -434,7 +437,10 @@ export default {
       let lastErrorMsg = "Gemini API error";
       let succeeded = false;
 
-      outer: for (const apiKey of allApiKeys) {
+      const { active: textKeys } = getAvailableKeys(allApiKeys);
+      const keysToTry = textKeys.length ? textKeys : allApiKeys;
+
+      outer: for (const apiKey of keysToTry) {
         for (const modelName of candidateModels) {
           usedModel = modelName;
           const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
@@ -443,11 +449,15 @@ export default {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(geminiPayload),
-              signal: AbortSignal.timeout(9500)
+              signal: AbortSignal.timeout(12000)
             });
             gemData = await gemRes.json();
             if (gemRes.ok) { succeeded = true; break outer; }
             lastErrorMsg = gemData?.error?.message || `HTTP ${gemRes.status}`;
+            if (gemRes.status === 429 || /QUOTA|RESOURCE_EXHAUSTED/i.test(lastErrorMsg)) {
+              markKeyCooldown(apiKey, COOLDOWN_MS);
+              break;
+            }
           } catch (e) {
             lastErrorMsg = e?.message || "Fetch error";
           }
