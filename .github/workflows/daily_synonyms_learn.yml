@@ -1,0 +1,48 @@
+name: Daily Auto-Learn Synonyms Cloud Sync
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-auto-synonyms
+  cancel-in-progress: false
+
+jobs:
+  learn-synonyms:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run Auto-Learn Synonyms Script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
+          GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
+          GEMINI_API_KEY_3: ${{ secrets.GEMINI_API_KEY_3 }}
+        run: |
+          python scripts/auto_learn_synonyms.py
+
+      - name: Commit and Push Learned Synonyms
+        run: |
+          git config user.name "Moaath Store Synonyms Bot"
+          git config user.email "bot@moaath.store"
+          git add synonyms_auto.json
+          if git diff --staged --quiet; then
+            echo "لا توجد مرادفات جديدة اليوم."
+          else
+            git commit -m "🧠 تحديث تلقائي لمرادفات البحث الذكي (synonyms_auto.json)"
+            git pull --rebase origin main
+            git push origin main
+          fi
+          
