@@ -721,7 +721,10 @@
             mode: "companion_shop",
             prompt: raw,
             history: roomChatHistory,
-            customerProfile: getCustomerInsights(),
+            customerProfile: {
+              ...getCustomerInsights(),
+              firstName: getCustomerInsights().nickname || ""
+            },
             catalog: matchedBridgeProducts.map((p) => ({ id: p.id, name: p.name, price: p.priceSYP })),
             storeMeta: {
               persona: room.name,
