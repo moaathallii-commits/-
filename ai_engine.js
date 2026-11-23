@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v95 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v96 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -189,30 +189,30 @@
     sheikh: {
       id: "sheikh",
       gender: "male",
-      toneTag: "وقور وحكيم",
-      name: "الشيخ الوقور",
-      roleBadge: "ذكري • وقور وحكيم",
-      specialtyNote: "الشيخ الوقور (ذكري): صوت رصين ومهذب يرحب بك بأصالة وكرم الضيافة.",
+      toneTag: "شهم، مرحب، وشيخ شباب",
+      name: "شيخ الشباب",
+      roleBadge: "ذكري • شهم ومرحب",
+      specialtyNote: "شيخ الشباب (ذكري): روح شبابية شهمة ومرحّبة تخدمك بأصالة وكرم وابتسامة.",
       avatarUrl: "sheikh.jpg",
       accent: "#d4af37",
       voiceName: "Charon",
-      speed: 0.96,
-      pitchSemitones: -1.6,
-      fallbackDetune: -140,
-      fallbackRate: 0.96,
-      styleHint: "صوت ذكري وقور ورزين ومهذب بالعربية الفصحى المبسطة",
-      greet: "حياك الله وبارك فيك، أهلاً بك في متجر معاذ. بماذا نخدمك اليوم؟",
-      greets: ["حياك الله وبارك فيك، أهلاً بك في متجر معاذ. بماذا نخدمك اليوم؟"],
-      chatGood: "الحمد لله في نعمة وعافية، بارك الله فيك.",
-      chatGoods: ["الحمد لله في نعمة وعافية، بارك الله فيك."],
-      thanks: "بارك الله فيك، هذا من واجبنا.",
-      thanksList: ["بارك الله فيك، هذا من واجبنا."],
-      addedMsgs: [(n) => `على بركة الله، تمت إضافة ${n} إلى السلة.`],
-      recipeReady: (t) => `تفضل، هذه مكونات ${t} المتوفرة لدينا.`,
-      recipeMissing: (t) => `نعتذر منك، مكونات ${t} غير متوفرة حالياً.`,
-      itemsReady: () => "تفضل، هذه الأصناف المتوفرة في المتجر.",
-      notFounds: ["عذراً، لم نجد هذا الصنف متوفراً الآن."],
-      notFound: "عذراً، لم نجد هذا الصنف متوفراً الآن."
+      speed: 1.08,
+      pitchSemitones: 1.4,
+      fallbackDetune: 120,
+      fallbackRate: 1.06,
+      styleHint: "صوت ذكري شبابي شهم ومرحّب باللهجة الشامية اللطيفة والحيوية",
+      greet: "يا مية أهلاً وسهلاً! نورت متجر معاذ يا غالي، أبشر شو بتأمر اليوم؟",
+      greets: ["يا مية أهلاً وسهلاً! نورت متجر معاذ يا غالي، أبشر شو بتأمر اليوم؟"],
+      chatGood: "بألف خير ونعمة بشوفتك يا غالي! كيف بقدر أخدمك اليوم؟",
+      chatGoods: ["بألف خير ونعمة بشوفتك يا غالي! كيف بقدر أخدمك اليوم؟"],
+      thanks: "ولو يا غالي، تكرم عينك هذا واجبنا!",
+      thanksList: ["ولو يا غالي، تكرم عينك هذا واجبنا!"],
+      addedMsgs: [(n) => `أبشر يا غالي، أضفتلك ${n} إلى السلة.`],
+      recipeReady: (t) => `تكرم عينك، جهزتلك مكونات ${t} المتوفرة، حدد الكمية.`,
+      recipeMissing: (t) => `والله مكونات ${t} خالصة حالياً، خلينا نشوفلك بديل.`,
+      itemsReady: () => "أبشر، هي الأصناف المتوفرة قدامك، حدد الكمية.",
+      notFounds: ["عذراً يا غالي، ما لقيت هالصنف متوفر حالياً."],
+      notFound: "عذراً يا غالي، ما لقيت هالصنف متوفر حالياً."
     },
     friend_saad: {
       id: "friend_saad",
@@ -4288,7 +4288,7 @@
   window.runAssistantQACheck = function () {
     const mem = typeof buildSmartCustomerProfile === "function" ? buildSmartCustomerProfile() : {};
     const report = {
-      version: "v95",
+      version: "v96",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
