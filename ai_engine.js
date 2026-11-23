@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v91 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v92 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -53,7 +53,7 @@
       name: "لولو النشيطة",
       roleBadge: "أنثوي • مرحة ونشيطة",
       specialtyNote: "لولو (أنثوي مرح): صوت حيوي ومبهج يقترح لك أطيب الأصناف بسرعة وخفة.",
-      avatarUrl: "store-icon.png",
+      avatarUrl: "lolo.jpg",
       accent: "#ff6ec7",
       voiceName: "Aoede",
       speed: 1.08,
@@ -278,7 +278,7 @@
       name: "رفيقة المنزل",
       roleBadge: "أنثوي • تنظيم ومنظفات",
       specialtyNote: "رفيقة المنزل (أنثوي): تساعدك في ترتيب قائمة المنظفات ومستلزمات البيت الكاملة.",
-      avatarUrl: "store-icon.png",
+      avatarUrl: "homemaker.jpg",
       accent: "#06b6d4",
       voiceName: "Aoede",
       speed: 1.02,
@@ -1707,14 +1707,28 @@
     return typeof getProductStockForBranch === "function" ? getProductStockForBranch(pObj, typeof activeBranchId !== "undefined" ? activeBranchId : "main") : (parseInt(pObj.stock) || 0);
   }
 
+  window.__moaathAvatarFallback = function (imgEl, baseId) {
+    if (!imgEl) return;
+    const step = parseInt(imgEl.dataset.fbStep || "0", 10);
+    const id = String(baseId || "").replace(/\.(jpg|jpeg|png|webp)$/i, "").trim();
+    const candidates = id ? [`${id}.png`, `${id}.webp`, `${id}.jpeg`, "store-icon.png"] : ["store-icon.png"];
+    if (step < candidates.length) {
+      imgEl.dataset.fbStep = String(step + 1);
+      imgEl.src = candidates[step];
+    } else {
+      imgEl.onerror = null;
+      imgEl.src = "store-icon.png";
+    }
+  };
+
   function renderFairyAvatarImage(imgEl, persona) {
     if (!imgEl || !persona) return;
     imgEl.alt = persona.name;
+    imgEl.dataset.fbStep = "0";
     imgEl.onerror = function () {
-      this.onerror = null;
-      this.src = "store-icon.png";
+      window.__moaathAvatarFallback(this, persona.id || persona.avatarUrl);
     };
-    imgEl.src = persona.avatarUrl;
+    imgEl.src = persona.avatarUrl || `${persona.id}.jpg`;
   }
 
   window.selectPetPersona = function (key) {
@@ -1815,7 +1829,7 @@
         <button type="button" onclick="window.__pickFairyFromGallery('${per.id}')" class="fairy-gal-card ${isSelected ? "is-active" : ""}" style="--f-accent:${accent};">
           ${isSelected ? `<span class="fairy-gal-active-pill">✓ نشطة</span>` : ""}
           <div class="fairy-gal-avatar-wrap">
-            <img src="${esc(per.avatarUrl || "store-icon.png")}" onerror="this.onerror=null;this.src='store-icon.png';" alt="${esc(per.name)}" class="fairy-gal-avatar">
+            <img src="${esc(per.avatarUrl || "store-icon.png")}" onerror="window.__moaathAvatarFallback(this, '${esc(per.id)}')" alt="${esc(per.name)}" class="fairy-gal-avatar">
           </div>
           <div class="fairy-gal-name">${esc(per.name)}</div>
           <div class="fairy-gal-badge">${esc(per.roleBadge || "")}</div>
@@ -3869,13 +3883,35 @@
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
 
-    window.addEventListener("scroll", () => {
-      if (isHoldingSpeak) return;
-      pauseRoaming(4500);
-      root.style.opacity = "0.48";
-      clearTimeout(scrollTimer);
-      scrollTimer = setTimeout(() => { root.style.opacity = "1"; }, 550);
-    }, { passive: true });
+    if (!window.__MOAATH_CARTBAR_AUTOHIDE__) {
+      window.__MOAATH_CARTBAR_AUTOHIDE__ = true;
+      let cartBarScrollTimer = null;
+      const onStoreScroll = () => {
+        const cb = $("cartBar");
+        if (cb && cb.style.display !== "none") {
+          cb.style.transition = "transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease";
+          cb.style.transform = "translateY(125%)";
+          cb.style.opacity = "0";
+          cb.style.pointerEvents = "none";
+          clearTimeout(cartBarScrollTimer);
+          cartBarScrollTimer = setTimeout(() => {
+            if (cb && cb.style.display !== "none") {
+              cb.style.transform = "translateY(0)";
+              cb.style.opacity = "1";
+              cb.style.pointerEvents = "auto";
+            }
+          }, 420);
+        }
+        if (!isHoldingSpeak && root) {
+          pauseRoaming(4500);
+          root.style.opacity = "0.52";
+          clearTimeout(scrollTimer);
+          scrollTimer = setTimeout(() => { if (root) root.style.opacity = "1"; }, 480);
+        }
+      };
+      window.addEventListener("scroll", onStoreScroll, { passive: true });
+      window.addEventListener("touchmove", onStoreScroll, { passive: true });
+    }
   }
 
   window.toggleRecipeProductTag = function (pid) {
@@ -4100,7 +4136,7 @@
   window.runAssistantQACheck = function () {
     const mem = typeof buildSmartCustomerProfile === "function" ? buildSmartCustomerProfile() : {};
     const report = {
-      version: "v91",
+      version: "v92",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
@@ -4994,7 +5030,7 @@
 
       const root = document.createElement("div");
       root.id = "petCharRoot";
-      root.style.cssText = "position:fixed; bottom:96px; left:12px; z-index:98;";
+      root.style.cssText = "position:fixed; bottom:96px; right:14px; z-index:995; display:block; visibility:visible; opacity:1;";
       root.innerHTML = `
         <div id="petMiniBubble"></div>
         <div style="position:relative;">
