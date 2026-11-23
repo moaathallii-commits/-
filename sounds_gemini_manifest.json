@@ -1,6 +1,6 @@
 {
   "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-23T04:53:41Z",
+  "updatedAt": "2026-11-23T06:04:20Z",
   "personas": {
     "buddy": {
       "greet": [
@@ -11,12 +11,28 @@
         {
           "text": "أهلاً بك يا غالي، المتجر منور بوجودك. بشو نبدأ سلتك اليوم؟",
           "file": "sounds_gemini/buddy_greet_2.wav"
+        },
+        {
+          "text": "يا مية هلا ومرحبا! كل شي طازج ومرتب بالمتجر، شو ناقصك اليوم؟",
+          "file": "sounds_gemini/buddy_greet_3.wav"
+        },
+        {
+          "text": "أهلاً وسهلاً فيك، يسعدني جداً أساعدك بتسوقك اليوم. بشو نبلش؟",
+          "file": "sounds_gemini/buddy_greet_5.wav"
+        },
+        {
+          "text": "يا هلا بالطلة الحلوة! متجر معاذ جاهز لطلباتك، سمّي بالله واطلب.",
+          "file": "sounds_gemini/buddy_greet_6.wav"
         }
       ],
       "greetMorning": [
         {
           "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
           "file": "sounds_gemini/buddy_greetMorning_1.wav"
+        },
+        {
+          "text": "صباح الفل والروقان، خبرني شو ناقص البيت لنجهزه عالسريع.",
+          "file": "sounds_gemini/buddy_greetMorning_4.wav"
         }
       ],
       "greetEvening": [
@@ -35,6 +51,10 @@
         {
           "text": "العفو يا غالي، تكرم عينك ويسعدني دائماً أكون بخدمتك.",
           "file": "sounds_gemini/buddy_thanks_1.wav"
+        },
+        {
+          "text": "لا شكر على واجب أبداً، بأي وقت بتحتاج شي أنا هون.",
+          "file": "sounds_gemini/buddy_thanks_4.wav"
         }
       ],
       "added": [
@@ -45,20 +65,69 @@
         {
           "text": "ممتاز، صار طلبك جاهز بالسلة، نضيف شي تاني؟",
           "file": "sounds_gemini/buddy_added_2.wav"
+        },
+        {
+          "text": "تمام التمام، صار الصنف بسلتك، خبرني إذا ناقصك شي غيره.",
+          "file": "sounds_gemini/buddy_added_5.wav"
         }
       ],
       "itemsReady": [
         {
           "text": "تفضل، عرضتلك الأصناف المتوفرة بالفرع هلق، حدد الكمية.",
           "file": "sounds_gemini/buddy_itemsReady_1.wav"
+        },
+        {
+          "text": "هي كل الخيارات المتوفرة حالياً، حدد الكمية وبنجهزها فوراً.",
+          "file": "sounds_gemini/buddy_itemsReady_4.wav"
+        }
+      ],
+      "alternative": [
+        {
+          "text": "هاد الصنف خالص هلق، بس جبتلك أقرب البدائل المتوفرة بالفرع.",
+          "file": "sounds_gemini/buddy_alternative_1.wav"
+        }
+      ],
+      "habit": [
+        {
+          "text": "تذكرت اختياراتك المفضلة وجهزتلك ياها عالسريع بالسلة.",
+          "file": "sounds_gemini/buddy_habit_3.wav"
         }
       ],
       "notFound": [
         {
           "text": "عذراً يا غالي، ما لقيت هاد الصنف متوفر هلق، جرب اسم أقرب.",
           "file": "sounds_gemini/buddy_notFound_1.wav"
+        },
+        {
+          "text": "بحثتلك منيح بس ما لقيت هاد الصنف حالياً، فيك تطلبه من زر طلب صنف.",
+          "file": "sounds_gemini/buddy_notFound_2.wav"
         }
-      ]
+      ],
+      "idleNudge": [],
+      "crossSell": [
+        {
+          "text": "أغراضك جاهزة، بس اتأكد إذا ناقصك شي خفيف للسهرة أو المطبخ، أفرجيك المقترحات؟",
+          "file": "sounds_gemini/buddy_crossSell_2.wav"
+        }
+      ],
+      "scarcityAlert": [
+        {
+          "text": "ملاحظة سريعة يا غالي، في عروض وأصناف عليها طلب عالي وما بقي منها كتير، تحب تشوفها هلق؟",
+          "file": "sounds_gemini/buddy_scarcityAlert_1.wav"
+        },
+        {
+          "text": "لحّق حالك! في عروض طازة اليوم وبأسعار بتجنن، أفرجيك ياها قبل ما تخلص؟",
+          "file": "sounds_gemini/buddy_scarcityAlert_2.wav"
+        }
+      ],
+      "checkoutBoost": [
+        {
+          "text": "اختياراتك رائعة ومتناسقة، تأكد إن طلبك رح يوصلك بأحلى صورة وبأسرع وقت.",
+          "file": "sounds_gemini/buddy_checkoutBoost_2.wav"
+        }
+      ],
+      "orderSuccess": [],
+      "welcomeBack": []
     },
     "lolo": {
       "greet": [
@@ -69,6 +138,10 @@
         {
           "text": "أهلاً بك يا غالي، المتجر منور بوجودك. بشو نبدأ سلتك اليوم؟",
           "file": "sounds_gemini/lolo_greet_2.wav"
+        },
+        {
+          "text": "حياك الله يا غالي، نورتنا بمتجر معاذ. قولي شو عبالك نجهزلك؟",
+          "file": "sounds_gemini/lolo_greet_4.wav"
         }
       ],
       "greetMorning": [
@@ -111,12 +184,20 @@
           "file": "sounds_gemini/lolo_itemsReady_1.wav"
         }
       ],
+      "alternative": [],
+      "habit": [],
       "notFound": [
         {
           "text": "عذراً يا غالي، ما لقيت هاد الصنف متوفر هلق، جرب اسم أقرب.",
           "file": "sounds_gemini/lolo_notFound_1.wav"
         }
-      ]
+      ],
+      "idleNudge": [],
+      "crossSell": [],
+      "scarcityAlert": [],
+      "checkoutBoost": [],
+      "orderSuccess": [],
+      "welcomeBack": []
     },
     "noor": {
       "greet": [
@@ -164,12 +245,20 @@
         }
       ],
       "itemsReady": [],
+      "alternative": [],
+      "habit": [],
       "notFound": [
         {
           "text": "عذراً يا غالي، ما لقيت هاد الصنف متوفر هلق، جرب اسم أقرب.",
           "file": "sounds_gemini/noor_notFound_1.wav"
         }
-      ]
+      ],
+      "idleNudge": [],
+      "crossSell": [],
+      "scarcityAlert": [],
+      "checkoutBoost": [],
+      "orderSuccess": [],
+      "welcomeBack": []
     },
     "chef": {
       "greet": [
@@ -184,7 +273,15 @@
       "thanks": [],
       "added": [],
       "itemsReady": [],
-      "notFound": []
+      "alternative": [],
+      "habit": [],
+      "notFound": [],
+      "idleNudge": [],
+      "crossSell": [],
+      "scarcityAlert": [],
+      "checkoutBoost": [],
+      "orderSuccess": [],
+      "welcomeBack": []
     },
     "pastry": {
       "greet": [],
@@ -194,7 +291,15 @@
       "thanks": [],
       "added": [],
       "itemsReady": [],
-      "notFound": []
+      "alternative": [],
+      "habit": [],
+      "notFound": [],
+      "idleNudge": [],
+      "crossSell": [],
+      "scarcityAlert": [],
+      "checkoutBoost": [],
+      "orderSuccess": [],
+      "welcomeBack": []
     },
     "athlete": {
       "greet": [],
@@ -204,7 +309,15 @@
       "thanks": [],
       "added": [],
       "itemsReady": [],
-      "notFound": []
+      "alternative": [],
+      "habit": [],
+      "notFound": [],
+      "idleNudge": [],
+      "crossSell": [],
+      "scarcityAlert": [],
+      "checkoutBoost": [],
+      "orderSuccess": [],
+      "welcomeBack": []
     },
     "sheikh": {
       "greet": [],
@@ -214,7 +327,15 @@
       "thanks": [],
       "added": [],
       "itemsReady": [],
-      "notFound": []
+      "alternative": [],
+      "habit": [],
+      "notFound": [],
+      "idleNudge": [],
+      "crossSell": [],
+      "scarcityAlert": [],
+      "checkoutBoost": [],
+      "orderSuccess": [],
+      "welcomeBack": []
     },
     "friend_saad": {
       "greet": [],
@@ -224,7 +345,15 @@
       "thanks": [],
       "added": [],
       "itemsReady": [],
-      "notFound": []
+      "alternative": [],
+      "habit": [],
+      "notFound": [],
+      "idleNudge": [],
+      "crossSell": [],
+      "scarcityAlert": [],
+      "checkoutBoost": [],
+      "orderSuccess": [],
+      "welcomeBack": []
     },
     "coach_sakhr": {
       "greet": [],
@@ -234,7 +363,15 @@
       "thanks": [],
       "added": [],
       "itemsReady": [],
-      "notFound": []
+      "alternative": [],
+      "habit": [],
+      "notFound": [],
+      "idleNudge": [],
+      "crossSell": [],
+      "scarcityAlert": [],
+      "checkoutBoost": [],
+      "orderSuccess": [],
+      "welcomeBack": []
     },
     "grand_chef": {
       "greet": [],
@@ -244,7 +381,15 @@
       "thanks": [],
       "added": [],
       "itemsReady": [],
-      "notFound": []
+      "alternative": [],
+      "habit": [],
+      "notFound": [],
+      "idleNudge": [],
+      "crossSell": [],
+      "scarcityAlert": [],
+      "checkoutBoost": [],
+      "orderSuccess": [],
+      "welcomeBack": []
     },
     "princess_layla": {
       "greet": [],
@@ -254,7 +399,15 @@
       "thanks": [],
       "added": [],
       "itemsReady": [],
-      "notFound": []
+      "alternative": [],
+      "habit": [],
+      "notFound": [],
+      "idleNudge": [],
+      "crossSell": [],
+      "scarcityAlert": [],
+      "checkoutBoost": [],
+      "orderSuccess": [],
+      "welcomeBack": []
     },
     "butler_farid": {
       "greet": [],
@@ -264,7 +417,15 @@
       "thanks": [],
       "added": [],
       "itemsReady": [],
-      "notFound": []
+      "alternative": [],
+      "habit": [],
+      "notFound": [],
+      "idleNudge": [],
+      "crossSell": [],
+      "scarcityAlert": [],
+      "checkoutBoost": [],
+      "orderSuccess": [],
+      "welcomeBack": []
     },
     "friend_fadi": {
       "greet": [],
@@ -274,7 +435,15 @@
       "thanks": [],
       "added": [],
       "itemsReady": [],
-      "notFound": []
+      "alternative": [],
+      "habit": [],
+      "notFound": [],
+      "idleNudge": [],
+      "crossSell": [],
+      "scarcityAlert": [],
+      "checkoutBoost": [],
+      "orderSuccess": [],
+      "welcomeBack": []
     },
     "anime_zain": {
       "greet": [],
@@ -284,7 +453,15 @@
       "thanks": [],
       "added": [],
       "itemsReady": [],
-      "notFound": []
+      "alternative": [],
+      "habit": [],
+      "notFound": [],
+      "idleNudge": [],
+      "crossSell": [],
+      "scarcityAlert": [],
+      "checkoutBoost": [],
+      "orderSuccess": [],
+      "welcomeBack": []
     },
     "anime_ryu": {
       "greet": [],
@@ -294,7 +471,15 @@
       "thanks": [],
       "added": [],
       "itemsReady": [],
-      "notFound": []
+      "alternative": [],
+      "habit": [],
+      "notFound": [],
+      "idleNudge": [],
+      "crossSell": [],
+      "scarcityAlert": [],
+      "checkoutBoost": [],
+      "orderSuccess": [],
+      "welcomeBack": []
     },
     "anime_ritaj": {
       "greet": [],
@@ -304,7 +489,15 @@
       "thanks": [],
       "added": [],
       "itemsReady": [],
-      "notFound": []
+      "alternative": [],
+      "habit": [],
+      "notFound": [],
+      "idleNudge": [],
+      "crossSell": [],
+      "scarcityAlert": [],
+      "checkoutBoost": [],
+      "orderSuccess": [],
+      "welcomeBack": []
     }
   }
 }
