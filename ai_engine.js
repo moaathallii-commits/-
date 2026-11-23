@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v79 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v80 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -10,7 +10,7 @@
 (function () {
   if (window.__MOAATH_AI_LOADED__) return;
   window.__MOAATH_AI_LOADED__ = true;
-
+Yo
   const PREFS_KEY = "moaath_store_pet_prefs";
   const POS_KEY = "moaath_store_pet_pos";
   const LEARN_KEY = "moaath_store_pet_learned";
@@ -661,7 +661,7 @@
     try {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(spokenText);
-      u.lang = "ar-SA";
+      u.lang = "ar-SY";
       u.rate = Math.max(0.9, Math.min(1.35, persona.speed || 1.2));
       const semi = typeof persona.pitchSemitones === "number" ? persona.pitchSemitones : 0;
       u.pitch = Math.max(0.75, Math.min(1.35, 1 + semi * 0.08));
@@ -3325,7 +3325,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v79",
+      version: "v80",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
