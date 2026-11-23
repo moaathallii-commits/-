@@ -16,26 +16,26 @@ MANIFEST_PATH = "sounds_manifest.json"
 FORCE_REGEN = os.environ.get("FORCE_REGEN", "0") == "1"
 CONCURRENCY = 5
 
-# توزيع أصوات Neural بشرية طبيعية 100% (16 شخصية) بدون تشويه pitch
+# توزيع أصوات Neural شامية وسورية/لبنانية حقيقية 100% لجميع الشخصيات الـ 16 بدون تشويه طبقة
 PERSONA_VOICES = {
     # 8 شخصيات أساسية
-    "buddy":          {"voice": "ar-SY-LaithNeural",   "rate": "+2%",  "pitch": "+0Hz", "style": "friendly"},
-    "lolo":           {"voice": "ar-SY-AmanyNeural",   "rate": "+8%",  "pitch": "+0Hz", "style": "sweet"},
-    "noor":           {"voice": "ar-LB-LaylaNeural",   "rate": "+0%",  "pitch": "+0Hz", "style": "sweet"},
-    "chef":           {"voice": "ar-LB-RamiNeural",    "rate": "+4%",  "pitch": "+0Hz", "style": "formal"},
-    "pastry":         {"voice": "ar-EG-SalmaNeural",   "rate": "-2%",  "pitch": "+0Hz", "style": "sweet"},
-    "athlete":        {"voice": "ar-JO-TaimNeural",    "rate": "+12%", "pitch": "+0Hz", "style": "energetic"},
-    "sheikh":         {"voice": "ar-JO-TaimNeural",    "rate": "+6%",  "pitch": "+0Hz", "style": "playful"},
-    "friend_saad":    {"voice": "ar-SA-HamedNeural",   "rate": "-4%",  "pitch": "+0Hz", "style": "formal"},
+    "buddy":          {"voice": "ar-SY-LaithNeural", "rate": "+2%",  "pitch": "+0Hz", "style": "friendly"},
+    "lolo":           {"voice": "ar-SY-AmanyNeural", "rate": "+8%",  "pitch": "+0Hz", "style": "sweet"},
+    "noor":           {"voice": "ar-LB-LaylaNeural", "rate": "+0%",  "pitch": "+0Hz", "style": "sweet"},
+    "chef":           {"voice": "ar-LB-RamiNeural",  "rate": "+4%",  "pitch": "+0Hz", "style": "formal"},
+    "pastry":         {"voice": "ar-LB-LaylaNeural", "rate": "-2%",  "pitch": "+0Hz", "style": "sweet"},
+    "athlete":        {"voice": "ar-SY-LaithNeural", "rate": "+10%", "pitch": "+0Hz", "style": "energetic"},
+    "sheikh":         {"voice": "ar-LB-RamiNeural",  "rate": "+6%",  "pitch": "+0Hz", "style": "playful"},
+    "friend_saad":    {"voice": "ar-LB-RamiNeural",  "rate": "-4%",  "pitch": "+0Hz", "style": "formal"},
     # 8 شخصيات VIP
-    "coach_sakhr":    {"voice": "ar-IQ-BasselNeural",  "rate": "+8%",  "pitch": "+0Hz", "style": "energetic"},
-    "grand_chef":     {"voice": "ar-EG-ShakirNeural",  "rate": "-2%",  "pitch": "+0Hz", "style": "formal"},
-    "princess_layla": {"voice": "ar-AE-HamdaNeural",   "rate": "-4%",  "pitch": "+0Hz", "style": "formal"},
-    "butler_farid":   {"voice": "ar-KW-FahedNeural",   "rate": "+0%",  "pitch": "+0Hz", "style": "formal"},
-    "friend_fadi":    {"voice": "ar-SY-LaithNeural",   "rate": "+4%",  "pitch": "+0Hz", "style": "playful"},
-    "anime_zain":     {"voice": "ar-AE-HamdanNeural",  "rate": "+12%", "pitch": "+0Hz", "style": "energetic"},
-    "anime_ryu":      {"voice": "ar-OM-AbdullahNeural","rate": "-2%",  "pitch": "+0Hz", "style": "formal"},
-    "anime_ritaj":    {"voice": "ar-JO-SanaNeural",    "rate": "+8%",  "pitch": "+0Hz", "style": "sweet"},
+    "coach_sakhr":    {"voice": "ar-SY-LaithNeural", "rate": "+8%",  "pitch": "+0Hz", "style": "energetic"},
+    "grand_chef":     {"voice": "ar-LB-RamiNeural",  "rate": "-2%",  "pitch": "+0Hz", "style": "formal"},
+    "princess_layla": {"voice": "ar-LB-LaylaNeural", "rate": "-4%",  "pitch": "+0Hz", "style": "formal"},
+    "butler_farid":   {"voice": "ar-LB-RamiNeural",  "rate": "+0%",  "pitch": "+0Hz", "style": "formal"},
+    "friend_fadi":    {"voice": "ar-SY-LaithNeural", "rate": "+4%",  "pitch": "+0Hz", "style": "playful"},
+    "anime_zain":     {"voice": "ar-SY-LaithNeural", "rate": "+12%", "pitch": "+0Hz", "style": "energetic"},
+    "anime_ryu":      {"voice": "ar-LB-RamiNeural",  "rate": "-2%",  "pitch": "+0Hz", "style": "formal"},
+    "anime_ritaj":    {"voice": "ar-SY-AmanyNeural", "rate": "+8%",  "pitch": "+0Hz", "style": "sweet"},
 }
 
 # بنك الجمل المتنوعة لكل أسلوب (24 جملة لكل شخصية × 15 شخصية = 360+ جملة، ومع الجمل الخاصة لكل شخصية = 405+ مقطع)
@@ -88,10 +88,10 @@ STYLE_BANKS = {
     },
     "energetic": {
         "greet": [
-            "أهلاً بالبطل، يوم جديد يعني إنجاز جديد. ما هدفك أو طلبك اليوم؟",
-            "يا هلا بالطاقة والهمة، وقودك وطاقتك جاهزة في المتجر الآن.",
-            "حيا الله الأبطال، انطلق واذكر ما تحتاجه لأجهزه لك فوراً.",
-            "جاهزية كاملة في متجر معاذ، هيا نجهز سلة القوة والنشاط."
+            "هلا بالبطل، يوم جديد يعني همة عالية. شو طلبك اليوم؟",
+            "يا هلا بالنشاط والهمة، أغراض الطاقة والنشاط جاهزة هلق.",
+            "هلا بالشباب والأبطال، قولي شو ناقصك لنجهزه عالسريع.",
+            "كل شي جاهز بالمتجر، يلا نضبط سلة النشاط والقوة."
         ],
         "greetMorning": [
             "صباح القوة والنشاط، ابدأ يومك بفطور صحي وغني بالطاقة.",
@@ -134,10 +134,10 @@ STYLE_BANKS = {
     },
     "formal": {
         "greet": [
-            "أهلاً بك سيدي الكريم، يسعدني تشريفك لمتجر معاذ. بماذا أخدمك اليوم؟",
-            "مرحباً بك بكل رقي، كل شيء مرتب ومعد بعناية لأجلك.",
-            "تحية طيبة وراقية لك، أخبرني بما ترغب وسأنسقه لك فوراً.",
-            "أهلاً بك في جناحك الخاص، خدمتك بدقة وأناقة هي أولويتي."
+            "أهلاً بك يا غالي، نورت متجر معاذ. شو بتحب أجهزلك اليوم؟",
+            "يا هلا ومرحبا فيك، كل شي مرتب ومجهز على رواق لأجلك.",
+            "يا هلا فيك، خبرني شو عبالك وهلق بنضبطه سوا.",
+            "أهلاً فيك يا غالي، خدمتك بدقة وراحة بال هي أولويتي."
         ],
         "greetMorning": [
             "صباح الخير والبركة، أتمنى لك يوماً منظماً ومليئاً بالخير.",
