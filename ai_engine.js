@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v88 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v89 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -47,6 +47,41 @@
   const PERSONAS = (window.MoaathAIPersonas && window.MoaathAIPersonas.PERSONAS)
     ? window.MoaathAIPersonas.PERSONAS
     : { buddy: FALLBACK_BUDDY };
+
+  function syncAllRegisteredPersonas() {
+    if (window.MoaathAIPersonas && window.MoaathAIPersonas.PERSONAS && typeof window.MoaathAIPersonas.PERSONAS === "object") {
+      Object.assign(PERSONAS, window.MoaathAIPersonas.PERSONAS);
+    }
+    const vipSources = [
+      window.VIP_PERSONAS,
+      window.MoaathVIPSystem && window.MoaathVIPSystem.personas
+    ];
+    vipSources.forEach(src => {
+      if (!src || typeof src !== "object") return;
+      Object.keys(src).forEach(k => {
+        const vp = src[k];
+        if (!vp || PERSONAS[k]) return;
+        PERSONAS[k] = {
+          ...vp,
+          id: vp.id || k,
+          roleBadge: vp.roleBadge || `👑 VIP • ${vp.role || ""}`,
+          specialtyNote: vp.specialtyNote || `${vp.name} (${vp.role || ""}): ${vp.shortDesc || ""}`,
+          greets: Array.isArray(vp.greets) && vp.greets.length ? vp.greets : [vp.greet || `أهلاً بك مع ${vp.name} في متجر معاذ.`],
+          chatGood: vp.chatGood || "بأفضل حال، كيف يمكنني خدمتك اليوم؟",
+          chatGoods: Array.isArray(vp.chatGoods) ? vp.chatGoods : [vp.chatGood || "بأفضل حال، كيف يمكنني خدمتك اليوم؟"],
+          thanks: vp.thanks || "العفو، يسعدني دائماً خدمتك.",
+          thanksList: Array.isArray(vp.thanksList) ? vp.thanksList : [vp.thanks || "العفو، يسعدني دائماً خدمتك."],
+          addedMsgs: Array.isArray(vp.addedMsgs) ? vp.addedMsgs : [(n) => `تمت إضافة ${n} إلى السلة.`],
+          recipeReady: typeof vp.recipeReady === "function" ? vp.recipeReady : ((t) => `جهزت لك المتوفر لوصفة ${t}، حدد الكمية.`),
+          recipeMissing: typeof vp.recipeMissing === "function" ? vp.recipeMissing : ((t) => `بعض مكونات ${t} غير متوفرة حالياً.`),
+          itemsReady: typeof vp.itemsReady === "function" ? vp.itemsReady : (() => "عرضت لك الأصناف المتوفرة في الفرع، حدد الكمية."),
+          notFounds: Array.isArray(vp.notFounds) ? vp.notFounds : ["لم أجد صنفاً مطابقاً متوفراً الآن."],
+          notFound: vp.notFound || "لم أجد صنفاً مطابقاً متوفراً الآن."
+        };
+      });
+    });
+  }
+  syncAllRegisteredPersonas();
 
   window.__registerDynamicCompanionPersona = function (key, personaObj) {
     if (!key || !personaObj || typeof PERSONAS !== "object") return;
@@ -101,7 +136,7 @@
     } catch (_) {}
 
     if (navigator.onLine === false) return;
-    fetch("sounds_gemini_manifest.json", { cache: "no-store" })
+    fetch(`sounds_gemini_manifest.json?t=${Math.floor(Date.now() / 60000)}`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.personas) {
@@ -277,7 +312,8 @@
     const custName = getCustomerFirstName();
     const timeInfo = getTimeGreetingWord();
 
-    // الأولوية القصوى: اختيار جملة بشرية مسجّلة من sounds_manifest.json لتطابق النص مع الصوت 100%
+    // الأولوية القصوى: اختيار جملة بشرية مسجّلة لنفس الشخصية من sounds_gemini_manifest.json لتطابق الصوت 100%
+    const isSocialOrSalesIntent = ["greet", "chatGood", "thanks", "idleNudge", "crossSell", "scarcityAlert", "checkoutBoost", "orderSuccess", "welcomeBack"].includes(intent);
     if (soundsManifestData && soundsManifestData.personas) {
       const pBank = soundsManifestData.personas[p.id];
       if (pBank) {
@@ -288,6 +324,14 @@
           pool = [...timePool, ...basePool];
         } else if (Array.isArray(pBank[intent]) && pBank[intent].length) {
           pool = pBank[intent];
+        } else if (isSocialOrSalesIntent) {
+          // إذا لم يتوفر مقطع للنية التحفيزية الفرعية بعد، نستخدم مقاطع التحية أو الشكر المسجلة لنفس الشخصية حتى لا يسقط الصوت لصوت آلي مختلف
+          const fallbackPool = [
+            ...(Array.isArray(pBank.greet) ? pBank.greet : []),
+            ...(Array.isArray(pBank.thanks) ? pBank.thanks : []),
+            ...(Array.isArray(pBank.chatGood) ? pBank.chatGood : [])
+          ];
+          if (fallbackPool.length) pool = fallbackPool;
         }
         if (pool.length) {
           const fresh = pool.filter((item) => item && item.text && !recent.includes(item.text));
@@ -1462,6 +1506,7 @@
   };
 
   window.openFairyGalleryModal = function () {
+    syncAllRegisteredPersonas();
     haptic(12);
     unlockEmbeddedVoice();
     pauseRoaming(12000);
@@ -2815,17 +2860,32 @@
     } catch (_) {}
   }
 
+  function getEffectiveProductStock(pid) {
+    const branchAvail = getBranchAvail(pid);
+    if (branchAvail > 0) return branchAvail;
+    const baseId = String(pid || "").replace(/_PKG$/, "");
+    const pObj = products?.[baseId] || specialOffers?.[pid];
+    if (!pObj) return 0;
+    // إذا أُضيف صنف جديد برصيد عام stock > 0 ولم يُنسخ بعد إلى الفرع الفرعي، نتحقق منه
+    const mainSt = Math.max(0, parseInt(pObj.stock, 10) || 0);
+    return mainSt > 0 && (!pObj.branchStock || Object.keys(pObj.branchStock).length <= 1) ? mainSt : 0;
+  }
+
   function matchCategoriesAndProducts(normText) {
+    let brainResult = null;
     if (window.MoaathAIBrain && typeof window.MoaathAIBrain.smartSearch === "function") {
       const activeCartIds = Object.keys(cart || {}).map(k => cart[k]?.origId || String(k).replace(/_PKG$/, ""));
-      return window.MoaathAIBrain.smartSearch(
+      brainResult = window.MoaathAIBrain.smartSearch(
         sessionCtx.lastQuery || normText,
         products || {},
         categories || [],
-        getBranchAvail,
+        getEffectiveProductStock,
         getUnitSYP,
         activeCartIds
       );
+      if (brainResult && Array.isArray(brainResult.items) && brainResult.items.length > 0) {
+        return brainResult;
+      }
     }
 
     const storeCats = (Array.isArray(categories) ? categories : []).filter(c => c && c !== "الكل");
@@ -3149,10 +3209,19 @@
     if (workerUrl && navigator.onLine !== false) {
       setOrbEmotion("thinking", "جاري البحث الذكي في أصناف المتجر...", false);
       try {
+        const qNormForCat = cleanArabicNorm(promptTxt);
+        const qTokensForCat = expandWordsWithAutoSynonyms(qNormForCat.split(/\s+/).filter(w => w.length >= 2));
         const catalogSummary = Object.keys(products || {})
-          .filter(pid => getBranchAvail(pid) > 0)
-          .slice(0, 85)
-          .map(pid => ({ id: pid, name: products[pid].name, cat: products[pid].category || "", price: getUnitSYP(pid) }));
+          .filter(pid => getEffectiveProductStock(pid) > 0)
+          .map((pid, idx) => {
+            const p = products[pid];
+            const pNorm = cleanArabicNorm((p.name || "") + " " + (p.category || ""));
+            const relScore = qTokensForCat.reduce((acc, tk) => acc + (pNorm.includes(tk) ? 50 : 0), 0);
+            return { id: pid, name: p.name, cat: p.category || "", price: getUnitSYP(pid), _score: relScore + idx * 0.01 };
+          })
+          .sort((a, b) => b._score - a._score)
+          .slice(0, 140)
+          .map(({ id, name, cat, price }) => ({ id, name, cat, price }));
         const currentCartSummary = Object.keys(cart || {}).map(k => ({ id: k, name: cart[k]?.name || "", qty: cart[k]?.qty || 0 }));
         if (!Array.isArray(sessionCtx.conversationHistory)) sessionCtx.conversationHistory = [];
         sessionCtx.conversationHistory.push({ role: "user", text: promptTxt.slice(0, 160) });
@@ -3674,7 +3743,7 @@
   window.runAssistantQACheck = function () {
     const mem = typeof buildSmartCustomerProfile === "function" ? buildSmartCustomerProfile() : {};
     const report = {
-      version: "v88",
+      version: "v89",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
@@ -3710,6 +3779,33 @@
       body {
         overflow-x: clip !important;
         max-width: 100% !important;
+      }
+      html.moaath-modal-locked,
+      body.moaath-modal-locked {
+        overflow: hidden !important;
+        height: 100% !important;
+        touch-action: none !important;
+      }
+      body.moaath-modal-locked > header,
+      body.moaath-modal-locked > .user-bar,
+      body.moaath-modal-locked > .container,
+      body.moaath-modal-locked > .cart-bar,
+      body.moaath-modal-locked > #petCharRoot {
+        pointer-events: none !important;
+      }
+      #adminModal,
+      .modal-overlay,
+      .page-overlay {
+        overscroll-behavior: contain !important;
+        touch-action: pan-y !important;
+      }
+      #adminModal .modal-content,
+      .modal-overlay .modal-content {
+        overscroll-behavior: contain !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        position: relative !important;
+        z-index: 2 !important;
       }
 
       /* =====================================================================
@@ -4555,11 +4651,31 @@
       bindOrbInteractions($("petCharOrb"), root);
     }
 
+    syncAllRegisteredPersonas();
     organizeAdminAndExportUI();
     enhanceCustomerCartCheckoutUX();
     syncVisuals();
     syncFuturisticCollapseUI();
     startRoamLoop();
+
+    if (!window.__MOAATH_MODAL_TOUCH_GUARD__) {
+      window.__MOAATH_MODAL_TOUCH_GUARD__ = true;
+      const syncModalLockState = () => {
+        const anyOpen = Array.from(document.querySelectorAll(".modal-overlay, .page-overlay")).some(el => {
+          const st = window.getComputedStyle(el);
+          return st.display !== "none" && st.visibility !== "hidden";
+        });
+        document.documentElement.classList.toggle("moaath-modal-locked", anyOpen);
+        document.body.classList.toggle("moaath-modal-locked", anyOpen);
+        const petRoot = $("petCharRoot");
+        if (petRoot && !getPrefs().hidden) {
+          petRoot.style.visibility = anyOpen ? "hidden" : "visible";
+        }
+      };
+      const obs = new MutationObserver(syncModalLockState);
+      obs.observe(document.body, { attributes: true, subtree: true, attributeFilter: ["style", "class"] });
+      syncModalLockState();
+    }
   }
 
   const _origRenderStore = window.renderStore;
@@ -4568,15 +4684,21 @@
   const salesTriggerFlags = { welcomeBack: false, idleNudge: false, crossSell: false, checkoutBoost: false };
 
   function triggerSmartSalesIntent(intentKey, dialogType = null) {
+    syncAllRegisteredPersonas();
     const prefs = getPrefs();
     if (prefs.hidden) return;
     const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
+    sessionCtx.lastManifestClip = null;
     const line = composeInfinitePhrase(intentKey, persona);
     if (!line) return;
     if (dialogType) {
       savePendingDialog({ type: dialogType, expiresAt: Date.now() + 2 * 60 * 1000 });
     }
-    setOrbEmotion(intentKey === "orderSuccess" ? "happy" : "greet", line, true);
+    const hasExactPersonaAudio = !!(
+      (sessionCtx.lastManifestClip && sessionCtx.lastManifestClip.pid === persona.id) ||
+      manifestTextToFile.has(`${persona.id}::${looseSpeechNorm(line)}`)
+    );
+    setOrbEmotion(intentKey === "orderSuccess" ? "happy" : "greet", line, hasExactPersonaAudio);
     setTxt("aiShoppingStatusText", `✨ ${line}`);
   }
 
