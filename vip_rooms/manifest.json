@@ -1,6 +1,6 @@
 {
-  "buildId": "20261123-03",
-  "updatedAt": "2026-11-23T18:52:00Z",
+  "buildId": "20261123-04",
+  "updatedAt": "2026-11-23T21:30:00Z",
   "rooms": [
     {
       "id": "coach_sakhr",
@@ -19,6 +19,16 @@
       "file": "vip_rooms/friend_saad.js",
       "avatarUrl": "friend_saad.jpg",
       "accent": "#38bdf8",
+      "isVip": true,
+      "enabled": true
+    },
+    {
+      "id": "grand_chef",
+      "name": "الشيف الكبير",
+      "title": "غرفة VIP • المطبخ الذهبي، الوصفات، وتدبير البيت",
+      "file": "vip_rooms/grand_chef.js",
+      "avatarUrl": "grand_chef.jpg",
+      "accent": "#f59e0b",
       "isVip": true,
       "enabled": true
     }
