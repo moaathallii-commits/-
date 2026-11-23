@@ -1,6 +1,6 @@
 {
   "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-23T08:33:57Z",
+  "updatedAt": "2026-11-23T09:49:07Z",
   "personas": {
     "buddy": {
       "greet": [
@@ -239,8 +239,34 @@
           "file": "sounds_gemini/buddy_checkoutBoost_3.wav"
         }
       ],
-      "orderSuccess": [],
-      "welcomeBack": []
+      "orderSuccess": [
+        {
+          "text": "كفو عليك! طلبك صار بعهدتنا، ريّح بالك وهلق بيوصلك لعند الباب.",
+          "file": "sounds_gemini/buddy_orderSuccess_1.wav"
+        },
+        {
+          "text": "طلبك انبعت بنجاح، تتهنى فيه يا رب وألف صحة وهنا مقدماً.",
+          "file": "sounds_gemini/buddy_orderSuccess_2.wav"
+        },
+        {
+          "text": "اختيار ذوّيق، طلبك قيد التجهيز بأعلى عناية ويسعدنا دايماً خدمتك.",
+          "file": "sounds_gemini/buddy_orderSuccess_3.wav"
+        }
+      ],
+      "welcomeBack": [
+        {
+          "text": "يا مية هلا بعودتك يا غالي! اشتقنالك بمتجر معاذ، نعيد نفس أغراض المرة الماضية ولا في شي جديد؟",
+          "file": "sounds_gemini/buddy_welcomeBack_1.wav"
+        },
+        {
+          "text": "أهلاً بعودتك يا غالي! جاهز نكرر طلبك السابق بلمسة وحدة ولا حابب نختار شي جديد اليوم؟",
+          "file": "sounds_gemini/buddy_welcomeBack_2.wav"
+        },
+        {
+          "text": "نورتنا من جديد بمتجر معاذ! تحب أجهزلك نفس مفضلاتك الماضية؟",
+          "file": "sounds_gemini/buddy_welcomeBack_3.wav"
+        }
+      ]
     },
     "lolo": {
       "greet": [
@@ -253,14 +279,38 @@
           "file": "sounds_gemini/lolo_greet_2.wav"
         },
         {
+          "text": "يا مية هلا ومرحبا! كل شي طازج ومرتب بالمتجر، شو ناقصك اليوم؟",
+          "file": "sounds_gemini/lolo_greet_3.wav"
+        },
+        {
           "text": "حياك الله يا غالي، نورتنا بمتجر معاذ. قولي شو عبالك نجهزلك؟",
           "file": "sounds_gemini/lolo_greet_4.wav"
+        },
+        {
+          "text": "أهلاً وسهلاً فيك، يسعدني جداً أساعدك بتسوقك اليوم. بشو نبلش؟",
+          "file": "sounds_gemini/lolo_greet_5.wav"
+        },
+        {
+          "text": "يا هلا بالطلة الحلوة! متجر معاذ جاهز لطلباتك، سمّي بالله واطلب.",
+          "file": "sounds_gemini/lolo_greet_6.wav"
         }
       ],
       "greetMorning": [
         {
           "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
           "file": "sounds_gemini/lolo_greetMorning_1.wav"
+        },
+        {
+          "text": "يسعد صباحك يا غالي، كل أغراض الفطور والقهوة جاهزة هلق.",
+          "file": "sounds_gemini/lolo_greetMorning_2.wav"
+        },
+        {
+          "text": "صباح النور والبركة! إن شاء الله يومك حلو ومليان خير، شو بتحب تطلب؟",
+          "file": "sounds_gemini/lolo_greetMorning_3.wav"
+        },
+        {
+          "text": "صباح الفل والروقان، خبرني شو ناقص البيت لنجهزه عالسريع.",
+          "file": "sounds_gemini/lolo_greetMorning_4.wav"
         }
       ],
       "greetEvening": [
@@ -271,18 +321,46 @@
         {
           "text": "يسعد مساك يا غالي، جاهز نضبط سلة السهرة والمتة والتسالي؟",
           "file": "sounds_gemini/lolo_greetEvening_2.wav"
+        },
+        {
+          "text": "مساء النور والهنا، خبرني شو عبالك للعشا أو السهرة اليوم.",
+          "file": "sounds_gemini/lolo_greetEvening_3.wav"
+        },
+        {
+          "text": "مساء الورد يا غالي، كل شي بتحتاجه لليلة جاهز ومرتب هلق.",
+          "file": "sounds_gemini/lolo_greetEvening_4.wav"
         }
       ],
       "chatGood": [
         {
           "text": "أنا بخير والحمد لله، كيف بقدر أساعدك اليوم؟",
           "file": "sounds_gemini/lolo_chatGood_1.wav"
+        },
+        {
+          "text": "بألف خير ونعمة بسؤالك اللطيف يا غالي، شو بتحب أجهزلك؟",
+          "file": "sounds_gemini/lolo_chatGood_2.wav"
+        },
+        {
+          "text": "تمام التمام وبأعلى جاهزية لخدمتك، خبرني شو ببالك تطلب.",
+          "file": "sounds_gemini/lolo_chatGood_3.wav"
+        },
+        {
+          "text": "الحمد لله عال العال، وجودك بمتجر معاذ بيسعدني دايماً. كيف أخدمك؟",
+          "file": "sounds_gemini/lolo_chatGood_4.wav"
         }
       ],
       "thanks": [
         {
           "text": "العفو يا غالي، تكرم عينك ويسعدني دائماً أكون بخدمتك.",
           "file": "sounds_gemini/lolo_thanks_1.wav"
+        },
+        {
+          "text": "ولو يا غالي، هاد واجبي بكل سرور ومحبة.",
+          "file": "sounds_gemini/lolo_thanks_2.wav"
+        },
+        {
+          "text": "لا شكر على واجب أبداً، بأي وقت بتحتاج شي أنا هون.",
+          "file": "sounds_gemini/lolo_thanks_4.wav"
         }
       ],
       "added": [
@@ -293,30 +371,102 @@
         {
           "text": "ممتاز، صار طلبك جاهز بالسلة، نضيف شي تاني؟",
           "file": "sounds_gemini/lolo_added_2.wav"
+        },
+        {
+          "text": "يا سلام عليك، أضفته للسلة عالسريع، شو نكمل كمان؟",
+          "file": "sounds_gemini/lolo_added_3.wav"
+        },
+        {
+          "text": "تمت الإضافة بنجاح، سلتك صارت مرتبة وأحلى هلق.",
+          "file": "sounds_gemini/lolo_added_4.wav"
+        },
+        {
+          "text": "تمام التمام، صار الصنف بسلتك، خبرني إذا ناقصك شي غيره.",
+          "file": "sounds_gemini/lolo_added_5.wav"
         }
       ],
       "itemsReady": [
         {
           "text": "تفضل، عرضتلك الأصناف المتوفرة بالفرع هلق، حدد الكمية.",
           "file": "sounds_gemini/lolo_itemsReady_1.wav"
+        },
+        {
+          "text": "جهزتلك القائمة المتوفرة قدامك، اكبس زائد لإضافة يلي بتحبه.",
+          "file": "sounds_gemini/lolo_itemsReady_2.wav"
+        },
+        {
+          "text": "هي كل الخيارات المتوفرة حالياً، حدد الكمية وبنجهزها فوراً.",
+          "file": "sounds_gemini/lolo_itemsReady_4.wav"
         }
       ],
-      "alternative": [],
-      "habit": [],
+      "alternative": [
+        {
+          "text": "للأسف ما لقيت نفس الصنف حالياً، شوف هالبدائل الطيبة والموجودة.",
+          "file": "sounds_gemini/lolo_alternative_2.wav"
+        },
+        {
+          "text": "الصنف المطلوب نافد مؤقتاً، عرضتلك أفضل بدائل متوفرة هلق.",
+          "file": "sounds_gemini/lolo_alternative_3.wav"
+        }
+      ],
+      "habit": [
+        {
+          "text": "جبتلك مفضلاتك يلي دايماً بتختارها لتوفير وقتك، حدد الكمية.",
+          "file": "sounds_gemini/lolo_habit_1.wav"
+        },
+        {
+          "text": "هي أغراضك المعتادة متوفرة هلق بلمسة وحدة يا غالي.",
+          "file": "sounds_gemini/lolo_habit_2.wav"
+        }
+      ],
       "notFound": [
         {
           "text": "عذراً يا غالي، ما لقيت هاد الصنف متوفر هلق، جرب اسم أقرب.",
           "file": "sounds_gemini/lolo_notFound_1.wav"
+        },
+        {
+          "text": "بحثتلك منيح بس ما لقيت هاد الصنف حالياً، فيك تطلبه من زر طلب صنف.",
+          "file": "sounds_gemini/lolo_notFound_2.wav"
+        },
+        {
+          "text": "هاد الصنف غير متوفر بالرف هلق، خبرني بنوع تاني وبساعدك فوراً.",
+          "file": "sounds_gemini/lolo_notFound_3.wav"
         }
       ],
-      "idleNudge": [],
+      "idleNudge": [
+        {
+          "text": "محتار شو تاخد يا غالي؟ خبرني شو عبالك اليوم وأنا برتبلك السلة على ذوقك.",
+          "file": "sounds_gemini/lolo_idleNudge_1.wav"
+        },
+        {
+          "text": "خذ راحتك بالتصفح، وإذا حابب أختصر عليك الوقت بقترحلك أحلى الأصناف الطازة اليوم.",
+          "file": "sounds_gemini/lolo_idleNudge_2.wav"
+        },
+        {
+          "text": "إذا عم تقارن الأسعار، خليني أفرجيك أوفر العروض الموجودة حالياً لتوفر وقتك وميزانيتك.",
+          "file": "sounds_gemini/lolo_idleNudge_3.wav"
+        }
+      ],
       "crossSell": [
         {
           "text": "سلتك صارت مرتبة! شو رأيك أفرجيك مكملات حلوة تناسب أغراضك قبل ما تعتمد الطلب؟",
           "file": "sounds_gemini/lolo_crossSell_1.wav"
+        },
+        {
+          "text": "أغراضك جاهزة، بس اتأكد إذا ناقصك شي خفيف للسهرة أو المطبخ، أفرجيك المقترحات؟",
+          "file": "sounds_gemini/lolo_crossSell_2.wav"
+        },
+        {
+          "text": "اختياراتك بتشهي! نحط معها شي تكميلي خفيف يكمّل القعدة؟",
+          "file": "sounds_gemini/lolo_crossSell_3.wav"
         }
       ],
-      "scarcityAlert": [],
+      "scarcityAlert": [
+        {
+          "text": "ملاحظة سريعة يا غالي، في عروض وأصناف عليها طلب عالي وما بقي منها كتير، تحب تشوفها هلق؟",
+          "file": "sounds_gemini/lolo_scarcityAlert_1.wav"
+        }
+      ],
       "checkoutBoost": [],
       "orderSuccess": [],
       "welcomeBack": []
