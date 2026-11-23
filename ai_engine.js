@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v82 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v88 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -218,6 +218,48 @@
         a: ["عذراً منك،", "بحثت جيداً،", "يبدو أنه حالياً", "للأسف الآن"],
         b: ["لم أجد صنفاً مطابقاً متوفراً في المخزون", "هذا الصنف غير متوفر في الفرع حالياً", "لم تظهر نتيجة مطابقة تماماً"],
         c: ["جرّب كتابة اسم أقرب أو تصفح الأقسام.", "يمكنك طلب الصنف من زر «طلب صنف» أو تجربة بديل.", "أخبرني بنوع آخر وسأساعدك فوراً."]
+      }
+    },
+    idleNudge: {
+      default: {
+        a: ["محتار شو تاخد يا غالي؟", "خذ راحتك بالتصفح،", "إذا عم تقارن الأسعار،"],
+        b: ["خبرني شو عبالك اليوم وأنا برتبلك السلة", "بقترحلك أحلى وأوفر الأصناف الطازة اليوم"],
+        c: ["تحب أفرجيك أوفر العروض الموجودة؟", "رد علي بـ أي أو تمام وبجهزلك القائمة."]
+      }
+    },
+    crossSell: {
+      default: {
+        a: ["سلتك صارت مرتبة!", "اختياراتك بتشهي!", "أغراضك الأساسية جاهزة،"],
+        b: ["شو رأيك أفرجيك مكملات خفيفة تناسب أغراضك", "اتأكد إذا ناقصك شي خفيف للبيت أو السهرة"],
+        c: ["تحب تشوف المقترحات؟", "قولي أي وبعرضلك ياهن فوراً."]
+      }
+    },
+    scarcityAlert: {
+      default: {
+        a: ["لحّق حالك يا غالي!", "ملاحظة سريعة إلك،", "بنصحك بصدق يا غالي،"],
+        b: ["في عروض وأصناف عليها طلب عالي وما بقي منها كتير", "عروض اليوم طازة وموفرة كتير"],
+        c: ["تحب تشوفها قبل ما تخلص؟", "قولي أي وبفرجيك ياها هلق."]
+      }
+    },
+    checkoutBoost: {
+      default: {
+        a: ["سلتك جاهزة مية بالمية!", "اختياراتك رائعة ومتناسقة،", "سلة متكاملة يا غالي!"],
+        b: ["ضغطة زر والتوصيل بطريقه إلك بأسرع وقت", "تأكد إن طلبك رح يوصلك بأبهى صورة"],
+        c: ["اعتمد الطلب هلق وخلي الباقي علينا.", "بالعافية مقدماً!"]
+      }
+    },
+    orderSuccess: {
+      default: {
+        a: ["كفو عليك!", "يا سلام!", "اختيار ذوّيق،"],
+        b: ["طلبك انبعت بنجاح وصار بعهدتنا", "طلبك قيد التجهيز بأعلى عناية"],
+        c: ["ريّح بالك وهلق بيوصلك لعند الباب.", "ألف صحة وهنا مقدماً!"]
+      }
+    },
+    welcomeBack: {
+      default: {
+        a: ["يا مية هلا بعودتك يا غالي!", "نورتنا من جديد بمتجر معاذ!", "أهلاً بعودتك يا غالي!"],
+        b: ["اشتقنالك بمتجر معاذ، نعيد نفس أغراض المرة الماضية", "جاهز نكرر طلبك السابق بلمسة وحدة"],
+        c: ["ولا في شي جديد اليوم؟", "قولي أي وبجهزلك ياهن فوراً!"]
       }
     }
   };
@@ -2211,9 +2253,51 @@
       }
     }
 
-    // 3) ردود الموافقة والمتابعة ("موافق"، "تمام"، "نعم"، "أوكي"، "ماشي"، "أضفهم")
-    if (/^(موافق|تمام|نعم|اوكي|ماشي|ايه|ايوه|طيب|ممتاز|اكمل|اضفهم)$/.test(normText)) {
+    // 3) ردود الموافقة والرفض باللهجة الشامية ("نعم"، "أي"، "إيه"، "يلا"، "أكيد"، "نفسهم" / "لا"، "شي جديد")
+    const isShamiYes = /^(موافق|تمام|نعم|اي|ايه|ايوه|يلا|اكيد|اوكي|ماشي|طيب|ممتاز|اكمل|اضفهم|نفسهم|نفسهن|فرجيني|اي والله|يلا بينا)$/.test(normText);
+    const isShamiNo = /^(لا|لا شكرا|شي جديد|غيره|غيرهم|بلاها|مو هلق|لا والله)$/.test(normText);
+
+    if (isShamiNo && pending) {
+      savePendingDialog(null);
       setVal("aiShoppingPromptInput", "");
+      const noReply = "تكرم عينك يا غالي، خبرني شو ببالك اليوم وأنا جاهز أساعدك فوراً.";
+      setOrbEmotion("greet", noReply, true);
+      setTxt("aiShoppingStatusText", `🌸 ${noReply}`);
+      return true;
+    }
+
+    if (isShamiYes) {
+      setVal("aiShoppingPromptInput", "");
+      if (pending && pending.type === "confirm_welcome_back") {
+        savePendingDialog(null);
+        return handleRepeatPreviousOrder("كرر طلبي السابق", persona);
+      }
+      if (pending && pending.type === "confirm_cross_sell") {
+        savePendingDialog(null);
+        return handleCartComplementRequest("شو ناقصني كمل سلتي", persona);
+      }
+      if (pending && pending.type === "confirm_idle_nudge") {
+        savePendingDialog(null);
+        return handleCheapestAvailableRequest("أوفر المتوفر", persona);
+      }
+      if (pending && pending.type === "confirm_scarcity") {
+        savePendingDialog(null);
+        const lowPicks = Object.keys(products || {})
+          .filter(pid => {
+            const st = getBranchAvail(pid);
+            return st > 0 && st <= (parseInt(products[pid]?.alertLimit) || 4);
+          })
+          .slice(0, 8)
+          .map(pid => ({ id: pid, name: products[pid].name, reason: `بقي فقط ${getBranchAvail(pid)} بالفرع` }));
+        if (lowPicks.length) {
+          openZeroDefaultModal("🔥 أصناف عليها طلب عالي وقاربت على النفاد:", lowPicks, "scarcity_picks");
+          const sMsg = "عرضتلك الأصناف يلي عليها طلب عالي قبل ما تخلص، حدد الكمية.";
+          setOrbEmotion("choice", sMsg, true);
+          setTxt("aiShoppingStatusText", `🔥 ${sMsg}`);
+          return true;
+        }
+        return handleCheapestAvailableRequest("أوفر المتوفر", persona);
+      }
       if (pending && pending.type === "awaiting_budget") {
         const askAgain = `ممتاز! اكتب رقم الميزانية بالليرة (مثلاً 500 أو 1000) لأجهزلك (${pending.title}) فوراً.`;
         setOrbEmotion("greet", askAgain, true);
@@ -2668,6 +2752,69 @@
     }
   };
 
+  // ==========================================================================
+  // [الخطوة 4: قراءة المرادفات المتعلّمة سحابياً (synonyms_auto.json) + تسجيل غير المطابق]
+  // ==========================================================================
+  const AUTO_SYN_CACHE_KEY = "moaath_auto_synonyms_cache_v1";
+  let autoSynonymGroups = [];
+
+  function loadAutoSynonymsCloud() {
+    try {
+      const cached = JSON.parse(localStorage.getItem(AUTO_SYN_CACHE_KEY) || "null");
+      if (cached && Array.isArray(cached.groups)) autoSynonymGroups = cached.groups;
+    } catch (_) {}
+
+    if (navigator.onLine === false) return;
+    fetch("synonyms_auto.json", { cache: "no-store" })
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (data && Array.isArray(data.groups)) {
+          autoSynonymGroups = data.groups;
+          try { localStorage.setItem(AUTO_SYN_CACHE_KEY, JSON.stringify(data)); } catch (_) {}
+        }
+      })
+      .catch(() => {});
+  }
+  loadAutoSynonymsCloud();
+
+  function expandWordsWithAutoSynonyms(words) {
+    const out = new Set(words);
+    const localGroups = [];
+    try {
+      const loc = JSON.parse(localStorage.getItem("moaath_store_local_synonyms") || "{}");
+      Object.values(loc || {}).forEach(g => { if (Array.isArray(g)) localGroups.push(g); });
+    } catch (_) {}
+
+    const allGroups = [...autoSynonymGroups, ...localGroups];
+    allGroups.forEach(grp => {
+      if (!Array.isArray(grp) || grp.length < 2) return;
+      const normGrp = grp.map(w => cleanArabicNorm(w)).filter(w => w.length >= 2);
+      const matched = words.some(w => normGrp.some(g => g === w || g.includes(w) || w.includes(g)));
+      if (matched) {
+        normGrp.forEach(g => out.add(g));
+      }
+    });
+    return Array.from(out);
+  }
+
+  function logUnmatchedQueryForCloudLearning(rawQuery) {
+    const clean = cleanArabicNorm(rawQuery || "");
+    if (!clean || clean.length < 2 || clean.length > 45) return;
+    if (typeof db === "undefined" || !db || typeof db.ref !== "function") return;
+    const key = "Q_" + clean.replace(/\s+/g, "_").slice(0, 32);
+    try {
+      const ref = db.ref(`ai_brain/unmatched_queries/${key}`);
+      ref.once("value", snap => {
+        const cur = snap.val() || {};
+        ref.set({
+          query: String(rawQuery || "").trim().slice(0, 50),
+          count: (parseInt(cur.count, 10) || 0) + 1,
+          updatedAt: new Date().toISOString()
+        }).catch(() => {});
+      });
+    } catch (_) {}
+  }
+
   function matchCategoriesAndProducts(normText) {
     if (window.MoaathAIBrain && typeof window.MoaathAIBrain.smartSearch === "function") {
       const activeCartIds = Object.keys(cart || {}).map(k => cart[k]?.origId || String(k).replace(/_PKG$/, ""));
@@ -2685,10 +2832,11 @@
     const budgetMatch = normText.match(/(\d{2,7})/);
     const maxBudget = budgetMatch ? parseInt(budgetMatch[1], 10) : null;
 
-    const words = normText
+    const baseWords = normText
       .replace(/\b(تجهيز|فاتوره|طلب|اريد|بدي|ابغى|ابي|مواد|اغراض|وصفه|وصفة|حلى|حلويات|طبخ|بـ|ب|\d+)\b/g, " ")
       .split(/\s+/)
       .filter(w => w.length >= 2);
+    const words = expandWordsWithAutoSynonyms(baseWords);
 
     const matchedCategories = storeCats.filter(catName => {
       const cNorm = cleanArabicNorm(catName);
@@ -2739,6 +2887,116 @@
 
     availableResults.sort((a, b) => b.score - a.score);
     return { matchedCategories, items: availableResults.slice(0, 8), usedAlternative: !!outOfStockCategory };
+  }
+
+  // ==========================================================================
+  // [الخطوة 2: الذاكرة الذكية المختصرة لكل زبون — محلية 100% بـ 0 حصة API]
+  // ==========================================================================
+  const CUSTOMER_MEMORY_KEY = "moaath_customer_memory_v1";
+
+  function buildSmartCustomerProfile() {
+    try {
+      const firstName = getCustomerFirstName();
+      const myPhone = String(currentUser?.phone || "").trim();
+      const allHist = Object.values(completedOrdersHistory || {});
+      const myOrders = myPhone
+        ? allHist.filter(o => o && String(o.customerPhone || "").trim() === myPhone)
+        : allHist;
+
+      const itemCounts = {};
+      let totalSpent = 0;
+      let bulkHits = 0;
+      let totalLineItems = 0;
+
+      myOrders.forEach(ord => {
+        totalSpent += (parseInt(ord.totalSaleSYP, 10) || 0);
+        (ord.items || []).forEach(it => {
+          const name = String(it.name || "").trim();
+          const qty = Math.max(1, parseInt(it.qty, 10) || 1);
+          if (name) itemCounts[name] = (itemCounts[name] || 0) + qty;
+          if (it.isPackage || String(it.id || "").endsWith("_PKG") || qty >= 3) bulkHits++;
+          totalLineItems++;
+        });
+      });
+
+      const topItems = Object.entries(itemCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([name]) => name);
+
+      const orderCount = myOrders.length;
+      const avgBasketSYP = orderCount > 0 ? Math.round(totalSpent / orderCount) : 0;
+      const prefersBulk = currentUser?.userType === "wholesale" || (totalLineItems > 0 && (bulkHits / totalLineItems) >= 0.35);
+
+      const profile = {
+        firstName,
+        orderCount,
+        avgBasketSYP,
+        prefersBulk,
+        topItems,
+        updatedAt: Date.now()
+      };
+      try { localStorage.setItem(CUSTOMER_MEMORY_KEY, JSON.stringify(profile)); } catch (_) {}
+      return profile;
+    } catch (_) {
+      try {
+        return JSON.parse(localStorage.getItem(CUSTOMER_MEMORY_KEY) || "null") || {};
+      } catch (__) {
+        return {};
+      }
+    }
+  }
+
+  // ==========================================================================
+  // [الخطوة 3: الإقناع الذكي بالبدائل عند النفاد]
+  // ==========================================================================
+  function detectRequestedOutOfStockItem(normText) {
+    const tokens = normText
+      .replace(/(بدي|اريد|ابي|ابغى|طلب|هات|اعطيني|كيلو|علبه|علبة|كيس|طرد|بـ|ب|\d+)/g, " ")
+      .split(/\s+/)
+      .filter(w => w.length >= 2);
+    if (!tokens.length) return null;
+
+    for (const pid of Object.keys(products || {})) {
+      const p = products[pid];
+      if (!p || !p.name) continue;
+      if (getBranchAvail(pid) > 0) continue;
+      const pNorm = cleanArabicNorm(p.name);
+      const hit = tokens.some(t => pNorm.includes(t) || (pNorm.length >= 3 && t.includes(pNorm)));
+      if (hit) {
+        const sameCatAlts = Object.keys(products || {})
+          .filter(altId => {
+            if (altId === pid) return false;
+            const ap = products[altId];
+            return ap && ap.category === p.category && getBranchAvail(altId) > 0;
+          })
+          .slice(0, 3)
+          .map(altId => ({
+            id: altId,
+            name: products[altId].name,
+            priceSYP: getUnitSYP(altId),
+            reason: `بديل متوفر في قسم (${products[altId].category})`
+          }));
+
+        const fallbackAlts = sameCatAlts.length ? sameCatAlts : Object.keys(products || {})
+          .filter(altId => altId !== pid && products[altId] && getBranchAvail(altId) > 0)
+          .slice(0, 3)
+          .map(altId => ({
+            id: altId,
+            name: products[altId].name,
+            priceSYP: getUnitSYP(altId),
+            reason: "بديل متوفر في الفرع"
+          }));
+
+        return {
+          requestedId: pid,
+          requestedName: p.name,
+          category: p.category || "",
+          alternatives: fallbackAlts
+        };
+      }
+    }
+    return null;
   }
 
   window.runAIShoppingAssistant = async function (overridePrompt = null) {
@@ -2896,15 +3154,29 @@
           .slice(0, 85)
           .map(pid => ({ id: pid, name: products[pid].name, cat: products[pid].category || "", price: getUnitSYP(pid) }));
         const currentCartSummary = Object.keys(cart || {}).map(k => ({ id: k, name: cart[k]?.name || "", qty: cart[k]?.qty || 0 }));
+        if (!Array.isArray(sessionCtx.conversationHistory)) sessionCtx.conversationHistory = [];
+        sessionCtx.conversationHistory.push({ role: "user", text: promptTxt.slice(0, 160) });
+        if (sessionCtx.conversationHistory.length > 6) sessionCtx.conversationHistory = sessionCtx.conversationHistory.slice(-6);
+
         const aiRes = await fetch(workerUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             mode: "companion_shop",
             prompt: promptTxt,
+            history: sessionCtx.conversationHistory,
+            customerProfile: buildSmartCustomerProfile(),
             catalog: catalogSummary,
             currentCart: currentCartSummary,
-            storeMeta: { persona: persona.name, dialectMode: persona.dialectMode || "shami_friendly", branch: typeof activeBranchId !== "undefined" ? activeBranchId : "main" }
+            storeMeta: {
+              persona: persona.name,
+              personaId: persona.id,
+              personaRole: persona.roleBadge || "",
+              personaTone: persona.toneTag || "",
+              personaStyle: persona.specialtyNote || persona.styleHint || "",
+              dialectMode: persona.dialectMode || "shami_friendly",
+              branch: typeof activeBranchId !== "undefined" ? activeBranchId : "main"
+            }
           })
         });
         const aiJson = await aiRes.json();
@@ -2912,30 +3184,105 @@
         const aiItems = [];
         (Array.isArray(aiData.items) ? aiData.items : []).forEach(it => {
           if (it?.id && products?.[it.id] && getBranchAvail(it.id) > 0) {
-            aiItems.push({ id: it.id, name: products[it.id].name, reason: it.reason || "اقتراح ذكي" });
+            const availMax = getBranchAvail(it.id);
+            const smartQty = Math.max(1, Math.min(availMax, parseInt(it.qty, 10) || 1));
+            aiItems.push({
+              id: it.id,
+              name: products[it.id].name,
+              suggestedQty: smartQty,
+              reason: it.reason || "اقتراح ذكي"
+            });
           }
         });
         (Array.isArray(aiData.choices) ? aiData.choices : []).forEach(ch => {
           if (ch?.id && products?.[ch.id] && getBranchAvail(ch.id) > 0 && !aiItems.some(x => x.id === ch.id)) {
-            aiItems.push({ id: ch.id, name: products[ch.id].name, reason: ch.reason || "خيار مقترح" });
+            aiItems.push({
+              id: ch.id,
+              name: products[ch.id].name,
+              suggestedQty: 1,
+              reason: ch.reason || "خيار مقترح"
+            });
           }
         });
 
+        const parsedMeta = aiData.parsedIntent || {};
+        const metaNoteParts = [];
+        if (parsedMeta.peopleCount) metaNoteParts.push(`لـ ${parsedMeta.peopleCount} أشخاص`);
+        if (parsedMeta.budgetSYP) metaNoteParts.push(`ضمن ميزانية ${Number(parsedMeta.budgetSYP).toLocaleString()} ل.س`);
+        const modalSub = metaNoteParts.length
+          ? `تم التجهيز (${metaNoteParts.join(" • ")}) — اضغط «تحديد المتوفر» أو (+)`
+          : "";
+
         if (aiItems.length > 0) {
           const replyTxt = String(aiData.reply || persona.itemsReady("")).trim();
-          openZeroDefaultModal("✨ اقتراحات المساعد الذكي — حدد الكمية:", aiItems, `ai_${norm.slice(0, 16)}`);
-          setOrbEmotion("choice", replyTxt, true);
+          sessionCtx.conversationHistory.push({ role: "assistant", text: replyTxt.slice(0, 160) });
+          if (sessionCtx.conversationHistory.length > 6) sessionCtx.conversationHistory = sessionCtx.conversationHistory.slice(-6);
+          openZeroDefaultModal(`✨ اقتراحات ${persona.name} — حدد الكمية:`, aiItems, `ai_${norm.slice(0, 16)}`, modalSub);
+          setOrbEmotion(aiData.mood || "choice", replyTxt, true);
           setTxt("aiShoppingStatusText", `✨ ${replyTxt}`);
           return;
         }
         if (aiData.reply) {
-          setOrbEmotion("greet", aiData.reply, true);
-          setTxt("aiShoppingStatusText", `🧚 ${aiData.reply}`);
+          const replyTxt = String(aiData.reply).trim();
+          sessionCtx.conversationHistory.push({ role: "assistant", text: replyTxt.slice(0, 160) });
+          if (sessionCtx.conversationHistory.length > 6) sessionCtx.conversationHistory = sessionCtx.conversationHistory.slice(-6);
+          setOrbEmotion(aiData.mood || "greet", replyTxt, true);
+          setTxt("aiShoppingStatusText", `🧚 ${replyTxt}`);
           return;
         }
       } catch (_) {}
     }
 
+    const oosInfo = detectRequestedOutOfStockItem(norm);
+    if (oosInfo && oosInfo.alternatives.length > 0) {
+      let persuasionLine = composeInfinitePhrase("alternative", persona);
+      if (workerUrl && navigator.onLine !== false) {
+        try {
+          const pRes = await fetch(workerUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              mode: "companion_shop",
+              prompt: promptTxt,
+              history: sessionCtx.conversationHistory || [],
+              customerProfile: buildSmartCustomerProfile(),
+              outOfStockContext: oosInfo,
+              catalog: oosInfo.alternatives.map(a => ({ id: a.id, name: a.name, price: a.priceSYP })),
+              currentCart: Object.keys(cart || {}).map(k => ({ id: k, name: cart[k]?.name || "", qty: cart[k]?.qty || 0 })),
+              storeMeta: {
+                persona: persona.name,
+                personaId: persona.id,
+                personaRole: persona.roleBadge || "",
+                personaTone: persona.toneTag || "",
+                personaStyle: persona.specialtyNote || persona.styleHint || "",
+                dialectMode: persona.dialectMode || "shami_friendly",
+                branch: typeof activeBranchId !== "undefined" ? activeBranchId : "main"
+              }
+            })
+          });
+          const pJson = await pRes.json();
+          if (pJson?.ok && pJson?.data?.reply) {
+            persuasionLine = String(pJson.data.reply).trim();
+          }
+        } catch (_) {}
+      }
+      openZeroDefaultModal(
+        `🔁 (${oosInfo.requestedName}) نافد — بدائل مقترحة:`,
+        oosInfo.alternatives.map(a => ({
+          id: a.id,
+          name: a.name,
+          suggestedQty: 1,
+          reason: `${a.reason} • ${a.priceSYP.toLocaleString()} ل.س`
+        })),
+        `oos_alt_${oosInfo.requestedId}`,
+        `الصنف المطلوب (${oosInfo.requestedName}) غير متوفر حالياً — حدد البديل المناسب`
+      );
+      setOrbEmotion("choice", persuasionLine, true);
+      setTxt("aiShoppingStatusText", `🔁 ${persuasionLine}`);
+      return;
+    }
+
+    logUnmatchedQueryForCloudLearning(promptTxt);
     const nfLine = composeInfinitePhrase("notFound", persona);
     setOrbEmotion("idle", nfLine, true);
     setTxt("aiShoppingStatusText", `⚠️ ${nfLine}`);
@@ -3310,7 +3657,8 @@
         </div>
         <div>• <b>المصدر الحالي:</b> ${escTxt(srcNow)}</div>
         <div>• <b>سبب فشل Gemini TTS:</b> <span style="color:#38bdf8;">${escTxt(errNow)}</span></div>
-        <div>• <b>المقاطع البشرية المحفوظة:</b> ${cachedCount}</div>
+        <div>• <b>المقاطع البشرية المحفوظة:</b> ${cachedCount} | <b>فهرس السحابة:</b> ${manifestTextToFile.size}</div>
+        <div>• <b>المرادفات الذكية:</b> ${Array.isArray(autoSynonymGroups) ? autoSynonymGroups.length : 0} مجموعة | <b>الذاكرة:</b> ${(buildSmartCustomerProfile()?.orderCount || 0)} طلبات</div>
         <div>• <b>رابط Worker:</b> <span style="word-break:break-all; color:#a7f3d0;">${escTxt(wUrl)}</span></div>
         <div>• <b>الاتصال:</b> ${escTxt(netNow)}</div>
         <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
@@ -3324,13 +3672,20 @@
   };
 
   window.runAssistantQACheck = function () {
+    const mem = typeof buildSmartCustomerProfile === "function" ? buildSmartCustomerProfile() : {};
     const report = {
-      version: "v82",
+      version: "v88",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
       lastGeminiError: sessionCtx.lastGeminiError || "none",
       fairiesCount: Object.keys(PERSONAS).length,
+      manifestClipsIndexed: manifestTextToFile.size,
+      autoSynonymsLoaded: Array.isArray(autoSynonymGroups) ? autoSynonymGroups.length : 0,
+      customerMemoryOrders: mem.orderCount || 0,
+      customerMemoryTopItems: Array.isArray(mem.topItems) ? mem.topItems.length : 0,
+      conversationHistoryDepth: Array.isArray(sessionCtx.conversationHistory) ? sessionCtx.conversationHistory.length : 0,
+      outOfStockPersuasionReady: typeof detectRequestedOutOfStockItem === "function",
       productsLoaded: Object.keys(products || {}).length,
       categoriesLoaded: Array.isArray(categories) ? categories.length : 0,
       recipesAvailable: getAllMergedRecipes().length,
@@ -3338,7 +3693,7 @@
       speechRecognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
       online: navigator.onLine !== false
     };
-    console.info("[QA Assistant Diagnostic v70]", report);
+    console.info("[QA Assistant Diagnostic v88 - Full 5-Step Upgrade]", report);
     return report;
   };
 
@@ -4210,6 +4565,64 @@
   const _origRenderStore = window.renderStore;
   window.renderStore = function () { if (typeof _origRenderStore === "function") _origRenderStore(); mountAssistant(); };
 
+  const salesTriggerFlags = { welcomeBack: false, idleNudge: false, crossSell: false, checkoutBoost: false };
+
+  function triggerSmartSalesIntent(intentKey, dialogType = null) {
+    const prefs = getPrefs();
+    if (prefs.hidden) return;
+    const persona = PERSONAS[prefs.persona] || PERSONAS.buddy;
+    const line = composeInfinitePhrase(intentKey, persona);
+    if (!line) return;
+    if (dialogType) {
+      savePendingDialog({ type: dialogType, expiresAt: Date.now() + 2 * 60 * 1000 });
+    }
+    setOrbEmotion(intentKey === "orderSuccess" ? "happy" : "greet", line, true);
+    setTxt("aiShoppingStatusText", `✨ ${line}`);
+  }
+
+  // 1) ترحيب الزبون العائد (welcomeBack)
+  setTimeout(() => {
+    if (salesTriggerFlags.welcomeBack) return;
+    const histCount = Object.keys(completedOrdersHistory || {}).length;
+    if (histCount > 0) {
+      salesTriggerFlags.welcomeBack = true;
+      triggerSmartSalesIntent("welcomeBack", "confirm_welcome_back");
+    }
+  }, 5500);
+
+  // 2) كسر التردد بعد 45 ثانية إذا السلة فاضية (idleNudge)
+  setTimeout(() => {
+    if (salesTriggerFlags.idleNudge) return;
+    const cartCnt = Object.keys(cart || {}).length;
+    if (cartCnt === 0 && !sessionCtx.lastQuery) {
+      salesTriggerFlags.idleNudge = true;
+      triggerSmartSalesIntent("idleNudge", "confirm_idle_nudge");
+    }
+  }, 45000);
+
+  // 3) البيع التكميلي بعد إضافة صنفين للسلة (crossSell)
+  const _origChangeQtyForSales = window.changeQty;
+  if (typeof _origChangeQtyForSales === "function") {
+    window.changeQty = function (id, delta) {
+      const res = _origChangeQtyForSales.apply(this, arguments);
+      if (delta > 0 && !salesTriggerFlags.crossSell && Object.keys(cart || {}).length >= 2) {
+        salesTriggerFlags.crossSell = true;
+        setTimeout(() => triggerSmartSalesIntent("crossSell", "confirm_cross_sell"), 1400);
+      }
+      return res;
+    };
+  }
+
+  // 4) تعزيز الرضا بعد إرسال الطلب (orderSuccess)
+  const _origSubmitOrderForSales = window.submitOrder;
+  if (typeof _origSubmitOrderForSales === "function") {
+    window.submitOrder = function () {
+      const res = _origSubmitOrderForSales.apply(this, arguments);
+      setTimeout(() => triggerSmartSalesIntent("orderSuccess", null), 1200);
+      return res;
+    };
+  }
+
   const _origRenderCart = window.renderCartModalItems;
   window.renderCartModalItems = function () {
     pauseRoaming(15000);
@@ -4224,6 +4637,11 @@
       paySel.addEventListener("change", () => setTimeout(purgeShamCashPaymentAIDOM, 30));
     }
     renderSmartCartRecommendations();
+    // 5) طمأنة إتمام الطلب عند فتح السلة (checkoutBoost)
+    if (!salesTriggerFlags.checkoutBoost && Object.keys(cart || {}).length > 0) {
+      salesTriggerFlags.checkoutBoost = true;
+      setTimeout(() => triggerSmartSalesIntent("checkoutBoost", null), 600);
+    }
   };
 
   const _origToggleTheme = window.toggleTheme;
