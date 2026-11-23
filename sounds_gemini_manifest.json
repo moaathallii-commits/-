@@ -1,6 +1,6 @@
 {
   "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-23T18:07:28Z",
+  "updatedAt": "2026-11-23T19:11:09Z",
   "personas": {
     "buddy": {
       "greet": [
@@ -749,6 +749,10 @@
           "file": "sounds_gemini/noor_scarcityAlert_1.wav"
         },
         {
+          "text": "لحّق حالك! في عروض طازة اليوم وبأسعار بتجنن، أفرجيك ياها قبل ما تخلص؟",
+          "file": "sounds_gemini/noor_scarcityAlert_2.wav"
+        },
+        {
           "text": "بنصحك بصدق يا غالي، عروض اليوم موفرة كتير، تحب نلقي عليها نظرة؟",
           "file": "sounds_gemini/noor_scarcityAlert_3.wav"
         }
@@ -781,25 +785,49 @@
           "file": "sounds_gemini/noor_orderSuccess_3.wav"
         }
       ],
-      "welcomeBack": []
+      "welcomeBack": [
+        {
+          "text": "يا مية هلا بعودتك يا غالي! اشتقنالك بمتجر معاذ، نعيد نفس أغراض المرة الماضية ولا في شي جديد؟",
+          "file": "sounds_gemini/noor_welcomeBack_1.wav"
+        }
+      ]
     },
     "chef": {
       "greet": [
+        {
+          "text": "يا أهلاً وسهلاً! نورت متجر معاذ. خبرني شو ببالك اليوم؟",
+          "file": "sounds_gemini/chef_greet_1.wav"
+        },
         {
           "text": "أهلاً بك يا غالي، المتجر منور بوجودك. بشو نبدأ سلتك اليوم؟",
           "file": "sounds_gemini/chef_greet_2.wav"
         }
       ],
       "greetMorning": [],
-      "greetEvening": [],
+      "greetEvening": [
+        {
+          "text": "يسعد مساك يا غالي، جاهز نضبط سلة السهرة والمتة والتسالي؟",
+          "file": "sounds_gemini/chef_greetEvening_2.wav"
+        }
+      ],
       "chatGood": [],
       "thanks": [],
       "added": [],
-      "itemsReady": [],
+      "itemsReady": [
+        {
+          "text": "هي كل الخيارات المتوفرة حالياً، حدد الكمية وبنجهزها فوراً.",
+          "file": "sounds_gemini/chef_itemsReady_4.wav"
+        }
+      ],
       "alternative": [],
       "habit": [],
       "notFound": [],
-      "idleNudge": [],
+      "idleNudge": [
+        {
+          "text": "محتار شو تاخد يا غالي؟ خبرني شو عبالك اليوم وأنا برتبلك السلة على ذوقك.",
+          "file": "sounds_gemini/chef_idleNudge_1.wav"
+        }
+      ],
       "crossSell": [],
       "scarcityAlert": [],
       "checkoutBoost": [],
