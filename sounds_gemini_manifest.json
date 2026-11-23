@@ -1,6 +1,6 @@
 {
   "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-23T13:12:48Z",
+  "updatedAt": "2026-11-23T15:14:51Z",
   "personas": {
     "buddy": {
       "greet": [
@@ -513,6 +513,10 @@
         {
           "text": "طلبك انبعت بنجاح، تتهنى فيه يا رب وألف صحة وهنا مقدماً.",
           "file": "sounds_gemini/lolo_orderSuccess_2.wav"
+        },
+        {
+          "text": "اختيار ذوّيق، طلبك قيد التجهيز بأعلى عناية ويسعدنا دايماً خدمتك.",
+          "file": "sounds_gemini/lolo_orderSuccess_3.wav"
         }
       ],
       "welcomeBack": [
@@ -541,32 +545,84 @@
           "file": "sounds_gemini/noor_greet_2.wav"
         },
         {
+          "text": "يا مية هلا ومرحبا! كل شي طازج ومرتب بالمتجر، شو ناقصك اليوم؟",
+          "file": "sounds_gemini/noor_greet_3.wav"
+        },
+        {
+          "text": "حياك الله يا غالي، نورتنا بمتجر معاذ. قولي شو عبالك نجهزلك؟",
+          "file": "sounds_gemini/noor_greet_4.wav"
+        },
+        {
           "text": "أهلاً وسهلاً فيك، يسعدني جداً أساعدك بتسوقك اليوم. بشو نبلش؟",
           "file": "sounds_gemini/noor_greet_5.wav"
+        },
+        {
+          "text": "يا هلا بالطلة الحلوة! متجر معاذ جاهز لطلباتك، سمّي بالله واطلب.",
+          "file": "sounds_gemini/noor_greet_6.wav"
         }
       ],
       "greetMorning": [
         {
           "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
           "file": "sounds_gemini/noor_greetMorning_1.wav"
+        },
+        {
+          "text": "يسعد صباحك يا غالي، كل أغراض الفطور والقهوة جاهزة هلق.",
+          "file": "sounds_gemini/noor_greetMorning_2.wav"
+        },
+        {
+          "text": "صباح النور والبركة! إن شاء الله يومك حلو ومليان خير، شو بتحب تطلب؟",
+          "file": "sounds_gemini/noor_greetMorning_3.wav"
+        },
+        {
+          "text": "صباح الفل والروقان، خبرني شو ناقص البيت لنجهزه عالسريع.",
+          "file": "sounds_gemini/noor_greetMorning_4.wav"
         }
       ],
       "greetEvening": [
         {
           "text": "مساء الخير والروقان! نورت متجر معاذ، شو نجهزلك الليلة؟",
           "file": "sounds_gemini/noor_greetEvening_1.wav"
+        },
+        {
+          "text": "يسعد مساك يا غالي، جاهز نضبط سلة السهرة والمتة والتسالي؟",
+          "file": "sounds_gemini/noor_greetEvening_2.wav"
+        },
+        {
+          "text": "مساء النور والهنا، خبرني شو عبالك للعشا أو السهرة اليوم.",
+          "file": "sounds_gemini/noor_greetEvening_3.wav"
+        },
+        {
+          "text": "مساء الورد يا غالي، كل شي بتحتاجه لليلة جاهز ومرتب هلق.",
+          "file": "sounds_gemini/noor_greetEvening_4.wav"
         }
       ],
       "chatGood": [
         {
           "text": "أنا بخير والحمد لله، كيف بقدر أساعدك اليوم؟",
           "file": "sounds_gemini/noor_chatGood_1.wav"
+        },
+        {
+          "text": "بألف خير ونعمة بسؤالك اللطيف يا غالي، شو بتحب أجهزلك؟",
+          "file": "sounds_gemini/noor_chatGood_2.wav"
+        },
+        {
+          "text": "تمام التمام وبأعلى جاهزية لخدمتك، خبرني شو ببالك تطلب.",
+          "file": "sounds_gemini/noor_chatGood_3.wav"
+        },
+        {
+          "text": "الحمد لله عال العال، وجودك بمتجر معاذ بيسعدني دايماً. كيف أخدمك؟",
+          "file": "sounds_gemini/noor_chatGood_4.wav"
         }
       ],
       "thanks": [
         {
           "text": "العفو يا غالي، تكرم عينك ويسعدني دائماً أكون بخدمتك.",
           "file": "sounds_gemini/noor_thanks_1.wav"
+        },
+        {
+          "text": "لا شكر على واجب أبداً، بأي وقت بتحتاج شي أنا هون.",
+          "file": "sounds_gemini/noor_thanks_4.wav"
         }
       ],
       "added": [
@@ -577,6 +633,10 @@
         {
           "text": "ممتاز، صار طلبك جاهز بالسلة، نضيف شي تاني؟",
           "file": "sounds_gemini/noor_added_2.wav"
+        },
+        {
+          "text": "يا سلام عليك، أضفته للسلة عالسريع، شو نكمل كمان؟",
+          "file": "sounds_gemini/noor_added_3.wav"
         }
       ],
       "itemsReady": [],
