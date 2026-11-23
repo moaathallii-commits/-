@@ -10,7 +10,7 @@
 (function () {
   if (window.__MOAATH_AI_LOADED__) return;
   window.__MOAATH_AI_LOADED__ = true;
-Yo
+
   const PREFS_KEY = "moaath_store_pet_prefs";
   const POS_KEY = "moaath_store_pet_pos";
   const LEARN_KEY = "moaath_store_pet_learned";
