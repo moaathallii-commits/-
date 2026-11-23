@@ -1,0 +1,37 @@
+name: Deploy Cloudflare Worker (Moaath Store)
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - main
+    paths:
+      - "worker.js"
+      - "worker_step4.js"
+      - ".github/workflows/deploy_worker.yml"
+
+jobs:
+  deploy-worker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Prepare worker entry file
+        run: |
+          if [ -f "worker_step4.js" ]; then
+            cp worker_step4.js worker.js
+          fi
+          test -f "worker.js"
+
+      - name: Deploy to Cloudflare Workers via Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy worker.js --name moaath-ai-proxy --compatibility-date 2026-11-01
