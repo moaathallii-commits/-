@@ -262,34 +262,119 @@
   }
 
   // --------------------------------------------------------------------------
-  // 4. الصوت (متوافق مع ai_engine.js و Web Speech دون تداخل)
+  // 4. لغة الجسد الواقعية + الصوت (متصل بملفات الصوت البشرية و Worker و Web Speech)
   // --------------------------------------------------------------------------
+  let gestureCycleTimer = null;
+  let speakingEndTimer = null;
+  let roomManifestMap = new Map();
+
+  (function preloadRoomManifestIndex() {
+    try {
+      const cached = JSON.parse(localStorage.getItem("moaath_gemini_manifest_cache_v1") || "null");
+      if (cached && cached.personas) {
+        Object.keys(cached.personas).forEach((pid) => {
+          Object.values(cached.personas[pid] || {}).forEach((arr) => {
+            if (Array.isArray(arr)) arr.forEach((it) => { if (it && it.text && it.file) roomManifestMap.set(`${pid}::${normAr(it.text)}`, it.file); });
+          });
+        });
+      }
+    } catch (_) {}
+    if (navigator.onLine !== false) {
+      fetch(`sounds_gemini_manifest.json?t=${Math.floor(Date.now() / 60000)}`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (!d || !d.personas) return;
+          roomManifestMap.clear();
+          Object.keys(d.personas).forEach((pid) => {
+            Object.values(d.personas[pid] || {}).forEach((arr) => {
+              if (Array.isArray(arr)) arr.forEach((it) => { if (it && it.text && it.file) roomManifestMap.set(`${pid}::${normAr(it.text)}`, it.file); });
+            });
+          });
+        })
+        .catch(() => {});
+    }
+  })();
+
+  function triggerBodyGesture(mood = "talk") {
+    const wrap = $id("vipRoomAvatarWrap");
+    if (!wrap) return;
+    const postures = ["pose-nod", "pose-lean-left", "pose-lean-right", "pose-enthusiastic"];
+    wrap.classList.remove(...postures, "pose-excited");
+    if (mood === "excited" || mood === "challenge") {
+      wrap.classList.add("pose-excited");
+      setTimeout(() => { if (wrap) wrap.classList.remove("pose-excited"); }, 680);
+      return;
+    }
+    const chosen = postures[Math.floor(Math.random() * postures.length)];
+    wrap.classList.add(chosen);
+    setTimeout(() => { if (wrap) wrap.classList.remove(chosen); }, 650);
+  }
+
+  function startSpeakingChoreography(durationMs, mood = "talk") {
+    const wrap = $id("vipRoomAvatarWrap");
+    const aura = $id("vipSpeakingAura");
+    clearInterval(gestureCycleTimer);
+    clearTimeout(speakingEndTimer);
+    if (wrap) wrap.classList.add("is-speaking");
+    if (aura) aura.classList.add("is-active");
+    triggerBodyGesture(mood);
+
+    gestureCycleTimer = setInterval(() => {
+      triggerBodyGesture(mood);
+    }, 950);
+
+    speakingEndTimer = setTimeout(() => {
+      clearInterval(gestureCycleTimer);
+      if (wrap) {
+        wrap.classList.remove("is-speaking", "pose-nod", "pose-lean-left", "pose-lean-right", "pose-enthusiastic");
+      }
+      if (aura) aura.classList.remove("is-active");
+    }, Math.max(1600, Math.min(9000, durationMs)));
+  }
+
   function stopRoomVoice() {
+    clearInterval(gestureCycleTimer);
+    clearTimeout(speakingEndTimer);
+    const wrap = $id("vipRoomAvatarWrap");
+    const aura = $id("vipSpeakingAura");
+    if (wrap) wrap.classList.remove("is-speaking", "pose-nod", "pose-lean-left", "pose-lean-right", "pose-enthusiastic", "pose-excited");
+    if (aura) aura.classList.remove("is-active");
     try { if (typeof window.__moaathStopAiEngineVoice === "function") window.__moaathStopAiEngineVoice(); } catch (_) {}
     try { if (typeof window.speechSynthesis !== "undefined") window.speechSynthesis.cancel(); } catch (_) {}
   }
 
-  function speakInRoom(text, room) {
+  function speakInRoom(text, room, mood = "talk") {
     if (isVoiceMuted || !text) return;
     stopRoomVoice();
     const clean = String(text).replace(/[\u{1F300}-\u{1FAFF}•*_#]/gu, " ").replace(/\s+/g, " ").trim();
     if (!clean) return;
 
-    // استخدام محرك الصوت الرئيسي في المتجر إذا كان متاحاً ومضبوطاً على نفس الشخصية
-    const avatarEl = $id("vipRoomAvatarWrap");
-    if (avatarEl) avatarEl.classList.add("is-speaking");
-    setTimeout(() => { if (avatarEl) avatarEl.classList.remove("is-speaking"); }, Math.min(7000, Math.max(1800, clean.length * 65)));
+    const estDur = Math.min(8000, Math.max(2000, clean.length * 68));
+    startSpeakingChoreography(estDur, mood);
 
+    // 1) تشغيل مقطع صوتي بشري مطابق من الفهرس إن وجد
+    const clipUrl = roomManifestMap.get(`${room?.id || ""}::${normAr(clean)}`);
+    if (clipUrl && navigator.onLine !== false) {
+      try {
+        const audio = new Audio(clipUrl);
+        audio.onended = () => stopRoomVoice();
+        audio.play().catch(() => {});
+        return;
+      } catch (_) {}
+    }
+
+    // 2) نطق صوتي عبر المتصفح مع تزامن لغة الجسد
     if (typeof window.speechSynthesis !== "undefined") {
       try {
         const u = new SpeechSynthesisUtterance(clean);
         u.lang = "ar-SY";
-        u.rate = room?.voice?.rate || 1.15;
-        u.pitch = room?.voice?.pitch || 0.92;
+        u.rate = room?.voice?.rate || 1.05;
+        u.pitch = room?.voice?.pitch || 0.95;
         const voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
         const arV = voices.find((v) => /ar/i.test(v.lang || ""));
         if (arV) u.voice = arV;
-        u.onend = () => { if (avatarEl) avatarEl.classList.remove("is-speaking"); };
+        u.onend = () => stopRoomVoice();
+        u.onerror = () => stopRoomVoice();
         window.speechSynthesis.speak(u);
       } catch (_) {}
     }
@@ -547,13 +632,41 @@
         border: 1px solid #00e676; border-radius: 50%;
         width: 38px; height: 38px; font-size: 15px; cursor: pointer;
       }
+      .vip-speaking-aura {
+        position: absolute; inset: -16px; border-radius: 50%;
+        border: 2px solid var(--vip-accent, #00e676);
+        opacity: 0; pointer-events: none; transform: scale(0.95);
+      }
+      .vip-speaking-aura.is-active {
+        animation: vipAuraWave 1.25s ease-out infinite;
+      }
+      .vip-avatar-stage.pose-nod {
+        transform: translateY(-4px) rotateX(11deg) rotateY(2deg) scale(1.04) !important;
+      }
+      .vip-avatar-stage.pose-lean-left {
+        transform: translateX(-8px) translateY(-5px) rotateY(-13deg) rotateZ(-2.5deg) scale(1.05) !important;
+      }
+      .vip-avatar-stage.pose-lean-right {
+        transform: translateX(8px) translateY(-5px) rotateY(13deg) rotateZ(2.5deg) scale(1.05) !important;
+      }
+      .vip-avatar-stage.pose-enthusiastic {
+        transform: translateY(-11px) scale(1.08) rotateX(-6deg) !important;
+      }
+      .vip-avatar-stage.pose-excited {
+        transform: scale(1.14) rotateY(16deg) rotateX(-9deg) !important;
+      }
+      @keyframes vipAuraWave {
+        0% { transform: scale(0.96); opacity: 0.72; }
+        100% { transform: scale(1.28); opacity: 0; }
+      }
       @keyframes vipFloat3D {
-        0%, 100% { transform: translateY(0px) rotateY(-5deg); }
-        50% { transform: translateY(-10px) rotateY(6deg); }
+        0%, 100% { transform: translateY(0px) scaleY(1.0) rotateY(-4deg) rotateX(2deg); }
+        50% { transform: translateY(-8px) scaleY(1.03) rotateY(5deg) rotateX(-3deg); }
       }
       @keyframes vipSpeakPulse {
-        0% { transform: scale(1.0) rotateY(-3deg); }
-        100% { transform: scale(1.05) rotateY(3deg); }
+        0% { transform: translateY(-2px) scale(1.01) rotateY(-4deg) rotateX(4deg); }
+        50% { transform: translateY(-7px) scale(1.06) rotateY(5deg) rotateX(-4deg); }
+        100% { transform: translateY(-2px) scale(1.02) rotateY(-3deg) rotateX(3deg); }
       }
       @keyframes vipSpinSlow {
         from { transform: rotate(0deg); }
@@ -582,6 +695,7 @@
       <div class="vip-stage">
         <div id="vipRoomBubble" class="vip-speech-bubble">أهلاً بك في عالم VIP!</div>
         <div id="vipRoomAvatarWrap" class="vip-avatar-stage" role="button" aria-label="تفاعل مع الشخصية">
+          <div id="vipSpeakingAura" class="vip-speaking-aura"></div>
           <div class="vip-avatar-ring"></div>
           <img id="vipRoomAvatarImg" class="vip-avatar-img" src="store-icon.png" alt="شخصية VIP">
         </div>
@@ -625,7 +739,7 @@
     return ov;
   }
 
-  function showRoomReply(text, room, suggestedProducts = null) {
+  function showRoomReply(text, room, suggestedProducts = null, mood = "talk") {
     const b = $id("vipRoomBubble");
     if (b) {
       b.style.opacity = "0.6";
@@ -635,7 +749,7 @@
       }, 90);
     }
     if (suggestedProducts) renderInlineProductStrip(suggestedProducts);
-    speakInRoom(text, room);
+    speakInRoom(text, room, mood);
   }
 
   function handleAvatarTouch(zone) {
@@ -649,7 +763,7 @@
     try { if (navigator.vibrate) navigator.vibrate(15); } catch (_) {}
     const pool = (room.touchReactions && room.touchReactions[zone]) || room.tips || ["أهلاً يا بطل!"];
     const line = pickNonRepeating(room.id, `touch_${zone}`, pool);
-    showRoomReply(line, room);
+    showRoomReply(line, room, null, zone === "head" ? "excited" : "talk");
   }
 
   // --------------------------------------------------------------------------
@@ -682,7 +796,7 @@
     }
     if (/تحدي|ملل|طفش|زهق|لعبه|سؤال/.test(n) && Array.isArray(room.challenges)) {
       const ch = pickNonRepeating(room.id, "challenges", room.challenges);
-      showRoomReply(ch, room);
+      showRoomReply(ch, room, null, "challenge");
       return;
     }
 
