@@ -1,6 +1,6 @@
 {
-  "buildId": "20261123-04",
-  "updatedAt": "2026-11-23T21:30:00Z",
+  "buildId": "20261123-05",
+  "updatedAt": "2026-11-23T21:48:00Z",
   "rooms": [
     {
       "id": "coach_sakhr",
@@ -29,6 +29,66 @@
       "file": "vip_rooms/grand_chef.js",
       "avatarUrl": "grand_chef.jpg",
       "accent": "#f59e0b",
+      "isVip": true,
+      "enabled": true
+    },
+    {
+      "id": "princess_layla",
+      "name": "الأميرة ليلى",
+      "title": "غرفة VIP • الذوق الملكي، الضيافة الراقية، والجمال",
+      "file": "vip_rooms/princess_layla.js",
+      "avatarUrl": "princess_layla.jpg",
+      "accent": "#f472b6",
+      "isVip": true,
+      "enabled": true
+    },
+    {
+      "id": "butler_farid",
+      "name": "المساعد الراقي فريد",
+      "title": "غرفة VIP • التنظيم الدقيق، الإدارة الذكية، والخدمة الرفيعة",
+      "file": "vip_rooms/butler_farid.js",
+      "avatarUrl": "butler_farid.jpg",
+      "accent": "#94a3b8",
+      "isVip": true,
+      "enabled": true
+    },
+    {
+      "id": "friend_fadi",
+      "name": "الصديق فادي",
+      "title": "غرفة VIP • فرفشة، كسر ملل، وسهرات شبابية مرحة",
+      "file": "vip_rooms/friend_fadi.js",
+      "avatarUrl": "friend_fadi.jpg",
+      "accent": "#fbbf24",
+      "isVip": true,
+      "enabled": true
+    },
+    {
+      "id": "anime_zain",
+      "name": "زين (أبطال الأنمي)",
+      "title": "غرفة VIP • حماس الأبطال، التحديات، وطاقة الإنجاز",
+      "file": "vip_rooms/anime_zain.js",
+      "avatarUrl": "anime_zain.jpg",
+      "accent": "#22d3ee",
+      "isVip": true,
+      "enabled": true
+    },
+    {
+      "id": "anime_ryu",
+      "name": "ريو (حكيم الأنمي)",
+      "title": "غرفة VIP • هدوء الحكماء، صفاء الذهن، والقرار الذكي",
+      "file": "vip_rooms/anime_ryu.js",
+      "avatarUrl": "anime_ryu.jpg",
+      "accent": "#818cf8",
+      "isVip": true,
+      "enabled": true
+    },
+    {
+      "id": "anime_ritaj",
+      "name": "ريتاج (لطافة الأنمي)",
+      "title": "غرفة VIP • بهجة، لطافة، وأفكار حلوة تكسر الملل",
+      "file": "vip_rooms/anime_ritaj.js",
+      "avatarUrl": "anime_ritaj.jpg",
+      "accent": "#fb7185",
       "isVip": true,
       "enabled": true
     }
