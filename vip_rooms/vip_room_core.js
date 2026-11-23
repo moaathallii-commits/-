@@ -296,10 +296,75 @@
   }
 
   // --------------------------------------------------------------------------
-  // 5. جسور التسوق الذكية (ربط الحوار بمنتجات متجر معاذ المتوفرة)
+  // 5. جسور التسوق الذكية (ربط الحوار بمنتجات متجر معاذ المتوفرة + تسعير دقيق + أزرار + / -)
   // --------------------------------------------------------------------------
+  let lastInlineProducts = [];
+
+  function resolveLiveExchangeRate() {
+    try {
+      if (typeof exchangeRate === "number" && exchangeRate > 0) return exchangeRate;
+    } catch (_) {}
+    if (typeof window.exchangeRate === "number" && window.exchangeRate > 0) return window.exchangeRate;
+    try {
+      const cached = JSON.parse(localStorage.getItem("cache_settings") || "{}");
+      if (cached && parseFloat(cached.exchangeRate) > 0) return parseFloat(cached.exchangeRate);
+    } catch (_) {}
+    return 15000;
+  }
+
+  function resolveProductPriceSYP(p) {
+    if (!p) return 0;
+    let isWholesale = false;
+    try {
+      isWholesale = (typeof currentUser === "object" && currentUser && currentUser.userType === "wholesale");
+    } catch (_) {}
+    const usdVal = parseFloat((isWholesale && p.wholesaleUSD > 0) ? p.wholesaleUSD : (p.priceUSD || p.newPriceUSD || 0)) || 0;
+    if (usdVal > 0) {
+      try {
+        if (typeof calcSYP === "function") return calcSYP(usdVal);
+      } catch (_) {}
+      if (typeof window.calcSYP === "function") return window.calcSYP(usdVal);
+      const rate = resolveLiveExchangeRate();
+      return Math.round((usdVal * rate) / 5) * 5;
+    }
+    return parseInt(p.priceSYP, 10) || 0;
+  }
+
+  function getLiveCartQty(pid) {
+    try {
+      if (typeof cart === "object" && cart && cart[pid]) {
+        return Math.max(0, parseInt(cart[pid].qty, 10) || 0);
+      }
+    } catch (_) {}
+    try {
+      const stored = JSON.parse(localStorage.getItem("moaath_cart") || "{}");
+      if (stored && stored[pid]) return Math.max(0, parseInt(stored[pid].qty, 10) || 0);
+    } catch (_) {}
+    return 0;
+  }
+
+  function adjustVipRoomProductQty(pid, delta) {
+    const fn = (typeof changeQty === "function") ? changeQty : (typeof window.changeQty === "function" ? window.changeQty : null);
+    if (!fn) return;
+    const prevQty = getLiveCartQty(pid);
+    fn(pid, delta);
+    const nextQty = getLiveCartQty(pid);
+    try { if (navigator.vibrate) navigator.vibrate(12); } catch (_) {}
+    if (delta > 0 && nextQty > prevQty && typeof showToast === "function") {
+      const hit = lastInlineProducts.find((x) => x.id === pid);
+      showToast(`✅ ${hit ? hit.name : "الصنف"} في السلة (الكمية: ${nextQty})`);
+    }
+    renderInlineProductStrip(lastInlineProducts);
+  }
+
   function findStoreProductsForKeywords(keywords = []) {
-    const prods = (typeof window.products === "object" && window.products) || (typeof products === "object" && products) || {};
+    let prods = {};
+    try {
+      if (typeof products === "object" && products) prods = products;
+      else if (typeof window.products === "object" && window.products) prods = window.products;
+    } catch (_) {
+      prods = (typeof window.products === "object" && window.products) || {};
+    }
     const kwNorms = keywords.map(normAr).filter((w) => w.length >= 2);
     const hits = [];
     Object.keys(prods).forEach((pid) => {
@@ -311,32 +376,43 @@
       if (st <= 0) return;
       const pNorm = normAr(`${p.name} ${p.category || ""}`);
       if (kwNorms.some((k) => pNorm.includes(k))) {
-        const priceSYP = typeof window.calcSYP === "function" ? window.calcSYP(p.priceUSD || 0) : 0;
+        const priceSYP = resolveProductPriceSYP(p);
         hits.push({ id: pid, name: p.name, priceSYP, thumb: p.thumb || p.image || "store-icon.png" });
       }
     });
-    return hits.slice(0, 4);
+    return hits.slice(0, 5);
   }
 
   function renderInlineProductStrip(items) {
     const strip = $id("vipRoomProductStrip");
     if (!strip) return;
-    if (!Array.isArray(items) || !items.length) {
+    lastInlineProducts = Array.isArray(items) ? items : [];
+    if (!lastInlineProducts.length) {
       strip.style.display = "none";
       strip.innerHTML = "";
       return;
     }
     strip.style.display = "flex";
-    strip.innerHTML = items.map((it) => `
-      <div class="vip-prod-pill">
+    strip.innerHTML = lastInlineProducts.map((it) => {
+      const qty = getLiveCartQty(it.id);
+      const ctrlHtml = qty > 0
+        ? `<div class="vip-qty-ctrl">
+            <button type="button" class="vip-qty-btn vip-qty-plus" onclick="window.MoaathVIPRooms.adjustProductQty('${escHtml(it.id)}', 1)">+</button>
+            <span class="vip-qty-val">${qty}</span>
+            <button type="button" class="vip-qty-btn vip-qty-minus" onclick="window.MoaathVIPRooms.adjustProductQty('${escHtml(it.id)}', -1)">-</button>
+          </div>`
+        : `<button type="button" class="vip-prod-add" onclick="window.MoaathVIPRooms.adjustProductQty('${escHtml(it.id)}', 1)">➕</button>`;
+      return `
+      <div class="vip-prod-pill ${qty > 0 ? "is-in-cart" : ""}">
         <img src="${escHtml(it.thumb)}" onerror="this.onerror=null;this.src='store-icon.png';" alt="${escHtml(it.name)}">
         <div class="vip-prod-meta">
           <div class="vip-prod-name">${escHtml(it.name)}</div>
           <div class="vip-prod-price">${(it.priceSYP || 0).toLocaleString()} ل.س</div>
         </div>
-        <button type="button" class="vip-prod-add" onclick="if(typeof changeQty==='function'){changeQty('${it.id}',1); if(typeof showToast==='function') showToast('✅ تمت إضافة ${escHtml(it.name)} للسلة');}">➕</button>
+        ${ctrlHtml}
       </div>
-    `).join("");
+    `;
+    }).join("");
   }
 
   // --------------------------------------------------------------------------
@@ -421,10 +497,27 @@
       .vip-prod-meta { min-width: 0; text-align: right; }
       .vip-prod-name { font-size: 10px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
       .vip-prod-price { font-size: 10px; color: #00e676; font-weight: 800; }
+      .vip-prod-pill.is-in-cart {
+        border-color: #00e676;
+        box-shadow: 0 0 10px rgba(0, 230, 118, 0.22);
+      }
       .vip-prod-add {
         background: #D4AF37; color: #000; border: none; border-radius: 8px;
-        width: 26px; height: 26px; font-weight: 900; cursor: pointer;
+        width: 28px; height: 28px; font-weight: 900; cursor: pointer; flex-shrink: 0;
       }
+      .vip-qty-ctrl {
+        display: flex; align-items: center; gap: 4px;
+        background: rgba(0, 0, 0, 0.35); border: 1px solid #00e676;
+        border-radius: 999px; padding: 2px 4px; flex-shrink: 0;
+      }
+      .vip-qty-btn {
+        width: 22px; height: 22px; border-radius: 50%; border: none;
+        font-size: 13px; font-weight: 900; cursor: pointer;
+        display: inline-flex; align-items: center; justify-content: center;
+      }
+      .vip-qty-plus { background: #00e676; color: #000; }
+      .vip-qty-minus { background: rgba(239, 68, 68, 0.85); color: #fff; }
+      .vip-qty-val { font-size: 11px; font-weight: 900; color: #fff; min-width: 16px; text-align: center; }
       .vip-quick-bar {
         display: flex; gap: 6px; overflow-x: auto; padding: 6px 12px;
         scrollbar-width: none;
@@ -720,8 +813,16 @@
     $id("vipRoomName").textContent = `${room.icon || "👑"} ${room.name}`;
     $id("vipRoomRole").textContent = room.title || "";
     const img = $id("vipRoomAvatarImg");
-    img.onerror = function () { this.onerror = null; this.src = "store-icon.png"; };
-    img.src = room.avatarUrl || "store-icon.png";
+    img.dataset.fbStep = "0";
+    img.onerror = function () {
+      if (typeof window.__moaathAvatarFallback === "function") {
+        window.__moaathAvatarFallback(this, room.id || room.avatarUrl);
+      } else {
+        this.onerror = null;
+        this.src = "store-icon.png";
+      }
+    };
+    img.src = room.avatarUrl || `${room.id}.jpg`;
 
     const qBar = $id("vipRoomQuickBar");
     const chips = Array.isArray(room.quickChips) ? room.quickChips : [
@@ -766,6 +867,7 @@
     close: closeRoom,
     sendMessage: sendRoomMessage,
     startVoice: startRoomVoiceInput,
+    adjustProductQty: adjustVipRoomProductQty,
     toggleMute() {
       isVoiceMuted = !isVoiceMuted;
       if (isVoiceMuted) stopRoomVoice();
