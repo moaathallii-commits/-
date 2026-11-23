@@ -1,6 +1,6 @@
 {
   "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-23T19:11:09Z",
+  "updatedAt": "2026-11-23T20:22:51Z",
   "personas": {
     "buddy": {
       "greet": [
@@ -1009,7 +1009,12 @@
       "notFound": [],
       "idleNudge": [],
       "crossSell": [],
-      "scarcityAlert": [],
+      "scarcityAlert": [
+        {
+          "text": "لحّق حالك! في عروض طازة اليوم وبأسعار بتجنن، أفرجيك ياها قبل ما تخلص؟",
+          "file": "sounds_gemini/anime_zain_scarcityAlert_2.wav"
+        }
+      ],
       "checkoutBoost": [],
       "orderSuccess": [],
       "welcomeBack": []
