@@ -1,0 +1,53 @@
+name: Hourly Gemini Human Voices Cloud Sync
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      max_clips:
+        description: "عدد المقاطع المراد توليدها في هذه الدفعة (افتراضي 15)"
+        required: false
+        default: "15"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hourly-gemini-voices
+  cancel-in-progress: false
+
+jobs:
+  sync-gemini-voices:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Generate Batch of Gemini Human Voices
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
+          GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
+          GEMINI_API_KEY_3: ${{ secrets.GEMINI_API_KEY_3 }}
+          MAX_CLIPS_PER_RUN: ${{ github.event.inputs.max_clips || '15' }}
+        run: |
+          python scripts/generate_gemini_voices.py
+
+      - name: Commit and Push to Cloud (GitHub)
+        run: |
+          git config user.name "Moaath Store Gemini Voice Bot"
+          git config user.email "bot@moaath.store"
+          git add sounds_gemini/ sounds_gemini_manifest.json
+          if git diff --staged --quiet; then
+            echo "لا توجد مقاطع جديدة للرفع في هذه الساعة."
+          else
+            git commit -m "🎙️ تحديث سحابي تلقائي لمكتبة أصوات Gemini البشرية"
+            git pull --rebase origin main
+            git push origin main
+          fi
