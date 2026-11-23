@@ -1,0 +1,238 @@
+{
+  "version": "3.0-gemini-cloud",
+  "updatedAt": "2026-11-23T04:40:58Z",
+  "personas": {
+    "buddy": {
+      "greet": [
+        {
+          "text": "يا أهلاً وسهلاً! نورت متجر معاذ. خبرني شو ببالك اليوم؟",
+          "file": "sounds_gemini/buddy_greet_1.wav"
+        },
+        {
+          "text": "أهلاً بك يا غالي، المتجر منور بوجودك. بشو نبدأ سلتك اليوم؟",
+          "file": "sounds_gemini/buddy_greet_2.wav"
+        }
+      ],
+      "greetMorning": [
+        {
+          "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
+          "file": "sounds_gemini/buddy_greetMorning_1.wav"
+        }
+      ],
+      "greetEvening": [
+        {
+          "text": "مساء الخير والروقان! نورت متجر معاذ، شو نجهزلك الليلة؟",
+          "file": "sounds_gemini/buddy_greetEvening_1.wav"
+        }
+      ],
+      "chatGood": [
+        {
+          "text": "أنا بخير والحمد لله، كيف بقدر أساعدك اليوم؟",
+          "file": "sounds_gemini/buddy_chatGood_1.wav"
+        }
+      ],
+      "thanks": [
+        {
+          "text": "العفو يا غالي، تكرم عينك ويسعدني دائماً أكون بخدمتك.",
+          "file": "sounds_gemini/buddy_thanks_1.wav"
+        }
+      ],
+      "added": [
+        {
+          "text": "اختيار موفق، تمت إضافة الصنف إلى السلة بنجاح.",
+          "file": "sounds_gemini/buddy_added_1.wav"
+        },
+        {
+          "text": "ممتاز، صار طلبك جاهز بالسلة، نضيف شي تاني؟",
+          "file": "sounds_gemini/buddy_added_2.wav"
+        }
+      ],
+      "itemsReady": [
+        {
+          "text": "تفضل، عرضتلك الأصناف المتوفرة بالفرع هلق، حدد الكمية.",
+          "file": "sounds_gemini/buddy_itemsReady_1.wav"
+        }
+      ],
+      "notFound": [
+        {
+          "text": "عذراً يا غالي، ما لقيت هاد الصنف متوفر هلق، جرب اسم أقرب.",
+          "file": "sounds_gemini/buddy_notFound_1.wav"
+        }
+      ]
+    },
+    "lolo": {
+      "greet": [
+        {
+          "text": "يا أهلاً وسهلاً! نورت متجر معاذ. خبرني شو ببالك اليوم؟",
+          "file": "sounds_gemini/lolo_greet_1.wav"
+        },
+        {
+          "text": "أهلاً بك يا غالي، المتجر منور بوجودك. بشو نبدأ سلتك اليوم؟",
+          "file": "sounds_gemini/lolo_greet_2.wav"
+        }
+      ],
+      "greetMorning": [
+        {
+          "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
+          "file": "sounds_gemini/lolo_greetMorning_1.wav"
+        }
+      ],
+      "greetEvening": [
+        {
+          "text": "مساء الخير والروقان! نورت متجر معاذ، شو نجهزلك الليلة؟",
+          "file": "sounds_gemini/lolo_greetEvening_1.wav"
+        }
+      ],
+      "chatGood": [
+        {
+          "text": "أنا بخير والحمد لله، كيف بقدر أساعدك اليوم؟",
+          "file": "sounds_gemini/lolo_chatGood_1.wav"
+        }
+      ],
+      "thanks": [],
+      "added": [],
+      "itemsReady": [],
+      "notFound": []
+    },
+    "noor": {
+      "greet": [],
+      "greetMorning": [],
+      "greetEvening": [],
+      "chatGood": [],
+      "thanks": [],
+      "added": [],
+      "itemsReady": [],
+      "notFound": []
+    },
+    "chef": {
+      "greet": [],
+      "greetMorning": [],
+      "greetEvening": [],
+      "chatGood": [],
+      "thanks": [],
+      "added": [],
+      "itemsReady": [],
+      "notFound": []
+    },
+    "pastry": {
+      "greet": [],
+      "greetMorning": [],
+      "greetEvening": [],
+      "chatGood": [],
+      "thanks": [],
+      "added": [],
+      "itemsReady": [],
+      "notFound": []
+    },
+    "athlete": {
+      "greet": [],
+      "greetMorning": [],
+      "greetEvening": [],
+      "chatGood": [],
+      "thanks": [],
+      "added": [],
+      "itemsReady": [],
+      "notFound": []
+    },
+    "sheikh": {
+      "greet": [],
+      "greetMorning": [],
+      "greetEvening": [],
+      "chatGood": [],
+      "thanks": [],
+      "added": [],
+      "itemsReady": [],
+      "notFound": []
+    },
+    "friend_saad": {
+      "greet": [],
+      "greetMorning": [],
+      "greetEvening": [],
+      "chatGood": [],
+      "thanks": [],
+      "added": [],
+      "itemsReady": [],
+      "notFound": []
+    },
+    "coach_sakhr": {
+      "greet": [],
+      "greetMorning": [],
+      "greetEvening": [],
+      "chatGood": [],
+      "thanks": [],
+      "added": [],
+      "itemsReady": [],
+      "notFound": []
+    },
+    "grand_chef": {
+      "greet": [],
+      "greetMorning": [],
+      "greetEvening": [],
+      "chatGood": [],
+      "thanks": [],
+      "added": [],
+      "itemsReady": [],
+      "notFound": []
+    },
+    "princess_layla": {
+      "greet": [],
+      "greetMorning": [],
+      "greetEvening": [],
+      "chatGood": [],
+      "thanks": [],
+      "added": [],
+      "itemsReady": [],
+      "notFound": []
+    },
+    "butler_farid": {
+      "greet": [],
+      "greetMorning": [],
+      "greetEvening": [],
+      "chatGood": [],
+      "thanks": [],
+      "added": [],
+      "itemsReady": [],
+      "notFound": []
+    },
+    "friend_fadi": {
+      "greet": [],
+      "greetMorning": [],
+      "greetEvening": [],
+      "chatGood": [],
+      "thanks": [],
+      "added": [],
+      "itemsReady": [],
+      "notFound": []
+    },
+    "anime_zain": {
+      "greet": [],
+      "greetMorning": [],
+      "greetEvening": [],
+      "chatGood": [],
+      "thanks": [],
+      "added": [],
+      "itemsReady": [],
+      "notFound": []
+    },
+    "anime_ryu": {
+      "greet": [],
+      "greetMorning": [],
+      "greetEvening": [],
+      "chatGood": [],
+      "thanks": [],
+      "added": [],
+      "itemsReady": [],
+      "notFound": []
+    },
+    "anime_ritaj": {
+      "greet": [],
+      "greetMorning": [],
+      "greetEvening": [],
+      "chatGood": [],
+      "thanks": [],
+      "added": [],
+      "itemsReady": [],
+      "notFound": []
+    }
+  }
+}
