@@ -1,6 +1,6 @@
 {
   "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-23T15:14:51Z",
+  "updatedAt": "2026-11-23T16:20:56Z",
   "personas": {
     "buddy": {
       "greet": [
@@ -621,6 +621,14 @@
           "file": "sounds_gemini/noor_thanks_1.wav"
         },
         {
+          "text": "ولو يا غالي، هاد واجبي بكل سرور ومحبة.",
+          "file": "sounds_gemini/noor_thanks_2.wav"
+        },
+        {
+          "text": "على راسي وعيني، بالعافية مقدماً على كل اختياراتك.",
+          "file": "sounds_gemini/noor_thanks_3.wav"
+        },
+        {
           "text": "لا شكر على واجب أبداً، بأي وقت بتحتاج شي أنا هون.",
           "file": "sounds_gemini/noor_thanks_4.wav"
         }
@@ -637,18 +645,74 @@
         {
           "text": "يا سلام عليك، أضفته للسلة عالسريع، شو نكمل كمان؟",
           "file": "sounds_gemini/noor_added_3.wav"
+        },
+        {
+          "text": "تمت الإضافة بنجاح، سلتك صارت مرتبة وأحلى هلق.",
+          "file": "sounds_gemini/noor_added_4.wav"
+        },
+        {
+          "text": "تمام التمام، صار الصنف بسلتك، خبرني إذا ناقصك شي غيره.",
+          "file": "sounds_gemini/noor_added_5.wav"
         }
       ],
-      "itemsReady": [],
-      "alternative": [],
-      "habit": [],
+      "itemsReady": [
+        {
+          "text": "تفضل، عرضتلك الأصناف المتوفرة بالفرع هلق، حدد الكمية.",
+          "file": "sounds_gemini/noor_itemsReady_1.wav"
+        },
+        {
+          "text": "لقيتلك المطلوب بالفرع، اختار الكمية المناسبة وأضفها للسلة.",
+          "file": "sounds_gemini/noor_itemsReady_3.wav"
+        },
+        {
+          "text": "هي كل الخيارات المتوفرة حالياً، حدد الكمية وبنجهزها فوراً.",
+          "file": "sounds_gemini/noor_itemsReady_4.wav"
+        }
+      ],
+      "alternative": [
+        {
+          "text": "هاد الصنف خالص هلق، بس جبتلك أقرب البدائل المتوفرة بالفرع.",
+          "file": "sounds_gemini/noor_alternative_1.wav"
+        },
+        {
+          "text": "للأسف ما لقيت نفس الصنف حالياً، شوف هالبدائل الطيبة والموجودة.",
+          "file": "sounds_gemini/noor_alternative_2.wav"
+        },
+        {
+          "text": "الصنف المطلوب نافد مؤقتاً، عرضتلك أفضل بدائل متوفرة هلق.",
+          "file": "sounds_gemini/noor_alternative_3.wav"
+        }
+      ],
+      "habit": [
+        {
+          "text": "جبتلك مفضلاتك يلي دايماً بتختارها لتوفير وقتك، حدد الكمية.",
+          "file": "sounds_gemini/noor_habit_1.wav"
+        },
+        {
+          "text": "هي أغراضك المعتادة متوفرة هلق بلمسة وحدة يا غالي.",
+          "file": "sounds_gemini/noor_habit_2.wav"
+        }
+      ],
       "notFound": [
         {
           "text": "عذراً يا غالي، ما لقيت هاد الصنف متوفر هلق، جرب اسم أقرب.",
           "file": "sounds_gemini/noor_notFound_1.wav"
+        },
+        {
+          "text": "بحثتلك منيح بس ما لقيت هاد الصنف حالياً، فيك تطلبه من زر طلب صنف.",
+          "file": "sounds_gemini/noor_notFound_2.wav"
+        },
+        {
+          "text": "هاد الصنف غير متوفر بالرف هلق، خبرني بنوع تاني وبساعدك فوراً.",
+          "file": "sounds_gemini/noor_notFound_3.wav"
         }
       ],
-      "idleNudge": [],
+      "idleNudge": [
+        {
+          "text": "إذا عم تقارن الأسعار، خليني أفرجيك أوفر العروض الموجودة حالياً لتوفر وقتك وميزانيتك.",
+          "file": "sounds_gemini/noor_idleNudge_3.wav"
+        }
+      ],
       "crossSell": [],
       "scarcityAlert": [],
       "checkoutBoost": [],
