@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v90 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v91 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -53,7 +53,7 @@
       name: "لولو النشيطة",
       roleBadge: "أنثوي • مرحة ونشيطة",
       specialtyNote: "لولو (أنثوي مرح): صوت حيوي ومبهج يقترح لك أطيب الأصناف بسرعة وخفة.",
-      avatarUrl: "lolo.jpg",
+      avatarUrl: "store-icon.png",
       accent: "#ff6ec7",
       voiceName: "Aoede",
       speed: 1.08,
@@ -217,18 +217,19 @@
     friend_saad: {
       id: "friend_saad",
       gender: "male",
-      toneTag: "ودود وقريب من القلب",
+      isVip: true,
+      toneTag: "متزن، صادق، هادئ وأخوي",
       name: "الصديق سعد",
-      roleBadge: "ذكري • رفيق التسوق",
-      specialtyNote: "الصديق سعد (ذكري): يرافقك كصديق مقرب لتجهيز السهرة والمتة وأغراض البيت.",
+      roleBadge: "👑 VIP • رفيق متزن وصادق",
+      specialtyNote: "الصديق سعد (VIP): رفيق متزن وصادق يجمع بين الود والاحترام والهدوء في النصيحة والمتابعة.",
       avatarUrl: "friend_saad.jpg",
       accent: "#38bdf8",
       voiceName: "Puck",
-      speed: 1.02,
-      pitchSemitones: -0.6,
-      fallbackDetune: -50,
-      fallbackRate: 1.0,
-      styleHint: "صوت ذكري ودود وطبيعي كصديق مقرب باللهجة الشامية اللطيفة",
+      speed: 0.98,
+      pitchSemitones: -1.0,
+      fallbackDetune: -60,
+      fallbackRate: 0.98,
+      styleHint: "صوت ذكري ودود متزن وهادئ وأعمق قليلاً (-6Hz) وسرعة معتدلة ومريحة (-2%) بطابع أخوي مريح وموثوق",
       greet: "يا هلا بالصديق! نورت المتجر، شو ناقصك اليوم لنجهزه سوا؟",
       greets: ["يا هلا بالصديق! نورت المتجر، شو ناقصك اليوم لنجهزه سوا؟"],
       chatGood: "تمام التمام بشوفتك يا غالي! شو عبالك نطلب اليوم؟",
@@ -277,7 +278,7 @@
       name: "رفيقة المنزل",
       roleBadge: "أنثوي • تنظيم ومنظفات",
       specialtyNote: "رفيقة المنزل (أنثوي): تساعدك في ترتيب قائمة المنظفات ومستلزمات البيت الكاملة.",
-      avatarUrl: "homemaker.jpg",
+      avatarUrl: "store-icon.png",
       accent: "#06b6d4",
       voiceName: "Aoede",
       speed: 1.02,
@@ -2634,8 +2635,8 @@
       }
     }
 
-    // 2) إذا كتب الزبون رقماً فقط (مثل "500" أو "٥٠٠" أو "ب 500") دون حوار معلق -> يجهز له سلة فورية ضمن الميزانية
-    if (!pending && budgetVal && /^(?:ب|حوالي|تقريبا|حدود|ميزانيه|ميزانيتي|مبلغ)?\s*(?:\d{2,7}|خمسميه|خمس\s*ميه|الف|الفين|ميه|ميتين|تلتميه|اربعميه|ستميه|سبعميه|تمنميه|تسعميه)\s*(?:ليره|ل\s*س|سوري|فقط)?$/.test(normText)) {
+    // 2) إذا ذكر الزبون ميزانية أو مبلغاً (مثل "500"، "فاجأني بميزانيتي 1000"، "ب 500") -> يجهز له سلة فورية ضمن الميزانية
+    if (!pending && budgetVal && (/(ميزان|ميزانيتي|ميزانيه|مبلغ|حدود|بميزانيه|بميزانيتي|فاجاني|فاجا)/.test(normText) || /^(?:ب|حوالي|تقريبا|حدود|ميزانيه|ميزانيتي|مبلغ)?\s*(?:\d{2,7}|خمسميه|خمس\s*ميه|الف|الفين|ميه|ميتين|تلتميه|اربعميه|ستميه|سبعميه|تمنميه|تسعميه)\s*(?:ليره|ل\s*س|سوري|فقط)?$/.test(normText))) {
       const ctxTitle = sessionCtx.lastModalTitle ? "تشكيلة حسب طلبك السابق" : "تشكيلة متوفرة";
       const ctxKws = sessionCtx.lastQuery ? [sessionCtx.lastQuery] : [];
       const { picked, runningTotal } = buildBudgetBasket(budgetVal, ctxKws, ctxTitle);
@@ -4099,7 +4100,7 @@
   window.runAssistantQACheck = function () {
     const mem = typeof buildSmartCustomerProfile === "function" ? buildSmartCustomerProfile() : {};
     const report = {
-      version: "v90",
+      version: "v91",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
@@ -5024,8 +5025,14 @@
         document.documentElement.classList.toggle("moaath-modal-locked", anyOpen);
         document.body.classList.toggle("moaath-modal-locked", anyOpen);
         const petRoot = $("petCharRoot");
-        if (petRoot && !getPrefs().hidden) {
-          petRoot.style.visibility = anyOpen ? "hidden" : "visible";
+        if (petRoot) {
+          if (getPrefs().hidden) {
+            petRoot.style.display = "none";
+          } else {
+            petRoot.style.display = "block";
+            petRoot.style.visibility = anyOpen ? "hidden" : "visible";
+            petRoot.style.opacity = anyOpen ? "0" : "1";
+          }
         }
       };
       const obs = new MutationObserver(syncModalLockState);
