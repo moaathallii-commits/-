@@ -1,6 +1,6 @@
 {
   "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-23T04:40:58Z",
+  "updatedAt": "2026-11-23T04:53:41Z",
   "personas": {
     "buddy": {
       "greet": [
@@ -89,23 +89,95 @@
           "file": "sounds_gemini/lolo_chatGood_1.wav"
         }
       ],
-      "thanks": [],
-      "added": [],
-      "itemsReady": [],
-      "notFound": []
+      "thanks": [
+        {
+          "text": "العفو يا غالي، تكرم عينك ويسعدني دائماً أكون بخدمتك.",
+          "file": "sounds_gemini/lolo_thanks_1.wav"
+        }
+      ],
+      "added": [
+        {
+          "text": "اختيار موفق، تمت إضافة الصنف إلى السلة بنجاح.",
+          "file": "sounds_gemini/lolo_added_1.wav"
+        },
+        {
+          "text": "ممتاز، صار طلبك جاهز بالسلة، نضيف شي تاني؟",
+          "file": "sounds_gemini/lolo_added_2.wav"
+        }
+      ],
+      "itemsReady": [
+        {
+          "text": "تفضل، عرضتلك الأصناف المتوفرة بالفرع هلق، حدد الكمية.",
+          "file": "sounds_gemini/lolo_itemsReady_1.wav"
+        }
+      ],
+      "notFound": [
+        {
+          "text": "عذراً يا غالي، ما لقيت هاد الصنف متوفر هلق، جرب اسم أقرب.",
+          "file": "sounds_gemini/lolo_notFound_1.wav"
+        }
+      ]
     },
     "noor": {
-      "greet": [],
-      "greetMorning": [],
-      "greetEvening": [],
-      "chatGood": [],
-      "thanks": [],
-      "added": [],
+      "greet": [
+        {
+          "text": "يا أهلاً وسهلاً! نورت متجر معاذ. خبرني شو ببالك اليوم؟",
+          "file": "sounds_gemini/noor_greet_1.wav"
+        },
+        {
+          "text": "أهلاً بك يا غالي، المتجر منور بوجودك. بشو نبدأ سلتك اليوم؟",
+          "file": "sounds_gemini/noor_greet_2.wav"
+        }
+      ],
+      "greetMorning": [
+        {
+          "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
+          "file": "sounds_gemini/noor_greetMorning_1.wav"
+        }
+      ],
+      "greetEvening": [
+        {
+          "text": "مساء الخير والروقان! نورت متجر معاذ، شو نجهزلك الليلة؟",
+          "file": "sounds_gemini/noor_greetEvening_1.wav"
+        }
+      ],
+      "chatGood": [
+        {
+          "text": "أنا بخير والحمد لله، كيف بقدر أساعدك اليوم؟",
+          "file": "sounds_gemini/noor_chatGood_1.wav"
+        }
+      ],
+      "thanks": [
+        {
+          "text": "العفو يا غالي، تكرم عينك ويسعدني دائماً أكون بخدمتك.",
+          "file": "sounds_gemini/noor_thanks_1.wav"
+        }
+      ],
+      "added": [
+        {
+          "text": "اختيار موفق، تمت إضافة الصنف إلى السلة بنجاح.",
+          "file": "sounds_gemini/noor_added_1.wav"
+        },
+        {
+          "text": "ممتاز، صار طلبك جاهز بالسلة، نضيف شي تاني؟",
+          "file": "sounds_gemini/noor_added_2.wav"
+        }
+      ],
       "itemsReady": [],
-      "notFound": []
+      "notFound": [
+        {
+          "text": "عذراً يا غالي، ما لقيت هاد الصنف متوفر هلق، جرب اسم أقرب.",
+          "file": "sounds_gemini/noor_notFound_1.wav"
+        }
+      ]
     },
     "chef": {
-      "greet": [],
+      "greet": [
+        {
+          "text": "أهلاً بك يا غالي، المتجر منور بوجودك. بشو نبدأ سلتك اليوم؟",
+          "file": "sounds_gemini/chef_greet_2.wav"
+        }
+      ],
       "greetMorning": [],
       "greetEvening": [],
       "chatGood": [],
