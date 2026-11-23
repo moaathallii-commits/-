@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v92 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v93 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -817,6 +817,24 @@
     }
     if (chipsToggleBtn) {
       chipsToggleBtn.textContent = chipsCollapsed ? "إظهار الاختصارات ▾" : "طي الاختصارات ▴";
+    }
+    // ضمان بقاء الجني المرافق ظاهراً وقابلاً للضغط المطول والتحدث حتى عند طي شريط البحث
+    const petRoot = $("petCharRoot");
+    if (petRoot) {
+      if (petRoot.parentElement !== document.body) {
+        document.body.appendChild(petRoot);
+      }
+      if (!getPrefs().hidden) {
+        const anyModalOpen = Array.from(document.querySelectorAll(".modal-overlay, .page-overlay")).some(el => {
+          const st = window.getComputedStyle(el);
+          const r = el.getBoundingClientRect();
+          return st.display !== "none" && st.visibility !== "hidden" && st.opacity !== "0" && r.width > 0 && r.height > 0;
+        });
+        petRoot.style.setProperty("display", "block", "important");
+        petRoot.style.setProperty("visibility", anyModalOpen ? "hidden" : "visible", "important");
+        petRoot.style.setProperty("opacity", anyModalOpen ? "0" : "1", "important");
+        petRoot.style.setProperty("pointer-events", anyModalOpen ? "none" : "auto", "important");
+      }
     }
   }
 
@@ -4136,7 +4154,7 @@
   window.runAssistantQACheck = function () {
     const mem = typeof buildSmartCustomerProfile === "function" ? buildSmartCustomerProfile() : {};
     const report = {
-      version: "v92",
+      version: "v93",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
@@ -5056,18 +5074,23 @@
       const syncModalLockState = () => {
         const anyOpen = Array.from(document.querySelectorAll(".modal-overlay, .page-overlay")).some(el => {
           const st = window.getComputedStyle(el);
-          return st.display !== "none" && st.visibility !== "hidden";
+          const r = el.getBoundingClientRect();
+          return st.display !== "none" && st.visibility !== "hidden" && st.opacity !== "0" && r.width > 0 && r.height > 0;
         });
         document.documentElement.classList.toggle("moaath-modal-locked", anyOpen);
         document.body.classList.toggle("moaath-modal-locked", anyOpen);
         const petRoot = $("petCharRoot");
         if (petRoot) {
+          if (petRoot.parentElement !== document.body) {
+            document.body.appendChild(petRoot);
+          }
           if (getPrefs().hidden) {
-            petRoot.style.display = "none";
+            petRoot.style.setProperty("display", "none", "important");
           } else {
-            petRoot.style.display = "block";
-            petRoot.style.visibility = anyOpen ? "hidden" : "visible";
-            petRoot.style.opacity = anyOpen ? "0" : "1";
+            petRoot.style.setProperty("display", "block", "important");
+            petRoot.style.setProperty("visibility", anyOpen ? "hidden" : "visible", "important");
+            petRoot.style.setProperty("opacity", anyOpen ? "0" : "1", "important");
+            petRoot.style.setProperty("pointer-events", anyOpen ? "none" : "auto", "important");
           }
         }
       };
