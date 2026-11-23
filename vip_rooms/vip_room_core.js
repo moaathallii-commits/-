@@ -285,7 +285,7 @@
         width: 205px; height: 205px; border-radius: 50%; object-fit: cover;
         border: 3.5px solid #D4AF37;
         box-shadow: 0 18px 40px rgba(0,0,0,0.65), 0 0 32px var(--vip-accent-soft, rgba(0,230,118,0.35));
-        user-select: none; -webkit-user-drag: none;
+        user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-user-drag: none; pointer-events: none;
       }
       .vip-touch-hint {
         margin-top: 10px; font-size: 10px; color: #94a3b8;
@@ -388,7 +388,25 @@
     document.body.appendChild(ov);
 
     const avatarWrap = $id("vipRoomAvatarWrap");
+    let vipHoldTimer = null;
+    let vipHoldTriggered = false;
+    avatarWrap.addEventListener("contextmenu", (e) => e.preventDefault());
+    avatarWrap.addEventListener("touchstart", (e) => {
+      vipHoldTriggered = false;
+      clearTimeout(vipHoldTimer);
+      vipHoldTimer = setTimeout(() => {
+        vipHoldTriggered = true;
+        startRoomVoiceInput();
+      }, 450);
+    }, { passive: true });
+    avatarWrap.addEventListener("touchend", () => {
+      clearTimeout(vipHoldTimer);
+    });
     avatarWrap.addEventListener("click", (e) => {
+      if (vipHoldTriggered) {
+        vipHoldTriggered = false;
+        return;
+      }
       const rect = avatarWrap.getBoundingClientRect();
       const relY = (e.clientY - rect.top) / Math.max(1, rect.height);
       const zone = relY < 0.45 ? "head" : "body";
@@ -410,225 +428,4 @@
     speakInRoom(text, room);
   }
 
-  function handleAvatarTouch(zone) {
-    const room = registry[activeRoomId];
-    if (!room) return;
-    const wrap = $id("vipRoomAvatarWrap");
-    if (wrap) {
-      wrap.classList.add("is-poked");
-      setTimeout(() => wrap.classList.remove("is-poked"), 320);
-    }
-    try { if (navigator.vibrate) navigator.vibrate(15); } catch (_) {}
-    const pool = (room.touchReactions && room.touchReactions[zone]) || room.tips || ["أهلاً يا بطل!"];
-    const line = pickNonRepeating(room.id, `touch_${zone}`, pool);
-    showRoomReply(line, room);
-  }
-
-  // --------------------------------------------------------------------------
-  // 7. منطق الدردشة الحرة (بنك الخبرة المحلي + Cloudflare Worker بالدور الثلاثي)
-  // --------------------------------------------------------------------------
-  async function sendRoomMessage(overrideText = null) {
-    const room = registry[activeRoomId];
-    if (!room) return;
-    const inp = $id("vipRoomTextInput");
-    const raw = String(overrideText ?? (inp ? inp.value : "")).trim();
-    if (!raw) return;
-    if (inp && overrideText === null) inp.value = "";
-
-    if (isPaymentRestricted(raw)) {
-      showRoomReply("التحقق من الدفع وشام كاش يتم يدوياً عبر إدارة المتجر فقط، هنا مساحتنا للدردشة والفائدة!", room);
-      return;
-    }
-
-    extractInsightsFromMessage(raw, room);
-    const n = normAr(raw);
-
-    // 1) فحص الأوامر السريعة وبنك الخبرة المحلي أولاً (استجابة فورية بـ 0 حصة API)
-    if (/نصيحه|نصيحة|فيدني|معلومه/.test(n) && Array.isArray(room.tips)) {
-      const tip = pickNonRepeating(room.id, "tips", room.tips);
-      const bridge = Array.isArray(room.shoppingBridges) ? room.shoppingBridges[Math.floor(Math.random() * room.shoppingBridges.length)] : null;
-      const items = bridge ? findStoreProductsForKeywords(bridge.keywords) : [];
-      showRoomReply(tip, room, items);
-      return;
-    }
-    if (/تحدي|ملل|طفش|زهق|لعبه|سؤال/.test(n) && Array.isArray(room.challenges)) {
-      const ch = pickNonRepeating(room.id, "challenges", room.challenges);
-      showRoomReply(ch, room);
-      return;
-    }
-
-    // 2) مطابقة جسور التسوق التخصصية في الغرفة
-    let matchedBridgeProducts = [];
-    if (Array.isArray(room.shoppingBridges)) {
-      const hitBridge = room.shoppingBridges.find((b) => b.triggers.some((t) => n.includes(normAr(t))));
-      if (hitBridge) {
-        matchedBridgeProducts = findStoreProductsForKeywords(hitBridge.keywords);
-        if (matchedBridgeProducts.length && (navigator.onLine === false || !resolveWorkerUrl())) {
-          showRoomReply(hitBridge.pitch, room, matchedBridgeProducts);
-          return;
-        }
-      }
-    }
-
-    // 3) محادثة سحابية حرة عبر Cloudflare Worker بالدور الثلاثي (علاقات اجتماعية + بيع وتسويق + خبير المجال)
-    const workerUrl = resolveWorkerUrl();
-    if (workerUrl && navigator.onLine !== false) {
-      const b = $id("vipRoomBubble");
-      if (b) b.textContent = "✨ يفكّر في رد مناسب لك...";
-      roomChatHistory.push({ role: "user", text: raw.slice(0, 160) });
-      if (roomChatHistory.length > 6) roomChatHistory = roomChatHistory.slice(-6);
-
-      const triExpertStyle = [
-        room.roles?.social || "خبير علاقات اجتماعية وذكاء عاطفي يكسر الملل بأسلوب دافئ وطبيعي",
-        room.roles?.sales || "خبير بيع وتسويق يلتقط احتياجات الزبون بلطف دون إلحاح",
-        room.roles?.domain || room.specialty || ""
-      ].filter(Boolean).join(" | ");
-
-      try {
-        const res = await fetch(workerUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            mode: "companion_shop",
-            prompt: raw,
-            history: roomChatHistory,
-            customerProfile: getCustomerInsights(),
-            catalog: matchedBridgeProducts.map((p) => ({ id: p.id, name: p.name, price: p.priceSYP })),
-            storeMeta: {
-              persona: room.name,
-              personaId: room.id,
-              personaRole: room.title,
-              personaTone: room.toneTag || "ودود وحماسي",
-              personaStyle: triExpertStyle,
-              dialectMode: room.dialectMode || "shami_friendly"
-            }
-          })
-        });
-        const json = await res.json();
-        const reply = String(json?.data?.reply || "").trim();
-        if (reply) {
-          roomChatHistory.push({ role: "assistant", text: reply.slice(0, 160) });
-          showRoomReply(reply, room, matchedBridgeProducts);
-          return;
-        }
-      } catch (_) {}
-    }
-
-    // 4) بديل محلي فوري من بنك الخبرة عند انقطاع الإنترنت أو تبريد 429
-    const fallbackPool = [...(room.tips || []), ...(room.challenges || [])];
-    const fallbackLine = pickNonRepeating(room.id, "fallback", fallbackPool) || "أهلاً بك دائماً، كيف يومك اليوم؟";
-    showRoomReply(fallbackLine, room, matchedBridgeProducts);
-  }
-
-  function resolveWorkerUrl() {
-    try {
-      if (typeof window.getEffectiveAIWorkerUrl === "function") {
-        const u = String(window.getEffectiveAIWorkerUrl() || "").trim();
-        if (u) return u;
-      }
-    } catch (_) {}
-    return String(localStorage.getItem("moaath_ai_worker_url") || "").trim();
-  }
-
-  function startRoomVoiceInput() {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      showRoomReply("المتصفح لا يدعم الميكروفون، اكتب رسالتك في الخانة بالأسفل.", registry[activeRoomId]);
-      return;
-    }
-    stopRoomVoice();
-    if (activeRecognizer) { try { activeRecognizer.stop(); } catch (_) {} }
-    const rec = new SR();
-    activeRecognizer = rec;
-    rec.lang = "ar-SY";
-    rec.interimResults = false;
-    const b = $id("vipRoomBubble");
-    if (b) b.textContent = "🎙️ أسمعك الآن... تفضل!";
-    rec.onresult = (ev) => {
-      const heard = String(ev?.results?.[0]?.[0]?.transcript || "").trim();
-      if (heard) sendRoomMessage(heard);
-    };
-    rec.onerror = () => { if (b) b.textContent = "تعذر التقاط الصوت، جرّب مجدداً أو اكتب رسالتك."; };
-    rec.start();
-  }
-
-  // --------------------------------------------------------------------------
-  // 8. الواجهة العامة لتسجيل وفتح وإغلاق الغرف
-  // --------------------------------------------------------------------------
-  async function openRoom(roomId = "coach_sakhr") {
-    const manifest = await loadManifest(false);
-    const meta = (manifest.rooms || []).find((r) => r.id === roomId) || { id: roomId, file: `vip_rooms/${roomId}.js` };
-    let room = registry[roomId];
-    if (!room) {
-      try {
-        room = await loadRoomScript(meta, manifest.buildId);
-      } catch (err) {
-        if (typeof window.showToast === "function") window.showToast("⚠️ تعذر فتح الغرفة حالياً", true);
-        return;
-      }
-    }
-    if (!room) return;
-
-    activeRoomId = room.id;
-    roomChatHistory = [];
-    const curIns = getCustomerInsights();
-    saveCustomerInsights({ sessionsCount: curIns.sessionsCount + 1, lastRoom: room.id });
-
-    const ov = ensureOverlayDOM();
-    ov.style.setProperty("--vip-accent", room.accent || "#00e676");
-    ov.style.setProperty("--vip-accent-soft", room.accentSoft || "rgba(0,230,118,0.22)");
-    ov.style.display = "flex";
-    document.documentElement.classList.add("moaath-modal-locked");
-    document.body.classList.add("moaath-modal-locked");
-
-    $id("vipRoomName").textContent = `${room.icon || "👑"} ${room.name}`;
-    $id("vipRoomRole").textContent = room.title || "";
-    const img = $id("vipRoomAvatarImg");
-    img.onerror = function () { this.onerror = null; this.src = "store-icon.png"; };
-    img.src = room.avatarUrl || "store-icon.png";
-
-    const qBar = $id("vipRoomQuickBar");
-    const chips = Array.isArray(room.quickChips) ? room.quickChips : [
-      { label: "💡 نصيحة سريعة", prompt: "أعطني نصيحة سريعة" },
-      { label: "🎯 تحدي اليوم", prompt: "أعطني تحدي اليوم" }
-    ];
-    qBar.innerHTML = chips.map((c) =>
-      `<button type="button" class="vip-quick-chip" onclick="window.MoaathVIPRooms.sendMessage('${escHtml(c.prompt)}')">${escHtml(c.label)}</button>`
-    ).join("");
-
-    renderInlineProductStrip([]);
-    const greet = pickNonRepeating(room.id, "greets", room.greets || [`أهلاً بك في غرفة ${room.name}!`]);
-    showRoomReply(greet, room);
-  }
-
-  function closeRoom() {
-    stopRoomVoice();
-    const ov = $id("moaathVipRoomOverlay");
-    if (ov) ov.style.display = "none";
-    document.documentElement.classList.remove("moaath-modal-locked");
-    document.body.classList.remove("moaath-modal-locked");
-    activeRoomId = null;
-  }
-
-  window.MoaathVIPRooms = {
-    __CORE_READY__: true,
-    register(roomId, config) {
-      if (!roomId || !config) return;
-      registry[roomId] = { id: roomId, ...config };
-    },
-    open: openRoom,
-    close: closeRoom,
-    sendMessage: sendRoomMessage,
-    startVoice: startRoomVoiceInput,
-    toggleMute() {
-      isVoiceMuted = !isVoiceMuted;
-      if (isVoiceMuted) stopRoomVoice();
-      const btn = $id("vipMuteBtn");
-      if (btn) btn.textContent = isVoiceMuted ? "🔇 مكتوم" : "🔊 صوت";
-    },
-    getInsights: getCustomerInsights,
-    listLoadedRooms: () => Object.keys(registry)
-  };
-
-  window.openVIPWorldRoom = openRoom;
-})();
+  function handleAvatarTouch(zone
