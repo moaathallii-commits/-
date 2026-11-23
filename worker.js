@@ -351,7 +351,7 @@ export default {
 
       const promptText = String(body.prompt || "").trim();
       const catalogSummary = Array.isArray(body.catalog)
-        ? body.catalog.slice(0, 70).map(p => ({ id: p.id, n: p.name, p: p.price }))
+        ? body.catalog.slice(0, 140).map(p => ({ id: p.id, n: p.name, c: p.cat || "", p: p.price }))
         : [];
       const currentCart = Array.isArray(body.currentCart) ? body.currentCart : [];
       const storeMeta = body.storeMeta || {};
