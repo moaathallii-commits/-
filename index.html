@@ -62,7 +62,8 @@
         .cart-bar-total-val { color:#00e676; font-size:15px; font-weight:900; text-shadow:0 0 10px rgba(0,230,118,0.4); }
         .cart-bar-btn { background:linear-gradient(45deg,#00e676,#00b0ff); color:#000; border:none; padding:9px 16px; border-radius:20px; font-weight:900; font-size:13px; cursor:pointer; box-shadow:0 3px 12px rgba(0,230,118,0.35); display:inline-flex; align-items:center; gap:5px; animation:pulse 1.8s infinite; white-space:nowrap; }
         .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); justify-content:center; align-items:center; z-index:1000; padding:10px; box-sizing:border-box; }
-        #adminModal { z-index: 10005 !important; }
+        #adminModal { z-index: 10005 !important; overscroll-behavior: contain; touch-action: pan-y; }
+        #adminModal .modal-content { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
         #adminEditCustomerModal { z-index: 10010 !important; }
         .modal-content { background:var(--card-bg); padding:16px; border-radius:10px; border:1px solid var(--gold-color); width:100%; max-width:480px; max-height:92vh; overflow-y:auto; box-sizing:border-box; }
         .form-group { margin-bottom:10px; text-align:right; }
@@ -6227,11 +6228,11 @@
           <script>window.renderAdminBrainUnmatchedList = window.renderAdminBrainUnmatchedList || function () {};</script>
     <script src="moaath_security_guard.js?v=1"></script>
     <script>window.renderAdminBrainUnmatchedList = window.renderAdminBrainUnmatchedList || function () {};</script>
-    <script src="ai_personas.js"></script>
-    <script src="ai_recipes.js"></script>
-    <script src="ai_brain.js"></script>
-    <script src="ai_engine.js?v=88"></script>
-    <script src="ai_vip_personas.js"></script>
+    <script src="ai_personas.js?v=2"></script>
+    <script src="ai_recipes.js?v=2"></script>
+    <script src="ai_brain.js?v=2"></script>
+    <script src="ai_vip_personas.js?v=2"></script>
+    <script src="ai_engine.js?v=89"></script>
     <script>
       window.MoaathVIPSystem = window.MoaathVIPSystem || {
         version: "4.0",
