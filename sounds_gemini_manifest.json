@@ -1,6 +1,6 @@
 {
   "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-23T20:22:51Z",
+  "updatedAt": "2026-11-23T21:59:24Z",
   "personas": {
     "buddy": {
       "greet": [
@@ -789,6 +789,10 @@
         {
           "text": "يا مية هلا بعودتك يا غالي! اشتقنالك بمتجر معاذ، نعيد نفس أغراض المرة الماضية ولا في شي جديد؟",
           "file": "sounds_gemini/noor_welcomeBack_1.wav"
+        },
+        {
+          "text": "نورتنا من جديد بمتجر معاذ! تحب أجهزلك نفس مفضلاتك الماضية؟",
+          "file": "sounds_gemini/noor_welcomeBack_3.wav"
         }
       ]
     },
@@ -801,6 +805,18 @@
         {
           "text": "أهلاً بك يا غالي، المتجر منور بوجودك. بشو نبدأ سلتك اليوم؟",
           "file": "sounds_gemini/chef_greet_2.wav"
+        },
+        {
+          "text": "يا مية هلا ومرحبا! كل شي طازج ومرتب بالمتجر، شو ناقصك اليوم؟",
+          "file": "sounds_gemini/chef_greet_3.wav"
+        },
+        {
+          "text": "أهلاً وسهلاً فيك، يسعدني جداً أساعدك بتسوقك اليوم. بشو نبلش؟",
+          "file": "sounds_gemini/chef_greet_5.wav"
+        },
+        {
+          "text": "يا هلا بالطلة الحلوة! متجر معاذ جاهز لطلباتك، سمّي بالله واطلب.",
+          "file": "sounds_gemini/chef_greet_6.wav"
         }
       ],
       "greetMorning": [],
@@ -812,7 +828,16 @@
       ],
       "chatGood": [],
       "thanks": [],
-      "added": [],
+      "added": [
+        {
+          "text": "ممتاز، صار طلبك جاهز بالسلة، نضيف شي تاني؟",
+          "file": "sounds_gemini/chef_added_2.wav"
+        },
+        {
+          "text": "يا سلام عليك، أضفته للسلة عالسريع، شو نكمل كمان؟",
+          "file": "sounds_gemini/chef_added_3.wav"
+        }
+      ],
       "itemsReady": [
         {
           "text": "هي كل الخيارات المتوفرة حالياً، حدد الكمية وبنجهزها فوراً.",
