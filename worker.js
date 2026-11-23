@@ -391,7 +391,15 @@ export default {
 
         const profileNotes = [];
         if (customerProfile) {
-          if (customerProfile.firstName) profileNotes.push(`اسم الزبون: ${customerProfile.firstName}`);
+          if (customerProfile.firstName || customerProfile.nickname) {
+            profileNotes.push(`اللقب/الاسم المفضل: ${customerProfile.firstName || customerProfile.nickname}`);
+          }
+          if (customerProfile.shoppingStyle) profileNotes.push(`أسلوب التسوق: ${customerProfile.shoppingStyle}`);
+          if (customerProfile.favoriteMood) profileNotes.push(`الجو اليومي المفضل: ${customerProfile.favoriteMood}`);
+          if (customerProfile.preferredTime) profileNotes.push(`وقت التسوق المفضل: ${customerProfile.preferredTime}`);
+          if (Array.isArray(customerProfile.favoriteTopics) && customerProfile.favoriteTopics.length) {
+            profileNotes.push(`اهتمامات المحادثة: ${customerProfile.favoriteTopics.slice(0, 4).join("، ")}`);
+          }
           if (Array.isArray(customerProfile.topItems) && customerProfile.topItems.length) {
             profileNotes.push(`أكثر أصناف يطلبها عادةً: ${customerProfile.topItems.slice(0, 3).join("، ")}`);
           }
