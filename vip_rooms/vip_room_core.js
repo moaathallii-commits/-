@@ -82,6 +82,11 @@
     try {
       const d = JSON.parse(localStorage.getItem(INSIGHTS_KEY) || "{}");
       return {
+        nickname: String(d.nickname || "").trim(),
+        shoppingStyle: String(d.shoppingStyle || "").trim(),
+        favoriteMood: String(d.favoriteMood || "").trim(),
+        preferredTime: String(d.preferredTime || "").trim(),
+        onboardingDone: !!d.onboardingDone,
         favoriteTopics: Array.isArray(d.favoriteTopics) ? d.favoriteTopics : [],
         preferredCategories: Array.isArray(d.preferredCategories) ? d.preferredCategories : [],
         likesBulk: !!d.likesBulk,
@@ -92,8 +97,120 @@
         updatedAt: d.updatedAt || 0
       };
     } catch (_) {
-      return { favoriteTopics: [], preferredCategories: [], likesBulk: false, budgetSensitive: false, preferredVibe: "friendly", sessionsCount: 0, lastRoom: "", updatedAt: 0 };
+      return { nickname: "", shoppingStyle: "", favoriteMood: "", preferredTime: "", onboardingDone: false, favoriteTopics: [], preferredCategories: [], likesBulk: false, budgetSensitive: false, preferredVibe: "friendly", sessionsCount: 0, lastRoom: "", updatedAt: 0 };
     }
+  }
+
+  let onboardingStep = 0; // 0 = inactive, 1..4 = active onboarding steps
+
+  function renderOnboardingStep(room) {
+    const qBar = $id("vipRoomQuickBar");
+    const ins = getCustomerInsights();
+    const nick = ins.nickname ? `يا ${ins.nickname}` : "يا غالي";
+
+    if (onboardingStep === 1) {
+      showRoomReply(`أهلاً بك لأول مرة في غرفتي الخاصة! 🌸 حتى تصير جلستنا أدفى وأقرب، شو اللقب أو الاسم يلي بتحب أناديك فيه دائماً؟ (اكتبه أو اختر من الأسفل)`, room);
+      if (qBar) {
+        qBar.innerHTML = [
+          { label: "أبو فلان / أخي", val: "أخي الغالي" },
+          { label: "صديقي", val: "صديقي" },
+          { label: "البطل", val: "البطل" },
+          { label: "تخطي التعارف ⏭️", val: "__SKIP_ONBOARDING__" }
+        ].map(c => `<button type="button" class="vip-quick-chip" onclick="window.MoaathVIPRooms.sendMessage('${escHtml(c.val)}')">${escHtml(c.label)}</button>`).join("");
+      }
+      return;
+    }
+
+    if (onboardingStep === 2) {
+      showRoomReply(`تشرفنا ${nick}! 🤍 لما تتسوق للبيت عادةً، شو أكتر شي بيهمّك حتى أساعدك بذكاء؟`, room);
+      if (qBar) {
+        qBar.innerHTML = [
+          { label: "💰 التوفير والطرود العائلية", val: "التوفير والطرود العائلية" },
+          { label: "⭐ الجودة والطعم المميز", val: "الجودة والطعم المميز" },
+          { label: "⚡ الطلب السريع والخفيف", val: "الطلب السريع والخفيف" }
+        ].map(c => `<button type="button" class="vip-quick-chip" onclick="window.MoaathVIPRooms.sendMessage('${escHtml(c.val)}')">${escHtml(c.label)}</button>`).join("");
+      }
+      return;
+    }
+
+    if (onboardingStep === 3) {
+      showRoomReply(`اختيار ذكي ${nick}! ✨ شو أكتر جو بتحبه بحياتك اليومية لنحكي فيه ونقترحلك أغراضه؟`, room);
+      if (qBar) {
+        qBar.innerHTML = [
+          { label: "🧉 السهرات والمتة والتسالي", val: "السهرات والمتة والتسالي" },
+          { label: "🍲 الطبخ والولائم العائلية", val: "الطبخ والولائم العائلية" },
+          { label: "🏋️ الرياضة والنشاط الصحي", val: "الرياضة والنشاط الصحي" },
+          { label: "☕ الهدوء والروقان", val: "الهدوء والروقان" }
+        ].map(c => `<button type="button" class="vip-quick-chip" onclick="window.MoaathVIPRooms.sendMessage('${escHtml(c.val)}')">${escHtml(c.label)}</button>`).join("");
+      }
+      return;
+    }
+
+    if (onboardingStep === 4) {
+      showRoomReply(`آخر سؤال لطيف ${nick} 😊 بأي وقت بتحب تتصفح أو تطلب أغراضك عادةً؟`, room);
+      if (qBar) {
+        qBar.innerHTML = [
+          { label: "🌅 صباحاً مع الفطور", val: "صباحاً" },
+          { label: "☀️ ظهراً وعصراً", val: "ظهراً وعصراً" },
+          { label: "🌙 مساءً ووقت السهرة", val: "مساءً ووقت السهرة" }
+        ].map(c => `<button type="button" class="vip-quick-chip" onclick="window.MoaathVIPRooms.sendMessage('${escHtml(c.val)}')">${escHtml(c.label)}</button>`).join("");
+      }
+      return;
+    }
+  }
+
+  function restoreRoomQuickChips(room) {
+    const qBar = $id("vipRoomQuickBar");
+    if (!qBar) return;
+    const chips = Array.isArray(room.quickChips) ? room.quickChips : [
+      { label: "💡 نصيحة سريعة", prompt: "أعطني نصيحة سريعة" },
+      { label: "🎯 تحدي اليوم", prompt: "أعطني تحدي اليوم" }
+    ];
+    qBar.innerHTML = chips.map((c) =>
+      `<button type="button" class="vip-quick-chip" onclick="window.MoaathVIPRooms.sendMessage('${escHtml(c.prompt)}')">${escHtml(c.label)}</button>`
+    ).join("");
+  }
+
+  function handleOnboardingAnswer(raw, room) {
+    if (onboardingStep <= 0) return false;
+    if (raw === "__SKIP_ONBOARDING__") {
+      onboardingStep = 0;
+      saveCustomerInsights({ onboardingDone: true });
+      restoreRoomQuickChips(room);
+      showRoomReply("على راحتك تماماً! الغرفة مفتوحة إلك بأي وقت للدردشة والفائدة.", room);
+      return true;
+    }
+    const cur = getCustomerInsights();
+    if (onboardingStep === 1) {
+      const cleanNick = String(raw || "").trim().slice(0, 24);
+      saveCustomerInsights({ nickname: cleanNick });
+      onboardingStep = 2;
+      renderOnboardingStep(room);
+      return true;
+    }
+    if (onboardingStep === 2) {
+      const isBulk = /توفير|طرد|عائل/.test(raw);
+      saveCustomerInsights({ shoppingStyle: raw, likesBulk: isBulk, budgetSensitive: isBulk });
+      onboardingStep = 3;
+      renderOnboardingStep(room);
+      return true;
+    }
+    if (onboardingStep === 3) {
+      const topics = [...cur.favoriteTopics, raw];
+      saveCustomerInsights({ favoriteMood: raw, favoriteTopics: topics });
+      onboardingStep = 4;
+      renderOnboardingStep(room);
+      return true;
+    }
+    if (onboardingStep === 4) {
+      const updated = saveCustomerInsights({ preferredTime: raw, onboardingDone: true });
+      onboardingStep = 0;
+      restoreRoomQuickChips(room);
+      const nick = updated.nickname ? `يا ${updated.nickname}` : "يا غالي";
+      showRoomReply(`يا سلام عليك ${nick}! 🌟 حفظت تفضيلاتك بذاكرتي (${updated.shoppingStyle} • ${updated.favoriteMood})، ومن اليوم رح تكون كل دردشتنا واقتراحاتنا مفصّلة على ذوقك!`, room);
+      return true;
+    }
+    return false;
   }
 
   function saveCustomerInsights(patch) {
@@ -458,6 +575,7 @@
       return;
     }
 
+    if (handleOnboardingAnswer(raw, room)) return;
     extractInsightsFromMessage(raw, room);
     const n = normAr(raw);
 
@@ -615,8 +733,18 @@
     ).join("");
 
     renderInlineProductStrip([]);
-    const greet = pickNonRepeating(room.id, "greets", room.greets || [`أهلاً بك في غرفة ${room.name}!`]);
-    showRoomReply(greet, room);
+    const latestIns = getCustomerInsights();
+    if (!latestIns.onboardingDone) {
+      onboardingStep = 1;
+      renderOnboardingStep(room);
+    } else {
+      onboardingStep = 0;
+      let greet = pickNonRepeating(room.id, "greets", room.greets || [`أهلاً بك في غرفة ${room.name}!`]);
+      if (latestIns.nickname && !greet.includes(latestIns.nickname)) {
+        greet = `أهلاً يا ${latestIns.nickname}! ${greet}`;
+      }
+      showRoomReply(greet, room);
+    }
   }
 
   function closeRoom() {
