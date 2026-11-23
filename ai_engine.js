@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v96 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v97 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -1856,9 +1856,7 @@
       `;
     }).join("");
 
-    const vipBtnHtml = typeof window.openVIPShowcaseModal === "function"
-      ? `<button type="button" onclick="window.closeFairyGalleryModal(); window.openVIPShowcaseModal('all');" class="btn" style="margin-top:10px; background:linear-gradient(45deg, rgba(212,175,55,0.22), rgba(56,189,248,0.18)); color:var(--gold-color); border:1px solid var(--gold-color); font-size:11px; padding:7px 10px;">👑 استعراض الشخصيات المميزة والباقة الشاملة (VIP)</button>`
-      : "";
+    const vipBtnHtml = "";
 
     modal.innerHTML = `
       <div class="modal-content fairy-gal-modal">
@@ -1927,9 +1925,7 @@
       </button>
     `).join("");
 
-    const showcaseFallbackBtn = typeof window.openVIPShowcaseModal === "function"
-      ? `<button type="button" onclick="document.getElementById('vipWorldRoomsHubModal').style.display='none'; window.openVIPShowcaseModal('all');" class="btn" style="margin-top:10px; background:rgba(212,175,55,0.16); color:var(--gold-color); border:1px solid var(--gold-color); font-size:11px; padding:7px 10px;">✨ بطاقات الشخصيات المميزة</button>`
-      : "";
+    const showcaseFallbackBtn = "";
 
     hub.innerHTML = `
       <div class="modal-content fairy-gal-modal">
@@ -2137,20 +2133,133 @@
     roamTimer = setInterval(stepFreeRoam, 4300);
   }
 
+  window.triggerCompactFuturisticGPS = function () {
+    const gpsBtn = $("futCompactGpsBtn");
+    if (gpsBtn) {
+      gpsBtn.classList.add("is-locating");
+      gpsBtn.innerHTML = `<span class="fut-gps-dot"></span><span>جاري الالتقاط...</span>`;
+    }
+    try { if (navigator.vibrate) navigator.vibrate(14); } catch (_) {}
+
+    const onSuccessCoords = (lat, lng, labelNote = "") => {
+      try {
+        localStorage.setItem("moaath_last_gps_coords", JSON.stringify({ lat, lng, ts: Date.now() }));
+      } catch (_) {}
+      const gpsInput = document.querySelector("#cartGpsInput, #customerGpsInput, #deliveryGpsInput, input[placeholder*='GPS'], input[placeholder*='الموقع']");
+      if (gpsInput) {
+        gpsInput.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        gpsInput.dispatchEvent(new Event("input", { bubbles: true }));
+        gpsInput.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      if (gpsBtn) {
+        gpsBtn.classList.remove("is-locating");
+        gpsBtn.classList.add("is-located");
+        gpsBtn.innerHTML = `<span class="fut-gps-dot"></span><span>✓ تم تحديد الموقع</span>`;
+      }
+      if (typeof showToast === "function") {
+        showToast(`📍 تم تحديد موقعك بدقة${labelNote ? " " + labelNote : ""}`);
+      }
+    };
+
+    const onFailCoords = () => {
+      if (gpsBtn) {
+        gpsBtn.classList.remove("is-locating");
+        gpsBtn.classList.remove("is-located");
+        gpsBtn.innerHTML = `<span class="fut-gps-dot"></span><span>📍 GPS</span>`;
+      }
+      if (typeof showToast === "function") {
+        showToast("⚠️ تعذر التقاط GPS، تأكد من تفعيل الموقع أو أدخل العنوان يدوياً", true);
+      }
+    };
+
+    if (typeof window.getCustomerGPS === "function") {
+      try {
+        const res = window.getCustomerGPS();
+        if (res && typeof res.then === "function") {
+          res.then(() => {
+            if (gpsBtn) {
+              gpsBtn.classList.remove("is-locating");
+              gpsBtn.classList.add("is-located");
+              gpsBtn.innerHTML = `<span class="fut-gps-dot"></span><span>✓ تم تحديد الموقع</span>`;
+            }
+          }).catch(onFailCoords);
+          return;
+        }
+      } catch (_) {}
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => onSuccessCoords(pos.coords.latitude, pos.coords.longitude),
+        onFailCoords,
+        { enableHighAccuracy: true, timeout: 9000, maximumAge: 60000 }
+      );
+    } else {
+      onFailCoords();
+    }
+  };
+
+  function cleanDuplicateLocationInCartModal() {
+    const cartModal = $("cartModal");
+    if (!cartModal) return;
+
+    // إخفاء أي حقول أو أزرار أو أسطر مكررة لتحديد الموقع داخل السلة ووضع زر GPS صغير أنيق واحد
+    const locCandidates = Array.from(cartModal.querySelectorAll("button, div, label, p, span"));
+    const seenLocBlocks = new Set();
+
+    locCandidates.forEach(el => {
+      if (el.id === "cartCheckoutStepper" || el.id === "cleanCheckoutSummaryCard" || el.id === "futCompactGpsSlot") return;
+      if (el.closest("#cartCheckoutStepper") || el.closest("#cleanCheckoutSummaryCard") || el.closest("#futCompactGpsSlot")) return;
+      const txt = String(el.textContent || "").trim();
+      const hasLocWord = /(تحديد\s*الموقع|موقعي|احداثيات|gps|الموقع\s*الجغرافي)/i.test(txt);
+      if (!hasLocWord || txt.length > 140) return;
+
+      const targetBlock = el.closest(".form-group, .gps-box, .location-box") || (el.children.length <= 3 ? el : null);
+      if (targetBlock && targetBlock.id !== "cartModal") {
+        const key = targetBlock.dataset.locKey || (targetBlock.className + "::" + txt.slice(0, 30));
+        if (seenLocBlocks.has(key)) {
+          targetBlock.style.setProperty("display", "none", "important");
+        } else {
+          seenLocBlocks.add(key);
+          // إذا كان كتلة تحديد موقع داخلية، نُخفي التكرار ونضع شارة GPS المدمجة
+          if (targetBlock.querySelector("button, input")) {
+            targetBlock.style.setProperty("display", "none", "important");
+          }
+        }
+      }
+    });
+
+    // إخفاء أي تبويب أو زر باسم "عالمي VIP" إن وُجد
+    document.querySelectorAll("button, a, div, span").forEach(el => {
+      if (el.children.length === 0 && /عالمي\s*vip/i.test(String(el.textContent || "").trim())) {
+        const wrapper = el.closest(".cat-btn, .tab-btn, button, a") || el;
+        wrapper.style.setProperty("display", "none", "important");
+      }
+    });
+  }
+
   function enhanceCustomerCartCheckoutUX() {
     const modalContent = document.querySelector("#cartModal .modal-content");
     if (!modalContent) return;
 
+    cleanDuplicateLocationInCartModal();
+
     if (!$("cartCheckoutStepper")) {
       const stepper = document.createElement("div");
       stepper.id = "cartCheckoutStepper";
-      stepper.style.cssText = "display:flex; justify-content:space-between; align-items:center; gap:4px; background:var(--bg-color); border:1px solid var(--border-color); border-radius:8px; padding:6px 8px; margin-bottom:10px; font-size:10px; font-weight:bold;";
+      stepper.style.cssText = "display:flex; justify-content:space-between; align-items:center; gap:6px; background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px; padding:6px 10px; margin-bottom:10px; font-size:10px; font-weight:bold;";
       stepper.innerHTML = `
-        <span style="color:#00e676;">① مراجعة السلة</span>
-        <span style="color:var(--gray-text);">←</span>
-        <span style="color:var(--gold-color);">② التوصيل والدفع اليدوي</span>
-        <span style="color:var(--gray-text);">←</span>
-        <span style="color:#00b0ff;">③ تأكيد الطلب</span>
+        <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+          <span style="color:#00e676;">① السلة</span>
+          <span style="color:var(--gray-text);">←</span>
+          <span style="color:var(--gold-color);">② التوصيل</span>
+          <span style="color:var(--gray-text);">←</span>
+          <span style="color:#00b0ff;">③ تأكيد</span>
+        </div>
+        <button id="futCompactGpsBtn" type="button" onclick="window.triggerCompactFuturisticGPS()" class="fut-gps-pill" title="تحديد الموقع الجغرافي GPS">
+          <span class="fut-gps-dot"></span>
+          <span>📍 GPS</span>
+        </button>
       `;
       const header = modalContent.firstElementChild;
       if (header && header.nextSibling) modalContent.insertBefore(stepper, header.nextSibling);
@@ -4288,7 +4397,7 @@
   window.runAssistantQACheck = function () {
     const mem = typeof buildSmartCustomerProfile === "function" ? buildSmartCustomerProfile() : {};
     const report = {
-      version: "v96",
+      version: "v97",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
@@ -4737,6 +4846,49 @@
         -webkit-line-clamp: 2 !important;
         -webkit-box-orient: vertical !important;
         overflow: hidden !important;
+      }
+
+      /* زر GPS مستقبلي صغير وأنيق داخل لوحة إتمام الطلب */
+      .fut-gps-pill {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        padding: 4px 10px !important;
+        border-radius: 999px !important;
+        font-size: 10px !important;
+        font-weight: 800 !important;
+        cursor: pointer !important;
+        color: #38bdf8 !important;
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.14), rgba(15, 23, 42, 0.85)) !important;
+        border: 1px solid rgba(56, 189, 248, 0.48) !important;
+        box-shadow: 0 0 12px rgba(56, 189, 248, 0.18) !important;
+        transition: all 0.2s ease !important;
+        white-space: nowrap !important;
+        width: auto !important;
+      }
+      body.light-mode .fut-gps-pill {
+        background: linear-gradient(135deg, rgba(2, 132, 199, 0.1), #ffffff) !important;
+        color: #0369a1 !important;
+        border-color: rgba(2, 132, 199, 0.4) !important;
+      }
+      .fut-gps-pill.is-locating {
+        border-color: #fbbf24 !important;
+        color: #fbbf24 !important;
+        box-shadow: 0 0 14px rgba(251, 191, 36, 0.3) !important;
+      }
+      .fut-gps-pill.is-located {
+        border-color: #00e676 !important;
+        color: #00e676 !important;
+        background: linear-gradient(135deg, rgba(0, 230, 118, 0.16), rgba(15, 23, 42, 0.85)) !important;
+        box-shadow: 0 0 14px rgba(0, 230, 118, 0.28) !important;
+      }
+      .fut-gps-dot {
+        width: 6px !important;
+        height: 6px !important;
+        border-radius: 50% !important;
+        background: currentColor !important;
+        box-shadow: 0 0 6px currentColor !important;
+        flex-shrink: 0 !important;
       }
 
       /* إخفاء الأزرار الزائدة داخل جسم المساعد لتجنب التكرار مع الشريط العلوي */
