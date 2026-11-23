@@ -1,14 +1,25 @@
 {
-  "buildId": "20261123-01",
-  "updatedAt": "2026-11-23T17:30:00Z",
+  "buildId": "20261123-03",
+  "updatedAt": "2026-11-23T18:52:00Z",
   "rooms": [
     {
       "id": "coach_sakhr",
       "name": "المدرب صخر",
-      "title": "غرفة القوة واللياقة",
+      "title": "غرفة VIP • القوة، اللياقة، وكسر الملل",
       "file": "vip_rooms/coach_sakhr.js",
       "avatarUrl": "coach_sakhr.jpg",
       "accent": "#00e676",
+      "isVip": true,
+      "enabled": true
+    },
+    {
+      "id": "friend_saad",
+      "name": "الصديق سعد",
+      "title": "غرفة VIP • الرفيق المتزن والنصيحة الصادقة",
+      "file": "vip_rooms/friend_saad.js",
+      "avatarUrl": "friend_saad.jpg",
+      "accent": "#38bdf8",
+      "isVip": true,
       "enabled": true
     }
   ]
