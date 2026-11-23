@@ -2,11 +2,11 @@ name: Hourly Gemini Human Voices Cloud Sync
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '17 * * * *'
   workflow_dispatch:
     inputs:
       max_clips:
-        description: "عدد المقاطع المراد توليدها في هذه الدفعة (افتراضي 15)"
+        description: "عدد المقاطع المراد توليدها في هذه الدفعة (الافتراضي 15)"
         required: false
         default: "15"
 
@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -45,9 +47,9 @@ jobs:
           git config user.email "bot@moaath.store"
           git add sounds_gemini/ sounds_gemini_manifest.json
           if git diff --staged --quiet; then
-            echo "لا توجد مقاطع جديدة للرفع في هذه الساعة."
+            echo "لا توجد مقاطع جديدة لرفعها في هذه الساعة."
           else
-            git commit -m "🎙️ تحديث سحابي تلقائي لمكتبة أصوات Gemini البشرية"
-            git pull --rebase origin main
+            git commit -m "🎙️ تحديث سحابي تلقائي لمكتبة أصوات Gemini"
+            git pull --rebase --autostash origin main
             git push origin main
           fi
