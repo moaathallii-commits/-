@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v80 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v82 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -90,7 +90,7 @@
     });
   }
 
-  const MANIFEST_LOCAL_KEY = "moaath_sounds_manifest_cache_v1";
+  const MANIFEST_LOCAL_KEY = "moaath_gemini_manifest_cache_v1";
   let manifestPreloadRunning = false;
 
   function loadSoundsManifest() {
@@ -101,7 +101,7 @@
     } catch (_) {}
 
     if (navigator.onLine === false) return;
-    fetch("sounds_manifest.json", { cache: "no-store" })
+    fetch("sounds_gemini_manifest.json", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.personas) {
@@ -818,7 +818,7 @@
     }
   }
 
-  const PERSISTENT_TTS_CACHE_NAME = "moaath_store_tts_human";
+  const PERSISTENT_TTS_CACHE_NAME = "moaath_store_tts_gemini_v1";
   const GEMINI_COOLDOWN_KEY = "moaath_store_gemini_cooldown_until";
   function getGeminiCooldownRemainingSec() {
     try {
@@ -899,7 +899,7 @@
     // 2) إضافة المقاطع الأساسية القديمة إن طابقت حرفياً
     const candidateClips = detectStaticClipCandidates(persona, spokenText);
     candidateClips.forEach((clipName) => {
-      const u = `sounds/${persona.id}_${clipName}.mp3`;
+      const u = `sounds_gemini/${persona.id}_${clipName}_1.wav`;
       if (!relUrlsToTry.includes(u)) relUrlsToTry.push(u);
     });
 
@@ -1054,7 +1054,7 @@
       }
     };
 
-    // 1) التحقق أولاً من ملفات الصوت الثابتة في مستودع GitHub (sounds/<id>_greet.mp3)
+    // 1) التحقق أولاً من مكتبة أصوات Gemini السحابية (sounds_gemini/) لتوفير حصة الـ API
     const playedLocal = await tryLocalRepoClip(persona, spokenText, mySeq, cacheKey);
     if (playedLocal) return;
 
@@ -1100,7 +1100,7 @@
           toneTag: persona.toneTag || "",
           dialectMode: persona.dialectMode || "shami_friendly",
           pitchSemitones: typeof persona.pitchSemitones === "number" ? persona.pitchSemitones : 0,
-          styleHint: persona.styleHint || ""
+          styleHint: persona.styleHint || `تحدث باللهجة الشامية السورية الطبيعية بصوت بشري دافئ وواقعي يناسب شخصية ${persona.name}`
         })
       });
       const json = await res.json();
@@ -1206,7 +1206,7 @@
             toneTag: persona.toneTag || "",
             dialectMode: persona.dialectMode || "shami_friendly",
             pitchSemitones: typeof persona.pitchSemitones === "number" ? persona.pitchSemitones : 0,
-            styleHint: persona.styleHint || ""
+            styleHint: persona.styleHint || `تحدث باللهجة الشامية السورية الطبيعية بصوت بشري دافئ وواقعي يناسب شخصية ${persona.name}`
           })
         });
         const json = await res.json();
@@ -1275,7 +1275,7 @@
         } catch (_) {}
 
         // تحميل تدريجي هادئ (مقطع كل 1.6 ثانية) بدون التأثير على سرعة التصفح
-        await new Promise((r) => setTimeout(r, 1600));
+        await new Promise((r) => setTimeout(r, 600));
       }
     } finally {
       manifestPreloadRunning = false;
@@ -1283,7 +1283,7 @@
   }
 
   window.addEventListener("load", () => {
-    setTimeout(() => { runManifestBackgroundPreload(); }, 4500);
+    setTimeout(() => { runManifestBackgroundPreload(); }, 2500);
     setTimeout(() => { runDripFeedPrewarm(); }, 12000);
   });
 
@@ -1411,7 +1411,7 @@
     if (specEl) specEl.textContent = p.specialtyNote || "";
     showBubble(`🧚 ${greetLine}`, 3800);
     speakOutLoud(greetLine, true);
-    setTimeout(() => { if (typeof runManifestBackgroundPreload === "function") runManifestBackgroundPreload(key); }, 2500);
+    setTimeout(() => { if (typeof runManifestBackgroundPreload === "function") runManifestBackgroundPreload(key); }, 1500);
   };
 
   window.closeFairyGalleryModal = function () {
@@ -3325,7 +3325,7 @@
 
   window.runAssistantQACheck = function () {
     const report = {
-      version: "v80",
+      version: "v82",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
