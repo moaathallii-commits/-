@@ -1,6 +1,6 @@
 {
   "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-23T07:27:49Z",
+  "updatedAt": "2026-11-23T08:33:57Z",
   "personas": {
     "buddy": {
       "greet": [
@@ -75,6 +75,10 @@
           "file": "sounds_gemini/buddy_chatGood_2.wav"
         },
         {
+          "text": "تمام التمام وبأعلى جاهزية لخدمتك، خبرني شو ببالك تطلب.",
+          "file": "sounds_gemini/buddy_chatGood_3.wav"
+        },
+        {
           "text": "الحمد لله عال العال، وجودك بمتجر معاذ بيسعدني دايماً. كيف أخدمك؟",
           "file": "sounds_gemini/buddy_chatGood_4.wav"
         }
@@ -87,6 +91,10 @@
         {
           "text": "ولو يا غالي، هاد واجبي بكل سرور ومحبة.",
           "file": "sounds_gemini/buddy_thanks_2.wav"
+        },
+        {
+          "text": "على راسي وعيني، بالعافية مقدماً على كل اختياراتك.",
+          "file": "sounds_gemini/buddy_thanks_3.wav"
         },
         {
           "text": "لا شكر على واجب أبداً، بأي وقت بتحتاج شي أنا هون.",
@@ -125,6 +133,10 @@
           "file": "sounds_gemini/buddy_itemsReady_2.wav"
         },
         {
+          "text": "لقيتلك المطلوب بالفرع، اختار الكمية المناسبة وأضفها للسلة.",
+          "file": "sounds_gemini/buddy_itemsReady_3.wav"
+        },
+        {
           "text": "هي كل الخيارات المتوفرة حالياً، حدد الكمية وبنجهزها فوراً.",
           "file": "sounds_gemini/buddy_itemsReady_4.wav"
         }
@@ -133,9 +145,21 @@
         {
           "text": "هاد الصنف خالص هلق، بس جبتلك أقرب البدائل المتوفرة بالفرع.",
           "file": "sounds_gemini/buddy_alternative_1.wav"
+        },
+        {
+          "text": "للأسف ما لقيت نفس الصنف حالياً، شوف هالبدائل الطيبة والموجودة.",
+          "file": "sounds_gemini/buddy_alternative_2.wav"
+        },
+        {
+          "text": "الصنف المطلوب نافد مؤقتاً، عرضتلك أفضل بدائل متوفرة هلق.",
+          "file": "sounds_gemini/buddy_alternative_3.wav"
         }
       ],
       "habit": [
+        {
+          "text": "جبتلك مفضلاتك يلي دايماً بتختارها لتوفير وقتك، حدد الكمية.",
+          "file": "sounds_gemini/buddy_habit_1.wav"
+        },
         {
           "text": "هي أغراضك المعتادة متوفرة هلق بلمسة وحدة يا غالي.",
           "file": "sounds_gemini/buddy_habit_2.wav"
@@ -153,13 +177,38 @@
         {
           "text": "بحثتلك منيح بس ما لقيت هاد الصنف حالياً، فيك تطلبه من زر طلب صنف.",
           "file": "sounds_gemini/buddy_notFound_2.wav"
+        },
+        {
+          "text": "هاد الصنف غير متوفر بالرف هلق، خبرني بنوع تاني وبساعدك فوراً.",
+          "file": "sounds_gemini/buddy_notFound_3.wav"
         }
       ],
-      "idleNudge": [],
+      "idleNudge": [
+        {
+          "text": "محتار شو تاخد يا غالي؟ خبرني شو عبالك اليوم وأنا برتبلك السلة على ذوقك.",
+          "file": "sounds_gemini/buddy_idleNudge_1.wav"
+        },
+        {
+          "text": "خذ راحتك بالتصفح، وإذا حابب أختصر عليك الوقت بقترحلك أحلى الأصناف الطازة اليوم.",
+          "file": "sounds_gemini/buddy_idleNudge_2.wav"
+        },
+        {
+          "text": "إذا عم تقارن الأسعار، خليني أفرجيك أوفر العروض الموجودة حالياً لتوفر وقتك وميزانيتك.",
+          "file": "sounds_gemini/buddy_idleNudge_3.wav"
+        }
+      ],
       "crossSell": [
+        {
+          "text": "سلتك صارت مرتبة! شو رأيك أفرجيك مكملات حلوة تناسب أغراضك قبل ما تعتمد الطلب؟",
+          "file": "sounds_gemini/buddy_crossSell_1.wav"
+        },
         {
           "text": "أغراضك جاهزة، بس اتأكد إذا ناقصك شي خفيف للسهرة أو المطبخ، أفرجيك المقترحات؟",
           "file": "sounds_gemini/buddy_crossSell_2.wav"
+        },
+        {
+          "text": "اختياراتك بتشهي! نحط معها شي تكميلي خفيف يكمّل القعدة؟",
+          "file": "sounds_gemini/buddy_crossSell_3.wav"
         }
       ],
       "scarcityAlert": [
@@ -170,12 +219,24 @@
         {
           "text": "لحّق حالك! في عروض طازة اليوم وبأسعار بتجنن، أفرجيك ياها قبل ما تخلص؟",
           "file": "sounds_gemini/buddy_scarcityAlert_2.wav"
+        },
+        {
+          "text": "بنصحك بصدق يا غالي، عروض اليوم موفرة كتير، تحب نلقي عليها نظرة؟",
+          "file": "sounds_gemini/buddy_scarcityAlert_3.wav"
         }
       ],
       "checkoutBoost": [
         {
+          "text": "سلتك جاهزة مية بالمية! ضغطة زر والتوصيل بطريقه إلك بأسرع وقت.",
+          "file": "sounds_gemini/buddy_checkoutBoost_1.wav"
+        },
+        {
           "text": "اختياراتك رائعة ومتناسقة، تأكد إن طلبك رح يوصلك بأحلى صورة وبأسرع وقت.",
           "file": "sounds_gemini/buddy_checkoutBoost_2.wav"
+        },
+        {
+          "text": "سلة متكاملة يا غالي! اعتمد الطلب هلق وخلي التوصيل علينا.",
+          "file": "sounds_gemini/buddy_checkoutBoost_3.wav"
         }
       ],
       "orderSuccess": [],
