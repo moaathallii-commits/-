@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v89 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v90 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -44,14 +44,277 @@
     notFound: "لم أجد صنفاً مطابقاً متوفراً الآن."
   };
 
-  const PERSONAS = (window.MoaathAIPersonas && window.MoaathAIPersonas.PERSONAS)
-    ? window.MoaathAIPersonas.PERSONAS
-    : { buddy: FALLBACK_BUDDY };
+  const BUILTIN_STANDARD_PERSONAS = {
+    buddy: FALLBACK_BUDDY,
+    lolo: {
+      id: "lolo",
+      gender: "female",
+      toneTag: "مرحة ونشيطة",
+      name: "لولو النشيطة",
+      roleBadge: "أنثوي • مرحة ونشيطة",
+      specialtyNote: "لولو (أنثوي مرح): صوت حيوي ومبهج يقترح لك أطيب الأصناف بسرعة وخفة.",
+      avatarUrl: "lolo.jpg",
+      accent: "#ff6ec7",
+      voiceName: "Aoede",
+      speed: 1.08,
+      pitchSemitones: 2.2,
+      fallbackDetune: 200,
+      fallbackRate: 1.06,
+      styleHint: "صوت أنثوي شاب مرح ونشيط بالعربية الفصحى المبسطة واللطيفة",
+      greet: "أهلاً وسهلاً! نورت متجر معاذ، شو حابب نجهّز بسلتك اليوم؟",
+      greets: ["أهلاً وسهلاً! نورت متجر معاذ، شو حابب نجهّز بسلتك اليوم؟"],
+      chatGood: "أنا بأحلى نشاط والحمد لله! جاهزة أساعدك بأي طلب.",
+      chatGoods: ["أنا بأحلى نشاط والحمد لله! جاهزة أساعدك بأي طلب."],
+      thanks: "ولو! يسعدني دائماً أكون بخدمتك.",
+      thanksList: ["ولو! يسعدني دائماً أكون بخدمتك."],
+      addedMsgs: [(n) => `يا سلام! أضفت ${n} إلى السلة.`],
+      recipeReady: (t) => `جهزت لك مكونات ${t} المتوفرة، حدد الكمية!`,
+      recipeMissing: (t) => `مكونات ${t} غير متوفرة حالياً في الفرع.`,
+      itemsReady: () => "عرضت لك الأصناف المتوفرة، اختر الكمية المناسبة.",
+      notFounds: ["لم أجد صنفاً مطابقاً متوفراً الآن."],
+      notFound: "لم أجد صنفاً مطابقاً متوفراً الآن."
+    },
+    noor: {
+      id: "noor",
+      gender: "female",
+      toneTag: "هادئة ولطيفة",
+      name: "نور الهادئة",
+      roleBadge: "أنثوي • هادئة ولطيفة",
+      specialtyNote: "نور (أنثوي هادئ): صوت دافئ ومريح يساعدك على اختيار مستلزمات البيت بكل هدوء.",
+      avatarUrl: "noor.jpg",
+      accent: "#a78bfa",
+      voiceName: "Kore",
+      speed: 0.98,
+      pitchSemitones: 1.4,
+      fallbackDetune: 130,
+      fallbackRate: 0.98,
+      styleHint: "صوت أنثوي هادئ ودافئ ومريح بالعربية الواضحة",
+      greet: "أهلاً بك بكل هدوء وترحاب في متجر معاذ. كيف أساعدك اليوم؟",
+      greets: ["أهلاً بك بكل هدوء وترحاب في متجر معاذ. كيف أساعدك اليوم؟"],
+      chatGood: "الحمد لله بكل خير وهدوء، أتمنى لك يوماً جميلاً.",
+      chatGoods: ["الحمد لله بكل خير وهدوء، أتمنى لك يوماً جميلاً."],
+      thanks: "على الرحب والسعة دائماً.",
+      thanksList: ["على الرحب والسعة دائماً."],
+      addedMsgs: [(n) => `تمت إضافة ${n} إلى سلتك بكل سرور.`],
+      recipeReady: (t) => `رتّبت لك المتوفر لوصفة ${t}، حدد الكمية.`,
+      recipeMissing: (t) => `للأسف مكونات ${t} غير متوفرة حالياً.`,
+      itemsReady: () => "إليك الأصناف المتوفرة في الفرع الآن.",
+      notFounds: ["لم أجد صنفاً مطابقاً متوفراً حالياً."],
+      notFound: "لم أجد صنفاً مطابقاً متوفراً حالياً."
+    },
+    chef: {
+      id: "chef",
+      gender: "male",
+      toneTag: "خبير الطبخ والمونة",
+      name: "الشيف الماهر",
+      roleBadge: "ذكري • خبير الطبخ",
+      specialtyNote: "الشيف الماهر (ذكري): يجهّز لك مكونات الطبخات والولائم وبدائل المطبخ بدقة.",
+      avatarUrl: "chef.jpg",
+      accent: "#f59e0b",
+      voiceName: "Orus",
+      speed: 1.04,
+      pitchSemitones: -1.2,
+      fallbackDetune: -110,
+      fallbackRate: 1.02,
+      styleHint: "صوت ذكري واثق كطاهٍ محترف يشرح مكونات الطبخ بوضوح",
+      greet: "أهلاً بك في مطبخ متجر معاذ! اذكر اسم الطبخة وسأجهز مكوناتها فوراً.",
+      greets: ["أهلاً بك في مطبخ متجر معاذ! اذكر اسم الطبخة وسأجهز مكوناتها فوراً."],
+      chatGood: "بأفضل حال والمطبخ جاهز! ماذا سنطبخ اليوم؟",
+      chatGoods: ["بأفضل حال والمطبخ جاهز! ماذا سنطبخ اليوم؟"],
+      thanks: "بالعافية مقدماً! دائماً في الخدمة.",
+      thanksList: ["بالعافية مقدماً! دائماً في الخدمة."],
+      addedMsgs: [(n) => `أضفت ${n} إلى قائمة مكوناتك.`],
+      recipeReady: (t) => `مكونات طبخة ${t} المتوفرة جاهزة أمامك، حدد الكمية.`,
+      recipeMissing: (t) => `بعض مكونات طبخة ${t} نفدت حالياً.`,
+      itemsReady: () => "هذه مستلزمات الطبخ المتوفرة في الفرع.",
+      notFounds: ["لم أجد هذا الصنف في قسم الطبخ حالياً."],
+      notFound: "لم أجد هذا الصنف في قسم الطبخ حالياً."
+    },
+    pastry: {
+      id: "pastry",
+      gender: "female",
+      toneTag: "خبيرة الحلويات والضيافة",
+      name: "صانعة الحلويات",
+      roleBadge: "أنثوي • حلويات وضيافة",
+      specialtyNote: "صانعة الحلويات (أنثوي): متخصصة في مستلزمات الكيك والحلويات والضيافة السريعة.",
+      avatarUrl: "pastry.jpg",
+      accent: "#f472b6",
+      voiceName: "Leda",
+      speed: 0.98,
+      pitchSemitones: 1.8,
+      fallbackDetune: 160,
+      fallbackRate: 0.98,
+      styleHint: "صوت أنثوي لطيف ومشرق يحب الحلويات والضيافة",
+      greet: "أهلاً بك! هل نجهّز اليوم كيكة لذيذة أو ضيافة حلوة؟",
+      greets: ["أهلاً بك! هل نجهّز اليوم كيكة لذيذة أو ضيافة حلوة؟"],
+      chatGood: "بأحلى حال والحمد لله! جاهزة لأشهى الوصفات.",
+      chatGoods: ["بأحلى حال والحمد لله! جاهزة لأشهى الوصفات."],
+      thanks: "يسعدني جداً! صحتين وهنا مقدماً.",
+      thanksList: ["يسعدني جداً! صحتين وهنا مقدماً."],
+      addedMsgs: [(n) => `تمت إضافة ${n} إلى سلة الحلويات.`],
+      recipeReady: (t) => `جهزت لك مكونات ${t}، اختر الكمية المناسبة.`,
+      recipeMissing: (t) => `مكونات ${t} غير مكتملة حالياً بالمخزون.`,
+      itemsReady: () => "عرضت لك مستلزمات الحلويات المتوفرة.",
+      notFounds: ["لم أجد هذا الصنف حالياً."],
+      notFound: "لم أجد هذا الصنف حالياً."
+    },
+    athlete: {
+      id: "athlete",
+      gender: "male",
+      toneTag: "حماسي وصحي",
+      name: "البطل الرياضي",
+      roleBadge: "ذكري • صحة ولياقة",
+      specialtyNote: "البطل الرياضي (ذكري): يختار لك الأغذية الصحية والبروتين ومصادر الطاقة الطبيعية.",
+      avatarUrl: "athlete.jpg",
+      accent: "#00e676",
+      voiceName: "Fenrir",
+      speed: 1.12,
+      pitchSemitones: 0.4,
+      fallbackDetune: 40,
+      fallbackRate: 1.08,
+      styleHint: "صوت ذكري رياضي نشيط ومشجّع",
+      greet: "أهلاً بالبطل! جاهز نجهّز سلة صحية مليئة بالطاقة والنشاط؟",
+      greets: ["أهلاً بالبطل! جاهز نجهّز سلة صحية مليئة بالطاقة والنشاط؟"],
+      chatGood: "طاقة عالية ونشاط مية بالمية! كيف أساعدك اليوم؟",
+      chatGoods: ["طاقة عالية ونشاط مية بالمية! كيف أساعدك اليوم؟"],
+      thanks: "كفو عليك! دائماً بالخدمة يا بطل.",
+      thanksList: ["كفو عليك! دائماً بالخدمة يا بطل."],
+      addedMsgs: [(n) => `ممتاز! أضفت ${n} لسلة الطاقة.`],
+      recipeReady: (t) => `وجبة ${t} الصحية جاهزة بمكوناتها المتوفرة.`,
+      recipeMissing: (t) => `مكونات ${t} غير متوفرة حالياً.`,
+      itemsReady: () => "هذه الخيارات الصحية المتوفرة في المتجر.",
+      notFounds: ["لم أجد صنفاً مطابقاً متوفراً الآن."],
+      notFound: "لم أجد صنفاً مطابقاً متوفراً الآن."
+    },
+    sheikh: {
+      id: "sheikh",
+      gender: "male",
+      toneTag: "وقور وحكيم",
+      name: "الشيخ الوقور",
+      roleBadge: "ذكري • وقور وحكيم",
+      specialtyNote: "الشيخ الوقور (ذكري): صوت رصين ومهذب يرحب بك بأصالة وكرم الضيافة.",
+      avatarUrl: "sheikh.jpg",
+      accent: "#d4af37",
+      voiceName: "Charon",
+      speed: 0.96,
+      pitchSemitones: -1.6,
+      fallbackDetune: -140,
+      fallbackRate: 0.96,
+      styleHint: "صوت ذكري وقور ورزين ومهذب بالعربية الفصحى المبسطة",
+      greet: "حياك الله وبارك فيك، أهلاً بك في متجر معاذ. بماذا نخدمك اليوم؟",
+      greets: ["حياك الله وبارك فيك، أهلاً بك في متجر معاذ. بماذا نخدمك اليوم؟"],
+      chatGood: "الحمد لله في نعمة وعافية، بارك الله فيك.",
+      chatGoods: ["الحمد لله في نعمة وعافية، بارك الله فيك."],
+      thanks: "بارك الله فيك، هذا من واجبنا.",
+      thanksList: ["بارك الله فيك، هذا من واجبنا."],
+      addedMsgs: [(n) => `على بركة الله، تمت إضافة ${n} إلى السلة.`],
+      recipeReady: (t) => `تفضل، هذه مكونات ${t} المتوفرة لدينا.`,
+      recipeMissing: (t) => `نعتذر منك، مكونات ${t} غير متوفرة حالياً.`,
+      itemsReady: () => "تفضل، هذه الأصناف المتوفرة في المتجر.",
+      notFounds: ["عذراً، لم نجد هذا الصنف متوفراً الآن."],
+      notFound: "عذراً، لم نجد هذا الصنف متوفراً الآن."
+    },
+    friend_saad: {
+      id: "friend_saad",
+      gender: "male",
+      toneTag: "ودود وقريب من القلب",
+      name: "الصديق سعد",
+      roleBadge: "ذكري • رفيق التسوق",
+      specialtyNote: "الصديق سعد (ذكري): يرافقك كصديق مقرب لتجهيز السهرة والمتة وأغراض البيت.",
+      avatarUrl: "friend_saad.jpg",
+      accent: "#38bdf8",
+      voiceName: "Puck",
+      speed: 1.02,
+      pitchSemitones: -0.6,
+      fallbackDetune: -50,
+      fallbackRate: 1.0,
+      styleHint: "صوت ذكري ودود وطبيعي كصديق مقرب باللهجة الشامية اللطيفة",
+      greet: "يا هلا بالصديق! نورت المتجر، شو ناقصك اليوم لنجهزه سوا؟",
+      greets: ["يا هلا بالصديق! نورت المتجر، شو ناقصك اليوم لنجهزه سوا؟"],
+      chatGood: "تمام التمام بشوفتك يا غالي! شو عبالك نطلب اليوم؟",
+      chatGoods: ["تمام التمام بشوفتك يا غالي! شو عبالك نطلب اليوم؟"],
+      thanks: "تكرم عينك يا صديقي، بأي وقت!",
+      thanksList: ["تكرم عينك يا صديقي، بأي وقت!"],
+      addedMsgs: [(n) => `تمام يا غالي، حطيتلك ${n} بالسلة.`],
+      recipeReady: (t) => `رتبتلك أغراض ${t} المتوفرة، حدد الكمية.`,
+      recipeMissing: (t) => `والله أغراض ${t} خالصة هلق.`,
+      itemsReady: () => "هي الأغراض المتوفرة قدامك، حدد الكمية.",
+      notFounds: ["ما لقيت هالصنف متوفر هلق."],
+      notFound: "ما لقيت هالصنف متوفر هلق."
+    },
+    saver: {
+      id: "saver",
+      gender: "male",
+      toneTag: "خبير التوفير والطرود",
+      name: "خبير التوفير",
+      roleBadge: "ذكري • عروض وتوفير",
+      specialtyNote: "خبير التوفير (ذكري): يرشدك إلى أوفر الأسعار والطرود العائلية المربحة.",
+      avatarUrl: "saver.jpg",
+      accent: "#10b981",
+      voiceName: "Orus",
+      speed: 1.05,
+      pitchSemitones: -0.4,
+      fallbackDetune: -30,
+      fallbackRate: 1.03,
+      styleHint: "صوت ذكري ذكي وعملي يركز على التوفير والعروض",
+      greet: "أهلاً بك! جاهز أساعدك تختار أوفر الأصناف والطرود في متجر معاذ.",
+      greets: ["أهلاً بك! جاهز أساعدك تختار أوفر الأصناف والطرود في متجر معاذ."],
+      chatGood: "بأفضل حال وجاهز لأقوى عروض التوفير!",
+      chatGoods: ["بأفضل حال وجاهز لأقوى عروض التوفير!"],
+      thanks: "العفو، هدفنا دائماً راحتك وتوفيرك.",
+      thanksList: ["العفو، هدفنا دائماً راحتك وتوفيرك."],
+      addedMsgs: [(n) => `اختيار موفر! أضفت ${n} للسلة.`],
+      recipeReady: (t) => `جهزت لك أوفر مكونات ${t} المتوفرة.`,
+      recipeMissing: (t) => `مكونات ${t} غير متوفرة حالياً.`,
+      itemsReady: () => "رتبت لك الأصناف المتوفرة بأفضل سعر.",
+      notFounds: ["لم أجد صنفاً مطابقاً متوفراً الآن."],
+      notFound: "لم أجد صنفاً مطابقاً متوفراً الآن."
+    },
+    homemaker: {
+      id: "homemaker",
+      gender: "female",
+      toneTag: "منظمة المنزل والنظافة",
+      name: "رفيقة المنزل",
+      roleBadge: "أنثوي • تنظيم ومنظفات",
+      specialtyNote: "رفيقة المنزل (أنثوي): تساعدك في ترتيب قائمة المنظفات ومستلزمات البيت الكاملة.",
+      avatarUrl: "homemaker.jpg",
+      accent: "#06b6d4",
+      voiceName: "Aoede",
+      speed: 1.02,
+      pitchSemitones: 1.2,
+      fallbackDetune: 110,
+      fallbackRate: 1.0,
+      styleHint: "صوت أنثوي مرتب وعملي لمستلزمات المنزل والنظافة",
+      greet: "أهلاً بك! خلينا نرتب قائمة البيت والمنظفات بكل سهولة.",
+      greets: ["أهلاً بك! خلينا نرتب قائمة البيت والمنظفات بكل سهولة."],
+      chatGood: "الحمد لله بكل نشاط! شو ناقص البيت اليوم؟",
+      chatGoods: ["الحمد لله بكل نشاط! شو ناقص البيت اليوم؟"],
+      thanks: "العفو، يسعدني دائماً ترتيب طلباتك.",
+      thanksList: ["العفو، يسعدني دائماً ترتيب طلباتك."],
+      addedMsgs: [(n) => `تمت إضافة ${n} إلى قائمة المنزل.`],
+      recipeReady: (t) => `جهزت لك مستلزمات ${t} المتوفرة.`,
+      recipeMissing: (t) => `مستلزمات ${t} غير متوفرة حالياً.`,
+      itemsReady: () => "عرضت لك مستلزمات المنزل المتوفرة.",
+      notFounds: ["لم أجد هذا الصنف متوفراً الآن."],
+      notFound: "لم أجد هذا الصنف متوفراً الآن."
+    }
+  };
+
+  const PERSONAS = { ...BUILTIN_STANDARD_PERSONAS };
+  if (window.MoaathAIPersonas && window.MoaathAIPersonas.PERSONAS && typeof window.MoaathAIPersonas.PERSONAS === "object") {
+    Object.assign(PERSONAS, window.MoaathAIPersonas.PERSONAS);
+  }
+  window.MoaathAIPersonas = window.MoaathAIPersonas || {};
+  window.MoaathAIPersonas.PERSONAS = PERSONAS;
 
   function syncAllRegisteredPersonas() {
-    if (window.MoaathAIPersonas && window.MoaathAIPersonas.PERSONAS && typeof window.MoaathAIPersonas.PERSONAS === "object") {
+    Object.keys(BUILTIN_STANDARD_PERSONAS).forEach(k => {
+      if (!PERSONAS[k]) PERSONAS[k] = BUILTIN_STANDARD_PERSONAS[k];
+    });
+    if (window.MoaathAIPersonas && window.MoaathAIPersonas.PERSONAS && typeof window.MoaathAIPersonas.PERSONAS === "object" && window.MoaathAIPersonas.PERSONAS !== PERSONAS) {
       Object.assign(PERSONAS, window.MoaathAIPersonas.PERSONAS);
     }
+    window.MoaathAIPersonas.PERSONAS = PERSONAS;
     const vipSources = [
       window.VIP_PERSONAS,
       window.MoaathVIPSystem && window.MoaathVIPSystem.personas
@@ -1577,6 +1840,99 @@
         ${vipBtnHtml}
       </div>
     `;
+  };
+
+  window.openVIPWorldRoomsHub = async function () {
+    haptic(14);
+    unlockEmbeddedVoice();
+    pauseRoaming(12000);
+
+    let roomsList = [
+      {
+        id: "coach_sakhr",
+        name: "المدرب صخر",
+        title: "غرفة القوة، اللياقة، وكسر الملل",
+        avatarUrl: "coach_sakhr.jpg",
+        accent: "#00e676",
+        enabled: true
+      }
+    ];
+
+    try {
+      const res = await fetch(`vip_rooms/manifest.json?t=${Math.floor(Date.now() / 60000)}`, { cache: "no-store" });
+      if (res.ok) {
+        const mf = await res.json();
+        if (mf && Array.isArray(mf.rooms) && mf.rooms.length) {
+          roomsList = mf.rooms.filter(r => r && r.enabled !== false);
+        }
+      }
+    } catch (_) {}
+
+    let hub = $("vipWorldRoomsHubModal");
+    if (!hub) {
+      hub = document.createElement("div");
+      hub.id = "vipWorldRoomsHubModal";
+      hub.className = "modal-overlay";
+      hub.style.cssText = "display:flex; z-index:10045; background:rgba(7,10,16,0.88); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);";
+      hub.addEventListener("click", (e) => {
+        if (e.target === hub) hub.style.display = "none";
+      });
+      document.body.appendChild(hub);
+    } else {
+      hub.style.display = "flex";
+    }
+
+    const cards = roomsList.map(r => `
+      <button type="button" onclick="document.getElementById('vipWorldRoomsHubModal').style.display='none'; window.enterStandaloneVIPRoom('${esc(r.id)}');" class="fairy-gal-card is-active" style="--f-accent:${esc(r.accent || "#D4AF37")};">
+        <span class="fairy-gal-active-pill">3D تفاعلية</span>
+        <div class="fairy-gal-avatar-wrap">
+          <img src="${esc(r.avatarUrl || "store-icon.png")}" onerror="this.onerror=null;this.src='store-icon.png';" alt="${esc(r.name)}" class="fairy-gal-avatar">
+        </div>
+        <div class="fairy-gal-name">${esc(r.name)}</div>
+        <div class="fairy-gal-badge">${esc(r.title || "غرفة عالم VIP")}</div>
+        <div class="fairy-gal-desc">اضغط للدخول إلى الغرفة ثلاثية الأبعاد والدردشة الحرة</div>
+      </button>
+    `).join("");
+
+    const showcaseFallbackBtn = typeof window.openVIPShowcaseModal === "function"
+      ? `<button type="button" onclick="document.getElementById('vipWorldRoomsHubModal').style.display='none'; window.openVIPShowcaseModal('all');" class="btn" style="margin-top:10px; background:rgba(212,175,55,0.16); color:var(--gold-color); border:1px solid var(--gold-color); font-size:11px; padding:7px 10px;">✨ بطاقات الشخصيات المميزة</button>`
+      : "";
+
+    hub.innerHTML = `
+      <div class="modal-content fairy-gal-modal">
+        <div class="fairy-gal-header">
+          <div>
+            <div class="fairy-gal-title">👑 غرف عالم VIP المستقلة</div>
+            <div class="fairy-gal-sub">اختر الغرفة للدخول إلى مساحة الدردشة الحرة ثلاثية الأبعاد</div>
+          </div>
+          <button type="button" onclick="document.getElementById('vipWorldRoomsHubModal').style.display='none'" class="btn btn-danger" style="width:auto; padding:4px 10px; font-size:11px;">✕</button>
+        </div>
+        <div class="fairy-gal-grid">${cards}</div>
+        ${showcaseFallbackBtn}
+      </div>
+    `;
+  };
+
+  window.enterStandaloneVIPRoom = function (roomId = "coach_sakhr") {
+    if (typeof window.openVIPWorldRoom === "function") {
+      window.openVIPWorldRoom(roomId);
+      return;
+    }
+    if (window.MoaathVIPRooms && typeof window.MoaathVIPRooms.open === "function") {
+      window.MoaathVIPRooms.open(roomId);
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = `vip_rooms/vip_room_core.js?t=${Date.now()}`;
+    s.onload = () => {
+      if (typeof window.openVIPWorldRoom === "function") {
+        window.openVIPWorldRoom(roomId);
+      } else {
+        showToast("⚠️ يرجى التأكد من رفع مجلد vip_rooms إلى GitHub", true);
+      }
+    };
+    s.onerror = () => showToast("⚠️ تعذر تحميل نواة غرف VIP (vip_rooms/vip_room_core.js)", true);
+    document.head.appendChild(s);
   };
 
   window.__pickFairyFromGallery = function (key) {
@@ -3743,7 +4099,7 @@
   window.runAssistantQACheck = function () {
     const mem = typeof buildSmartCustomerProfile === "function" ? buildSmartCustomerProfile() : {};
     const report = {
-      version: "v89",
+      version: "v90",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
@@ -4273,7 +4629,7 @@
           <span class="fut-chev">▾</span>
         </button>
         <div class="fut-ai-header-actions">
-          <button id="futVipShowcaseBtn" type="button" onclick="if(typeof window.openVIPShowcaseModal==='function'){window.openVIPShowcaseModal('all');}else{showToast('يرجى التأكد من رفع ملف ai_vip_personas.js وربطه في index.html');}" class="fut-icon-btn fut-gold-btn" title="غرف الشخصيات المميزة والباقة الشاملة">👑 غرف VIP</button>
+          <button id="futVipShowcaseBtn" type="button" onclick="window.openVIPWorldRoomsHub()" class="fut-icon-btn fut-gold-btn" title="الدخول إلى غرف عالم VIP المستقلة ثلاثية الأبعاد">👑 غرف VIP</button>
           <button id="petDirectMicBtn" type="button" onclick="startVoiceShoppingInput()" class="fut-icon-btn fut-mic-btn" title="تحدّث الآن">🎙️</button>
           <button id="petShowCharBtn" type="button" onclick="setPetHidden(false)" class="fut-show-fairy-btn" style="display:none;">إظهار</button>
         </div>
