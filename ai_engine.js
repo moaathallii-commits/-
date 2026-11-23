@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v93 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v94 - Guaranteed Audible TTS & Diagnostics)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -3343,9 +3343,91 @@
   // ==========================================================================
   const CUSTOMER_MEMORY_KEY = "moaath_customer_memory_v1";
 
+  function readUnifiedVipRoomInsights() {
+    try {
+      const raw = JSON.parse(localStorage.getItem("moaath_vip_customer_insights_v1") || "{}");
+      return raw && typeof raw === "object" ? raw : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function parseCompoundShoppingIntent(normText) {
+    const budgetSYP = extractBudgetNumber(normText);
+    const peopleCount = parsePeopleCount(normText);
+    const prefersBulk = /طرد|طرود|جمله|جملة|عائلي|عائليه|كرتونه|كرتونة|توفير|اوفر|أوفر/.test(normText);
+    let mealOrOccasion = "";
+    if (/فطور|افطار|إفطار|صباح/.test(normText)) mealOrOccasion = "breakfast";
+    else if (/سهره|سهرة|مته|متة|تسالي|قعده|قعدة/.test(normText)) mealOrOccasion = "sahra";
+    else if (/غداء|عشاء|طبخه|طبخة|وصفه|وصفة|طبخ/.test(normText)) mealOrOccasion = "meal";
+    else if (/حلى|حلويات|كيك|ضيافه|ضيافة/.test(normText)) mealOrOccasion = "sweets";
+    else if (/رياضه|رياضة|صحي|صحة|دايت|بروتين/.test(normText)) mealOrOccasion = "fitness";
+    else if (/تنظيف|منظفات|جلي|غسيل/.test(normText)) mealOrOccasion = "cleaning";
+
+    return {
+      budgetSYP,
+      peopleCount,
+      prefersBulk,
+      mealOrOccasion,
+      hasMultipleConstraints: [!!budgetSYP, !!peopleCount, !!prefersBulk, !!mealOrOccasion].filter(Boolean).length >= 2
+    };
+  }
+
+  function buildCompoundBasketFromIntent(intentObj, rawPrompt) {
+    const budget = intentObj.budgetSYP || null;
+    const people = intentObj.peopleCount || 1;
+    const baseQty = people >= 5 ? Math.min(4, Math.ceil(people / 3)) : 1;
+
+    const topicKeywordsMap = {
+      breakfast: ["بيض", "حليب", "لبنة", "لبنه", "جبن", "زعتر", "زيتون", "عسل", "مربى", "شاي"],
+      sahra: ["متة", "مته", "بزر", "شيبس", "بسكوت", "شوكولاتة", "شوكولاته", "عصير", "شاي", "موالح"],
+      meal: ["رز", "ارز", "برغل", "عدس", "زيت", "سمن", "معكرونة", "مكرونة", "بهار", "ملح"],
+      sweets: ["بسكوت", "كاكاو", "شوكولاتة", "شوكولاته", "حليب", "سكر", "نشا", "سميد", "كيك"],
+      fitness: ["بيض", "حليب", "لبن", "عدس", "تونة", "تونه", "عسل", "شوفان", "ماء"],
+      cleaning: ["سائل جلي", "جلي", "كلور", "صابون", "مناديل", "معقم", "ليف"]
+    };
+
+    const kws = topicKeywordsMap[intentObj.mealOrOccasion] || [];
+    const allAvail = Object.keys(products || {})
+      .filter(pid => getEffectiveProductStock(pid) > 0 && getUnitSYP(pid) > 0)
+      .map(pid => {
+        const p = products[pid];
+        const pNorm = cleanArabicNorm((p.name || "") + " " + (p.category || ""));
+        const kwScore = kws.reduce((acc, kw) => acc + (pNorm.includes(cleanArabicNorm(kw)) ? 12 : 0), 0);
+        const isPkg = /طرد|كيلو|لتر/.test(pNorm) && intentObj.prefersBulk ? 6 : 0;
+        const price = getUnitSYP(pid);
+        return { id: pid, name: p.name, price, score: kwScore + isPkg };
+      })
+      .filter(x => !budget || x.price <= budget);
+
+    const matched = allAvail.filter(x => x.score > 0).sort((a, b) => (b.score - a.score) || (a.price - b.price));
+    const pool = matched.length >= 2 ? matched : allAvail.sort((a, b) => a.price - b.price);
+
+    const picked = [];
+    let runningTotal = 0;
+    for (const item of pool) {
+      if (picked.length >= 8) break;
+      const qtyToSuggest = Math.max(1, Math.min(baseQty, getEffectiveProductStock(item.id)));
+      const lineCost = item.price * qtyToSuggest;
+      if (!budget || (runningTotal + lineCost <= budget)) {
+        picked.push({
+          id: item.id,
+          name: item.name,
+          suggestedQty: qtyToSuggest,
+          reason: budget
+            ? `ضمن ميزانية ${budget.toLocaleString()} ل.س (${item.price.toLocaleString()} ل.س)`
+            : (people > 1 ? `مقترح لـ ${people} أشخاص` : "متوفر في الفرع")
+        });
+        runningTotal += lineCost;
+      }
+    }
+    return { picked, runningTotal };
+  }
+
   function buildSmartCustomerProfile() {
     try {
-      const firstName = getCustomerFirstName();
+      const vipIns = readUnifiedVipRoomInsights();
+      const firstName = vipIns.nickname || getCustomerFirstName();
       const myPhone = String(currentUser?.phone || "").trim();
       const allHist = Object.values(completedOrdersHistory || {});
       const myOrders = myPhone
@@ -3375,13 +3457,19 @@
 
       const orderCount = myOrders.length;
       const avgBasketSYP = orderCount > 0 ? Math.round(totalSpent / orderCount) : 0;
-      const prefersBulk = currentUser?.userType === "wholesale" || (totalLineItems > 0 && (bulkHits / totalLineItems) >= 0.35);
+      const prefersBulk = !!(vipIns.likesBulk || currentUser?.userType === "wholesale" || (totalLineItems > 0 && (bulkHits / totalLineItems) >= 0.35));
+      const mergedTopics = Array.from(new Set([...(vipIns.favoriteTopics || [])])).slice(-6);
 
       const profile = {
         firstName,
         orderCount,
         avgBasketSYP,
         prefersBulk,
+        budgetSensitive: !!vipIns.budgetSensitive,
+        shoppingStyle: vipIns.shoppingStyle || "",
+        favoriteMood: vipIns.favoriteMood || "",
+        preferredTime: vipIns.preferredTime || "",
+        favoriteTopics: mergedTopics,
         topItems,
         updatedAt: Date.now()
       };
@@ -3496,6 +3584,29 @@
     if (handleCheapestAvailableRequest(norm, persona)) return;
     if (handlePersonalHabitsRequest(norm)) return;
     if (handleRepeatPreviousOrder(norm, persona)) return;
+
+    const compoundIntent = parseCompoundShoppingIntent(norm);
+    if (compoundIntent.hasMultipleConstraints || (compoundIntent.budgetSYP && compoundIntent.mealOrOccasion)) {
+      const { picked, runningTotal } = buildCompoundBasketFromIntent(compoundIntent, promptTxt);
+      if (picked.length > 0) {
+        const metaParts = [];
+        if (compoundIntent.peopleCount) metaParts.push(`${compoundIntent.peopleCount} أشخاص`);
+        if (compoundIntent.budgetSYP) metaParts.push(`ميزانية ${compoundIntent.budgetSYP.toLocaleString()} ل.س`);
+        if (compoundIntent.prefersBulk) metaParts.push("توفير وطرود");
+        openZeroDefaultModal(
+          `✨ تشكيلة مخصصة (${metaParts.join(" • ") || "حسب طلبك"}):`,
+          picked,
+          `compound_${norm.slice(0, 18)}`,
+          `المجموع المقترح: ${runningTotal.toLocaleString()} ل.س — اضغط «تحديد المتوفر» أو (+)`
+        );
+        const prof = buildSmartCustomerProfile();
+        const who = prof.firstName ? `يا ${prof.firstName}` : "يا غالي";
+        const msg = `رتبتلك تشكيلة متناسقة ${who}${compoundIntent.budgetSYP ? " ضمن ميزانيتك" : ""} والمجموع ${runningTotal.toLocaleString()} ليرة.`;
+        setOrbEmotion("choice", msg, true);
+        setTxt("aiShoppingStatusText", `✨ ${msg}`);
+        return;
+      }
+    }
 
     const peopleCount = parsePeopleCount(norm);
     const suggestedPerItem = peopleCount && peopleCount >= 5 ? Math.min(4, Math.ceil(peopleCount / 3)) : 1;
@@ -4154,7 +4265,7 @@
   window.runAssistantQACheck = function () {
     const mem = typeof buildSmartCustomerProfile === "function" ? buildSmartCustomerProfile() : {};
     const report = {
-      version: "v93",
+      version: "v94",
       shamCashPaymentAI: "COMPLETELY_DISABLED",
       resolvedWorkerUrl: resolveWorkerEndpoint() || "NOT_FOUND",
       lastTtsSource: sessionCtx.lastTtsSource || "not_played_yet",
