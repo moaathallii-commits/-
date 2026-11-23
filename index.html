@@ -6225,34 +6225,47 @@
         </header>
         <div class="container" id="myOrdersListContainer"></div>
     </div>
-          <script>window.renderAdminBrainUnmatchedList = window.renderAdminBrainUnmatchedList || function () {};</script>
+              <script>window.renderAdminBrainUnmatchedList = window.renderAdminBrainUnmatchedList || function () {};</script>
     <script src="moaath_security_guard.js?v=1"></script>
-    <script>window.renderAdminBrainUnmatchedList = window.renderAdminBrainUnmatchedList || function () {};</script>
-    <script src="ai_personas.js?v=2"></script>
-    <script src="ai_recipes.js?v=2"></script>
-    <script src="ai_brain.js?v=2"></script>
-    <script src="ai_vip_personas.js?v=2"></script>
-    <script src="ai_engine.js?v=89"></script>
+
+    <!-- 1. قواعد البيانات الأساسية للشخصيات والوصفات والعقل الذكي -->
+    <script src="ai_personas.js"></script>
+    <script src="ai_recipes.js"></script>
+    <script src="ai_brain.js"></script>
+    <script src="ai_vip_personas.js"></script>
+
+    <!-- 2. تهيئة سجل VIP ونواة غرف عالم VIP المستقلة قبل تشغيل المحرك -->
     <script>
       window.MoaathVIPSystem = window.MoaathVIPSystem || {
         version: "4.0",
         personas: window.VIP_PERSONAS || {},
-        activePersonaId: (function(){ try { return JSON.parse(localStorage.getItem("moaath_store_pet_prefs") || "{}").persona || "coach_sakhr"; } catch(_) { return "coach_sakhr"; } })(),
+        activePersonaId: (function () {
+          try { return JSON.parse(localStorage.getItem("moaath_store_pet_prefs") || "{}").persona || "coach_sakhr"; } catch (_) { return "coach_sakhr"; }
+        })(),
         isPersonaUnlockedLifetime: function () { return true; }
       };
       if (window.MoaathSystemRegistry && typeof window.MoaathSystemRegistry.register === "function") {
         window.MoaathSystemRegistry.register("ai_vip", "4.0");
       }
     </script>
+    <script src="vip_rooms/vip_room_core.js"></script>
+
+    <!-- 3. المحرك الرئيسي للمساعد الذكي والشخصيات -->
+    <script src="ai_engine.js"></script>
+
+    <!-- 4. أدوات الإدارة والصوت والملاحة والواجهة المستقبلية -->
     <script src="ai_admin_architect.js"></script>
-    <script src="moaath_voice_fresh_engine.js?v=3"></script>
+    <script src="moaath_voice_fresh_engine.js"></script>
     <script src="moaath_learning_hub.js"></script>
     <script src="moaath_gps_pro.js"></script>
     <script src="moaath_persona_skill_btn.js"></script>
     <script src="moaath_express_nav.js"></script>
     <script src="moaath_vip_daily_engine.js"></script>
-    <script src="moaath_egg_onboarding.js?v=2"></script>
-    <script src="moaath_egg_and_dispatch_fix.js?v=2"></script>
-    <script src="store_ui_futuristic.js?v=14"></script>
+    <script src="moaath_egg_onboarding.js"></script>
+    <script src="moaath_egg_and_dispatch_fix.js"></script>
+    <script src="store_ui_futuristic.js"></script>
+</body>
+</html>
+
 </body>
 </html>
