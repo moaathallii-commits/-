@@ -1,5 +1,5 @@
 // ============================================================================
-// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v97 - Guaranteed Audible TTS & Diagnostics)
+// محرك الجنيات المتحدثة ثلاثية الأبعاد لمتجر معاذ (v98 - Sheikh Shabab, Compound Intents & Visual Matching)
 // - إلغاء كامل ونهائي للتحقق من الدفع وشام كاش عبر الذكاء الاصطناعي
 // - ضمان خروج الصوت بوضوح على الهاتف عبر مشغل صوت مباشر موثوق + دعم Web Audio detune عند الإمكان
 // - بحث ذكي عن رابط Cloudflare Worker في عدة مصادر لتجنب الخروج الصامت
@@ -304,6 +304,12 @@
   const PERSONAS = { ...BUILTIN_STANDARD_PERSONAS };
   if (window.MoaathAIPersonas && window.MoaathAIPersonas.PERSONAS && typeof window.MoaathAIPersonas.PERSONAS === "object") {
     Object.assign(PERSONAS, window.MoaathAIPersonas.PERSONAS);
+    if (PERSONAS.sheikh) {
+      PERSONAS.sheikh.name = "شيخ الشباب";
+      PERSONAS.sheikh.toneTag = "شهم، مرحب، وشيخ شباب";
+      PERSONAS.sheikh.roleBadge = "ذكري • شيخ شباب وروح ولمّات";
+      PERSONAS.sheikh.specialtyNote = "شيخ الشباب (ذكري): روح شبابية شهمة ومرحّبة تخدمك بأصالة وكرم وابتسامة.";
+    }
   }
   window.MoaathAIPersonas = window.MoaathAIPersonas || {};
   window.MoaathAIPersonas.PERSONAS = PERSONAS;
@@ -3473,10 +3479,20 @@
     }
   }
 
+  function extractExplicitCompoundTerms(normText) {
+    const cleaned = toWesternDigits(String(normText || ""))
+      .replace(/\b(اريد|بدي|ابغى|ابي|اعطني|هات|ممكن|تجهيز|جهز|رتب|نظم|حضر|اقترح|سوي|اعمل|اطلب|طلب|اغراض|أغراض|مواد|حاجات|حاجيات|بميزانيه|بميزانيتي|ميزانيه|ميزانيتي|مبلغ|حدود|ليره|ليرة|ل\s*س|سوري|اشخاص|أشخاص|افراد|أفراد|شخص|نفر|طرد|طرود|جمله|جملة|عائلي|عائليه|اوفر|أوفر|توفير|و)\b/g, " ")
+      .replace(/\b(كيلو|كغ|غرام|جرام|علبه|علبة|علبتين|كيس|كيسين|حبه|حبة|حبتين|قطعه|قطعة|لتر|بـ|ب|\d+)\b/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    return cleaned.split(/\s+/).filter(w => w.length >= 2);
+  }
+
   function parseCompoundShoppingIntent(normText) {
     const budgetSYP = extractBudgetNumber(normText);
     const peopleCount = parsePeopleCount(normText);
     const prefersBulk = /طرد|طرود|جمله|جملة|عائلي|عائليه|كرتونه|كرتونة|توفير|اوفر|أوفر/.test(normText);
+    const explicitTerms = extractExplicitCompoundTerms(normText);
     let mealOrOccasion = "";
     if (/فطور|افطار|إفطار|صباح/.test(normText)) mealOrOccasion = "breakfast";
     else if (/سهره|سهرة|مته|متة|تسالي|قعده|قعدة/.test(normText)) mealOrOccasion = "sahra";
@@ -3485,12 +3501,14 @@
     else if (/رياضه|رياضة|صحي|صحة|دايت|بروتين/.test(normText)) mealOrOccasion = "fitness";
     else if (/تنظيف|منظفات|جلي|غسيل/.test(normText)) mealOrOccasion = "cleaning";
 
+    const constraintCount = [!!budgetSYP, !!peopleCount, !!prefersBulk, !!mealOrOccasion, explicitTerms.length >= 2].filter(Boolean).length;
     return {
       budgetSYP,
       peopleCount,
       prefersBulk,
       mealOrOccasion,
-      hasMultipleConstraints: [!!budgetSYP, !!peopleCount, !!prefersBulk, !!mealOrOccasion].filter(Boolean).length >= 2
+      explicitTerms,
+      hasMultipleConstraints: constraintCount >= 2
     };
   }
 
@@ -3508,7 +3526,7 @@
       cleaning: ["سائل جلي", "جلي", "كلور", "صابون", "مناديل", "معقم", "ليف"]
     };
 
-    const kws = topicKeywordsMap[intentObj.mealOrOccasion] || [];
+    const kws = [...(topicKeywordsMap[intentObj.mealOrOccasion] || []), ...(intentObj.explicitTerms || [])];
     const allAvail = Object.keys(products || {})
       .filter(pid => getEffectiveProductStock(pid) > 0 && getUnitSYP(pid) > 0)
       .map(pid => {
