@@ -1,6 +1,6 @@
 {
   "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-24T02:59:39Z",
+  "updatedAt": "2026-11-24T04:08:38Z",
   "personas": {
     "buddy": {
       "greet": [
@@ -1031,10 +1031,36 @@
         {
           "text": "اختياراتك رائعة ومتناسقة، تأكد إن طلبك رح يوصلك بأحلى صورة وبأسرع وقت.",
           "file": "sounds_gemini/chef_checkoutBoost_2.wav"
+        },
+        {
+          "text": "سلة متكاملة يا غالي! اعتمد الطلب هلق وخلي التوصيل علينا.",
+          "file": "sounds_gemini/chef_checkoutBoost_3.wav"
         }
       ],
-      "orderSuccess": [],
-      "welcomeBack": []
+      "orderSuccess": [
+        {
+          "text": "كفو عليك! طلبك صار بعهدتنا، ريّح بالك وهلق بيوصلك لعند الباب.",
+          "file": "sounds_gemini/chef_orderSuccess_1.wav"
+        },
+        {
+          "text": "طلبك انبعت بنجاح، تتهنى فيه يا رب وألف صحة وهنا مقدماً.",
+          "file": "sounds_gemini/chef_orderSuccess_2.wav"
+        },
+        {
+          "text": "اختيار ذوّيق، طلبك قيد التجهيز بأعلى عناية ويسعدنا دايماً خدمتك.",
+          "file": "sounds_gemini/chef_orderSuccess_3.wav"
+        }
+      ],
+      "welcomeBack": [
+        {
+          "text": "يا مية هلا بعودتك يا غالي! اشتقنالك بمتجر معاذ، نعيد نفس أغراض المرة الماضية ولا في شي جديد؟",
+          "file": "sounds_gemini/chef_welcomeBack_1.wav"
+        },
+        {
+          "text": "أهلاً بعودتك يا غالي! جاهز نكرر طلبك السابق بلمسة وحدة ولا حابب نختار شي جديد اليوم؟",
+          "file": "sounds_gemini/chef_welcomeBack_2.wav"
+        }
+      ]
     },
     "pastry": {
       "greet": [],
@@ -1052,7 +1078,12 @@
       "scarcityAlert": [],
       "checkoutBoost": [],
       "orderSuccess": [],
-      "welcomeBack": []
+      "welcomeBack": [
+        {
+          "text": "أهلاً بعودتك يا غالي! جاهز نكرر طلبك السابق بلمسة وحدة ولا حابب نختار شي جديد اليوم؟",
+          "file": "sounds_gemini/pastry_welcomeBack_2.wav"
+        }
+      ]
     },
     "athlete": {
       "greet": [],
@@ -1202,7 +1233,12 @@
       "greet": [],
       "greetMorning": [],
       "greetEvening": [],
-      "chatGood": [],
+      "chatGood": [
+        {
+          "text": "تمام التمام وبأعلى جاهزية لخدمتك، خبرني شو ببالك تطلب.",
+          "file": "sounds_gemini/anime_zain_chatGood_3.wav"
+        }
+      ],
       "thanks": [],
       "added": [],
       "itemsReady": [],
