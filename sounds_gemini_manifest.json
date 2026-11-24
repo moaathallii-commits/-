@@ -1,6 +1,6 @@
 {
   "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-24T01:20:48Z",
+  "updatedAt": "2026-11-24T02:59:39Z",
   "personas": {
     "buddy": {
       "greet": [
@@ -891,6 +891,10 @@
           "file": "sounds_gemini/chef_thanks_2.wav"
         },
         {
+          "text": "على راسي وعيني، بالعافية مقدماً على كل اختياراتك.",
+          "file": "sounds_gemini/chef_thanks_3.wav"
+        },
+        {
           "text": "لا شكر على واجب أبداً، بأي وقت بتحتاج شي أنا هون.",
           "file": "sounds_gemini/chef_thanks_4.wav"
         }
@@ -927,6 +931,10 @@
           "file": "sounds_gemini/chef_itemsReady_2.wav"
         },
         {
+          "text": "لقيتلك المطلوب بالفرع، اختار الكمية المناسبة وأضفها للسلة.",
+          "file": "sounds_gemini/chef_itemsReady_3.wav"
+        },
+        {
           "text": "هي كل الخيارات المتوفرة حالياً، حدد الكمية وبنجهزها فوراً.",
           "file": "sounds_gemini/chef_itemsReady_4.wav"
         }
@@ -939,15 +947,35 @@
         {
           "text": "للأسف ما لقيت نفس الصنف حالياً، شوف هالبدائل الطيبة والموجودة.",
           "file": "sounds_gemini/chef_alternative_2.wav"
+        },
+        {
+          "text": "الصنف المطلوب نافد مؤقتاً، عرضتلك أفضل بدائل متوفرة هلق.",
+          "file": "sounds_gemini/chef_alternative_3.wav"
         }
       ],
       "habit": [
         {
           "text": "جبتلك مفضلاتك يلي دايماً بتختارها لتوفير وقتك، حدد الكمية.",
           "file": "sounds_gemini/chef_habit_1.wav"
+        },
+        {
+          "text": "هي أغراضك المعتادة متوفرة هلق بلمسة وحدة يا غالي.",
+          "file": "sounds_gemini/chef_habit_2.wav"
+        },
+        {
+          "text": "تذكرت اختياراتك المفضلة وجهزتلك ياها عالسريع بالسلة.",
+          "file": "sounds_gemini/chef_habit_3.wav"
         }
       ],
       "notFound": [
+        {
+          "text": "عذراً يا غالي، ما لقيت هاد الصنف متوفر هلق، جرب اسم أقرب.",
+          "file": "sounds_gemini/chef_notFound_1.wav"
+        },
+        {
+          "text": "بحثتلك منيح بس ما لقيت هاد الصنف حالياً، فيك تطلبه من زر طلب صنف.",
+          "file": "sounds_gemini/chef_notFound_2.wav"
+        },
         {
           "text": "هاد الصنف غير متوفر بالرف هلق، خبرني بنوع تاني وبساعدك فوراً.",
           "file": "sounds_gemini/chef_notFound_3.wav"
@@ -961,16 +989,50 @@
         {
           "text": "خذ راحتك بالتصفح، وإذا حابب أختصر عليك الوقت بقترحلك أحلى الأصناف الطازة اليوم.",
           "file": "sounds_gemini/chef_idleNudge_2.wav"
+        },
+        {
+          "text": "إذا عم تقارن الأسعار، خليني أفرجيك أوفر العروض الموجودة حالياً لتوفر وقتك وميزانيتك.",
+          "file": "sounds_gemini/chef_idleNudge_3.wav"
         }
       ],
-      "crossSell": [],
+      "crossSell": [
+        {
+          "text": "سلتك صارت مرتبة! شو رأيك أفرجيك مكملات حلوة تناسب أغراضك قبل ما تعتمد الطلب؟",
+          "file": "sounds_gemini/chef_crossSell_1.wav"
+        },
+        {
+          "text": "أغراضك جاهزة، بس اتأكد إذا ناقصك شي خفيف للسهرة أو المطبخ، أفرجيك المقترحات؟",
+          "file": "sounds_gemini/chef_crossSell_2.wav"
+        },
+        {
+          "text": "اختياراتك بتشهي! نحط معها شي تكميلي خفيف يكمّل القعدة؟",
+          "file": "sounds_gemini/chef_crossSell_3.wav"
+        }
+      ],
       "scarcityAlert": [
+        {
+          "text": "ملاحظة سريعة يا غالي، في عروض وأصناف عليها طلب عالي وما بقي منها كتير، تحب تشوفها هلق؟",
+          "file": "sounds_gemini/chef_scarcityAlert_1.wav"
+        },
         {
           "text": "لحّق حالك! في عروض طازة اليوم وبأسعار بتجنن، أفرجيك ياها قبل ما تخلص؟",
           "file": "sounds_gemini/chef_scarcityAlert_2.wav"
+        },
+        {
+          "text": "بنصحك بصدق يا غالي، عروض اليوم موفرة كتير، تحب نلقي عليها نظرة؟",
+          "file": "sounds_gemini/chef_scarcityAlert_3.wav"
         }
       ],
-      "checkoutBoost": [],
+      "checkoutBoost": [
+        {
+          "text": "سلتك جاهزة مية بالمية! ضغطة زر والتوصيل بطريقه إلك بأسرع وقت.",
+          "file": "sounds_gemini/chef_checkoutBoost_1.wav"
+        },
+        {
+          "text": "اختياراتك رائعة ومتناسقة، تأكد إن طلبك رح يوصلك بأحلى صورة وبأسرع وقت.",
+          "file": "sounds_gemini/chef_checkoutBoost_2.wav"
+        }
+      ],
       "orderSuccess": [],
       "welcomeBack": []
     },
