@@ -270,32 +270,109 @@
   // --------------------------------------------------------------------------
   // 4. لغة الجسد الواقعية + الصوت (متصل بملفات الصوت البشرية و Worker و Web Speech)
   // --------------------------------------------------------------------------
+  const ROOM_AUDIO_CACHE_NAME = "moaath_store_tts_gemini_v1";
   let gestureCycleTimer = null;
   let speakingEndTimer = null;
+  let activeRoomAudio = null;
   let roomManifestMap = new Map();
+  let roomPersonaClipsMap = new Map();
+  let roomPreloadActiveFor = null;
+
+  function indexManifestData(d) {
+    if (!d || !d.personas) return;
+    roomManifestMap.clear();
+    roomPersonaClipsMap.clear();
+    Object.keys(d.personas).forEach((pid) => {
+      const clips = [];
+      Object.values(d.personas[pid] || {}).forEach((arr) => {
+        if (!Array.isArray(arr)) return;
+        arr.forEach((it) => {
+          if (it && it.text && it.file) {
+            const entry = {
+              file: it.file,
+              text: it.text,
+              mood: it.mood || "talk",
+              durationMs: parseInt(it.durationMs, 10) || 0
+            };
+            roomManifestMap.set(`${pid}::${normAr(it.text)}`, entry);
+            clips.push(entry);
+          }
+        });
+      });
+      if (clips.length) roomPersonaClipsMap.set(pid, clips);
+    });
+  }
+
+  function updateOfflineVoiceBadge(cachedCount, totalCount) {
+    const badge = $id("vipOfflineVoiceBadge");
+    if (!badge) return;
+    if (!totalCount) {
+      badge.style.display = "none";
+      return;
+    }
+    badge.style.display = "inline-flex";
+    badge.textContent = cachedCount >= totalCount
+      ? `🎙️ أوفلاين ${cachedCount}/${totalCount}`
+      : `⏳ صوت ${cachedCount}/${totalCount}`;
+  }
+
+  async function preloadSelectedRoomClips(roomId) {
+    if (!roomId || typeof caches === "undefined") return;
+    const clips = roomPersonaClipsMap.get(roomId) || [];
+    if (!clips.length) {
+      updateOfflineVoiceBadge(0, 0);
+      return;
+    }
+    const maxBatch = Math.min(clips.length, 25);
+    const targetClips = clips.slice(0, maxBatch);
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const saveData = !!(conn && conn.saveData);
+
+    try {
+      const cache = await caches.open(ROOM_AUDIO_CACHE_NAME);
+      let cachedCount = 0;
+      const missing = [];
+      for (const c of targetClips) {
+        const hit = await cache.match(c.file);
+        if (hit) cachedCount++;
+        else missing.push(c);
+      }
+      if (activeRoomId === roomId) updateOfflineVoiceBadge(cachedCount, targetClips.length);
+      if (saveData || navigator.onLine === false || !missing.length) return;
+      if (roomPreloadActiveFor === roomId) return;
+      roomPreloadActiveFor = roomId;
+
+      for (const c of missing) {
+        if (activeRoomId !== roomId || navigator.onLine === false) break;
+        try {
+          const res = await fetch(c.file, { cache: "default" });
+          if (res.ok && !/text\/html/i.test(res.headers.get("content-type") || "")) {
+            await cache.put(c.file, res.clone());
+            cachedCount++;
+            if (activeRoomId === roomId) updateOfflineVoiceBadge(cachedCount, targetClips.length);
+          }
+        } catch (_) {}
+        await new Promise((r) => setTimeout(r, 350));
+      }
+    } catch (_) {
+    } finally {
+      if (roomPreloadActiveFor === roomId) roomPreloadActiveFor = null;
+    }
+  }
 
   (function preloadRoomManifestIndex() {
     try {
       const cached = JSON.parse(localStorage.getItem("moaath_gemini_manifest_cache_v1") || "null");
-      if (cached && cached.personas) {
-        Object.keys(cached.personas).forEach((pid) => {
-          Object.values(cached.personas[pid] || {}).forEach((arr) => {
-            if (Array.isArray(arr)) arr.forEach((it) => { if (it && it.text && it.file) roomManifestMap.set(`${pid}::${normAr(it.text)}`, it.file); });
-          });
-        });
-      }
+      if (cached && cached.personas) indexManifestData(cached);
     } catch (_) {}
     if (navigator.onLine !== false) {
       fetch(`sounds_gemini_manifest.json?t=${Math.floor(Date.now() / 60000)}`, { cache: "no-store" })
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => {
           if (!d || !d.personas) return;
-          roomManifestMap.clear();
-          Object.keys(d.personas).forEach((pid) => {
-            Object.values(d.personas[pid] || {}).forEach((arr) => {
-              if (Array.isArray(arr)) arr.forEach((it) => { if (it && it.text && it.file) roomManifestMap.set(`${pid}::${normAr(it.text)}`, it.file); });
-            });
-          });
+          indexManifestData(d);
+          try { localStorage.setItem("moaath_gemini_manifest_cache_v1", JSON.stringify(d)); } catch (_) {}
+          if (activeRoomId) preloadSelectedRoomClips(activeRoomId);
         })
         .catch(() => {});
     }
@@ -345,6 +422,10 @@
     const aura = $id("vipSpeakingAura");
     if (wrap) wrap.classList.remove("is-speaking", "pose-nod", "pose-lean-left", "pose-lean-right", "pose-enthusiastic", "pose-excited");
     if (aura) aura.classList.remove("is-active");
+    if (activeRoomAudio) {
+      try { activeRoomAudio.pause(); activeRoomAudio.currentTime = 0; } catch (_) {}
+      activeRoomAudio = null;
+    }
     try { if (typeof window.__moaathStopAiEngineVoice === "function") window.__moaathStopAiEngineVoice(); } catch (_) {}
     try { if (typeof window.speechSynthesis !== "undefined") window.speechSynthesis.cancel(); } catch (_) {}
   }
@@ -355,18 +436,43 @@
     const clean = String(text).replace(/[\u{1F300}-\u{1FAFF}•*_#]/gu, " ").replace(/\s+/g, " ").trim();
     if (!clean) return;
 
-    const estDur = Math.min(8000, Math.max(2000, clean.length * 68));
-    startSpeakingChoreography(estDur, mood);
+    const clipEntry = roomManifestMap.get(`${room?.id || ""}::${normAr(clean)}`);
+    const effectiveMood = (clipEntry && clipEntry.mood) || mood || "talk";
+    const estDur = (clipEntry && clipEntry.durationMs > 0)
+      ? Math.min(10000, Math.max(1400, clipEntry.durationMs))
+      : Math.min(8000, Math.max(2000, clean.length * 68));
+    startSpeakingChoreography(estDur, effectiveMood);
 
-    // 1) تشغيل مقطع صوتي بشري مطابق حرفياً من الفهرس إن وجد (0 استهلاك حصة)
-    const clipUrl = roomManifestMap.get(`${room?.id || ""}::${normAr(clean)}`);
-    if (clipUrl && navigator.onLine !== false) {
-      try {
-        const audio = new Audio(clipUrl);
-        audio.onended = () => stopRoomVoice();
-        audio.play().catch(() => {});
-        return;
-      } catch (_) {}
+    // 1) تشغيل مقطع صوتي بشري مطابق حرفياً من الكاش المحلي أو الفهرس (0 استهلاك حصة ويعمل أوفلاين)
+    if (clipEntry && clipEntry.file) {
+      (async () => {
+        try {
+          let srcToPlay = clipEntry.file;
+          let revokeAfter = false;
+          if (typeof caches !== "undefined") {
+            const cache = await caches.open(ROOM_AUDIO_CACHE_NAME);
+            const cachedResp = await cache.match(clipEntry.file);
+            if (cachedResp) {
+              const blob = await cachedResp.blob();
+              srcToPlay = URL.createObjectURL(blob);
+              revokeAfter = true;
+            }
+          }
+          if (!revokeAfter && navigator.onLine === false) return;
+          const audio = new Audio(srcToPlay);
+          activeRoomAudio = audio;
+          audio.onended = () => {
+            if (revokeAfter) try { URL.revokeObjectURL(srcToPlay); } catch (_) {}
+            stopRoomVoice();
+          };
+          audio.onerror = () => {
+            if (revokeAfter) try { URL.revokeObjectURL(srcToPlay); } catch (_) {}
+            stopRoomVoice();
+          };
+          audio.play().catch(() => {});
+        } catch (_) {}
+      })();
+      return;
     }
 
     // 2) أولوية قصوى لـ VIP: استدعاء الصوت البشري المباشر من Worker (مخزّن 30 يوماً في Cloudflare Edge)
@@ -739,6 +845,7 @@
           <div id="vipRoomRole" class="vip-room-role">مساحة دردشة حرة وتطوير تجربة التسوق</div>
         </div>
         <div class="vip-room-top-btns">
+          <span id="vipOfflineVoiceBadge" class="vip-icon-pill" style="display:none; font-size:10px; border-color:rgba(0,230,118,0.45); color:#6ee7b7;">🎙️ أوفلاين</span>
           <button type="button" id="vipMuteBtn" class="vip-icon-pill" onclick="window.MoaathVIPRooms.toggleMute()">🔊 صوت</button>
           <button type="button" class="vip-icon-pill vip-close-pill" onclick="window.MoaathVIPRooms.close()">✕ خروج</button>
         </div>
@@ -1010,6 +1117,7 @@
     ).join("");
 
     renderInlineProductStrip([]);
+    preloadSelectedRoomClips(room.id);
     const latestIns = getCustomerInsights();
     if (!latestIns.onboardingDone) {
       onboardingStep = 1;
