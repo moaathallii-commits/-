@@ -207,7 +207,7 @@
         const pkgItems = [];
         for (const pid of Object.keys(prods)) {
           const p = prods[pid];
-          if (p && getStock(p) > 0 && parseInt(p.pkgQty, 10) > 1 && p.pkgPriceUSD > 0) {
+          if (p && getStock(p) > 0 && (parseInt(p.pkgCount, 10) || parseInt(p.pkgQty, 10)) > 1 && p.pkgPriceUSD > 0) {
             pkgItems.push({
               id: pid + "_PKG",
               name: `طرد ${p.name} (${p.pkgQty} قطعة)`,
