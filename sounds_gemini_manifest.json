@@ -1,6 +1,6 @@
 {
   "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-23T21:59:24Z",
+  "updatedAt": "2026-11-23T23:00:23Z",
   "personas": {
     "buddy": {
       "greet": [
@@ -819,14 +819,40 @@
           "file": "sounds_gemini/chef_greet_6.wav"
         }
       ],
-      "greetMorning": [],
+      "greetMorning": [
+        {
+          "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
+          "file": "sounds_gemini/chef_greetMorning_1.wav"
+        },
+        {
+          "text": "صباح الفل والروقان، خبرني شو ناقص البيت لنجهزه عالسريع.",
+          "file": "sounds_gemini/chef_greetMorning_4.wav"
+        }
+      ],
       "greetEvening": [
+        {
+          "text": "مساء الخير والروقان! نورت متجر معاذ، شو نجهزلك الليلة؟",
+          "file": "sounds_gemini/chef_greetEvening_1.wav"
+        },
         {
           "text": "يسعد مساك يا غالي، جاهز نضبط سلة السهرة والمتة والتسالي؟",
           "file": "sounds_gemini/chef_greetEvening_2.wav"
+        },
+        {
+          "text": "مساء النور والهنا، خبرني شو عبالك للعشا أو السهرة اليوم.",
+          "file": "sounds_gemini/chef_greetEvening_3.wav"
+        },
+        {
+          "text": "مساء الورد يا غالي، كل شي بتحتاجه لليلة جاهز ومرتب هلق.",
+          "file": "sounds_gemini/chef_greetEvening_4.wav"
         }
       ],
-      "chatGood": [],
+      "chatGood": [
+        {
+          "text": "أنا بخير والحمد لله، كيف بقدر أساعدك اليوم؟",
+          "file": "sounds_gemini/chef_chatGood_1.wav"
+        }
+      ],
       "thanks": [],
       "added": [
         {
@@ -836,6 +862,14 @@
         {
           "text": "يا سلام عليك، أضفته للسلة عالسريع، شو نكمل كمان؟",
           "file": "sounds_gemini/chef_added_3.wav"
+        },
+        {
+          "text": "تمت الإضافة بنجاح، سلتك صارت مرتبة وأحلى هلق.",
+          "file": "sounds_gemini/chef_added_4.wav"
+        },
+        {
+          "text": "تمام التمام، صار الصنف بسلتك، خبرني إذا ناقصك شي غيره.",
+          "file": "sounds_gemini/chef_added_5.wav"
         }
       ],
       "itemsReady": [
@@ -845,16 +879,35 @@
         }
       ],
       "alternative": [],
-      "habit": [],
-      "notFound": [],
+      "habit": [
+        {
+          "text": "جبتلك مفضلاتك يلي دايماً بتختارها لتوفير وقتك، حدد الكمية.",
+          "file": "sounds_gemini/chef_habit_1.wav"
+        }
+      ],
+      "notFound": [
+        {
+          "text": "هاد الصنف غير متوفر بالرف هلق، خبرني بنوع تاني وبساعدك فوراً.",
+          "file": "sounds_gemini/chef_notFound_3.wav"
+        }
+      ],
       "idleNudge": [
         {
           "text": "محتار شو تاخد يا غالي؟ خبرني شو عبالك اليوم وأنا برتبلك السلة على ذوقك.",
           "file": "sounds_gemini/chef_idleNudge_1.wav"
+        },
+        {
+          "text": "خذ راحتك بالتصفح، وإذا حابب أختصر عليك الوقت بقترحلك أحلى الأصناف الطازة اليوم.",
+          "file": "sounds_gemini/chef_idleNudge_2.wav"
         }
       ],
       "crossSell": [],
-      "scarcityAlert": [],
+      "scarcityAlert": [
+        {
+          "text": "لحّق حالك! في عروض طازة اليوم وبأسعار بتجنن، أفرجيك ياها قبل ما تخلص؟",
+          "file": "sounds_gemini/chef_scarcityAlert_2.wav"
+        }
+      ],
       "checkoutBoost": [],
       "orderSuccess": [],
       "welcomeBack": []
