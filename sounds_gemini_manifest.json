@@ -1,6 +1,6 @@
 {
   "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-24T04:08:38Z",
+  "updatedAt": "2026-11-24T05:17:33Z",
   "personas": {
     "buddy": {
       "greet": [
@@ -1059,13 +1059,64 @@
         {
           "text": "أهلاً بعودتك يا غالي! جاهز نكرر طلبك السابق بلمسة وحدة ولا حابب نختار شي جديد اليوم؟",
           "file": "sounds_gemini/chef_welcomeBack_2.wav"
+        },
+        {
+          "text": "نورتنا من جديد بمتجر معاذ! تحب أجهزلك نفس مفضلاتك الماضية؟",
+          "file": "sounds_gemini/chef_welcomeBack_3.wav"
         }
       ]
     },
     "pastry": {
-      "greet": [],
-      "greetMorning": [],
-      "greetEvening": [],
+      "greet": [
+        {
+          "text": "يا أهلاً وسهلاً! نورت متجر معاذ. خبرني شو ببالك اليوم؟",
+          "file": "sounds_gemini/pastry_greet_1.wav"
+        },
+        {
+          "text": "أهلاً بك يا غالي، المتجر منور بوجودك. بشو نبدأ سلتك اليوم؟",
+          "file": "sounds_gemini/pastry_greet_2.wav"
+        },
+        {
+          "text": "يا مية هلا ومرحبا! كل شي طازج ومرتب بالمتجر، شو ناقصك اليوم؟",
+          "file": "sounds_gemini/pastry_greet_3.wav"
+        },
+        {
+          "text": "حياك الله يا غالي، نورتنا بمتجر معاذ. قولي شو عبالك نجهزلك؟",
+          "file": "sounds_gemini/pastry_greet_4.wav"
+        },
+        {
+          "text": "أهلاً وسهلاً فيك، يسعدني جداً أساعدك بتسوقك اليوم. بشو نبلش؟",
+          "file": "sounds_gemini/pastry_greet_5.wav"
+        }
+      ],
+      "greetMorning": [
+        {
+          "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
+          "file": "sounds_gemini/pastry_greetMorning_1.wav"
+        },
+        {
+          "text": "يسعد صباحك يا غالي، كل أغراض الفطور والقهوة جاهزة هلق.",
+          "file": "sounds_gemini/pastry_greetMorning_2.wav"
+        },
+        {
+          "text": "صباح النور والبركة! إن شاء الله يومك حلو ومليان خير، شو بتحب تطلب؟",
+          "file": "sounds_gemini/pastry_greetMorning_3.wav"
+        }
+      ],
+      "greetEvening": [
+        {
+          "text": "مساء الخير والروقان! نورت متجر معاذ، شو نجهزلك الليلة؟",
+          "file": "sounds_gemini/pastry_greetEvening_1.wav"
+        },
+        {
+          "text": "يسعد مساك يا غالي، جاهز نضبط سلة السهرة والمتة والتسالي؟",
+          "file": "sounds_gemini/pastry_greetEvening_2.wav"
+        },
+        {
+          "text": "مساء الورد يا غالي، كل شي بتحتاجه لليلة جاهز ومرتب هلق.",
+          "file": "sounds_gemini/pastry_greetEvening_4.wav"
+        }
+      ],
       "chatGood": [],
       "thanks": [],
       "added": [],
@@ -1077,7 +1128,16 @@
       "crossSell": [],
       "scarcityAlert": [],
       "checkoutBoost": [],
-      "orderSuccess": [],
+      "orderSuccess": [
+        {
+          "text": "كفو عليك! طلبك صار بعهدتنا، ريّح بالك وهلق بيوصلك لعند الباب.",
+          "file": "sounds_gemini/pastry_orderSuccess_1.wav"
+        },
+        {
+          "text": "طلبك انبعت بنجاح، تتهنى فيه يا رب وألف صحة وهنا مقدماً.",
+          "file": "sounds_gemini/pastry_orderSuccess_2.wav"
+        }
+      ],
       "welcomeBack": [
         {
           "text": "أهلاً بعودتك يا غالي! جاهز نكرر طلبك السابق بلمسة وحدة ولا حابب نختار شي جديد اليوم؟",
@@ -1098,7 +1158,12 @@
       "notFound": [],
       "idleNudge": [],
       "crossSell": [],
-      "scarcityAlert": [],
+      "scarcityAlert": [
+        {
+          "text": "لحّق حالك! في عروض طازة اليوم وبأسعار بتجنن، أفرجيك ياها قبل ما تخلص؟",
+          "file": "sounds_gemini/athlete_scarcityAlert_2.wav"
+        }
+      ],
       "checkoutBoost": [],
       "orderSuccess": [],
       "welcomeBack": []
