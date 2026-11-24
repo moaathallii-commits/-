@@ -1,12 +1,13 @@
 /**
- * وحدة الجسر الآمن بين «متجر معاذ» و«عالم التحديات والمسابقات» (v1.1)
+ * وحدة الجسر الآمن بين «متجر معاذ» و«عالم التحديات والمسابقات» (v1.2)
  * المسار في مستودع متجر معاذ: moaath_arena_bridge.js
- * السياسة الأمنية: 0% تدخل للذكاء الاصطناعي في المال أو التحويلات.
+ * - يعالج خطأ Failed to fetch عند الاتصال بـ Cloudflare Worker بتشخيص واضح + بديل آمن لتوليد معرف الربط محلياً عند تعذر الوصول للـ Worker
+ * - يحافظ على عزل الذكاء الاصطناعي تماماً عن المال وشام كاش
  */
 
 (function () {
-  if (window.__MOAATH_ARENA_BRIDGE_V11__) return;
-  window.__MOAATH_ARENA_BRIDGE_V11__ = true;
+  if (window.__MOAATH_ARENA_BRIDGE_V12__) return;
+  window.__MOAATH_ARENA_BRIDGE_V12__ = true;
 
   const ARENA_WORKER_URL = 'https://moaath-arena-worker.moaathallii.workers.dev';
   const ARENA_APP_URL = 'https://moaathallii-commits.github.io/moaath-arena/';
@@ -42,7 +43,7 @@
       .mab-title { color: #f3d576; font-size: 1.1rem; font-weight: 800; }
       .mab-close { background: none; border: none; color: #cbd5e1; font-size: 1.4rem; cursor: pointer; }
       .mab-box { background: #0b1120; border: 1px solid rgba(203, 213, 225, 0.15); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
-      .mab-key { font-family: monospace; font-size: 1.3rem; letter-spacing: 2px; color: #4ade80; text-align: center; padding: 10px; background: #0f172a; border-radius: 8px; margin: 8px 0; border: 1px dashed #d4af37; user-select: all; }
+      .mab-key { font-family: monospace; font-size: 1.25rem; letter-spacing: 2px; color: #4ade80; text-align: center; padding: 10px; background: #0f172a; border-radius: 8px; margin: 8px 0; border: 1px dashed #d4af37; user-select: all; }
       .mab-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: 700; font-size: 0.95rem; cursor: pointer; margin-top: 8px; }
       .mab-btn-gold { background: linear-gradient(135deg, #d4af37, #b48a1e); color: #0b1120; }
       .mab-btn-blue { background: #2563eb; color: #fff; }
@@ -56,24 +57,47 @@
     document.head.appendChild(style);
   }
 
+  function resolveStoreSession() {
+    let u = window.currentUser || null;
+    if (!u || !u.phone) {
+      try {
+        const cached = JSON.parse(localStorage.getItem('moaath_user') || 'null');
+        if (cached && cached.phone) u = cached;
+      } catch (_) {}
+    }
+    const phone = u?.phone ? String(u.phone).trim() : '';
+    const userName = u?.name ? String(u.name).trim() : '';
+    return { u, phone, userName };
+  }
+
   async function getAuthContext() {
     let idToken = '';
-    if (window.firebase && firebase.auth && firebase.auth().currentUser) {
-      idToken = await firebase.auth().currentUser.getIdToken(true);
-    } else if (window.auth && window.auth.currentUser && typeof window.auth.currentUser.getIdToken === 'function') {
-      idToken = await window.auth.currentUser.getIdToken(true);
-    }
+    try {
+      if (window.firebase && firebase.auth && firebase.auth().currentUser) {
+        idToken = await firebase.auth().currentUser.getIdToken(false);
+      } else if (window.auth && window.auth.currentUser && typeof window.auth.currentUser.getIdToken === 'function') {
+        idToken = await window.auth.currentUser.getIdToken(false);
+      }
+    } catch (_) {}
 
-    const storeUser = window.currentUser || null;
-    if (!idToken && (!storeUser || !storeUser.phone)) {
-      throw new Error('يرجى تسجيل الدخول في متجر معاذ أولاً.');
+    const sess = resolveStoreSession();
+    if (!idToken && !sess.phone) {
+      throw new Error('يرجى تسجيل الدخول بحسابك (رقم الهاتف) في متجر معاذ أولاً.');
     }
 
     return {
       idToken,
-      phone: storeUser?.phone ? String(storeUser.phone).trim() : '',
-      userName: storeUser?.name ? String(storeUser.name).trim() : ''
+      phone: sess.phone,
+      userName: sess.userName
     };
+  }
+
+  function buildDeterministicBindKey(phone) {
+    const cleanPhone = String(phone || '0000000000').replace(/[^0-9]/g, '').slice(-10).padStart(10, '0');
+    const part1 = cleanPhone.slice(-4).toUpperCase();
+    const sum = cleanPhone.split('').reduce((acc, ch, idx) => acc + (parseInt(ch, 10) || 0) * (idx + 3), 19);
+    const part2 = String((sum * 73) % 8999 + 1000);
+    return `MTH-${part1}-${part2}`;
   }
 
   async function workerRequest(path, body = {}) {
@@ -81,18 +105,41 @@
     const headers = { 'Content-Type': 'application/json' };
     if (ctx.idToken) headers['Authorization'] = `Bearer ${ctx.idToken}`;
 
-    const res = await fetch(`${ARENA_WORKER_URL}${path}`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        ...body,
-        bridgePhone: body.bridgePhone || ctx.phone || undefined,
-        bridgeUserName: body.bridgeUserName || ctx.userName || undefined
-      })
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.message || data.error || `خطأ (${res.status})`);
-    return data;
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), 9000) : null;
+
+    try {
+      const res = await fetch(`${ARENA_WORKER_URL}${path}`, {
+        method: 'POST',
+        headers,
+        signal: ctrl ? ctrl.signal : undefined,
+        body: JSON.stringify({
+          ...body,
+          bridgePhone: body.bridgePhone || ctx.phone || undefined,
+          bridgeUserName: body.bridgeUserName || ctx.userName || undefined
+        })
+      });
+      if (timer) clearTimeout(timer);
+
+      const rawText = await res.text();
+      let data = {};
+      try { data = JSON.parse(rawText); } catch (_) { data = { message: rawText }; }
+
+      if (!res.ok) {
+        throw new Error(data.message || data.error || `خطأ من الخادم (${res.status})`);
+      }
+      return data;
+    } catch (err) {
+      if (timer) clearTimeout(timer);
+      const msg = String(err?.message || err || '');
+      if (err?.name === 'AbortError') {
+        throw new Error('انتهت مهلة الاتصال بخادم عالم التحديات (Timeout). تحقق من الشبكة أو حالة Worker.');
+      }
+      if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {
+        throw new Error('تعذر الوصول إلى خادم عالم التحديات (Failed to fetch). قد يكون الخادم متوقفاً مؤقتاً أو محجوباً على الشبكة.');
+      }
+      throw new Error(msg);
+    }
   }
 
   function closeModal() {
@@ -130,11 +177,18 @@
     close: closeModal,
 
     openCustomerModal() {
+      const sess = resolveStoreSession();
+      const acctLine = sess.phone
+        ? `الحساب الحالي: <b>${esc(sess.userName || 'زبون')}</b> (${esc(sess.phone)})`
+        : `<span style="color:#fbbf24;">⚠️ لم يتم رصد رقم هاتف مسجل بعد — سجّل دخولك في المتجر أولاً.</span>`;
+
       createModal('🏆 عالم تحديات معاذ', `
+        <div class="mab-small" style="margin-bottom:10px; padding:7px 10px; background:rgba(255,255,255,0.04); border-radius:8px;">${acctLine}</div>
         <div class="mab-box">
           <div style="font-weight:700; color:#f3d576; margin-bottom:4px;">1. ربط جهازك لأول مرة</div>
           <p class="mab-small">ولّد معرفك السري الخاص وانسخه لتسجيل الدخول في تطبيق «عالم التحديات» المستقل.</p>
           <div id="mabKeyBox" class="mab-key" style="display:none;"></div>
+          <div id="mabKeyNote" class="mab-small" style="display:none; color:#93c5fd; margin-top:4px;"></div>
           <button type="button" class="mab-btn mab-btn-gold" onclick="window.MoaathArenaBridge.generateKey()">🔑 توليد معرف اللاعب السري</button>
           <button type="button" id="mabCopyBtn" class="mab-btn mab-btn-outline" style="display:none;" onclick="window.MoaathArenaBridge.copyKey()">📋 نسخ المعرف</button>
         </div>
@@ -151,16 +205,34 @@
     },
 
     async generateKey() {
+      const box = document.getElementById('mabKeyBox');
+      const copyBtn = document.getElementById('mabCopyBtn');
+      const noteEl = document.getElementById('mabKeyNote');
       try {
         const res = await workerRequest('/bridge/generate-bind-key');
-        const box = document.getElementById('mabKeyBox');
-        const copyBtn = document.getElementById('mabCopyBtn');
         if (box && res.bindKey) {
           box.textContent = String(res.bindKey);
           box.style.display = 'block';
         }
+        if (noteEl) {
+          noteEl.textContent = '✅ تم التوليد والمزامنة مع خادم العالم بنجاح.';
+          noteEl.style.display = 'block';
+        }
         if (copyBtn) copyBtn.style.display = 'block';
       } catch (err) {
+        const sess = resolveStoreSession();
+        if (sess.phone && box) {
+          const localKey = buildDeterministicBindKey(sess.phone);
+          try { localStorage.setItem('moaath_arena_local_bind_key', localKey); } catch (_) {}
+          box.textContent = localKey;
+          box.style.display = 'block';
+          if (copyBtn) copyBtn.style.display = 'block';
+          if (noteEl) {
+            noteEl.textContent = `⚠️ تعذر الاتصال بالخادم (${err.message}). تم توليد معرف محلي مرتبط برقمك (${sess.phone})؛ تأكد من نشر moaath-arena-worker على Cloudflare.`;
+            noteEl.style.display = 'block';
+          }
+          return;
+        }
         alert(err.message);
       }
     },
