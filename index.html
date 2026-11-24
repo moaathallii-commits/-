@@ -241,7 +241,7 @@
             <h3 style="color:var(--gold-color); margin:0 0 8px 0; text-align:center; font-size:15px;">🛒 سلة المشتريات وإتمام الطلب</h3>
             <div id="cartItemsList" style="max-height:145px; overflow-y:auto; margin-bottom:8px; padding-left:2px;"></div>
             <div id="aiCartRecommendationsBox" style="display:none; margin-bottom:8px;"></div>
-            <div id="gpsStatusBox" style="display:none; background:rgba(0,176,255,0.1); border:1px solid #00b0ff; border-radius:6px; padding:8px; margin-bottom:8px; font-size:11px; text-align:center;">
+            <div id="gpsStatusBox" style="display:none !important; background:rgba(0,176,255,0.1); border:1px solid #00b0ff; border-radius:6px; padding:8px; margin-bottom:8px; font-size:11px; text-align:center;">
                 <span style="color:#00b0ff; font-weight:bold;">📍 تم تحديد موقعك آلياً بالـ GPS</span>
                 <div id="gpsDistanceText" style="color:var(--text-color); margin-top:4px;"></div>
                 <button type="button" onclick="forceRefreshCartGPSLocation()" class="btn" style="margin-top:6px; width:auto; padding:3px 8px; font-size:10px; background:#00b0ff; color:#000;">🔄 تحديث موقعي الآن</button>
@@ -269,7 +269,7 @@
                 <label>💳 طريقة الدفع:</label>
                 <select id="cartPaymentMethod" class="form-control" onchange="renderCartModalItems()" style="padding:6px; font-weight:bold;"></select>
             </div>
-            <div id="shamCashInfoBox" style="display:none; text-align:center; background:rgba(212,175,55,0.08); border:1px dashed var(--gold-color); border-radius:6px; padding:7px; margin-bottom:8px;">
+            <div id="shamCashInfoBox" style="display:none !important; text-align:center; background:rgba(212,175,55,0.08); border:1px dashed var(--gold-color); border-radius:6px; padding:7px; margin-bottom:8px;">
                 <div style="font-size:10px; color:var(--gold-color); font-weight:bold; margin-bottom:4px;">🔍 فحص مبدئي لإشعار شام كاش (يتطلب تأكيدك اليدوي للرصيد)</div>
                 <input type="file" id="shamCashReceiptFile" accept="image/*" class="form-control" style="padding:5px; font-size:10px; margin-bottom:5px;" onchange="analyzeShamCashReceiptOCR()">
                 <div id="shamCashOcrResult" style="font-size:10px; color:var(--text-color); text-align:right;"></div>
@@ -6226,6 +6226,7 @@
         <div class="container" id="myOrdersListContainer"></div>
     </div>
               <script>window.renderAdminBrainUnmatchedList = window.renderAdminBrainUnmatchedList || function () {};</script>
+    <script src="moaath_core_registry.js"></script>
     <script src="moaath_security_guard.js?v=1"></script>
 
     <!-- 1. قواعد البيانات الأساسية للشخصيات والوصفات والعقل الذكي -->
@@ -6264,8 +6265,5 @@
     <script src="moaath_egg_onboarding.js"></script>
     <script src="moaath_egg_and_dispatch_fix.js"></script>
     <script src="store_ui_futuristic.js"></script>
-</body>
-</html>
-
 </body>
 </html>
