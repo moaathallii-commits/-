@@ -1,1621 +1,293 @@
 {
-  "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-24T12:06:21Z",
+  "version": "5.0-vip10x-std5x",
+  "updatedAt": "2026-11-24T13:26:53Z",
   "personas": {
+    "anime_ritaj": {
+      "greet": [
+        {
+          "text": "أهلاً وسهلاً يا حلو! نورت الغرفة، شو رايك نعمل جو لطيف؟",
+          "file": "sounds_gemini/anime_ritaj_greet_1.wav",
+          "mood": "excited",
+          "durationMs": 5130,
+          "tier": "vip"
+        }
+      ],
+      "greetMorning": [
+        {
+          "text": "صباح الورد والبهجة! يومك رح يكون حلو ومشرق بإذن الله.",
+          "file": "sounds_gemini/anime_ritaj_greetMorning_2.wav",
+          "mood": "excited",
+          "durationMs": 5210,
+          "tier": "vip"
+        }
+      ],
+      "greetEvening": [
+        {
+          "text": "مساء اللطف والروقان! نبعد الملل ونشوف شو في أفكار حلوة.",
+          "file": "sounds_gemini/anime_ritaj_greetEvening_3.wav",
+          "mood": "talk",
+          "durationMs": 4850,
+          "tier": "vip"
+        }
+      ],
+      "welcomeBack": [
+        {
+          "text": "يا هلا بابتسامتك من جديد! سعيدة جداً بوجودك معنا.",
+          "file": "sounds_gemini/anime_ritaj_welcomeBack_4.wav",
+          "mood": "excited",
+          "durationMs": 4610,
+          "tier": "vip"
+        }
+      ],
+      "chatGood": [
+        {
+          "text": "مبسوطة ومشرقة بوجودك! قولي شو عبالك اليوم؟",
+          "file": "sounds_gemini/anime_ritaj_chatGood_5.wav",
+          "mood": "excited",
+          "durationMs": 4170,
+          "tier": "vip"
+        }
+      ],
+      "thanks": [
+        {
+          "text": "ولو، يسعدني دائماً أكون لطيفة وبخدمتك بكل حب!",
+          "file": "sounds_gemini/anime_ritaj_thanks_6.wav",
+          "mood": "talk",
+          "durationMs": 4890,
+          "tier": "vip"
+        }
+      ],
+      "touchHead": [
+        {
+          "text": "ابتسامتك بتنوّر اليوم كله، شو أكتر شي بيفرحك هلق؟",
+          "file": "sounds_gemini/anime_ritaj_touchHead_7.wav",
+          "mood": "excited",
+          "durationMs": 4290,
+          "tier": "vip"
+        }
+      ],
+      "touchBody": [
+        {
+          "text": "أنا هنا بكل لطف ومساعدة، نختار يلي بيعجبك على مهلك.",
+          "file": "sounds_gemini/anime_ritaj_touchBody_8.wav",
+          "mood": "talk",
+          "durationMs": 4810,
+          "tier": "vip"
+        }
+      ],
+      "tip": [
+        {
+          "text": "إضافة لمسة حلوة أو مشروب بتحبه وسط اليوم بتغيّر النفسية للأجمل.",
+          "file": "sounds_gemini/anime_ritaj_tip_9.wav",
+          "mood": "talk",
+          "durationMs": 6210,
+          "tier": "vip"
+        }
+      ],
+      "challenge": [
+        {
+          "text": "سؤال لطيف: شو أكتر حلى أو نكهة حلوة بتسعدك فوراً؟",
+          "file": "sounds_gemini/anime_ritaj_challenge_10.wav",
+          "mood": "challenge",
+          "durationMs": 4530,
+          "tier": "vip"
+        }
+      ],
+      "shopBridge": [
+        {
+          "text": "لأجواء حلوة ومبهجة، هي الخيارات اللطيفة المتوفرة حالياً بالمتجر.",
+          "file": "sounds_gemini/anime_ritaj_shopBridge_11.wav",
+          "mood": "talk",
+          "durationMs": 5530,
+          "tier": "vip"
+        }
+      ],
+      "added": [
+        {
+          "text": "ياي! أضفت الصنف لسلتك بكل حب، نكمل؟",
+          "file": "sounds_gemini/anime_ritaj_added_12.wav",
+          "mood": "excited",
+          "durationMs": 4010,
+          "tier": "vip"
+        }
+      ],
+      "alternative": [
+        {
+          "text": "هاد الصنف مو متوفر هلق، شوف هالخيارات الحلوة الموجودة.",
+          "file": "sounds_gemini/anime_ritaj_alternative_13.wav",
+          "mood": "talk",
+          "durationMs": 4690,
+          "tier": "vip"
+        }
+      ],
+      "idleNudge": [
+        {
+          "text": "خبرني بمزاجك أو شو حابب نختار اليوم وأنا أساعدك فوراً!",
+          "file": "sounds_gemini/anime_ritaj_idleNudge_14.wav",
+          "mood": "talk",
+          "durationMs": 4890,
+          "tier": "vip"
+        }
+      ]
+    },
+    "anime_ryu": {},
+    "anime_zain": {},
+    "butler_farid": {},
+    "coach_sakhr": {},
+    "friend_fadi": {},
+    "friend_saad": {},
+    "grand_chef": {},
+    "princess_layla": {},
+    "athlete": {
+      "greet": [
+        {
+          "text": "يا أهلاً وسهلاً! نورت متجر معاذ، شو بتحب نجهزلك اليوم؟",
+          "file": "sounds_gemini/athlete_greet_1.wav",
+          "mood": "talk",
+          "tier": "standard"
+        }
+      ],
+      "greetMorning": [
+        {
+          "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
+          "file": "sounds_gemini/athlete_greetMorning_2.wav",
+          "mood": "talk",
+          "tier": "standard"
+        }
+      ]
+    },
     "buddy": {
       "greet": [
         {
-          "text": "يا أهلاً وسهلاً! نورت متجر معاذ. خبرني شو ببالك اليوم؟",
-          "file": "sounds_gemini/buddy_greet_1.wav"
-        },
-        {
-          "text": "أهلاً بك يا غالي، المتجر منور بوجودك. بشو نبدأ سلتك اليوم؟",
-          "file": "sounds_gemini/buddy_greet_2.wav"
-        },
-        {
-          "text": "يا مية هلا ومرحبا! كل شي طازج ومرتب بالمتجر، شو ناقصك اليوم؟",
-          "file": "sounds_gemini/buddy_greet_3.wav"
-        },
-        {
-          "text": "حياك الله يا غالي، نورتنا بمتجر معاذ. قولي شو عبالك نجهزلك؟",
-          "file": "sounds_gemini/buddy_greet_4.wav"
-        },
-        {
-          "text": "أهلاً وسهلاً فيك، يسعدني جداً أساعدك بتسوقك اليوم. بشو نبلش؟",
-          "file": "sounds_gemini/buddy_greet_5.wav"
-        },
-        {
-          "text": "يا هلا بالطلة الحلوة! متجر معاذ جاهز لطلباتك، سمّي بالله واطلب.",
-          "file": "sounds_gemini/buddy_greet_6.wav"
+          "text": "يا أهلاً وسهلاً! نورت متجر معاذ، شو بتحب نجهزلك اليوم؟",
+          "file": "sounds_gemini/buddy_greet_1.wav",
+          "mood": "talk",
+          "tier": "standard"
         }
       ],
       "greetMorning": [
         {
           "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
-          "file": "sounds_gemini/buddy_greetMorning_1.wav"
-        },
-        {
-          "text": "يسعد صباحك يا غالي، كل أغراض الفطور والقهوة جاهزة هلق.",
-          "file": "sounds_gemini/buddy_greetMorning_2.wav"
-        },
-        {
-          "text": "صباح النور والبركة! إن شاء الله يومك حلو ومليان خير، شو بتحب تطلب؟",
-          "file": "sounds_gemini/buddy_greetMorning_3.wav"
-        },
-        {
-          "text": "صباح الفل والروقان، خبرني شو ناقص البيت لنجهزه عالسريع.",
-          "file": "sounds_gemini/buddy_greetMorning_4.wav"
+          "file": "sounds_gemini/buddy_greetMorning_2.wav",
+          "mood": "talk",
+          "tier": "standard"
         }
       ],
       "greetEvening": [
         {
           "text": "مساء الخير والروقان! نورت متجر معاذ، شو نجهزلك الليلة؟",
-          "file": "sounds_gemini/buddy_greetEvening_1.wav"
-        },
-        {
-          "text": "يسعد مساك يا غالي، جاهز نضبط سلة السهرة والمتة والتسالي؟",
-          "file": "sounds_gemini/buddy_greetEvening_2.wav"
-        },
-        {
-          "text": "مساء النور والهنا، خبرني شو عبالك للعشا أو السهرة اليوم.",
-          "file": "sounds_gemini/buddy_greetEvening_3.wav"
-        },
-        {
-          "text": "مساء الورد يا غالي، كل شي بتحتاجه لليلة جاهز ومرتب هلق.",
-          "file": "sounds_gemini/buddy_greetEvening_4.wav"
-        }
-      ],
-      "chatGood": [
-        {
-          "text": "أنا بخير والحمد لله، كيف بقدر أساعدك اليوم؟",
-          "file": "sounds_gemini/buddy_chatGood_1.wav"
-        },
-        {
-          "text": "بألف خير ونعمة بسؤالك اللطيف يا غالي، شو بتحب أجهزلك؟",
-          "file": "sounds_gemini/buddy_chatGood_2.wav"
-        },
-        {
-          "text": "تمام التمام وبأعلى جاهزية لخدمتك، خبرني شو ببالك تطلب.",
-          "file": "sounds_gemini/buddy_chatGood_3.wav"
-        },
-        {
-          "text": "الحمد لله عال العال، وجودك بمتجر معاذ بيسعدني دايماً. كيف أخدمك؟",
-          "file": "sounds_gemini/buddy_chatGood_4.wav"
-        }
-      ],
-      "thanks": [
-        {
-          "text": "العفو يا غالي، تكرم عينك ويسعدني دائماً أكون بخدمتك.",
-          "file": "sounds_gemini/buddy_thanks_1.wav"
-        },
-        {
-          "text": "ولو يا غالي، هاد واجبي بكل سرور ومحبة.",
-          "file": "sounds_gemini/buddy_thanks_2.wav"
-        },
-        {
-          "text": "على راسي وعيني، بالعافية مقدماً على كل اختياراتك.",
-          "file": "sounds_gemini/buddy_thanks_3.wav"
-        },
-        {
-          "text": "لا شكر على واجب أبداً، بأي وقت بتحتاج شي أنا هون.",
-          "file": "sounds_gemini/buddy_thanks_4.wav"
-        }
-      ],
-      "added": [
-        {
-          "text": "اختيار موفق، تمت إضافة الصنف إلى السلة بنجاح.",
-          "file": "sounds_gemini/buddy_added_1.wav"
-        },
-        {
-          "text": "ممتاز، صار طلبك جاهز بالسلة، نضيف شي تاني؟",
-          "file": "sounds_gemini/buddy_added_2.wav"
-        },
-        {
-          "text": "يا سلام عليك، أضفته للسلة عالسريع، شو نكمل كمان؟",
-          "file": "sounds_gemini/buddy_added_3.wav"
-        },
-        {
-          "text": "تمت الإضافة بنجاح، سلتك صارت مرتبة وأحلى هلق.",
-          "file": "sounds_gemini/buddy_added_4.wav"
-        },
-        {
-          "text": "تمام التمام، صار الصنف بسلتك، خبرني إذا ناقصك شي غيره.",
-          "file": "sounds_gemini/buddy_added_5.wav"
-        }
-      ],
-      "itemsReady": [
-        {
-          "text": "تفضل، عرضتلك الأصناف المتوفرة بالفرع هلق، حدد الكمية.",
-          "file": "sounds_gemini/buddy_itemsReady_1.wav"
-        },
-        {
-          "text": "جهزتلك القائمة المتوفرة قدامك، اكبس زائد لإضافة يلي بتحبه.",
-          "file": "sounds_gemini/buddy_itemsReady_2.wav"
-        },
-        {
-          "text": "لقيتلك المطلوب بالفرع، اختار الكمية المناسبة وأضفها للسلة.",
-          "file": "sounds_gemini/buddy_itemsReady_3.wav"
-        },
-        {
-          "text": "هي كل الخيارات المتوفرة حالياً، حدد الكمية وبنجهزها فوراً.",
-          "file": "sounds_gemini/buddy_itemsReady_4.wav"
-        }
-      ],
-      "alternative": [
-        {
-          "text": "هاد الصنف خالص هلق، بس جبتلك أقرب البدائل المتوفرة بالفرع.",
-          "file": "sounds_gemini/buddy_alternative_1.wav"
-        },
-        {
-          "text": "للأسف ما لقيت نفس الصنف حالياً، شوف هالبدائل الطيبة والموجودة.",
-          "file": "sounds_gemini/buddy_alternative_2.wav"
-        },
-        {
-          "text": "الصنف المطلوب نافد مؤقتاً، عرضتلك أفضل بدائل متوفرة هلق.",
-          "file": "sounds_gemini/buddy_alternative_3.wav"
-        }
-      ],
-      "habit": [
-        {
-          "text": "جبتلك مفضلاتك يلي دايماً بتختارها لتوفير وقتك، حدد الكمية.",
-          "file": "sounds_gemini/buddy_habit_1.wav"
-        },
-        {
-          "text": "هي أغراضك المعتادة متوفرة هلق بلمسة وحدة يا غالي.",
-          "file": "sounds_gemini/buddy_habit_2.wav"
-        },
-        {
-          "text": "تذكرت اختياراتك المفضلة وجهزتلك ياها عالسريع بالسلة.",
-          "file": "sounds_gemini/buddy_habit_3.wav"
-        }
-      ],
-      "notFound": [
-        {
-          "text": "عذراً يا غالي، ما لقيت هاد الصنف متوفر هلق، جرب اسم أقرب.",
-          "file": "sounds_gemini/buddy_notFound_1.wav"
-        },
-        {
-          "text": "بحثتلك منيح بس ما لقيت هاد الصنف حالياً، فيك تطلبه من زر طلب صنف.",
-          "file": "sounds_gemini/buddy_notFound_2.wav"
-        },
-        {
-          "text": "هاد الصنف غير متوفر بالرف هلق، خبرني بنوع تاني وبساعدك فوراً.",
-          "file": "sounds_gemini/buddy_notFound_3.wav"
-        }
-      ],
-      "idleNudge": [
-        {
-          "text": "محتار شو تاخد يا غالي؟ خبرني شو عبالك اليوم وأنا برتبلك السلة على ذوقك.",
-          "file": "sounds_gemini/buddy_idleNudge_1.wav"
-        },
-        {
-          "text": "خذ راحتك بالتصفح، وإذا حابب أختصر عليك الوقت بقترحلك أحلى الأصناف الطازة اليوم.",
-          "file": "sounds_gemini/buddy_idleNudge_2.wav"
-        },
-        {
-          "text": "إذا عم تقارن الأسعار، خليني أفرجيك أوفر العروض الموجودة حالياً لتوفر وقتك وميزانيتك.",
-          "file": "sounds_gemini/buddy_idleNudge_3.wav"
-        }
-      ],
-      "crossSell": [
-        {
-          "text": "سلتك صارت مرتبة! شو رأيك أفرجيك مكملات حلوة تناسب أغراضك قبل ما تعتمد الطلب؟",
-          "file": "sounds_gemini/buddy_crossSell_1.wav"
-        },
-        {
-          "text": "أغراضك جاهزة، بس اتأكد إذا ناقصك شي خفيف للسهرة أو المطبخ، أفرجيك المقترحات؟",
-          "file": "sounds_gemini/buddy_crossSell_2.wav"
-        },
-        {
-          "text": "اختياراتك بتشهي! نحط معها شي تكميلي خفيف يكمّل القعدة؟",
-          "file": "sounds_gemini/buddy_crossSell_3.wav"
-        }
-      ],
-      "scarcityAlert": [
-        {
-          "text": "ملاحظة سريعة يا غالي، في عروض وأصناف عليها طلب عالي وما بقي منها كتير، تحب تشوفها هلق؟",
-          "file": "sounds_gemini/buddy_scarcityAlert_1.wav"
-        },
-        {
-          "text": "لحّق حالك! في عروض طازة اليوم وبأسعار بتجنن، أفرجيك ياها قبل ما تخلص؟",
-          "file": "sounds_gemini/buddy_scarcityAlert_2.wav"
-        },
-        {
-          "text": "بنصحك بصدق يا غالي، عروض اليوم موفرة كتير، تحب نلقي عليها نظرة؟",
-          "file": "sounds_gemini/buddy_scarcityAlert_3.wav"
-        }
-      ],
-      "checkoutBoost": [
-        {
-          "text": "سلتك جاهزة مية بالمية! ضغطة زر والتوصيل بطريقه إلك بأسرع وقت.",
-          "file": "sounds_gemini/buddy_checkoutBoost_1.wav"
-        },
-        {
-          "text": "اختياراتك رائعة ومتناسقة، تأكد إن طلبك رح يوصلك بأحلى صورة وبأسرع وقت.",
-          "file": "sounds_gemini/buddy_checkoutBoost_2.wav"
-        },
-        {
-          "text": "سلة متكاملة يا غالي! اعتمد الطلب هلق وخلي التوصيل علينا.",
-          "file": "sounds_gemini/buddy_checkoutBoost_3.wav"
-        }
-      ],
-      "orderSuccess": [
-        {
-          "text": "كفو عليك! طلبك صار بعهدتنا، ريّح بالك وهلق بيوصلك لعند الباب.",
-          "file": "sounds_gemini/buddy_orderSuccess_1.wav"
-        },
-        {
-          "text": "طلبك انبعت بنجاح، تتهنى فيه يا رب وألف صحة وهنا مقدماً.",
-          "file": "sounds_gemini/buddy_orderSuccess_2.wav"
-        },
-        {
-          "text": "اختيار ذوّيق، طلبك قيد التجهيز بأعلى عناية ويسعدنا دايماً خدمتك.",
-          "file": "sounds_gemini/buddy_orderSuccess_3.wav"
-        }
-      ],
-      "welcomeBack": [
-        {
-          "text": "يا مية هلا بعودتك يا غالي! اشتقنالك بمتجر معاذ، نعيد نفس أغراض المرة الماضية ولا في شي جديد؟",
-          "file": "sounds_gemini/buddy_welcomeBack_1.wav"
-        },
-        {
-          "text": "أهلاً بعودتك يا غالي! جاهز نكرر طلبك السابق بلمسة وحدة ولا حابب نختار شي جديد اليوم؟",
-          "file": "sounds_gemini/buddy_welcomeBack_2.wav"
-        },
-        {
-          "text": "نورتنا من جديد بمتجر معاذ! تحب أجهزلك نفس مفضلاتك الماضية؟",
-          "file": "sounds_gemini/buddy_welcomeBack_3.wav"
-        }
-      ]
-    },
-    "lolo": {
-      "greet": [
-        {
-          "text": "يا أهلاً وسهلاً! نورت متجر معاذ. خبرني شو ببالك اليوم؟",
-          "file": "sounds_gemini/lolo_greet_1.wav"
-        },
-        {
-          "text": "أهلاً بك يا غالي، المتجر منور بوجودك. بشو نبدأ سلتك اليوم؟",
-          "file": "sounds_gemini/lolo_greet_2.wav"
-        },
-        {
-          "text": "يا مية هلا ومرحبا! كل شي طازج ومرتب بالمتجر، شو ناقصك اليوم؟",
-          "file": "sounds_gemini/lolo_greet_3.wav"
-        },
-        {
-          "text": "حياك الله يا غالي، نورتنا بمتجر معاذ. قولي شو عبالك نجهزلك؟",
-          "file": "sounds_gemini/lolo_greet_4.wav"
-        },
-        {
-          "text": "أهلاً وسهلاً فيك، يسعدني جداً أساعدك بتسوقك اليوم. بشو نبلش؟",
-          "file": "sounds_gemini/lolo_greet_5.wav"
-        },
-        {
-          "text": "يا هلا بالطلة الحلوة! متجر معاذ جاهز لطلباتك، سمّي بالله واطلب.",
-          "file": "sounds_gemini/lolo_greet_6.wav"
-        }
-      ],
-      "greetMorning": [
-        {
-          "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
-          "file": "sounds_gemini/lolo_greetMorning_1.wav"
-        },
-        {
-          "text": "يسعد صباحك يا غالي، كل أغراض الفطور والقهوة جاهزة هلق.",
-          "file": "sounds_gemini/lolo_greetMorning_2.wav"
-        },
-        {
-          "text": "صباح النور والبركة! إن شاء الله يومك حلو ومليان خير، شو بتحب تطلب؟",
-          "file": "sounds_gemini/lolo_greetMorning_3.wav"
-        },
-        {
-          "text": "صباح الفل والروقان، خبرني شو ناقص البيت لنجهزه عالسريع.",
-          "file": "sounds_gemini/lolo_greetMorning_4.wav"
-        }
-      ],
-      "greetEvening": [
-        {
-          "text": "مساء الخير والروقان! نورت متجر معاذ، شو نجهزلك الليلة؟",
-          "file": "sounds_gemini/lolo_greetEvening_1.wav"
-        },
-        {
-          "text": "يسعد مساك يا غالي، جاهز نضبط سلة السهرة والمتة والتسالي؟",
-          "file": "sounds_gemini/lolo_greetEvening_2.wav"
-        },
-        {
-          "text": "مساء النور والهنا، خبرني شو عبالك للعشا أو السهرة اليوم.",
-          "file": "sounds_gemini/lolo_greetEvening_3.wav"
-        },
-        {
-          "text": "مساء الورد يا غالي، كل شي بتحتاجه لليلة جاهز ومرتب هلق.",
-          "file": "sounds_gemini/lolo_greetEvening_4.wav"
-        }
-      ],
-      "chatGood": [
-        {
-          "text": "أنا بخير والحمد لله، كيف بقدر أساعدك اليوم؟",
-          "file": "sounds_gemini/lolo_chatGood_1.wav"
-        },
-        {
-          "text": "بألف خير ونعمة بسؤالك اللطيف يا غالي، شو بتحب أجهزلك؟",
-          "file": "sounds_gemini/lolo_chatGood_2.wav"
-        },
-        {
-          "text": "تمام التمام وبأعلى جاهزية لخدمتك، خبرني شو ببالك تطلب.",
-          "file": "sounds_gemini/lolo_chatGood_3.wav"
-        },
-        {
-          "text": "الحمد لله عال العال، وجودك بمتجر معاذ بيسعدني دايماً. كيف أخدمك؟",
-          "file": "sounds_gemini/lolo_chatGood_4.wav"
-        }
-      ],
-      "thanks": [
-        {
-          "text": "العفو يا غالي، تكرم عينك ويسعدني دائماً أكون بخدمتك.",
-          "file": "sounds_gemini/lolo_thanks_1.wav"
-        },
-        {
-          "text": "ولو يا غالي، هاد واجبي بكل سرور ومحبة.",
-          "file": "sounds_gemini/lolo_thanks_2.wav"
-        },
-        {
-          "text": "على راسي وعيني، بالعافية مقدماً على كل اختياراتك.",
-          "file": "sounds_gemini/lolo_thanks_3.wav"
-        },
-        {
-          "text": "لا شكر على واجب أبداً، بأي وقت بتحتاج شي أنا هون.",
-          "file": "sounds_gemini/lolo_thanks_4.wav"
-        }
-      ],
-      "added": [
-        {
-          "text": "اختيار موفق، تمت إضافة الصنف إلى السلة بنجاح.",
-          "file": "sounds_gemini/lolo_added_1.wav"
-        },
-        {
-          "text": "ممتاز، صار طلبك جاهز بالسلة، نضيف شي تاني؟",
-          "file": "sounds_gemini/lolo_added_2.wav"
-        },
-        {
-          "text": "يا سلام عليك، أضفته للسلة عالسريع، شو نكمل كمان؟",
-          "file": "sounds_gemini/lolo_added_3.wav"
-        },
-        {
-          "text": "تمت الإضافة بنجاح، سلتك صارت مرتبة وأحلى هلق.",
-          "file": "sounds_gemini/lolo_added_4.wav"
-        },
-        {
-          "text": "تمام التمام، صار الصنف بسلتك، خبرني إذا ناقصك شي غيره.",
-          "file": "sounds_gemini/lolo_added_5.wav"
-        }
-      ],
-      "itemsReady": [
-        {
-          "text": "تفضل، عرضتلك الأصناف المتوفرة بالفرع هلق، حدد الكمية.",
-          "file": "sounds_gemini/lolo_itemsReady_1.wav"
-        },
-        {
-          "text": "جهزتلك القائمة المتوفرة قدامك، اكبس زائد لإضافة يلي بتحبه.",
-          "file": "sounds_gemini/lolo_itemsReady_2.wav"
-        },
-        {
-          "text": "لقيتلك المطلوب بالفرع، اختار الكمية المناسبة وأضفها للسلة.",
-          "file": "sounds_gemini/lolo_itemsReady_3.wav"
-        },
-        {
-          "text": "هي كل الخيارات المتوفرة حالياً، حدد الكمية وبنجهزها فوراً.",
-          "file": "sounds_gemini/lolo_itemsReady_4.wav"
-        }
-      ],
-      "alternative": [
-        {
-          "text": "هاد الصنف خالص هلق، بس جبتلك أقرب البدائل المتوفرة بالفرع.",
-          "file": "sounds_gemini/lolo_alternative_1.wav"
-        },
-        {
-          "text": "للأسف ما لقيت نفس الصنف حالياً، شوف هالبدائل الطيبة والموجودة.",
-          "file": "sounds_gemini/lolo_alternative_2.wav"
-        },
-        {
-          "text": "الصنف المطلوب نافد مؤقتاً، عرضتلك أفضل بدائل متوفرة هلق.",
-          "file": "sounds_gemini/lolo_alternative_3.wav"
-        }
-      ],
-      "habit": [
-        {
-          "text": "جبتلك مفضلاتك يلي دايماً بتختارها لتوفير وقتك، حدد الكمية.",
-          "file": "sounds_gemini/lolo_habit_1.wav"
-        },
-        {
-          "text": "هي أغراضك المعتادة متوفرة هلق بلمسة وحدة يا غالي.",
-          "file": "sounds_gemini/lolo_habit_2.wav"
-        },
-        {
-          "text": "تذكرت اختياراتك المفضلة وجهزتلك ياها عالسريع بالسلة.",
-          "file": "sounds_gemini/lolo_habit_3.wav"
-        }
-      ],
-      "notFound": [
-        {
-          "text": "عذراً يا غالي، ما لقيت هاد الصنف متوفر هلق، جرب اسم أقرب.",
-          "file": "sounds_gemini/lolo_notFound_1.wav"
-        },
-        {
-          "text": "بحثتلك منيح بس ما لقيت هاد الصنف حالياً، فيك تطلبه من زر طلب صنف.",
-          "file": "sounds_gemini/lolo_notFound_2.wav"
-        },
-        {
-          "text": "هاد الصنف غير متوفر بالرف هلق، خبرني بنوع تاني وبساعدك فوراً.",
-          "file": "sounds_gemini/lolo_notFound_3.wav"
-        }
-      ],
-      "idleNudge": [
-        {
-          "text": "محتار شو تاخد يا غالي؟ خبرني شو عبالك اليوم وأنا برتبلك السلة على ذوقك.",
-          "file": "sounds_gemini/lolo_idleNudge_1.wav"
-        },
-        {
-          "text": "خذ راحتك بالتصفح، وإذا حابب أختصر عليك الوقت بقترحلك أحلى الأصناف الطازة اليوم.",
-          "file": "sounds_gemini/lolo_idleNudge_2.wav"
-        },
-        {
-          "text": "إذا عم تقارن الأسعار، خليني أفرجيك أوفر العروض الموجودة حالياً لتوفر وقتك وميزانيتك.",
-          "file": "sounds_gemini/lolo_idleNudge_3.wav"
-        }
-      ],
-      "crossSell": [
-        {
-          "text": "سلتك صارت مرتبة! شو رأيك أفرجيك مكملات حلوة تناسب أغراضك قبل ما تعتمد الطلب؟",
-          "file": "sounds_gemini/lolo_crossSell_1.wav"
-        },
-        {
-          "text": "أغراضك جاهزة، بس اتأكد إذا ناقصك شي خفيف للسهرة أو المطبخ، أفرجيك المقترحات؟",
-          "file": "sounds_gemini/lolo_crossSell_2.wav"
-        },
-        {
-          "text": "اختياراتك بتشهي! نحط معها شي تكميلي خفيف يكمّل القعدة؟",
-          "file": "sounds_gemini/lolo_crossSell_3.wav"
-        }
-      ],
-      "scarcityAlert": [
-        {
-          "text": "ملاحظة سريعة يا غالي، في عروض وأصناف عليها طلب عالي وما بقي منها كتير، تحب تشوفها هلق؟",
-          "file": "sounds_gemini/lolo_scarcityAlert_1.wav"
-        },
-        {
-          "text": "لحّق حالك! في عروض طازة اليوم وبأسعار بتجنن، أفرجيك ياها قبل ما تخلص؟",
-          "file": "sounds_gemini/lolo_scarcityAlert_2.wav"
-        },
-        {
-          "text": "بنصحك بصدق يا غالي، عروض اليوم موفرة كتير، تحب نلقي عليها نظرة؟",
-          "file": "sounds_gemini/lolo_scarcityAlert_3.wav"
-        }
-      ],
-      "checkoutBoost": [
-        {
-          "text": "سلتك جاهزة مية بالمية! ضغطة زر والتوصيل بطريقه إلك بأسرع وقت.",
-          "file": "sounds_gemini/lolo_checkoutBoost_1.wav"
-        },
-        {
-          "text": "اختياراتك رائعة ومتناسقة، تأكد إن طلبك رح يوصلك بأحلى صورة وبأسرع وقت.",
-          "file": "sounds_gemini/lolo_checkoutBoost_2.wav"
-        },
-        {
-          "text": "سلة متكاملة يا غالي! اعتمد الطلب هلق وخلي التوصيل علينا.",
-          "file": "sounds_gemini/lolo_checkoutBoost_3.wav"
-        }
-      ],
-      "orderSuccess": [
-        {
-          "text": "كفو عليك! طلبك صار بعهدتنا، ريّح بالك وهلق بيوصلك لعند الباب.",
-          "file": "sounds_gemini/lolo_orderSuccess_1.wav"
-        },
-        {
-          "text": "طلبك انبعت بنجاح، تتهنى فيه يا رب وألف صحة وهنا مقدماً.",
-          "file": "sounds_gemini/lolo_orderSuccess_2.wav"
-        },
-        {
-          "text": "اختيار ذوّيق، طلبك قيد التجهيز بأعلى عناية ويسعدنا دايماً خدمتك.",
-          "file": "sounds_gemini/lolo_orderSuccess_3.wav"
-        }
-      ],
-      "welcomeBack": [
-        {
-          "text": "يا مية هلا بعودتك يا غالي! اشتقنالك بمتجر معاذ، نعيد نفس أغراض المرة الماضية ولا في شي جديد؟",
-          "file": "sounds_gemini/lolo_welcomeBack_1.wav"
-        },
-        {
-          "text": "أهلاً بعودتك يا غالي! جاهز نكرر طلبك السابق بلمسة وحدة ولا حابب نختار شي جديد اليوم؟",
-          "file": "sounds_gemini/lolo_welcomeBack_2.wav"
-        },
-        {
-          "text": "نورتنا من جديد بمتجر معاذ! تحب أجهزلك نفس مفضلاتك الماضية؟",
-          "file": "sounds_gemini/lolo_welcomeBack_3.wav"
-        }
-      ]
-    },
-    "noor": {
-      "greet": [
-        {
-          "text": "يا أهلاً وسهلاً! نورت متجر معاذ. خبرني شو ببالك اليوم؟",
-          "file": "sounds_gemini/noor_greet_1.wav"
-        },
-        {
-          "text": "أهلاً بك يا غالي، المتجر منور بوجودك. بشو نبدأ سلتك اليوم؟",
-          "file": "sounds_gemini/noor_greet_2.wav"
-        },
-        {
-          "text": "يا مية هلا ومرحبا! كل شي طازج ومرتب بالمتجر، شو ناقصك اليوم؟",
-          "file": "sounds_gemini/noor_greet_3.wav"
-        },
-        {
-          "text": "حياك الله يا غالي، نورتنا بمتجر معاذ. قولي شو عبالك نجهزلك؟",
-          "file": "sounds_gemini/noor_greet_4.wav"
-        },
-        {
-          "text": "أهلاً وسهلاً فيك، يسعدني جداً أساعدك بتسوقك اليوم. بشو نبلش؟",
-          "file": "sounds_gemini/noor_greet_5.wav"
-        },
-        {
-          "text": "يا هلا بالطلة الحلوة! متجر معاذ جاهز لطلباتك، سمّي بالله واطلب.",
-          "file": "sounds_gemini/noor_greet_6.wav"
-        }
-      ],
-      "greetMorning": [
-        {
-          "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
-          "file": "sounds_gemini/noor_greetMorning_1.wav"
-        },
-        {
-          "text": "يسعد صباحك يا غالي، كل أغراض الفطور والقهوة جاهزة هلق.",
-          "file": "sounds_gemini/noor_greetMorning_2.wav"
-        },
-        {
-          "text": "صباح النور والبركة! إن شاء الله يومك حلو ومليان خير، شو بتحب تطلب؟",
-          "file": "sounds_gemini/noor_greetMorning_3.wav"
-        },
-        {
-          "text": "صباح الفل والروقان، خبرني شو ناقص البيت لنجهزه عالسريع.",
-          "file": "sounds_gemini/noor_greetMorning_4.wav"
-        }
-      ],
-      "greetEvening": [
-        {
-          "text": "مساء الخير والروقان! نورت متجر معاذ، شو نجهزلك الليلة؟",
-          "file": "sounds_gemini/noor_greetEvening_1.wav"
-        },
-        {
-          "text": "يسعد مساك يا غالي، جاهز نضبط سلة السهرة والمتة والتسالي؟",
-          "file": "sounds_gemini/noor_greetEvening_2.wav"
-        },
-        {
-          "text": "مساء النور والهنا، خبرني شو عبالك للعشا أو السهرة اليوم.",
-          "file": "sounds_gemini/noor_greetEvening_3.wav"
-        },
-        {
-          "text": "مساء الورد يا غالي، كل شي بتحتاجه لليلة جاهز ومرتب هلق.",
-          "file": "sounds_gemini/noor_greetEvening_4.wav"
-        }
-      ],
-      "chatGood": [
-        {
-          "text": "أنا بخير والحمد لله، كيف بقدر أساعدك اليوم؟",
-          "file": "sounds_gemini/noor_chatGood_1.wav"
-        },
-        {
-          "text": "بألف خير ونعمة بسؤالك اللطيف يا غالي، شو بتحب أجهزلك؟",
-          "file": "sounds_gemini/noor_chatGood_2.wav"
-        },
-        {
-          "text": "تمام التمام وبأعلى جاهزية لخدمتك، خبرني شو ببالك تطلب.",
-          "file": "sounds_gemini/noor_chatGood_3.wav"
-        },
-        {
-          "text": "الحمد لله عال العال، وجودك بمتجر معاذ بيسعدني دايماً. كيف أخدمك؟",
-          "file": "sounds_gemini/noor_chatGood_4.wav"
-        }
-      ],
-      "thanks": [
-        {
-          "text": "العفو يا غالي، تكرم عينك ويسعدني دائماً أكون بخدمتك.",
-          "file": "sounds_gemini/noor_thanks_1.wav"
-        },
-        {
-          "text": "ولو يا غالي، هاد واجبي بكل سرور ومحبة.",
-          "file": "sounds_gemini/noor_thanks_2.wav"
-        },
-        {
-          "text": "على راسي وعيني، بالعافية مقدماً على كل اختياراتك.",
-          "file": "sounds_gemini/noor_thanks_3.wav"
-        },
-        {
-          "text": "لا شكر على واجب أبداً، بأي وقت بتحتاج شي أنا هون.",
-          "file": "sounds_gemini/noor_thanks_4.wav"
-        }
-      ],
-      "added": [
-        {
-          "text": "اختيار موفق، تمت إضافة الصنف إلى السلة بنجاح.",
-          "file": "sounds_gemini/noor_added_1.wav"
-        },
-        {
-          "text": "ممتاز، صار طلبك جاهز بالسلة، نضيف شي تاني؟",
-          "file": "sounds_gemini/noor_added_2.wav"
-        },
-        {
-          "text": "يا سلام عليك، أضفته للسلة عالسريع، شو نكمل كمان؟",
-          "file": "sounds_gemini/noor_added_3.wav"
-        },
-        {
-          "text": "تمت الإضافة بنجاح، سلتك صارت مرتبة وأحلى هلق.",
-          "file": "sounds_gemini/noor_added_4.wav"
-        },
-        {
-          "text": "تمام التمام، صار الصنف بسلتك، خبرني إذا ناقصك شي غيره.",
-          "file": "sounds_gemini/noor_added_5.wav"
-        }
-      ],
-      "itemsReady": [
-        {
-          "text": "تفضل، عرضتلك الأصناف المتوفرة بالفرع هلق، حدد الكمية.",
-          "file": "sounds_gemini/noor_itemsReady_1.wav"
-        },
-        {
-          "text": "جهزتلك القائمة المتوفرة قدامك، اكبس زائد لإضافة يلي بتحبه.",
-          "file": "sounds_gemini/noor_itemsReady_2.wav"
-        },
-        {
-          "text": "لقيتلك المطلوب بالفرع، اختار الكمية المناسبة وأضفها للسلة.",
-          "file": "sounds_gemini/noor_itemsReady_3.wav"
-        },
-        {
-          "text": "هي كل الخيارات المتوفرة حالياً، حدد الكمية وبنجهزها فوراً.",
-          "file": "sounds_gemini/noor_itemsReady_4.wav"
-        }
-      ],
-      "alternative": [
-        {
-          "text": "هاد الصنف خالص هلق، بس جبتلك أقرب البدائل المتوفرة بالفرع.",
-          "file": "sounds_gemini/noor_alternative_1.wav"
-        },
-        {
-          "text": "للأسف ما لقيت نفس الصنف حالياً، شوف هالبدائل الطيبة والموجودة.",
-          "file": "sounds_gemini/noor_alternative_2.wav"
-        },
-        {
-          "text": "الصنف المطلوب نافد مؤقتاً، عرضتلك أفضل بدائل متوفرة هلق.",
-          "file": "sounds_gemini/noor_alternative_3.wav"
-        }
-      ],
-      "habit": [
-        {
-          "text": "جبتلك مفضلاتك يلي دايماً بتختارها لتوفير وقتك، حدد الكمية.",
-          "file": "sounds_gemini/noor_habit_1.wav"
-        },
-        {
-          "text": "هي أغراضك المعتادة متوفرة هلق بلمسة وحدة يا غالي.",
-          "file": "sounds_gemini/noor_habit_2.wav"
-        },
-        {
-          "text": "تذكرت اختياراتك المفضلة وجهزتلك ياها عالسريع بالسلة.",
-          "file": "sounds_gemini/noor_habit_3.wav"
-        }
-      ],
-      "notFound": [
-        {
-          "text": "عذراً يا غالي، ما لقيت هاد الصنف متوفر هلق، جرب اسم أقرب.",
-          "file": "sounds_gemini/noor_notFound_1.wav"
-        },
-        {
-          "text": "بحثتلك منيح بس ما لقيت هاد الصنف حالياً، فيك تطلبه من زر طلب صنف.",
-          "file": "sounds_gemini/noor_notFound_2.wav"
-        },
-        {
-          "text": "هاد الصنف غير متوفر بالرف هلق، خبرني بنوع تاني وبساعدك فوراً.",
-          "file": "sounds_gemini/noor_notFound_3.wav"
-        }
-      ],
-      "idleNudge": [
-        {
-          "text": "محتار شو تاخد يا غالي؟ خبرني شو عبالك اليوم وأنا برتبلك السلة على ذوقك.",
-          "file": "sounds_gemini/noor_idleNudge_1.wav"
-        },
-        {
-          "text": "خذ راحتك بالتصفح، وإذا حابب أختصر عليك الوقت بقترحلك أحلى الأصناف الطازة اليوم.",
-          "file": "sounds_gemini/noor_idleNudge_2.wav"
-        },
-        {
-          "text": "إذا عم تقارن الأسعار، خليني أفرجيك أوفر العروض الموجودة حالياً لتوفر وقتك وميزانيتك.",
-          "file": "sounds_gemini/noor_idleNudge_3.wav"
-        }
-      ],
-      "crossSell": [
-        {
-          "text": "سلتك صارت مرتبة! شو رأيك أفرجيك مكملات حلوة تناسب أغراضك قبل ما تعتمد الطلب؟",
-          "file": "sounds_gemini/noor_crossSell_1.wav"
-        },
-        {
-          "text": "أغراضك جاهزة، بس اتأكد إذا ناقصك شي خفيف للسهرة أو المطبخ، أفرجيك المقترحات؟",
-          "file": "sounds_gemini/noor_crossSell_2.wav"
-        },
-        {
-          "text": "اختياراتك بتشهي! نحط معها شي تكميلي خفيف يكمّل القعدة؟",
-          "file": "sounds_gemini/noor_crossSell_3.wav"
-        }
-      ],
-      "scarcityAlert": [
-        {
-          "text": "ملاحظة سريعة يا غالي، في عروض وأصناف عليها طلب عالي وما بقي منها كتير، تحب تشوفها هلق؟",
-          "file": "sounds_gemini/noor_scarcityAlert_1.wav"
-        },
-        {
-          "text": "لحّق حالك! في عروض طازة اليوم وبأسعار بتجنن، أفرجيك ياها قبل ما تخلص؟",
-          "file": "sounds_gemini/noor_scarcityAlert_2.wav"
-        },
-        {
-          "text": "بنصحك بصدق يا غالي، عروض اليوم موفرة كتير، تحب نلقي عليها نظرة؟",
-          "file": "sounds_gemini/noor_scarcityAlert_3.wav"
-        }
-      ],
-      "checkoutBoost": [
-        {
-          "text": "سلتك جاهزة مية بالمية! ضغطة زر والتوصيل بطريقه إلك بأسرع وقت.",
-          "file": "sounds_gemini/noor_checkoutBoost_1.wav"
-        },
-        {
-          "text": "اختياراتك رائعة ومتناسقة، تأكد إن طلبك رح يوصلك بأحلى صورة وبأسرع وقت.",
-          "file": "sounds_gemini/noor_checkoutBoost_2.wav"
-        },
-        {
-          "text": "سلة متكاملة يا غالي! اعتمد الطلب هلق وخلي التوصيل علينا.",
-          "file": "sounds_gemini/noor_checkoutBoost_3.wav"
-        }
-      ],
-      "orderSuccess": [
-        {
-          "text": "كفو عليك! طلبك صار بعهدتنا، ريّح بالك وهلق بيوصلك لعند الباب.",
-          "file": "sounds_gemini/noor_orderSuccess_1.wav"
-        },
-        {
-          "text": "طلبك انبعت بنجاح، تتهنى فيه يا رب وألف صحة وهنا مقدماً.",
-          "file": "sounds_gemini/noor_orderSuccess_2.wav"
-        },
-        {
-          "text": "اختيار ذوّيق، طلبك قيد التجهيز بأعلى عناية ويسعدنا دايماً خدمتك.",
-          "file": "sounds_gemini/noor_orderSuccess_3.wav"
-        }
-      ],
-      "welcomeBack": [
-        {
-          "text": "يا مية هلا بعودتك يا غالي! اشتقنالك بمتجر معاذ، نعيد نفس أغراض المرة الماضية ولا في شي جديد؟",
-          "file": "sounds_gemini/noor_welcomeBack_1.wav"
-        },
-        {
-          "text": "أهلاً بعودتك يا غالي! جاهز نكرر طلبك السابق بلمسة وحدة ولا حابب نختار شي جديد اليوم؟",
-          "file": "sounds_gemini/noor_welcomeBack_2.wav"
-        },
-        {
-          "text": "نورتنا من جديد بمتجر معاذ! تحب أجهزلك نفس مفضلاتك الماضية؟",
-          "file": "sounds_gemini/noor_welcomeBack_3.wav"
+          "file": "sounds_gemini/buddy_greetEvening_3.wav",
+          "mood": "talk",
+          "tier": "standard"
         }
       ]
     },
     "chef": {
       "greet": [
         {
-          "text": "يا أهلاً وسهلاً! نورت متجر معاذ. خبرني شو ببالك اليوم؟",
-          "file": "sounds_gemini/chef_greet_1.wav"
-        },
-        {
-          "text": "أهلاً بك يا غالي، المتجر منور بوجودك. بشو نبدأ سلتك اليوم؟",
-          "file": "sounds_gemini/chef_greet_2.wav"
-        },
-        {
-          "text": "يا مية هلا ومرحبا! كل شي طازج ومرتب بالمتجر، شو ناقصك اليوم؟",
-          "file": "sounds_gemini/chef_greet_3.wav"
-        },
-        {
-          "text": "حياك الله يا غالي، نورتنا بمتجر معاذ. قولي شو عبالك نجهزلك؟",
-          "file": "sounds_gemini/chef_greet_4.wav"
-        },
-        {
-          "text": "أهلاً وسهلاً فيك، يسعدني جداً أساعدك بتسوقك اليوم. بشو نبلش؟",
-          "file": "sounds_gemini/chef_greet_5.wav"
-        },
-        {
-          "text": "يا هلا بالطلة الحلوة! متجر معاذ جاهز لطلباتك، سمّي بالله واطلب.",
-          "file": "sounds_gemini/chef_greet_6.wav"
+          "text": "يا أهلاً وسهلاً! نورت متجر معاذ، شو بتحب نجهزلك اليوم؟",
+          "file": "sounds_gemini/chef_greet_1.wav",
+          "mood": "talk",
+          "tier": "standard"
         }
       ],
       "greetMorning": [
         {
           "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
-          "file": "sounds_gemini/chef_greetMorning_1.wav"
-        },
-        {
-          "text": "يسعد صباحك يا غالي، كل أغراض الفطور والقهوة جاهزة هلق.",
-          "file": "sounds_gemini/chef_greetMorning_2.wav"
-        },
-        {
-          "text": "صباح النور والبركة! إن شاء الله يومك حلو ومليان خير، شو بتحب تطلب؟",
-          "file": "sounds_gemini/chef_greetMorning_3.wav"
-        },
-        {
-          "text": "صباح الفل والروقان، خبرني شو ناقص البيت لنجهزه عالسريع.",
-          "file": "sounds_gemini/chef_greetMorning_4.wav"
+          "file": "sounds_gemini/chef_greetMorning_2.wav",
+          "mood": "talk",
+          "tier": "standard"
         }
       ],
       "greetEvening": [
         {
           "text": "مساء الخير والروقان! نورت متجر معاذ، شو نجهزلك الليلة؟",
-          "file": "sounds_gemini/chef_greetEvening_1.wav"
-        },
+          "file": "sounds_gemini/chef_greetEvening_3.wav",
+          "mood": "talk",
+          "tier": "standard"
+        }
+      ]
+    },
+    "homemaker": {},
+    "lolo": {
+      "greet": [
         {
-          "text": "يسعد مساك يا غالي، جاهز نضبط سلة السهرة والمتة والتسالي؟",
-          "file": "sounds_gemini/chef_greetEvening_2.wav"
-        },
-        {
-          "text": "مساء النور والهنا، خبرني شو عبالك للعشا أو السهرة اليوم.",
-          "file": "sounds_gemini/chef_greetEvening_3.wav"
-        },
-        {
-          "text": "مساء الورد يا غالي، كل شي بتحتاجه لليلة جاهز ومرتب هلق.",
-          "file": "sounds_gemini/chef_greetEvening_4.wav"
+          "text": "يا أهلاً وسهلاً! نورت متجر معاذ، شو بتحب نجهزلك اليوم؟",
+          "file": "sounds_gemini/lolo_greet_1.wav",
+          "mood": "talk",
+          "tier": "standard"
         }
       ],
-      "chatGood": [
+      "greetMorning": [
         {
-          "text": "أنا بخير والحمد لله، كيف بقدر أساعدك اليوم؟",
-          "file": "sounds_gemini/chef_chatGood_1.wav"
-        },
-        {
-          "text": "بألف خير ونعمة بسؤالك اللطيف يا غالي، شو بتحب أجهزلك؟",
-          "file": "sounds_gemini/chef_chatGood_2.wav"
-        },
-        {
-          "text": "تمام التمام وبأعلى جاهزية لخدمتك، خبرني شو ببالك تطلب.",
-          "file": "sounds_gemini/chef_chatGood_3.wav"
-        },
-        {
-          "text": "الحمد لله عال العال، وجودك بمتجر معاذ بيسعدني دايماً. كيف أخدمك؟",
-          "file": "sounds_gemini/chef_chatGood_4.wav"
+          "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
+          "file": "sounds_gemini/lolo_greetMorning_2.wav",
+          "mood": "talk",
+          "tier": "standard"
         }
       ],
-      "thanks": [
+      "greetEvening": [
         {
-          "text": "العفو يا غالي، تكرم عينك ويسعدني دائماً أكون بخدمتك.",
-          "file": "sounds_gemini/chef_thanks_1.wav"
-        },
+          "text": "مساء الخير والروقان! نورت متجر معاذ، شو نجهزلك الليلة؟",
+          "file": "sounds_gemini/lolo_greetEvening_3.wav",
+          "mood": "talk",
+          "tier": "standard"
+        }
+      ]
+    },
+    "noor": {
+      "greet": [
         {
-          "text": "ولو يا غالي، هاد واجبي بكل سرور ومحبة.",
-          "file": "sounds_gemini/chef_thanks_2.wav"
-        },
-        {
-          "text": "على راسي وعيني، بالعافية مقدماً على كل اختياراتك.",
-          "file": "sounds_gemini/chef_thanks_3.wav"
-        },
-        {
-          "text": "لا شكر على واجب أبداً، بأي وقت بتحتاج شي أنا هون.",
-          "file": "sounds_gemini/chef_thanks_4.wav"
+          "text": "يا أهلاً وسهلاً! نورت متجر معاذ، شو بتحب نجهزلك اليوم؟",
+          "file": "sounds_gemini/noor_greet_1.wav",
+          "mood": "talk",
+          "tier": "standard"
         }
       ],
-      "added": [
+      "greetMorning": [
         {
-          "text": "اختيار موفق، تمت إضافة الصنف إلى السلة بنجاح.",
-          "file": "sounds_gemini/chef_added_1.wav"
-        },
-        {
-          "text": "ممتاز، صار طلبك جاهز بالسلة، نضيف شي تاني؟",
-          "file": "sounds_gemini/chef_added_2.wav"
-        },
-        {
-          "text": "يا سلام عليك، أضفته للسلة عالسريع، شو نكمل كمان؟",
-          "file": "sounds_gemini/chef_added_3.wav"
-        },
-        {
-          "text": "تمت الإضافة بنجاح، سلتك صارت مرتبة وأحلى هلق.",
-          "file": "sounds_gemini/chef_added_4.wav"
-        },
-        {
-          "text": "تمام التمام، صار الصنف بسلتك، خبرني إذا ناقصك شي غيره.",
-          "file": "sounds_gemini/chef_added_5.wav"
+          "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
+          "file": "sounds_gemini/noor_greetMorning_2.wav",
+          "mood": "talk",
+          "tier": "standard"
         }
       ],
-      "itemsReady": [
+      "greetEvening": [
         {
-          "text": "تفضل، عرضتلك الأصناف المتوفرة بالفرع هلق، حدد الكمية.",
-          "file": "sounds_gemini/chef_itemsReady_1.wav"
-        },
-        {
-          "text": "جهزتلك القائمة المتوفرة قدامك، اكبس زائد لإضافة يلي بتحبه.",
-          "file": "sounds_gemini/chef_itemsReady_2.wav"
-        },
-        {
-          "text": "لقيتلك المطلوب بالفرع، اختار الكمية المناسبة وأضفها للسلة.",
-          "file": "sounds_gemini/chef_itemsReady_3.wav"
-        },
-        {
-          "text": "هي كل الخيارات المتوفرة حالياً، حدد الكمية وبنجهزها فوراً.",
-          "file": "sounds_gemini/chef_itemsReady_4.wav"
-        }
-      ],
-      "alternative": [
-        {
-          "text": "هاد الصنف خالص هلق، بس جبتلك أقرب البدائل المتوفرة بالفرع.",
-          "file": "sounds_gemini/chef_alternative_1.wav"
-        },
-        {
-          "text": "للأسف ما لقيت نفس الصنف حالياً، شوف هالبدائل الطيبة والموجودة.",
-          "file": "sounds_gemini/chef_alternative_2.wav"
-        },
-        {
-          "text": "الصنف المطلوب نافد مؤقتاً، عرضتلك أفضل بدائل متوفرة هلق.",
-          "file": "sounds_gemini/chef_alternative_3.wav"
-        }
-      ],
-      "habit": [
-        {
-          "text": "جبتلك مفضلاتك يلي دايماً بتختارها لتوفير وقتك، حدد الكمية.",
-          "file": "sounds_gemini/chef_habit_1.wav"
-        },
-        {
-          "text": "هي أغراضك المعتادة متوفرة هلق بلمسة وحدة يا غالي.",
-          "file": "sounds_gemini/chef_habit_2.wav"
-        },
-        {
-          "text": "تذكرت اختياراتك المفضلة وجهزتلك ياها عالسريع بالسلة.",
-          "file": "sounds_gemini/chef_habit_3.wav"
-        }
-      ],
-      "notFound": [
-        {
-          "text": "عذراً يا غالي، ما لقيت هاد الصنف متوفر هلق، جرب اسم أقرب.",
-          "file": "sounds_gemini/chef_notFound_1.wav"
-        },
-        {
-          "text": "بحثتلك منيح بس ما لقيت هاد الصنف حالياً، فيك تطلبه من زر طلب صنف.",
-          "file": "sounds_gemini/chef_notFound_2.wav"
-        },
-        {
-          "text": "هاد الصنف غير متوفر بالرف هلق، خبرني بنوع تاني وبساعدك فوراً.",
-          "file": "sounds_gemini/chef_notFound_3.wav"
-        }
-      ],
-      "idleNudge": [
-        {
-          "text": "محتار شو تاخد يا غالي؟ خبرني شو عبالك اليوم وأنا برتبلك السلة على ذوقك.",
-          "file": "sounds_gemini/chef_idleNudge_1.wav"
-        },
-        {
-          "text": "خذ راحتك بالتصفح، وإذا حابب أختصر عليك الوقت بقترحلك أحلى الأصناف الطازة اليوم.",
-          "file": "sounds_gemini/chef_idleNudge_2.wav"
-        },
-        {
-          "text": "إذا عم تقارن الأسعار، خليني أفرجيك أوفر العروض الموجودة حالياً لتوفر وقتك وميزانيتك.",
-          "file": "sounds_gemini/chef_idleNudge_3.wav"
-        }
-      ],
-      "crossSell": [
-        {
-          "text": "سلتك صارت مرتبة! شو رأيك أفرجيك مكملات حلوة تناسب أغراضك قبل ما تعتمد الطلب؟",
-          "file": "sounds_gemini/chef_crossSell_1.wav"
-        },
-        {
-          "text": "أغراضك جاهزة، بس اتأكد إذا ناقصك شي خفيف للسهرة أو المطبخ، أفرجيك المقترحات؟",
-          "file": "sounds_gemini/chef_crossSell_2.wav"
-        },
-        {
-          "text": "اختياراتك بتشهي! نحط معها شي تكميلي خفيف يكمّل القعدة؟",
-          "file": "sounds_gemini/chef_crossSell_3.wav"
-        }
-      ],
-      "scarcityAlert": [
-        {
-          "text": "ملاحظة سريعة يا غالي، في عروض وأصناف عليها طلب عالي وما بقي منها كتير، تحب تشوفها هلق؟",
-          "file": "sounds_gemini/chef_scarcityAlert_1.wav"
-        },
-        {
-          "text": "لحّق حالك! في عروض طازة اليوم وبأسعار بتجنن، أفرجيك ياها قبل ما تخلص؟",
-          "file": "sounds_gemini/chef_scarcityAlert_2.wav"
-        },
-        {
-          "text": "بنصحك بصدق يا غالي، عروض اليوم موفرة كتير، تحب نلقي عليها نظرة؟",
-          "file": "sounds_gemini/chef_scarcityAlert_3.wav"
-        }
-      ],
-      "checkoutBoost": [
-        {
-          "text": "سلتك جاهزة مية بالمية! ضغطة زر والتوصيل بطريقه إلك بأسرع وقت.",
-          "file": "sounds_gemini/chef_checkoutBoost_1.wav"
-        },
-        {
-          "text": "اختياراتك رائعة ومتناسقة، تأكد إن طلبك رح يوصلك بأحلى صورة وبأسرع وقت.",
-          "file": "sounds_gemini/chef_checkoutBoost_2.wav"
-        },
-        {
-          "text": "سلة متكاملة يا غالي! اعتمد الطلب هلق وخلي التوصيل علينا.",
-          "file": "sounds_gemini/chef_checkoutBoost_3.wav"
-        }
-      ],
-      "orderSuccess": [
-        {
-          "text": "كفو عليك! طلبك صار بعهدتنا، ريّح بالك وهلق بيوصلك لعند الباب.",
-          "file": "sounds_gemini/chef_orderSuccess_1.wav"
-        },
-        {
-          "text": "طلبك انبعت بنجاح، تتهنى فيه يا رب وألف صحة وهنا مقدماً.",
-          "file": "sounds_gemini/chef_orderSuccess_2.wav"
-        },
-        {
-          "text": "اختيار ذوّيق، طلبك قيد التجهيز بأعلى عناية ويسعدنا دايماً خدمتك.",
-          "file": "sounds_gemini/chef_orderSuccess_3.wav"
-        }
-      ],
-      "welcomeBack": [
-        {
-          "text": "يا مية هلا بعودتك يا غالي! اشتقنالك بمتجر معاذ، نعيد نفس أغراض المرة الماضية ولا في شي جديد؟",
-          "file": "sounds_gemini/chef_welcomeBack_1.wav"
-        },
-        {
-          "text": "أهلاً بعودتك يا غالي! جاهز نكرر طلبك السابق بلمسة وحدة ولا حابب نختار شي جديد اليوم؟",
-          "file": "sounds_gemini/chef_welcomeBack_2.wav"
-        },
-        {
-          "text": "نورتنا من جديد بمتجر معاذ! تحب أجهزلك نفس مفضلاتك الماضية؟",
-          "file": "sounds_gemini/chef_welcomeBack_3.wav"
+          "text": "مساء الخير والروقان! نورت متجر معاذ، شو نجهزلك الليلة؟",
+          "file": "sounds_gemini/noor_greetEvening_3.wav",
+          "mood": "talk",
+          "tier": "standard"
         }
       ]
     },
     "pastry": {
       "greet": [
         {
-          "text": "يا أهلاً وسهلاً! نورت متجر معاذ. خبرني شو ببالك اليوم؟",
-          "file": "sounds_gemini/pastry_greet_1.wav"
-        },
-        {
-          "text": "أهلاً بك يا غالي، المتجر منور بوجودك. بشو نبدأ سلتك اليوم؟",
-          "file": "sounds_gemini/pastry_greet_2.wav"
-        },
-        {
-          "text": "يا مية هلا ومرحبا! كل شي طازج ومرتب بالمتجر، شو ناقصك اليوم؟",
-          "file": "sounds_gemini/pastry_greet_3.wav"
-        },
-        {
-          "text": "حياك الله يا غالي، نورتنا بمتجر معاذ. قولي شو عبالك نجهزلك؟",
-          "file": "sounds_gemini/pastry_greet_4.wav"
-        },
-        {
-          "text": "أهلاً وسهلاً فيك، يسعدني جداً أساعدك بتسوقك اليوم. بشو نبلش؟",
-          "file": "sounds_gemini/pastry_greet_5.wav"
-        },
-        {
-          "text": "يا هلا بالطلة الحلوة! متجر معاذ جاهز لطلباتك، سمّي بالله واطلب.",
-          "file": "sounds_gemini/pastry_greet_6.wav"
+          "text": "يا أهلاً وسهلاً! نورت متجر معاذ، شو بتحب نجهزلك اليوم؟",
+          "file": "sounds_gemini/pastry_greet_1.wav",
+          "mood": "talk",
+          "tier": "standard"
         }
       ],
       "greetMorning": [
         {
           "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
-          "file": "sounds_gemini/pastry_greetMorning_1.wav"
-        },
-        {
-          "text": "يسعد صباحك يا غالي، كل أغراض الفطور والقهوة جاهزة هلق.",
-          "file": "sounds_gemini/pastry_greetMorning_2.wav"
-        },
-        {
-          "text": "صباح النور والبركة! إن شاء الله يومك حلو ومليان خير، شو بتحب تطلب؟",
-          "file": "sounds_gemini/pastry_greetMorning_3.wav"
-        },
-        {
-          "text": "صباح الفل والروقان، خبرني شو ناقص البيت لنجهزه عالسريع.",
-          "file": "sounds_gemini/pastry_greetMorning_4.wav"
+          "file": "sounds_gemini/pastry_greetMorning_2.wav",
+          "mood": "talk",
+          "tier": "standard"
         }
       ],
       "greetEvening": [
         {
           "text": "مساء الخير والروقان! نورت متجر معاذ، شو نجهزلك الليلة؟",
-          "file": "sounds_gemini/pastry_greetEvening_1.wav"
-        },
-        {
-          "text": "يسعد مساك يا غالي، جاهز نضبط سلة السهرة والمتة والتسالي؟",
-          "file": "sounds_gemini/pastry_greetEvening_2.wav"
-        },
-        {
-          "text": "مساء النور والهنا، خبرني شو عبالك للعشا أو السهرة اليوم.",
-          "file": "sounds_gemini/pastry_greetEvening_3.wav"
-        },
-        {
-          "text": "مساء الورد يا غالي، كل شي بتحتاجه لليلة جاهز ومرتب هلق.",
-          "file": "sounds_gemini/pastry_greetEvening_4.wav"
-        }
-      ],
-      "chatGood": [
-        {
-          "text": "أنا بخير والحمد لله، كيف بقدر أساعدك اليوم؟",
-          "file": "sounds_gemini/pastry_chatGood_1.wav"
-        },
-        {
-          "text": "بألف خير ونعمة بسؤالك اللطيف يا غالي، شو بتحب أجهزلك؟",
-          "file": "sounds_gemini/pastry_chatGood_2.wav"
-        },
-        {
-          "text": "تمام التمام وبأعلى جاهزية لخدمتك، خبرني شو ببالك تطلب.",
-          "file": "sounds_gemini/pastry_chatGood_3.wav"
-        },
-        {
-          "text": "الحمد لله عال العال، وجودك بمتجر معاذ بيسعدني دايماً. كيف أخدمك؟",
-          "file": "sounds_gemini/pastry_chatGood_4.wav"
-        }
-      ],
-      "thanks": [
-        {
-          "text": "العفو يا غالي، تكرم عينك ويسعدني دائماً أكون بخدمتك.",
-          "file": "sounds_gemini/pastry_thanks_1.wav"
-        },
-        {
-          "text": "ولو يا غالي، هاد واجبي بكل سرور ومحبة.",
-          "file": "sounds_gemini/pastry_thanks_2.wav"
-        },
-        {
-          "text": "على راسي وعيني، بالعافية مقدماً على كل اختياراتك.",
-          "file": "sounds_gemini/pastry_thanks_3.wav"
-        },
-        {
-          "text": "لا شكر على واجب أبداً، بأي وقت بتحتاج شي أنا هون.",
-          "file": "sounds_gemini/pastry_thanks_4.wav"
-        }
-      ],
-      "added": [
-        {
-          "text": "اختيار موفق، تمت إضافة الصنف إلى السلة بنجاح.",
-          "file": "sounds_gemini/pastry_added_1.wav"
-        },
-        {
-          "text": "ممتاز، صار طلبك جاهز بالسلة، نضيف شي تاني؟",
-          "file": "sounds_gemini/pastry_added_2.wav"
-        },
-        {
-          "text": "يا سلام عليك، أضفته للسلة عالسريع، شو نكمل كمان؟",
-          "file": "sounds_gemini/pastry_added_3.wav"
-        },
-        {
-          "text": "تمت الإضافة بنجاح، سلتك صارت مرتبة وأحلى هلق.",
-          "file": "sounds_gemini/pastry_added_4.wav"
-        },
-        {
-          "text": "تمام التمام، صار الصنف بسلتك، خبرني إذا ناقصك شي غيره.",
-          "file": "sounds_gemini/pastry_added_5.wav"
-        }
-      ],
-      "itemsReady": [
-        {
-          "text": "تفضل، عرضتلك الأصناف المتوفرة بالفرع هلق، حدد الكمية.",
-          "file": "sounds_gemini/pastry_itemsReady_1.wav"
-        },
-        {
-          "text": "جهزتلك القائمة المتوفرة قدامك، اكبس زائد لإضافة يلي بتحبه.",
-          "file": "sounds_gemini/pastry_itemsReady_2.wav"
-        },
-        {
-          "text": "لقيتلك المطلوب بالفرع، اختار الكمية المناسبة وأضفها للسلة.",
-          "file": "sounds_gemini/pastry_itemsReady_3.wav"
-        },
-        {
-          "text": "هي كل الخيارات المتوفرة حالياً، حدد الكمية وبنجهزها فوراً.",
-          "file": "sounds_gemini/pastry_itemsReady_4.wav"
-        }
-      ],
-      "alternative": [
-        {
-          "text": "هاد الصنف خالص هلق، بس جبتلك أقرب البدائل المتوفرة بالفرع.",
-          "file": "sounds_gemini/pastry_alternative_1.wav"
-        },
-        {
-          "text": "للأسف ما لقيت نفس الصنف حالياً، شوف هالبدائل الطيبة والموجودة.",
-          "file": "sounds_gemini/pastry_alternative_2.wav"
-        },
-        {
-          "text": "الصنف المطلوب نافد مؤقتاً، عرضتلك أفضل بدائل متوفرة هلق.",
-          "file": "sounds_gemini/pastry_alternative_3.wav"
-        }
-      ],
-      "habit": [
-        {
-          "text": "جبتلك مفضلاتك يلي دايماً بتختارها لتوفير وقتك، حدد الكمية.",
-          "file": "sounds_gemini/pastry_habit_1.wav"
-        },
-        {
-          "text": "هي أغراضك المعتادة متوفرة هلق بلمسة وحدة يا غالي.",
-          "file": "sounds_gemini/pastry_habit_2.wav"
-        },
-        {
-          "text": "تذكرت اختياراتك المفضلة وجهزتلك ياها عالسريع بالسلة.",
-          "file": "sounds_gemini/pastry_habit_3.wav"
-        }
-      ],
-      "notFound": [
-        {
-          "text": "عذراً يا غالي، ما لقيت هاد الصنف متوفر هلق، جرب اسم أقرب.",
-          "file": "sounds_gemini/pastry_notFound_1.wav"
-        },
-        {
-          "text": "بحثتلك منيح بس ما لقيت هاد الصنف حالياً، فيك تطلبه من زر طلب صنف.",
-          "file": "sounds_gemini/pastry_notFound_2.wav"
-        },
-        {
-          "text": "هاد الصنف غير متوفر بالرف هلق، خبرني بنوع تاني وبساعدك فوراً.",
-          "file": "sounds_gemini/pastry_notFound_3.wav"
-        }
-      ],
-      "idleNudge": [
-        {
-          "text": "محتار شو تاخد يا غالي؟ خبرني شو عبالك اليوم وأنا برتبلك السلة على ذوقك.",
-          "file": "sounds_gemini/pastry_idleNudge_1.wav"
-        },
-        {
-          "text": "خذ راحتك بالتصفح، وإذا حابب أختصر عليك الوقت بقترحلك أحلى الأصناف الطازة اليوم.",
-          "file": "sounds_gemini/pastry_idleNudge_2.wav"
-        },
-        {
-          "text": "إذا عم تقارن الأسعار، خليني أفرجيك أوفر العروض الموجودة حالياً لتوفر وقتك وميزانيتك.",
-          "file": "sounds_gemini/pastry_idleNudge_3.wav"
-        }
-      ],
-      "crossSell": [
-        {
-          "text": "سلتك صارت مرتبة! شو رأيك أفرجيك مكملات حلوة تناسب أغراضك قبل ما تعتمد الطلب؟",
-          "file": "sounds_gemini/pastry_crossSell_1.wav"
-        },
-        {
-          "text": "أغراضك جاهزة، بس اتأكد إذا ناقصك شي خفيف للسهرة أو المطبخ، أفرجيك المقترحات؟",
-          "file": "sounds_gemini/pastry_crossSell_2.wav"
-        },
-        {
-          "text": "اختياراتك بتشهي! نحط معها شي تكميلي خفيف يكمّل القعدة؟",
-          "file": "sounds_gemini/pastry_crossSell_3.wav"
-        }
-      ],
-      "scarcityAlert": [
-        {
-          "text": "ملاحظة سريعة يا غالي، في عروض وأصناف عليها طلب عالي وما بقي منها كتير، تحب تشوفها هلق؟",
-          "file": "sounds_gemini/pastry_scarcityAlert_1.wav"
-        },
-        {
-          "text": "لحّق حالك! في عروض طازة اليوم وبأسعار بتجنن، أفرجيك ياها قبل ما تخلص؟",
-          "file": "sounds_gemini/pastry_scarcityAlert_2.wav"
-        },
-        {
-          "text": "بنصحك بصدق يا غالي، عروض اليوم موفرة كتير، تحب نلقي عليها نظرة؟",
-          "file": "sounds_gemini/pastry_scarcityAlert_3.wav"
-        }
-      ],
-      "checkoutBoost": [
-        {
-          "text": "سلتك جاهزة مية بالمية! ضغطة زر والتوصيل بطريقه إلك بأسرع وقت.",
-          "file": "sounds_gemini/pastry_checkoutBoost_1.wav"
-        },
-        {
-          "text": "اختياراتك رائعة ومتناسقة، تأكد إن طلبك رح يوصلك بأحلى صورة وبأسرع وقت.",
-          "file": "sounds_gemini/pastry_checkoutBoost_2.wav"
-        },
-        {
-          "text": "سلة متكاملة يا غالي! اعتمد الطلب هلق وخلي التوصيل علينا.",
-          "file": "sounds_gemini/pastry_checkoutBoost_3.wav"
-        }
-      ],
-      "orderSuccess": [
-        {
-          "text": "كفو عليك! طلبك صار بعهدتنا، ريّح بالك وهلق بيوصلك لعند الباب.",
-          "file": "sounds_gemini/pastry_orderSuccess_1.wav"
-        },
-        {
-          "text": "طلبك انبعت بنجاح، تتهنى فيه يا رب وألف صحة وهنا مقدماً.",
-          "file": "sounds_gemini/pastry_orderSuccess_2.wav"
-        },
-        {
-          "text": "اختيار ذوّيق، طلبك قيد التجهيز بأعلى عناية ويسعدنا دايماً خدمتك.",
-          "file": "sounds_gemini/pastry_orderSuccess_3.wav"
-        }
-      ],
-      "welcomeBack": [
-        {
-          "text": "يا مية هلا بعودتك يا غالي! اشتقنالك بمتجر معاذ، نعيد نفس أغراض المرة الماضية ولا في شي جديد؟",
-          "file": "sounds_gemini/pastry_welcomeBack_1.wav"
-        },
-        {
-          "text": "أهلاً بعودتك يا غالي! جاهز نكرر طلبك السابق بلمسة وحدة ولا حابب نختار شي جديد اليوم؟",
-          "file": "sounds_gemini/pastry_welcomeBack_2.wav"
-        },
-        {
-          "text": "نورتنا من جديد بمتجر معاذ! تحب أجهزلك نفس مفضلاتك الماضية؟",
-          "file": "sounds_gemini/pastry_welcomeBack_3.wav"
+          "file": "sounds_gemini/pastry_greetEvening_3.wav",
+          "mood": "talk",
+          "tier": "standard"
         }
       ]
     },
-    "athlete": {
-      "greet": [
-        {
-          "text": "يا أهلاً وسهلاً! نورت متجر معاذ. خبرني شو ببالك اليوم؟",
-          "file": "sounds_gemini/athlete_greet_1.wav"
-        },
-        {
-          "text": "أهلاً بك يا غالي، المتجر منور بوجودك. بشو نبدأ سلتك اليوم؟",
-          "file": "sounds_gemini/athlete_greet_2.wav"
-        },
-        {
-          "text": "يا مية هلا ومرحبا! كل شي طازج ومرتب بالمتجر، شو ناقصك اليوم؟",
-          "file": "sounds_gemini/athlete_greet_3.wav"
-        },
-        {
-          "text": "حياك الله يا غالي، نورتنا بمتجر معاذ. قولي شو عبالك نجهزلك؟",
-          "file": "sounds_gemini/athlete_greet_4.wav"
-        },
-        {
-          "text": "يا هلا بالطلة الحلوة! متجر معاذ جاهز لطلباتك، سمّي بالله واطلب.",
-          "file": "sounds_gemini/athlete_greet_6.wav"
-        }
-      ],
-      "greetMorning": [
-        {
-          "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
-          "file": "sounds_gemini/athlete_greetMorning_1.wav"
-        },
-        {
-          "text": "يسعد صباحك يا غالي، كل أغراض الفطور والقهوة جاهزة هلق.",
-          "file": "sounds_gemini/athlete_greetMorning_2.wav"
-        },
-        {
-          "text": "صباح النور والبركة! إن شاء الله يومك حلو ومليان خير، شو بتحب تطلب؟",
-          "file": "sounds_gemini/athlete_greetMorning_3.wav"
-        },
-        {
-          "text": "صباح الفل والروقان، خبرني شو ناقص البيت لنجهزه عالسريع.",
-          "file": "sounds_gemini/athlete_greetMorning_4.wav"
-        }
-      ],
-      "greetEvening": [
-        {
-          "text": "يسعد مساك يا غالي، جاهز نضبط سلة السهرة والمتة والتسالي؟",
-          "file": "sounds_gemini/athlete_greetEvening_2.wav"
-        }
-      ],
-      "chatGood": [
-        {
-          "text": "أنا بخير والحمد لله، كيف بقدر أساعدك اليوم؟",
-          "file": "sounds_gemini/athlete_chatGood_1.wav"
-        },
-        {
-          "text": "تمام التمام وبأعلى جاهزية لخدمتك، خبرني شو ببالك تطلب.",
-          "file": "sounds_gemini/athlete_chatGood_3.wav"
-        }
-      ],
-      "thanks": [],
-      "added": [],
-      "itemsReady": [],
-      "alternative": [
-        {
-          "text": "للأسف ما لقيت نفس الصنف حالياً، شوف هالبدائل الطيبة والموجودة.",
-          "file": "sounds_gemini/athlete_alternative_2.wav"
-        }
-      ],
-      "habit": [],
-      "notFound": [
-        {
-          "text": "بحثتلك منيح بس ما لقيت هاد الصنف حالياً، فيك تطلبه من زر طلب صنف.",
-          "file": "sounds_gemini/athlete_notFound_2.wav"
-        }
-      ],
-      "idleNudge": [
-        {
-          "text": "خذ راحتك بالتصفح، وإذا حابب أختصر عليك الوقت بقترحلك أحلى الأصناف الطازة اليوم.",
-          "file": "sounds_gemini/athlete_idleNudge_2.wav"
-        }
-      ],
-      "crossSell": [],
-      "scarcityAlert": [
-        {
-          "text": "لحّق حالك! في عروض طازة اليوم وبأسعار بتجنن، أفرجيك ياها قبل ما تخلص؟",
-          "file": "sounds_gemini/athlete_scarcityAlert_2.wav"
-        }
-      ],
-      "checkoutBoost": [
-        {
-          "text": "سلتك جاهزة مية بالمية! ضغطة زر والتوصيل بطريقه إلك بأسرع وقت.",
-          "file": "sounds_gemini/athlete_checkoutBoost_1.wav"
-        }
-      ],
-      "orderSuccess": [],
-      "welcomeBack": []
-    },
-    "sheikh": {
-      "greet": [],
-      "greetMorning": [],
-      "greetEvening": [],
-      "chatGood": [],
-      "thanks": [],
-      "added": [],
-      "itemsReady": [],
-      "alternative": [],
-      "habit": [],
-      "notFound": [],
-      "idleNudge": [],
-      "crossSell": [],
-      "scarcityAlert": [],
-      "checkoutBoost": [],
-      "orderSuccess": [],
-      "welcomeBack": []
-    },
-    "friend_saad": {
-      "greet": [],
-      "greetMorning": [],
-      "greetEvening": [],
-      "chatGood": [],
-      "thanks": [],
-      "added": [],
-      "itemsReady": [],
-      "alternative": [],
-      "habit": [],
-      "notFound": [],
-      "idleNudge": [],
-      "crossSell": [],
-      "scarcityAlert": [],
-      "checkoutBoost": [],
-      "orderSuccess": [],
-      "welcomeBack": []
-    },
-    "coach_sakhr": {
-      "greet": [],
-      "greetMorning": [],
-      "greetEvening": [],
-      "chatGood": [],
-      "thanks": [],
-      "added": [],
-      "itemsReady": [],
-      "alternative": [],
-      "habit": [],
-      "notFound": [],
-      "idleNudge": [],
-      "crossSell": [],
-      "scarcityAlert": [],
-      "checkoutBoost": [],
-      "orderSuccess": [],
-      "welcomeBack": []
-    },
-    "grand_chef": {
-      "greet": [],
-      "greetMorning": [],
-      "greetEvening": [],
-      "chatGood": [],
-      "thanks": [],
-      "added": [],
-      "itemsReady": [],
-      "alternative": [],
-      "habit": [],
-      "notFound": [],
-      "idleNudge": [],
-      "crossSell": [],
-      "scarcityAlert": [],
-      "checkoutBoost": [],
-      "orderSuccess": [],
-      "welcomeBack": []
-    },
-    "princess_layla": {
-      "greet": [],
-      "greetMorning": [],
-      "greetEvening": [],
-      "chatGood": [],
-      "thanks": [],
-      "added": [],
-      "itemsReady": [],
-      "alternative": [],
-      "habit": [],
-      "notFound": [],
-      "idleNudge": [],
-      "crossSell": [],
-      "scarcityAlert": [],
-      "checkoutBoost": [],
-      "orderSuccess": [],
-      "welcomeBack": []
-    },
-    "butler_farid": {
-      "greet": [],
-      "greetMorning": [],
-      "greetEvening": [],
-      "chatGood": [],
-      "thanks": [],
-      "added": [],
-      "itemsReady": [],
-      "alternative": [],
-      "habit": [],
-      "notFound": [],
-      "idleNudge": [],
-      "crossSell": [],
-      "scarcityAlert": [],
-      "checkoutBoost": [],
-      "orderSuccess": [],
-      "welcomeBack": []
-    },
-    "friend_fadi": {
-      "greet": [],
-      "greetMorning": [],
-      "greetEvening": [],
-      "chatGood": [],
-      "thanks": [],
-      "added": [],
-      "itemsReady": [],
-      "alternative": [],
-      "habit": [],
-      "notFound": [],
-      "idleNudge": [],
-      "crossSell": [],
-      "scarcityAlert": [],
-      "checkoutBoost": [],
-      "orderSuccess": [],
-      "welcomeBack": []
-    },
-    "anime_zain": {
-      "greet": [],
-      "greetMorning": [],
-      "greetEvening": [],
-      "chatGood": [
-        {
-          "text": "تمام التمام وبأعلى جاهزية لخدمتك، خبرني شو ببالك تطلب.",
-          "file": "sounds_gemini/anime_zain_chatGood_3.wav"
-        }
-      ],
-      "thanks": [],
-      "added": [],
-      "itemsReady": [],
-      "alternative": [],
-      "habit": [],
-      "notFound": [],
-      "idleNudge": [],
-      "crossSell": [],
-      "scarcityAlert": [
-        {
-          "text": "لحّق حالك! في عروض طازة اليوم وبأسعار بتجنن، أفرجيك ياها قبل ما تخلص؟",
-          "file": "sounds_gemini/anime_zain_scarcityAlert_2.wav"
-        }
-      ],
-      "checkoutBoost": [],
-      "orderSuccess": [],
-      "welcomeBack": []
-    },
-    "anime_ryu": {
-      "greet": [],
-      "greetMorning": [],
-      "greetEvening": [],
-      "chatGood": [],
-      "thanks": [],
-      "added": [],
-      "itemsReady": [],
-      "alternative": [],
-      "habit": [],
-      "notFound": [],
-      "idleNudge": [],
-      "crossSell": [],
-      "scarcityAlert": [],
-      "checkoutBoost": [],
-      "orderSuccess": [],
-      "welcomeBack": []
-    },
-    "anime_ritaj": {
-      "greet": [],
-      "greetMorning": [],
-      "greetEvening": [],
-      "chatGood": [],
-      "thanks": [],
-      "added": [],
-      "itemsReady": [],
-      "alternative": [],
-      "habit": [],
-      "notFound": [],
-      "idleNudge": [],
-      "crossSell": [],
-      "scarcityAlert": [],
-      "checkoutBoost": [],
-      "orderSuccess": [],
-      "welcomeBack": []
-    }
+    "saver": {},
+    "sheikh": {}
   }
 }
