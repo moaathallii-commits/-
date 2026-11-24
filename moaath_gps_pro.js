@@ -492,6 +492,8 @@
       lastEvalState = evaluateCoordinates(lastEvalState.lat, lastEvalState.lng, lastEvalState.accuracy);
     }
 
+    const activeEl = document.activeElement;
+    if (activeEl && activeEl.id === "moaathGpsLandmarkInput") return;
     let panel = document.getElementById("moaathGpsProPanel");
     if (!panel) {
       panel = document.createElement("div");
@@ -582,8 +584,11 @@
     `;
 
     const lmInp = document.getElementById("moaathGpsLandmarkInput");
-    if (lmInp) {
-      lmInp.addEventListener("input", () => writeJSON(LANDMARK_KEY, lmInp.value.trim()));
+    if (lmInp && !lmInp.dataset.gpsFocusStable) {
+      lmInp.dataset.gpsFocusStable = "1";
+      lmInp.addEventListener("pointerdown", (ev) => { ev.stopPropagation(); });
+      lmInp.addEventListener("touchstart", (ev) => { ev.stopPropagation(); }, { passive: true });
+      lmInp.addEventListener("input", () => writeJSON(LANDMARK_KEY, lmInp.value));
     }
   }
 
