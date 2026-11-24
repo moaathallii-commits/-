@@ -3151,7 +3151,8 @@
       name: it.name,
       qty: 0,
       suggestedQty: Math.max(1, parseInt(it.suggestedQty, 10) || 1),
-      unitPrice: getUnitSYP(it.id),
+      unitPrice: typeof it.unitPriceOverride === "number" ? it.unitPriceOverride : getUnitSYP(it.id),
+      maxAvailOverride: typeof it.maxAvailOverride === "number" ? it.maxAvailOverride : null,
       thumb: getThumb(it.id),
       reason: it.reason || ""
     }));
@@ -3196,7 +3197,7 @@
 
   window.selectAllZeroDefaultSuggestions = function () {
     modalItemsState.forEach(it => {
-      const maxAvail = getBranchAvail(it.id);
+      const maxAvail = typeof it.maxAvailOverride === "number" ? it.maxAvailOverride : getBranchAvail(it.id);
       if (maxAvail > 0) it.qty = Math.min(maxAvail, it.suggestedQty || 1);
     });
     haptic(12);
@@ -3810,28 +3811,45 @@
 
     const recipeRes = matchRecipeOrSweet(norm);
     if (recipeRes) {
+      const missingList = Array.isArray(recipeRes.missingIngredients) ? recipeRes.missingIngredients : [];
+      const missingFormatted = missingList.length ? ` ينقصك [${missingList.join("، ")}] لكن للاسف مو متوفر هلق رح نحاول توفره المرة الجاية.` : "";
+      const missingModalEntries = missingList.slice(0, 5).map((mName, idx) => ({
+        id: "MISSING_REC_" + idx + "_" + cleanArabicNorm(mName).replace(/\s+/g, "_"),
+        name: `⚠️ ناقص: ${mName}`,
+        suggestedQty: 1,
+        unitPriceOverride: 0,
+        maxAvailOverride: 0,
+        reason: "غير متوفر حالياً — سنحاول توفيره المرة الجاية"
+      }));
+
       if (recipeRes.availableItems.length > 0) {
         const enrichedItems = recipeRes.availableItems.map(it => ({
           ...it,
           suggestedQty: suggestedPerItem,
           reason: peopleCount ? `${it.reason} • مقترح لـ ${peopleCount} أشخاص: ${suggestedPerItem}` : it.reason
         }));
-        const missingNote = recipeRes.missingIngredients.length
-          ? ` | غير متوفر حالياً: ${recipeRes.missingIngredients.slice(0, 4).join("، ")}`
-          : " | جميع المكونات الأساسية متوفرة";
+        const combinedModalItems = [...enrichedItems, ...missingModalEntries].slice(0, 8);
         const peopleNote = peopleCount ? ` (لـ ${peopleCount} أشخاص)` : "";
         openZeroDefaultModal(
-          `🍲 ${recipeRes.recipe.title}${peopleNote} — المتوفر في الفرع:`,
-          enrichedItems,
+          `🍲 ${recipeRes.recipe.title}${peopleNote} — مكونات الوصفة فقط:`,
+          combinedModalItems,
           `recipe_${recipeRes.recipe.title}`,
-          `الكمية الافتراضية 0 — اضغط (+) أو «تحديد المتوفر»${missingNote}`
+          missingFormatted ? missingFormatted.trim() : "جميع مكونات الوصفة المتوفرة في الفرع جاهزة — حدد الكمية"
         );
-        const msg = persona.recipeReady(recipeRes.recipe.title);
+        const msg = `${persona.recipeReady(recipeRes.recipe.title)}${missingFormatted}`.trim();
         setOrbEmotion("choice", msg, true);
         setTxt("aiShoppingStatusText", `✅ ${msg}`);
         return;
       } else {
-        const noStockMsg = persona.recipeMissing(recipeRes.recipe.title);
+        if (missingModalEntries.length) {
+          openZeroDefaultModal(
+            `🍲 ${recipeRes.recipe.title} — الأصناف الناقصة:`,
+            missingModalEntries,
+            `recipe_missing_${recipeRes.recipe.title}`,
+            missingFormatted.trim() || "مكونات الوصفة غير متوفرة حالياً"
+          );
+        }
+        const noStockMsg = `${persona.recipeMissing(recipeRes.recipe.title)}${missingFormatted}`.trim();
         setOrbEmotion("idle", noStockMsg, true);
         setTxt("aiShoppingStatusText", `⚠️ ${noStockMsg}`);
         return;
