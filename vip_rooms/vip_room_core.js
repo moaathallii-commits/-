@@ -822,45 +822,27 @@
     extractInsightsFromMessage(raw, room);
     const n = normAr(raw);
 
-    // 1) فحص الأوامر السريعة وبنك الخبرة المحلي أولاً (استجابة فورية بـ 0 حصة API)
-    if (/نصيحه|نصيحة|فيدني|معلومه/.test(n) && Array.isArray(room.tips)) {
-      const tip = pickNonRepeating(room.id, "tips", room.tips);
-      const bridge = Array.isArray(room.shoppingBridges) ? room.shoppingBridges[Math.floor(Math.random() * room.shoppingBridges.length)] : null;
-      const items = bridge ? findStoreProductsForKeywords(bridge.keywords) : [];
-      showRoomReply(tip, room, items);
-      return;
-    }
-    if (/تحدي|ملل|طفش|زهق|لعبه|سؤال/.test(n) && Array.isArray(room.challenges)) {
-      const ch = pickNonRepeating(room.id, "challenges", room.challenges);
-      showRoomReply(ch, room, null, "challenge");
-      return;
-    }
-
-    // 2) مطابقة جسور التسوق التخصصية في الغرفة
+    const ins = getCustomerInsights();
+    const who = ins.nickname ? ` يا ${ins.nickname}` : "";
     let matchedBridgeProducts = [];
     if (Array.isArray(room.shoppingBridges)) {
       const hitBridge = room.shoppingBridges.find((b) => b.triggers.some((t) => n.includes(normAr(t))));
-      if (hitBridge) {
-        matchedBridgeProducts = findStoreProductsForKeywords(hitBridge.keywords);
-        if (matchedBridgeProducts.length && (navigator.onLine === false || !resolveWorkerUrl())) {
-          showRoomReply(hitBridge.pitch, room, matchedBridgeProducts);
-          return;
-        }
-      }
+      if (hitBridge) matchedBridgeProducts = findStoreProductsForKeywords(hitBridge.keywords);
     }
 
-    // 3) محادثة سحابية حرة عبر Cloudflare Worker بالدور الثلاثي (علاقات اجتماعية + بيع وتسويق + خبير المجال)
+    // 1) أولوية قصوى: محادثة حية حرة ومباشرة عبر Worker عندما يكون الإنترنت متاحاً
     const workerUrl = resolveWorkerUrl();
     if (workerUrl && navigator.onLine !== false) {
       const b = $id("vipRoomBubble");
-      if (b) b.textContent = "✨ يفكّر في رد مناسب لك...";
-      roomChatHistory.push({ role: "user", text: raw.slice(0, 160) });
-      if (roomChatHistory.length > 6) roomChatHistory = roomChatHistory.slice(-6);
+      if (b) b.textContent = "🎙️ يسمعك ويرد عليك مباشرة...";
+      roomChatHistory.push({ role: "user", text: raw.slice(0, 180) });
+      if (roomChatHistory.length > 8) roomChatHistory = roomChatHistory.slice(-8);
 
-      const triExpertStyle = [
-        room.roles?.social || "خبير علاقات اجتماعية وذكاء عاطفي يكسر الملل بأسلوب دافئ وطبيعي",
-        room.roles?.sales || "خبير بيع وتسويق يلتقط احتياجات الزبون بلطف دون إلحاح",
-        room.roles?.domain || room.specialty || ""
+      const liveChatStyle = [
+        `أنت الآن في محادثة حية حرة ومباشرة بدور ${room.name} (${room.title || ""})`,
+        "ردّ مباشرة على كلام المستخدم وما يقصده الآن بأسلوب طبيعي حر وعفوي دون تكرار عبارات جاهزة أو إلقاء نصائح مفروضة إذا لم يطلب نصيحة",
+        room.roles?.social || "",
+        room.roles?.domain || ""
       ].filter(Boolean).join(" | ");
 
       try {
@@ -872,16 +854,16 @@
             prompt: raw,
             history: roomChatHistory,
             customerProfile: {
-              ...getCustomerInsights(),
-              firstName: getCustomerInsights().nickname || ""
+              ...ins,
+              firstName: ins.nickname || ""
             },
             catalog: matchedBridgeProducts.map((p) => ({ id: p.id, name: p.name, price: p.priceSYP })),
             storeMeta: {
               persona: room.name,
               personaId: room.id,
               personaRole: room.title,
-              personaTone: room.toneTag || "ودود وحماسي",
-              personaStyle: triExpertStyle,
+              personaTone: room.toneTag || "حيوي وعفوي وحر",
+              personaStyle: liveChatStyle,
               dialectMode: room.dialectMode || "shami_friendly"
             }
           })
@@ -889,17 +871,40 @@
         const json = await res.json();
         const reply = String(json?.data?.reply || "").trim();
         if (reply) {
-          roomChatHistory.push({ role: "assistant", text: reply.slice(0, 160) });
+          roomChatHistory.push({ role: "assistant", text: reply.slice(0, 180) });
           showRoomReply(reply, room, matchedBridgeProducts);
           return;
         }
       } catch (_) {}
     }
 
-    // 4) بديل محلي فوري من بنك الخبرة عند انقطاع الإنترنت أو تبريد 429
-    const fallbackPool = [...(room.tips || []), ...(room.challenges || [])];
-    const fallbackLine = pickNonRepeating(room.id, "fallback", fallbackPool) || "أهلاً بك دائماً، كيف يومك اليوم؟";
-    showRoomReply(fallbackLine, room, matchedBridgeProducts);
+    // 2) تفاعل محلي ذكي ومباشر مع مضمون كلام المستخدم (تحية، حال، سؤال، أو طلب نصيحة/تحدي)
+    if (/^(مرحبا|اهلا|هلا|سلام|السلام|صباح|مساء)/.test(n)) {
+      showRoomReply(`يا هلا${who}! نورت الغرفة، شو عبالك نحكي فيه أو نجهزلك اليوم؟`, room, null, "talk");
+      return;
+    }
+    if (/كيف\s*حالك|شلونك|كيفك|شو\s*اخبارك|اخبارك/.test(n)) {
+      showRoomReply(`أنا بخير وتمام التمام${who}، مبسوط بحكينا! أنت شو أخبارك وكيف يومك؟`, room, null, "talk");
+      return;
+    }
+    if (/نصيحه|نصيحة|فيدني|معلومه/.test(n) && Array.isArray(room.tips)) {
+      const tip = pickNonRepeating(room.id, "tips", room.tips);
+      showRoomReply(tip, room, matchedBridgeProducts);
+      return;
+    }
+    if (/تحدي|ملل|طفش|زهق|لعبه|سؤال/.test(n) && Array.isArray(room.challenges)) {
+      const ch = pickNonRepeating(room.id, "challenges", room.challenges);
+      showRoomReply(ch, room, null, "challenge");
+      return;
+    }
+    if (matchedBridgeProducts.length) {
+      const hitBridge = room.shoppingBridges.find((b) => b.triggers.some((t) => n.includes(normAr(t))));
+      showRoomReply(hitBridge?.pitch || `هي خيارات متوفرة تناسب كلامك${who}:`, room, matchedBridgeProducts);
+      return;
+    }
+
+    const reactiveReply = `سمعتك منيح${who} عم تقول: «${raw.slice(0, 60)}» — خبرني شو رأيك أو شو حابب نعمل فيها هلق؟`;
+    showRoomReply(reactiveReply, room, null, "talk");
   }
 
   function resolveWorkerUrl() {
