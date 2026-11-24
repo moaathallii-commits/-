@@ -1,6 +1,6 @@
 {
   "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-24T05:17:33Z",
+  "updatedAt": "2026-11-24T07:29:37Z",
   "personas": {
     "buddy": {
       "greet": [
@@ -1087,6 +1087,10 @@
         {
           "text": "أهلاً وسهلاً فيك، يسعدني جداً أساعدك بتسوقك اليوم. بشو نبلش؟",
           "file": "sounds_gemini/pastry_greet_5.wav"
+        },
+        {
+          "text": "يا هلا بالطلة الحلوة! متجر معاذ جاهز لطلباتك، سمّي بالله واطلب.",
+          "file": "sounds_gemini/pastry_greet_6.wav"
         }
       ],
       "greetMorning": [
@@ -1101,6 +1105,10 @@
         {
           "text": "صباح النور والبركة! إن شاء الله يومك حلو ومليان خير، شو بتحب تطلب؟",
           "file": "sounds_gemini/pastry_greetMorning_3.wav"
+        },
+        {
+          "text": "صباح الفل والروقان، خبرني شو ناقص البيت لنجهزه عالسريع.",
+          "file": "sounds_gemini/pastry_greetMorning_4.wav"
         }
       ],
       "greetEvening": [
@@ -1113,14 +1121,70 @@
           "file": "sounds_gemini/pastry_greetEvening_2.wav"
         },
         {
+          "text": "مساء النور والهنا، خبرني شو عبالك للعشا أو السهرة اليوم.",
+          "file": "sounds_gemini/pastry_greetEvening_3.wav"
+        },
+        {
           "text": "مساء الورد يا غالي، كل شي بتحتاجه لليلة جاهز ومرتب هلق.",
           "file": "sounds_gemini/pastry_greetEvening_4.wav"
         }
       ],
-      "chatGood": [],
-      "thanks": [],
-      "added": [],
-      "itemsReady": [],
+      "chatGood": [
+        {
+          "text": "أنا بخير والحمد لله، كيف بقدر أساعدك اليوم؟",
+          "file": "sounds_gemini/pastry_chatGood_1.wav"
+        },
+        {
+          "text": "بألف خير ونعمة بسؤالك اللطيف يا غالي، شو بتحب أجهزلك؟",
+          "file": "sounds_gemini/pastry_chatGood_2.wav"
+        },
+        {
+          "text": "تمام التمام وبأعلى جاهزية لخدمتك، خبرني شو ببالك تطلب.",
+          "file": "sounds_gemini/pastry_chatGood_3.wav"
+        },
+        {
+          "text": "الحمد لله عال العال، وجودك بمتجر معاذ بيسعدني دايماً. كيف أخدمك؟",
+          "file": "sounds_gemini/pastry_chatGood_4.wav"
+        }
+      ],
+      "thanks": [
+        {
+          "text": "العفو يا غالي، تكرم عينك ويسعدني دائماً أكون بخدمتك.",
+          "file": "sounds_gemini/pastry_thanks_1.wav"
+        },
+        {
+          "text": "ولو يا غالي، هاد واجبي بكل سرور ومحبة.",
+          "file": "sounds_gemini/pastry_thanks_2.wav"
+        },
+        {
+          "text": "على راسي وعيني، بالعافية مقدماً على كل اختياراتك.",
+          "file": "sounds_gemini/pastry_thanks_3.wav"
+        },
+        {
+          "text": "لا شكر على واجب أبداً، بأي وقت بتحتاج شي أنا هون.",
+          "file": "sounds_gemini/pastry_thanks_4.wav"
+        }
+      ],
+      "added": [
+        {
+          "text": "يا سلام عليك، أضفته للسلة عالسريع، شو نكمل كمان؟",
+          "file": "sounds_gemini/pastry_added_3.wav"
+        },
+        {
+          "text": "تمام التمام، صار الصنف بسلتك، خبرني إذا ناقصك شي غيره.",
+          "file": "sounds_gemini/pastry_added_5.wav"
+        }
+      ],
+      "itemsReady": [
+        {
+          "text": "تفضل، عرضتلك الأصناف المتوفرة بالفرع هلق، حدد الكمية.",
+          "file": "sounds_gemini/pastry_itemsReady_1.wav"
+        },
+        {
+          "text": "جهزتلك القائمة المتوفرة قدامك، اكبس زائد لإضافة يلي بتحبه.",
+          "file": "sounds_gemini/pastry_itemsReady_2.wav"
+        }
+      ],
       "alternative": [],
       "habit": [],
       "notFound": [],
