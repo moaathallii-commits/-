@@ -9,6 +9,7 @@
 
   window.MoaathVIPRooms.register("princess_layla", {
     "id": "princess_layla",
+    "isVip": true,
     "name": "الأميرة ليلى",
     "icon": "👑",
     "title": "غرفة VIP • الذوق الملكي، الضيافة الراقية، والجمال",
