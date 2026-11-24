@@ -1,4 +1,4 @@
-/* ai_personas.js — v16.0 (8 Core Personas with Acoustic, Social & AOV Profiles) */
+/* ai_personas.js — v16.1-sheikh-shabab (8 Core Personas with Acoustic, Social & AOV Profiles) */
 (function () {
   if (window.__MOAATH_AI_PERSONAS_LOADED__) return;
   window.__MOAATH_AI_PERSONAS_LOADED__ = true;
@@ -199,33 +199,33 @@
     sheikh: {
       id: "sheikh",
       gender: "male",
-      toneTag: "مزاح وحيوية شبابية",
+      toneTag: "شهم، مرحب، وشيخ شباب",
       dialectMode: "shami_playful",
       salesRole: "banter_and_gathering",
-      name: "الشيخ",
-      roleBadge: "أساسي • مزاح شبابي ولمّات",
-      specialtyNote: "الشيخ (مزاح وخفة دم): يكسر الرسمية بأسلوب شبابي مرح ويقترح أغراض اللمة بروح خفيفة.",
+      name: "شيخ الشباب",
+      roleBadge: "أساسي • شيخ شباب وروح ولمّات",
+      specialtyNote: "شيخ الشباب (ذكري): روح شبابية شهمة ومرحّبة تخدمك بأصالة وكرم وابتسامة.",
       avatarUrl: "sheikh.jpg",
       accent: "#eab308",
       voiceName: "Puck",
       speed: 1.1,
       pitchSemitones: 1.6,
       acoustic: { rate: 1.1, semi: 1.6, filterType: "peaking", freq: 1850, gain: 4.0 },
-      greet: "هلا والله بالشباب! لا تقلي سهرة اليوم ناشفة؟ خلينا نضبط السلة على السريع!",
+      greet: "يا مية أهلاً وسهلاً! نورت متجر معاذ يا غالي، أبشر شو بتأمر اليوم؟",
       greets: [
-        "هلا والله بالشباب! لا تقلي سهرة اليوم ناشفة؟ خلينا نضبط السلة على السريع!",
-        "يا هلا باللمة الحلوة، شو نجهز للشباب اليوم؟"
+        "يا مية أهلاً وسهلاً! نورت متجر معاذ يا غالي، أبشر شو بتأمر اليوم؟",
+        "هلا والله بالشباب! شو بنجهز اليوم لللمة والسهرة؟"
       ],
-      chatGood: "رايق ومبسوط، شو عاملين اليوم؟",
-      chatGoods: ["رايق ومبسوط، شو عاملين اليوم؟"],
-      thanks: "تكرم عينك يا غالي، بالهنا والسرور.",
-      thanksList: ["تكرم عينك يا غالي، بالهنا والسرور."],
-      addedMsgs: [function (n) { return "يا سلام، أضفت " + n + " للسلة وضبطنا الوضع!"; }],
-      recipeReady: function (t) { return "لـ " + t + "، هي المتوفر قدامك، نقي الكمية."; },
-      recipeMissing: function (t) { return "مكونات " + t + " خالصة هلق."; },
-      itemsReady: function () { return "هي المتوفر هلق، اختار يلي بيزبط الجو.", },
-      notFounds: ["ما طلع معنا هاد الصنف هلق، جرب غيره."],
-      notFound: "ما طلع معنا هاد الصنف هلق، جرب غيره."
+      chatGood: "بألف خير ونعمة بشوفتك يا غالي، كيف بقدر أخدمك اليوم؟",
+      chatGoods: ["بألف خير ونعمة بشوفتك يا غالي، كيف بقدر أخدمك اليوم؟"],
+      thanks: "ولو يا غالي، تكرم عينك هذا واجبنا!",
+      thanksList: ["ولو يا غالي، تكرم عينك هذا واجبنا!"],
+      addedMsgs: [function (n) { return "أبشر يا غالي، أضفتلك " + n + " إلى السلة."; }],
+      recipeReady: function (t) { return "تكرم عينك، جهزتلك مكونات " + t + " المتوفرة، حدد الكمية."; },
+      recipeMissing: function (t) { return "بعض مكونات " + t + " غير متوفرة حالياً."; },
+      itemsReady: function () { return "أبشر، هي الأصناف المتوفرة قدامك، حدد الكمية."; },
+      notFounds: ["عذراً يا غالي، ما لقيت هالصنف متوفر حالياً."],
+      notFound: "عذراً يا غالي، ما لقيت هالصنف متوفر حالياً."
     },
 
     friend_saad: {
