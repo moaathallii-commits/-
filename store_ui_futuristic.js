@@ -1,6 +1,7 @@
 /* store_ui_futuristic.js — v5.9 (Step 4: Safe MutationObserver + Clean Search Sync + Zero Duplicate Containers + All 15 Store UI & 10 AI Enhancements) */
 (function () {
   if (window.__MOAATH_STORE_UI_V59__) return;
+  window.__MOAATH_STORE_UI_V60__ = true;
   window.__MOAATH_STORE_UI_V59__ = true;
   window.__MOAATH_STORE_UI_V56__ = true;
   window.__MOAATH_STORE_UI_V55__ = true;
@@ -112,7 +113,7 @@
       ".moaath-img-skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(212,175,55,0.16) 50%, rgba(255,255,255,0.05) 75%) !important; background-size: 200% 100% !important; animation: moaathSkeletonShimmer 1.3s infinite linear !important; min-height: 95px !important; }",
 
       /* Floating Dock & BackToTop */
-      "body.moaath-ai-expanded #petCharRoot, body.moaath-search-focused #petCharRoot { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; transform: scale(0.75) !important; }",
+      "body.moaath-search-focused #petCharRoot { opacity: 0.35 !important; transform: scale(0.88) !important; }",
       "body { padding-bottom: 132px !important; }",
       ".cart-bar, .bottom-cart-bar, .fixed-cart-bar, #bottomCartBar { left: 8px !important; right: 8px !important; bottom: 62px !important; width: auto !important; z-index: 120 !important; border-radius: 18px !important; background: rgba(15, 20, 30, 0.94) !important; backdrop-filter: blur(14px) !important; -webkit-backdrop-filter: blur(14px) !important; border: 1px solid rgba(212, 175, 55, 0.48) !important; box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55) !important; }",
       "#moaathCartCountBadge { display: inline-flex !important; align-items: center !important; justify-content: center !important; min-width: 19px !important; height: 19px !important; padding: 0 5px !important; border-radius: 999px !important; background: #D4AF37 !important; color: #000 !important; font-size: 10px !important; font-weight: 900 !important; margin-right: 5px !important; }",
@@ -129,7 +130,7 @@
       ".moaath-cart-top-actions { display: flex; align-items: center; gap: 5px; }",
       ".moaath-cart-mini-btn { padding: 4px 8px; border-radius: 999px; font-size: 10px; font-weight: 800; border: 1px solid rgba(212, 175, 55, 0.35); background: rgba(255, 255, 255, 0.05); color: var(--text-color); cursor: pointer; }",
       ".moaath-cart-close-x { width: 28px; height: 28px; padding: 0; border-radius: 50%; border: 1px solid rgba(239, 68, 68, 0.45); background: rgba(239, 68, 68, 0.16); color: #fca5a5; font-size: 13px; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }",
-      "#cartModal #cleanCheckoutSummaryCard, #cartModal #cartCheckoutStepper, #cartModal .moaath-cart-hidden-close { display: none !important; }",
+      "#cartModal #cleanCheckoutSummaryCard, #cartModal #cartCheckoutStepper, #cartModal .moaath-cart-hidden-close, #cartModal #shamCashInfoBox, #cartModal #manualGpsRetryBtn, #cartModal #gpsStatusBox { display: none !important; }",
       "#moaathCartRecsToggle { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 6px 9px; margin: 6px 0; border-radius: 12px; background: rgba(56, 189, 248, 0.08); border: 1px dashed rgba(56, 189, 248, 0.38); color: #38bdf8; font-size: 10.5px; font-weight: 800; cursor: pointer; }",
       "#aiCartRecommendationsBox.moaath-recs-collapsed { display: none !important; }",
       "#moaathPaymentPillsWrap { display: flex; gap: 6px; margin: 6px 0 8px 0; width: 100%; }",
@@ -424,6 +425,7 @@
       topBar.innerHTML =
         '<span class="moaath-cart-top-title">🛒 سلة المشتريات</span>' +
         '<div class="moaath-cart-top-actions">' +
+          '<button type="button" id="moaathCompactGpsBtn" class="moaath-cart-mini-btn" style="border-color:rgba(56,189,248,0.55); color:#38bdf8;" title="تحديد الموقع GPS">📍 GPS</button>' +
           '<button type="button" id="moaathCartSaveListBtn" class="moaath-cart-mini-btn" title="حفظ كقائمة سريعة">💾 حفظ</button>' +
           '<button type="button" id="moaathCartClearBtn" class="moaath-cart-mini-btn" title="إفراغ السلة">🧹 إفراغ</button>' +
           '<button type="button" id="moaathCartTopCloseBtn" class="moaath-cart-close-x" title="إغلاق">✕</button>' +
@@ -442,6 +444,22 @@
       $("moaathCartTopCloseBtn").onclick = function () {
         if (typeof window.closeCartModal === "function") window.closeCartModal();
         else cartModal.style.display = "none";
+      };
+
+      $("moaathCompactGpsBtn").onclick = function () {
+        var gpsBtn = $("moaathCompactGpsBtn");
+        if (gpsBtn) { gpsBtn.textContent = "⏳ GPS..."; gpsBtn.style.color = "#fbbf24"; }
+        if (typeof window.forceRefreshCartGPSLocation === "function") {
+          window.forceRefreshCartGPSLocation();
+        } else if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function (pos) {
+            try { localStorage.setItem("moaath_last_gps_coords", JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude, ts: Date.now() })); } catch (_) {}
+            if (gpsBtn) { gpsBtn.textContent = "✓ GPS"; gpsBtn.style.color = "#00e676"; gpsBtn.style.borderColor = "#00e676"; }
+            if (typeof showToast === "function") showToast("📍 تم تحديد موقعك بدقة");
+          }, function () {
+            if (gpsBtn) { gpsBtn.textContent = "📍 GPS"; gpsBtn.style.color = "#38bdf8"; }
+          }, { enableHighAccuracy: true, timeout: 8000 });
+        }
       };
 
       $("moaathCartClearBtn").onclick = function () {
@@ -908,7 +926,7 @@
   }
 
   if (window.MoaathSystemRegistry && typeof window.MoaathSystemRegistry.register === "function") {
-    window.MoaathSystemRegistry.register("store_ui", "5.9");
+    window.MoaathSystemRegistry.register("store_ui", "6.0");
   }
 
   if (document.readyState === "loading") {
