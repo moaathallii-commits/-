@@ -1,6 +1,6 @@
 {
   "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-23T23:00:23Z",
+  "updatedAt": "2026-11-24T01:20:48Z",
   "personas": {
     "buddy": {
       "greet": [
@@ -791,6 +791,10 @@
           "file": "sounds_gemini/noor_welcomeBack_1.wav"
         },
         {
+          "text": "أهلاً بعودتك يا غالي! جاهز نكرر طلبك السابق بلمسة وحدة ولا حابب نختار شي جديد اليوم؟",
+          "file": "sounds_gemini/noor_welcomeBack_2.wav"
+        },
+        {
           "text": "نورتنا من جديد بمتجر معاذ! تحب أجهزلك نفس مفضلاتك الماضية؟",
           "file": "sounds_gemini/noor_welcomeBack_3.wav"
         }
@@ -811,6 +815,10 @@
           "file": "sounds_gemini/chef_greet_3.wav"
         },
         {
+          "text": "حياك الله يا غالي، نورتنا بمتجر معاذ. قولي شو عبالك نجهزلك؟",
+          "file": "sounds_gemini/chef_greet_4.wav"
+        },
+        {
           "text": "أهلاً وسهلاً فيك، يسعدني جداً أساعدك بتسوقك اليوم. بشو نبلش؟",
           "file": "sounds_gemini/chef_greet_5.wav"
         },
@@ -823,6 +831,14 @@
         {
           "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
           "file": "sounds_gemini/chef_greetMorning_1.wav"
+        },
+        {
+          "text": "يسعد صباحك يا غالي، كل أغراض الفطور والقهوة جاهزة هلق.",
+          "file": "sounds_gemini/chef_greetMorning_2.wav"
+        },
+        {
+          "text": "صباح النور والبركة! إن شاء الله يومك حلو ومليان خير، شو بتحب تطلب؟",
+          "file": "sounds_gemini/chef_greetMorning_3.wav"
         },
         {
           "text": "صباح الفل والروقان، خبرني شو ناقص البيت لنجهزه عالسريع.",
@@ -851,10 +867,39 @@
         {
           "text": "أنا بخير والحمد لله، كيف بقدر أساعدك اليوم؟",
           "file": "sounds_gemini/chef_chatGood_1.wav"
+        },
+        {
+          "text": "بألف خير ونعمة بسؤالك اللطيف يا غالي، شو بتحب أجهزلك؟",
+          "file": "sounds_gemini/chef_chatGood_2.wav"
+        },
+        {
+          "text": "تمام التمام وبأعلى جاهزية لخدمتك، خبرني شو ببالك تطلب.",
+          "file": "sounds_gemini/chef_chatGood_3.wav"
+        },
+        {
+          "text": "الحمد لله عال العال، وجودك بمتجر معاذ بيسعدني دايماً. كيف أخدمك؟",
+          "file": "sounds_gemini/chef_chatGood_4.wav"
         }
       ],
-      "thanks": [],
+      "thanks": [
+        {
+          "text": "العفو يا غالي، تكرم عينك ويسعدني دائماً أكون بخدمتك.",
+          "file": "sounds_gemini/chef_thanks_1.wav"
+        },
+        {
+          "text": "ولو يا غالي، هاد واجبي بكل سرور ومحبة.",
+          "file": "sounds_gemini/chef_thanks_2.wav"
+        },
+        {
+          "text": "لا شكر على واجب أبداً، بأي وقت بتحتاج شي أنا هون.",
+          "file": "sounds_gemini/chef_thanks_4.wav"
+        }
+      ],
       "added": [
+        {
+          "text": "اختيار موفق، تمت إضافة الصنف إلى السلة بنجاح.",
+          "file": "sounds_gemini/chef_added_1.wav"
+        },
         {
           "text": "ممتاز، صار طلبك جاهز بالسلة، نضيف شي تاني؟",
           "file": "sounds_gemini/chef_added_2.wav"
@@ -874,11 +919,28 @@
       ],
       "itemsReady": [
         {
+          "text": "تفضل، عرضتلك الأصناف المتوفرة بالفرع هلق، حدد الكمية.",
+          "file": "sounds_gemini/chef_itemsReady_1.wav"
+        },
+        {
+          "text": "جهزتلك القائمة المتوفرة قدامك، اكبس زائد لإضافة يلي بتحبه.",
+          "file": "sounds_gemini/chef_itemsReady_2.wav"
+        },
+        {
           "text": "هي كل الخيارات المتوفرة حالياً، حدد الكمية وبنجهزها فوراً.",
           "file": "sounds_gemini/chef_itemsReady_4.wav"
         }
       ],
-      "alternative": [],
+      "alternative": [
+        {
+          "text": "هاد الصنف خالص هلق، بس جبتلك أقرب البدائل المتوفرة بالفرع.",
+          "file": "sounds_gemini/chef_alternative_1.wav"
+        },
+        {
+          "text": "للأسف ما لقيت نفس الصنف حالياً، شوف هالبدائل الطيبة والموجودة.",
+          "file": "sounds_gemini/chef_alternative_2.wav"
+        }
+      ],
       "habit": [
         {
           "text": "جبتلك مفضلاتك يلي دايماً بتختارها لتوفير وقتك، حدد الكمية.",
