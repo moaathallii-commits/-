@@ -1,6 +1,6 @@
 {
   "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-24T07:29:37Z",
+  "updatedAt": "2026-11-24T09:17:19Z",
   "personas": {
     "buddy": {
       "greet": [
@@ -1167,8 +1167,20 @@
       ],
       "added": [
         {
+          "text": "اختيار موفق، تمت إضافة الصنف إلى السلة بنجاح.",
+          "file": "sounds_gemini/pastry_added_1.wav"
+        },
+        {
+          "text": "ممتاز، صار طلبك جاهز بالسلة، نضيف شي تاني؟",
+          "file": "sounds_gemini/pastry_added_2.wav"
+        },
+        {
           "text": "يا سلام عليك، أضفته للسلة عالسريع، شو نكمل كمان؟",
           "file": "sounds_gemini/pastry_added_3.wav"
+        },
+        {
+          "text": "تمت الإضافة بنجاح، سلتك صارت مرتبة وأحلى هلق.",
+          "file": "sounds_gemini/pastry_added_4.wav"
         },
         {
           "text": "تمام التمام، صار الصنف بسلتك، خبرني إذا ناقصك شي غيره.",
@@ -1183,12 +1195,64 @@
         {
           "text": "جهزتلك القائمة المتوفرة قدامك، اكبس زائد لإضافة يلي بتحبه.",
           "file": "sounds_gemini/pastry_itemsReady_2.wav"
+        },
+        {
+          "text": "لقيتلك المطلوب بالفرع، اختار الكمية المناسبة وأضفها للسلة.",
+          "file": "sounds_gemini/pastry_itemsReady_3.wav"
+        },
+        {
+          "text": "هي كل الخيارات المتوفرة حالياً، حدد الكمية وبنجهزها فوراً.",
+          "file": "sounds_gemini/pastry_itemsReady_4.wav"
         }
       ],
-      "alternative": [],
-      "habit": [],
-      "notFound": [],
-      "idleNudge": [],
+      "alternative": [
+        {
+          "text": "هاد الصنف خالص هلق، بس جبتلك أقرب البدائل المتوفرة بالفرع.",
+          "file": "sounds_gemini/pastry_alternative_1.wav"
+        },
+        {
+          "text": "للأسف ما لقيت نفس الصنف حالياً، شوف هالبدائل الطيبة والموجودة.",
+          "file": "sounds_gemini/pastry_alternative_2.wav"
+        },
+        {
+          "text": "الصنف المطلوب نافد مؤقتاً، عرضتلك أفضل بدائل متوفرة هلق.",
+          "file": "sounds_gemini/pastry_alternative_3.wav"
+        }
+      ],
+      "habit": [
+        {
+          "text": "جبتلك مفضلاتك يلي دايماً بتختارها لتوفير وقتك، حدد الكمية.",
+          "file": "sounds_gemini/pastry_habit_1.wav"
+        },
+        {
+          "text": "هي أغراضك المعتادة متوفرة هلق بلمسة وحدة يا غالي.",
+          "file": "sounds_gemini/pastry_habit_2.wav"
+        },
+        {
+          "text": "تذكرت اختياراتك المفضلة وجهزتلك ياها عالسريع بالسلة.",
+          "file": "sounds_gemini/pastry_habit_3.wav"
+        }
+      ],
+      "notFound": [
+        {
+          "text": "عذراً يا غالي، ما لقيت هاد الصنف متوفر هلق، جرب اسم أقرب.",
+          "file": "sounds_gemini/pastry_notFound_1.wav"
+        },
+        {
+          "text": "بحثتلك منيح بس ما لقيت هاد الصنف حالياً، فيك تطلبه من زر طلب صنف.",
+          "file": "sounds_gemini/pastry_notFound_2.wav"
+        },
+        {
+          "text": "هاد الصنف غير متوفر بالرف هلق، خبرني بنوع تاني وبساعدك فوراً.",
+          "file": "sounds_gemini/pastry_notFound_3.wav"
+        }
+      ],
+      "idleNudge": [
+        {
+          "text": "محتار شو تاخد يا غالي؟ خبرني شو عبالك اليوم وأنا برتبلك السلة على ذوقك.",
+          "file": "sounds_gemini/pastry_idleNudge_1.wav"
+        }
+      ],
       "crossSell": [],
       "scarcityAlert": [],
       "checkoutBoost": [],
