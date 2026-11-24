@@ -9,6 +9,7 @@
 
   window.MoaathVIPRooms.register("anime_zain", {
     "id": "anime_zain",
+    "isVip": true,
     "name": "زين (أبطال الأنمي)",
     "icon": "⚡",
     "title": "غرفة VIP • حماس الأبطال، التحديات، وطاقة الإنجاز",
