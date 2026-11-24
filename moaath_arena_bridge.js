@@ -1,15 +1,26 @@
 /**
- * وحدة الجسر الآمن بين «متجر معاذ» و«عالم التحديات والمسابقات»
+ * وحدة الجسر الآمن بين «متجر معاذ» و«عالم التحديات والمسابقات» (v1.1)
  * المسار في مستودع متجر معاذ: moaath_arena_bridge.js
- * المزايا:
- * 1. للزبون: توليد معرف الربط السري (MTH-XXXX-XXXX)، شحن عملات العالم من المحفظة مسبقة الدفع، وفتح تطبيق العالم المستقل.
- * 2. للإدارة (0965461504): لوحة تحكم مدمجة لإدارة زر الطوارئ، الإعدادات، اعتماد السحوبات بعد تدقيق الساعة، وفك تجميد الحسابات.
  * السياسة الأمنية: 0% تدخل للذكاء الاصطناعي في المال أو التحويلات.
  */
 
 (function () {
+  if (window.__MOAATH_ARENA_BRIDGE_V11__) return;
+  window.__MOAATH_ARENA_BRIDGE_V11__ = true;
+
   const ARENA_WORKER_URL = 'https://moaath-arena-worker.moaathallii.workers.dev';
   const ARENA_APP_URL = 'https://moaathallii-commits.github.io/moaath-arena/';
+
+  const esc = (s) =>
+    typeof window.moaathEscapeHtml === 'function'
+      ? window.moaathEscapeHtml(s)
+      : String(s ?? '').replace(/[&<>"']/g, (c) => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }[c]));
 
   function injectStyles() {
     if (document.getElementById('moaath-arena-bridge-css')) return;
@@ -31,7 +42,7 @@
       .mab-title { color: #f3d576; font-size: 1.1rem; font-weight: 800; }
       .mab-close { background: none; border: none; color: #cbd5e1; font-size: 1.4rem; cursor: pointer; }
       .mab-box { background: #0b1120; border: 1px solid rgba(203, 213, 225, 0.15); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
-      .mab-key { font-family: monospace; font-size: 1.3rem; letter-spacing: 2px; color: #4ade80; text-align: center; padding: 10px; background: #0f172a; border-radius: 8px; margin: 8px 0; border: 1px dashed #d4af37; }
+      .mab-key { font-family: monospace; font-size: 1.3rem; letter-spacing: 2px; color: #4ade80; text-align: center; padding: 10px; background: #0f172a; border-radius: 8px; margin: 8px 0; border: 1px dashed #d4af37; user-select: all; }
       .mab-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: 700; font-size: 0.95rem; cursor: pointer; margin-top: 8px; }
       .mab-btn-gold { background: linear-gradient(135deg, #d4af37, #b48a1e); color: #0b1120; }
       .mab-btn-blue { background: #2563eb; color: #fff; }
@@ -45,48 +56,69 @@
     document.head.appendChild(style);
   }
 
-  async function getFirebaseIdToken() {
-    // يدعم Firebase Compat (v8) و Modular إذا كان auth متاحاً في window
+  async function getAuthContext() {
+    let idToken = '';
     if (window.firebase && firebase.auth && firebase.auth().currentUser) {
-      return firebase.auth().currentUser.getIdToken(true);
+      idToken = await firebase.auth().currentUser.getIdToken(true);
+    } else if (window.auth && window.auth.currentUser && typeof window.auth.currentUser.getIdToken === 'function') {
+      idToken = await window.auth.currentUser.getIdToken(true);
     }
-    if (window.auth && window.auth.currentUser && typeof window.auth.currentUser.getIdToken === 'function') {
-      return window.auth.currentUser.getIdToken(true);
+
+    const storeUser = window.currentUser || null;
+    if (!idToken && (!storeUser || !storeUser.phone)) {
+      throw new Error('يرجى تسجيل الدخول في متجر معاذ أولاً.');
     }
-    throw new Error('يرجى تسجيل الدخول في متجر معاذ أولاً.');
+
+    return {
+      idToken,
+      phone: storeUser?.phone ? String(storeUser.phone).trim() : '',
+      userName: storeUser?.name ? String(storeUser.name).trim() : ''
+    };
   }
 
   async function workerRequest(path, body = {}) {
-    const idToken = await getFirebaseIdToken();
+    const ctx = await getAuthContext();
+    const headers = { 'Content-Type': 'application/json' };
+    if (ctx.idToken) headers['Authorization'] = `Bearer ${ctx.idToken}`;
+
     const res = await fetch(`${ARENA_WORKER_URL}${path}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${idToken}`
-      },
-      body: JSON.stringify(body)
+      headers,
+      body: JSON.stringify({
+        ...body,
+        bridgePhone: body.bridgePhone || ctx.phone || undefined,
+        bridgeUserName: body.bridgeUserName || ctx.userName || undefined
+      })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || `خطأ (${data.code || res.status})`);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || data.error || `خطأ (${res.status})`);
     return data;
   }
 
   function closeModal() {
     const el = document.getElementById('mab-modal-root');
     if (el) el.remove();
+    document.documentElement.classList.remove('moaath-modal-locked');
+    document.body.classList.remove('moaath-modal-locked');
   }
 
   function createModal(title, innerHTML) {
     injectStyles();
     closeModal();
+    document.documentElement.classList.add('moaath-modal-locked');
+    document.body.classList.add('moaath-modal-locked');
+
     const root = document.createElement('div');
     root.id = 'mab-modal-root';
     root.className = 'mab-backdrop';
+    root.addEventListener('click', (e) => {
+      if (e.target === root) closeModal();
+    });
     root.innerHTML = `
       <div class="mab-modal">
         <div class="mab-header">
-          <div class="mab-title">${title}</div>
-          <button class="mab-close" onclick="window.MoaathArenaBridge.close()">✕</button>
+          <div class="mab-title">${esc(title)}</div>
+          <button type="button" class="mab-close" onclick="window.MoaathArenaBridge.close()">✕</button>
         </div>
         ${innerHTML}
       </div>
@@ -97,27 +129,24 @@
   window.MoaathArenaBridge = {
     close: closeModal,
 
-    // ==================================================
-    // 1. نافذة الزبون (توليد معرف الربط + شحن النقاط + فتح العالم)
-    // ==================================================
     openCustomerModal() {
       createModal('🏆 عالم تحديات معاذ', `
         <div class="mab-box">
           <div style="font-weight:700; color:#f3d576; margin-bottom:4px;">1. ربط جهازك لأول مرة</div>
           <p class="mab-small">ولّد معرفك السري الخاص وانسخه لتسجيل الدخول في تطبيق «عالم التحديات» المستقل.</p>
           <div id="mabKeyBox" class="mab-key" style="display:none;"></div>
-          <button class="mab-btn mab-btn-gold" onclick="window.MoaathArenaBridge.generateKey()">🔑 توليد معرف اللاعب السري</button>
-          <button id="mabCopyBtn" class="mab-btn mab-btn-outline" style="display:none;" onclick="window.MoaathArenaBridge.copyKey()">📋 نسخ المعرف</button>
+          <button type="button" class="mab-btn mab-btn-gold" onclick="window.MoaathArenaBridge.generateKey()">🔑 توليد معرف اللاعب السري</button>
+          <button type="button" id="mabCopyBtn" class="mab-btn mab-btn-outline" style="display:none;" onclick="window.MoaathArenaBridge.copyKey()">📋 نسخ المعرف</button>
         </div>
 
         <div class="mab-box">
           <div style="font-weight:700; color:#f3d576; margin-bottom:4px;">2. شحن عملات معاذ (من محفظة المتجر)</div>
           <p class="mab-small">حوّل من رصيدك مسبق الدفع ($) إلى عملات داخل عالم التحديات فوراً وبأمان تام.</p>
           <input type="number" id="mabUsdInput" class="mab-input" value="1" min="0.5" step="0.5" placeholder="المبلغ بالدولار ($)" />
-          <button class="mab-btn mab-btn-green" onclick="window.MoaathArenaBridge.buyCoins()">💸 تحويل إلى عملات العالم</button>
+          <button type="button" class="mab-btn mab-btn-green" onclick="window.MoaathArenaBridge.buyCoins()">💸 تحويل إلى عملات العالم</button>
         </div>
 
-        <button class="mab-btn mab-btn-blue" onclick="window.open('${ARENA_APP_URL}', '_blank')">🚀 فتح تطبيق عالم التحديات</button>
+        <button type="button" class="mab-btn mab-btn-blue" onclick="window.open('${ARENA_APP_URL}', '_blank')">🚀 فتح تطبيق عالم التحديات</button>
       `);
     },
 
@@ -126,65 +155,68 @@
         const res = await workerRequest('/bridge/generate-bind-key');
         const box = document.getElementById('mabKeyBox');
         const copyBtn = document.getElementById('mabCopyBtn');
-        box.textContent = res.bindKey;
-        box.style.display = 'block';
-        copyBtn.style.display = 'block';
+        if (box && res.bindKey) {
+          box.textContent = String(res.bindKey);
+          box.style.display = 'block';
+        }
+        if (copyBtn) copyBtn.style.display = 'block';
       } catch (err) {
         alert(err.message);
       }
     },
 
     copyKey() {
-      const key = document.getElementById('mabKeyBox').textContent;
-      if (navigator.clipboard) {
+      const box = document.getElementById('mabKeyBox');
+      const key = box ? box.textContent.trim() : '';
+      if (!key) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(key).then(() => alert('تم نسخ المعرف السري! ألصقه الآن في تطبيق عالم التحديات.'));
       }
     },
 
     async buyCoins() {
-      const usd = Number(document.getElementById('mabUsdInput').value);
+      const usd = Number(document.getElementById('mabUsdInput')?.value);
       if (!usd || usd <= 0) return alert('أدخل مبلغاً صحيحاً بالدولار.');
       if (!confirm(`هل تؤكد خصم ${usd}$ من محفظتك مسبقة الدفع وشحنها كعملات في عالم التحديات؟`)) return;
       try {
         const idempotencyKey = `topup_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
         const res = await workerRequest('/bridge/store-to-arena', { usdAmount: usd, idempotencyKey });
-        alert(res.message);
+        alert(res.message || 'تم الشحن بنجاح.');
       } catch (err) {
         alert(err.message);
       }
     },
 
-    // ==================================================
-    // 2. لوحة إدارة عالم التحديات (مدمجة داخل لوحة إدارة متجر معاذ)
-    // ==================================================
     async openAdminModal() {
       createModal('🛡️ إدارة عالم التحديات', `<p class="mab-small" style="text-align:center;">جاري تحميل بيانات السحابة...</p>`);
       try {
         const data = await workerRequest('/admin/dashboard');
-        const cfg = data.config;
+        const cfg = data.config || {};
+        const pendingList = Array.isArray(data.pendingCashouts) ? data.pendingCashouts : [];
+        const frozenList = Array.isArray(data.frozenPlayers) ? data.frozenPlayers : [];
 
-        const cashoutsHtml = data.pendingCashouts.length === 0
+        const cashoutsHtml = pendingList.length === 0
           ? '<p class="mab-small">لا توجد طلبات سحب معلقة حالياً.</p>'
-          : data.pendingCashouts.map((c) => {
+          : pendingList.map((c) => {
               const ready = Date.now() >= Number(c.releaseAt || 0);
               return `
                 <div style="border-top:1px solid rgba(255,255,255,0.1); padding:8px 0;">
-                  <div class="mab-row"><strong>${c.phone}</strong><span style="color:#4ade80;">${c.pts} عملة (${c.usdAmount}$)</span></div>
+                  <div class="mab-row"><strong>${esc(c.phone)}</strong><span style="color:#4ade80;">${esc(c.pts)} عملة (${esc(c.usdAmount)}$)</span></div>
                   <div class="mab-small">حالة تدقيق الساعة: ${ready ? '✅ اكتملت الساعة (جاهز)' : '⏳ قيد الانتظار'}</div>
                   <div class="mab-row" style="margin-top:6px;">
-                    <button class="mab-btn mab-btn-green" style="margin:0;padding:7px;" onclick="window.MoaathArenaBridge.resolveCashout('${c.txId}','approve')">اعتماد للمتجر</button>
-                    <button class="mab-btn mab-btn-red" style="margin:0;padding:7px;" onclick="window.MoaathArenaBridge.resolveCashout('${c.txId}','reject')">رفض وإرجاع</button>
+                    <button type="button" class="mab-btn mab-btn-green" style="margin:0;padding:7px;" onclick="window.MoaathArenaBridge.resolveCashout('${esc(c.txId)}','approve')">اعتماد للمتجر</button>
+                    <button type="button" class="mab-btn mab-btn-red" style="margin:0;padding:7px;" onclick="window.MoaathArenaBridge.resolveCashout('${esc(c.txId)}','reject')">رفض وإرجاع</button>
                   </div>
                 </div>
               `;
             }).join('');
 
-        const frozenHtml = data.frozenPlayers.length === 0
+        const frozenHtml = frozenList.length === 0
           ? '<p class="mab-small">لا توجد حسابات مجمدة.</p>'
-          : data.frozenPlayers.map((p) => `
+          : frozenList.map((p) => `
               <div class="mab-row" style="border-top:1px solid rgba(255,255,255,0.1); padding:6px 0;">
-                <span>${p.displayName} (${p.phone}) - مخالفات: ${p.flags}</span>
-                <button class="mab-btn mab-btn-outline" style="width:auto;margin:0;padding:5px 10px;" onclick="window.MoaathArenaBridge.unfreeze('${p.phone}')">فك التجميد</button>
+                <span>${esc(p.displayName)} (${esc(p.phone)}) - مخالفات: ${esc(p.flags)}</span>
+                <button type="button" class="mab-btn mab-btn-outline" style="width:auto;margin:0;padding:5px 10px;" onclick="window.MoaathArenaBridge.unfreeze('${esc(p.phone)}')">فك التجميد</button>
               </div>
             `).join('');
 
@@ -194,20 +226,20 @@
               <strong>⚙️ وضع الصيانة (زر الطوارئ)</strong>
               <input type="checkbox" id="mabKillSwitch" ${cfg.killSwitch ? 'checked' : ''} style="width:20px;height:20px;" />
             </div>
-            <div class="mab-row"><span>نقاط ترحيبية للجدد:</span><input id="mabWelcomePts" class="mab-input" style="width:90px;" type="number" value="${cfg.welcomePoints}" /></div>
-            <div class="mab-row"><span>الحد الأدنى للسحب:</span><input id="mabMinCashout" class="mab-input" style="width:90px;" type="number" value="${cfg.minCashoutPts}" /></div>
-            <div class="mab-row"><span>عمولة PvP (%):</span><input id="mabPvpEdge" class="mab-input" style="width:90px;" type="number" value="${cfg.pvpHouseEdgePct}" /></div>
-            <div class="mab-row"><span>سعر العملة بالدولار:</span><input id="mabUsdRate" class="mab-input" style="width:90px;" type="number" step="0.001" value="${cfg.coinToUsdRate}" /></div>
-            <button class="mab-btn mab-btn-gold" onclick="window.MoaathArenaBridge.saveAdminConfig()">💾 حفظ الإعدادات</button>
+            <div class="mab-row"><span>نقاط ترحيبية للجدد:</span><input id="mabWelcomePts" class="mab-input" style="width:90px;" type="number" value="${esc(cfg.welcomePoints ?? 0)}" /></div>
+            <div class="mab-row"><span>الحد الأدنى للسحب:</span><input id="mabMinCashout" class="mab-input" style="width:90px;" type="number" value="${esc(cfg.minCashoutPts ?? 0)}" /></div>
+            <div class="mab-row"><span>عمولة PvP (%):</span><input id="mabPvpEdge" class="mab-input" style="width:90px;" type="number" value="${esc(cfg.pvpHouseEdgePct ?? 0)}" /></div>
+            <div class="mab-row"><span>سعر العملة بالدولار:</span><input id="mabUsdRate" class="mab-input" style="width:90px;" type="number" step="0.001" value="${esc(cfg.coinToUsdRate ?? 0)}" /></div>
+            <button type="button" class="mab-btn mab-btn-gold" onclick="window.MoaathArenaBridge.saveAdminConfig()">💾 حفظ الإعدادات</button>
           </div>
 
           <div class="mab-box">
-            <div style="font-weight:700; color:#f3d576; margin-bottom:6px;">💰 طلبات السحب المعلقة (${data.pendingCashouts.length})</div>
+            <div style="font-weight:700; color:#f3d576; margin-bottom:6px;">💰 طلبات السحب المعلقة (${pendingList.length})</div>
             ${cashoutsHtml}
           </div>
 
           <div class="mab-box">
-            <div style="font-weight:700; color:#f87171; margin-bottom:6px;">🚨 الحسابات المجمدة (${data.frozenPlayers.length})</div>
+            <div style="font-weight:700; color:#f87171; margin-bottom:6px;">🚨 الحسابات المجمدة (${frozenList.length})</div>
             ${frozenHtml}
           </div>
         `);
@@ -220,13 +252,13 @@
     async saveAdminConfig() {
       try {
         const res = await workerRequest('/admin/config', {
-          killSwitch: document.getElementById('mabKillSwitch').checked,
-          welcomePoints: Number(document.getElementById('mabWelcomePts').value),
-          minCashoutPts: Number(document.getElementById('mabMinCashout').value),
-          pvpHouseEdgePct: Number(document.getElementById('mabPvpEdge').value),
-          coinToUsdRate: Number(document.getElementById('mabUsdRate').value)
+          killSwitch: !!document.getElementById('mabKillSwitch')?.checked,
+          welcomePoints: Number(document.getElementById('mabWelcomePts')?.value),
+          minCashoutPts: Number(document.getElementById('mabMinCashout')?.value),
+          pvpHouseEdgePct: Number(document.getElementById('mabPvpEdge')?.value),
+          coinToUsdRate: Number(document.getElementById('mabUsdRate')?.value)
         });
-        alert(res.message);
+        alert(res.message || 'تم حفظ الإعدادات.');
       } catch (err) {
         alert(err.message);
       }
@@ -236,7 +268,7 @@
       if (!confirm(action === 'approve' ? 'تأكيد اعتماد السحب وإضافة الدولار لمحفظة الزبون في المتجر؟' : 'تأكيد رفض السحب وإعادة النقاط للعالم؟')) return;
       try {
         const res = await workerRequest('/admin/cashout/resolve', { txId, action });
-        alert(res.message);
+        alert(res.message || 'تم تنفيذ الإجراء.');
         this.openAdminModal();
       } catch (err) {
         alert(err.message);
@@ -246,7 +278,7 @@
     async unfreeze(phone) {
       try {
         const res = await workerRequest('/admin/player/unfreeze', { phone });
-        alert(res.message);
+        alert(res.message || 'تم فك التجميد.');
         this.openAdminModal();
       } catch (err) {
         alert(err.message);
