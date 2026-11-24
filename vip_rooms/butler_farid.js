@@ -9,6 +9,7 @@
 
   window.MoaathVIPRooms.register("butler_farid", {
     "id": "butler_farid",
+    "isVip": true,
     "name": "المساعد الراقي فريد",
     "icon": "🎩",
     "title": "غرفة VIP • التنظيم الدقيق، الإدارة الذكية، والخدمة الرفيعة",
