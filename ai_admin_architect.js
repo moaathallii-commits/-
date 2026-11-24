@@ -111,7 +111,7 @@
     let vipMediaCacheCount = 0;
     if (typeof caches !== "undefined") {
       try {
-        const c1 = await caches.open("moaath_store_tts_human");
+        const c1 = await caches.open("moaath_store_tts_gemini_v1");
         ttsCacheCount = (await c1.keys()).length;
       } catch (_) {}
       try {
@@ -137,7 +137,7 @@
       .slice(0, 6);
 
     const hasBrain = !!window.MoaathAIBrain;
-    const hasEngine = !!window.MOAATH_AI_LOADED;
+    const hasEngine = !!(window.__MOAATH_AI_LOADED__ || window.MOAATH_AI_LOADED);
     const hasVIP = !!window.MoaathVIPSystem;
     const workerUrl = resolveWorkerUrl();
     const online = navigator.onLine !== false;
