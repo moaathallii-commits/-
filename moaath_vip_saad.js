@@ -568,7 +568,7 @@
     return `
       <div style="text-align:right; direction:rtl;">
         <div style="display:flex; align-items:center; gap:9px; margin-bottom:9px; padding-bottom:8px; border-bottom:1px solid rgba(16,185,129,0.28);">
-          <img src="saad.jpg" onerror="this.onerror=null;this.src='store-icon.png';" style="width:48px; height:48px; border-radius:50%; object-fit:cover; border:2px solid #10b981; box-shadow:0 0 12px rgba(16,185,129,0.4);">
+          <img src="friend_saad.jpg" onerror="this.onerror=null;this.src='store-icon.png';" style="width:48px; height:48px; border-radius:50%; object-fit:cover; border:2px solid #10b981; box-shadow:0 0 12px rgba(16,185,129,0.4);">
           <div style="flex:1;">
             <div style="font-size:14px; font-weight:900; color:#10b981;">🕌 سعد — الصديق الوقور</div>
             <div style="font-size:10px; color:var(--gray-text);">غرفة الالتزام الإيماني • تتحدث تلقائياً 5 مرات يومياً</div>
@@ -604,7 +604,7 @@
     name: "سعد",
     title: "الصديق الوقور والالتزام الإيماني",
     emoji: "🕌",
-    img: "saad.jpg",
+    img: "friend_saad.jpg",
     voiceName: "Orus",
     gender: "male",
     accent: "#10b981",
