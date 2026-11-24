@@ -1,6 +1,6 @@
 {
   "version": "5.0-vip10x-std5x",
-  "updatedAt": "2026-11-24T15:12:38Z",
+  "updatedAt": "2026-11-24T16:22:23Z",
   "personas": {
     "anime_ritaj": {
       "greet": [
@@ -14,7 +14,13 @@
           "text": "أهلاً بك يا غالي، أهلاً وسهلاً يا حلو! نورت الغرفة، شو رايك نعمل جو لطيف — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_greet_16.wav",
           "mood": "excited",
-          "durationMs": 6530,
+          "tier": "vip"
+        },
+        {
+          "text": "أهلاً وسهلاً يا حلو! نورت الغرفة، شو رايك نعمل جو لطيف، خبرني شو ببالك؟",
+          "file": "sounds_gemini/anime_ritaj_greet_31.wav",
+          "mood": "excited",
+          "durationMs": 5890,
           "tier": "vip"
         }
       ],
@@ -29,7 +35,13 @@
           "text": "صباح الورد والبهجة! يومك رح يكون حلو ومشرق بإذن الله، شو رأيك نبدأ هلق؟",
           "file": "sounds_gemini/anime_ritaj_greetMorning_17.wav",
           "mood": "excited",
-          "durationMs": 6090,
+          "tier": "vip"
+        },
+        {
+          "text": "حياك الله، صباح الورد والبهجة! يومك رح يكون حلو ومشرق بإذن الله — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_greetMorning_32.wav",
+          "mood": "excited",
+          "durationMs": 6050,
           "tier": "vip"
         }
       ],
@@ -43,6 +55,12 @@
         {
           "text": "تكرم عينك، مساء اللطف والروقان! نبعد الملل ونشوف شو في أفكار حلوة — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_greetEvening_18.wav",
+          "mood": "talk",
+          "tier": "vip"
+        },
+        {
+          "text": "مساء اللطف والروقان! نبعد الملل ونشوف شو في أفكار حلوة، خبرني شو ببالك؟",
+          "file": "sounds_gemini/anime_ritaj_greetEvening_33.wav",
           "mood": "talk",
           "durationMs": 6170,
           "tier": "vip"
@@ -59,7 +77,13 @@
           "text": "يا هلا بابتسامتك من جديد! سعيدة جداً بوجودك معنا، شو رأيك نبدأ هلق؟",
           "file": "sounds_gemini/anime_ritaj_welcomeBack_19.wav",
           "mood": "excited",
-          "durationMs": 6210,
+          "tier": "vip"
+        },
+        {
+          "text": "أهلاً بك يا غالي، يا هلا بابتسامتك من جديد! سعيدة جداً بوجودك معنا — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_welcomeBack_34.wav",
+          "mood": "excited",
+          "durationMs": 5810,
           "tier": "vip"
         }
       ],
@@ -74,7 +98,13 @@
           "text": "يا سلام عليك، مبسوطة ومشرقة بوجودك! قولي شو عبالك اليوم — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_chatGood_20.wav",
           "mood": "excited",
-          "durationMs": 5650,
+          "tier": "vip"
+        },
+        {
+          "text": "مبسوطة ومشرقة بوجودك! قولي شو عبالك اليوم، وأنا جاهز أساعدك فوراً.",
+          "file": "sounds_gemini/anime_ritaj_chatGood_35.wav",
+          "mood": "excited",
+          "durationMs": 6290,
           "tier": "vip"
         }
       ],
@@ -89,7 +119,6 @@
           "text": "ولو، يسعدني دائماً أكون لطيفة وبخدمتك بكل حب، شو رأيك نبدأ هلق؟",
           "file": "sounds_gemini/anime_ritaj_thanks_21.wav",
           "mood": "talk",
-          "durationMs": 5890,
           "tier": "vip"
         }
       ],
@@ -104,7 +133,6 @@
           "text": "أبشر يا غالي، ابتسامتك بتنوّر اليوم كله، شو أكتر شي بيفرحك هلق — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_touchHead_22.wav",
           "mood": "excited",
-          "durationMs": 5410,
           "tier": "vip"
         }
       ],
@@ -119,7 +147,6 @@
           "text": "أنا هنا بكل لطف ومساعدة، نختار يلي بيعجبك على مهلك، شو رأيك نبدأ هلق؟",
           "file": "sounds_gemini/anime_ritaj_touchBody_23.wav",
           "mood": "talk",
-          "durationMs": 6490,
           "tier": "vip"
         }
       ],
@@ -134,7 +161,6 @@
           "text": "نورتنا اليوم، إضافة لمسة حلوة أو مشروب بتحبه وسط اليوم بتغيّر النفسية للأجمل — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_tip_24.wav",
           "mood": "talk",
-          "durationMs": 6970,
           "tier": "vip"
         }
       ],
@@ -149,7 +175,6 @@
           "text": "سؤال لطيف: شو أكتر حلى أو نكهة حلوة بتسعدك فوراً، خبرني شو ببالك؟",
           "file": "sounds_gemini/anime_ritaj_challenge_25.wav",
           "mood": "challenge",
-          "durationMs": 6130,
           "tier": "vip"
         }
       ],
@@ -164,7 +189,6 @@
           "text": "يا هلا فيك، لأجواء حلوة ومبهجة، هي الخيارات اللطيفة المتوفرة حالياً بالمتجر — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_shopBridge_26.wav",
           "mood": "talk",
-          "durationMs": 6570,
           "tier": "vip"
         }
       ],
@@ -179,7 +203,6 @@
           "text": "ياي! أضفت الصنف لسلتك بكل حب، نكمل، خبرني شو ببالك؟",
           "file": "sounds_gemini/anime_ritaj_added_27.wav",
           "mood": "excited",
-          "durationMs": 5370,
           "tier": "vip"
         }
       ],
@@ -194,7 +217,6 @@
           "text": "بكل سرور، هاد الصنف مو متوفر هلق، شوف هالخيارات الحلوة الموجودة — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_alternative_28.wav",
           "mood": "talk",
-          "durationMs": 5250,
           "tier": "vip"
         }
       ],
@@ -209,7 +231,6 @@
           "text": "خبرني بمزاجك أو شو حابب نختار اليوم وأنا أساعدك فوراً، خبرني شو ببالك؟",
           "file": "sounds_gemini/anime_ritaj_idleNudge_29.wav",
           "mood": "talk",
-          "durationMs": 7450,
           "tier": "vip"
         }
       ],
@@ -218,7 +239,13 @@
           "text": "خليك دايماً مبسوط ومشرق، نلتقي على خير يا حلو!",
           "file": "sounds_gemini/anime_ritaj_farewell_15.wav",
           "mood": "talk",
-          "durationMs": 3850,
+          "tier": "vip"
+        },
+        {
+          "text": "على عيني، خليك دايماً مبسوط ومشرق، نلتقي على خير يا حلو — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_farewell_30.wav",
+          "mood": "talk",
+          "durationMs": 4690,
           "tier": "vip"
         }
       ]
