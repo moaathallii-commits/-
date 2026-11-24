@@ -1,6 +1,6 @@
 {
   "version": "5.0-vip10x-std5x",
-  "updatedAt": "2026-11-24T23:05:49Z",
+  "updatedAt": "2026-11-24T23:56:08Z",
   "personas": {
     "anime_ritaj": {
       "greet": [
@@ -266,7 +266,6 @@
           "text": "بكل سرور، ابتسامتك بتنوّر اليوم كله، شو أكتر شي بيفرحك هلق — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_touchHead_82.wav",
           "mood": "excited",
-          "durationMs": 5450,
           "tier": "vip"
         }
       ],
@@ -305,7 +304,6 @@
           "text": "أنا هنا بكل لطف ومساعدة، نختار يلي بيعجبك على مهلك، والاختيار لك دائماً.",
           "file": "sounds_gemini/anime_ritaj_touchBody_83.wav",
           "mood": "talk",
-          "durationMs": 6770,
           "tier": "vip"
         }
       ],
@@ -338,14 +336,12 @@
           "text": "إضافة لمسة حلوة أو مشروب بتحبه وسط اليوم بتغيّر النفسية للأجمل، نكمل سوا بكل نشاط.",
           "file": "sounds_gemini/anime_ritaj_tip_69.wav",
           "mood": "talk",
-          "durationMs": 7010,
           "tier": "vip"
         },
         {
           "text": "على عيني، إضافة لمسة حلوة أو مشروب بتحبه وسط اليوم بتغيّر النفسية للأجمل — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_tip_84.wav",
           "mood": "talk",
-          "durationMs": 6930,
           "tier": "vip"
         }
       ],
@@ -384,7 +380,6 @@
           "text": "سؤال لطيف: شو أكتر حلى أو نكهة حلوة بتسعدك فوراً، والاختيار لك دائماً.",
           "file": "sounds_gemini/anime_ritaj_challenge_85.wav",
           "mood": "challenge",
-          "durationMs": 6850,
           "tier": "vip"
         }
       ],
@@ -423,7 +418,6 @@
           "text": "حياك الله، لأجواء حلوة ومبهجة، هي الخيارات اللطيفة المتوفرة حالياً بالمتجر — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_shopBridge_86.wav",
           "mood": "talk",
-          "durationMs": 6530,
           "tier": "vip"
         }
       ],
