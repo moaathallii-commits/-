@@ -3790,22 +3790,75 @@
       }
     }
 
-    // دعم طلبات وصفات الطعام (الطباخ الماهر) أو الحلويات (صانعة الحلويات)
-    if (/(وصفه|وصفة|اكله|أكلة|طبخه|طبخة|غداء|عشاء)/.test(norm) && !matchRecipeOrSweet(norm)) {
+    // دعم طلبات وصفات الطعام أو الحلويات عبر البحث في المكتبة المرفقة أولاً قبل أي رد عام
+    if (/(وصفه|وصفة|اكله|أكلة|طبخه|طبخة|غداء|عشاء|حلى|حلويات|حلو)/.test(norm) && !matchRecipeOrSweet(norm)) {
       const allRecs = getAllMergedRecipes();
       const wantsSweets = persona.id === "pastry" || /(حلى|حلويات|حلو|كيك|بسبوسه|بسبوسة|مهلبيه|مهلبية)/.test(norm);
-      const filteredRecs = allRecs.filter(r => {
-        const isSweet = r.category === "حلويات";
-        return wantsSweets ? isSweet : (!isSweet && r.category !== "تنظيف");
-      });
-      if (filteredRecs.length > 0) {
-        const sampleTitles = filteredRecs.slice(0, 5).map(r => r.title).join("، ");
-        const msg = wantsSweets
-          ? `من حلويات الإدارة عندنا: ${sampleTitles}. اذكر اسم الحلى وأجهز المتوفر!`
-          : `من وصفات الطعام عندنا: ${sampleTitles}. اذكر اسم الطبخة وأجهز مكوناتها!`;
-        setOrbEmotion("choice", msg, true);
-        setTxt("aiShoppingStatusText", `🍲 ${msg}`);
-        return;
+      const queryTokens = norm
+        .replace(/\b(وصفه|وصفة|اكله|أكلة|طبخه|طبخة|غداء|عشاء|حلى|حلويات|حلو|اريد|بدي|ابغى|ابي|مكونات|مقادير|لعمل|تحضير|بـ|ب)\b/g, " ")
+        .split(/\s+/)
+        .filter(w => w.length >= 2);
+
+      const scoredRecs = allRecs
+        .filter(r => {
+          const isSweet = r.category === "حلويات";
+          return wantsSweets ? isSweet : (!isSweet && r.category !== "تنظيف");
+        })
+        .map(r => {
+          const rHay = cleanArabicNorm(`${r.title} ${(r.keywords || []).join(" ")} ${(r.ingredients || []).join(" ")}`);
+          const hits = queryTokens.reduce((acc, qt) => acc + (rHay.includes(qt) ? 10 : 0), 0);
+          return { r, hits };
+        })
+        .filter(x => x.hits > 0)
+        .sort((a, b) => b.hits - a.hits);
+
+      if (scoredRecs.length > 0) {
+        const bestR = scoredRecs[0].r;
+        const prodEntries = Object.keys(products || {}).map(pid => {
+          const p = products[pid];
+          if (!p) return null;
+          return { pid, p, st: getBranchAvail(pid), pNorm: cleanArabicNorm(p.name || "") };
+        }).filter(Boolean);
+
+        const availItems = [];
+        const missingIngs = [];
+        (bestR.ingredients || []).forEach(ing => {
+          const iNorm = cleanArabicNorm(ing);
+          if (!iNorm) return;
+          const hitProd = prodEntries.find(x => x.pNorm.includes(iNorm) && x.st > 0);
+          if (hitProd) {
+            if (!availItems.some(a => a.id === hitProd.pid)) {
+              availItems.push({ id: hitProd.pid, name: hitProd.p.name, suggestedQty: suggestedPerItem, reason: `من مكونات (${bestR.title})` });
+            }
+          } else {
+            missingIngs.push(ing);
+          }
+        });
+
+        const missingFormatted = missingIngs.length
+          ? ` ينقصك [${missingIngs.join("، ")}] لكن للاسف مو متوفر هلق رح نحاول توفره المرة الجاية.`
+          : "";
+        const missingEntries = missingIngs.slice(0, 5).map((mName, idx) => ({
+          id: "MISSING_LIB_" + idx + "_" + cleanArabicNorm(mName).replace(/\s+/g, "_"),
+          name: `⚠️ ناقص: ${mName}`,
+          suggestedQty: 1,
+          unitPriceOverride: 0,
+          maxAvailOverride: 0,
+          reason: "غير متوفر حالياً — سنحاول توفيره المرة الجاية"
+        }));
+
+        if (availItems.length > 0) {
+          openZeroDefaultModal(
+            `🍲 ${bestR.title} — مكونات الوصفة فقط:`,
+            [...availItems, ...missingEntries].slice(0, 8),
+            `recipe_lib_${bestR.title}`,
+            missingFormatted ? missingFormatted.trim() : "مكونات الوصفة المتوفرة في الفرع جاهزة"
+          );
+          const msg = `${persona.recipeReady(bestR.title)}${missingFormatted}`.trim();
+          setOrbEmotion("choice", msg, true);
+          setTxt("aiShoppingStatusText", `✅ ${msg}`);
+          return;
+        }
       }
     }
 
