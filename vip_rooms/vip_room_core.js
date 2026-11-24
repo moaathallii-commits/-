@@ -358,41 +358,56 @@
     const estDur = Math.min(8000, Math.max(2000, clean.length * 68));
     startSpeakingChoreography(estDur, mood);
 
-    // 1) تشغيل مقطع صوتي بشري مطابق من الفهرس أو من المقاطع المسجّلة للشخصية
-    let clipUrl = roomManifestMap.get(`${room?.id || ""}::${normAr(clean)}`);
-    if (!clipUrl && room?.id) {
-      try {
-        const cachedMf = JSON.parse(localStorage.getItem("moaath_gemini_manifest_cache_v1") || "null");
-        const pBank = cachedMf?.personas?.[room.id];
-        if (pBank && typeof pBank === "object") {
-          for (const arr of Object.values(pBank)) {
-            if (!Array.isArray(arr)) continue;
-            const found = arr.find(it => it && it.file && (normAr(it.text) === normAr(clean) || normAr(clean).includes(normAr(it.text).slice(0, 14))));
-            if (found) { clipUrl = found.file; break; }
-          }
-        }
-      } catch (_) {}
-    }
-    if (!clipUrl && room?.id) {
-      clipUrl = `sounds_gemini/${room.id}_greet_1.wav`;
-    }
+    // 1) تشغيل مقطع صوتي بشري مطابق حرفياً من الفهرس إن وجد (0 استهلاك حصة)
+    const clipUrl = roomManifestMap.get(`${room?.id || ""}::${normAr(clean)}`);
     if (clipUrl && navigator.onLine !== false) {
       try {
         const audio = new Audio(clipUrl);
         audio.onended = () => stopRoomVoice();
-        audio.onerror = () => {
-          if (typeof window.speechSynthesis !== "undefined") {
-            const u = new SpeechSynthesisUtterance(clean);
-            u.lang = "ar-SY";
-            u.rate = room?.voice?.rate || 1.08;
-            u.pitch = room?.voice?.pitch || 0.98;
-            u.onend = () => stopRoomVoice();
-            window.speechSynthesis.speak(u);
-          }
-        };
         audio.play().catch(() => {});
         return;
       } catch (_) {}
+    }
+
+    // 2) أولوية قصوى لـ VIP: استدعاء الصوت البشري المباشر من Worker (مخزّن 30 يوماً في Cloudflare Edge)
+    const workerUrl = resolveWorkerUrl();
+    if (workerUrl && navigator.onLine !== false) {
+      fetch(workerUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "tts",
+          isVip: true,
+          personaId: room?.id || "",
+          text: clean.slice(0, 220),
+          voiceName: room?.voiceName || "Puck",
+          gender: room?.gender || "male",
+          toneTag: room?.toneTag || "",
+          dialectMode: room?.dialectMode || "shami_friendly"
+        })
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((json) => {
+          if (json && json.ok && json.audioBase64) {
+            const mime = /pcm|L16/i.test(json.mimeType || "") ? "audio/wav" : (json.mimeType || "audio/mpeg");
+            if (mime === "audio/mpeg") {
+              const a = new Audio(`data:${mime};base64,${json.audioBase64}`);
+              a.onended = () => stopRoomVoice();
+              a.play().catch(() => {});
+              return;
+            }
+          }
+          if (typeof window.speechSynthesis !== "undefined") {
+            const u = new SpeechSynthesisUtterance(clean);
+            u.lang = "ar-SY";
+            u.rate = room?.voice?.rate || 1.05;
+            u.pitch = room?.voice?.pitch || 0.95;
+            u.onend = () => stopRoomVoice();
+            window.speechSynthesis.speak(u);
+          }
+        })
+        .catch(() => {});
+      return;
     }
 
     // 2) نطق صوتي عبر المتصفح مع تزامن لغة الجسد
