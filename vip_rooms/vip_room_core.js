@@ -1005,5 +1005,20 @@
     listLoadedRooms: () => Object.keys(registry)
   };
 
+
+  window.MoaathVIPRooms.getDailyFeedForRoom = async function (roomId) {
+    const urls = ["vip_media/daily_vip_feed.json", "daily_vip_feed.json"];
+    const t = Math.floor(Date.now() / 60000);
+    for (let i = 0; i < urls.length; i++) {
+      try {
+        const res = await fetch(`${urls[i]}?t=${t}`, { cache: "no-store" });
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (data && data.rooms && data.rooms[roomId]) return data.rooms[roomId];
+      } catch (_) {}
+    }
+    return null;
+  };
+
   window.openVIPWorldRoom = openRoom;
 })();
