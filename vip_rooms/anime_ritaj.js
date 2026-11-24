@@ -9,6 +9,7 @@
 
   window.MoaathVIPRooms.register("anime_ritaj", {
     "id": "anime_ritaj",
+    "isVip": true,
     "name": "ريتاج (لطافة الأنمي)",
     "icon": "🌸",
     "title": "غرفة VIP • بهجة، لطافة، وأفكار حلوة تكسر الملل",
