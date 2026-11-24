@@ -479,44 +479,267 @@
     log: pushLog,
     getTelemetry: collectSystemTelemetry
   };
-})();
-// ============================================================================
-// ترقيع الحكيم التقني: سد ثغرة renderAdminBrainUnmatchedList المفقودة
-// ============================================================================
-window.renderAdminBrainUnmatchedList = window.renderAdminBrainUnmatchedList || function (dataObj) {
-  const container = document.getElementById("adminBrainUnmatchedContainer") || 
-                    document.getElementById("unmatchedQueriesBox");
-  
-  if (!container) {
-    console.warn("[الحكيم التقني] حاوية عرض الاستعلامات غير المطابقة غير موجودة في الواجهة حالياً.");
-    return;
+
+  const PERSONA_STATS_KEY = "moaath_persona_usage_stats_v1";
+  let manifestClipsByPersona = {};
+  let cachedAudioFilesSet = new Set();
+
+  function loadPersonaUsageStats() {
+    try {
+      const d = JSON.parse(localStorage.getItem(PERSONA_STATS_KEY) || "{}");
+      return d && typeof d === "object" ? d : {};
+    } catch (_) {
+      return {};
+    }
   }
 
-  const items = dataObj ? (typeof dataObj === 'object' ? Object.values(dataObj) : dataObj) : [];
-  
-  if (!Array.isArray(items) || items.length === 0) {
-    container.innerHTML = `<div style="font-size:11px; color:var(--gray-text); padding:8px;">لا توجد استعلامات غير مطابقة مسجلة.</div>`;
-    return;
+  function savePersonaUsageStats(st) {
+    try { localStorage.setItem(PERSONA_STATS_KEY, JSON.stringify(st)); } catch (_) {}
   }
 
-  // ترتيب الاستعلامات حسب الأكثر تكراراً
-  const sortedItems = items
-    .filter(it => it && it.query)
-    .sort((a, b) => (b.count || 0) - (a.count || 0))
-    .slice(0, 15);
+  function recordPersonaActivation(pid) {
+    const cleanId = String(pid || "").trim();
+    if (!cleanId) return;
+    const st = loadPersonaUsageStats();
+    const cur = st[cleanId] || { activations: 0, lastUsedAt: "" };
+    cur.activations = (parseInt(cur.activations, 10) || 0) + 1;
+    cur.lastUsedAt = new Date().toLocaleTimeString("ar-SY");
+    st[cleanId] = cur;
+    savePersonaUsageStats(st);
+  }
 
-  container.innerHTML = sortedItems.map(item => `
-    <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 8px; border-bottom:1px dashed var(--border-color); font-size:11px;">
-      <span style="color:var(--text-color); font-weight:bold;">${String(item.query).replace(/</g, "&lt;")}</span>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <span style="background:rgba(245,158,11,0.15); color:var(--gold-color); padding:1px 6px; border-radius:4px; font-size:10px;">${item.count || 1} 🔁</span>
-        <button type="button" class="btn" style="width:auto; padding:2px 6px; font-size:9px; background:rgba(56,189,248,0.2); color:#38bdf8; border:none;" 
-                onclick="if(typeof window._admArchPromoteTopUnmatchedToSynonym === 'function') { window._admArchPromoteTopUnmatchedToSynonym() }">
-          ترقية
-        </button>
+  function hookPersonaUsageTracking() {
+    if (typeof window.selectPetPersona === "function" && !window.selectPetPersona.__moaathArchTracked) {
+      const origSel = window.selectPetPersona;
+      const wrappedSel = function (key) {
+        recordPersonaActivation(key);
+        return origSel.apply(this, arguments);
+      };
+      wrappedSel.__moaathArchTracked = true;
+      window.selectPetPersona = wrappedSel;
+    }
+
+    if (window.MoaathVIPRooms && typeof window.MoaathVIPRooms.open === "function" && !window.MoaathVIPRooms.open.__moaathArchTracked) {
+      const origOpen = window.MoaathVIPRooms.open;
+      const wrappedOpen = function (roomId) {
+        recordPersonaActivation(roomId);
+        return origOpen.apply(this, arguments);
+      };
+      wrappedOpen.__moaathArchTracked = true;
+      window.MoaathVIPRooms.open = wrappedOpen;
+    }
+  }
+
+  async function refreshPersonaAudioInventory() {
+    manifestClipsByPersona = {};
+    cachedAudioFilesSet = new Set();
+
+    let mfData = null;
+    try {
+      const cachedMf = JSON.parse(localStorage.getItem("moaath_gemini_manifest_cache_v1") || "null");
+      if (cachedMf && cachedMf.personas) mfData = cachedMf;
+    } catch (_) {}
+
+    if (navigator.onLine !== false) {
+      try {
+        const res = await fetch(`sounds_gemini_manifest.json?t=${Math.floor(Date.now() / 60000)}`, { cache: "no-store" });
+        if (res.ok) {
+          const d = await res.json();
+          if (d && d.personas) {
+            mfData = d;
+            try { localStorage.setItem("moaath_gemini_manifest_cache_v1", JSON.stringify(d)); } catch (_) {}
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (mfData && mfData.personas) {
+      Object.keys(mfData.personas).forEach((pid) => {
+        let total = 0;
+        Object.values(mfData.personas[pid] || {}).forEach((arr) => {
+          if (Array.isArray(arr)) total += arr.filter((x) => x && x.file).length;
+        });
+        manifestClipsByPersona[pid] = total;
+      });
+    }
+
+    if (typeof caches !== "undefined") {
+      try {
+        const cache = await caches.open("moaath_store_tts_gemini_v1");
+        const keys = await cache.keys();
+        keys.forEach((req) => {
+          const u = String(req.url || "");
+          cachedAudioFilesSet.add(u);
+          const pathOnly = u.split("?")[0].split("/").slice(-2).join("/");
+          if (pathOnly) cachedAudioFilesSet.add(pathOnly);
+        });
+      } catch (_) {}
+    }
+  }
+
+  function buildAllPersonasAnalytics() {
+    const baseMap = (window.MoaathAIPersonas && window.MoaathAIPersonas.PERSONAS) || {};
+    const vipMap = (window.MoaathVIPSystem && window.MoaathVIPSystem.personas) || {};
+    const combined = {};
+
+    Object.keys(baseMap).forEach((k) => {
+      const p = baseMap[k];
+      if (!p) return;
+      combined[k] = {
+        id: k,
+        name: p.name || k,
+        tier: p.isVip ? "VIP" : "أساسية",
+        voiceName: p.voiceName || "-"
+      };
+    });
+
+    Object.keys(vipMap).forEach((k) => {
+      const vp = vipMap[k];
+      if (!vp) return;
+      combined[k] = {
+        id: k,
+        name: vp.name || k,
+        tier: "VIP",
+        voiceName: vp.voiceName || combined[k]?.voiceName || "-"
+      };
+    });
+
+    // Ensure known 9 VIP + 9 standard IDs appear cleanly even before lazy load
+    const knownVIP = [
+      ["coach_sakhr", "كابتن صخر", "Fenrir"],
+      ["grand_chef", "الشيف الذهبي", "Charon"],
+      ["princess_layla", "الأميرة ليلى", "Aoede"],
+      ["butler_farid", "السيد فريد", "Orus"],
+      ["friend_fadi", "فادي الفرفوش", "Puck"],
+      ["anime_zain", "كابتن زين", "Puck"],
+      ["anime_ryu", "المحقق ريو", "Charon"],
+      ["anime_ritaj", "ريتاج", "Kore"],
+      ["friend_saad", "سعد", "Orus"]
+    ];
+    knownVIP.forEach(([id, nm, vn]) => {
+      if (!combined[id]) combined[id] = { id, name: nm, tier: "VIP", voiceName: vn };
+      else combined[id].tier = "VIP";
+    });
+
+    const usageMap = loadPersonaUsageStats();
+    const brainTopPersonas = (window.MoaathAIBrain && typeof window.MoaathAIBrain.getProfileSummary === "function")
+      ? (window.MoaathAIBrain.getProfileSummary()?.topPersonas || {})
+      : {};
+
+    let activePrefPersona = "";
+    try {
+      activePrefPersona = JSON.parse(localStorage.getItem("moaath_store_pet_prefs") || "{}").persona || "";
+    } catch (_) {}
+
+    const rows = Object.values(combined).map((item) => {
+      const clipsCount = manifestClipsByPersona[item.id] || 0;
+      const localUsage = parseInt(usageMap[item.id]?.activations, 10) || 0;
+      const brainUsage = parseInt(brainTopPersonas[item.id], 10) || 0;
+      const totalUses = localUsage + brainUsage + (activePrefPersona === item.id ? 1 : 0);
+      const isCached = Array.from(cachedAudioFilesSet).some((u) => u.includes(`/${item.id}_`) || u.includes(`::${item.id}::`));
+      const readinessPct = clipsCount >= 15 ? 100 : (clipsCount > 0 ? Math.min(95, Math.round((clipsCount / 15) * 100)) : (isCached ? 60 : 35));
+      return {
+        ...item,
+        clipsCount,
+        totalUses,
+        isCached,
+        readinessPct,
+        lastUsedAt: usageMap[item.id]?.lastUsedAt || "-"
+      };
+    });
+
+    rows.sort((a, b) => (b.totalUses - a.totalUses) || (b.clipsCount - a.clipsCount));
+    const vipRows = rows.filter((r) => r.tier === "VIP");
+    const stdRows = rows.filter((r) => r.tier !== "VIP");
+    const totalClips = rows.reduce((acc, r) => acc + r.clipsCount, 0);
+    const totalUses = rows.reduce((acc, r) => acc + r.totalUses, 0);
+    const mostUsed = rows[0] || null;
+
+    return {
+      rows,
+      vipCount: vipRows.length,
+      stdCount: stdRows.length,
+      totalPersonas: rows.length,
+      totalClips,
+      totalUses,
+      mostUsed
+    };
+  }
+
+  window._admArchRenderPersonaAnalytics = async function () {
+    const box = document.getElementById("admArchPersonasStatsBox");
+    if (!box) return;
+    await refreshPersonaAudioInventory();
+    const stats = buildAllPersonasAnalytics();
+
+    const summaryBar = `
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin-bottom:8px; text-align:center; font-size:10px;">
+        <div style="background:rgba(212,175,55,0.12); border:1px solid rgba(212,175,55,0.35); border-radius:8px; padding:5px;">
+          <div style="color:var(--gray-text);">إجمالي الشخصيات</div>
+          <b style="color:#D4AF37; font-size:12px;">${stats.totalPersonas}</b> <span style="font-size:9px;">(${stats.vipCount} VIP)</span>
+        </div>
+        <div style="background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); border-radius:8px; padding:5px;">
+          <div style="color:var(--gray-text);">مقاطع الفهرس</div>
+          <b style="color:#10b981; font-size:12px;">${stats.totalClips}</b>
+        </div>
+        <div style="background:rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.35); border-radius:8px; padding:5px;">
+          <div style="color:var(--gray-text);">إجمالي التفاعلات</div>
+          <b style="color:#38bdf8; font-size:12px;">${stats.totalUses}</b>
+        </div>
       </div>
-    </div>
-  `).join("");
-};
+      ${stats.mostUsed ? `<div style="font-size:10px; color:#fbbf24; margin-bottom:6px;">🏆 الأكثر تفاعلاً حالياً: <b>${escHtml(stats.mostUsed.name)}</b> (${stats.mostUsed.totalUses} تفاعل • ${stats.mostUsed.clipsCount} صوت)</div>` : ""}
+    `;
 
-console.log("[الحكيم التقني] تم حقن renderAdminBrainUnmatchedList الوقائية بأمان.");
+    const listHtml = stats.rows.map((r) => {
+      const tierBadge = r.tier === "VIP"
+        ? `<span style="background:rgba(212,175,55,0.2); color:#D4AF37; padding:1px 5px; border-radius:5px; font-size:9px; font-weight:800;">VIP</span>`
+        : `<span style="background:rgba(148,163,184,0.16); color:#cbd5e1; padding:1px 5px; border-radius:5px; font-size:9px;">أساسية</span>`;
+      const rColor = r.readinessPct >= 80 ? "#10b981" : (r.readinessPct >= 50 ? "#fbbf24" : "#94a3b8");
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; padding:5px 6px; border-bottom:1px dashed var(--border-color); font-size:10px;">
+          <div style="min-width:0; flex:1;">
+            <div style="display:flex; align-items:center; gap:4px; font-weight:800; color:var(--text-color);">
+              <span>${escHtml(r.name)}</span>
+              ${tierBadge}
+            </div>
+            <div style="font-size:9px; color:var(--gray-text);">
+              صوت: <b>${escHtml(r.voiceName)}</b> • مقاطع: <b style="color:#10b981;">${r.clipsCount}</b> • استخدام: <b style="color:#38bdf8;">${r.totalUses}</b>${r.isCached ? " • 💾 مخزّن" : ""}
+            </div>
+          </div>
+          <div style="text-align:left; flex-shrink:0;">
+            <span style="color:${rColor}; font-weight:900; font-size:10.5px;">${r.readinessPct}%</span>
+            <div style="font-size:8.5px; color:var(--gray-text);">جاهزية</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    box.innerHTML = `${summaryBar}<div style="max-height:210px; overflow-y:auto;">${listHtml}</div>`;
+  };
+
+  const _origMountArch = mountAdminArchitectTab;
+  mountAdminArchitectTab = function () {
+    _origMountArch();
+    const sec = document.getElementById("admTab15Architect");
+    if (sec && !document.getElementById("admArchPersonasStatsCard")) {
+      const pCard = document.createElement("div");
+      pCard.id = "admArchPersonasStatsCard";
+      pCard.className = "adm-sec";
+      pCard.style.cssText = "border-color:#a855f7; margin-top:10px;";
+      pCard.innerHTML = `
+        <div class="adm-sec-title" style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="color:#c084fc;">📊 إحصائيات الشخصيات (الأصوات، الاستخدام، والجاهزية)</span>
+          <button type="button" onclick="window._admArchRenderPersonaAnalytics()" class="btn" style="width:auto; padding:2px 8px; font-size:9.5px; background:rgba(192,132,252,0.18); color:#d8b4fe; border:1px solid #c084fc;">تحديث</button>
+        </div>
+        <div id="admArchPersonasStatsBox" style="font-size:10px;">جاري تحميل إحصائيات الشخصيات...</div>
+      `;
+      sec.appendChild(pCard);
+      window._admArchRenderPersonaAnalytics();
+    }
+  };
+
+  hookPersonaUsageTracking();
+  setTimeout(hookPersonaUsageTracking, 1500);
+  setTimeout(() => { if (document.getElementById("admArchPersonasStatsBox")) window._admArchRenderPersonaAnalytics(); }, 1800);
+
+})();
