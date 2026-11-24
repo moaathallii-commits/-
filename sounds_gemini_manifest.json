@@ -1,6 +1,6 @@
 {
   "version": "3.0-gemini-cloud",
-  "updatedAt": "2026-11-24T11:00:45Z",
+  "updatedAt": "2026-11-24T12:06:21Z",
   "personas": {
     "buddy": {
       "greet": [
@@ -1337,18 +1337,80 @@
         {
           "text": "يا أهلاً وسهلاً! نورت متجر معاذ. خبرني شو ببالك اليوم؟",
           "file": "sounds_gemini/athlete_greet_1.wav"
+        },
+        {
+          "text": "أهلاً بك يا غالي، المتجر منور بوجودك. بشو نبدأ سلتك اليوم؟",
+          "file": "sounds_gemini/athlete_greet_2.wav"
+        },
+        {
+          "text": "يا مية هلا ومرحبا! كل شي طازج ومرتب بالمتجر، شو ناقصك اليوم؟",
+          "file": "sounds_gemini/athlete_greet_3.wav"
+        },
+        {
+          "text": "حياك الله يا غالي، نورتنا بمتجر معاذ. قولي شو عبالك نجهزلك؟",
+          "file": "sounds_gemini/athlete_greet_4.wav"
+        },
+        {
+          "text": "يا هلا بالطلة الحلوة! متجر معاذ جاهز لطلباتك، سمّي بالله واطلب.",
+          "file": "sounds_gemini/athlete_greet_6.wav"
         }
       ],
-      "greetMorning": [],
-      "greetEvening": [],
-      "chatGood": [],
+      "greetMorning": [
+        {
+          "text": "صباح الخير والنشاط! نورت متجر معاذ، بشو نبدأ سلتك الصباحية؟",
+          "file": "sounds_gemini/athlete_greetMorning_1.wav"
+        },
+        {
+          "text": "يسعد صباحك يا غالي، كل أغراض الفطور والقهوة جاهزة هلق.",
+          "file": "sounds_gemini/athlete_greetMorning_2.wav"
+        },
+        {
+          "text": "صباح النور والبركة! إن شاء الله يومك حلو ومليان خير، شو بتحب تطلب؟",
+          "file": "sounds_gemini/athlete_greetMorning_3.wav"
+        },
+        {
+          "text": "صباح الفل والروقان، خبرني شو ناقص البيت لنجهزه عالسريع.",
+          "file": "sounds_gemini/athlete_greetMorning_4.wav"
+        }
+      ],
+      "greetEvening": [
+        {
+          "text": "يسعد مساك يا غالي، جاهز نضبط سلة السهرة والمتة والتسالي؟",
+          "file": "sounds_gemini/athlete_greetEvening_2.wav"
+        }
+      ],
+      "chatGood": [
+        {
+          "text": "أنا بخير والحمد لله، كيف بقدر أساعدك اليوم؟",
+          "file": "sounds_gemini/athlete_chatGood_1.wav"
+        },
+        {
+          "text": "تمام التمام وبأعلى جاهزية لخدمتك، خبرني شو ببالك تطلب.",
+          "file": "sounds_gemini/athlete_chatGood_3.wav"
+        }
+      ],
       "thanks": [],
       "added": [],
       "itemsReady": [],
-      "alternative": [],
+      "alternative": [
+        {
+          "text": "للأسف ما لقيت نفس الصنف حالياً، شوف هالبدائل الطيبة والموجودة.",
+          "file": "sounds_gemini/athlete_alternative_2.wav"
+        }
+      ],
       "habit": [],
-      "notFound": [],
-      "idleNudge": [],
+      "notFound": [
+        {
+          "text": "بحثتلك منيح بس ما لقيت هاد الصنف حالياً، فيك تطلبه من زر طلب صنف.",
+          "file": "sounds_gemini/athlete_notFound_2.wav"
+        }
+      ],
+      "idleNudge": [
+        {
+          "text": "خذ راحتك بالتصفح، وإذا حابب أختصر عليك الوقت بقترحلك أحلى الأصناف الطازة اليوم.",
+          "file": "sounds_gemini/athlete_idleNudge_2.wav"
+        }
+      ],
       "crossSell": [],
       "scarcityAlert": [
         {
@@ -1356,7 +1418,12 @@
           "file": "sounds_gemini/athlete_scarcityAlert_2.wav"
         }
       ],
-      "checkoutBoost": [],
+      "checkoutBoost": [
+        {
+          "text": "سلتك جاهزة مية بالمية! ضغطة زر والتوصيل بطريقه إلك بأسرع وقت.",
+          "file": "sounds_gemini/athlete_checkoutBoost_1.wav"
+        }
+      ],
       "orderSuccess": [],
       "welcomeBack": []
     },
