@@ -45,13 +45,19 @@
   // --------------------------------------------------------------------------
   async function loadManifest(forceFresh = false) {
     if (manifestCache && !forceFresh) return manifestCache;
-    try {
-      const res = await fetch(`${MANIFEST_URL}?t=${Math.floor(Date.now() / 60000)}`, { cache: "no-store" });
-      if (res.ok) {
-        manifestCache = await res.json();
-        return manifestCache;
-      }
-    } catch (_) {}
+    const urls = [MANIFEST_URL, "vip_rooms/manifest_2.json", "manifest_2.json"];
+    for (let i = 0; i < urls.length; i++) {
+      try {
+        const res = await fetch(`${urls[i]}?t=${Math.floor(Date.now() / 60000)}`, { cache: "no-store" });
+        if (res.ok) {
+          const parsed = await res.json();
+          if (parsed && Array.isArray(parsed.rooms)) {
+            manifestCache = parsed;
+            return manifestCache;
+          }
+        }
+      } catch (_) {}
+    }
     return manifestCache || { buildId: "local", rooms: [] };
   }
 
@@ -445,8 +451,12 @@
   function findStoreProductsForKeywords(keywords = []) {
     let prods = {};
     try {
-      if (typeof products === "object" && products) prods = products;
-      else if (typeof window.products === "object" && window.products) prods = window.products;
+      if (typeof products === "object" && products && Object.keys(products).length) prods = products;
+      else if (typeof window.products === "object" && window.products && Object.keys(window.products).length) prods = window.products;
+      else {
+        const cached = JSON.parse(localStorage.getItem("cache_products") || "{}");
+        if (cached && typeof cached === "object") prods = cached;
+      }
     } catch (_) {
       prods = (typeof window.products === "object" && window.products) || {};
     }
