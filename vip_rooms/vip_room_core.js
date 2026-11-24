@@ -358,12 +358,38 @@
     const estDur = Math.min(8000, Math.max(2000, clean.length * 68));
     startSpeakingChoreography(estDur, mood);
 
-    // 1) تشغيل مقطع صوتي بشري مطابق من الفهرس إن وجد
-    const clipUrl = roomManifestMap.get(`${room?.id || ""}::${normAr(clean)}`);
+    // 1) تشغيل مقطع صوتي بشري مطابق من الفهرس أو من المقاطع المسجّلة للشخصية
+    let clipUrl = roomManifestMap.get(`${room?.id || ""}::${normAr(clean)}`);
+    if (!clipUrl && room?.id) {
+      try {
+        const cachedMf = JSON.parse(localStorage.getItem("moaath_gemini_manifest_cache_v1") || "null");
+        const pBank = cachedMf?.personas?.[room.id];
+        if (pBank && typeof pBank === "object") {
+          for (const arr of Object.values(pBank)) {
+            if (!Array.isArray(arr)) continue;
+            const found = arr.find(it => it && it.file && (normAr(it.text) === normAr(clean) || normAr(clean).includes(normAr(it.text).slice(0, 14))));
+            if (found) { clipUrl = found.file; break; }
+          }
+        }
+      } catch (_) {}
+    }
+    if (!clipUrl && room?.id) {
+      clipUrl = `sounds_gemini/${room.id}_greet_1.wav`;
+    }
     if (clipUrl && navigator.onLine !== false) {
       try {
         const audio = new Audio(clipUrl);
         audio.onended = () => stopRoomVoice();
+        audio.onerror = () => {
+          if (typeof window.speechSynthesis !== "undefined") {
+            const u = new SpeechSynthesisUtterance(clean);
+            u.lang = "ar-SY";
+            u.rate = room?.voice?.rate || 1.08;
+            u.pitch = room?.voice?.pitch || 0.98;
+            u.onend = () => stopRoomVoice();
+            window.speechSynthesis.speak(u);
+          }
+        };
         audio.play().catch(() => {});
         return;
       } catch (_) {}
@@ -912,10 +938,13 @@
   // 8. الواجهة العامة لتسجيل وفتح وإغلاق الغرف
   // --------------------------------------------------------------------------
   async function openRoom(roomId = "coach_sakhr") {
-    const manifest = await loadManifest(false);
-    const meta = (manifest.rooms || []).find((r) => r.id === roomId) || { id: roomId, file: `vip_rooms/${roomId}.js` };
+    const ovImmediate = ensureOverlayDOM();
+    ovImmediate.style.display = "flex";
+    if ($id("vipRoomBubble")) $id("vipRoomBubble").textContent = "✨ جاري تجهيز الغرفة...";
     let room = registry[roomId];
     if (!room) {
+      const manifest = await loadManifest(false);
+      const meta = (manifest.rooms || []).find((r) => r.id === roomId) || { id: roomId, file: `vip_rooms/${roomId}.js` };
       try {
         room = await loadRoomScript(meta, manifest.buildId);
       } catch (err) {
