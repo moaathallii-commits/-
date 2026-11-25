@@ -1,13 +1,13 @@
 /**
- * وحدة الجسر الآمن بين «متجر معاذ» و«عالم التحديات والمسابقات» (v1.2)
- * المسار في مستودع متجر معاذ: moaath_arena_bridge.js
- * - يعالج خطأ Failed to fetch عند الاتصال بـ Cloudflare Worker بتشخيص واضح + بديل آمن لتوليد معرف الربط محلياً عند تعذر الوصول للـ Worker
+ * وحدة الجسر الآمن بين «متجر معاذ» و«عالم التحديات والمسابقات» (v1.3)
+ * المسار في مستودع متجر معاذ: moaath_arena_bridge.js (في الجذر الرئيسي بجانب index.html)
+ * - يدعم إدارة البطولات الأسبوعية المستقلة لكل لعبة
  * - يحافظ على عزل الذكاء الاصطناعي تماماً عن المال وشام كاش
  */
 
 (function () {
-  if (window.__MOAATH_ARENA_BRIDGE_V12__) return;
-  window.__MOAATH_ARENA_BRIDGE_V12__ = true;
+  if (window.__MOAATH_ARENA_BRIDGE_V13__) return;
+  window.__MOAATH_ARENA_BRIDGE_V13__ = true;
 
   const ARENA_WORKER_URL = 'https://moaath-arena-worker.moaathallii.workers.dev';
   const ARENA_APP_URL = 'https://moaathallii-commits.github.io/moaath-arena/';
@@ -30,8 +30,7 @@
     style.textContent = `
       .mab-backdrop {
         position: fixed; inset: 0; background: rgba(11, 17, 32, 0.88);
-     z-index: 2000000 !important;
- flex; justify-content: center; align-items: center;
+        z-index: 2000000 !important; display: flex; justify-content: center; align-items: center;
         padding: 16px; direction: rtl; font-family: system-ui, -apple-system, sans-serif;
       }
       .mab-modal {
