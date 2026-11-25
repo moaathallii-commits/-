@@ -1,6 +1,6 @@
 {
   "version": "5.0-vip10x-std5x",
-  "updatedAt": "2026-11-25T17:12:36Z",
+  "updatedAt": "2026-11-25T17:57:00Z",
   "personas": {
     "anime_ritaj": {
       "greet": [
@@ -372,7 +372,6 @@
           "text": "ولو، يسعدني دائماً أكون لطيفة وبخدمتك بكل حب، نكمل سوا بكل نشاط.",
           "file": "sounds_gemini/anime_ritaj_thanks_141.wav",
           "mood": "talk",
-          "durationMs": 7370,
           "tier": "vip"
         }
       ],
@@ -430,6 +429,13 @@
           "file": "sounds_gemini/anime_ritaj_touchHead_127.wav",
           "mood": "excited",
           "tier": "vip"
+        },
+        {
+          "text": "أهلاً بك يا غالي، ابتسامتك بتنوّر اليوم كله، شو أكتر شي بيفرحك هلق — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_touchHead_142.wav",
+          "mood": "excited",
+          "durationMs": 5850,
+          "tier": "vip"
         }
       ],
       "touchBody": [
@@ -485,6 +491,13 @@
           "text": "يا سلام عليك، أنا هنا بكل لطف ومساعدة، نختار يلي بيعجبك على مهلك — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_touchBody_128.wav",
           "mood": "talk",
+          "tier": "vip"
+        },
+        {
+          "text": "أنا هنا بكل لطف ومساعدة، نختار يلي بيعجبك على مهلك، قول يلي بناسبك.",
+          "file": "sounds_gemini/anime_ritaj_touchBody_143.wav",
+          "mood": "talk",
+          "durationMs": 6450,
           "tier": "vip"
         }
       ],
