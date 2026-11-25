@@ -1,6 +1,6 @@
 {
   "version": "5.0-vip10x-std5x",
-  "updatedAt": "2026-11-25T04:16:42Z",
+  "updatedAt": "2026-11-25T05:25:02Z",
   "personas": {
     "anime_ritaj": {
       "greet": [
@@ -82,6 +82,13 @@
           "text": "صباح الورد والبهجة! يومك رح يكون حلو ومشرق بإذن الله، قول يلي بناسبك.",
           "file": "sounds_gemini/anime_ritaj_greetMorning_77.wav",
           "mood": "excited",
+          "tier": "vip"
+        },
+        {
+          "text": "يا سلام عليك، صباح الورد والبهجة! يومك رح يكون حلو ومشرق بإذن الله — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_greetMorning_92.wav",
+          "mood": "excited",
+          "durationMs": 6170,
           "tier": "vip"
         }
       ],
