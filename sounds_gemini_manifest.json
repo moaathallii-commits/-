@@ -1,6 +1,6 @@
 {
   "version": "5.0-vip10x-std5x",
-  "updatedAt": "2026-11-25T17:57:00Z",
+  "updatedAt": "2026-11-25T19:01:49Z",
   "personas": {
     "anime_ritaj": {
       "greet": [
@@ -434,7 +434,6 @@
           "text": "أهلاً بك يا غالي، ابتسامتك بتنوّر اليوم كله، شو أكتر شي بيفرحك هلق — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_touchHead_142.wav",
           "mood": "excited",
-          "durationMs": 5850,
           "tier": "vip"
         }
       ],
@@ -497,7 +496,6 @@
           "text": "أنا هنا بكل لطف ومساعدة، نختار يلي بيعجبك على مهلك، قول يلي بناسبك.",
           "file": "sounds_gemini/anime_ritaj_touchBody_143.wav",
           "mood": "talk",
-          "durationMs": 6450,
           "tier": "vip"
         }
       ],
