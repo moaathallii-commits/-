@@ -30,7 +30,8 @@
     style.textContent = `
       .mab-backdrop {
         position: fixed; inset: 0; background: rgba(11, 17, 32, 0.88);
-        z-index: 99999; display: flex; justify-content: center; align-items: center;
+     z-index: 2000000 !important;
+ flex; justify-content: center; align-items: center;
         padding: 16px; direction: rtl; font-family: system-ui, -apple-system, sans-serif;
       }
       .mab-modal {
