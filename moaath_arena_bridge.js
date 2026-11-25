@@ -349,6 +349,7 @@
             <div class="mab-small" style="color:#4ade80; text-align:center; margin:4px 0;">معاينة: سحب 100 عملة = ${cashout100Syp.toLocaleString()} ل.س</div>
             <div class="mab-row"><span>نقاط ترحيبية للجدد:</span><input id="mabWelcomePts" class="mab-input" style="width:110px;" type="number" value="${esc(cfg.welcomePoints ?? 0)}" /></div>
             <div class="mab-row"><span>الحد الأدنى للسحب (عملة):</span><input id="mabMinCashout" class="mab-input" style="width:110px;" type="number" value="${esc(cfg.minCashoutPts ?? 100)}" /></div>
+            <div class="mab-row"><span>رسم كسر الرقم (عملة • 80% جائزة / 20% إدارة):</span><input id="mabRecordEntryCost" class="mab-input" style="width:90px;" type="number" min="1" value="${esc(cfg.recordEntryCostPts ?? 10)}" /></div>
             <div class="mab-row"><span>عمولة PvP (%):</span><input id="mabPvpEdge" class="mab-input" style="width:110px;" type="number" value="${esc(cfg.pvpHouseEdgePct ?? 10)}" /></div>
             <button type="button" class="mab-btn mab-btn-gold" onclick="window.MoaathArenaBridge.saveAdminConfig()">💾 حفظ إعدادات الاقتصاد والليرة</button>
           </div>
@@ -486,7 +487,8 @@
           coinToUsdRate: Number(document.getElementById('mabUsdRate')?.value),
           welcomePoints: Number(document.getElementById('mabWelcomePts')?.value),
           minCashoutPts: Number(document.getElementById('mabMinCashout')?.value),
-          pvpHouseEdgePct: Number(document.getElementById('mabPvpEdge')?.value)
+          pvpHouseEdgePct: Number(document.getElementById('mabPvpEdge')?.value),
+          recordEntryCostPts: Number(document.getElementById('mabRecordEntryCost')?.value || 10)
         });
         alert(res.message || 'تم حفظ الإعدادات.');
         this.openAdminModal();
