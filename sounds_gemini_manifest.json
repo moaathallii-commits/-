@@ -1,6 +1,6 @@
 {
   "version": "5.0-vip10x-std5x",
-  "updatedAt": "2026-11-25T01:27:16Z",
+  "updatedAt": "2026-11-25T03:05:45Z",
   "personas": {
     "anime_ritaj": {
       "greet": [
@@ -38,6 +38,13 @@
           "text": "أبشر يا غالي، أهلاً وسهلاً يا حلو! نورت الغرفة، شو رايك نعمل جو لطيف — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_greet_76.wav",
           "mood": "excited",
+          "tier": "vip"
+        },
+        {
+          "text": "أهلاً وسهلاً يا حلو! نورت الغرفة، شو رايك نعمل جو لطيف، شو رأيك نبدأ هلق؟",
+          "file": "sounds_gemini/anime_ritaj_greet_91.wav",
+          "mood": "excited",
+          "durationMs": 6210,
           "tier": "vip"
         }
       ],
@@ -456,7 +463,6 @@
           "text": "ياي! أضفت الصنف لسلتك بكل حب، نكمل، والاختيار لك دائماً.",
           "file": "sounds_gemini/anime_ritaj_added_87.wav",
           "mood": "excited",
-          "durationMs": 5370,
           "tier": "vip"
         }
       ],
@@ -495,7 +501,6 @@
           "text": "أهلاً بك يا غالي، هاد الصنف مو متوفر هلق، شوف هالخيارات الحلوة الموجودة — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_alternative_88.wav",
           "mood": "talk",
-          "durationMs": 6090,
           "tier": "vip"
         }
       ],
@@ -534,7 +539,6 @@
           "text": "خبرني بمزاجك أو شو حابب نختار اليوم وأنا أساعدك فوراً، شو رأيك نبدأ هلق؟",
           "file": "sounds_gemini/anime_ritaj_idleNudge_89.wav",
           "mood": "talk",
-          "durationMs": 6450,
           "tier": "vip"
         }
       ],
@@ -567,6 +571,13 @@
           "text": "خليك دايماً مبسوط ومشرق، نلتقي على خير يا حلو، قول يلي بناسبك.",
           "file": "sounds_gemini/anime_ritaj_farewell_75.wav",
           "mood": "talk",
+          "tier": "vip"
+        },
+        {
+          "text": "تكرم عينك، خليك دايماً مبسوط ومشرق، نلتقي على خير يا حلو — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_farewell_90.wav",
+          "mood": "talk",
+          "durationMs": 5050,
           "tier": "vip"
         }
       ]
