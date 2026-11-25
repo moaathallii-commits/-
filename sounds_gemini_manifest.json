@@ -1,6 +1,6 @@
 {
   "version": "5.0-vip10x-std5x",
-  "updatedAt": "2026-11-24T23:56:08Z",
+  "updatedAt": "2026-11-25T01:27:16Z",
   "personas": {
     "anime_ritaj": {
       "greet": [
@@ -451,6 +451,13 @@
           "file": "sounds_gemini/anime_ritaj_added_72.wav",
           "mood": "excited",
           "tier": "vip"
+        },
+        {
+          "text": "ياي! أضفت الصنف لسلتك بكل حب، نكمل، والاختيار لك دائماً.",
+          "file": "sounds_gemini/anime_ritaj_added_87.wav",
+          "mood": "excited",
+          "durationMs": 5370,
+          "tier": "vip"
         }
       ],
       "alternative": [
@@ -483,6 +490,13 @@
           "file": "sounds_gemini/anime_ritaj_alternative_73.wav",
           "mood": "talk",
           "tier": "vip"
+        },
+        {
+          "text": "أهلاً بك يا غالي، هاد الصنف مو متوفر هلق، شوف هالخيارات الحلوة الموجودة — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_alternative_88.wav",
+          "mood": "talk",
+          "durationMs": 6090,
+          "tier": "vip"
         }
       ],
       "idleNudge": [
@@ -514,6 +528,13 @@
           "text": "يا سلام عليك، خبرني بمزاجك أو شو حابب نختار اليوم وأنا أساعدك فوراً — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_idleNudge_74.wav",
           "mood": "talk",
+          "tier": "vip"
+        },
+        {
+          "text": "خبرني بمزاجك أو شو حابب نختار اليوم وأنا أساعدك فوراً، شو رأيك نبدأ هلق؟",
+          "file": "sounds_gemini/anime_ritaj_idleNudge_89.wav",
+          "mood": "talk",
+          "durationMs": 6450,
           "tier": "vip"
         }
       ],
