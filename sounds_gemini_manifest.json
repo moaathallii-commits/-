@@ -1,6 +1,6 @@
 {
   "version": "5.0-vip10x-std5x",
-  "updatedAt": "2026-11-25T03:05:45Z",
+  "updatedAt": "2026-11-25T04:16:42Z",
   "personas": {
     "anime_ritaj": {
       "greet": [
@@ -44,7 +44,6 @@
           "text": "أهلاً وسهلاً يا حلو! نورت الغرفة، شو رايك نعمل جو لطيف، شو رأيك نبدأ هلق؟",
           "file": "sounds_gemini/anime_ritaj_greet_91.wav",
           "mood": "excited",
-          "durationMs": 6210,
           "tier": "vip"
         }
       ],
@@ -577,7 +576,6 @@
           "text": "تكرم عينك، خليك دايماً مبسوط ومشرق، نلتقي على خير يا حلو — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_farewell_90.wav",
           "mood": "talk",
-          "durationMs": 5050,
           "tier": "vip"
         }
       ]
