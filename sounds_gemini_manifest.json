@@ -1,6 +1,6 @@
 {
   "version": "5.0-vip10x-std5x",
-  "updatedAt": "2026-11-25T13:32:07Z",
+  "updatedAt": "2026-11-25T15:17:20Z",
   "personas": {
     "anime_ritaj": {
       "greet": [
@@ -124,7 +124,6 @@
           "text": "صباح الورد والبهجة! يومك رح يكون حلو ومشرق بإذن الله، نكمل سوا بكل نشاط.",
           "file": "sounds_gemini/anime_ritaj_greetMorning_137.wav",
           "mood": "excited",
-          "durationMs": 6330,
           "tier": "vip"
         }
       ],
@@ -182,6 +181,13 @@
           "file": "sounds_gemini/anime_ritaj_greetEvening_123.wav",
           "mood": "talk",
           "tier": "vip"
+        },
+        {
+          "text": "على عيني، مساء اللطف والروقان! نبعد الملل ونشوف شو في أفكار حلوة — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_greetEvening_138.wav",
+          "mood": "talk",
+          "durationMs": 5410,
+          "tier": "vip"
         }
       ],
       "welcomeBack": [
@@ -238,6 +244,13 @@
           "file": "sounds_gemini/anime_ritaj_welcomeBack_124.wav",
           "mood": "excited",
           "tier": "vip"
+        },
+        {
+          "text": "يا هلا بابتسامتك من جديد! سعيدة جداً بوجودك معنا، نكمل سوا بكل نشاط.",
+          "file": "sounds_gemini/anime_ritaj_welcomeBack_139.wav",
+          "mood": "excited",
+          "durationMs": 6770,
+          "tier": "vip"
         }
       ],
       "chatGood": [
@@ -293,6 +306,13 @@
           "text": "مبسوطة ومشرقة بوجودك! قولي شو عبالك اليوم، شو حابب نعمل الآن؟",
           "file": "sounds_gemini/anime_ritaj_chatGood_125.wav",
           "mood": "excited",
+          "tier": "vip"
+        },
+        {
+          "text": "حياك الله، مبسوطة ومشرقة بوجودك! قولي شو عبالك اليوم — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_chatGood_140.wav",
+          "mood": "excited",
+          "durationMs": 5250,
           "tier": "vip"
         }
       ],
