@@ -1,6 +1,6 @@
 {
   "version": "5.0-vip10x-std5x",
-  "updatedAt": "2026-11-25T07:32:23Z",
+  "updatedAt": "2026-11-25T09:21:09Z",
   "personas": {
     "anime_ritaj": {
       "greet": [
@@ -44,6 +44,13 @@
           "text": "أهلاً وسهلاً يا حلو! نورت الغرفة، شو رايك نعمل جو لطيف، شو رأيك نبدأ هلق؟",
           "file": "sounds_gemini/anime_ritaj_greet_91.wav",
           "mood": "excited",
+          "tier": "vip"
+        },
+        {
+          "text": "أهلاً بك يا غالي، أهلاً وسهلاً يا حلو! نورت الغرفة، شو رايك نعمل جو لطيف — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_greet_106.wav",
+          "mood": "excited",
+          "durationMs": 6690,
           "tier": "vip"
         }
       ],
@@ -89,6 +96,13 @@
           "file": "sounds_gemini/anime_ritaj_greetMorning_92.wav",
           "mood": "excited",
           "tier": "vip"
+        },
+        {
+          "text": "صباح الورد والبهجة! يومك رح يكون حلو ومشرق بإذن الله، وأنا جاهز أساعدك فوراً.",
+          "file": "sounds_gemini/anime_ritaj_greetMorning_107.wav",
+          "mood": "excited",
+          "durationMs": 6610,
+          "tier": "vip"
         }
       ],
       "greetEvening": [
@@ -126,6 +140,13 @@
           "text": "نورتنا اليوم، مساء اللطف والروقان! نبعد الملل ونشوف شو في أفكار حلوة — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_greetEvening_78.wav",
           "mood": "talk",
+          "tier": "vip"
+        },
+        {
+          "text": "مساء اللطف والروقان! نبعد الملل ونشوف شو في أفكار حلوة، شو رأيك نبدأ هلق؟",
+          "file": "sounds_gemini/anime_ritaj_greetEvening_93.wav",
+          "mood": "talk",
+          "durationMs": 6250,
           "tier": "vip"
         }
       ],
@@ -165,6 +186,13 @@
           "file": "sounds_gemini/anime_ritaj_welcomeBack_79.wav",
           "mood": "excited",
           "tier": "vip"
+        },
+        {
+          "text": "أبشر يا غالي، يا هلا بابتسامتك من جديد! سعيدة جداً بوجودك معنا — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_welcomeBack_94.wav",
+          "mood": "excited",
+          "durationMs": 5290,
+          "tier": "vip"
         }
       ],
       "chatGood": [
@@ -202,6 +230,13 @@
           "text": "يا هلا فيك، مبسوطة ومشرقة بوجودك! قولي شو عبالك اليوم — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_chatGood_80.wav",
           "mood": "excited",
+          "tier": "vip"
+        },
+        {
+          "text": "مبسوطة ومشرقة بوجودك! قولي شو عبالك اليوم، شو رأيك نبدأ هلق؟",
+          "file": "sounds_gemini/anime_ritaj_chatGood_95.wav",
+          "mood": "excited",
+          "durationMs": 5730,
           "tier": "vip"
         }
       ],
@@ -241,6 +276,13 @@
           "file": "sounds_gemini/anime_ritaj_thanks_81.wav",
           "mood": "talk",
           "tier": "vip"
+        },
+        {
+          "text": "نورتنا اليوم، ولو، يسعدني دائماً أكون لطيفة وبخدمتك بكل حب — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_thanks_96.wav",
+          "mood": "talk",
+          "durationMs": 5810,
+          "tier": "vip"
         }
       ],
       "touchHead": [
@@ -278,6 +320,13 @@
           "text": "بكل سرور، ابتسامتك بتنوّر اليوم كله، شو أكتر شي بيفرحك هلق — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_touchHead_82.wav",
           "mood": "excited",
+          "tier": "vip"
+        },
+        {
+          "text": "ابتسامتك بتنوّر اليوم كله، شو أكتر شي بيفرحك هلق، خبرني شو ببالك؟",
+          "file": "sounds_gemini/anime_ritaj_touchHead_97.wav",
+          "mood": "excited",
+          "durationMs": 5810,
           "tier": "vip"
         }
       ],
@@ -317,6 +366,13 @@
           "file": "sounds_gemini/anime_ritaj_touchBody_83.wav",
           "mood": "talk",
           "tier": "vip"
+        },
+        {
+          "text": "يا هلا فيك، أنا هنا بكل لطف ومساعدة، نختار يلي بيعجبك على مهلك — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_touchBody_98.wav",
+          "mood": "talk",
+          "durationMs": 6290,
+          "tier": "vip"
         }
       ],
       "tip": [
@@ -354,6 +410,13 @@
           "text": "على عيني، إضافة لمسة حلوة أو مشروب بتحبه وسط اليوم بتغيّر النفسية للأجمل — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_tip_84.wav",
           "mood": "talk",
+          "tier": "vip"
+        },
+        {
+          "text": "إضافة لمسة حلوة أو مشروب بتحبه وسط اليوم بتغيّر النفسية للأجمل، خبرني شو ببالك؟",
+          "file": "sounds_gemini/anime_ritaj_tip_99.wav",
+          "mood": "talk",
+          "durationMs": 7410,
           "tier": "vip"
         }
       ],
@@ -393,6 +456,13 @@
           "file": "sounds_gemini/anime_ritaj_challenge_85.wav",
           "mood": "challenge",
           "tier": "vip"
+        },
+        {
+          "text": "بكل سرور، سؤال لطيف: شو أكتر حلى أو نكهة حلوة بتسعدك فوراً — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_challenge_100.wav",
+          "mood": "challenge",
+          "durationMs": 5450,
+          "tier": "vip"
         }
       ],
       "shopBridge": [
@@ -430,6 +500,13 @@
           "text": "حياك الله، لأجواء حلوة ومبهجة، هي الخيارات اللطيفة المتوفرة حالياً بالمتجر — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_shopBridge_86.wav",
           "mood": "talk",
+          "tier": "vip"
+        },
+        {
+          "text": "لأجواء حلوة ومبهجة، هي الخيارات اللطيفة المتوفرة حالياً بالمتجر، خبرني شو ببالك؟",
+          "file": "sounds_gemini/anime_ritaj_shopBridge_101.wav",
+          "mood": "talk",
+          "durationMs": 7090,
           "tier": "vip"
         }
       ],
@@ -469,6 +546,13 @@
           "file": "sounds_gemini/anime_ritaj_added_87.wav",
           "mood": "excited",
           "tier": "vip"
+        },
+        {
+          "text": "على عيني، ياي! أضفت الصنف لسلتك بكل حب، نكمل — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_added_102.wav",
+          "mood": "excited",
+          "durationMs": 5330,
+          "tier": "vip"
         }
       ],
       "alternative": [
@@ -506,6 +590,13 @@
           "text": "أهلاً بك يا غالي، هاد الصنف مو متوفر هلق، شوف هالخيارات الحلوة الموجودة — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_alternative_88.wav",
           "mood": "talk",
+          "tier": "vip"
+        },
+        {
+          "text": "هاد الصنف مو متوفر هلق، شوف هالخيارات الحلوة الموجودة، خبرني شو ببالك؟",
+          "file": "sounds_gemini/anime_ritaj_alternative_103.wav",
+          "mood": "talk",
+          "durationMs": 5930,
           "tier": "vip"
         }
       ],
@@ -545,6 +636,13 @@
           "file": "sounds_gemini/anime_ritaj_idleNudge_89.wav",
           "mood": "talk",
           "tier": "vip"
+        },
+        {
+          "text": "حياك الله، خبرني بمزاجك أو شو حابب نختار اليوم وأنا أساعدك فوراً — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_idleNudge_104.wav",
+          "mood": "talk",
+          "durationMs": 6170,
+          "tier": "vip"
         }
       ],
       "farewell": [
@@ -582,6 +680,13 @@
           "text": "تكرم عينك، خليك دايماً مبسوط ومشرق، نلتقي على خير يا حلو — أنثوي شاب مرح ومبهج ولطيف.",
           "file": "sounds_gemini/anime_ritaj_farewell_90.wav",
           "mood": "talk",
+          "tier": "vip"
+        },
+        {
+          "text": "خليك دايماً مبسوط ومشرق، نلتقي على خير يا حلو، خبرني شو ببالك؟",
+          "file": "sounds_gemini/anime_ritaj_farewell_105.wav",
+          "mood": "talk",
+          "durationMs": 5890,
           "tier": "vip"
         }
       ]
