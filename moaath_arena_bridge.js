@@ -8,8 +8,8 @@
  */
 
 (function () {
-  if (window.__MOAATH_ARENA_BRIDGE_V50__) return;
-  window.__MOAATH_ARENA_BRIDGE_V50__ = true;
+  if (window.__MOAATH_ARENA_BRIDGE_V60__) return;
+  window.__MOAATH_ARENA_BRIDGE_V60__ = true;
 
   const ARENA_WORKER_URL = 'https://moaath-arena-worker.moaathallii.workers.dev';
   const ARENA_APP_URL = 'https://moaathallii-commits.github.io/moaath-arena/';
@@ -344,7 +344,7 @@
           <div class="mab-banner" style="background:linear-gradient(135deg,rgba(34,197,94,0.2),rgba(212,175,55,0.2)); border-color:rgba(74,222,128,0.5);">
             <div style="font-size:0.76rem; color:#cbd5e1;">💎 صافي ربح الإدارة التراكمي (حتمي 100%)</div>
             <div style="font-size:1.15rem; font-weight:900; color:#4ade80; margin:3px 0;">${Number(profit.totalSyp || 0).toLocaleString()} ل.س</div>
-            <div style="font-size:0.74rem; color:#fde047;">(${Number(profit.totalPts || 0).toLocaleString()} عملة • ${Number(profit.totalUsd || 0)}$)</div>
+            <div style="font-size:0.74rem; color:#fde047;">(${Number(profit.totalPts || 0).toLocaleString()} عملة • ${Number(profit.totalUsd || 0)}$)</div><div style="font-size:0.7rem; color:#7dd3fc; margin-top:2px;">عمولات الإحالة المصروفة (5%): ${Number(profit.referralPaidPts || 0).toLocaleString()} عملة</div>
           </div>
           <div class="mab-box">
             <div style="font-weight:800; color:#7dd3fc; margin-bottom:4px;">📢 شريط الإعلانات الفوري (Broadcast)</div>
@@ -383,7 +383,7 @@
         const wkSummaryHtml = Object.values(wk).map((w) => `
           <div class="mab-row" style="border-top:1px solid rgba(255,255,255,0.08); padding-top:5px;">
             <span>${esc(w.title)}</span>
-            <span style="color:#facc15;">وعاء: ${w.poolPts} • عمولة 10%: ${w.adminShare}</span>
+            <span style="color:#facc15;">وعاء: ${w.poolPts} • بذرة قادمة (5%): ${w.nextWeeklySeedPts || 0}</span>
           </div>
         `).join('');
         const now = Date.now();
@@ -404,9 +404,12 @@
               <option value="cyber_shooter">🔫 ميجا شوتر 2D</option>
             </select>
             <div class="mab-row"><span>رسم الدخول (عملة):</span><input id="mabWkFee" class="mab-input" style="width:95px;" type="number" min="1" value="10" /></div>
-            <div class="mab-presets" style="grid-template-columns:repeat(2,1fr);">
-              <button type="button" class="mab-preset" onclick="window.MoaathArenaBridge.quickSetWeek(7)">📅 أسبوع من الآن</button>
-              <button type="button" class="mab-preset" onclick="window.MoaathArenaBridge.quickSetWeek(3)">⚡ 3 أيام من الآن</button>
+            <div class="mab-row"><span>مدة البطولة (أيام):</span><input id="mabWkDays" class="mab-input" style="width:95px;" type="number" min="1" max="60" value="7" oninput="window.MoaathArenaBridge.quickSetWeek(Number(this.value||1))" /></div>
+            <div class="mab-presets">
+              <button type="button" class="mab-preset" onclick="window.MoaathArenaBridge.quickSetWeek(1)">يوم</button>
+              <button type="button" class="mab-preset" onclick="window.MoaathArenaBridge.quickSetWeek(2)">يومان</button>
+              <button type="button" class="mab-preset" onclick="window.MoaathArenaBridge.quickSetWeek(3)">3 أيام</button>
+              <button type="button" class="mab-preset" onclick="window.MoaathArenaBridge.quickSetWeek(7)">أسبوع</button>
             </div>
             <div class="mab-row"><span>البدء:</span><input id="mabWkStart" class="mab-input" style="width:185px;" type="datetime-local" value="${formatDatetimeLocal(now)}" /></div>
             <div class="mab-row"><span>الانتهاء:</span><input id="mabWkEnd" class="mab-input" style="width:185px;" type="datetime-local" value="${formatDatetimeLocal(now + 7 * 86400000)}" /></div>
@@ -512,6 +515,7 @@
 
     quickSetWeek(days) {
       const now = Date.now();
+      const dInp = document.getElementById('mabWkDays'); if (dInp) dInp.value = days;
       const s = document.getElementById('mabWkStart');
       const e = document.getElementById('mabWkEnd');
       if (s) s.value = formatDatetimeLocal(now);
@@ -588,7 +592,8 @@
       const endAt = eVal ? new Date(eVal).getTime() : (startAt + 7 * 86400000);
       if (resetCycle && !confirm('هل تؤكد بدء دورة أسبوعية جديدة وتصفير لوحة هذه اللعبة؟')) return;
       try {
-        const res = await workerRequest('/admin/weekly/config', { gameId, entryFeePts, startAt, endAt, resetCycle });
+        const durationDays = Number(document.getElementById('mabWkDays')?.value || 7);
+      const res = await workerRequest('/admin/weekly/config', { gameId, entryFeePts, startAt, endAt, durationDays, resetCycle });
         alert(res.message || 'تم الحفظ.');
         this.openAdminModal();
       } catch (err) { alert(err.message); }
