@@ -1,5 +1,5 @@
 /**
- * وحدة الجسر الآمن بين «متجر معاذ» و«عالم التحديات والمسابقات» (v3.0 — المرحلة 3: صافي الربح + الإعلانات + تعديل جماعي + سحب تلقائي)
+ * وحدة الجسر الآمن بين «متجر معاذ» و«عالم التحديات والمسابقات» (v3.0 — المرحلة 3 و4: صافي الربح + الإعلانات + تعديل جماعي + سحب تلقائي)
  * المسار في مستودع متجر معاذ: moaath_arena_bridge.js (في الجذر الرئيسي بجانب index.html)
  * - الدفع والشحن بالليرة السورية (ل.س) مع حاسبة عملات حيّة وأزرار شحن سريعة
  * - تمرير معرّف الربط تلقائياً (?bind=...) عند فتح عالم التحديات
@@ -368,7 +368,7 @@
             <div class="mab-small" style="color:#4ade80; text-align:center; margin:4px 0;">معاينة: سحب 100 عملة = ${cashout100Syp.toLocaleString()} ل.س</div>
             <div class="mab-row"><span>نقاط ترحيبية للجدد:</span><input id="mabWelcomePts" class="mab-input" style="width:110px;" type="number" value="${esc(cfg.welcomePoints ?? 0)}" /></div>
             <div class="mab-row"><span>الحد الأدنى للسحب (عملة):</span><input id="mabMinCashout" class="mab-input" style="width:110px;" type="number" value="${esc(cfg.minCashoutPts ?? 100)}" /></div>
-            <div class="mab-row"><span>رسم كسر الرقم (عملة • 80% جائزة / 20% إدارة):</span><input id="mabRecordEntryCost" class="mab-input" style="width:90px;" type="number" min="1" value="${esc(cfg.recordEntryCostPts ?? 10)}" /></div>
+            <div class="mab-row"><span>رسم كسر الرقم (عملة • 75% جائزة / 15% إدارة / 10% بذرة):</span><input id="mabRecordEntryCost" class="mab-input" style="width:90px;" type="number" min="1" value="${esc(cfg.recordEntryCostPts ?? 10)}" /></div>
             <div class="mab-row"><span>عمولة PvP (%):</span><input id="mabPvpEdge" class="mab-input" style="width:110px;" type="number" value="${esc(cfg.pvpHouseEdgePct ?? 10)}" /></div>
             <button type="button" class="mab-btn mab-btn-gold" onclick="window.MoaathArenaBridge.saveAdminConfig()">💾 حفظ إعدادات الاقتصاد والليرة</button>
           </div>
@@ -571,7 +571,6 @@
       } catch (err) { alert(err.message); }
     },
 
-
     async sendBroadcast(clear) {
       const text = document.getElementById('mabBroadcastText')?.value || '';
       const hours = Number(document.getElementById('mabBroadcastHours')?.value || 24);
@@ -584,7 +583,7 @@
 
     async toggleAutoRollover(enabled) {
       try {
-        const res = await workerRequest('/admin/config', { autoRolloverWeekly: Boolean(enabled) });
+        await workerRequest('/admin/config', { autoRolloverWeekly: Boolean(enabled) });
         alert(enabled ? '✅ تم تفعيل التجديد التلقائي للبطولات الأسبوعية.' : '⏸️ تم إيقاف التجديد التلقائي.');
       } catch (err) { alert(err.message); }
     },
