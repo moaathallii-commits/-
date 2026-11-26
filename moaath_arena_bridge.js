@@ -1,5 +1,5 @@
 /**
- * وحدة الجسر الآمن بين «متجر معاذ» و«عالم التحديات والمسابقات» (v2.0 — الدفع بالليرة السورية + التحكم بأسعار الإطارات الـ 15)
+ * وحدة الجسر الآمن بين «متجر معاذ» و«عالم التحديات والمسابقات» (v3.0 — المرحلة 3: صافي الربح + الإعلانات + تعديل جماعي + سحب تلقائي)
  * المسار في مستودع متجر معاذ: moaath_arena_bridge.js (في الجذر الرئيسي بجانب index.html)
  * - الدفع والشحن بالليرة السورية (ل.س) مع حاسبة عملات حيّة وأزرار شحن سريعة
  * - تمرير معرّف الربط تلقائياً (?bind=...) عند فتح عالم التحديات
@@ -8,8 +8,8 @@
  */
 
 (function () {
-  if (window.__MOAATH_ARENA_BRIDGE_V20__) return;
-  window.__MOAATH_ARENA_BRIDGE_V20__ = true;
+  if (window.__MOAATH_ARENA_BRIDGE_V30__) return;
+  window.__MOAATH_ARENA_BRIDGE_V30__ = true;
 
   const ARENA_WORKER_URL = 'https://moaath-arena-worker.moaathallii.workers.dev';
   const ARENA_APP_URL = 'https://moaathallii-commits.github.io/moaath-arena/';
@@ -336,8 +336,27 @@
 
       let bodyHtml = '';
       if (adminActiveTab === 'eco') {
+        const profit = data.adminProfit || { totalPts: 0, totalUsd: 0, totalSyp: 0 };
+        const bcast = cfg.broadcast || null;
         const cashout100Syp = Math.round(100 * Number(cfg.coinToUsdRate || 0.01) * sypRate);
         bodyHtml = `
+          <div class="mab-banner" style="background:linear-gradient(135deg,rgba(34,197,94,0.2),rgba(212,175,55,0.2)); border-color:rgba(74,222,128,0.5);">
+            <div style="font-size:0.76rem; color:#cbd5e1;">💎 صافي ربح الإدارة التراكمي (حتمي 100%)</div>
+            <div style="font-size:1.15rem; font-weight:900; color:#4ade80; margin:3px 0;">${Number(profit.totalSyp || 0).toLocaleString()} ل.س</div>
+            <div style="font-size:0.74rem; color:#fde047;">(${Number(profit.totalPts || 0).toLocaleString()} عملة • ${Number(profit.totalUsd || 0)}$)</div>
+          </div>
+          <div class="mab-box">
+            <div style="font-weight:800; color:#7dd3fc; margin-bottom:4px;">📢 شريط الإعلانات الفوري (Broadcast)</div>
+            <input id="mabBroadcastText" class="mab-input" type="text" placeholder="أكتب إعلاناً فورياً لجميع اللاعبين..." value="${esc(bcast ? bcast.text : '')}" />
+            <div class="mab-row">
+              <span>المدة (ساعات):</span>
+              <input id="mabBroadcastHours" class="mab-input" style="width:85px;" type="number" min="1" max="168" value="24" />
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+              <button type="button" class="mab-btn mab-btn-blue" style="margin:0;padding:8px;" onclick="window.MoaathArenaBridge.sendBroadcast(false)">🚀 نشر الإعلان</button>
+              <button type="button" class="mab-btn mab-btn-outline" style="margin:0;padding:8px;" onclick="window.MoaathArenaBridge.sendBroadcast(true)">🗑️ إخفاء</button>
+            </div>
+          </div>
           <div class="mab-box">
             <div class="mab-row">
               <strong>⚙️ وضع الصيانة (زر الطوارئ)</strong>
@@ -364,6 +383,10 @@
         const now = Date.now();
         bodyHtml = `
           <div class="mab-box">
+            <div class="mab-row" style="margin-top:0; padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.08);">
+              <strong>🔄 التجديد التلقائي للبطولات (Auto-Rollover)</strong>
+              <input type="checkbox" id="mabAutoRollover" ${cfg.autoRolloverWeekly !== false ? 'checked' : ''} onchange="window.MoaathArenaBridge.toggleAutoRollover(this.checked)" style="width:20px;height:20px;" />
+            </div>
             <div style="font-weight:800; color:#f3d576; margin-bottom:4px;">📊 ملخص الأوعية الأسبوعية</div>
             ${wkSummaryHtml}
           </div>
@@ -398,6 +421,15 @@
             <div class="mab-row"><span>الفتح المجاني (XP):</span><input id="mabFrameXp" class="mab-input" style="width:110px;" type="number" min="0" value="${f0.reqXp}" /></div>
             <button type="button" class="mab-btn mab-btn-gold" onclick="window.MoaathArenaBridge.saveFramePrice()">💾 حفظ تسعيرة الإطار</button>
           </div>
+          <div class="mab-box">
+            <div style="font-weight:800; color:#7dd3fc; margin-bottom:6px;">⚡ تعديل جماعي لأسعار الإطارات الـ 15</div>
+            <div class="mab-presets">
+              <button type="button" class="mab-preset" onclick="window.MoaathArenaBridge.bulkAdjustFrames(10)">+10%</button>
+              <button type="button" class="mab-preset" onclick="window.MoaathArenaBridge.bulkAdjustFrames(-10)">-10%</button>
+              <button type="button" class="mab-preset" onclick="window.MoaathArenaBridge.bulkAdjustFrames(20)">+20%</button>
+              <button type="button" class="mab-preset" onclick="window.MoaathArenaBridge.bulkAdjustFrames(-20)">-20%</button>
+            </div>
+          </div>
         `;
       } else {
         const cashoutsHtml = pendingList.length === 0
@@ -427,6 +459,16 @@
             `).join('');
 
         bodyHtml = `
+          <div class="mab-box">
+            <div style="font-weight:800; color:#4ade80; margin-bottom:6px;">⚡ الاعتماد التلقائي للسحب الصغير (للموثوقين)</div>
+            <div class="mab-row">
+              <span>تفعيل الاعتماد التلقائي بعد مهلة الساعة:</span>
+              <input type="checkbox" id="mabAutoCashout" ${cfg.autoCashoutEnabled ? 'checked' : ''} style="width:20px;height:20px;" />
+            </div>
+            <div class="mab-row"><span>الحد الأقصى للتلقائي (عملة):</span><input id="mabAutoCashMax" class="mab-input" style="width:95px;" type="number" min="100" max="1000" value="${esc(cfg.autoCashoutMaxPts ?? 200)}" /></div>
+            <div class="mab-row"><span>الحد الأدنى للفوز للتوثيق التلقائي:</span><input id="mabAutoCashWins" class="mab-input" style="width:95px;" type="number" min="0" value="${esc(cfg.autoCashoutMinWins ?? 3)}" /></div>
+            <button type="button" class="mab-btn mab-btn-green" onclick="window.MoaathArenaBridge.saveAutoCashoutConfig()">💾 حفظ إعدادات السحب التلقائي</button>
+          </div>
           <div class="mab-box">
             <div style="font-weight:800; color:#f3d576; margin-bottom:6px;">💰 طلبات السحب المعلقة (${pendingList.length})</div>
             ${cashoutsHtml}
@@ -525,6 +567,45 @@
       try {
         const res = await workerRequest('/admin/weekly/settle', { gameId });
         alert(res.message || 'تم التوزيع.');
+        this.openAdminModal();
+      } catch (err) { alert(err.message); }
+    },
+
+
+    async sendBroadcast(clear) {
+      const text = document.getElementById('mabBroadcastText')?.value || '';
+      const hours = Number(document.getElementById('mabBroadcastHours')?.value || 24);
+      try {
+        const res = await workerRequest('/admin/broadcast', { text, hours, clear: Boolean(clear) });
+        alert(res.message || 'تم التحديث.');
+        this.openAdminModal();
+      } catch (err) { alert(err.message); }
+    },
+
+    async toggleAutoRollover(enabled) {
+      try {
+        const res = await workerRequest('/admin/config', { autoRolloverWeekly: Boolean(enabled) });
+        alert(enabled ? '✅ تم تفعيل التجديد التلقائي للبطولات الأسبوعية.' : '⏸️ تم إيقاف التجديد التلقائي.');
+      } catch (err) { alert(err.message); }
+    },
+
+    async bulkAdjustFrames(percentDelta) {
+      if (!confirm(`هل تؤكد تعديل أسعار جميع الإطارات الـ 15 بنسبة (${percentDelta > 0 ? '+' : ''}${percentDelta}%)؟`)) return;
+      try {
+        const res = await workerRequest('/admin/frames/bulk', { percentDelta });
+        alert(res.message || 'تم التعديل الجماعي.');
+        this.openAdminModal();
+      } catch (err) { alert(err.message); }
+    },
+
+    async saveAutoCashoutConfig() {
+      try {
+        const res = await workerRequest('/admin/config', {
+          autoCashoutEnabled: !!document.getElementById('mabAutoCashout')?.checked,
+          autoCashoutMaxPts: Number(document.getElementById('mabAutoCashMax')?.value || 200),
+          autoCashoutMinWins: Number(document.getElementById('mabAutoCashWins')?.value || 3)
+        });
+        alert(res.message || 'تم حفظ إعدادات السحب التلقائي.');
         this.openAdminModal();
       } catch (err) { alert(err.message); }
     },
