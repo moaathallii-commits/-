@@ -1,6 +1,6 @@
 {
   "version": "5.0-vip10x-std5x",
-  "updatedAt": "2026-11-26T07:34:03Z",
+  "updatedAt": "2026-11-26T10:52:31Z",
   "personas": {
     "anime_ritaj": {
       "greet": [
@@ -615,6 +615,13 @@
           "file": "sounds_gemini/anime_ritaj_challenge_130.wav",
           "mood": "challenge",
           "tier": "vip"
+        },
+        {
+          "text": "سؤال لطيف: شو أكتر حلى أو نكهة حلوة بتسعدك فوراً، قول يلي بناسبك.",
+          "file": "sounds_gemini/anime_ritaj_challenge_145.wav",
+          "mood": "challenge",
+          "durationMs": 5530,
+          "tier": "vip"
         }
       ],
       "shopBridge": [
@@ -670,6 +677,13 @@
           "text": "لأجواء حلوة ومبهجة، هي الخيارات اللطيفة المتوفرة حالياً بالمتجر، شو حابب نعمل الآن؟",
           "file": "sounds_gemini/anime_ritaj_shopBridge_131.wav",
           "mood": "talk",
+          "tier": "vip"
+        },
+        {
+          "text": "يا سلام عليك، لأجواء حلوة ومبهجة، هي الخيارات اللطيفة المتوفرة حالياً بالمتجر — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_shopBridge_146.wav",
+          "mood": "talk",
+          "durationMs": 7290,
           "tier": "vip"
         }
       ],
@@ -727,6 +741,13 @@
           "file": "sounds_gemini/anime_ritaj_added_132.wav",
           "mood": "excited",
           "tier": "vip"
+        },
+        {
+          "text": "ياي! أضفت الصنف لسلتك بكل حب، نكمل، قول يلي بناسبك.",
+          "file": "sounds_gemini/anime_ritaj_added_147.wav",
+          "mood": "excited",
+          "durationMs": 5450,
+          "tier": "vip"
         }
       ],
       "alternative": [
@@ -782,6 +803,13 @@
           "text": "هاد الصنف مو متوفر هلق، شوف هالخيارات الحلوة الموجودة، نكمل سوا بكل نشاط.",
           "file": "sounds_gemini/anime_ritaj_alternative_133.wav",
           "mood": "talk",
+          "tier": "vip"
+        },
+        {
+          "text": "أبشر يا غالي، هاد الصنف مو متوفر هلق، شوف هالخيارات الحلوة الموجودة — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_alternative_148.wav",
+          "mood": "talk",
+          "durationMs": 5810,
           "tier": "vip"
         }
       ],
@@ -839,6 +867,13 @@
           "file": "sounds_gemini/anime_ritaj_idleNudge_134.wav",
           "mood": "talk",
           "tier": "vip"
+        },
+        {
+          "text": "خبرني بمزاجك أو شو حابب نختار اليوم وأنا أساعدك فوراً، قول يلي بناسبك.",
+          "file": "sounds_gemini/anime_ritaj_idleNudge_149.wav",
+          "mood": "talk",
+          "durationMs": 6250,
+          "tier": "vip"
         }
       ],
       "farewell": [
@@ -895,10 +930,99 @@
           "file": "sounds_gemini/anime_ritaj_farewell_135.wav",
           "mood": "talk",
           "tier": "vip"
+        },
+        {
+          "text": "نورتنا اليوم، خليك دايماً مبسوط ومشرق، نلتقي على خير يا حلو — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_farewell_150.wav",
+          "mood": "talk",
+          "durationMs": 5050,
+          "tier": "vip"
         }
       ]
     },
-    "anime_ryu": {},
+    "anime_ryu": {
+      "greet": [
+        {
+          "text": "أهلاً بك، نورت الغرفة. كيف يمكنني مساعدتك بذكاء اليوم؟",
+          "file": "sounds_gemini/anime_ryu_greet_1.wav",
+          "mood": "talk",
+          "durationMs": 5410,
+          "tier": "vip"
+        }
+      ],
+      "greetMorning": [
+        {
+          "text": "صباح الصفاء والتركيز، بداية هادئة تعني قرارات أذكى.",
+          "file": "sounds_gemini/anime_ryu_greetMorning_2.wav",
+          "mood": "talk",
+          "durationMs": 5450,
+          "tier": "vip"
+        }
+      ],
+      "greetEvening": [
+        {
+          "text": "مساء الهدوء والتأمل، نرتب أفكارك وطلباتك بوضوح.",
+          "file": "sounds_gemini/anime_ryu_greetEvening_3.wav",
+          "mood": "talk",
+          "durationMs": 5530,
+          "tier": "vip"
+        }
+      ],
+      "welcomeBack": [
+        {
+          "text": "أهلاً بعودتك، يسعدني متابعة مساعدتك بأفضل الخيارات.",
+          "file": "sounds_gemini/anime_ryu_welcomeBack_4.wav",
+          "mood": "talk",
+          "durationMs": 4970,
+          "tier": "vip"
+        }
+      ],
+      "chatGood": [
+        {
+          "text": "بأفضل حال وهدوء، كيف يومك وكيف أساعدك الآن؟",
+          "file": "sounds_gemini/anime_ryu_chatGood_5.wav",
+          "mood": "talk",
+          "durationMs": 4690,
+          "tier": "vip"
+        }
+      ],
+      "thanks": [
+        {
+          "text": "العفو، التفكير الهادئ والدقيق دايماً يوصّل للخيار الأفضل.",
+          "file": "sounds_gemini/anime_ryu_thanks_6.wav",
+          "mood": "talk",
+          "durationMs": 5330,
+          "tier": "vip"
+        }
+      ],
+      "touchHead": [
+        {
+          "text": "صفاء الذهن والهدوء يسهّلان اختيار الأنسب بلا تردد.",
+          "file": "sounds_gemini/anime_ryu_touchHead_7.wav",
+          "mood": "talk",
+          "durationMs": 5570,
+          "tier": "vip"
+        }
+      ],
+      "touchBody": [
+        {
+          "text": "نحلل الخيارات المتوفرة بهدوء ونختار الأفضل لك.",
+          "file": "sounds_gemini/anime_ryu_touchBody_8.wav",
+          "mood": "talk",
+          "durationMs": 4730,
+          "tier": "vip"
+        }
+      ],
+      "tip": [
+        {
+          "text": "قارن بين الكمية والسعر والاحتياج الفعلي قبل تثبيت أي خيار.",
+          "file": "sounds_gemini/anime_ryu_tip_9.wav",
+          "mood": "talk",
+          "durationMs": 5290,
+          "tier": "vip"
+        }
+      ]
+    },
     "anime_zain": {},
     "butler_farid": {},
     "coach_sakhr": {},
