@@ -1,6 +1,6 @@
 {
   "version": "5.0-vip10x-std5x",
-  "updatedAt": "2026-11-25T19:01:49Z",
+  "updatedAt": "2026-11-26T02:12:25Z",
   "personas": {
     "anime_ritaj": {
       "greet": [
@@ -552,6 +552,13 @@
           "text": "إضافة لمسة حلوة أو مشروب بتحبه وسط اليوم بتغيّر النفسية للأجمل، شو حابب نعمل الآن؟",
           "file": "sounds_gemini/anime_ritaj_tip_129.wav",
           "mood": "talk",
+          "tier": "vip"
+        },
+        {
+          "text": "تكرم عينك، إضافة لمسة حلوة أو مشروب بتحبه وسط اليوم بتغيّر النفسية للأجمل — أنثوي شاب مرح ومبهج ولطيف.",
+          "file": "sounds_gemini/anime_ritaj_tip_144.wav",
+          "mood": "talk",
+          "durationMs": 6810,
           "tier": "vip"
         }
       ],
