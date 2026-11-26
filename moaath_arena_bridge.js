@@ -1,5 +1,5 @@
 /**
- * وحدة الجسر الآمن بين «متجر معاذ» و«عالم التحديات والمسابقات» (v3.0 — المرحلة 3 و4: صافي الربح + الإعلانات + تعديل جماعي + سحب تلقائي)
+ * وحدة الجسر الآمن بين «متجر معاذ» و«عالم التحديات والمسابقات» (v3.0 — المرحلة 3: صافي الربح + الإعلانات + تعديل جماعي + سحب تلقائي)
  * المسار في مستودع متجر معاذ: moaath_arena_bridge.js (في الجذر الرئيسي بجانب index.html)
  * - الدفع والشحن بالليرة السورية (ل.س) مع حاسبة عملات حيّة وأزرار شحن سريعة
  * - تمرير معرّف الربط تلقائياً (?bind=...) عند فتح عالم التحديات
@@ -8,8 +8,8 @@
  */
 
 (function () {
-  if (window.__MOAATH_ARENA_BRIDGE_V30__) return;
-  window.__MOAATH_ARENA_BRIDGE_V30__ = true;
+  if (window.__MOAATH_ARENA_BRIDGE_V40__) return;
+  window.__MOAATH_ARENA_BRIDGE_V40__ = true;
 
   const ARENA_WORKER_URL = 'https://moaath-arena-worker.moaathallii.workers.dev';
   const ARENA_APP_URL = 'https://moaathallii-commits.github.io/moaath-arena/';
@@ -169,7 +169,7 @@
     document.body.appendChild(root);
   }
 
-  let latestBuyRateSYP = 150;
+  let latestBuyRateSYP = 1;
   let latestGeneratedKey = '';
   let adminDashboardCache = null;
   let adminActiveTab = 'eco';
@@ -228,7 +228,7 @@
         <div class="mab-box">
           <div class="mab-row" style="margin-top:0;">
             <strong style="color:#f3d576;">2. شحن العملات بالليرة السورية (ل.س)</strong>
-            <small id="mabRateLabel" style="color:#7dd3fc;">1 عملة = 150 ل.س</small>
+            <small id="mabRateLabel" style="color:#7dd3fc;">1 عملة = 1 ل.س</small>
           </div>
           <p class="mab-small">حوّل مباشرة من رصيد محفظتك في متجر معاذ إلى عملات معاذ فوراً وبأمان تام.</p>
           <div class="mab-presets">
@@ -332,7 +332,7 @@
       const frozenList = Array.isArray(data.frozenPlayers) ? data.frozenPlayers : [];
       const frames = Array.isArray(data.framesCatalog) ? data.framesCatalog : [];
       const wk = data.weeklyTournaments || {};
-      const sypRate = Number(cfg.usdToSypRate || 15000);
+      const sypRate = Number(cfg.usdToSypRate || 150);
 
       let bodyHtml = '';
       if (adminActiveTab === 'eco') {
@@ -362,13 +362,18 @@
               <strong>⚙️ وضع الصيانة (زر الطوارئ)</strong>
               <input type="checkbox" id="mabKillSwitch" ${cfg.killSwitch ? 'checked' : ''} style="width:20px;height:20px;" />
             </div>
-            <div class="mab-row"><span>سعر شراء العملة (ل.س):</span><input id="mabBuyRateSYP" class="mab-input" style="width:110px;" type="number" value="${esc(cfg.buyRateSYP ?? 150)}" /></div>
+            <div class="mab-row"><span>سعر شراء العملة (ل.س):</span><input id="mabBuyRateSYP" class="mab-input" style="width:110px;" type="number" value="${esc(cfg.buyRateSYP ?? 1)}" /></div>
             <div class="mab-row"><span>سعر صرف الدولار (ل.س):</span><input id="mabUsdToSyp" class="mab-input" style="width:110px;" type="number" value="${esc(sypRate)}" /></div>
             <div class="mab-row"><span>سعر سحب العملة ($):</span><input id="mabUsdRate" class="mab-input" style="width:110px;" type="number" step="0.001" value="${esc(cfg.coinToUsdRate ?? 0.01)}" /></div>
             <div class="mab-small" style="color:#4ade80; text-align:center; margin:4px 0;">معاينة: سحب 100 عملة = ${cashout100Syp.toLocaleString()} ل.س</div>
             <div class="mab-row"><span>نقاط ترحيبية للجدد:</span><input id="mabWelcomePts" class="mab-input" style="width:110px;" type="number" value="${esc(cfg.welcomePoints ?? 0)}" /></div>
-            <div class="mab-row"><span>الحد الأدنى للسحب (عملة):</span><input id="mabMinCashout" class="mab-input" style="width:110px;" type="number" value="${esc(cfg.minCashoutPts ?? 100)}" /></div>
-            <div class="mab-row"><span>رسم كسر الرقم (عملة • 75% جائزة / 15% إدارة / 10% بذرة):</span><input id="mabRecordEntryCost" class="mab-input" style="width:90px;" type="number" min="1" value="${esc(cfg.recordEntryCostPts ?? 10)}" /></div>
+            <div class="mab-row"><span>الحد الأدنى للسحب (عملة/ل.س):</span><input id="mabMinCashout" class="mab-input" style="width:110px;" type="number" value="${esc(cfg.minCashoutPts ?? 100)}" /></div>
+            <div class="mab-row"><span>الحد الأدنى للشحن (ل.س):</span><input id="mabMinTopup" class="mab-input" style="width:110px;" type="number" value="${esc(cfg.minTopupSYP ?? 100)}" /></div>
+            <div class="mab-row"><span>تفعيل السحب عبر شام كاش:</span><input type="checkbox" id="mabShamCashout" ${cfg.shamCashCashoutEnabled ? 'checked' : ''} style="width:20px;height:20px;" /></div>
+            <div class="mab-row"><span>تفعيل الشحن عبر شام كاش:</span><input type="checkbox" id="mabShamTopup" ${cfg.shamCashTopupEnabled ? 'checked' : ''} style="width:20px;height:20px;" /></div>
+            <div class="mab-row"><span>معرّف شام كاش الإدارة:</span><input id="mabAdminShamId" class="mab-input" style="width:165px;" type="text" value="${esc(cfg.adminShamCashId ?? '')}" placeholder="معرف شام كاش" /></div>
+            <div class="mab-row"><span>واتساب إدارة العالم:</span><input id="mabAdminWa" class="mab-input" style="width:165px;" type="text" value="${esc(cfg.adminWhatsApp ?? '963965461504')}" placeholder="9639..." /></div>
+            <div class="mab-row"><span>رسم كسر الرقم (عملة • 80% جائزة / 20% إدارة):</span><input id="mabRecordEntryCost" class="mab-input" style="width:90px;" type="number" min="1" value="${esc(cfg.recordEntryCostPts ?? 10)}" /></div>
             <div class="mab-row"><span>عمولة PvP (%):</span><input id="mabPvpEdge" class="mab-input" style="width:110px;" type="number" value="${esc(cfg.pvpHouseEdgePct ?? 10)}" /></div>
             <button type="button" class="mab-btn mab-btn-gold" onclick="window.MoaathArenaBridge.saveAdminConfig()">💾 حفظ إعدادات الاقتصاد والليرة</button>
           </div>
@@ -440,7 +445,8 @@
               return `
                 <div style="border-top:1px solid rgba(255,255,255,0.1); padding:8px 0;">
                   <div class="mab-row"><strong>${esc(c.phone)}</strong><span style="color:#4ade80;">${esc(c.pts)} عملة (${sypVal.toLocaleString()} ل.س)</span></div>
-                  <div class="mab-small">المعادل: ${esc(c.usdAmount)}$ • تدقيق الساعة: ${ready ? '✅ جاهز' : '⏳ قيد الانتظار'}</div>
+                  <div class="mab-small">الطريقة: ${c.method === 'shamcash' ? '<b style="color:#38bdf8;">💳 شام كاش</b>' : '🛒 محفظة المتجر'} • ${esc(c.usdAmount)}$ • ${ready ? '✅ جاهز' : '⏳ قيد الانتظار'}</div>
+                  ${c.shamCashId ? `<div class="mab-row" style="background:#0f172a;padding:5px 8px;border-radius:8px;margin-top:4px;"><span style="font-family:monospace;color:#fde047;">${esc(c.shamCashId)}</span><button type="button" class="mab-preset" style="padding:3px 8px;" onclick="navigator.clipboard?.writeText('${esc(c.shamCashId)}').then(()=>alert('تم نسخ معرف شام كاش!'))">📋 نسخ</button></div>` : ''}
                   <div class="mab-row" style="margin-top:6px;">
                     <button type="button" class="mab-btn mab-btn-green" style="margin:0;padding:7px;" onclick="window.MoaathArenaBridge.resolveCashout('${esc(c.txId)}','approve')">اعتماد للمتجر</button>
                     <button type="button" class="mab-btn mab-btn-red" style="margin:0;padding:7px;" onclick="window.MoaathArenaBridge.resolveCashout('${esc(c.txId)}','reject')">رفض وإرجاع</button>
@@ -468,6 +474,18 @@
             <div class="mab-row"><span>الحد الأقصى للتلقائي (عملة):</span><input id="mabAutoCashMax" class="mab-input" style="width:95px;" type="number" min="100" max="1000" value="${esc(cfg.autoCashoutMaxPts ?? 200)}" /></div>
             <div class="mab-row"><span>الحد الأدنى للفوز للتوثيق التلقائي:</span><input id="mabAutoCashWins" class="mab-input" style="width:95px;" type="number" min="0" value="${esc(cfg.autoCashoutMinWins ?? 3)}" /></div>
             <button type="button" class="mab-btn mab-btn-green" onclick="window.MoaathArenaBridge.saveAutoCashoutConfig()">💾 حفظ إعدادات السحب التلقائي</button>
+          </div>
+          <div class="mab-box">
+            <div style="font-weight:800; color:#38bdf8; margin-bottom:6px;">💳 طلبات شحن شام كاش المعلقة (${(data.pendingTopups || []).length})</div>
+            ${(data.pendingTopups || []).length === 0 ? '<p class="mab-small">لا توجد طلبات شحن معلقة.</p>' : (data.pendingTopups || []).map((t) => `
+              <div style="border-top:1px solid rgba(255,255,255,0.1); padding:7px 0;">
+                <div class="mab-row"><strong>${esc(t.txId)} • ${esc(t.phone)}</strong><span style="color:#4ade80;">${Number(t.sypAmount || 0).toLocaleString()} ل.س</span></div>
+                <div class="mab-row" style="margin-top:5px;">
+                  <button type="button" class="mab-btn mab-btn-green" style="margin:0;padding:6px;" onclick="window.MoaathArenaBridge.resolveTopup('${esc(t.txId)}','approve')">✅ اعتماد الشحن</button>
+                  <button type="button" class="mab-btn mab-btn-red" style="margin:0;padding:6px;" onclick="window.MoaathArenaBridge.resolveTopup('${esc(t.txId)}','reject')">رفض</button>
+                </div>
+              </div>
+            `).join('')}
           </div>
           <div class="mab-box">
             <div style="font-weight:800; color:#f3d576; margin-bottom:6px;">💰 طلبات السحب المعلقة (${pendingList.length})</div>
@@ -530,9 +548,23 @@
           welcomePoints: Number(document.getElementById('mabWelcomePts')?.value),
           minCashoutPts: Number(document.getElementById('mabMinCashout')?.value),
           pvpHouseEdgePct: Number(document.getElementById('mabPvpEdge')?.value),
-          recordEntryCostPts: Number(document.getElementById('mabRecordEntryCost')?.value || 10)
+          recordEntryCostPts: Number(document.getElementById('mabRecordEntryCost')?.value || 10),
+          minTopupSYP: Number(document.getElementById('mabMinTopup')?.value || 100),
+          shamCashCashoutEnabled: !!document.getElementById('mabShamCashout')?.checked,
+          shamCashTopupEnabled: !!document.getElementById('mabShamTopup')?.checked,
+          adminShamCashId: document.getElementById('mabAdminShamId')?.value || '',
+          adminWhatsApp: document.getElementById('mabAdminWa')?.value || '963965461504'
         });
         alert(res.message || 'تم حفظ الإعدادات.');
+        this.openAdminModal();
+      } catch (err) { alert(err.message); }
+    },
+
+    async resolveTopup(txId, action) {
+      if (!confirm(action === 'approve' ? 'تأكيد اعتماد الشحن وإضافة العملات لحساب اللاعب؟' : 'تأكيد رفض طلب الشحن؟')) return;
+      try {
+        const res = await workerRequest('/admin/topup/resolve', { txId, action });
+        alert(res.message || 'تم التنفيذ.');
         this.openAdminModal();
       } catch (err) { alert(err.message); }
     },
@@ -571,6 +603,7 @@
       } catch (err) { alert(err.message); }
     },
 
+
     async sendBroadcast(clear) {
       const text = document.getElementById('mabBroadcastText')?.value || '';
       const hours = Number(document.getElementById('mabBroadcastHours')?.value || 24);
@@ -583,7 +616,7 @@
 
     async toggleAutoRollover(enabled) {
       try {
-        await workerRequest('/admin/config', { autoRolloverWeekly: Boolean(enabled) });
+        const res = await workerRequest('/admin/config', { autoRolloverWeekly: Boolean(enabled) });
         alert(enabled ? '✅ تم تفعيل التجديد التلقائي للبطولات الأسبوعية.' : '⏸️ تم إيقاف التجديد التلقائي.');
       } catch (err) { alert(err.message); }
     },
