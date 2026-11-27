@@ -1,6 +1,6 @@
 {
   "version": "5.0-vip10x-std5x",
-  "updatedAt": "2026-11-27T15:14:09Z",
+  "updatedAt": "2026-11-27T18:57:02Z",
   "personas": {
     "anime_ritaj": {
       "greet": [
@@ -1372,7 +1372,6 @@
           "text": "بكل سرور، سؤال تفكير: بتفضل الخيار الأسرع وقت الضيق ولا الخيار الأوفر على المدى الأطول — شاب هادئ وذكي وتحليلي.",
           "file": "sounds_gemini/anime_ryu_challenge_100.wav",
           "mood": "challenge",
-          "durationMs": 8170,
           "tier": "vip"
         }
       ],
@@ -1525,7 +1524,6 @@
           "text": "إذا كنت تقارن بين خيارات، أخبرني بميزانيتك أو حاجتك لأرتبها لك، شو رأيك نبدأ هلق؟",
           "file": "sounds_gemini/anime_ryu_idleNudge_89.wav",
           "mood": "talk",
-          "durationMs": 7810,
           "tier": "vip"
         }
       ],
