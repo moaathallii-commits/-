@@ -1,13 +1,13 @@
 // ============================================================================
-// Service Worker المطور لمتجر معاذ (sw.js — v2.0)
+// Service Worker المطور لمتجر معاذ (sw.js — v3.0 (معزول عن عالم التحديات))
 // - Network-First مع cache: "no-store" ومهلة زمنية (4.5 ثانية) لكسر كاش HTTP فوراً
 // - سياسة تنظيف ذكية للكاش (حد أقصى 80 عنصراً) لحماية ذاكرة الهاتف
 // - حماية ضد تلوث الكاش (التحقق من status === 200 ونوع المحتوى Content-Type)
 // - استثناء تام لـ Cloudflare Worker و Firebase و ShamCash و Payment
 // ============================================================================
 
-const STATIC_CACHE = "moaath-store-static-v2";
-const RUNTIME_CACHE = "moaath-store-runtime-v2";
+const STATIC_CACHE = "moaath-store-static-v3";
+const RUNTIME_CACHE = "moaath-store-runtime-v3";
 const MAX_RUNTIME_ENTRIES = 80;
 const NETWORK_TIMEOUT_MS = 4500;
 
