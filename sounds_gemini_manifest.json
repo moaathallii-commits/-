@@ -1,6 +1,6 @@
 {
   "version": "5.0-vip10x-std5x",
-  "updatedAt": "2026-11-27T02:51:41Z",
+  "updatedAt": "2026-11-27T06:20:48Z",
   "personas": {
     "anime_ritaj": {
       "greet": [
@@ -1062,7 +1062,6 @@
           "text": "حياك الله، بأفضل حال وهدوء، كيف يومك وكيف أساعدك الآن — شاب هادئ وذكي وتحليلي.",
           "file": "sounds_gemini/anime_ryu_chatGood_50.wav",
           "mood": "talk",
-          "durationMs": 5410,
           "tier": "vip"
         }
       ],
@@ -1084,6 +1083,13 @@
           "file": "sounds_gemini/anime_ryu_thanks_36.wav",
           "mood": "talk",
           "tier": "vip"
+        },
+        {
+          "text": "العفو، التفكير الهادئ والدقيق دايماً يوصّل للخيار الأفضل، خلينا نرتبها على رواق.",
+          "file": "sounds_gemini/anime_ryu_thanks_51.wav",
+          "mood": "talk",
+          "durationMs": 7330,
+          "tier": "vip"
         }
       ],
       "touchHead": [
@@ -1103,6 +1109,13 @@
           "text": "صفاء الذهن والهدوء يسهّلان اختيار الأنسب بلا تردد، وأنا جاهز أساعدك فوراً.",
           "file": "sounds_gemini/anime_ryu_touchHead_37.wav",
           "mood": "talk",
+          "tier": "vip"
+        },
+        {
+          "text": "أهلاً بك يا غالي، صفاء الذهن والهدوء يسهّلان اختيار الأنسب بلا تردد — شاب هادئ وذكي وتحليلي.",
+          "file": "sounds_gemini/anime_ryu_touchHead_52.wav",
+          "mood": "talk",
+          "durationMs": 7690,
           "tier": "vip"
         }
       ],
@@ -1124,6 +1137,13 @@
           "file": "sounds_gemini/anime_ryu_touchBody_38.wav",
           "mood": "talk",
           "tier": "vip"
+        },
+        {
+          "text": "نحلل الخيارات المتوفرة بهدوء ونختار الأفضل لك، شو حابب نعمل الآن؟",
+          "file": "sounds_gemini/anime_ryu_touchBody_53.wav",
+          "mood": "talk",
+          "durationMs": 7090,
+          "tier": "vip"
         }
       ],
       "tip": [
@@ -1144,6 +1164,13 @@
           "file": "sounds_gemini/anime_ryu_tip_39.wav",
           "mood": "talk",
           "tier": "vip"
+        },
+        {
+          "text": "تكرم عينك، قارن بين الكمية والسعر والاحتياج الفعلي قبل تثبيت أي خيار — شاب هادئ وذكي وتحليلي.",
+          "file": "sounds_gemini/anime_ryu_tip_54.wav",
+          "mood": "talk",
+          "durationMs": 6530,
+          "tier": "vip"
         }
       ],
       "challenge": [
@@ -1163,6 +1190,13 @@
           "text": "أبشر يا غالي، سؤال تفكير: بتفضل الخيار الأسرع وقت الضيق ولا الخيار الأوفر على المدى الأطول — شاب هادئ وذكي وتحليلي.",
           "file": "sounds_gemini/anime_ryu_challenge_40.wav",
           "mood": "challenge",
+          "tier": "vip"
+        },
+        {
+          "text": "سؤال تفكير: بتفضل الخيار الأسرع وقت الضيق ولا الخيار الأوفر على المدى الأطول، شو حابب نعمل الآن؟",
+          "file": "sounds_gemini/anime_ryu_challenge_55.wav",
+          "mood": "challenge",
+          "durationMs": 8890,
           "tier": "vip"
         }
       ],
