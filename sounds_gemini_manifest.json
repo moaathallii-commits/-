@@ -1,6 +1,6 @@
 {
   "version": "5.0-vip10x-std5x",
-  "updatedAt": "2026-11-27T06:20:48Z",
+  "updatedAt": "2026-11-27T07:37:05Z",
   "personas": {
     "anime_ritaj": {
       "greet": [
@@ -1088,7 +1088,6 @@
           "text": "العفو، التفكير الهادئ والدقيق دايماً يوصّل للخيار الأفضل، خلينا نرتبها على رواق.",
           "file": "sounds_gemini/anime_ryu_thanks_51.wav",
           "mood": "talk",
-          "durationMs": 7330,
           "tier": "vip"
         }
       ],
@@ -1115,7 +1114,6 @@
           "text": "أهلاً بك يا غالي، صفاء الذهن والهدوء يسهّلان اختيار الأنسب بلا تردد — شاب هادئ وذكي وتحليلي.",
           "file": "sounds_gemini/anime_ryu_touchHead_52.wav",
           "mood": "talk",
-          "durationMs": 7690,
           "tier": "vip"
         }
       ],
@@ -1142,7 +1140,6 @@
           "text": "نحلل الخيارات المتوفرة بهدوء ونختار الأفضل لك، شو حابب نعمل الآن؟",
           "file": "sounds_gemini/anime_ryu_touchBody_53.wav",
           "mood": "talk",
-          "durationMs": 7090,
           "tier": "vip"
         }
       ],
@@ -1169,7 +1166,6 @@
           "text": "تكرم عينك، قارن بين الكمية والسعر والاحتياج الفعلي قبل تثبيت أي خيار — شاب هادئ وذكي وتحليلي.",
           "file": "sounds_gemini/anime_ryu_tip_54.wav",
           "mood": "talk",
-          "durationMs": 6530,
           "tier": "vip"
         }
       ],
@@ -1196,7 +1192,6 @@
           "text": "سؤال تفكير: بتفضل الخيار الأسرع وقت الضيق ولا الخيار الأوفر على المدى الأطول، شو حابب نعمل الآن؟",
           "file": "sounds_gemini/anime_ryu_challenge_55.wav",
           "mood": "challenge",
-          "durationMs": 8890,
           "tier": "vip"
         }
       ],
