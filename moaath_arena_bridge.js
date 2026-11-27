@@ -1,10 +1,10 @@
 /**
  * ============================================================================
  * جسر الربط بين «متجر معاذ» و«عالم تحديات معاذ (Moaath Arena)»
- * الملف: moaath_arena_bridge.js
+ * الملف: moaath_arena_bridge.js (v2 - مدمج بالكامل داخل تبويبات #adminModal)
  * - يعتمد الاقتصاد الموحد (1 ل.س = 1 عملة معاذ، ومرجع الصرف 150 ل.س = 1 دولار)
  * - يدعم توليد معرف الربط الفوري (MTH-XXXX-XXXX) والتحويل من محفظة المتجر
- * - يوفّر لوحة تحكم إدارة عالم التحديات مدمجة داخل حاوية/تبويب المتجر + نظام أحداث الإدارة الـ 25
+ * - يوفّر لوحة تحكم إدارة عالم التحديات مدمجة داخل #adminModal + نافذة الزبون openCustomerModal
  * ============================================================================
  */
 (function () {
@@ -90,12 +90,12 @@
         text-align: right;
         background: linear-gradient(160deg, #0f172a 0%, #070d19 100%);
         border: 1.5px solid rgba(250, 204, 21, 0.45);
-        border-radius: 18px;
-        padding: 14px;
-        margin: 12px 0;
+        border-radius: 14px;
+        padding: 12px;
+        margin: 6px 0;
         color: #f8fafc;
-        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
-        font-family: system-ui, -apple-system, Tahoma, sans-serif;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        font-family: Tahoma, system-ui, -apple-system, sans-serif;
       }
       .ma-adm-hdr {
         display: flex;
@@ -103,13 +103,13 @@
         align-items: center;
         gap: 8px;
         padding-bottom: 10px;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       }
       .ma-adm-title {
         color: #fde047;
         font-weight: 900;
-        font-size: 1.02rem;
+        font-size: 0.98rem;
         margin: 0;
       }
       .ma-adm-tabs {
@@ -119,12 +119,12 @@
         margin-bottom: 12px;
       }
       .ma-adm-tab {
-        padding: 8px 6px;
-        border-radius: 11px;
+        padding: 8px 4px;
+        border-radius: 10px;
         border: 1px solid rgba(148, 163, 184, 0.25);
         background: #0b1222;
         color: #cbd5e1;
-        font-size: 0.76rem;
+        font-size: 0.72rem;
         font-weight: 800;
         cursor: pointer;
       }
@@ -136,13 +136,13 @@
       .ma-adm-box {
         background: rgba(15, 23, 42, 0.85);
         border: 1px solid rgba(56, 189, 248, 0.25);
-        border-radius: 14px;
-        padding: 11px;
+        border-radius: 12px;
+        padding: 10px;
         margin-bottom: 10px;
       }
       .ma-adm-box h4 {
         color: #7dd3fc;
-        font-size: 0.86rem;
+        font-size: 0.84rem;
         margin: 0 0 8px;
       }
       .ma-adm-grid2 {
@@ -153,25 +153,25 @@
       .ma-adm-stat {
         background: #070c18;
         border: 1px solid rgba(250, 204, 21, 0.28);
-        border-radius: 12px;
-        padding: 9px;
+        border-radius: 10px;
+        padding: 8px;
         text-align: center;
       }
       .ma-adm-stat small {
         display: block;
         color: #94a3b8;
-        font-size: 0.7rem;
+        font-size: 0.68rem;
       }
       .ma-adm-stat strong {
         color: #4ade80;
-        font-size: 0.98rem;
+        font-size: 0.92rem;
       }
       .ma-adm-field {
         margin-bottom: 8px;
       }
       .ma-adm-field label {
         display: block;
-        font-size: 0.74rem;
+        font-size: 0.72rem;
         color: #cbd5e1;
         margin-bottom: 3px;
         font-weight: 700;
@@ -182,17 +182,17 @@
         width: 100%;
         box-sizing: border-box;
         padding: 8px 10px;
-        border-radius: 10px;
+        border-radius: 8px;
         border: 1px solid rgba(212, 175, 55, 0.4);
         background: #070c18;
         color: #fff;
-        font-size: 0.82rem;
+        font-size: 0.8rem;
       }
       .ma-adm-check {
         display: flex;
         align-items: center;
         gap: 8px;
-        font-size: 0.78rem;
+        font-size: 0.76rem;
         color: #e2e8f0;
         margin: 6px 0;
         cursor: pointer;
@@ -202,11 +202,11 @@
         margin: 0;
       }
       .ma-adm-btn {
-        padding: 9px 12px;
-        border-radius: 11px;
+        padding: 8px 10px;
+        border-radius: 9px;
         border: none;
         font-weight: 900;
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         cursor: pointer;
       }
       .ma-adm-btn-gold {
@@ -234,15 +234,15 @@
         gap: 8px;
         padding: 8px 0;
         border-top: 1px solid rgba(255, 255, 255, 0.08);
-        font-size: 0.76rem;
+        font-size: 0.75rem;
       }
       .ma-adm-row:first-of-type {
         border-top: none;
       }
       .ma-adm-msg {
         padding: 8px 10px;
-        border-radius: 10px;
-        font-size: 0.78rem;
+        border-radius: 9px;
+        font-size: 0.76rem;
         font-weight: 800;
         margin-bottom: 10px;
       }
@@ -263,7 +263,7 @@
     document.head.appendChild(st);
   }
 
-  function resolveEmbedContainer(targetOrId) {
+  function resolveAdminTabContainer(targetOrId) {
     if (targetOrId && typeof targetOrId === "object" && targetOrId.nodeType === 1) {
       return targetOrId;
     }
@@ -271,20 +271,35 @@
       const byId = document.getElementById(targetOrId.trim()) || document.querySelector(targetOrId.trim());
       if (byId) return byId;
     }
-    const candidates = [
-      "arenaAdminContainer",
-      "moaathArenaAdminContainer",
-      "adminArenaTab",
-      "tab-arena-admin",
-      "adminTabContent",
-      "adminDynamicContainer",
-      "adminMainContent"
-    ];
-    for (const id of candidates) {
-      const el = document.getElementById(id);
-      if (el) return el;
+
+    // الاندماج المباشر داخل #adminModal .modal-content كتبويب إداري أصلي (.admin-tab)
+    const adminModal = document.getElementById("adminModal");
+    const adminContent = adminModal ? adminModal.querySelector(".modal-content") : null;
+    if (adminContent) {
+      // إخفاء جميع التبويبات الإدارية الأخرى
+      adminContent.querySelectorAll(".admin-tab").forEach((t) => {
+        t.style.display = "none";
+      });
+      // تحديث حالة الأزرار النشطة في شريط التبويبات
+      const catsBar = adminContent.querySelector(".categories");
+      if (catsBar) {
+        catsBar.querySelectorAll(".cat-btn").forEach((b) => {
+          const isArenaBtn = (b.getAttribute("onclick") || "").includes("openAdminModal");
+          b.classList.toggle("active", isArenaBtn);
+        });
+      }
+      let pane = document.getElementById("admTabArenaBridge");
+      if (!pane) {
+        pane = document.createElement("div");
+        pane.id = "admTabArenaBridge";
+        pane.className = "admin-tab";
+        adminContent.appendChild(pane);
+      }
+      pane.style.display = "block";
+      return pane;
     }
 
+    // بديل احتياطي في حال استدعيت خارج #adminModal
     let fallback = document.getElementById("moaathArenaEmbeddedHost");
     if (!fallback) {
       fallback = document.createElement("div");
@@ -292,15 +307,7 @@
       fallback.style.maxWidth = "680px";
       fallback.style.margin = "10px auto";
       fallback.style.padding = "0 10px";
-      const anchor =
-        document.querySelector("main") ||
-        document.querySelector(".admin-container, .container, #app") ||
-        document.body;
-      if (anchor === document.body) {
-        document.body.insertBefore(fallback, document.body.firstChild);
-      } else {
-        anchor.insertBefore(fallback, anchor.firstChild);
-      }
+      document.body.insertBefore(fallback, document.body.firstChild);
     }
     return fallback;
   }
@@ -311,7 +318,6 @@
     storeUrl: STORE_APP_URL,
     occasions25: ADMIN_EVENT_OCCASIONS_25,
     _activeSubTab: "overview",
-    _lastHost: null,
 
     async getStoreInfo() {
       return await callBridgeApi("/bridge/store-info", {});
@@ -372,8 +378,67 @@
       return await callBridgeApi("/admin/player/unfreeze", { phone });
     },
 
+    // نافذة الزبون عند الضغط على زر "🏆 عالم التحديات" في الشريط العلوي
+    async openCustomerModal() {
+      injectEmbeddedStyles();
+      let ov = document.getElementById("moaathArenaCustomerModal");
+      if (!ov) {
+        ov = document.createElement("div");
+        ov.id = "moaathArenaCustomerModal";
+        ov.className = "modal-overlay";
+        ov.style.zIndex = "10030";
+        document.body.appendChild(ov);
+      }
+      ov.style.display = "flex";
+      ov.innerHTML = `
+        <div class="modal-content" style="max-width:420px; border-color:#fde047;">
+          <div class="ma-adm-hdr">
+            <h3 class="ma-adm-title">🏆 عالم تحديات معاذ</h3>
+            <button type="button" class="ma-adm-btn ma-adm-btn-outline" id="maCustCloseBtn">✕</button>
+          </div>
+          <div id="maCustBanner" class="ma-adm-msg ma-adm-hidden"></div>
+          <p style="font-size:0.78rem; color:#cbd5e1; margin:0 0 10px;">
+            اربط حسابك في متجر معاذ مباشرة بعالم التحديات أو حوّل من محفظتك المسبقة (1 ل.س = 1 عملة).
+          </p>
+          <button type="button" class="ma-adm-btn ma-adm-btn-gold" id="maCustOpenArenaBtn" style="margin-bottom:10px;">
+            🚀 توليد معرف الربط والدخول لعالم التحديات
+          </button>
+          <div class="ma-adm-box">
+            <h4>💳 تحويل من محفظة المتجر إلى عملات التحدي</h4>
+            <div class="ma-adm-field">
+              <label>المبلغ بالليرة السورية (ل.س)</label>
+              <input type="number" id="maCustTransferSyp" min="100" value="1000" />
+            </div>
+            <button type="button" class="ma-adm-btn ma-adm-btn-green" id="maCustTransferBtn" style="width:100%;">
+              تحويل الآن
+            </button>
+          </div>
+        </div>
+      `;
+
+      ov.querySelector("#maCustCloseBtn")?.addEventListener("click", () => {
+        ov.style.display = "none";
+      });
+      ov.querySelector("#maCustOpenArenaBtn")?.addEventListener("click", async () => {
+        try {
+          await this.openArenaWithBindKey();
+        } catch (e) {
+          this._setBanner(ov, e.message, true);
+        }
+      });
+      ov.querySelector("#maCustTransferBtn")?.addEventListener("click", async () => {
+        const syp = Number(ov.querySelector("#maCustTransferSyp")?.value || 0);
+        try {
+          const res = await this.transferStoreToArena(syp);
+          this._setBanner(ov, res.message || "تم التحويل بنجاح.");
+        } catch (e) {
+          this._setBanner(ov, e.message, true);
+        }
+      });
+    },
+
     _setBanner(host, text, isError = false) {
-      const el = host.querySelector("#maAdmBanner");
+      const el = host.querySelector("#maAdmBanner") || host.querySelector("#maCustBanner");
       if (!el) return;
       if (!text) {
         el.className = "ma-adm-msg ma-adm-hidden";
@@ -397,18 +462,14 @@
 
     async openAdminModal(targetContainer = null) {
       injectEmbeddedStyles();
-      const host = resolveEmbedContainer(targetContainer || this._lastHost);
-      this._lastHost = host;
-      host.classList.remove("hidden", "ma-adm-hidden");
+      const host = resolveAdminTabContainer(targetContainer);
+      host.style.display = "block";
 
       host.innerHTML = `
         <div class="ma-adm-wrap">
           <div class="ma-adm-hdr">
             <h3 class="ma-adm-title">🛡️ لوحة إدارة عالم تحديات معاذ</h3>
-            <div style="display:flex; gap:6px;">
-              <button type="button" class="ma-adm-btn ma-adm-btn-outline" id="maAdmRefreshBtn">🔄 تحديث</button>
-              <button type="button" class="ma-adm-btn ma-adm-btn-outline" id="maAdmCloseBtn">✕ إغلاق</button>
-            </div>
+            <button type="button" class="ma-adm-btn ma-adm-btn-outline" id="maAdmRefreshBtn">🔄 تحديث</button>
           </div>
           <div style="text-align:center; padding:18px; color:#7dd3fc; font-weight:800;">
             ⏳ جاري تحميل بيانات الساحة والمحفظة الموحدة...
@@ -416,9 +477,6 @@
         </div>
       `;
 
-      host.querySelector("#maAdmCloseBtn")?.addEventListener("click", () => {
-        host.innerHTML = "";
-      });
       host.querySelector("#maAdmRefreshBtn")?.addEventListener("click", () => {
         this.openAdminModal(host);
       });
@@ -440,7 +498,7 @@
               <button type="button" class="ma-adm-btn ma-adm-btn-outline" id="maAdmRetryBtn">إعادة المحاولة</button>
             </div>
             <div class="ma-adm-msg err">⚠️ ${escHtml(err.message || "تعذر فتح لوحة الإدارة.")}</div>
-            <div style="font-size:0.75rem; color:#94a3b8;">
+            <div style="font-size:0.74rem; color:#94a3b8;">
               تأكد من تسجيل الدخول في المتجر بحساب الإدارة (0965461504@moaath.store) واستقرار الاتصال.
             </div>
           </div>
@@ -480,7 +538,7 @@
               </div>`
             )
             .join("")
-        : `<div style="font-size:0.76rem; color:#94a3b8;">لا توجد طلبات شحن معلقة حالياً.</div>`;
+        : `<div style="font-size:0.75rem; color:#94a3b8;">لا توجد طلبات شحن معلقة حالياً.</div>`;
 
       const cashoutsHtml = pendingCashouts.length
         ? pendingCashouts
@@ -499,7 +557,7 @@
               </div>`
             )
             .join("")
-        : `<div style="font-size:0.76rem; color:#94a3b8;">لا توجد طلبات سحب بانتظار التدقيق.</div>`;
+        : `<div style="font-size:0.75rem; color:#94a3b8;">لا توجد طلبات سحب بانتظار التدقيق.</div>`;
 
       const frozenHtml = frozenPlayers.length
         ? frozenPlayers
@@ -514,7 +572,7 @@
               </div>`
             )
             .join("")
-        : `<div style="font-size:0.76rem; color:#94a3b8;">لا توجد حسابات مجمدة حالياً.</div>`;
+        : `<div style="font-size:0.75rem; color:#94a3b8;">لا توجد حسابات مجمدة حالياً.</div>`;
 
       const alertsHtml = recentAlerts.slice(0, 6).length
         ? recentAlerts
@@ -529,16 +587,13 @@
               </div>`
             )
             .join("")
-        : `<div style="font-size:0.76rem; color:#94a3b8;">السجل الأمني نظيف.</div>`;
+        : `<div style="font-size:0.75rem; color:#94a3b8;">السجل الأمني نظيف.</div>`;
 
       host.innerHTML = `
         <div class="ma-adm-wrap">
           <div class="ma-adm-hdr">
             <h3 class="ma-adm-title">🛡️ لوحة إدارة عالم تحديات معاذ</h3>
-            <div style="display:flex; gap:6px;">
-              <button type="button" class="ma-adm-btn ma-adm-btn-outline" id="maAdmRefreshBtn">🔄 تحديث</button>
-              <button type="button" class="ma-adm-btn ma-adm-btn-outline" id="maAdmCloseBtn">✕ إغلاق</button>
-            </div>
+            <button type="button" class="ma-adm-btn ma-adm-btn-outline" id="maAdmRefreshBtn">🔄 تحديث</button>
           </div>
 
           <div id="maAdmBanner" class="ma-adm-msg ma-adm-hidden"></div>
@@ -550,7 +605,6 @@
             <button type="button" class="ma-adm-tab" data-subtab="settings">⚙️ الإعدادات</button>
           </div>
 
-          <!-- 1. الملخص -->
           <div id="maAdmPane_overview">
             <div class="ma-adm-grid2" style="margin-bottom:10px;">
               <div class="ma-adm-stat">
@@ -582,7 +636,6 @@
             </div>
           </div>
 
-          <!-- 2. طلبات الشحن والسحب -->
           <div id="maAdmPane_requests" class="ma-adm-hidden">
             <div class="ma-adm-box">
               <h4>📥 طلبات شحن شام كاش المعلقة (${pendingTopups.length})</h4>
@@ -594,7 +647,6 @@
             </div>
           </div>
 
-          <!-- 3. أحداث الإدارة الـ 25 -->
           <div id="maAdmPane_events" class="ma-adm-hidden">
             <div class="ma-adm-box">
               <h4>🎪 إعداد وتفعيل حدث إداري (من أصل 25 مناسبة)</h4>
@@ -631,7 +683,6 @@
             </div>
           </div>
 
-          <!-- 4. الإعدادات والاقتصاد وشام كاش -->
           <div id="maAdmPane_settings" class="ma-adm-hidden">
             <div class="ma-adm-box">
               <h4>⚙️ إعدادات الاقتصاد وشام كاش والطوارئ</h4>
@@ -677,9 +728,6 @@
 
       this._switchSubTab(host, this._activeSubTab || "overview");
 
-      host.querySelector("#maAdmCloseBtn")?.addEventListener("click", () => {
-        host.innerHTML = "";
-      });
       host.querySelector("#maAdmRefreshBtn")?.addEventListener("click", () => {
         this.openAdminModal(host);
       });
@@ -688,7 +736,6 @@
         btn.addEventListener("click", () => this._switchSubTab(host, btn.dataset.subtab));
       });
 
-      // أزرار قبول/رفض الشحن
       host.querySelectorAll("[data-topup-act]").forEach((btn) => {
         btn.addEventListener("click", async () => {
           btn.disabled = true;
@@ -703,7 +750,6 @@
         });
       });
 
-      // أزرار اعتماد/رفض السحب
       host.querySelectorAll("[data-cash-act]").forEach((btn) => {
         btn.addEventListener("click", async () => {
           btn.disabled = true;
@@ -718,7 +764,6 @@
         });
       });
 
-      // أزرار فك تجميد اللاعبين
       host.querySelectorAll("[data-unfreeze]").forEach((btn) => {
         btn.addEventListener("click", async () => {
           btn.disabled = true;
@@ -733,7 +778,6 @@
         });
       });
 
-      // تحديث عنوان الحدث عند تغيير الاختيار من القائمة الـ 25
       const evtSel = host.querySelector("#maEvtSelect");
       evtSel?.addEventListener("change", () => {
         const opt = evtSel.options[evtSel.selectedIndex];
@@ -741,7 +785,6 @@
         if (opt && titleInp) titleInp.value = opt.dataset.name || "";
       });
 
-      // حفظ وتفعيل الحدث الإداري
       host.querySelector("#maEvtSaveBtn")?.addEventListener("click", async () => {
         const sel = host.querySelector("#maEvtSelect");
         const opt = sel.options[sel.selectedIndex];
@@ -765,7 +808,6 @@
         }
       });
 
-      // تصفية الحدث الإداري
       host.querySelector("#maEvtSettleBtn")?.addEventListener("click", async () => {
         try {
           const res = await this.settleAdminEvent();
@@ -775,7 +817,6 @@
         }
       });
 
-      // حفظ الإعدادات العامة
       host.querySelector("#maCfgSaveBtn")?.addEventListener("click", async () => {
         try {
           const res = await this.updateAdminConfig({
