@@ -1,6 +1,6 @@
 {
   "version": "5.0-vip10x-std5x",
-  "updatedAt": "2026-11-27T11:47:10Z",
+  "updatedAt": "2026-11-27T12:14:58Z",
   "personas": {
     "anime_ritaj": {
       "greet": [
@@ -964,7 +964,13 @@
           "text": "أهلاً بك، نورت الغرفة. كيف يمكنني مساعدتك بذكاء اليوم، نكمل سوا بكل نشاط.",
           "file": "sounds_gemini/anime_ryu_greet_61.wav",
           "mood": "talk",
-          "durationMs": 7410,
+          "tier": "vip"
+        },
+        {
+          "text": "أبشر يا غالي، أهلاً بك، نورت الغرفة. كيف يمكنني مساعدتك بذكاء اليوم — شاب هادئ وذكي وتحليلي.",
+          "file": "sounds_gemini/anime_ryu_greet_76.wav",
+          "mood": "talk",
+          "durationMs": 7130,
           "tier": "vip"
         }
       ],
@@ -996,6 +1002,12 @@
         {
           "text": "يا هلا فيك، صباح الصفاء والتركيز، بداية هادئة تعني قرارات أذكى — شاب هادئ وذكي وتحليلي.",
           "file": "sounds_gemini/anime_ryu_greetMorning_62.wav",
+          "mood": "talk",
+          "tier": "vip"
+        },
+        {
+          "text": "صباح الصفاء والتركيز، بداية هادئة تعني قرارات أذكى، قول يلي بناسبك.",
+          "file": "sounds_gemini/anime_ryu_greetMorning_77.wav",
           "mood": "talk",
           "durationMs": 6610,
           "tier": "vip"
@@ -1030,7 +1042,13 @@
           "text": "مساء الهدوء والتأمل، نرتب أفكارك وطلباتك بوضوح، نكمل سوا بكل نشاط.",
           "file": "sounds_gemini/anime_ryu_greetEvening_63.wav",
           "mood": "talk",
-          "durationMs": 7290,
+          "tier": "vip"
+        },
+        {
+          "text": "نورتنا اليوم، مساء الهدوء والتأمل، نرتب أفكارك وطلباتك بوضوح — شاب هادئ وذكي وتحليلي.",
+          "file": "sounds_gemini/anime_ryu_greetEvening_78.wav",
+          "mood": "talk",
+          "durationMs": 6450,
           "tier": "vip"
         }
       ],
@@ -1063,7 +1081,13 @@
           "text": "بكل سرور، أهلاً بعودتك، يسعدني متابعة مساعدتك بأفضل الخيارات — شاب هادئ وذكي وتحليلي.",
           "file": "sounds_gemini/anime_ryu_welcomeBack_64.wav",
           "mood": "talk",
-          "durationMs": 5810,
+          "tier": "vip"
+        },
+        {
+          "text": "أهلاً بعودتك، يسعدني متابعة مساعدتك بأفضل الخيارات، والاختيار لك دائماً.",
+          "file": "sounds_gemini/anime_ryu_welcomeBack_79.wav",
+          "mood": "talk",
+          "durationMs": 6930,
           "tier": "vip"
         }
       ],
@@ -1096,7 +1120,13 @@
           "text": "بأفضل حال وهدوء، كيف يومك وكيف أساعدك الآن، نكمل سوا بكل نشاط.",
           "file": "sounds_gemini/anime_ryu_chatGood_65.wav",
           "mood": "talk",
-          "durationMs": 7410,
+          "tier": "vip"
+        },
+        {
+          "text": "يا هلا فيك، بأفضل حال وهدوء، كيف يومك وكيف أساعدك الآن — شاب هادئ وذكي وتحليلي.",
+          "file": "sounds_gemini/anime_ryu_chatGood_80.wav",
+          "mood": "talk",
+          "durationMs": 6050,
           "tier": "vip"
         }
       ],
@@ -1129,7 +1159,13 @@
           "text": "على عيني، العفو، التفكير الهادئ والدقيق دايماً يوصّل للخيار الأفضل — شاب هادئ وذكي وتحليلي.",
           "file": "sounds_gemini/anime_ryu_thanks_66.wav",
           "mood": "talk",
-          "durationMs": 5930,
+          "tier": "vip"
+        },
+        {
+          "text": "العفو، التفكير الهادئ والدقيق دايماً يوصّل للخيار الأفضل، والاختيار لك دائماً.",
+          "file": "sounds_gemini/anime_ryu_thanks_81.wav",
+          "mood": "talk",
+          "durationMs": 7810,
           "tier": "vip"
         }
       ],
@@ -1162,7 +1198,13 @@
           "text": "صفاء الذهن والهدوء يسهّلان اختيار الأنسب بلا تردد، نكمل سوا بكل نشاط.",
           "file": "sounds_gemini/anime_ryu_touchHead_67.wav",
           "mood": "talk",
-          "durationMs": 7050,
+          "tier": "vip"
+        },
+        {
+          "text": "بكل سرور، صفاء الذهن والهدوء يسهّلان اختيار الأنسب بلا تردد — شاب هادئ وذكي وتحليلي.",
+          "file": "sounds_gemini/anime_ryu_touchHead_82.wav",
+          "mood": "talk",
+          "durationMs": 6210,
           "tier": "vip"
         }
       ],
@@ -1195,7 +1237,13 @@
           "text": "حياك الله، نحلل الخيارات المتوفرة بهدوء ونختار الأفضل لك — شاب هادئ وذكي وتحليلي.",
           "file": "sounds_gemini/anime_ryu_touchBody_68.wav",
           "mood": "talk",
-          "durationMs": 5250,
+          "tier": "vip"
+        },
+        {
+          "text": "نحلل الخيارات المتوفرة بهدوء ونختار الأفضل لك، والاختيار لك دائماً.",
+          "file": "sounds_gemini/anime_ryu_touchBody_83.wav",
+          "mood": "talk",
+          "durationMs": 6930,
           "tier": "vip"
         }
       ],
@@ -1228,7 +1276,13 @@
           "text": "قارن بين الكمية والسعر والاحتياج الفعلي قبل تثبيت أي خيار، نكمل سوا بكل نشاط.",
           "file": "sounds_gemini/anime_ryu_tip_69.wav",
           "mood": "talk",
-          "durationMs": 6650,
+          "tier": "vip"
+        },
+        {
+          "text": "على عيني، قارن بين الكمية والسعر والاحتياج الفعلي قبل تثبيت أي خيار — شاب هادئ وذكي وتحليلي.",
+          "file": "sounds_gemini/anime_ryu_tip_84.wav",
+          "mood": "talk",
+          "durationMs": 7490,
           "tier": "vip"
         }
       ],
@@ -1261,7 +1315,13 @@
           "text": "أهلاً بك يا غالي، سؤال تفكير: بتفضل الخيار الأسرع وقت الضيق ولا الخيار الأوفر على المدى الأطول — شاب هادئ وذكي وتحليلي.",
           "file": "sounds_gemini/anime_ryu_challenge_70.wav",
           "mood": "challenge",
-          "durationMs": 8650,
+          "tier": "vip"
+        },
+        {
+          "text": "سؤال تفكير: بتفضل الخيار الأسرع وقت الضيق ولا الخيار الأوفر على المدى الأطول، والاختيار لك دائماً.",
+          "file": "sounds_gemini/anime_ryu_challenge_85.wav",
+          "mood": "challenge",
+          "durationMs": 9770,
           "tier": "vip"
         }
       ],
@@ -1288,7 +1348,13 @@
           "text": "يا سلام عليك، هذه الأصناف المتوفرة حالياً في الفرع حسب معطيات البحث — شاب هادئ وذكي وتحليلي.",
           "file": "sounds_gemini/anime_ryu_shopBridge_56.wav",
           "mood": "talk",
-          "durationMs": 6170,
+          "tier": "vip"
+        },
+        {
+          "text": "هذه الأصناف المتوفرة حالياً في الفرع حسب معطيات البحث، قول يلي بناسبك.",
+          "file": "sounds_gemini/anime_ryu_shopBridge_71.wav",
+          "mood": "talk",
+          "durationMs": 6050,
           "tier": "vip"
         }
       ],
@@ -1315,7 +1381,13 @@
           "text": "تمت إضافة الصنف بدقة، هل هناك إضافة أخرى، شو حابب نعمل الآن؟",
           "file": "sounds_gemini/anime_ryu_added_57.wav",
           "mood": "talk",
-          "durationMs": 5890,
+          "tier": "vip"
+        },
+        {
+          "text": "تكرم عينك، تمت إضافة الصنف بدقة، هل هناك إضافة أخرى — شاب هادئ وذكي وتحليلي.",
+          "file": "sounds_gemini/anime_ryu_added_72.wav",
+          "mood": "talk",
+          "durationMs": 5010,
           "tier": "vip"
         }
       ],
@@ -1342,7 +1414,13 @@
           "text": "أبشر يا غالي، الصنف المطلوب غير متوفر حالياً، وهذا بديل قريب متوفر — شاب هادئ وذكي وتحليلي.",
           "file": "sounds_gemini/anime_ryu_alternative_58.wav",
           "mood": "talk",
-          "durationMs": 6930,
+          "tier": "vip"
+        },
+        {
+          "text": "الصنف المطلوب غير متوفر حالياً، وهذا بديل قريب متوفر، قول يلي بناسبك.",
+          "file": "sounds_gemini/anime_ryu_alternative_73.wav",
+          "mood": "talk",
+          "durationMs": 6690,
           "tier": "vip"
         }
       ],
@@ -1369,7 +1447,13 @@
           "text": "إذا كنت تقارن بين خيارات، أخبرني بميزانيتك أو حاجتك لأرتبها لك، شو حابب نعمل الآن؟",
           "file": "sounds_gemini/anime_ryu_idleNudge_59.wav",
           "mood": "talk",
-          "durationMs": 7570,
+          "tier": "vip"
+        },
+        {
+          "text": "يا سلام عليك، إذا كنت تقارن بين خيارات، أخبرني بميزانيتك أو حاجتك لأرتبها لك — شاب هادئ وذكي وتحليلي.",
+          "file": "sounds_gemini/anime_ryu_idleNudge_74.wav",
+          "mood": "talk",
+          "durationMs": 7810,
           "tier": "vip"
         }
       ],
@@ -1396,7 +1480,13 @@
           "text": "نورتنا اليوم، دمت بخير وصفاء، أنا هنا متى ما احتجت لمشورة أو طلب — شاب هادئ وذكي وتحليلي.",
           "file": "sounds_gemini/anime_ryu_farewell_60.wav",
           "mood": "talk",
-          "durationMs": 7930,
+          "tier": "vip"
+        },
+        {
+          "text": "دمت بخير وصفاء، أنا هنا متى ما احتجت لمشورة أو طلب، قول يلي بناسبك.",
+          "file": "sounds_gemini/anime_ryu_farewell_75.wav",
+          "mood": "talk",
+          "durationMs": 6690,
           "tier": "vip"
         }
       ]
